@@ -1,0 +1,9 @@
+CC=gcc
+ARCH=sm_35
+
+stream : stream.cpp
+	hipcc -std=c++11 -ccbin=$(CC)  stream.cpp -arch=$(ARCH) -o stream
+
+
+clean :
+	rm -f stream

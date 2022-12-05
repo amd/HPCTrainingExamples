@@ -1,0 +1,7 @@
+export GCN_SUPPRESS_HOST_FALLBACK=true
+export LIBOMPTARGET_KERNEL_TRACE=1
+export LIBOMPTARGET_INFO=$((0x20 | 0x02 | 0x01 | 0x10))  
+#export LIBOMPTARGET_INFO=$((0x20 | 0x02))
+module load aomp
+export CC=${AOMP}/bin/clang
+export FC=${AOMP}/bin/flang

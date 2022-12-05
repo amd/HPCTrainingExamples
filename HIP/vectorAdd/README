@@ -1,0 +1,4 @@
+Original vectorAdd example from HIP-Examples 
+  https://github.com/ROCm-Developer-Tools/HIP-Examples
+
+Simple vectorAdd example written directly to the HIP interface.

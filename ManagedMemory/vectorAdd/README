@@ -1,0 +1,14 @@
+/******************************************************************************
+Copyright (c) 2022 Advanced Micro Devices, Inc. (AMD)
+Released under the MIT License. See License file in the top-level directory.
+******************************************************************************/
+
+Examples for the Managed Memory exercises.
+
+Original source code is from the HIP-Examples repository at 
+https://github.com/ROCm-Developer-Tools/HIP-Examples 
+
+HIP-Examples/vectorAdd/vectoradd_hip.cpp
+
+The example has been modified to demonstrate the operation
+of managed memory.

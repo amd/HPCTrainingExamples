@@ -1,0 +1,6 @@
+export GCN_SUPPRESS_HOST_FALLBACK=true
+export GCN_DEBUG=1
+module load gcc/10.2.0
+module load rocm/5.3.0
+export CC=/share/modules/gcc/10.2.0/bin/gcc
+export FC=/share/modules/gcc/10.2.0/bin/gfortran
