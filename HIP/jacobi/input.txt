@@ -1,0 +1,2 @@
+pmc : WriteSize FetchSize VALUUtilization VALUBusy Wavefronts
+# pmc : L2CacheHit LDSBankConflict ALUStalledByLDS
