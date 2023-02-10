@@ -38,14 +38,14 @@ void randomizeBodies(float *data, int n) {
 
 __global__
 void bodyForce(float4 *p, float4 *v, float dt, int n) {
-  int i = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+  int i = blockDim.x * blockIdx.x + threadIdx.x;
   if (i < n) {
     float Fx = 0.0f; float Fy = 0.0f; float Fz = 0.0f;
 
-    for (int tile = 0; tile < hipGridDim_x; tile++) {
+    for (int tile = 0; tile < gridDim.x; tile++) {
       __shared__ float3 spos[BLOCK_SIZE];
-      float4 tpos = p[tile * hipBlockDim_x + hipThreadIdx_x];
-      spos[hipThreadIdx_x] = make_float3(tpos.x, tpos.y, tpos.z);
+      float4 tpos = p[tile * blockDim.x + threadIdx.x];
+      spos[threadIdx.x] = make_float3(tpos.x, tpos.y, tpos.z);
       __syncthreads();
 
       for (int j = 0; j < BLOCK_SIZE; j++) {
@@ -53,7 +53,7 @@ void bodyForce(float4 *p, float4 *v, float dt, int n) {
         float dy = spos[j].y - p[i].y;
         float dz = spos[j].z - p[i].z;
         float distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
-        float invDist = 1.0f / sqrtf(distSqr);
+        float invDist = rsqrtf(distSqr);
         float invDist3 = invDist * invDist * invDist;
 
         Fx += dx * invDist3; Fy += dy * invDist3; Fz += dz * invDist3;
@@ -66,13 +66,13 @@ void bodyForce(float4 *p, float4 *v, float dt, int n) {
 }
 
 int main(const int argc, const char** argv) {
-
+  
   int nBodies = 30000;
   if (argc > 1) nBodies = atoi(argv[1]);
-
+  
   const float dt = 0.01f; // time step
   const int nIters = 10;  // simulation iterations
-
+  
   int bytes = 2*nBodies*sizeof(float4);
   float *buf = (float*)malloc(bytes);
   BodySystem p = { (float4*)buf, ((float4*)buf) + nBodies };
@@ -84,13 +84,13 @@ int main(const int argc, const char** argv) {
   BodySystem d_p = { (float4*)d_buf, ((float4*)d_buf) + nBodies };
 
   int nBlocks = (nBodies + BLOCK_SIZE - 1) / BLOCK_SIZE;
-  double totalTime = 0.0;
+  double totalTime = 0.0; 
 
   for (int iter = 1; iter <= nIters; iter++) {
     StartTimer();
 
     hipMemcpy(d_buf, buf, bytes, hipMemcpyHostToDevice);
-    hipLaunchKernelGGL(bodyForce, dim3(nBlocks), dim3(BLOCK_SIZE), 0, 0, d_p.pos, d_p.vel, dt, nBodies);
+    hipLaunchKernelGGL(bodyForce, nBlocks, BLOCK_SIZE, 0, 0, d_p.pos, d_p.vel, dt, nBodies);
     hipMemcpy(buf, d_buf, bytes, hipMemcpyDeviceToHost);
 
     for (int i = 0 ; i < nBodies; i++) { // integrate position
@@ -101,13 +101,13 @@ int main(const int argc, const char** argv) {
 
     const double tElapsed = GetTimer() / 1000.0;
     if (iter > 1) { // First iter is warm up
-      totalTime += tElapsed;
+      totalTime += tElapsed; 
     }
 #ifndef SHMOO
     printf("Iteration %d: %.3f seconds\n", iter, tElapsed);
 #endif
   }
-  double avgTime = totalTime / (double)(nIters-1);
+  double avgTime = totalTime / (double)(nIters-1); 
 
 #ifdef SHMOO
   printf("%d, %0.3f\n", nBodies, 1e-9 * nBodies * nBodies / avgTime);

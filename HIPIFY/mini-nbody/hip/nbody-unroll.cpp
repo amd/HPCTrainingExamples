@@ -1,24 +1,3 @@
-/*
-Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
 #include "hip/hip_runtime.h"
 #include <math.h>
 #include <stdio.h>
@@ -42,15 +21,24 @@ void bodyForce(float4 *p, float4 *v, float dt, int n) {
   if (i < n) {
     float Fx = 0.0f; float Fy = 0.0f; float Fz = 0.0f;
 
-    for (int j = 0; j < n; j++) {
-      float dx = p[j].x - p[i].x;
-      float dy = p[j].y - p[i].y;
-      float dz = p[j].z - p[i].z;
-      float distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
-      float invDist = rsqrtf(distSqr);
-      float invDist3 = invDist * invDist * invDist;
+    for (int tile = 0; tile < gridDim.x; tile++) {
+      __shared__ float3 spos[BLOCK_SIZE];
+      float4 tpos = p[tile * blockDim.x + threadIdx.x];
+      spos[threadIdx.x] = make_float3(tpos.x, tpos.y, tpos.z);
+      __syncthreads();
 
-      Fx += dx * invDist3; Fy += dy * invDist3; Fz += dz * invDist3;
+      #pragma unroll
+      for (int j = 0; j < BLOCK_SIZE; j++) {
+        float dx = spos[j].x - p[i].x;
+        float dy = spos[j].y - p[i].y;
+        float dz = spos[j].z - p[i].z;
+        float distSqr = dx*dx + dy*dy + dz*dz + SOFTENING;
+        float invDist = rsqrtf(distSqr);
+        float invDist3 = invDist * invDist * invDist;
+
+        Fx += dx * invDist3; Fy += dy * invDist3; Fz += dz * invDist3;
+      }
+      __syncthreads();
     }
 
     v[i].x += dt*Fx; v[i].y += dt*Fy; v[i].z += dt*Fz;
