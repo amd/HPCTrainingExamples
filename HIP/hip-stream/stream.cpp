@@ -48,8 +48,8 @@ vectoradd_float(float* __restrict__ a, const float* __restrict__ b, const float*
 
   {
  
-      int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-      int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+      int x = blockDim.x * blockIdx.x + threadIdx.x;
+      int y = blockDim.y * blockIdx.y + threadIdx.y;
 
       int i = y * width + x;
       if ( i < (width * height)) {
@@ -59,20 +59,6 @@ vectoradd_float(float* __restrict__ a, const float* __restrict__ b, const float*
 
 
   }
-
-#if 0
-__kernel__ void vectoradd_float(float* a, const float* b, const float* c, int width, int height) {
-
-  
-  int x = blockDimX * blockIdx.x + threadIdx.x;
-  int y = blockDimY * blockIdy.y + threadIdx.y;
-
-  int i = y * width + x;
-  if ( i < (width * height)) {
-    a[i] = b[i] + c[i];
-  }
-}
-#endif
 
 using namespace std;
 
@@ -261,7 +247,7 @@ double mysecond()
 template <typename T>
 __global__ void set_array(T *a,  T value, int len)
 {
-    int idx = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (idx < len)
         a[idx] = value;
 }
@@ -269,7 +255,7 @@ __global__ void set_array(T *a,  T value, int len)
 template <typename T>
 __global__ void STREAM_Copy(T *a, T *b, int len)
 {
-    int idx = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (idx < len)
         b[idx] = a[idx];
 }
@@ -277,7 +263,7 @@ __global__ void STREAM_Copy(T *a, T *b, int len)
 template <typename T>
 __global__ void STREAM_Scale(T *a, T *b, T scale,  int len)
 {
-    int idx = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (idx < len)
         b[idx] = scale* a[idx];
 }
@@ -285,7 +271,7 @@ __global__ void STREAM_Scale(T *a, T *b, T scale,  int len)
 template <typename T>
 __global__ void STREAM_Add(T *a, T *b, T *c,  int len)
 {
-    int idx = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (idx < len)
         c[idx] = a[idx]+b[idx];
 }
@@ -293,7 +279,7 @@ __global__ void STREAM_Add(T *a, T *b, T *c,  int len)
 template <typename T>
 __global__ void STREAM_Triad(T *a, T *b, T *c, T scalar, int len)
 {
-    int idx = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (idx < len)
         c[idx] = a[idx]+scalar*b[idx];
 }
