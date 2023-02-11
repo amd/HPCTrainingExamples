@@ -201,9 +201,9 @@ int main(int argc, char** argv)
         printf(" output in IEC units (KiB = 1024 B)\n");
 
     /* Initialize memory on the device */
-    hipLaunchKernelGGL(set_array<real>, dim3(dimGrid), dim3(dimBlock), 0, 0, d_a, 2.f, N);
-    hipLaunchKernelGGL(set_array<real>, dim3(dimGrid), dim3(dimBlock), 0, 0, d_b, .5f, N);
-    hipLaunchKernelGGL(set_array<real>, dim3(dimGrid), dim3(dimBlock), 0, 0, d_c, .5f, N);
+    set_array<real><<<dimGrid, dimBlock, 0, 0>>>(d_a, 2.f, N);
+    set_array<real><<<dimGrid, dimBlock, 0, 0>>>(d_b, .5f, N);
+    set_array<real><<<dimGrid, dimBlock, 0, 0>>>(d_c, .5f, N);
 
     /*  --- MAIN LOOP --- repeat test cases NTIMES times --- */
 
@@ -211,22 +211,22 @@ int main(int argc, char** argv)
     for (k=0; k<NTIMES; k++)
     {
         times[0][k]= mysecond();
-        hipLaunchKernelGGL(STREAM_Copy<real>, dim3(dimGrid), dim3(dimBlock), 0, 0, d_a, d_c, N);
+        STREAM_Copy<real><<<dimGrid, dimBlock, 0, 0>>>(d_a, d_c, N);
         hipDeviceSynchronize();
         times[0][k]= mysecond() -  times[0][k];
 
         times[1][k]= mysecond();
-        hipLaunchKernelGGL(STREAM_Scale<real>, dim3(dimGrid), dim3(dimBlock), 0, 0, d_b, d_c, scalar,  N);
+        STREAM_Scale<real><<<dimGrid, dimBlock, 0, 0>>>(d_b, d_c, scalar, N);
         hipDeviceSynchronize();
         times[1][k]= mysecond() -  times[1][k];
 
         times[2][k]= mysecond();
-        hipLaunchKernelGGL(STREAM_Add<real>, dim3(dimGrid), dim3(dimBlock), 0, 0, d_a, d_b, d_c,  N);
+        STREAM_Add<real><<<dimGrid, dimBlock, 0, 0>>>(d_a, d_b, d_c, N);
         hipDeviceSynchronize();
         times[2][k]= mysecond() -  times[2][k];
 
         times[3][k]= mysecond();
-        hipLaunchKernelGGL(STREAM_Triad<real>, dim3(dimGrid), dim3(dimBlock), 0, 0, d_b, d_c, d_a, scalar,  N);
+        STREAM_Triad<real><<<dimGrid, dimBlock, 0, 0>>>(d_b, d_c, d_a, scalar, N);
         hipDeviceSynchronize();
         times[3][k]= mysecond() -  times[3][k];
     }

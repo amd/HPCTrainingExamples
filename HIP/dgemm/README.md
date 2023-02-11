@@ -55,9 +55,9 @@ where,
 
 ## Output
 
-GEMM operations on each gpu is ran asynchronously, and the data
+GEMM operations on each GPU are run asynchronously, and the data
 printed to `stdout` aims only to show the progress for each
-gpu:
+GPU:
 ```bash
 ./dgemm -m 8192 -n 8192 -k 8192 -i 3 -r 10 -d 0,1,2,3 -o dgemm.csv
 2     1   27.56

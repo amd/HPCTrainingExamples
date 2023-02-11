@@ -21,7 +21,7 @@ if (NOT DEFINED HIP_PATH)
   endif()
 endif()
 
-include($ENV{HIP_PATH}/cmake/FindHIP.cmake)
+include(${HIP_PATH}/cmake/FindHIP.cmake)
 
 find_package(HIP REQUIRED)
 
