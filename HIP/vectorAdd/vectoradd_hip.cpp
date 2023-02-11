@@ -102,11 +102,14 @@ int main() {
   HIP_ASSERT(hipMemcpy(deviceC, hostC, NUM*sizeof(float), hipMemcpyHostToDevice));
 
 
-  hipLaunchKernelGGL(vectoradd_float, 
-                  dim3(WIDTH/THREADS_PER_BLOCK_X, HEIGHT/THREADS_PER_BLOCK_Y),
-                  dim3(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y),
-                  0, 0,
-                  deviceA ,deviceB ,deviceC ,WIDTH ,HEIGHT);
+  //hipLaunchKernelGGL(vectoradd_float, 
+  //                dim3(WIDTH/THREADS_PER_BLOCK_X, HEIGHT/THREADS_PER_BLOCK_Y),
+  //                dim3(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y),
+  //                0, 0,
+  //                deviceA ,deviceB ,deviceC ,WIDTH ,HEIGHT);
+  dim3 grid(WIDTH/THREADS_PER_BLOCK_X, HEIGHT/THREADS_PER_BLOCK_Y);
+  dim3 block(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
+  vectoradd_float<<<grid, block, 0, 0>>>(deviceA, deviceB, deviceC, WIDTH, HEIGHT);
 
 
   HIP_ASSERT(hipMemcpy(hostA, deviceA, NUM*sizeof(float), hipMemcpyDeviceToHost));
