@@ -1,19 +1,16 @@
-CC               = gcc
-CFLAGS           = -O3 -g -std=c99
+FC               = gfortran
+FFLAGS           = -O3 -g
 LDFLAGS += -fopenmp
-
-EXEC=reduction 
-
+ 
+EXEC=freduce
+ 
 all: $(EXEC)
-
-main.o: main.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-codelet.o:codelet.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -c $< -o $@
-
-$(EXEC): codelet.o main.o
-	$(CC) -o $@ $^ $(LDFLAGS)
-
+ 
+%.o:%.F90
+	$(FC) $(FFLAGS) $(LDFLAGS) -c $< -o $@
+ 
+$(EXEC): freduce.o
+	$(FC) -o $@ $^ $(LDFLAGS)
+ 
 clean:
 	rm -rf *.o $(EXEC) *.bin
