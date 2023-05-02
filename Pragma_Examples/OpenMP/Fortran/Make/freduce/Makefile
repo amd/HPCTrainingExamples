@@ -17,12 +17,18 @@ else ifeq ($(notdir $(FC)), amdflang)
 # Should work for > ROCm 4.5
   OPENMP_FLAGS = -fopenmp -target $(ROCM_CPUTARGET) --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -Mfreeform
+else ifeq ($(notdir $(FC)), ftn)
+  OPENMP_FLAGS = -fopenmp
 else
   OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
   FREE_FORM_FLAG = -ffree-form
 endif
 
-FFLAGS = -g -O3 ${FREE_FORM_FLAG} -fstrict-aliasing ${OPENMP_FLAGS}
+ifeq ($(notdir $(FC)), ftn)
+  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
+else
+  FFLAGS = -g -O3 ${FREE_FORM_FLAG} -fstrict-aliasing ${OPENMP_FLAGS}
+endif
 LDFLAGS = ${OPENMP_FLAGS}
 
 ${EXEC}: ${EXEC}.o
