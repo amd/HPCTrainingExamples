@@ -1,20 +1,40 @@
-HIP_PATH?= $(wildcard /opt/rocm/hip)
-ifeq (,$(HIP_PATH))
-	HIP_PATH=/opt/rocm
+CXX_SOURCES = ""
+HIP_SOURCES=stream.hip
+
+OBJECTS = stream.o
+
+EXECUTABLE=./stream
+
+.PHONY: test
+
+
+all: $(EXECUTABLE) test
+
+CXXFLAGS =-g -O2
+HIPCC_OPTS=-O2 -g -DNDEBUG
+
+HIPCC?=hipcc
+
+ifeq ($(HIPCC), nvcc)
+   HIPCC_FLAGS=$(HIPCC_OPTS) -x cu
+   LDFLAGS=-lcudadevrt -lcudart_static -lrt -lpthread -ldl
 endif
-HIPCC=$(HIP_PATH)/bin/hipcc
-
-CXXFLAGS += -std=c++11 -O3
-
-stream: stream.cpp
-ifeq ($(shell which $(HIPCC) > /dev/null; echo $$?), 0)
-	${HIPCC} ${CXXFLAGS} -o $@ $^ 
-else
-	$(error "Cannot find $(HIPCC), please install HIP toolkit")
+ifeq ($(HIPCC), hipcc)
+   HIPCC_FLAGS=$(HIPCC_OPTS) -munsafe-fp-atomics
+   LDFLAGS=
 endif
 
-.PHONY: clean
+%.o : %.hip
+	$(HIPCC) $(HIPCC_FLAGS) -c $^ -o $@
+
+$(EXECUTABLE): $(OBJECTS) 
+	$(CXX) $(OBJECTS) $(LDFLAGS) -o $@
+
+
+test: $(EXECUTABLE)
+	$(EXECUTABLE)
+
 
 clean:
-	rm -f stream *.o
-
+	rm -f $(EXECUTABLE)
+	rm -f $(OBJECTS)
