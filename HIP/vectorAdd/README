@@ -3,7 +3,7 @@ Adding portable makefiles and cmake builds
 For ROCm environment
    module load rocm
    module load cmake
-   export CXX=clang++
+   export CXX=${ROCM_PATH}/llvm/bin/clang++
 
 For ROCm with make
    make
