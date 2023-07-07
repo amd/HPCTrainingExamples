@@ -11,15 +11,16 @@ EXECUTABLE=./vectoradd
 all: $(EXECUTABLE) test
 
 CXXFLAGS =-g -O2
+HIPCC_OPTS=-O2 -g -DNDEBUG
 
 HIPCC?=hipcc
 
 ifeq ($(HIPCC), nvcc)
-   HIPCC_FLAGS=-O2 -g -DNDEBUG -MD -MT -MF -x cu
+   HIPCC_FLAGS=$(HIPCC_OPTS) -x cu
    LDFLAGS=-lcudadevrt -lcudart_static -lrt -lpthread -ldl
 endif
 ifeq ($(HIPCC), hipcc)
-   HIPCC_FLAGS=-munsafe-fp-atomics
+   HIPCC_FLAGS=$(HIPCC_OPTS) -munsafe-fp-atomics
    LDFLAGS=
 endif
 
@@ -37,3 +38,4 @@ test: $(EXECUTABLE)
 clean:
 	rm -f $(EXECUTABLE)
 	rm -f $(OBJECTS)
+	rm -f $(EXECUTABLE).d
