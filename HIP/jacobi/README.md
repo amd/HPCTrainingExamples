@@ -48,6 +48,12 @@ A `Makefile` is included along with the source files that configures and builds 
 ```
 make
 ```
+An alternative cmake build system is also include
+```
+mkdir build && cd build
+cmake ..
+make
+```
 
 ## Run instructions
 
