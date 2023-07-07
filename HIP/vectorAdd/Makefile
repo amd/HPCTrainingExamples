@@ -12,8 +12,16 @@ all: $(EXECUTABLE) test
 
 CXXFLAGS =-g -O2
 
-HIPCC_FLAGS=-O2 -g -DNDEBUG -MD -MT -MF -x cu
-LDFLAGS=-lcudadevrt -lcudart_static -lrt -lpthread -ldl
+HIPCC?=hipcc
+
+ifeq ($(HIPCC), nvcc)
+   HIPCC_FLAGS=-O2 -g -DNDEBUG -MD -MT -MF -x cu
+   LDFLAGS=-lcudadevrt -lcudart_static -lrt -lpthread -ldl
+endif
+ifeq ($(HIPCC), hipcc)
+   HIPCC_FLAGS=-munsafe-fp-atomics
+   LDFLAGS=
+endif
 
 %.o : %.hip
 	$(HIPCC) $(HIPCC_FLAGS) -c $^ -o $@
