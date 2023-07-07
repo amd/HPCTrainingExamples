@@ -40,8 +40,7 @@ add_executable(vectoradd ${VECTORADD_CXX_SRCS} ${VECTORADD_HIP_SRCS} )
 
 # Make example runnable using ctest
 add_test(NAME Vectoradd COMMAND vectoradd )
-set_property(TEST Vectoradd 
-             PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
+set_property(TEST Vectoradd PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 
 set(ROCMCC_FLAGS "${ROCMCC_FLAGS} -munsafe-fp-atomics")
 set(CUDACC_FLAGS "${CUDACC_FLAGS} ")

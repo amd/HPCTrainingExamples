@@ -5,7 +5,7 @@ all: $(EXECUTABLE) test
 
 OBJECTS = vectoradd.o
 
-CXXFLAGS = -g -O2
+CXXFLAGS = -g -O2 -DNDEBUG
 HIPCC_FLAGS = -O2 -g -DNDEBUG
 
 HIPCC ?= hipcc
@@ -16,10 +16,11 @@ ifeq ($(HIPCC), nvcc)
 endif
 ifeq ($(HIPCC), hipcc)
    HIPCC_FLAGS += -munsafe-fp-atomics
-   ifeq (, $(findstring CXX, clang++))
-      LDFLAGS = --hip-link
-   else
-      LDFLAGS = -L${ROCM_PATH}/hip/lib -lamdhip64
+   LDFLAGS = -L${ROCM_PATH}/hip/lib -lamdhip64
+   ifeq ($(CXX),)
+      ifeq (, $(findstring CXX, clang++))
+         LDFLAGS = --hip-link
+      endif
    endif
 endif
 
@@ -27,12 +28,10 @@ endif
 	$(HIPCC) $(HIPCC_FLAGS) -c $^ -o $@
 
 $(EXECUTABLE): $(OBJECTS) 
-	$(CXX) $(OBJECTS) $(LDFLAGS) -o $@
+	$(CXX) $< $(LDFLAGS) -o $@
 
 test: $(EXECUTABLE)
 	$(EXECUTABLE)
 
 clean:
-	rm -f $(EXECUTABLE)
-	rm -f $(OBJECTS)
-	rm -f $(EXECUTABLE).d
+	rm -f $(EXECUTABLE) $(OBJECTS)
