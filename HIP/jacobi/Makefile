@@ -24,8 +24,8 @@ endif
 
 # Flags
 CFLAGS=-O3 -g -ggdb -fPIC -std=c++11 -march=native -Wall
-CFLAGS+=-I$(ROCM_PATH)/roctracer/include
-LDFLAGS=-L$(ROCM_PATH)/lib/ -lroctx64 -lroctracer64
+CFLAGS+=-I$(ROCM_PATH)roctracer/include
+LDFLAGS=-L$(ROCM_PATH)lib/ -lroctx64 -lroctracer64
 MPICFLAGS+=$(CFLAGS)
 MPILDFLAGS+=$(LDFLAGS)
 HIPFLAGS=-lamdhip64
@@ -52,29 +52,29 @@ OBJS=JacobiSetup.o  \
 # Commands
 all: $(BINARIES)
 
-HaloExchange.o: $(DEPS)  HaloExchange.cpp
-	$(MPICC) $(MPICFLAGS) $(HIPCFLAGS) $(CFLAGS) -c HaloExchange.cpp -o HaloExchange.o
+HaloExchange.o: $(DEPS)  HaloExchange.hip
+	$(HIPCC) $(MPICFLAGS) $(HIPCFLAGS) $(CFLAGS) -c HaloExchange.hip -o HaloExchange.o
 
-Input.o: $(DEPS)  Input.cpp
-	$(MPICC) $(MPICFLAGS) $(HIPCFLAGS) $(CFLAGS) -c Input.cpp -o Input.o
+Input.o: $(DEPS)  Input.hip
+	$(HIPCC) $(MPICFLAGS) $(HIPCFLAGS) $(CFLAGS) -c Input.hip -o Input.o
 
-JacobiMain.o: $(DEPS)  JacobiMain.cpp
-	$(MPICC) $(MPICFLAGS) $(HIPCFLAGS) $(CFLAGS) -c JacobiMain.cpp -o JacobiMain.o
+JacobiMain.o: $(DEPS)  JacobiMain.hip
+	$(HIPCC) $(MPICFLAGS) $(HIPCFLAGS) $(CFLAGS) -c JacobiMain.hip -o JacobiMain.o
 
-JacobiRun.o: $(DEPS)  JacobiRun.cpp
-	$(MPICC) $(MPICFLAGS) $(HIPCFLAGS) $(CFLAGS) -c JacobiRun.cpp -o JacobiRun.o
+JacobiRun.o: $(DEPS)  JacobiRun.hip
+	$(HIPCC) $(MPICFLAGS) $(HIPCFLAGS) $(CFLAGS) -c JacobiRun.hip -o JacobiRun.o
 
-JacobiSetup.o: $(DEPS)  JacobiSetup.cpp
-	$(MPICC) $(MPICFLAGS) $(HIPCFLAGS) $(CFLAGS) -c JacobiSetup.cpp -o JacobiSetup.o
+JacobiSetup.o: $(DEPS)  JacobiSetup.hip
+	$(HIPCC) $(MPICFLAGS) $(HIPCFLAGS) $(CFLAGS) -c JacobiSetup.hip -o JacobiSetup.o
 
-JacobiIteration.o: $(DEPS)  JacobiIteration.cpp
-	$(HIPCC) $(MPICFLAGS) $(CFLAGS) -c JacobiIteration.cpp -o JacobiIteration.o
+JacobiIteration.o: $(DEPS)  JacobiIteration.hip
+	$(HIPCC) $(MPICFLAGS) $(CFLAGS) -c JacobiIteration.hip -o JacobiIteration.o
 
-Laplacian.o: $(DEPS)  Laplacian.cpp
-	$(HIPCC) $(MPICFLAGS) $(CFLAGS) -c Laplacian.cpp -o Laplacian.o
+Laplacian.o: $(DEPS)  Laplacian.hip
+	$(HIPCC) $(MPICFLAGS) $(CFLAGS) -c Laplacian.hip -o Laplacian.o
 
-Norm.o: $(DEPS)  Norm.cpp
-	$(HIPCC) $(MPICFLAGS) $(CFLAGS) -c Norm.cpp -o Norm.o
+Norm.o: $(DEPS)  Norm.hip
+	$(HIPCC) $(MPICFLAGS) $(CFLAGS) -c Norm.hip -o Norm.o
 
 $(JACOBI_HIP): $(OBJS)
 	$(MPILD) $(MPICFLAGS) $(CFLAGS) -o $(JACOBI_HIP)  $(OBJS) $(MPILDFLAGS) $(LDFLAGS)

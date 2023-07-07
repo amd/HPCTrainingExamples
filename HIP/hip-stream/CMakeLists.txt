@@ -32,11 +32,11 @@ enable_language(${GPU_RUNTIME})
 set(CMAKE_${GPU_RUNTIME}_EXTENSIONS OFF)
 set(CMAKE_${GPU_RUNTIME}_STANDARD_REQUIRED ON)
 
-set(VECTORADD_CXX_SRCS "")
+set(STREAM_CXX_SRCS "")
 
-set(VECTORADD_HIP_SRCS stream.hip)
+set(STREAM_HIP_SRCS stream.hip)
 
-add_executable(stream ${VECTORADD_CXX_SRCS} ${VECTORADD_HIP_SRCS} )
+add_executable(stream ${STREAM_CXX_SRCS} ${STREAM_HIP_SRCS} )
 
 # Make example runnable using ctest
 #add_test(NAME Stream COMMAND stream )
@@ -52,7 +52,7 @@ else (${GPU_RUNTIME} MATCHES "HIP")
    set(HIPCC_FLAGS "${CUDACC_FLAGS}")
 endif (${GPU_RUNTIME} MATCHES "HIP")
 
-set_source_files_properties(${VECTORADD_HIP_SRCS} PROPERTIES LANGUAGE ${GPU_RUNTIME})
+set_source_files_properties(${STREAM_HIP_SRCS} PROPERTIES LANGUAGE ${GPU_RUNTIME})
 set_source_files_properties(stream.hip PROPERTIES COMPILE_FLAGS ${HIPCC_FLAGS})
 
 install(TARGETS stream)
