@@ -1,3 +1,20 @@
+Adding portable makefiles and cmake builds
+
+For CUDA environment
+   module load rocm
+   module load CUDA/11.8
+   module load cmake
+
+For CUDA with make
+   HIPCC=nvcc make
+
+For CUDA with cmake
+   mkdir build && cd build
+   cmake -DCMAKE_GPU_RUNTIME=CUDA ..
+   make VERBOSE=1
+   ./vectoradd
+   ctest      
+   
 Original vectorAdd example from HIP-Examples 
   https://github.com/ROCm-Developer-Tools/HIP-Examples
 

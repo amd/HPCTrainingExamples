@@ -1,29 +1,25 @@
-HIP_PATH?= $(wildcard /opt/rocm/hip)
-ifeq (,$(HIP_PATH))
-	HIP_PATH=/opt/rocm
-endif
+CXX_SOURCES = ""
+HIP_SOURCES=vectoradd.hip
 
-HIPCC=$(HIP_PATH)/bin/hipcc
+OBJECTS = vectoradd.o
 
-TARGET=hcc
-
-SOURCES = vectoradd_hip.cpp 
-OBJECTS = $(SOURCES:.cpp=.o)
-
-EXECUTABLE=./vectoradd_hip.exe
+EXECUTABLE=./vectoradd
 
 .PHONY: test
 
 
 all: $(EXECUTABLE) test
 
-CXXFLAGS =-g
+CXXFLAGS =-g -O2
 
-CXX=$(HIPCC)
+HIPCC_FLAGS=-O2 -g -DNDEBUG -MD -MT -MF -x cu
+LDFLAGS=-lcudadevrt -lcudart_static -lrt -lpthread -ldl
 
+%.o : %.hip
+	$(HIPCC) $(HIPCC_FLAGS) -c $^ -o $@
 
 $(EXECUTABLE): $(OBJECTS) 
-	$(HIPCC) $(OBJECTS) -o $@
+	$(CXX) $(OBJECTS) $(LDFLAGS) -o $@
 
 
 test: $(EXECUTABLE)
@@ -33,6 +29,3 @@ test: $(EXECUTABLE)
 clean:
 	rm -f $(EXECUTABLE)
 	rm -f $(OBJECTS)
-	rm -f $(HIP_PATH)/src/*.o
-
-
