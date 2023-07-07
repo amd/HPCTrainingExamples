@@ -3,6 +3,7 @@ Adding portable makefiles and cmake builds
 For ROCm environment
    module load rocm
    module load cmake
+   export CXX=clang++
 
 For ROCm with make
    make
