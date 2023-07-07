@@ -1,5 +1,19 @@
 Adding portable makefiles and cmake builds
 
+For ROCm environment
+   module load rocm
+   module load cmake
+
+For ROCm with make
+   make
+
+For ROCm with cmake
+   mkdir build && cd build
+   cmake ..
+   make VERBOSE=1
+   ./vectoradd
+   ctest      
+
 For CUDA environment
    module load rocm
    module load CUDA/11.8

@@ -15,9 +15,31 @@ The benchmark is modified from STREAM benchmark implementation with the followin
     SUM:        a(i) = b(i) + c(i)
     TRIAD:      a(i) = b(i) + q*c(i)
 
-To compile HIP version:
-    make
-To execute:
-    ./stream
+For ROCm environment
+   module load rocm
+   module load cmake
 
-To compile on NV node, use Makefile.titan.
+For ROCm with make
+   make
+
+For ROCm with cmake
+   mkdir build && cd build
+   cmake ..
+   make VERBOSE=1
+   ./stream
+   ctest      
+
+For CUDA environment
+   module load rocm
+   module load CUDA/11.8
+   module load cmake
+
+For CUDA with make
+   HIPCC=nvcc make
+
+For CUDA with cmake
+   mkdir build && cd build
+   cmake -DCMAKE_GPU_RUNTIME=CUDA ..
+   make VERBOSE=1
+   ./stream
+   ctest      
