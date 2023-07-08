@@ -34,4 +34,4 @@ test: $(EXECUTABLE)
 	$(EXECUTABLE)
 
 clean:
-	rm -f $(EXECUTABLE) $(OBJECTS)
+	rm -rf $(EXECUTABLE) $(OBJECTS) build
