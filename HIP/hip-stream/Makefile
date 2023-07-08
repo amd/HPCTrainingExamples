@@ -16,11 +16,7 @@ ifeq ($(HIPCC), nvcc)
 endif
 ifeq ($(HIPCC), hipcc)
    HIPCC_FLAGS += -munsafe-fp-atomics
-   ifeq (, $(findstring CXX, clang++))
-      LDFLAGS = --hip-link
-   else
-      LDFLAGS = -L${ROCM_PATH}/hip/lib -lamdhip64
-   endif
+   LDFLAGS = -L${ROCM_PATH}/hip/lib -lamdhip64
 endif
 
 %.o: %.hip
