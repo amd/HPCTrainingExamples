@@ -18,7 +18,7 @@ The simpler interface makes it easier to be used in training modules as opposed 
 - ROCm > 3.9
 
 ## Build
-Follow the instructions below to configure and build the `dgemm` binary using the commands:  
+Follow the instructions below to configure and build the `dgemm` binary using the commands:
 ```bash
 mkdir build
 cd build

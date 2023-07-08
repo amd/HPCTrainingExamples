@@ -23,17 +23,17 @@ THE SOFTWARE.
 
 __constant__ float a = 1.0f;
 
-__global__ 
+__global__
 void saxpy (int n, float const* x, int incx, float* y, int incy)
 {
     int i = blockDim.x * blockIdx.x + threadIdx.x;
     if (i < n)
-        y[i] += a*x[i]; 
+        y[i] += a*x[i];
 }
 
 int main()
 {
-    int n = 256; 
+    int n = 256;
     std::size_t size = sizeof(float)*n;
 
     float* d_x;

@@ -22,7 +22,7 @@ endif
 %.o: %.hip
 	$(HIPCC) $(HIPCC_FLAGS) -c $^ -o $@
 
-$(EXECUTABLE): $(OBJECTS) 
+$(EXECUTABLE): $(OBJECTS)
 	$(CXX) $< $(LDFLAGS) -o $@
 
 test: $(EXECUTABLE)

@@ -13,7 +13,7 @@ For ROCm with cmake
    cmake ..
    make VERBOSE=1
    ./vectoradd
-   ctest      
+   ctest
 
 For CUDA environment
    module load rocm
@@ -28,9 +28,9 @@ For CUDA with cmake
    cmake -DCMAKE_GPU_RUNTIME=CUDA ..
    make VERBOSE=1
    ./vectoradd
-   ctest      
-   
-Original vectorAdd example from HIP-Examples 
+   ctest
+
+Original vectorAdd example from HIP-Examples
   https://github.com/ROCm-Developer-Tools/HIP-Examples
 
 Simple vectorAdd example written directly to the HIP interface.

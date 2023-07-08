@@ -1,4 +1,4 @@
-Originally from HIP-Examples as cuda-stream 
+Originally from HIP-Examples as cuda-stream
    https://github.com/ROCm-Developer-Tools/HIP-Examples
 Code based on the code developed by John D. McCalpin
 http://www.cs.virginia.edu/stream/FTP/Code/stream.c
@@ -35,7 +35,7 @@ For ROCm with cmake
    cmake ..
    make VERBOSE=1
    ./stream
-   ctest      
+   ctest
 ```
 
 For CUDA environment
@@ -56,5 +56,5 @@ For CUDA with cmake
    cmake -DCMAKE_GPU_RUNTIME=CUDA ..
    make VERBOSE=1
    ./stream
-   ctest      
+   ctest
 ```

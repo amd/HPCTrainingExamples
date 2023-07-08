@@ -13,7 +13,7 @@ For ROCm with cmake
    cmake ..
    make VERBOSE=1
    ./saxpy
-   ctest      
+   ctest
 
 For CUDA environment
    module load rocm
@@ -28,4 +28,4 @@ For CUDA with cmake
    cmake -DCMAKE_GPU_RUNTIME=CUDA ..
    make VERBOSE=1
    ./saxpy
-   ctest      
+   ctest

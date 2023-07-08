@@ -40,7 +40,7 @@ add_executable(stream ${STREAM_CXX_SRCS} ${STREAM_HIP_SRCS} )
 
 # Make example runnable using ctest
 #add_test(NAME Stream COMMAND stream )
-#set_property(TEST Stream 
+#set_property(TEST Stream
 #             PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 
 set(ROCMCC_FLAGS "${ROCMCC_FLAGS} -munsafe-fp-atomics")

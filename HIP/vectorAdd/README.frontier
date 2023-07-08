@@ -13,8 +13,8 @@ For AMD with cmake
    cmake ..
    make VERBOSE=1
    ./vectoradd
-   ctest      
-   
+   ctest
+
 For batch version of AMD environment, modify hip_batch_frontier.sh
 and submit with sbatch <hip_batch_frontier.sh. It is setup to run
 both Makefile and cmake build systems.
@@ -32,9 +32,9 @@ For Cray with cmake
    cmake CXX=CC CRAY_CPU_TARGET=x86-64 ..
    make VERBOSE=1
    ./vectoradd
-   ctest      
+   ctest
 
-Original vectorAdd example from HIP-Examples 
+Original vectorAdd example from HIP-Examples
   https://github.com/ROCm-Developer-Tools/HIP-Examples
 
 Simple vectorAdd example written directly to the HIP interface.

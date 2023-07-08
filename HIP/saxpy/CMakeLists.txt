@@ -40,7 +40,7 @@ add_executable(saxpy ${SAXPY_CXX_SRCS} ${SAXPY_HIP_SRCS} )
 
 # Make example runnable using ctest
 add_test(NAME Saxpy COMMAND saxpy )
-set_property(TEST Saxpy 
+set_property(TEST Saxpy
              PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 
 set(ROCMCC_FLAGS "${ROCMCC_FLAGS} -munsafe-fp-atomics")

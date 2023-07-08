@@ -42,7 +42,7 @@ add_executable(Jacobi_hip ${JACOBI_CXX_SRCS} ${JACOBI_HIP_SRCS} )
 
 # Make example runnable using ctest
 #add_test(NAME Saxpy COMMAND saxpy )
-#set_property(TEST Saxpy 
+#set_property(TEST Saxpy
 #             PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 
 set(CXXFLAGS "")

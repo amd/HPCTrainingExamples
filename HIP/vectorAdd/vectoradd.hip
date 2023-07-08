@@ -43,11 +43,11 @@ THE SOFTWARE.
 #define THREADS_PER_BLOCK_Y  16
 #define THREADS_PER_BLOCK_Z  1
 
-__global__ void 
-vectoradd_float(float* __restrict__ a, const float* __restrict__ b, const float* __restrict__ c, int width, int height) 
+__global__ void
+vectoradd_float(float* __restrict__ a, const float* __restrict__ b, const float* __restrict__ c, int width, int height)
 
   {
- 
+
       int x = blockDim.x * blockIdx.x + threadIdx.x;
       int y = blockDim.y * blockIdx.y + threadIdx.y;
 
@@ -61,7 +61,7 @@ vectoradd_float(float* __restrict__ a, const float* __restrict__ b, const float*
 using namespace std;
 
 int main() {
-  
+
   float* hostA;
   float* hostB;
   float* hostC;
@@ -87,22 +87,22 @@ int main() {
   hostA = (float*)malloc(NUM * sizeof(float));
   hostB = (float*)malloc(NUM * sizeof(float));
   hostC = (float*)malloc(NUM * sizeof(float));
-  
+
   // initialize the input data
   for (i = 0; i < NUM; i++) {
     hostB[i] = (float)i;
     hostC[i] = (float)i*100.0f;
   }
-  
+
   HIP_ASSERT(hipMalloc((void**)&deviceA, NUM * sizeof(float)));
   HIP_ASSERT(hipMalloc((void**)&deviceB, NUM * sizeof(float)));
   HIP_ASSERT(hipMalloc((void**)&deviceC, NUM * sizeof(float)));
-  
+
   HIP_ASSERT(hipMemcpy(deviceB, hostB, NUM*sizeof(float), hipMemcpyHostToDevice));
   HIP_ASSERT(hipMemcpy(deviceC, hostC, NUM*sizeof(float), hipMemcpyHostToDevice));
 
 
-  //hipLaunchKernelGGL(vectoradd_float, 
+  //hipLaunchKernelGGL(vectoradd_float,
   //                dim3(WIDTH/THREADS_PER_BLOCK_X, HEIGHT/THREADS_PER_BLOCK_Y),
   //                dim3(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y),
   //                0, 0,
