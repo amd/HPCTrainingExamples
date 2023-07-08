@@ -14,12 +14,16 @@ cd $HOME/HPCTrainingExamples/HIP/vectorAdd
 # portable Makefile system
 
 make vectoradd
+# Run the vectoradd application
+srun ./vectoradd
+# cleanup
+make clean
 
 # portable cmake system
 
-#mkdir build && cd build
-#cmake ..
-#make
+mkdir build && cd build
+cmake ..
+make
 
 # Run the vectoradd application
 srun ./vectoradd

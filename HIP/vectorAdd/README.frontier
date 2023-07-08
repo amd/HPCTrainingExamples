@@ -1,0 +1,40 @@
+
+For AMD environment
+   module load PrgEnv-amd
+   module load amd
+   module load cmake
+   export CXX=${ROCM_PATH}/llvm/bin/clang++
+
+For AMD with make
+   make vectoradd
+
+For AMD with cmake
+   mkdir build && cd build
+   cmake ..
+   make VERBOSE=1
+   ./vectoradd
+   ctest      
+   
+For batch version of AMD environment, modify hip_batch_frontier.sh
+and submit with sbatch <hip_batch_frontier.sh. It is setup to run
+both Makefile and cmake build systems.
+
+For Cray environment
+   module load PrgEnv-cray
+   module load amd-mixed
+   module load cmake
+
+For Cray with make
+   CXX=CC CRAY_CPU_TARGET=x86-64 make vectoradd
+
+For Cray with cmake
+   mkdir build && cd build
+   cmake CXX=CC CRAY_CPU_TARGET=x86-64 ..
+   make VERBOSE=1
+   ./vectoradd
+   ctest      
+
+Original vectorAdd example from HIP-Examples 
+  https://github.com/ROCm-Developer-Tools/HIP-Examples
+
+Simple vectorAdd example written directly to the HIP interface.
