@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
 project(Jacobi LANGUAGES CXX)
-include(CTest)
 
 set (CMAKE_CXX_STANDARD 14)
 
@@ -40,13 +39,8 @@ set(JACOBI_HIP_SRCS HaloExchange.hip Input.hip JacobiIteration.hip JacobiMain.hi
 
 add_executable(Jacobi_hip ${JACOBI_CXX_SRCS} ${JACOBI_HIP_SRCS} )
 
-# Make example runnable using ctest
-#add_test(NAME Saxpy COMMAND saxpy )
-#set_property(TEST Saxpy
-#             PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
-
 set(CXXFLAGS "")
-set(ROCMCC_FLAGS "${ROCMCC_FLAGS} -munsafe-fp-atomics -I$ENV{ROCM_PATH}include/roctracer ${MPI_INCLUDE_PATH}")
+set(ROCMCC_FLAGS "${ROCMCC_FLAGS} -munsafe-fp-atomics -I$ENV{ROCM_PATH}/include/roctracer -I${MPI_INCLUDE_PATH}")
 set(CUDACC_FLAGS "${CUDACC_FLAGS} ${MPI_INCLUDE_PATH}")
 
 if (${GPU_RUNTIME} MATCHES "HIP")
