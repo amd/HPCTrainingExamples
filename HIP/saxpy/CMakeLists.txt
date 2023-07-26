@@ -32,6 +32,8 @@ enable_language(${GPU_RUNTIME})
 set(CMAKE_${GPU_RUNTIME}_EXTENSIONS OFF)
 set(CMAKE_${GPU_RUNTIME}_STANDARD_REQUIRED ON)
 
+set(CMAKE_${GPU_RUNTIME}_FLAGS "-ggdb")
+
 set(SAXPY_CXX_SRCS "")
 
 set(SAXPY_HIP_SRCS saxpy.hip)
