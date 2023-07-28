@@ -5,8 +5,8 @@ all: $(EXECUTABLE) test
 
 OBJECTS = vectoradd.o
 
-CXXFLAGS = -g -O2 -DNDEBUG
-HIPCC_FLAGS = -O2 -g -DNDEBUG
+CXXFLAGS = -g -O2 -DNDEBUG -fPIC
+HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC
 
 HIPCC ?= hipcc
 
