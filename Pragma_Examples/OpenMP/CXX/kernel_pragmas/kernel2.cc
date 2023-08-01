@@ -44,9 +44,9 @@ int main(int argc, char* argv[])
       n=atoi(argv[1]);
    }
    double a = 3.0;
-   double *x = new double[n];
-   double *y = new double[n];
-   double *z = new double[n];
+   double *x = new (align_val_t(64) ) double[n];
+   double *y = new (align_val_t(64) ) double[n];
+   double *z = new (align_val_t(64) ) double[n];
 #pragma omp target enter data map(alloc: x[0:n], y[0:n], z[0:n])
 
 #pragma omp target teams distribute parallel for simd num_threads(64)
