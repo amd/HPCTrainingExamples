@@ -40,33 +40,42 @@ Mem3 pattern: Replacing map to/from with updates to bypass unneeded device memor
 
 Mem4 pattern: Replacing delete with release to use Reference Counting
 
-   `mem4.cc:#pragma omp target enter data map(alloc: x[0:n], y[0:n], z[0:n])`
-   `mem4.cc:#pragma omp target exit data map(release: x[0:n], y[0:n], z[0:n])`
-   `mem4.cc:#pragma omp target teams distribute parallel for simd map(to: x[0:n], y[0:n]) map(from: z[0:n])`
+```
+   mem4.cc:#pragma omp target enter data map(alloc: x[0:n], y[0:n], z[0:n])
+   mem4.cc:#pragma omp target exit data map(release: x[0:n], y[0:n], z[0:n])
+   mem4.cc:#pragma omp target teams distribute parallel for simd map(to: x[0:n], y[0:n]) map(from: z[0:n])
+```
 
 Mem5 pattern: Using enter data map to/from alloc/delete to reduce memory copies
 
-   `mem5.cc:#pragma omp target enter data map(to: x[0:n], y[0:n]) map(alloc: z[0:n])`
-   `mem5.cc:#pragma omp target exit data map(from: z[0:n]) map(delete: x[0:n], y[0:n])`
-   `mem5.cc:#pragma omp target teams distribute parallel for simd map(to:x[0:n], y[0:n]) map(from: z[0:n])`
+```
+   mem5.cc:#pragma omp target enter data map(to: x[0:n], y[0:n]) map(alloc: z[0:n])
+   mem5.cc:#pragma omp target exit data map(from: z[0:n]) map(delete: x[0:n], y[0:n])
+   mem5.cc:#pragma omp target teams distribute parallel for simd map(to:x[0:n], y[0:n]) map(from: z[0:n])
+```
 
 Mem6 pattern: Using enter data alloc/delete with update clause at end
 
+```
    mem6.cc:#pragma omp target enter data map(alloc: x[0:n], y[0:n], z[0:n])
    mem6.cc:#pragma omp target teams distribute parallel for simd
    mem6.cc:#pragma omp target update from(z[0])
    mem6.cc:#pragma omp target exit data map(delete: x[0:n], y[0:n], z[0:n])
    mem6.cc:#pragma omp target teams distribute parallel for simd
+```
 
 Mem7 pattern: Using Unified Shared Memory to automatically move data
 
+```
    set HSA_XNACK=1 at runtime
    mem7.cc:#pragma omp requires unified_shared_memory
    mem7.cc:#pragma omp target teams distribute parallel for simd
    mem7.cc:#pragma omp target teams distribute parallel for simd
+```
 
 Mem8 pattern: Demonstrating Unified Shared Memory with maps for backward compatibility
 
+```
    set HSA_XNACK=1 at runtime
    mem8.cc:#pragma omp requires unified_shared_memory
    mem8.cc:#pragma omp target enter data map(alloc: x[0:n], y[0:n], z[0:n])
@@ -74,5 +83,34 @@ Mem8 pattern: Demonstrating Unified Shared Memory with maps for backward compati
    mem8.cc:#pragma omp target update from(z[0])
    mem8.cc:#pragma omp target exit data map(delete: x[0:n], y[0:n], z[0:n])
    mem8.cc:#pragma omp target teams distribute parallel for simd
+```
 
-num_threads(64) num_teams(480)
+Mem9 pattern: Using std::vector with Unified Shared Memory to automatically move data
+
+```
+   mem9.cc:#pragma omp requires unified_shared_memory
+   mem9.cc:#pragma omp target teams distribute parallel for simd
+   mem9.cc:#pragma omp target teams distribute parallel for simd
+```
+
+Mem10 pattern: Demonstrating Unified Shared Memory with valarray and maps for backward compatibility
+
+```
+   mem10.cc:#pragma omp requires unified_shared_memory
+   mem10.cc:#pragma omp target enter data map(alloc: xptr[0:n], yptr[0:n], zptr[0:n])
+   mem10.cc:#pragma omp target teams distribute parallel for simd
+   mem10.cc:#pragma omp target update from(zptr[0])
+   mem10.cc:#pragma omp target exit data map(delete: xptr[0:n], yptr[0:n], zptr[0:n])
+   mem10.cc:#pragma omp target teams distribute parallel for simd
+```
+
+Mem11.cc Adding memory alignment to Mem 8 code with unified shared memory and backwards compatibility
+
+```
+   mem11.cc:#pragma omp requires unified_shared_memory
+   mem11.cc:#pragma omp target enter data map(alloc: x[0:n], y[0:n], z[0:n])
+   mem11.cc:#pragma omp target teams distribute parallel for simd
+   mem11.cc:#pragma omp target update from(z[0])
+   mem11.cc:#pragma omp target exit data map(delete: x[0:n], y[0:n], z[0:n])
+   mem11.cc:#pragma omp target teams distribute parallel for simd
+```
