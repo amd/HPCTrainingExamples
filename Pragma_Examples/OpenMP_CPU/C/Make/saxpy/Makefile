@@ -10,7 +10,7 @@ main.o: main.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 codelet.o:codelet.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(EXEC): codelet.o main.o
 	$(CC) -o $@ $^ $(LDFLAGS)
