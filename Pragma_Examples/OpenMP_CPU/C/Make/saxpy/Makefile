@@ -1,4 +1,4 @@
-CC               = gcc
+CC               = amdclang
 CFLAGS           = -O3 -g -std=c99 -fopenmp
 LDFLAGS += -fopenmp
 
