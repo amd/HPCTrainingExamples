@@ -45,5 +45,6 @@ int main()
     int group_size = 128;
     saxpy<<<num_groups, group_size>>>(n, d_x, 1, d_y, 1);
     hipDeviceSynchronize();
+    printf("PASSED!\n");
     return 0;
 }
