@@ -22,6 +22,7 @@ THE SOFTWARE.
 #include <hip/hip_runtime.h>
 
 __constant__ float a = 1.0f;
+const float a_h = 1.0f;
 
 void init (int n, float *x, float *y)
 {
@@ -44,8 +45,8 @@ float test_accuracy(int n, float *y, float *y0)
 
 void saxpy_cpu (int n, float const* x, int incx, float* y, int incy)
 {
-  for (std::size_t i = 0; i < n; ++i)
-    y[i] += a*x[i];
+    for (std::size_t i = 0; i < n; ++i)
+	y[i] += a_h*x[i];
 }
 
 __global__
@@ -76,6 +77,7 @@ int main()
     int group_size = 128;
     saxpy<<<num_groups, group_size>>>(n, d_x, 1, d_y, 1);
     hipDeviceSynchronize();
+    hipMemcpy(h_y, d_y, size, hipMemcpyDeviceToHost);
 
     // Accuracy test
     float tol=1.e-12;
