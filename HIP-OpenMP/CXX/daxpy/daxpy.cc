@@ -36,12 +36,12 @@ int main(int argc, char* argv[])
    // allocate the device memory
    #pragma omp target data map(to:x[0:count]) map(tofrom:y[0:count])
    {
-      compute_1(n, x); // mapping table: x:[0xabcd,0xef12], x = 0xabcd
+      compute_1(n, x); 
       compute_2(n, y);
       #pragma omp target update to(x[0:count]) to(y[0:count]) // update x and y on the target
       #pragma omp target data use_device_ptr(x,y)
       {
-         daxpy_hip(n, a, x, y); // mapping table: x:[0xabcd,0xef12], x = 0xef12
+         daxpy_hip(n, a, x, y); 
       }
    }
    compute_3(n, y);
