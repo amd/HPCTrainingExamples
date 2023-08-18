@@ -21,7 +21,7 @@ For CUDA environment
    module load cmake
 
 For CUDA with make
-   HIPCC=nvcc make
+   HIP_PLATFORM=nvidia make
 
 For CUDA with cmake
    mkdir build && cd build

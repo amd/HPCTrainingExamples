@@ -6,24 +6,23 @@ all: $(EXECUTABLE) test
 OBJECTS = vectoradd.o
 
 CXXFLAGS = -g -O2 -DNDEBUG -fPIC
-HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC
+HIPCC_FLAGS = -g -O2 -DNDEBUG
 
-HIPCC ?= hipcc
+HIP_PLATFORM ?= amd
 
-ifeq ($(HIPCC), nvcc)
-   HIPCC_FLAGS += -x cu
-   LDFLAGS = -lcudadevrt -lcudart_static -lrt -lpthread -ldl
+ifeq ($(HIP_PLATFORM), nvidia)
+   HIP_PATH ?= $(shell hipconfig --path)
+   HIPCC_FLAGS += -x cu -I${HIP_PATH}/include/
 endif
-ifeq ($(HIPCC), hipcc)
-   HIPCC_FLAGS += -munsafe-fp-atomics
-   LDFLAGS = -L${ROCM_PATH}/hip/lib -lamdhip64
+ifeq ($(HIP_PLATFORM), amd)
+   HIPCC_FLAGS += -x hip -munsafe-fp-atomics
 endif
 
 %.o: %.hip
-	$(HIPCC) $(HIPCC_FLAGS) -c $^ -o $@
+	hipcc $(HIPCC_FLAGS) -c $^ -o $@
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CXX) $< $(LDFLAGS) -o $@
+	hipcc $< $(LDFLAGS) -o $@
 
 test: $(EXECUTABLE)
 	$(EXECUTABLE)

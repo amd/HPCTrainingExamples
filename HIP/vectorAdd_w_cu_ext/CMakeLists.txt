@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
-project(Stream LANGUAGES CXX)
+project(Vectoradd LANGUAGES CXX)
 include(CTest)
 
 set (CMAKE_CXX_STANDARD 14)
@@ -34,9 +34,9 @@ set(CMAKE_${GPU_RUNTIME}_STANDARD_REQUIRED ON)
 
 set(CMAKE_${GPU_RUNTIME}_FLAGS_DEBUG "-ggdb")
 
-set(STREAM_CXX_SRCS "")
+set(VECTORADD_CXX_SRCS "")
 
-set(STREAM_HIP_SRCS stream.hip)
+set(VECTORADD_CU_SRCS vectoradd.cu)
 
 if (DEFINED ENV{HIP_PATH})
    set(HIP_PATH $ENV{HIP_PATH})
@@ -44,12 +44,11 @@ else (DEFINED ENV{HIP_PATH})
    execute_process(COMMAND hipconfig --path OUTPUT_VARIABLE HIP_PATH ERROR_QUIET)
 endif (DEFINED ENV{HIP_PATH})
 
-add_executable(stream ${STREAM_CXX_SRCS} ${STREAM_HIP_SRCS} )
+add_executable(vectoradd ${VECTORADD_CXX_SRCS} ${VECTORADD_CU_SRCS} )
 
 # Make example runnable using ctest
-#add_test(NAME Stream COMMAND stream )
-#set_property(TEST Stream
-#             PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
+add_test(NAME Vectoradd COMMAND vectoradd )
+set_property(TEST Vectoradd PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 
 set(ROCMCC_FLAGS "${ROCMCC_FLAGS} -munsafe-fp-atomics")
 set(CUDACC_FLAGS "${CUDACC_FLAGS} ")
@@ -60,7 +59,7 @@ else (${GPU_RUNTIME} MATCHES "HIP")
    set(HIPCC_FLAGS "${CUDACC_FLAGS} -I/${HIP_PATH}/include")
 endif (${GPU_RUNTIME} MATCHES "HIP")
 
-set_source_files_properties(${STREAM_HIP_SRCS} PROPERTIES LANGUAGE ${GPU_RUNTIME})
-set_source_files_properties(stream.hip PROPERTIES COMPILE_FLAGS "${HIPCC_FLAGS}")
+set_source_files_properties(${VECTORADD_CU_SRCS} PROPERTIES LANGUAGE ${GPU_RUNTIME})
+set_source_files_properties(vectoradd.cu PROPERTIES COMPILE_FLAGS "${HIPCC_FLAGS}")
 
-install(TARGETS stream)
+install(TARGETS vectoradd)

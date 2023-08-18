@@ -38,6 +38,12 @@ set(SAXPY_CXX_SRCS "")
 
 set(SAXPY_HIP_SRCS saxpy.hip)
 
+if (DEFINED ENV{HIP_PATH})
+   set(HIP_PATH $ENV{HIP_PATH})
+else (DEFINED ENV{HIP_PATH})
+   execute_process(COMMAND hipconfig --path OUTPUT_VARIABLE HIP_PATH ERROR_QUIET)
+endif (DEFINED ENV{HIP_PATH})
+
 add_executable(saxpy ${SAXPY_CXX_SRCS} ${SAXPY_HIP_SRCS} )
 
 # Make example runnable using ctest
@@ -51,10 +57,10 @@ set(CUDACC_FLAGS "${CUDACC_FLAGS} ")
 if (${GPU_RUNTIME} MATCHES "HIP")
    set(HIPCC_FLAGS "${ROCMCC_FLAGS}")
 else (${GPU_RUNTIME} MATCHES "HIP")
-   set(HIPCC_FLAGS "${CUDACC_FLAGS}")
+   set(HIPCC_FLAGS "${CUDACC_FLAGS} -I/${HIP_PATH}/include")
 endif (${GPU_RUNTIME} MATCHES "HIP")
 
 set_source_files_properties(${SAXPY_HIP_SRCS} PROPERTIES LANGUAGE ${GPU_RUNTIME})
-set_source_files_properties(saxpy.hip PROPERTIES COMPILE_FLAGS ${HIPCC_FLAGS})
+set_source_files_properties(saxpy.hip PROPERTIES COMPILE_FLAGS "${HIPCC_FLAGS}")
 
 install(TARGETS saxpy)

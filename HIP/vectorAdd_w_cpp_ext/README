@@ -12,7 +12,7 @@ For ROCm with cmake
    mkdir build && cd build
    cmake ..
    make VERBOSE=1
-   ./saxpy
+   ./vectoradd
    ctest
 
 For CUDA environment
@@ -21,11 +21,16 @@ For CUDA environment
    module load cmake
 
 For CUDA with make
-   HIP_PLATFORM=nvidia make
+   HIPCC=nvcc make
 
 For CUDA with cmake
    mkdir build && cd build
    cmake -DCMAKE_GPU_RUNTIME=CUDA ..
    make VERBOSE=1
-   ./saxpy
+   ./vectoradd
    ctest
+
+Original vectorAdd example from HIP-Examples
+  https://github.com/ROCm-Developer-Tools/HIP-Examples
+
+Simple vectorAdd example written directly to the HIP interface.

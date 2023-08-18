@@ -1,9 +1,9 @@
-EXECUTABLE = ./saxpy
+EXECUTABLE = ./vectoradd
 all: $(EXECUTABLE) test
 
 .PHONY: test
 
-OBJECTS = saxpy.o
+OBJECTS = vectoradd.o
 
 CXXFLAGS = -g -O2 -DNDEBUG -fPIC
 HIPCC_FLAGS = -g -O2 -DNDEBUG
@@ -18,7 +18,7 @@ ifeq ($(HIP_PLATFORM), amd)
    HIPCC_FLAGS += -x hip -munsafe-fp-atomics
 endif
 
-%.o: %.hip
+%.o: %.cu
 	hipcc $(HIPCC_FLAGS) -c $^ -o $@
 
 $(EXECUTABLE): $(OBJECTS)

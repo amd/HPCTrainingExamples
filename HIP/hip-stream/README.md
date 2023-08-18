@@ -47,7 +47,7 @@ For CUDA environment
 
 For CUDA with make
 ```
-   HIPCC=nvcc make
+   HIP_PLATFORM=nvidia make
 ```
 
 For CUDA with cmake
