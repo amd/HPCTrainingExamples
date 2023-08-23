@@ -18,8 +18,8 @@ else ifeq ($(notdir $(CC)), amdclang)
 else ifeq ($(notdir $(CC)), cc)
   OPENMP_FLAGS = -fopenmp
 else
-  #OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp -fopt-info-missed
-  OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
+  #OPENMP_FLAGS = -fopenmp --foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp -fopt-info-missed
+  OPENMP_FLAGS = -fopenmp --foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
 endif
 
 CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
