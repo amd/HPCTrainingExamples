@@ -1,5 +1,5 @@
 EXECUTABLE = ./vectoradd
-all: $(EXECUTABLE) test
+all: $(EXECUTABLE)
 
 .PHONY: test
 

@@ -1,5 +1,5 @@
 EXECUTABLE = ./saxpy
-all: $(EXECUTABLE) test
+all: $(EXECUTABLE)
 
 .PHONY: test
 

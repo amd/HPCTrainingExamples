@@ -1,5 +1,5 @@
 EXECUTABLE = ./stream
-all: $(EXECUTABLE) test
+all: $(EXECUTABLE)
 
 .PHONY: test
 
