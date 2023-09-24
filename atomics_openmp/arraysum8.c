@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
     b[i] = 1.0;
   }
 
-  #pragma omp target teams distribute parallel for
+  #pragma omp target teams distribute parallel for reduction(+:ret)
   for(int i = 0; i < n; i++) {
     #pragma omp atomic hint(AMD_fast_fp_atomics)
     ret += b[i];

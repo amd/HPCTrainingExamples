@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
   }
 
   for(int i = 0; i < n; i++) {
-     if ( a[i] != b[i] ) {
+     if ( a[i] != 2.0 ) {
         printf("Error -- i %d a %lf b %lf\n",i,a[i],b[i]);
         errors++;
      }
