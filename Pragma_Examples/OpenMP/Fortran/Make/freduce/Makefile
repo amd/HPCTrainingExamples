@@ -7,17 +7,18 @@ UNAMEP = $(shell uname -p)
 ROCM_CPUTARGET = $(UNAMEP)-pc-linux-gnu
 ROCM_GPUTARGET ?= amdgcn-amd-amdhsa
 
-ifeq ($(notdir $(FC)), flang)
-# OPENMP_FLAGS = -fopenmp -target $(ROCM_CPUTARGET) -fopenmp-targets=$(ROCM_GPUTARGET) -Xopenmp-target=$(ROCM_GPUTARGET) -march=$(ROCM_GPU)
-# Should work for > ROCm 4.5
+FC1=$(notdir $(FC))
+
+ifeq ($(findstring amdflang,$(FC1)), amdflang)
   OPENMP_FLAGS = -fopenmp -target $(ROCM_CPUTARGET) --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -Mfreeform
-else ifeq ($(notdir $(FC)), amdflang)
-# OPENMP_FLAGS = -fopenmp -target $(ROCM_CPUTARGET) -fopenmp-targets=$(ROCM_GPUTARGET) -Xopenmp-target=$(ROCM_GPUTARGET) -march=$(ROCM_GPU) 
-# Should work for > ROCm 4.5
+else ifeq ($(findstring flang,$(FC1)), flang)
   OPENMP_FLAGS = -fopenmp -target $(ROCM_CPUTARGET) --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -Mfreeform
-else ifeq ($(notdir $(FC)), ftn)
+else ifeq ($(findstring gfortran,$(FC1)), gfortran)
+  OPENMP_FLAGS = -fopenmp -foffload=amdgcn-amdhsa=-march=$(ROCM_GPU)
+  FREE_FORM_FLAG = -ffree-form
+else ifeq ($(findstring ftn,$(FC1)), ftn)
   OPENMP_FLAGS = -fopenmp
 else
   OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
