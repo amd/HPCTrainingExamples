@@ -4,10 +4,12 @@ all: ${EXEC}
 
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 
-ifeq ($(notdir $(FC)), flang)
+FC1=$(notdir $(FC))
+
+ifeq ($(findstring, flang, $(FC1)), flang)
   OPENACC_FLAGS = Flang_does_not_support_OpenACC_for_AMD
   FREE_FORM_FLAG = -Mfreeform
-else ifeq ($(notdir $(FC)), amdflang)
+else ifeq ($(findstring, amdflang, $(FC1)), amdflang)
   OPENACC_FLAGS = amdflang_does_not_support_OpenACC_for_AMD
   FREE_FORM_FLAG = -Mfreeform
 else
