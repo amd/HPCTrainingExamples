@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
 
    main_timer = omp_get_wtime()-main_start;
    cout << "-Overall time is " << main_timer << endl;
-#pragma omp target update from(z[0])
+#pragma omp target update from(z[0:n])
 
    cout << "Last Value: z[" << n-1 << "]=" << z[n-1] << endl;
 
