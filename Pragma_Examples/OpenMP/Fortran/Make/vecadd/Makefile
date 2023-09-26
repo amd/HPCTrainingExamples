@@ -30,7 +30,11 @@ else
   FFLAGS = -g -O3 ${FREE_FORM_FLAG} -fstrict-aliasing ${OPENMP_FLAGS}
 endif
 CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
-LDFLAGS = ${OPENMP_FLAGS}
+ifeq (${FC1},gfortran-13)
+   LDFLAGS = ${OPENMP_FLAGS} -fno-lto
+else
+   LDFLAGS = ${OPENMP_FLAGS}
+endif
 
 ftimers.o: timers.o
 ${EXEC}.o: ftimers.o

@@ -16,7 +16,11 @@ else
 endif
 
 CFLAGS = -g -O3 -fstrict-aliasing ${OPENACC_FLAGS}
-LDFLAGS = ${OPENACC_FLAGS} -lm
+ifeq (${CC1},gcc-13)
+   LDFLAGS = ${OPENACC_FLAGS} -fno-lto -lm
+else
+   LDFLAGS = ${OPENACC_FLAGS} -lm
+endif
 
 ${EXEC}: ${EXEC}.o codelet.o
 	$(CC) $(LDFLAGS) $^ -o $@

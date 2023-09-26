@@ -7,16 +7,22 @@ UNAMEP = $(shell uname -p)
 ROCM_CPUTARGET = $(UNAMEP)-pc-linux-gnu
 ROCM_GPUTARGET ?= amdgcn-amd-amdhsa
 
-ifeq ($(notdir $(CC)), clang)
+CC1=$(notdir $(CC))
+
+ifeq ($(findstring, clang, $(CC1)), clang)
   OPENACC_FLAGS = Clang_does_not_support_OpenACC_for_AMD_GPUs
-else ifeq ($(notdir $(CC)), amdclang)
+else ifeq ($(findstring, amdclang, $(CC1)), amdclang)
   OPENACC_FLAGS = amdclang_does_not_support_OpenACC_for_AMD_GPUs
 else
   OPENACC_FLAGS = -fopenacc -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
 endif
 
 CFLAGS = -g -O3 -fstrict-aliasing ${OPENACC_FLAGS}
-LDFLAGS = ${OPENACC_FLAGS} -lm
+ifeq (${CC1},gcc-13)
+  LDFLAGS = ${OPENACC_FLAGS} -fno-lto -lm
+else
+  LDFLAGS = ${OPENACC_FLAGS} -lm
+endif
 
 ${EXEC}: ${EXEC}.o codelet.o
 	$(CC) $(LDFLAGS) $^ -o $@

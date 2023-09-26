@@ -27,7 +27,11 @@ else
 endif
 
 CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
-LDFLAGS = ${OPENMP_FLAGS} -lm
+ifeq (${CC1},gcc-13)
+   LDFLAGS = ${OPENMP_FLAGS} -fno-lto -lm
+else
+   LDFLAGS = ${OPENMP_FLAGS} -lm
+endif
 
 ${EXEC}: ${EXEC}.o codelet.o
 	$(CC) $(LDFLAGS) $^ -o $@

@@ -16,7 +16,11 @@ else
 endif
 
 FFLAGS = -g -O3 ${FREE_FORM_FLAG} -fstrict-aliasing ${OPENACC_FLAGS}
-LDFLAGS = ${OPENACC_FLAGS}
+ifeq (${FC1},gfortran-13)
+   LDFLAGS = ${OPENACC_FLAGS} -fno-lto
+else
+   LDFLAGS = ${OPENACC_FLAGS}
+endif
 
 ${EXEC}: ${EXEC}.o
 	$(FC) $(LDFLAGS) $^ -o $@
