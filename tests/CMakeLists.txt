@@ -134,7 +134,7 @@ endif()
 
 # Advanced OpenMP Examples
 
-if(${LIBOMPTARGET_INFO_SUPPORT} EQUALS "1")
+if(${LIBOMPTARGET_INFO_SUPPORT} MATCHES "1")
    add_test(NAME AdvancedOpenMP_Memory1 COMMAND ../advancedopenmp_memory1.sh )
    set_property(TEST AdvancedOpenMP_Memory1 PROPERTY PASS_REGULAR_EXPRESSION "Entering OpenMP kernel at mem1.cc")
 
