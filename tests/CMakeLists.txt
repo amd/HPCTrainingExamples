@@ -2,6 +2,20 @@ cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
 project(Vectoradd LANGUAGES CXX)
 include(CTest)
 
+execute_process(COMMAND rocminfo COMMAND grep gfx COMMAND sed "s/Name://" COMMAND head -1 COMMAND sed "s/ //g" OUTPUT_VARIABLE GFXMODEL)
+#string(STRIP GFXMODEL GFXMODEL)
+#message(STATUS "GFXMODEL ${GFXMODEL}")
+
+execute_process(COMMAND rocminfo COMMAND grep xnack COMMAND wc -l OUTPUT_VARIABLE XNACK_COUNT)
+#string(STRIP XNACK_COUNT XNACK_COUNT)
+#message(STATUS "XNACK_COUNT ${XNACK_COUNT}")
+
+if(${GFXMODEL} MATCHES "gfx1030")
+   set(LIBOMPTARGET_INFO_SUPPORT 0)
+else ()
+   set(LIBOMPTARGET_INFO_SUPPORT 1)
+endif()
+
 # HIP Examples
 
 add_test(NAME HIP_Vectoradd_Makefile COMMAND ../hip_vectoradd_makefile.sh )
@@ -55,10 +69,6 @@ set_property(TEST OpenMP_Saxpy_C_AMDClang PROPERTY PASS_REGULAR_EXPRESSION "Last
 add_test(NAME OpenMP_Saxpy_C_GCC COMMAND ../openmp_saxpy_c_gcc.sh )
 set_property(TEST OpenMP_Saxpy_C_GCC PROPERTY PASS_REGULAR_EXPRESSION "Last Value")
 
-# Not on gfx1030
-execute_process(COMMAND rocminfo COMMAND grep gfx COMMAND sed "s/Name://" COMMAND head -1 COMMAND sed "s/ //g" OUTPUT_VARIABLE GFXMODEL)
-#string(STRIP GFXMODEL GFXMODEL)
-#message(STATUS "GFXMODEL ${GFXMODEL}")
 if (NOT ${GFXMODEL} MATCHES "gfx1030")
    add_test(NAME OpenMP_Saxpy_C_Sourcery COMMAND ../openmp_saxpy_c_sourcery.sh )
    set_property(TEST OpenMP_Saxpy_C_Sourcery PROPERTY PASS_REGULAR_EXPRESSION "Last Value")
@@ -75,7 +85,6 @@ set_property(TEST OpenMP_Freduce_F_AMDFlang PROPERTY PASS_REGULAR_EXPRESSION "10
 add_test(NAME OpenMP_Freduce_F_GFortran COMMAND ../openmp_freduce_f_gfortran.sh )
 set_property(TEST OpenMP_Freduce_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "1010")
 
-# Not on gfx1030
 if (NOT ${GFXMODEL} MATCHES "gfx1030")
    add_test(NAME OpenMP_Freduce_F_Sourcery COMMAND ../openmp_freduce_f_sourcery.sh )
    set_property(TEST OpenMP_Freduce_F_Sourcery PROPERTY PASS_REGULAR_EXPRESSION "1010")
@@ -93,7 +102,6 @@ endif()
 #add_test(NAME OpenACC_Saxpy_C_GCC COMMAND ../openacc_saxpy_c_gcc.sh )
 #set_property(TEST OpenACC_Saxpy_C_GCC PROPERTY PASS_REGULAR_EXPRESSION "Final result")
 
-# Not on gfx1030
 if (NOT ${GFXMODEL} MATCHES "gfx1030")
    add_test(NAME OpenACC_Saxpy_C_Sourcery COMMAND ../openacc_saxpy_c_sourcery.sh )
    set_property(TEST OpenACC_Saxpy_C_Sourcery PROPERTY PASS_REGULAR_EXPRESSION "Last Value")
@@ -109,7 +117,6 @@ endif()
 #add_test(NAME OpenACC_Vecadd_C_GCC COMMAND ../openacc_vecadd_c_gcc.sh )
 #set_property(TEST OpenACC_Vecadd_C_GCC PROPERTY PASS_REGULAR_EXPRESSION "Final result")
 
-# Not on gfx1030
 if (NOT ${GFXMODEL} MATCHES "gfx1030")
    add_test(NAME OpenACC_Vecadd_C_Sourcery COMMAND ../openacc_vecadd_c_sourcery.sh )
    set_property(TEST OpenACC_Vecadd_C_Sourcery PROPERTY PASS_REGULAR_EXPRESSION "Final result")
@@ -127,11 +134,13 @@ endif()
 
 # Advanced OpenMP Examples
 
-add_test(NAME AdvancedOpenMP_Memory1 COMMAND ../advancedopenmp_memory1.sh )
-set_property(TEST AdvancedOpenMP_Memory1 PROPERTY PASS_REGULAR_EXPRESSION "Entering OpenMP kernel at mem1.cc")
+if(${LIBOMPTARGET_INFO_SUPPORT} EQUALS 1)
+   add_test(NAME AdvancedOpenMP_Memory1 COMMAND ../advancedopenmp_memory1.sh )
+   set_property(TEST AdvancedOpenMP_Memory1 PROPERTY PASS_REGULAR_EXPRESSION "Entering OpenMP kernel at mem1.cc")
 
-add_test(NAME AdvancedOpenMP_Memory2 COMMAND ../advancedopenmp_memory2.sh )
-set_property(TEST AdvancedOpenMP_Memory2 PROPERTY PASS_REGULAR_EXPRESSION "Exiting OpenMP data region at mem2.cc")
+   add_test(NAME AdvancedOpenMP_Memory2 COMMAND ../advancedopenmp_memory2.sh )
+   set_property(TEST AdvancedOpenMP_Memory2 PROPERTY PASS_REGULAR_EXPRESSION "Exiting OpenMP data region at mem2.cc")
+endif()
 
 # Kokkos
 
@@ -230,9 +239,6 @@ set_property(TEST NodeMemModel_Managed_Memory_HIP1 PROPERTY PASS_REGULAR_EXPRESS
 add_test(NAME NodeMemModel_Managed_Memory_HIP2_XNACK_OFF COMMAND ../nodememmodel_managed_memory_hip2_xnack_off.sh )
 set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_OFF PROPERTY PASS_REGULAR_EXPRESSION "Memory access fault")
 
-execute_process(COMMAND rocminfo COMMAND grep xnack COMMAND wc -l OUTPUT_VARIABLE XNACK_COUNT)
-#string(STRIP XNACK_COUNT XNACK_COUNT)
-#message(STATUS "XNACK_COUNT ${XNACK_COUNT}")
 if(${XNACK_COUNT} GREATER "1")
    add_test(NAME NodeMemModel_Managed_Memory_HIP2_XNACK_ON COMMAND ../nodememmodel_managed_memory_hip2_xnack_on.sh )
    set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_ON PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
