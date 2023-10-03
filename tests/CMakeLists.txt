@@ -57,9 +57,9 @@ set_property(TEST OpenMP_Saxpy_C_GCC PROPERTY PASS_REGULAR_EXPRESSION "Last Valu
 
 # Not on gfx1030
 execute_process(COMMAND rocminfo COMMAND grep gfx COMMAND sed "s/Name://" COMMAND head -1 COMMAND sed "s/ //g" OUTPUT_VARIABLE GFXMODEL)
-string(STRIP GFXMODEL GFXMODEL)
+#string(STRIP GFXMODEL GFXMODEL)
 #message(STATUS "GFXMODEL ${GFXMODEL}")
-if (NOT $GFXMODEL MATCHES "gfx1030")
+if (NOT ${GFXMODEL} MATCHES "gfx1030")
    add_test(NAME OpenMP_Saxpy_C_Sourcery COMMAND ../openmp_saxpy_c_sourcery.sh )
    set_property(TEST OpenMP_Saxpy_C_Sourcery PROPERTY PASS_REGULAR_EXPRESSION "Last Value")
 endif()
@@ -76,7 +76,7 @@ add_test(NAME OpenMP_Freduce_F_GFortran COMMAND ../openmp_freduce_f_gfortran.sh 
 set_property(TEST OpenMP_Freduce_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "1010")
 
 # Not on gfx1030
-if (NOT $GFXMODEL MATCHES "gfx1030")
+if (NOT ${GFXMODEL} MATCHES "gfx1030")
    add_test(NAME OpenMP_Freduce_F_Sourcery COMMAND ../openmp_freduce_f_sourcery.sh )
    set_property(TEST OpenMP_Freduce_F_Sourcery PROPERTY PASS_REGULAR_EXPRESSION "1010")
 endif()
@@ -94,7 +94,7 @@ endif()
 #set_property(TEST OpenACC_Saxpy_C_GCC PROPERTY PASS_REGULAR_EXPRESSION "Final result")
 
 # Not on gfx1030
-if (NOT $GFXMODEL MATCHES "gfx1030")
+if (NOT ${GFXMODEL} MATCHES "gfx1030")
    add_test(NAME OpenACC_Saxpy_C_Sourcery COMMAND ../openacc_saxpy_c_sourcery.sh )
    set_property(TEST OpenACC_Saxpy_C_Sourcery PROPERTY PASS_REGULAR_EXPRESSION "Last Value")
 endif()
@@ -110,7 +110,7 @@ endif()
 #set_property(TEST OpenACC_Vecadd_C_GCC PROPERTY PASS_REGULAR_EXPRESSION "Final result")
 
 # Not on gfx1030
-if (NOT $GFXMODEL MATCHES "gfx1030")
+if (NOT ${GFXMODEL} MATCHES "gfx1030")
    add_test(NAME OpenACC_Vecadd_C_Sourcery COMMAND ../openacc_vecadd_c_sourcery.sh )
    set_property(TEST OpenACC_Vecadd_C_Sourcery PROPERTY PASS_REGULAR_EXPRESSION "Final result")
 endif()
@@ -231,9 +231,9 @@ add_test(NAME NodeMemModel_Managed_Memory_HIP2_XNACK_OFF COMMAND ../nodememmodel
 set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_OFF PROPERTY PASS_REGULAR_EXPRESSION "Memory access fault")
 
 execute_process(COMMAND rocminfo COMMAND grep xnack COMMAND wc -l OUTPUT_VARIABLE XNACK_COUNT)
-string(STRIP XNACK_COUNT XNACK_COUNT)
+#string(STRIP XNACK_COUNT XNACK_COUNT)
 #message(STATUS "XNACK_COUNT ${XNACK_COUNT}")
-if(DEFINED ${XNACK_COUNT})
+if(${XNACK_COUNT} GREATER "1")
    add_test(NAME NodeMemModel_Managed_Memory_HIP2_XNACK_ON COMMAND ../nodememmodel_managed_memory_hip2_xnack_on.sh )
    set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_ON PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 endif ()
