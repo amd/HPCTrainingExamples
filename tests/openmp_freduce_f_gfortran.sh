@@ -1,6 +1,6 @@
 #!/bin/bash
 
-module load gcc/13
+module load amd-gcc
 
 cd ~/HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/freduce
 
