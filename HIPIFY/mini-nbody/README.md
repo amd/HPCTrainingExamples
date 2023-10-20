@@ -1,6 +1,6 @@
 Example taken from HIP-Examples/mini-nbody
    Used for demonstrating hipify tool
-   HIP code additions: Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+   HIP code additions: Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 Original CUDA source from https://github.com/harrism/mini-nbody. Mark Harris.
 Discussion: Chapter 31. Fast N-Body Simulation with CUDA -- GPU Gems 3,
    Lars Nyland, Mark Harris, Jan Prins

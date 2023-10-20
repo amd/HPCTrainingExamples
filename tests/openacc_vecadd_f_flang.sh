@@ -2,7 +2,7 @@
 
 module load clang/15
 
-cd ~/HPCTrainingExamples/Pragma_Examples/OpenACC/Fortran/Make/vecadd
+cd ~/HPCTrainingExamples/Pragma_Examples/OpenACC/Fortran/vecadd
 
 make
 ./vecadd

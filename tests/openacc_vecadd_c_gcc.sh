@@ -2,7 +2,7 @@
 
 module load gcc/13
 
-cd ~/HPCTrainingExamples/Pragma_Examples/OpenACC/C/Make/vecadd
+cd ~/HPCTrainingExamples/Pragma_Examples/OpenACC/C/vecadd
 
 make
 ./vecadd

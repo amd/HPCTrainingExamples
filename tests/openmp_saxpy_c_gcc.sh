@@ -2,7 +2,7 @@
 
 module load gcc/13
 
-cd ~/HPCTrainingExamples/Pragma_Examples/OpenMP/C/Make/saxpy
+cd ~/HPCTrainingExamples/Pragma_Examples/OpenMP/C/saxpy
 
 make
 ./saxpy

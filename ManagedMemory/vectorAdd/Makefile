@@ -1,6 +1,6 @@
-HIP_PATH?= $(wildcard /opt/rocm/hip)
+HIP_PATH?= $(wildcard ${ROCM_PATH}/hip)
 ifeq (,$(HIP_PATH))
-	HIP_PATH=/opt/rocm
+	HIP_PATH=${ROCM_PATH}
 endif
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 
