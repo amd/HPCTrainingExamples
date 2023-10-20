@@ -3,17 +3,15 @@ default: ${EXEC}
 all: ${EXEC}
 
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
-UNAMEP = $(shell uname -p)
-ROCM_CPUTARGET = $(UNAMEP)-pc-linux-gnu
 ROCM_GPUTARGET ?= amdgcn-amd-amdhsa
 
 FC1=$(notdir $(FC))
 
 ifeq ($(findstring amdflang,$(FC1)), amdflang)
-  OPENMP_FLAGS = -fopenmp -target $(ROCM_CPUTARGET) --offload-arch=$(ROCM_GPU)
+  OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -Mfreeform
 else ifeq ($(findstring flang,$(FC1)), flang)
-  OPENMP_FLAGS = -fopenmp -target $(ROCM_CPUTARGET) --offload-arch=$(ROCM_GPU)
+  OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -Mfreeform
 else ifeq ($(findstring gfortran,$(FC1)), gfortran)
   OPENMP_FLAGS = -fopenmp -foffload=amdgcn-amdhsa=-march=$(ROCM_GPU)
