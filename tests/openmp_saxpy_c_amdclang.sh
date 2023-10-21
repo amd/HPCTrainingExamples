@@ -1,6 +1,6 @@
 #!/bin/bash
 
-module load aomp-amdclang
+module load amdclang
 
 cd ~/HPCTrainingExamples/Pragma_Examples/OpenMP/C/saxpy
 
