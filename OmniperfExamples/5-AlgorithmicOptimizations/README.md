@@ -5,6 +5,18 @@ A simple yAx kernel, and more efficient, but more complex yAx kernel to demonstr
 **Note:** This exercise was tested on a system with MI210s, on omniperf version `1.0.10` and ROCm 5.7.0
 
 <details>
+<summary><h3>Background: Acronyms and terms used in this exercise</h3></summary>
+     <ul>
+          <li><strong>L1:</strong> Level 1 Cache, the first level cache local to the Compute Unit (CU). If requested data is not found in the L1, the request goes to the L2</li>
+          <li><strong>L2:</strong> Level 2 Cache, the second level cache, which is shared by all Compute Units (CUs) on a GPU. If requested data is not found in the L2, the request goes to HBM</li>
+          <li><strong>HBM:</strong> High Bandwidth Memory is globally accessible from the GPU, and is a level of memory above the L2 cache</li>
+          <li><strong>CU:</strong> The Compute Unit is responsible for executing the User's kernels </li> 
+          <li><strong>yAx:</strong> a vector-matrix-vector product, y*A*x, where y and x are vectors, and A is a matrix</li>
+          <li><strong>FP(32/16):</strong> 32- or 16-bit Floating Point numeric types</li>
+     </ul>
+</details>
+
+<details>
 <summary><h3>Background: yAx Algorithmic Improvement Explanation</h3></summary>
  Our approach up to this point could be described as having each thread sum up a row, as illustrated below:
  <img src="threadrows.PNG"/>
@@ -488,14 +500,14 @@ Analyze
 ```
 Looking at the L1 data, we see:
 - L1 Cache Hit Rate (`16.3.7`) has increased about 20%.
-- L1 Total Req (`16.3.0`) has decreased by an order of magnitude: 16448 compared to 524368 previously.
+- L1 Total Req (`16.3.0`) has decreased by ~32x, 16448 compared to 524368 previously.
 - This results in fewer requests going out to the L2.
 
 Looking at the L2 data, we see:
-- L2 Req (`17.3.0`) is orders of magnitude lower than before: 617.4 compared to 32945.35 previously.
+- L2 Req (`17.3.0`) has decreased by ~53x, 617.4 compared to 32945.35 previously.
 - L2 Cache Hit (`17.3.8`) is orders of magnitude higher than before: 16.85% compared to 0.52% previously.
-- L2 Hits (`17.3.6`) is lower than before: 104 compared to 171
-- L2 Misses (`17.3.7`) is orders of magnitude lower than before: 513 compared to 32773
+- L2 Hits (`17.3.6`) is slightly lower than before: 104 compared to 171
+- L2 Misses (`17.3.7`) has decreased by ~64x, 513 compared to 32773
 - L2 Read bandwidth (`17.2.0`) has decreased due to the decrease in L2 misses. 
 - We have orders of magnitude fewer requests going out to HBM than we did previously, which explains our observed speedup.
 
@@ -516,17 +528,21 @@ They are also provided below for easy reference:
 |FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise5_solution_roofline_int8_fp16.png"/> |
 
 As the Omniperf stats indicate, we are moving most data through the L1, which shows in the roofline as a decrease in Arithmetic Intensity for that cache layer.
-We have a high hit rate in L1, with a fairly low hit rate in L2, and we end up having to go to HBM much less frequently than we did previously.
+We have a high hit rate in L1, with a fairly low hit rate in L2, and we end up having to go to HBM much less frequently than we did previously, 
+thus our HBM bandwidth has decreased as a result of more efficient usage of our memory system.
 
 ### Roofline Comparison
+
+The comparison of these two rooflines is confusing, due to the fact that these algorithms use the memory system very differently.
+It is important to keep in mind that our solution runs **29x** faster than the problem.
 
 | Roofline Type | Problem Roofline                                     | Solution Roofline                                      |
 |---------------|------------------------------------------------------|--------------------------------------------------------|
 | FP32          | <img src="exercise5_problem_roofline_fp32.png"/>     | <img src="exercise5_solution_roofline_fp32.png"/>      |
 | FP16/INT8     | <img src="exercise5_problem_roofline_int8_fp16.png"/>| <img src="exercise5_solution_roofline_int8_fp16.png"/> |
 
-We see a significant speedup from problem to solution, but on the roofline it is difficult to determine which implementation is using the hardware more efficiently. The problem seems to be better, as the HBM point is very close to the achievable bandwidth, while the performance of the solution points decreases.
-The roofline for reasonably optimized kernels can be difficult to interpret, but it is useful as a first pass tool to identify poorly performing kernels.
+We see a significant speedup from problem to solution, but on the roofline it is difficult to determine which implementation is using the hardware more efficiently. The problem seems to be better, as the HBM point is very close to the achievable bandwidth, while the performance of the solution points seem to decrease.
+The roofline, though useful for estimating efficiencies of kernels, still only shows one perspective of performance.
 
 ### Summary and Take-aways
 

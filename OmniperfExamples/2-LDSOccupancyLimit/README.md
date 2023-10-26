@@ -4,6 +4,22 @@ Simple kernel implementing a version of yAx, to demonstrate the downside of allo
 amount of LDS, and the benefit of using a smaller amount of LDS due to occupancy limits.
 
 **Note:** This exercise was tested on a system with MI210s, on omniperf version `1.0.10` and ROCm 5.7.0
+<details>
+<summary><h3>Background: Acronyms and terms used in this exercise</h3></summary>
+     <ul>
+          <li><strong>Wavefront:</strong> A collection of threads, usually 64.</li>
+          <li><strong>Workgroup:</strong> A collection of Wavefronts (at least 1), which can be scheduled on a Compute Unit (CU)</li>
+          <li><strong>LDS:</strong> Local Data Store is Shared Memory that is accessible to the entire workgroup on a Compute Unit (CU)</li>
+          <li><strong>CU:</strong> The Compute Unit is responsible for executing the User's kernels</li>
+          <li><strong>SPI:</strong> Shader Processor Input, also referred to as the Workgroup Manager, is responsible for scheduling workgroups on Compute Units</li>
+          <li><strong>Occupancy:</strong> A measure of how many wavefronts are executing on the GPU on average through the duration of the kernel</li>
+          <li><strong>PoP:</strong> Percent of Peak refers to the ratio of an achieved value and a theoretical or actual maximum. In terms of occupancy, it is how many wavefronts on average were on the device divided by how many can fit on the device.
+          <li><strong>yAx:</strong> a vector-matrix-vector product, y*A*x, where y and x are vectors, and A is a matrix</li>
+          <li><strong>FP(32/16):</strong> 32- or 16-bit Floating Point numeric types</li>
+          <li><strong>FLOPs:</strong> Floating Point Operations Per second</li>
+          <li><strong>HBM:</strong> High Bandwidth Memory is globally accessible from the GPU, and is a level of memory above the L2 cache</li>
+     </ul>
+</details>
 
 ### Initial Roofline Analysis
 In this exercise we're using a problem code that is slightly different than where we left off in Exercise 1. 

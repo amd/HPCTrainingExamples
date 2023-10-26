@@ -6,6 +6,18 @@ and demonstrates how to use omniperf to begin to diagnose them.
 **Note:** This exercise was tested on a system with MI210s, on omniperf version `1.0.10` and ROCm 5.7.0
 
 <details>
+<summary><h3>Background: Acronyms and terms used in this exercise</h3></summary>
+     <ul>
+          <li><strong>L1:</strong> Level 1 Cache, the first level cache local to the Compute Unit (CU). If requested data is not found in the L1, the request goes to the L2</li>
+          <li><strong>L2:</strong> Level 2 Cache, the second level cache, which is shared by all Compute Units (CUs) on a GPU. If requested data is not found in the L2, the request goes to HBM</li>
+          <li><strong>HBM:</strong> High Bandwidth Memory is globally accessible from the GPU, and is a level of memory above the L2 cache</li>
+          <li><strong>CU:</strong> The Compute Unit is responsible for executing the User's kernels </li> 
+          <li><strong>yAx:</strong> a vector-matrix-vector product, y*A*x, where y and x are vectors, and A is a matrix</li>
+          <li><strong>FP(32/16):</strong> 32- or 16-bit Floating Point numeric types</li>
+     </ul>
+</details>
+
+<details>
 <summary><h3>Background: What is a "Strided Data Access Pattern"?</h3></summary>
  Strided data patterns happen when each thread in a wavefront has to access data locations which have a lot of space between them.
  For instance, in the algorithm we've been using, each thread works on a row, and those rows are contiguous in device memory.
@@ -120,11 +132,9 @@ Analyze
 Looking at this data, we see:
 - L1 Cache Hit (`16.1.3`) is 0%, so the kernel's memory requests are never found in the L1.
 - L2 Cache Hit (`17.1.1`) is 93.46%, so most requests are found in the L2, with about 7% needing to go out to HBM.
-- We are generating a lot of requests to the L2, so restructuring our data accesses should provide better performance
-  
-This is a fairly extreme example, but it is very likely that restructuring our data accesses will provide better performance, given these L1 stats.
+- We are never finding data in the L1 and generating a lot of requests to the L2, so restructuring our data accesses should provide better performance
 
-Since our implementation of yAx simply uses 1 for all values in y, A, and x, we do not have to change how we fill our data.
+Since our implementation of yAx simply uses 1 for all values in y, A, and x, we do not have to change how we populate our data.
 Since A is implemented as a flat array, we don't need to change our allocation either.
 >In real-world use-cases, these considerations add non-trivial development overhead, so data access patterns may be non-trivial to change. 
 

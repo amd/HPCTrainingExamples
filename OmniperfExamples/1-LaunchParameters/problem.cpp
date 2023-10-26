@@ -2,6 +2,7 @@
 #include<chrono>
 #include"hipCheck.h"
 
+
 __global__ void yax(double* y,
 		    double* A,
 		    double* x,
@@ -20,7 +21,7 @@ __global__ void yax(double* y,
 }
 
 int main(int argc, char** argv){
-  dim3 grid = dim3(1,1,1);
+  dim3 grid = dim3(4,1,1);
   dim3 block = dim3(64,1,1);
   int n = 2<<14;
   int m = 2<<14;

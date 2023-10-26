@@ -3,7 +3,16 @@
 Simple kernel implementing a version of yAx, to demonstrate effects of Launch Parameters on kernel 
 execution time. 
 
-**Note:** This exercise was tested on a system with MI210s, on Omniperf version `1.0.10` and ROCm `5.7.0`
+**Note:** This exercise was tested on a system with MI210s, on Omniperf version `1.0.10` and ROCm `5.7.0`, the section on the omniperf comparison feature currently requires building a release candidate that is newer than Omniperf 1.0.10.
+<details>
+<summary><h3>Background: Acronyms and terms used in this exercise</h3></summary>
+     <ul>
+          <li>yAx: a vector-matrix-vector product, y*A*x, where y and x are vectors, and A is a matrix</li>
+          <li>FP(32/16): 32- or 16-bit Floating Point numeric types</li>
+          <li>FLOPs: Floating Point Operations Per second</li>
+          <li>HBM: High Bandwidth Memory is globally accessible from the GPU, and is a level of memory above the L2 cache</li>
+     </ul>
+</details>
 
 ### Initial Roofline Analysis:
 The roofline model is a way to gauge kernel performance in terms of maximum achievable bandwidth and floating-point operations.
@@ -162,6 +171,117 @@ Looking through this data we see:
 - Workgroup Size (`7.1.1`) corresponds to the first argument of the block launch parameter
 - Total Wavefronts (`7.1.2`) corresponds to the first index of the grid launch parameter
 - Grid size (`7.1.0`) is Workgroup Size (`7.1.1`) times Total Wavefronts (`7.1.2`)
+
+### Omniperf Command Line Comparison Feature
+
+**On releases newer than Omniperf 1.0.10**, the comparison feature of omniperf can be used to quickly compare two profiles.
+To use this feature, use the command:
+```
+omniperf analyze -p workloads/problem/mi200 -p solution/workloads/solution/mi200 --dispatch 1 --metric 7.1.0 7.1.1 7.1.2
+```
+
+This feature sets the first `-p` argument as the baseline, and the second as the comparison workload.
+In this case, problem is set as the baseline and is compared to solution.
+The output should look like:
+```
+--------
+Analyze
+--------
+
+
+--------------------------------------------------------------------------------
+0. Top Stat
+╒════╤══════════════════════════════════════════╤═════════╤════════════╤══════════════╤══════════════════════╤══════════════╤══════════════════════╤══════════════╤══════════════════════╤════════╤══════════════╕
+│    │ KernelName                               │   Count │ Count      │      Sum(ns) │ Sum(ns)              │     Mean(ns) │ Mean(ns)             │   Median(ns) │ Median(ns)           │    Pct │ Pct          │
+╞════╪══════════════════════════════════════════╪═════════╪════════════╪══════════════╪══════════════════════╪══════════════╪══════════════════════╪══════════════╪══════════════════════╪════════╪══════════════╡
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 1.0 (0.0%) │ 754934306.50 │ 69702016.5 (-90.77%) │ 754934306.50 │ 69702016.5 (-90.77%) │ 754934306.50 │ 69702016.5 (-90.77%) │ 100.00 │ 100.0 (0.0%) │
+│    │  double*)                                │         │            │              │                      │              │                      │              │                      │        │              │
+╘════╧══════════════════════════════════════════╧═════════╧════════════╧══════════════╧══════════════════════╧══════════════╧══════════════════════╧══════════════╧══════════════════════╧════════╧══════════════╛
+
+
+--------------------------------------------------------------------------------
+7. Wavefront
+7.1 Wavefront Launch Stats
+╒═════════╤══════════════════╤════════╤═════════════════════╤════════╤═════════════════════╤════════╤═════════════════════╤════════════╕
+│ Index   │ Metric           │    Avg │ Avg                 │    Min │ Min                 │    Max │ Max                 │ Unit       │
+╞═════════╪══════════════════╪════════╪═════════════════════╪════════╪═════════════════════╪════════╪═════════════════════╪════════════╡
+│ 7.1.0   │ Grid Size        │ 256.00 │ 131072.0 (51100.0%) │ 256.00 │ 131072.0 (51100.0%) │ 256.00 │ 131072.0 (51100.0%) │ Work items │
+├─────────┼──────────────────┼────────┼─────────────────────┼────────┼─────────────────────┼────────┼─────────────────────┼────────────┤
+│ 7.1.1   │ Workgroup Size   │  64.00 │ 64.0 (0.0%)         │  64.00 │ 64.0 (0.0%)         │  64.00 │ 64.0 (0.0%)         │ Work items │
+├─────────┼──────────────────┼────────┼─────────────────────┼────────┼─────────────────────┼────────┼─────────────────────┼────────────┤
+│ 7.1.2   │ Total Wavefronts │   4.00 │ 2048.0 (51100.0%)   │   4.00 │ 2048.0 (51100.0%)   │   4.00 │ 2048.0 (51100.0%)   │ Wavefronts │
+╘═════════╧══════════════════╧════════╧═════════════════════╧════════╧═════════════════════╧════════╧═════════════════════╧════════════╛
+```
+Note that the comparison workload shows the percentage difference from the baseline.
+This feature can be used to quickly compare filtered stats to make sure code changes fix known issues.
+
+### More Kernel Filtering
+
+For this exercise, it is appropriate to filter the `omniperf analyze` command with the `--dispatch 1` argument. 
+This `--dispatch 1` argument filters the data shown to only include the kernel invocation with dispatch ID 1, or the second kernel run during profiling.
+
+However, there is another way to filter kernels that may be more applicable in real use-cases.
+Typically real codes launch many kernels, and only a few of them take most of the overall kernel runtime.
+To see a ranking of the top kernels that take up most of the kernel runtime in your code, you can run:
+```
+omniperf analyze -p workloads/problem/mi200 --list-kernels
+```
+
+This command will output something like:
+```
+--------
+Analyze
+--------
+
+
+--------------------------------------------------------------------------------
+Detected Kernels
+╒════╤═══════════════════════════════════════════════════╕
+│    │ KernelName                                        │
+╞════╪═══════════════════════════════════════════════════╡
+│  0 │ yax(double*, double*, double*, int, int, double*) │
+╘════╧═══════════════════════════════════════════════════╛ 
+```
+
+Using Omniperf versions greater than `1.0.10`, `--list-kernels` will list all kernels launched by your code, in order of runtime (largest runtime first).
+The number displayed beside the kernel in the output can be used to filter `omniperf analyze` commands.
+**Note that this will display aggregated stats for kernels of the same name**, meaning that the invocations could differ in terms of launch parameters, and vary widely in terms of work completed. 
+This filtering is accomplished with the `-k` argument:
+```
+omniperf analyze -p workloads/problem/mi200 -k 0 --metric 7.1.0 7.1.1 7.1.2
+```
+Which should show something like:
+```
+--------
+Analyze
+--------
+
+
+--------------------------------------------------------------------------------
+0. Top Stat
+╒════╤══════════════════════════════════════════╤═════════╤═══════════════╤══════════════╤══════════════╤════════╤═════╕
+│    │ KernelName                               │   Count │       Sum(ns) │     Mean(ns) │   Median(ns) │    Pct │ S   │
+╞════╪══════════════════════════════════════════╪═════════╪═══════════════╪══════════════╪══════════════╪════════╪═════╡
+│  0 │ yax(double*, double*, double*, int, int, │    2.00 │ 1508098228.00 │ 754049114.00 │ 754049114.00 │ 100.00 │ *   │
+│    │  double*)                                │         │               │              │              │        │     │
+╘════╧══════════════════════════════════════════╧═════════╧═══════════════╧══════════════╧══════════════╧════════╧═════╛
+
+
+--------------------------------------------------------------------------------
+7. Wavefront
+7.1 Wavefront Launch Stats
+╒═════════╤══════════════════╤════════╤════════╤════════╤════════════╕
+│ Index   │ Metric           │    Avg │    Min │    Max │ Unit       │
+╞═════════╪══════════════════╪════════╪════════╪════════╪════════════╡
+│ 7.1.0   │ Grid Size        │ 256.00 │ 256.00 │ 256.00 │ Work items │
+├─────────┼──────────────────┼────────┼────────┼────────┼────────────┤
+│ 7.1.1   │ Workgroup Size   │  64.00 │  64.00 │  64.00 │ Work items │
+├─────────┼──────────────────┼────────┼────────┼────────┼────────────┤
+│ 7.1.2   │ Total Wavefronts │   4.00 │   4.00 │   4.00 │ Wavefronts │
+╘═════════╧══════════════════╧════════╧════════╧════════╧════════════╛
+```
+Note that the 'count' field in Top Stat is 2 here, where filtering by dispatch ID displays a count of 1, indicating that filtering with `-k` returns aggregated stats for two kernel invocations in this case.
+Also note that the "Top Stats" table will still show all the top kernels but the rightmost column titled "S" will have an asterisk beside the kernel for which data is being displayed.
 
 ### Solution Roofline
 We've demonstrated better performance than problem.cpp in solution.cpp, but could we potentially do better?

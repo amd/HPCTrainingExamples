@@ -1,37 +1,32 @@
-HIP_PATH?= $(wildcard /opt/rocm)
-ifeq (,$(HIP_PATH))
-	HIP_PATH=/opt/rocm
-endif
-
-HIPCC=$(HIP_PATH)/bin/hipcc
-
-TARGET=hcc
-
-SOURCES = problem.cpp 
-OBJECTS = $(SOURCES:.cpp=.o)
-
-EXECUTABLE=./problem.exe
+EXECUTABLE = ./problem.exe
+all: $(EXECUTABLE)
 
 .PHONY: test
 
+OBJECTS = problem.o
 
-all: $(EXECUTABLE)
+CXXFLAGS = -g -O2 -DNDEBUG -fPIC
+HIPCC_FLAGS = -g -O2 -DNDEBUG
 
-CXXFLAGS = -O3
+HIP_PLATFORM ?= amd
 
-CXX=$(HIPCC)
+ifeq ($(HIP_PLATFORM), nvidia)
+   HIP_PATH ?= $(shell hipconfig --path)
+   HIPCC_FLAGS += -x cu -I${HIP_PATH}/include/
+endif
+ifeq ($(HIP_PLATFORM), amd)
+   HIPCC_FLAGS += -x hip -munsafe-fp-atomics
+endif
 
+%.o: %.cpp
+	hipcc $(HIPCC_FLAGS) -c $^ -o $@
 
-$(EXECUTABLE): $(OBJECTS) 
-	$(HIPCC) $(OBJECTS) -o $@
-
+$(EXECUTABLE): $(OBJECTS)
+	hipcc $< $(LDFLAGS) -o $@
 
 test: $(EXECUTABLE)
 	$(EXECUTABLE)
 
-
 clean:
-	rm -f $(EXECUTABLE)
-	rm -f $(OBJECTS)
-
+	rm -rf $(EXECUTABLE) $(OBJECTS) build
 
