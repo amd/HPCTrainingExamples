@@ -5,7 +5,6 @@ all: ${EXEC}
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 UNAMEP = $(shell uname -p)
 ROCM_CPUTARGET = $(UNAMEP)-pc-linux-gnu
-ROCM_GPUTARGET ?= amdgcn-amd-amdhsa
 
 CC1=$(notdir $(CC))
 
