@@ -4,11 +4,13 @@ all: ${EXEC}
 
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 
-ifeq ($(notdir $(FC)), flang)
-  OPENACC_FLAGS = Flang_does_not_support_OpenACC_for_AMD
+FC1=$(notdir $(FC))
+
+ifeq ($(findstring flang, $(FC1)), flang)
+  OPENACC_FLAGS = -fopenacc --offload=-march=${ROCM_GPU}
   FREE_FORM_FLAG = -Mfreeform
-else ifeq ($(notdir $(FC)), amdflang)
-  OPENACC_FLAGS = amdflang_does_not_support_OpenACC_for_AMD
+else ifeq ($(findstring amdflang, $(FC1)), amdflang)
+  OPENACC_FLAGS = -fopenacc --offload=-march=${ROCM_GPU}
   FREE_FORM_FLAG = -Mfreeform
 else
   OPENACC_FLAGS = -fopenacc -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
@@ -17,9 +19,9 @@ endif
 
 FFLAGS = -g -O3 ${FREE_FORM_FLAG} -fstrict-aliasing ${OPENACC_FLAGS}
 ifeq (${FC1},gfortran-13)
-   LDFLAGS = ${OPENACC_FLAGS} -fno-lto
+  LDFLAGS = ${OPENACC_FLAGS} -fno-lto
 else
-   LDFLAGS = ${OPENACC_FLAGS}
+  LDFLAGS = ${OPENACC_FLAGS}
 endif
 
 ${EXEC}: ${EXEC}.o
