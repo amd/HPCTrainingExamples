@@ -7,9 +7,9 @@ ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name
 CC1=$(notdir $(CC))
 
 ifeq ($(findstring clang, $(CC1)), clang)
-  OPENACC_FLAGS = -fopenacc --offload=-march=${ROCM_GPU}
+  OPENACC_FLAGS = -fopenacc --offload-arch=${ROCM_GPU}
 else ifeq ($(findstring amdclang, $(CC1)), amdclang)
-  OPENACC_FLAGS = -fopenacc --offload=-march=${ROCM_GPU}
+  OPENACC_FLAGS = -fopenacc --offload-arch=${ROCM_GPU}
 else
   OPENACC_FLAGS = -fopenacc -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
 endif
