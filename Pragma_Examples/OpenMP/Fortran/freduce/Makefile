@@ -9,20 +9,21 @@ FC1=$(notdir $(FC))
 ifeq ($(findstring amdflang,$(FC1)), amdflang)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -Mfreeform
+else ifeq ($(findstring flang-new,$(FC1)), flang-new)
+  OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
+  FREE_FORM_FLAG = -ffree-form
 else ifeq ($(findstring flang,$(FC1)), flang)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -Mfreeform
 else ifeq ($(findstring gfortran,$(FC1)), gfortran)
-  OPENMP_FLAGS = -fopenmp -foffload=-march=$(ROCM_GPU)
+  OPENMP_FLAGS = -fopenmp --offload=-march=$(ROCM_GPU)
+  #OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
   FREE_FORM_FLAG = -ffree-form
 else ifeq ($(findstring ftn,$(FC1)), ftn)
   OPENMP_FLAGS = -fopenmp
-else
-  OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
-  FREE_FORM_FLAG = -ffree-form
 endif
 
-ifeq ($(notdir $(FC)), ftn)
+ifeq ($(findstring ftn,$(FC1)), ftn)
   FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else
   FFLAGS = -g -O3 ${FREE_FORM_FLAG} -fstrict-aliasing ${OPENMP_FLAGS}
@@ -36,5 +37,6 @@ endif
 ${EXEC}: ${EXEC}.o
 	$(FC) $(LDFLAGS) $^ -o $@
 
+# Cleanup
 clean:
 	rm -f *.o ${EXEC} *.mod *.bin
