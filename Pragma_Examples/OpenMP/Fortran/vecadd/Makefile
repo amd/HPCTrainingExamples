@@ -21,6 +21,9 @@ else ifeq ($(findstring gfortran,$(FC1)), gfortran)
   FREE_FORM_FLAG = -ffree-form
 else ifeq ($(findstring ftn,$(FC1)), ftn)
   OPENMP_FLAGS = -fopenmp
+  FREE_FORM_FLAG = xffree-formx
+else
+  FREE_FORM_FLAG = yffree-formy
 endif
 
 ifeq ($(findstring ftn,$(FC1)), ftn)
