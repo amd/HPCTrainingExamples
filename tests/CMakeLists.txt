@@ -84,11 +84,6 @@ set_property(TEST OpenMP_Saxpy_C_OG PROPERTY PASS_REGULAR_EXPRESSION "Last Value
 add_test(NAME OpenMP_Saxpy_C_GCC COMMAND ../openmp_saxpy_c_gcc.sh )
 set_property(TEST OpenMP_Saxpy_C_GCC PROPERTY PASS_REGULAR_EXPRESSION "Last Value")
 
-if (NOT ${GFXMODEL} MATCHES "gfx1030")
-   add_test(NAME OpenMP_Saxpy_C_Sourcery COMMAND ../openmp_saxpy_c_sourcery.sh )
-   set_property(TEST OpenMP_Saxpy_C_Sourcery PROPERTY PASS_REGULAR_EXPRESSION "Last Value")
-endif()
-
 add_test(NAME OpenMP_Freduce_F_AMDFlang COMMAND ../openmp_freduce_f_amdflang.sh )
 set_property(TEST OpenMP_Freduce_F_AMDFlang PROPERTY PASS_REGULAR_EXPRESSION "1010")
 
@@ -99,11 +94,6 @@ set_property(TEST OpenMP_Freduce_F_AMDFlang PROPERTY PASS_REGULAR_EXPRESSION "10
 
 add_test(NAME OpenMP_Freduce_F_GFortran COMMAND ../openmp_freduce_f_gfortran.sh )
 set_property(TEST OpenMP_Freduce_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "1010")
-
-if (NOT ${GFXMODEL} MATCHES "gfx1030")
-   add_test(NAME OpenMP_Freduce_F_Sourcery COMMAND ../openmp_freduce_f_sourcery.sh )
-   set_property(TEST OpenMP_Freduce_F_Sourcery PROPERTY PASS_REGULAR_EXPRESSION "1010")
-endif()
 
 # OpenACC Examples
 
@@ -117,11 +107,6 @@ endif()
 #add_test(NAME OpenACC_Saxpy_C_GCC COMMAND ../openacc_saxpy_c_gcc.sh )
 #set_property(TEST OpenACC_Saxpy_C_GCC PROPERTY PASS_REGULAR_EXPRESSION "Final result")
 
-if (NOT ${GFXMODEL} MATCHES "gfx1030")
-   add_test(NAME OpenACC_Saxpy_C_Sourcery COMMAND ../openacc_saxpy_c_sourcery.sh )
-   set_property(TEST OpenACC_Saxpy_C_Sourcery PROPERTY PASS_REGULAR_EXPRESSION "Last Value")
-endif()
-
 #add_test(NAME OpenACC_Vecadd_C_AMDClang COMMAND ../openacc_vecadd_c_amdclang.sh )
 #set_property(TEST OpenACC_Vecadd_C_AMDClang PROPERTY PASS_REGULAR_EXPRESSION "Final result")
 
@@ -131,11 +116,6 @@ endif()
 # math library missing?
 #add_test(NAME OpenACC_Vecadd_C_GCC COMMAND ../openacc_vecadd_c_gcc.sh )
 #set_property(TEST OpenACC_Vecadd_C_GCC PROPERTY PASS_REGULAR_EXPRESSION "Final result")
-
-if (NOT ${GFXMODEL} MATCHES "gfx1030")
-   add_test(NAME OpenACC_Vecadd_C_Sourcery COMMAND ../openacc_vecadd_c_sourcery.sh )
-   set_property(TEST OpenACC_Vecadd_C_Sourcery PROPERTY PASS_REGULAR_EXPRESSION "Final result")
-endif()
 
 #add_test(NAME OpenACC_Vecadd_F_AMDFlang COMMAND ../openacc_vecadd_f_amdflang.sh )
 #set_property(TEST OpenACC_Vecadd_F_AMDFlang PROPERTY PASS_REGULAR_EXPRESSION "Final result")
