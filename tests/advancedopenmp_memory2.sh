@@ -3,7 +3,6 @@ module load amdclang
 
 cd ~/HPCTrainingExamples/Pragma_Examples/OpenMP/CXX/memory_pragmas
 
-export CXX=amdclang++
 export LIBOMPTARGET_INFO=-1
 export OMP_TARGET_OFFLOAD=MANDATORY
 
