@@ -7,15 +7,20 @@ if (NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif(NOT CMAKE_BUILD_TYPE)
 
+execute_process(COMMAND rocminfo
+       OUTPUT_VARIABLE ROCMINFO_OUTPUT)
+string(REGEX MATCH gfx[0-9a-f]+ GFX_STRING ${ROCMINFO_OUTPUT})
+#message("GFX_STRING: ${GFX_STRING}")
+
 string(REPLACE -O2 -O3 CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
 set(CMAKE_CXX_FLAGS_DEBUG "-ggdb")
 set(CMAKE_CXX_FLAGS "-g")
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
    # using Clang
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -target x86_64-pc-linux-gnu -fstrict-aliasing")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp --offload-arch=${GFX_STRING} -fstrict-aliasing")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
    # using GCC
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -fstrict-aliasing -fopt-info-optimized-omp")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -foffload=-march=${GFX_STRING} -fstrict-aliasing -fopt-info-optimized-omp")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Cray")
 endif()
 
