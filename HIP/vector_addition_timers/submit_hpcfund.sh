@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH -J 03_vector_addition_timers
+#SBATCH -J vector_addition_timers
 #SBATCH -N 1
 #SBATCH -t 5
 

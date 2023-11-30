@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH -J 04_stencil
+#SBATCH -J stencil
 #SBATCH -N 1
 #SBATCH -t 5
 
