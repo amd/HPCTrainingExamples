@@ -1,6 +1,6 @@
 #!/bin/bash
 
-module load amdclang
+module load clang/15
 
 cd ~/HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/freduce
 
