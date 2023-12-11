@@ -2,16 +2,14 @@ EXEC = reduction
 default: ${EXEC}
 all: ${EXEC}
 
-ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
-
 CC1=$(notdir $(CC))
 
 ifeq ($(findstring clang, $(CC1)), clang)
-  OPENACC_FLAGS = -fopenacc --offload-arch=${ROCM_GPU}
+  OPENACC_FLAGS = -fopenacc --offload-arch=native
 else ifeq ($(findstring amdclang, $(CC1)), amdclang)
-  OPENACC_FLAGS = -fopenacc --offload-arch=${ROCM_GPU}
+  OPENACC_FLAGS = -fopenacc --offload-arch=native
 else
-  OPENACC_FLAGS = -fopenacc -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
+  OPENACC_FLAGS = -fopenacc -foffload=-march=native -fopt-info-optimized-omp
 endif
 
 CFLAGS = -g -O3 -fstrict-aliasing ${OPENACC_FLAGS}
