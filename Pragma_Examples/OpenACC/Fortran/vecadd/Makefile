@@ -2,18 +2,16 @@ EXEC = vecadd
 default: ${EXEC}
 all: ${EXEC}
 
-ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
-
 FC1=$(notdir $(FC))
 
 ifeq ($(findstring flang, $(FC1)), flang)
-  OPENACC_FLAGS = -fopenacc --offload-arch=${ROCM_GPU}
+  OPENACC_FLAGS = -fopenacc --offload-arch=native
   FREE_FORM_FLAG = -Mfreeform
 else ifeq ($(findstring amdflang, $(FC1)), amdflang)
-  OPENACC_FLAGS = -fopenacc --offload-arch=${ROCM_GPU}
+  OPENACC_FLAGS = -fopenacc --offload-arch=native
   FREE_FORM_FLAG = -Mfreeform
 else
-  OPENACC_FLAGS = -fopenacc -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
+  OPENACC_FLAGS = -fopenacc -foffload=-march=native -fopt-info-optimized-omp
   FREE_FORM_FLAG = -ffree-form
 endif
 

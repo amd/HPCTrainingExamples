@@ -13,10 +13,10 @@ set(CMAKE_CXX_FLAGS "-g")
 #set(CMAKE_CXX_FLAGS "-g -faligned-allocation -fnew-alignment=256")
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
    # using Clang
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp --offload-arch=gfx90a -target x86_64-pc-linux-gnu -fstrict-aliasing")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp --offload-arch=native -target x86_64-pc-linux-gnu -fstrict-aliasing")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
    # using GCC
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -foffload=-march=gfx90a -fstrict-aliasing -fopt-info-optimized-omp")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -foffload=-march=native -fstrict-aliasing -fopt-info-optimized-omp")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Cray")
 endif()
 
