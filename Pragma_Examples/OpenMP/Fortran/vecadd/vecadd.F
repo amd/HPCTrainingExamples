@@ -45,6 +45,18 @@ program main
         b(i) = cos(dble(i)*1.0d0)*cos(dble(i)*1.0d0) 
     enddo
  
+!   do i=1,n
+!       c(i) = a(i) + b(i)
+!   enddo
+
+!   ! Sum up vector c. Print result divided by n. It should equal 1
+!   sum = 0.0d0
+!   do i=1,n
+!       sum = sum +  c(i)
+!   enddo
+!   sum = sum/dble(n)
+!   write(*,'("Final result: ",f10.6)') sum
+
     ! Sum each component of arrays
 
     !$omp target teams distribute parallel do simd map(to: a(1:n),b(1:n)) map(from: c(1:n))

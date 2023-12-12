@@ -96,10 +96,10 @@ add_test(NAME OpenMP_Freduce_F_GFortran COMMAND ../openmp_freduce_f_gfortran.sh 
 set_property(TEST OpenMP_Freduce_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "1010")
 
 add_test(NAME OpenMP_Vecadd_F_AMDFlang COMMAND ../openmp_vecadd_f_amdflang.sh )
-set_property(TEST OpenMP_Vecadd_F_AMDFlang PROPERTY PASS_REGULAR_EXPRESSION "Final result:   0.000000")
+set_property(TEST OpenMP_Vecadd_F_AMDFlang PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
 
 add_test(NAME OpenMP_Vecadd_F_GFortran COMMAND ../openmp_vecadd_f_gfortran.sh )
-set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "Final result:   0.000000")
+set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
 
 # OpenACC Examples
 
