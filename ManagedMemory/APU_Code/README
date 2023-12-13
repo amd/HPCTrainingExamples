@@ -1,0 +1,8 @@
+# Must run on an APU like the MI3000A (or managed memory mode on MI200 series)
+# Build the code
+
+make
+
+# Run the code
+
+./gpu_code

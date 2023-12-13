@@ -1,0 +1,11 @@
+# first set the HSA_XNACK variable
+
+export HSA_XNACK=1
+
+# Build the code
+
+make
+
+# Run the executable
+
+./gpu_code

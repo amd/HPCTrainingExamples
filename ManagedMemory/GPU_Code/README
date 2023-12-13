@@ -1,0 +1,9 @@
+# Explicit memory management can run on any device
+
+# Build the code
+
+make
+
+# Run the executable
+
+./gpu_code

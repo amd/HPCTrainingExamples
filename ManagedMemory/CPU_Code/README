@@ -1,0 +1,9 @@
+# CPU code will run on the CPU
+
+# Build the code
+
+make
+
+# Run the executable
+
+./cpu_code
