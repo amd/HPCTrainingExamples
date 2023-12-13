@@ -42,7 +42,7 @@ subroutine saxpy(a, x, y, n)
    end do
    !$omp end target teams distribute parallel do simd
 
-   if (y(i) > 1.0e80) then
+   if (y(i) > 1.0e30) then
       print *,"y(i)",y(i)
    endif
 end subroutine

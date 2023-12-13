@@ -36,7 +36,7 @@ subroutine saxpy(a, x, y, n)
    finish = OMP_GET_WTIME()
    write (*, '("Time of kernel: ",f8.6)') finish-start
 
-   if (y(i) > 1.0e80) then
+   if (y(i) > 1.0e30) then
       print *,"y(i)",y(i)
    endif
 end subroutine
