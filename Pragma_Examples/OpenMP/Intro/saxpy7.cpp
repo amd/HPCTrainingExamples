@@ -8,7 +8,7 @@ void saxpy(float a, float* x, float* y,
 
    tb = omp_get_wtime();
 
-   int nteams = omp_get_num_teams();
+   int nteams = 208;
 
    #pragma omp target teams distribute parallel for simd \
                num_teams(nteams) map(to:x[0:n]) map(tofrom:y[0:n])

@@ -33,7 +33,7 @@ subroutine saxpy(a, x, y, n)
    real(kind=real32), dimension(n) :: y
    integer :: nteams
 
-   nteams = omp_get_num_teams()
+   nteams = 208
 
    !$omp target teams distribute parallel do simd &
    !$omp& num_teams(nteams) map(to:x) map(tofrom:y)

@@ -4,7 +4,7 @@
 void saxpy(float a, float* x, float* y,
            int n) {
 
-   int nteams = omp_get_num_teams();
+   int nteams = 208;
 
    #pragma omp target teams map(to:x[0:n]) map(tofrom:y[0:n]) num_teams(nteams)
    {
