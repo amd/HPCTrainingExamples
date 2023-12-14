@@ -30,7 +30,7 @@ void example() {
         compute_kernel_2(tmp, b, N); // uses target
         saxpy(2.0f, c, tmp, N);
     }
-    printf("Saxpy8 successfully completed\n");
+    printf("Example program for structured target data region completed successfully\n");
 }
 
 int main(int argc, char *argv[]){

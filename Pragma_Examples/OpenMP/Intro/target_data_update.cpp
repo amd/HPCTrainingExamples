@@ -39,5 +39,5 @@ int main(int argc, char *argv[]) {
       res += final_computation(input[i], tmp[i], i);
   }
 
-  printf("Result is %lf\n",res);
+  printf("Target Update result is %lf\n",res);
 }
