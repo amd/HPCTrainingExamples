@@ -108,8 +108,8 @@ target_data_unstructured: target_data_unstructured.o
 target_data_update: target_data_update.o
 	$(CXX) $(LDFLAGS) $^ -o $@
 
-run: saxpy_cpu saxpy1 saxpy2 saxpy1f saxpy3 saxpy4 saxpy5 saxpy6 saxpy7 target_data_structured \
-	target_data_unstructured target_data_update
+run: saxpy_cpu saxpy1 saxpy2 saxpy1f saxpy3 saxpy4 saxpy5 saxpy6 saxpy7 saxpy2f \
+        target_data_structured target_data_unstructured target_data_update
 	./saxpy_cpu
 	./saxpy1
 	./saxpy2
@@ -119,6 +119,7 @@ run: saxpy_cpu saxpy1 saxpy2 saxpy1f saxpy3 saxpy4 saxpy5 saxpy6 saxpy7 target_d
 	./saxpy5
 	#./saxpy6
 	./saxpy7
+	./saxpy2f
 	./target_data_structured
 	./target_data_unstructured
 	./target_data_update
