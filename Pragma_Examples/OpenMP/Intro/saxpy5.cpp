@@ -19,6 +19,10 @@ void saxpy(float a, float* x, float* y,
    t = te - tb;
 
    printf("Time of kernel: %lf\n", t);
+
+   if (y[0] > 1.0e30) {
+      printf("y[0] %lf\n",y[0]);
+   }
 }
 int main(int argc, char *argv[]){
    int N=1000000;

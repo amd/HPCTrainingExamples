@@ -31,4 +31,8 @@ int main(int argc, char *argv[]){
    }
 
    saxpy(a, x, y, N);
+
+   if (y[0] > 1.0e30) {
+      printf("y[0] %lf\n",y[0]);
+   }
 }

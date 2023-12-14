@@ -1,5 +1,6 @@
 # saxpy6 crashes during execution
-all: saxpy_cpu saxpy1 saxpy2 saxpy1f saxpy3 saxpy4 saxpy5 saxpy6 saxpy7 saxpy2f target_data_structured target_data_unstructured target_data_update
+all: saxpy_cpu saxpy1 saxpy2 saxpy1f saxpy3 saxpy4 saxpy5 saxpy6 saxpy7 saxpy2f \
+	target_data_structured target_data_unstructured target_data_update
 
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 
@@ -107,7 +108,8 @@ target_data_unstructured: target_data_unstructured.o
 target_data_update: target_data_update.o
 	$(CXX) $(LDFLAGS) $^ -o $@
 
-run: saxpy_cpu saxpy1 saxpy2 saxpy1f saxpy3 saxpy4 saxpy5 saxpy6 saxpy7 target_data_structured target_data_unstructured target_data_update
+run: saxpy_cpu saxpy1 saxpy2 saxpy1f saxpy3 saxpy4 saxpy5 saxpy6 saxpy7 target_data_structured \
+	target_data_unstructured target_data_update
 	./saxpy_cpu
 	./saxpy1
 	./saxpy2
@@ -122,4 +124,5 @@ run: saxpy_cpu saxpy1 saxpy2 saxpy1f saxpy3 saxpy4 saxpy5 saxpy6 saxpy7 target_d
 	./target_data_update
 
 clean:
-	rm -f saxpy_cpu saxpy1 saxpy2 saxpy1f saxpy3 saxpy4 saxpy5 saxpy5a saxpy6 saxpy7 saxpy2f saxpy8 targetdata *.o
+	rm -f saxpy_cpu saxpy1 saxpy2 saxpy1f saxpy3 saxpy4 saxpy5 saxpy5a saxpy6 \
+	   saxpy7 saxpy2f target_data_structured target_data_unstructured target_data_update *.o

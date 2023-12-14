@@ -29,7 +29,7 @@ void compute(int N) {
 }
 
 int main(int argc, char *argv[]) {
-    int N = 100;
+    int N = 100000;
 
     tmp = (float *)malloc(N*sizeof(float));
     a = (float *)malloc(N*sizeof(float));
