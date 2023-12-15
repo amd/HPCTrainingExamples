@@ -20,16 +20,16 @@ endif()
 
 # Programming Model Examples
 
-add_test(NAME Programming_Model_CPU COMMAND ../programming_model_CPU.sh )
+add_test(NAME Programming_Model_CPU COMMAND ../programming_model_cpu.sh )
 set_property(TEST Programming_Model_CPU PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
 
-add_test(NAME Programming_Model_GPU COMMAND ../programming_model_GPU.sh )
+add_test(NAME Programming_Model_GPU COMMAND ../programming_model_gpu.sh )
 set_property(TEST Programming_Model_GPU PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
 
 add_test(NAME Programming_Model_Managed_Memory COMMAND ../programming_model_managed_memory.sh )
 set_property(TEST Programming_Model_Managed_Memory PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
 
-add_test(NAME Programming_Model_APU COMMAND ../programming_model_APU.sh )
+add_test(NAME Programming_Model_APU COMMAND ../programming_model_apu.sh )
 set_property(TEST Programming_Model_APU PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
 
 add_test(NAME Programming_Model_OpenMP COMMAND ../programming_model_openmp.sh )
