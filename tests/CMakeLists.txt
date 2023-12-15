@@ -20,6 +20,31 @@ endif()
 
 # HIP Examples
 
+add_test(NAME Programming_Model_CPU COMMAND ../programming_model_CPU.sh )
+set_property(TEST Programming_Model_CPU PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
+
+add_test(NAME Programming_Model_GPU COMMAND ../programming_model_GPU.sh )
+set_property(TEST Programming_Model_GPU PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
+
+add_test(NAME Programming_Model_Managed_Memory COMMAND ../programming_model_managed_memory.sh )
+set_property(TEST Programming_Model_Managed_Memory PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
+
+add_test(NAME Programming_Model_APU COMMAND ../programming_model_APU.sh )
+set_property(TEST Programming_Model_APU PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
+
+add_test(NAME Programming_Model_OpenMP COMMAND ../programming_model_openmp.sh )
+set_property(TEST Programming_Model_OpenMP PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
+
+add_test(NAME Programming_Model_Raja COMMAND ../programming_model_raja.sh )
+set_property(TEST Programming_Model_Raja PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
+
+add_test(NAME Programming_Model_Kokkos COMMAND ../programming_model_kokkos.sh )
+set_property(TEST Programming_Model_Kokkos PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
+
+
+
+
+
 add_test(NAME HIP_Vectoradd_Makefile COMMAND ../hip_vectoradd_makefile.sh )
 set_property(TEST HIP_Vectoradd_Makefile PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 
