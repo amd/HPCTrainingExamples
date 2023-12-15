@@ -24,7 +24,7 @@ add_test(NAME Programming_Model_CPU COMMAND ../programming_model_cpu.sh )
 set_property(TEST Programming_Model_CPU PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
 
 add_test(NAME Programming_Model_GPU COMMAND ../programming_model_gpu.sh )
-set_property(TEST Programming_Model_GPU PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
+set_property(TEST Programming_Model_GPU PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
 
 add_test(NAME Programming_Model_Managed_Memory COMMAND ../programming_model_managed_memory.sh )
 set_property(TEST Programming_Model_Managed_Memory PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
@@ -124,6 +124,18 @@ set_property(TEST OpenMP_Intro_Target_Data_Unstructured PROPERTY PASS_REGULAR_EX
 add_test(NAME OpenMP_Intro_Target_Data_Update COMMAND ../openmp_intro_target_data_update.sh )
 set_property(TEST OpenMP_Intro_Target_Data_Update PROPERTY PASS_REGULAR_EXPRESSION "Target Update result is 300000.000000")
 
+# Additional OpenMP Language Constructs
+
+# Advanced OpenMP Examples
+
+if(${LIBOMPTARGET_INFO_SUPPORT} MATCHES "1")
+   add_test(NAME AdvancedOpenMP_Memory1 COMMAND ../advancedopenmp_memory1.sh )
+   set_property(TEST AdvancedOpenMP_Memory1 PROPERTY PASS_REGULAR_EXPRESSION "Entering OpenMP kernel at mem1.cc")
+
+   add_test(NAME AdvancedOpenMP_Memory2 COMMAND ../advancedopenmp_memory2.sh )
+   set_property(TEST AdvancedOpenMP_Memory2 PROPERTY PASS_REGULAR_EXPRESSION "Exiting OpenMP data region at mem2.cc")
+endif()
+
 # HIP Examples
 
 add_test(NAME HIP_Vectoradd_Makefile COMMAND ../hip_vectoradd_makefile.sh )
@@ -197,16 +209,6 @@ set_property(TEST Hipify_Nbody PROPERTY PASS_REGULAR_EXPRESSION "3000")
 # failing
 #add_test(NAME OpenACC_Vecadd_F_GFortran COMMAND ../openacc_vecadd_f_gfortran.sh )
 #set_property(TEST OpenACC_Vecadd_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "Final result")
-
-# Advanced OpenMP Examples
-
-if(${LIBOMPTARGET_INFO_SUPPORT} MATCHES "1")
-   add_test(NAME AdvancedOpenMP_Memory1 COMMAND ../advancedopenmp_memory1.sh )
-   set_property(TEST AdvancedOpenMP_Memory1 PROPERTY PASS_REGULAR_EXPRESSION "Entering OpenMP kernel at mem1.cc")
-
-   add_test(NAME AdvancedOpenMP_Memory2 COMMAND ../advancedopenmp_memory2.sh )
-   set_property(TEST AdvancedOpenMP_Memory2 PROPERTY PASS_REGULAR_EXPRESSION "Exiting OpenMP data region at mem2.cc")
-endif()
 
 # Kokkos
 
