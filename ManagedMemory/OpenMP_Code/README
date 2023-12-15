@@ -1,0 +1,15 @@
+# OpenMP code with two different cases
+
+# Load the compiler
+
+module load amdclang
+
+# Build the code
+
+make
+
+# Run the executable with the LIBOMPTARGET_INFO variable set to see what is happening
+
+export LIBOMPTARGET_INFO=-1
+./openmp_code
+./openmp_code1
