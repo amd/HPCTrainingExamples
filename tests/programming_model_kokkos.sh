@@ -35,6 +35,9 @@ CXX=hipcc cmake ..
 make
 ./kokkos_code
 
+cd ..
+rm -rf build
+
 cd ${PWDir}
 rm -rf Kokkos_HIP
 
