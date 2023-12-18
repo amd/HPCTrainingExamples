@@ -9,6 +9,7 @@ cd osu-micro-benchmarks-7.1-1
 
 ./configure --prefix=`pwd`/../build/ \
 	CC=`which mpicc` \
+	CPPFLAGS=-D__HIP_PLATFORM_AMD__=1 \
         CXX=`which mpicxx` \
 	--enable-rocm \
 	--with-rocm=${ROCM_PATH}
