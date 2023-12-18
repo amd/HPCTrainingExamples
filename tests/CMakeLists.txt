@@ -6,6 +6,10 @@ execute_process(COMMAND rocminfo COMMAND grep gfx COMMAND sed "s/Name://" COMMAN
 #string(STRIP GFXMODEL GFXMODEL)
 #message(STATUS "GFXMODEL ${GFXMODEL}")
 
+execute_process(COMMAND rocminfo COMMAND grep GPU\&"Device Type" COMMAND wc -l OUTPUT_VARIABLE GPUCOUNT)
+string(STRIP GPUCOUNT GPUCOUNT)
+message(STATUS "GPUCOUNT ${GPUCOUNT}")
+
 execute_process(COMMAND rocminfo COMMAND grep xnack COMMAND wc -l OUTPUT_VARIABLE XNACK_COUNT)
 #string(STRIP XNACK_COUNT XNACK_COUNT)
 #message(STATUS "XNACK_COUNT ${XNACK_COUNT}")
@@ -377,8 +381,10 @@ endif()
 
 # GPU-Aware MPI tests
 
-add_test(NAME GPUAwareMPI_pt2pt COMMAND ../gpuawarempi_pt2pt.sh )
-set_property(TEST GPUAwareMPI_pt2pt PROPERTY PASS_REGULAR_EXPRESSION "Run successful: received buffer has the right value")
+if (${GPUCOUNT} GREATER_EQUAL "2")
+   add_test(NAME GPUAwareMPI_pt2pt COMMAND ../gpuawarempi_pt2pt.sh )
+   set_property(TEST GPUAwareMPI_pt2pt PROPERTY PASS_REGULAR_EXPRESSION "Run successful: received buffer has the right value")
+endif()
 
 add_test(NAME GPUAwareMPI_OSUBenchmark COMMAND ../gpuawarempi_osubenchmark.sh )
 set_property(TEST GPUAwareMPI_OSUBenchmark PROPERTY PASS_REGULAR_EXPRESSION "8388608")
