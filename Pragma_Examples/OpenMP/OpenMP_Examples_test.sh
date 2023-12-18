@@ -3,11 +3,10 @@
 wget https://github.com/OpenMP/Examples/archive/refs/tags/v5.2.1.tar.gz
 tar -xzvf v5.2.1.tar.gz
 cd Examples-5.2.1/sources
-ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 sed -i -e 's/^comp_c=""/comp_c="$CC"/' \
        -e 's/^comp_cpp=""/comp_cpp="$CXX"/' \
        -e 's/^comp_f=""/comp_f="$FC"/' \
-       -e 's/^omp_flag=""/omp_flag="-fopenmp --offload-arch=$(ROCM_GPU)"/' \
+       -e 's/^omp_flag=""/omp_flag="-fopenmp --offload-arch=gfx90a"/' \
      eval_codes
 
 module load amdclang

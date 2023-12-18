@@ -6,9 +6,9 @@ module load og
 sed -e "s|^!CC:gcc|CC:/opt/rocmplus-5.7.2/og13-23-12-08/bin/gcc|" \
     -e "s|^!CPP:g++|CPP:/opt/rocmplus-5.7.2/og13-23-12-08/bin/g++|" \
     -e "s|^!FC:gfortran|FC:/opt/rocmplus-5.7.2/og13-23-12-08/bin/gfortran|" \
-    -e "/^!CCFlags:-fopenacc -cpp -lm -foffload=-march=native'/s/^!//" \
-    -e "/^!CPPFlags:-fopenacc -cpp -lm -foffload=-march=native'/s/^!//" \
-    -e "/^!FCFlags:-fopenacc -cpp -lm -foffload=-march=native/s/^!//" \
+    -e "/^!CCFlags:-fopenacc -cpp -lm -foffload=-march=gfx90a'/s/^!//" \
+    -e "/^!CPPFlags:-fopenacc -cpp -lm -foffload=-march=gfx90a'/s/^!//" \
+    -e "/^!FCFlags:-fopenacc -cpp -lm -foffload=-march=gfx90a/s/^!//" \
     -e "s/^!ResultsFormat:json/ResultsFormat:html/" \
     init_config.txt > gcc_config.txt
 
@@ -19,7 +19,7 @@ tar -czvf gcc_openacc_results.tgz gcc_openacc_results
 
 module load clacc
 sed -e "s|^!CC:gcc|CC:/opt/rocmplus-5.7.2/clacc_clang/bin/clang|" \
-    -e "s|^!CCFlags:-fopenacc -cpp -lm -foffload='-lm'|CCFlags:-fopenacc --offload-arch=native|" \
+    -e "s|^!CCFlags:-fopenacc -cpp -lm -foffload='-lm'|CCFlags:-fopenacc --offload-arch=gfx90a|" \
     -e "s|^!ResultsFormat:json|ResultsFormat:html|" \
     init_config.txt > clacc_config.txt
 
