@@ -11,7 +11,7 @@
 #pragma omp requires unified_shared_memory
 
 #define SWAP_PTR(xnew,xold,xtmp) (xtmp=xnew, xnew=xold, xold=xtmp)
-void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &do_timing);
+void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing);
 void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx);
 void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop);
 void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize,
@@ -30,54 +30,48 @@ int main(int argc, char *argv[])
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
    if (rank == 0) printf("Parallel run with no threads\n");
 
-   int DevNum;
-   switch(rank)
-   {
-     case 0:
-     case 1:
-      DevNum = 3;
-      break;
-     case 2:
-     case 3:
-      DevNum = 2;
-      break;
-     case 4:
-     case 5:
-      DevNum = 1;
-      break;
-     case 6:
-     case 7:
-      DevNum = 0;
-      break;
-     case 8:
-     case 9:
-      DevNum = 7;
-      break;
-     case 10:
-     case 11:
-      DevNum = 6;
-      break;
-     case 12:
-     case 13:
-      DevNum = 5;
-      break;
-     case 14:
-     case 15:
-      DevNum = 4;
-      break;
-   }
-   omp_set_default_device(DevNum);
-
-   if (rank == 0 || rank == 1){
-      omp_set_default_device(4);
-   }
+//   int numPerNUMA=nprocs/8;
+//   int DevNum;
+//   switch(rank/numPerNUMA)
+//   {
+//     case 0:
+//      DevNum = 3;
+//      break;
+//     case 1:
+//      DevNum = 2;
+//      break;
+//     case 2:
+//      DevNum = 1;
+//      break;
+//     case 3:
+//      DevNum = 0;
+//      break;
+//     case 4:
+//      DevNum = 7;
+//      break;
+//     case 5:
+//      DevNum = 6;
+//      break;
+//     case 6:
+//      DevNum = 5;
+//      break;
+//     case 7:
+//      DevNum = 4;
+//      break;
+//   }
+//   omp_set_default_device(DevNum);
+//
+//   if (rank == 0 || rank == 1){
+//      omp_set_default_device(4);
+//   }
 
    int imax = 2000, jmax = 2000;
    int nprocx = 0, nprocy = 0;
    int nhalo = 2, corners = 0;
    int do_timing = 0;
+   int maxIter = 1000;
 
-   parse_input_args(argc, argv, jmax, imax, nprocy, nprocx, nhalo, corners, do_timing);
+   parse_input_args(argc, argv, jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, do_timing);
  
    struct timespec tstart_stencil, tstart_total;
    double stencil_time=0.0, total_time;
@@ -140,7 +134,7 @@ int main(int argc, char *argv[])
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
    ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
-   for (int iter = 0; iter < 1000; iter++){
+   for (int iter = 0; iter < maxIter; iter++){
       cpu_timer_start(&tstart_stencil);
 
       #pragma omp target teams distribute parallel for collapse(2)
@@ -348,19 +342,22 @@ void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, in
    malloc2D_free(x, nhalo);
 }
 
-void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &do_timing)
+void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing)
 {
    int c;
    int rank;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-   while ((c = getopt(argc, argv, "ch:i:j:tx:y:")) != -1){
+   while ((c = getopt(argc, argv, "ch:I:i:j:tx:y:")) != -1){
       switch(c){
          case 'c':
             corners = 1;
             break;
          case 'h':
             nhalo = atoi(optarg);
+            break;
+         case 'I':
+            maxIter = atoi(optarg);
             break;
          case 'i':
             imax = atoi(optarg);
@@ -378,7 +375,7 @@ void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, 
             nprocy = atoi(optarg);
             break;
          case '?':
-            if (optopt == 'h' || optopt == 'i' || optopt == 'j' || optopt == 'x' || optopt == 'y'){
+            if (optopt == 'h' || optopt == 'I' || optopt == 'i' || optopt == 'j' || optopt == 'x' || optopt == 'y'){
                if (rank == 0) fprintf (stderr, "Option -%c requires an argument.\n", optopt);
                MPI_Finalize();
                exit(1);

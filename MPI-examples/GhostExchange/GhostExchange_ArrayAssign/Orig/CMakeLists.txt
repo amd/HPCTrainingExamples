@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(GhostExchange)
+project(GhostExchange C CXX)
 
 set (CMAKE_C_STANDARD 99)
 set (CMAKE_CXX_STANDARD 98)
@@ -23,7 +23,6 @@ endif (CMAKE_VECTOR_NOVEC)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${VECTOR_C_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${VECTOR_CXX_FLAGS}")
-
 
 # Require MPI for this project:
 find_package(MPI REQUIRED)

@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include "malloc2D.h"
 
+#pragma omp requires unified_shared_memory
+
 double **malloc2D(int jmax, int imax, int joffset, int ioffset)
 {
    // first allocate a block of memory for the row pointers and the 2D array
