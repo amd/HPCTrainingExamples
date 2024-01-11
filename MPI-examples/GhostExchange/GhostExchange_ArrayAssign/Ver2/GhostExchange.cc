@@ -66,8 +66,8 @@ int main(int argc, char *argv[])
 //      omp_set_default_device(4);
 //   }
 
-   int imax = 20000, jmax = 20000;
-   int nprocx = 4, nprocy = 4;
+   int imax = 200, jmax = 200;
+   int nprocx = 2, nprocy = 2;
    int nhalo = 2, corners = 1;
    int do_timing = 1;
    int maxIter = 1;
