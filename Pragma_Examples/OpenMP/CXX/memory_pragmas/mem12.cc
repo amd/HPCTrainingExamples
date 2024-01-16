@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#pragma omp requires unified_address
+#pragma omp requires unified_shared_memory
 #include <iostream>
 #include <iomanip>
 #include <algorithm>

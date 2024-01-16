@@ -1,4 +1,4 @@
-#pragma omp requires unified_address
+#pragma omp requires unified_shared_memory
 
 #include <stdio.h>
 #include <stdlib.h>

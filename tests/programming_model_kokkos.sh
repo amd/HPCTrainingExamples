@@ -39,7 +39,6 @@ cd ..
 rm -rf build
 
 cd ${PWDir}
-rm -rf Kokkos_HIP
+rm -rf Kokkos_HIP Kokkos_build
 
-cd ..
 rm -rf ${PROB_NAME}
