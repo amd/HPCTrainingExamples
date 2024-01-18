@@ -181,6 +181,15 @@ set_property(TEST MPI_Ghost_Exchange_Orig PROPERTY PASS_REGULAR_EXPRESSION "Ghos
 add_test(NAME MPI_Ghost_Exchange_Orig_Affinity COMMAND ../mpi_ghost_exchange_orig_affinity.sh )
 set_property(TEST MPI_Ghost_Exchange_Orig_Affinity PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
 
+add_test(NAME MPI_Ghost_Exchange_Ver1 COMMAND ../mpi_ghost_exchange_ver1.sh )
+set_property(TEST MPI_Ghost_Exchange_Ver1 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+
+add_test(NAME MPI_Ghost_Exchange_Ver3 COMMAND ../mpi_ghost_exchange_ver3.sh )
+set_property(TEST MPI_Ghost_Exchange_Ver3 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+
+add_test(NAME MPI_Ghost_Exchange_Ver4 COMMAND ../mpi_ghost_exchange_ver4.sh )
+set_property(TEST MPI_Ghost_Exchange_Ver4 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+
 
 
 # HIP Examples

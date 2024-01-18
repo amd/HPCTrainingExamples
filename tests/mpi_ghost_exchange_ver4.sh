@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export HSA_XNACK=1
 module load amdclang openmpi
 
 # OpenIB is removed as of OpenMPI 5.0.0, so only needed for older versions
@@ -15,7 +16,7 @@ fi
 
 cd ~/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign
 
-cd Orig
+cd Ver4
 
 mkdir build && cd build
 cmake ..
