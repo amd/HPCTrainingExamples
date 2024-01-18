@@ -155,7 +155,6 @@ set_property(TEST OpenMP_Language_Constructs_C_Device_Routine_wGlobalData PROPER
 add_test(NAME OpenMP_Language_Constructs_C_Device_Routine_wDynGlobalData COMMAND ../openmp_language_constructs_c_device_routine_wdynglobaldata.sh )
 set_property(TEST OpenMP_Language_Constructs_C_Device_Routine_wDynGlobalData PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 5500.000000")
 
-
 # Advanced OpenMP Examples
 
 if(${LIBOMPTARGET_INFO_SUPPORT} MATCHES "1")
@@ -165,6 +164,24 @@ if(${LIBOMPTARGET_INFO_SUPPORT} MATCHES "1")
    add_test(NAME AdvancedOpenMP_Memory2 COMMAND ../advancedopenmp_memory2.sh )
    set_property(TEST AdvancedOpenMP_Memory2 PROPERTY PASS_REGULAR_EXPRESSION "Exiting OpenMP data region at mem2.cc")
 endif()
+
+# GPU-Aware MPI tests
+
+if (${GPUCOUNT} GREATER_EQUAL "2")
+   add_test(NAME GPUAwareMPI_pt2pt COMMAND ../gpuawarempi_pt2pt.sh )
+   set_property(TEST GPUAwareMPI_pt2pt PROPERTY PASS_REGULAR_EXPRESSION "Run successful: received buffer has the right value")
+endif()
+
+add_test(NAME GPUAwareMPI_OSUBenchmark COMMAND ../gpuawarempi_osubenchmark.sh )
+set_property(TEST GPUAwareMPI_OSUBenchmark PROPERTY PASS_REGULAR_EXPRESSION "8388608")
+
+add_test(NAME MPI_Ghost_Exchange_Orig COMMAND ../mpi_ghost_exchange_orig.sh )
+set_property(TEST MPI_Ghost_Exchange_Orig PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+
+add_test(NAME MPI_Ghost_Exchange_Orig_Affinity COMMAND ../mpi_ghost_exchange_orig_affinity.sh )
+set_property(TEST MPI_Ghost_Exchange_Orig_Affinity PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+
+
 
 # HIP Examples
 
@@ -400,16 +417,6 @@ if(${XNACK_COUNT} GREATER_EQUAL "1")
    add_test(NAME NodeMemModel_OpenMP_Atomics10 COMMAND ../nodememmodel_openmp_atomics10.sh )
    set_property(TEST NodeMemModel_OpenMP_Atomics10 PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
 endif()
-
-# GPU-Aware MPI tests
-
-if (${GPUCOUNT} GREATER_EQUAL "2")
-   add_test(NAME GPUAwareMPI_pt2pt COMMAND ../gpuawarempi_pt2pt.sh )
-   set_property(TEST GPUAwareMPI_pt2pt PROPERTY PASS_REGULAR_EXPRESSION "Run successful: received buffer has the right value")
-endif()
-
-add_test(NAME GPUAwareMPI_OSUBenchmark COMMAND ../gpuawarempi_osubenchmark.sh )
-set_property(TEST GPUAwareMPI_OSUBenchmark PROPERTY PASS_REGULAR_EXPRESSION "8388608")
 
 # Affinity tests
 
