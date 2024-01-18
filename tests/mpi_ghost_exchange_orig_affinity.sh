@@ -21,8 +21,14 @@ mkdir build && cd build
 cmake ..
 make
 
-mpirun ${MPI_RUN_OPTIONS} -n 16 --bind-to core --map-by ppr:2:numa  --report-bindings ./GhostExchange \
-    -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I 1000
+NUMCPUS=`lscpu | grep '^CPU(s):' |cut -d':' -f2 | tr -d ' '`
+if [ ${NUMCPUS} -gt 255 ]; then
+   mpirun ${MPI_RUN_OPTIONS} -n 16 --bind-to core --map-by ppr:2:numa  --report-bindings ./GhostExchange \
+       -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I 1000
+else
+   mpirun ${MPI_RUN_OPTIONS} -n 4 --bind-to core --report-bindings ./GhostExchange \
+       -x 2  -y 2  -i 2000 -j 2000 -h 2 -t -c -I 1000
+fi
 
 cd ..
 rm -rf build
