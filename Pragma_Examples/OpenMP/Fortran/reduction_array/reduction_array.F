@@ -2,11 +2,12 @@
 ! Copyright (c) 2024 AMD HPC Application Performance Team
 ! MIT License
       program reduction
+
+      implicit none
+
       integer:: j
       integer, parameter :: real8 = kind(0.0d0)
       real(real8):: ce(2)
-
-      implicit none
 
       ce(:)=0.0d0
 !$omp target teams distribute parallel do simd reduction(+:ce)

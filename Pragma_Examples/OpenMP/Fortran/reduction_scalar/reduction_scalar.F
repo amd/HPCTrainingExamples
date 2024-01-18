@@ -2,11 +2,11 @@
 ! Copyright (c) 2024 AMD HPC Application Performance Team
 ! MIT License
       program reduction
+      implicit none
+
       integer:: i,j,k
       integer, parameter :: real8 = kind(0.0d0)
       real(real8):: ce1,ce2
-
-      implicit none
 
       ce1=0.0d0
       ce2=0.0d0
