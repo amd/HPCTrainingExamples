@@ -38,10 +38,10 @@ if(${XNACK_COUNT} GREATER_EQUAL "1")
    set_property(TEST Programming_Model_APU PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
 endif ()
 
-add_test(NAME Programming_Model_OpenMP COMMAND ../programming_model_openmp.sh )
-set_property(TEST Programming_Model_OpenMP PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
-
 if(${XNACK_COUNT} GREATER_EQUAL "1")
+   add_test(NAME Programming_Model_OpenMP COMMAND ../programming_model_openmp.sh )
+   set_property(TEST Programming_Model_OpenMP PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
+
    add_test(NAME Programming_Model_Raja COMMAND ../programming_model_raja.sh )
    set_property(TEST Programming_Model_Raja PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
 
@@ -144,7 +144,7 @@ add_test(NAME OpenMP_Language_Constructs_C_Reduction_Scalar COMMAND ../openmp_la
 set_property(TEST OpenMP_Language_Constructs_C_Reduction_Scalar PROPERTY PASS_REGULAR_EXPRESSION "ce1 = 1000.000000 ce2 1000.000000")
 
 add_test(NAME OpenMP_Language_Constructs_C_Reduction_Array COMMAND ../openmp_language_constructs_c_reduction_array.sh )
-set_property(TEST OpenMP_Language_Constructs_C_Reduction_Array PROPERTY PASS_REGULAR_EXPRESSION "ce1 = 1000.000000 ce2 1000.000000")
+set_property(TEST OpenMP_Language_Constructs_C_Reduction_Array PROPERTY PASS_REGULAR_EXPRESSION "ce[0] = 1000.000000 ce[1] = 1000.000000")
 
 add_test(NAME OpenMP_Language_Constructs_C_Device_Routine COMMAND ../openmp_language_constructs_c_device_routine.sh )
 set_property(TEST OpenMP_Language_Constructs_C_Device_Routine PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 1000.000000")
