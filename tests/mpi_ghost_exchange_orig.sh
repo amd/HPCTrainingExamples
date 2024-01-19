@@ -24,10 +24,8 @@ make
 NUMCPUS=`lscpu | grep '^CPU(s):' |cut -d':' -f2 | tr -d ' '`
 
 if [ ${NUMCPUS} -gt 255 ]; then
-  echo "mpirun ${MPI_RUN_OPTIONS} -n 16  ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I 1000"
   mpirun ${MPI_RUN_OPTIONS} -n 16  ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I 1000
 else
-  echo "mpirun ${MPI_RUN_OPTIONS} -n 4  ./GhostExchange -x 2  -y 2  -i 2000 -j 2000 -h 2 -t -c -I 1000"
   mpirun ${MPI_RUN_OPTIONS} -n 4  ./GhostExchange -x 2  -y 2  -i 2000 -j 2000 -h 2 -t -c -I 1000
 fi
 
