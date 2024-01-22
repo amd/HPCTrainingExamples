@@ -16,7 +16,7 @@
 #define xvnew(j,i) xnew[(j+nhalo)*jstride+(i+nhalo)]
 
 void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing);
-void Cartesian_print(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx);
+void Cartesian_print(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int jstride);
 void boundarycondition_update(double *x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop);
 void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize,
       int nleft, int nrght, int nbot, int ntop, int do_timing);
@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
 
    total_time = cpu_timer_stop(tstart_total);
 
-   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx, jstride);
 
    if (rank == 0){
       printf("GhostExchange_ArrayAssign Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
@@ -389,7 +389,7 @@ void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, in
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
    ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
-   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx, jstride);
 
    free(x);
 }
@@ -462,10 +462,8 @@ void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, 
    }
 }
 
-void Cartesian_print(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx)
+void Cartesian_print(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int jstride)
 {
-   int jstride = imax+2*nhalo;
-
    int rank, nprocs;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
