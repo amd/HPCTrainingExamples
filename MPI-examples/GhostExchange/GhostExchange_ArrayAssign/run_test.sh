@@ -89,3 +89,24 @@ make
 echo "Ver 4: Timing for GPU version with 16 ranks with memory allocation once in main"
 mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
 cd ../..
+
+echo "Building Ver5"
+cd Ver5
+rm -rf build
+mkdir build && cd build
+cmake ..
+make
+echo "Ver 5: Timing for GPU version with 16 ranks with memory allocation once in main"
+mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+cd ../..
+
+unset HSA_XNACK
+echo "Building Ver6"
+cd Ver6
+rm -rf build
+mkdir build && cd build
+cmake ..
+make
+echo "Ver 6: Timing for GPU version with 16 ranks with memory allocation once in main"
+mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+cd ../..
