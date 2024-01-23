@@ -196,7 +196,7 @@ if(${XNACK_COUNT} GREATER_EQUAL "1")
 endif()
 
    add_test(NAME MPI_Ghost_Exchange_Ver6 COMMAND ../mpi_ghost_exchange_ver6.sh )
-   set_property(TEST MPI_Ghost_Exchange_Ver5 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+   set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
 
 # HIP Examples
 
