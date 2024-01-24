@@ -3,7 +3,7 @@
 module load rocm
 
 cd ~/HPCTrainingExamples/HIPIFY/mini-nbody/hip/
-hipcc -DSHMOO -I ../ nbody-orig.hip -o nbody-orig
+make nbody-orig
 
 rocprof --stats --hsa-trace ./nbody-orig 65536
 
