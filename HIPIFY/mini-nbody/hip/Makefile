@@ -26,17 +26,19 @@ endif
 	$(HIPCC) $(HIPCC_FLAGS) -c $< -o $@
 
 nbody-orig: nbody-orig.o
-	$(CXX) $^ $(LDFLAGS) -o $@
+	$(HIPCC) $^ $(LDFLAGS) -o $@
 
 nbody-soa: nbody-soa.o
-	$(CXX) $^ $(LDFLAGS) -o $@
+	$(HIPCC) $^ $(LDFLAGS) -o $@
 
 nbody-block: nbody-block.o
-	$(CXX) $^ $(LDFLAGS) -o $@
+	$(HIPCC) $^ $(LDFLAGS) -o $@
 
 nbody-unroll: nbody-unroll.o
-	$(CXX) $^ $(LDFLAGS) -o $@
+	$(HIPCC) $^ $(LDFLAGS) -o $@
 
 clean:
 	rm -f nbody-orig nbody-soa nbody-block nbody-unroll
 	rm -f nbody-orig.o nbody-soa.o nbody-block.o nbody-unroll.o
+	rm -f results.copy_stats.csv results.csv results.db results.hip_stats.csv
+	rm -f results.hsa_stats.csv results.json results.stats.csv results.sysinfo.txt
