@@ -27,10 +27,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${VECTOR_CXX_FLAGS}")
 # Require MPI for this project:
 find_package(MPI REQUIRED)
 
+set(ROCM_GPU "$(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//')")
+
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
    # using Clang
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp --offload-arch=gfx90a -fstrict-aliasing")
-   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp --offload-arch=gfx90a -fstrict-aliasing")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp --offload-arch=${ROCM_GPU} -fstrict-aliasing")
+   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp --offload-arch=${ROCM_GPU} -fstrict-aliasing")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
    # using GCC
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -foffload=-march=native -fstrict-aliasing -fopt-info-optimized-omp")
@@ -41,7 +43,6 @@ add_executable(GhostExchange GhostExchange.cc timer.c timer.h malloc2D.c malloc2
 
 set_target_properties(GhostExchange PROPERTIES INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH}")
 set_target_properties(GhostExchange PROPERTIES COMPILE_FLAGS "${MPI_CXX_COMPILE_FLAGS}")
-set_target_properties(GhostExchange PROPERTIES LINK_FLAGS "${MPI_CXX_LINK_FLAGS}")
 target_link_libraries(GhostExchange PRIVATE "${MPI_CXX_LIBRARIES}")
 
 # Add a test:
