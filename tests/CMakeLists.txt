@@ -443,3 +443,22 @@ set_property(TEST Affinity_MPI2_OpenMP2 PROPERTY PASS_REGULAR_EXPRESSION "MPI 00
 
 add_test(NAME Affinity_MPI4_OpenMP2_Bind COMMAND ../affinity_mpi4_openmp2_bind.sh )
 set_property(TEST Affinity_MPI4_OpenMP2_Bind PROPERTY PASS_REGULAR_EXPRESSION "MCW rank 3 bound to socket 0")
+
+# Rocprof tests
+
+add_test(NAME Rocprof_Mini_Nbody_Results COMMAND ../rocprof_mini_nbody_results.sh )
+set_property(TEST Rocprof_Mini_Nbody_Results PROPERTY PASS_REGULAR_EXPRESSION "10")
+
+add_test(NAME Rocprof_Mini_Nbody_Stats COMMAND ../rocprof_mini_nbody_stats.sh )
+set_property(TEST Rocprof_Mini_Nbody_Stats PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
+
+add_test(NAME Rocprof_Mini_Nbody_Basenames COMMAND ../rocprof_mini_nbody_basenames.sh )
+set_property(TEST Rocprof_Mini_Nbody_Basename PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
+
+add_test(NAME Rocprof_Mini_Nbody_HIP_Trace COMMAND ../rocprof_mini_nbody_hip_trace.sh )
+set_property(TEST Rocprof_Mini_Nbody_HIP_Trace PROPERTY PASS_REGULAR_EXPRESSION "hipLaunchKernel")
+
+add_test(NAME Rocprof_Mini_Nbody_HSA_Trace COMMAND ../rocprof_mini_nbody_hsa_trace.sh )
+set_property(TEST Rocprof_Mini_Nbody_HSA_Trace PROPERTY PASS_REGULAR_EXPRESSION "hsa_system_get_info")
+
+
