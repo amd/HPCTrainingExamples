@@ -453,7 +453,7 @@ add_test(NAME Rocprof_Mini_Nbody_Stats COMMAND ../rocprof_mini_nbody_stats.sh )
 set_property(TEST Rocprof_Mini_Nbody_Stats PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
 
 add_test(NAME Rocprof_Mini_Nbody_Basenames COMMAND ../rocprof_mini_nbody_basenames.sh )
-set_property(TEST Rocprof_Mini_Nbody_Basename PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
+set_property(TEST Rocprof_Mini_Nbody_Basenames PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
 
 add_test(NAME Rocprof_Mini_Nbody_HIP_Trace COMMAND ../rocprof_mini_nbody_hip_trace.sh )
 set_property(TEST Rocprof_Mini_Nbody_HIP_Trace PROPERTY PASS_REGULAR_EXPRESSION "hipLaunchKernel")
