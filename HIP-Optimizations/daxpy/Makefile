@@ -4,7 +4,7 @@ EXECUTABLE = daxpy_1 daxpy_2 daxpy_3 daxpy_4 daxpy_5
 
 CXX=hipcc
 LDFLAGS=
-CXXFLAGS= -std=c++17 -Wno-unused-result -O2 -g --save-temps
+CXXFLAGS= -std=c++17 -Wno-unused-result -O2 -g --save-temps #-Rpass-analysis=kernel-resource-usage
 
 all: ${EXECUTABLE} 
 

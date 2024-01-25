@@ -45,9 +45,9 @@ If we ensured that the array has a multiple of `BLOCK_SIZE` elements so that all
 Question: What happens if `BLOCK_SIZE` is `1024`? Why?
 
 ## `daxpy_5`
-In this experiment, we will use double2 type in the kernel to see if the compiler can generate `global_load_dwordx4` instructions instead of `global_load_dwordx2` instructions. So, with same number of load and store instructions, we are able to process two elements in each thread. This should help amortize on the cost of index calculation. This kernel does not perform as well.. and we need to understand why. Adding `__launch_bounds__` to the kernel does not help as we did not have register pressure to begin with.
+In this experiment, we will use double2 type in the kernel to see if the compiler can generate `global_load_dwordx4` instructions instead of `global_load_dwordx2` instructions. So, with same number of load and store instructions, we are able to read/write two elements from each array in each thread. This should help amortize on the cost of index calculations. 
 
-First, to get the assembly for these kernels, ensure that the `-g --save-temps` flags are passed to `hipcc`. Then you can find the assembly code in `daxpy_*-host-x86_64-unknown-linux-gnu.s` files. Examining `daxpy_3` and `daxpy_5`, we see the two cases:
+To show this difference, we need to generate the assembly for these two kernels. To generate the assembly code for these kernels, ensure that the `-g --save-temps` flags are passed to `hipcc`. Then you can find the assembly code in `daxpy_*-host-x86_64-unknown-linux-gnu.s` files. Examining `daxpy_3` and `daxpy_5`, we see the two cases (edited here for clarity):
 
 `daxpy_3`:
 ```
@@ -73,16 +73,7 @@ First, to get the assembly for these kernels, ensure that the `-g --save-temps` 
     v_addc_co_u32_e32 v1, vcc, v10, v9, vcc
     global_store_dwordx4 v[0:1], v[4:7], off
 ```
-We observe that in the `daxpy_5` case, there are two `v_fmac_f64_e32` instructions, one for each element being processed.
-
-To understand why `daxpy_5` does not perform better, we can profile the two kernels and compare. Here are the steps:
-
-```
-omniperf profile -n daxpy_3 --no-roof -- ./daxpy_3 10000000
-omniperf profile -n daxpy_5 --no-roof -- ./daxpy_5 10000000
-omniperf analyze -p workloads/daxpy_3/mi200 -p workloads/daxpy_5/mi200 --dispatch 5
-```
-In the analyze command above, we are skipping the warmup runs and the first few iterations and analyzing only the 5th kernel dispatch in each case. The command compares the profiles and shows how each metric changes between the two cases. We leave the reader to ponder about the reasons why `daxpy_5` is slower than `daxpy_3`. Our thoughts are that due to the increased latency of read and write instructions now, the compute operations cannot be scheduled as fast as in the `daxpy_3` case. This optimization does not quite help this case, but could be useful in `SAXPY`, for instance, where processing 2 FP32 values could be done with one packed FP64 FMA instruction.
+We observe that, in the `daxpy_5` case, there are two `v_fmac_f64_e32` instructions as expected, one for each element being processed.
 
 # Notes
 - Before timing kernels, it is best to launch the kernel at least once as warmup so that those initial GPU launch latencies do not affect your timing measurements.
