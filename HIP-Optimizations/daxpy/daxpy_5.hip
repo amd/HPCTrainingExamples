@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015-2024 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
 
 This training example is released under the MIT license as listed
 in the top-level directory. If this example is separated from the
