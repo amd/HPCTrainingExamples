@@ -82,7 +82,7 @@ omniperf profile -n daxpy_3 --no-roof -- ./daxpy_3 10000000
 omniperf profile -n daxpy_5 --no-roof -- ./daxpy_5 10000000
 omniperf analyze -p workloads/daxpy_3/mi200 -p workloads/daxpy_5/mi200 --dispatch 5
 ```
-In the analyze command above, we are skipping the warmup runs and the first few iterations and analyzing only the 5th kernel dispatch in each case. The command compares the profiles and shows how each metric changes between the two cases. We leave the reader to ponder about the reasons why `daxpy_5` is slower than `daxpy_3`.
+In the analyze command above, we are skipping the warmup runs and the first few iterations and analyzing only the 5th kernel dispatch in each case. The command compares the profiles and shows how each metric changes between the two cases. We leave the reader to ponder about the reasons why `daxpy_5` is slower than `daxpy_3`. Our thoughts are that due to the increased latency of read and write instructions now, the compute operations cannot be scheduled as fast as in the `daxpy_3` case. This optimization does not quite help this case, but could be useful in `SAXPY`, for instance, where processing 2 FP32 values could be done with one packed FP64 FMA instruction.
 
 # Notes
 - Before timing kernels, it is best to launch the kernel at least once as warmup so that those initial GPU launch latencies do not affect your timing measurements.
