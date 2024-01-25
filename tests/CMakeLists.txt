@@ -32,10 +32,10 @@ set_property(TEST Programming_Model_GPU PROPERTY PASS_REGULAR_EXPRESSION "Result
 
 if(${XNACK_COUNT} GREATER_EQUAL "1")
    add_test(NAME Programming_Model_Managed_Memory COMMAND ../programming_model_managed_memory.sh )
-   set_property(TEST Programming_Model_Managed_Memory PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
+   set_property(TEST Programming_Model_Managed_Memory PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
 
    add_test(NAME Programming_Model_APU COMMAND ../programming_model_apu.sh )
-   set_property(TEST Programming_Model_APU PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
+   set_property(TEST Programming_Model_APU PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
 endif ()
 
 if(${XNACK_COUNT} GREATER_EQUAL "1")
