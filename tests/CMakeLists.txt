@@ -22,6 +22,13 @@ else ()
    set(SLURM_BATCH_WAIT 1)
 endif()
 
+# Unified Shared Memory Examples (MI300A programming)
+add_test(NAME USM_Vector_Add COMMAND ../usm_vector_add.sh )
+set_property(TEST USM_Vector_Add PROPERTY PASS_REGULAR_EXPRESSION "PASSED")
+
+add_test(NAME USM_Vector_Auto_Zero_Copy COMMAND ../usm_vector_auto_zero_copy.sh )
+set_property(TEST USM_Vector_Auto_Zero_Copy PROPERTY PASS_REGULAR_EXPRESSION "PASSED")
+
 # HIP Optimizations Examples
 add_test(NAME HIP_Optimizations_daxpy_1 COMMAND ../hip_optimizations_daxpy_1.sh )
 set_property(TEST HIP_Optimizations_daxpy_1 PROPERTY PASS_REGULAR_EXPRESSION "PASSED")
