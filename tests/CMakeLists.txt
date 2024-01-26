@@ -24,10 +24,10 @@ endif()
 
 # Unified Shared Memory Examples (MI300A programming)
 add_test(NAME USM_Vector_Add COMMAND ../usm_vector_add.sh )
-set_property(TEST USM_Vector_Add PROPERTY PASS_REGULAR_EXPRESSION "PASSED")
+set_property(TEST USM_Vector_Add PROPERTY PASS_REGULAR_EXPRESSION "Success")
 
 add_test(NAME USM_Vector_Auto_Zero_Copy COMMAND ../usm_vector_auto_zero_copy.sh )
-set_property(TEST USM_Vector_Auto_Zero_Copy PROPERTY PASS_REGULAR_EXPRESSION "PASSED")
+set_property(TEST USM_Vector_Auto_Zero_Copy PROPERTY PASS_REGULAR_EXPRESSION "Success")
 
 # HIP Optimizations Examples
 add_test(NAME HIP_Optimizations_daxpy_1 COMMAND ../hip_optimizations_daxpy_1.sh )
