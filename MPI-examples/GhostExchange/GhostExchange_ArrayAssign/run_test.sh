@@ -23,10 +23,14 @@ rm -rf build
 mkdir build && cd build
 cmake ..
 make
-echo "Orig Ver: Timing for CPU version with 16 ranks"
-mpirun ${MPI_RUN_OPTIONS} -n 16  ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
-echo "Orig Ver: Timing for CPU version with 16 ranks with affinity"
-mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+echo "Orig Ver: Timing for CPU version with 4 ranks"
+mpirun ${MPI_RUN_OPTIONS} -n 4  ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+#echo "Orig Ver: Timing for CPU version with 16 ranks"
+#mpirun ${MPI_RUN_OPTIONS} -n 16  ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+echo "Orig Ver: Timing for CPU version with 4 ranks with affinity"
+mpirun ${MPI_RUN_OPTIONS} -n 4  --bind-to core     -map-by ppr:1:numa  --report-bindings ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+#echo "Orig Ver: Timing for CPU version with 16 ranks with affinity"
+#mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
 #mpirun ${MPI_RUN_OPTIONS} -n 64  --bind-to core     -map-by ppr:8:numa  --report-bindings ./GhostExchange -x 8  -y 8  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
 #mpirun ${MPI_RUN_OPTIONS} -n 256 ./GhostExchange -x 16 -y 16 -i 20000 -j 20000 -h 2 -t -c
 #mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c
@@ -44,9 +48,11 @@ make
 #make VERBOSE=1
 #export LIBOMPTARGET_INFO=-1
 #export LIBOMPTARGET_KERNEL_TRACE=1
-echo "Ver 1: Timing for GPU version with 16 ranks with compute pragmas"
+echo "Ver 1: Timing for GPU version with 4 ranks with compute pragmas"
+mpirun ${MPI_RUN_OPTIONS} -n 4  --bind-to core     -map-by ppr:1:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+#echo "Ver 1: Timing for GPU version with 16 ranks with compute pragmas"
 #mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
-mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+#mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
 #mpirun ${MPI_RUN_OPTIONS} -n 64  --bind-to core     -map-by ppr:8:numa  --report-bindings ./GhostExchange -x 8  -y 8  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
 #mpirun ${MPI_RUN_OPTIONS} -n 256 --bind-to hwthread -map-by ppr:32:numa --report-bindings ./GhostExchange -x 16 -y 16 -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
 cd ../..
@@ -62,12 +68,12 @@ cd ../..
 #export OMNITRACE_USE_PROCESS_SAMPLING=false
 #export OMP_NUM_THREADS=1
 #omnitrace-instrument -o GhostExchange.inst -- ./GhostExchange
-#echo "mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  omnitrace-run -- ../../affinity_script.sh ./GhostExchange.inst"
+#echo "mpirun ${MPI_RUN_OPTIONS} -n 4  --bind-to core     -map-by ppr:1:numa  omnitrace-run -- ../../affinity_script.sh ./GhostExchange.inst"
 #mpirun -n 4  omnitrace-run -- ./GhostExchange.inst
-#exit
 #unset LIBOMPTARGET_INFO
 #unset LIBOMPTARGET_KERNEL_TRACE
 #cd ../..
+#exit
 
 echo "Building Ver3"
 cd Ver3
@@ -75,8 +81,10 @@ rm -rf build
 mkdir build && cd build
 cmake ..
 make
-echo "Ver 3: Timing for GPU version with 16 ranks with omp target alloc"
-mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+echo "Ver 3: Timing for GPU version with 4 ranks with omp target alloc"
+mpirun ${MPI_RUN_OPTIONS} -n 4  --bind-to core     -map-by ppr:1:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+#echo "Ver 3: Timing for GPU version with 16 ranks with omp target alloc"
+#mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
 #mpirun ${MPI_RUN_OPTIONS} -n 64  --bind-to core     -map-by ppr:8:numa  --report-bindings ./GhostExchange -x 8  -y 8  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
 cd ../..
 
@@ -86,8 +94,10 @@ rm -rf build
 mkdir build && cd build
 cmake ..
 make
-echo "Ver 4: Timing for GPU version with 16 ranks with memory allocation once in main"
-mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+echo "Ver 4: Timing for GPU version with 4 ranks with memory allocation once in main"
+mpirun ${MPI_RUN_OPTIONS} -n 4  --bind-to core     -map-by ppr:1:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+#echo "Ver 4: Timing for GPU version with 16 ranks with memory allocation once in main"
+#mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
 cd ../..
 
 echo "Building Ver5"
@@ -96,8 +106,10 @@ rm -rf build
 mkdir build && cd build
 cmake ..
 make
-echo "Ver 5: Timing for GPU version with 16 ranks with memory allocation once in main"
-mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+echo "Ver 5: Timing for GPU version with 4 ranks with memory allocation once in main"
+mpirun ${MPI_RUN_OPTIONS} -n 4  --bind-to core     -map-by ppr:1:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+#echo "Ver 5: Timing for GPU version with 16 ranks with memory allocation once in main"
+#mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
 cd ../..
 
 unset HSA_XNACK
@@ -107,8 +119,10 @@ rm -rf build
 mkdir build && cd build
 cmake ..
 make
-echo "Ver 6: Timing for GPU version with 16 ranks with conversion to 1D indexing"
-mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+echo "Ver 6: Timing for GPU version with 4 ranks with conversion to 1D indexing"
+mpirun ${MPI_RUN_OPTIONS} -n 4  --bind-to core     -map-by ppr:1:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+#echo "Ver 6: Timing for GPU version with 16 ranks with conversion to 1D indexing"
+#mpirun ${MPI_RUN_OPTIONS} -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
 cd ../..
 
 #echo "Building Ver7"
