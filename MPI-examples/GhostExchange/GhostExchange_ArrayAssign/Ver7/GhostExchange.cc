@@ -448,10 +448,10 @@ void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, 
       }
    }
 
-   nprocx = 1;
-   nprocy = 1;
-   imax=1000;
-   jmax=1000;
+   nprocx = 2;
+   nprocy = 2;
+   imax=20000;
+   jmax=20000;
    nhalo = 2;
    do_timing = 1;
    corners = 1;
