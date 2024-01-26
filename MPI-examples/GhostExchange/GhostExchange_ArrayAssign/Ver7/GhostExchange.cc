@@ -455,7 +455,7 @@ void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, 
    nhalo = 2;
    do_timing = 1;
    corners = 1;
-   maxIter = 1000;
+   maxIter = 10;
 
    int xcoord = rank%nprocx;
    int ycoord = rank/nprocx;
