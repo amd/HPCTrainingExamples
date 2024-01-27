@@ -30,6 +30,7 @@ clean:
 	rm -f *.o ${EXEC}
 
 HSA_XNACK ?= 1
+OMPX_APU_MAPS ?= 1
 
 run:
-	HSA_XNACK=${HSA_XNACK} ./$(EXEC)
+	OMPX_APU_MAPS=${OMPX_APU_MAPS} HSA_XNACK=${HSA_XNACK} ./$(EXEC)
