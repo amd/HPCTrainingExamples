@@ -21,9 +21,9 @@ int main()
 
   // initialize
   for(size_t i = 0; i < n; i++) {
-    a[i] = -1;
-    b[i] = i;
-    c[i] = 2*i;
+    a[i] = -1.0;
+    b[i] = (double)i;
+    c[i] = 2.0*(double)i;
   }
 
   #pragma omp target teams loop

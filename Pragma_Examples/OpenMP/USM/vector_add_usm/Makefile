@@ -15,11 +15,10 @@ else ifeq ($(findstring gcc,$(CXX1)), gcc)
 else ifeq ($(findstring cc,$(CXX1)), cc)
   OPENMP_FLAGS = -fopenmp
 else
-  #OPENMP_FLAGS = -fopenmp --foffload=-march=$(ROCM_GPU) -fopt-info-optimized-omp -fopt-info-missed
   OPENMP_FLAGS = -fopenmp --foffload=-march=$(ROCM_GPU) -fopt-info-optimized-omp
 endif
 
-CXXFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
+CXXFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS} -fopenmp-force-usm
 LDFLAGS = ${OPENMP_FLAGS} -fno-lto -lm
 
 ${EXEC}: ${EXEC}.o

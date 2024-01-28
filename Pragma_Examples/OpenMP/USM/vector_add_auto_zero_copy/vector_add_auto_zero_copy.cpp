@@ -19,8 +19,8 @@ int main()
 
   // initialize
   for(size_t i = 0; i < n; i++) {
-    b[i] = i;
-    c[i] = 2*i;
+    b[i] = (double)i;
+    c[i] = 2.0*(double)i;
   }
 
   #pragma omp target teams loop map(from:a[:n]) map(to:b[:n],c[:n])
