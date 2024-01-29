@@ -18,7 +18,7 @@ else
   OPENMP_FLAGS = -fopenmp --foffload=-march=$(ROCM_GPU) -fopt-info-optimized-omp
 endif
 
-CXXFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS} -fopenmp-force-usm
+CXXFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
 LDFLAGS = ${OPENMP_FLAGS} -fno-lto -lm
 
 ${EXEC}: ${EXEC}.o
