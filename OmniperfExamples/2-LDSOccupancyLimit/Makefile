@@ -4,9 +4,9 @@ all: $(EXECUTABLE)
 .PHONY: test
 
 OBJECTS = problem.o
-
+ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 CXXFLAGS = -g -O2 -DNDEBUG -fPIC
-HIPCC_FLAGS = -g -O2 -DNDEBUG
+HIPCC_FLAGS = --offload-arch=$(ROCM_GPU) -g -O2 -DNDEBUG
 
 HIP_PLATFORM ?= amd
 
