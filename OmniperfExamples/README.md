@@ -1,2 +1,2 @@
 # OmniperfExamples
-Repo for developing examples for the HIP Lecture Series at ORNL
+Repo for developing examples for the HIP Lecture Series.
