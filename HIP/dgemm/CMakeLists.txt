@@ -13,15 +13,16 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # -------------------------------------------------------------------------INCLUDES--
 include(GNUInstallDirs)
 # ------------------------------------------------------------------------------HIP--
-if (NOT DEFINED HIP_PATH)
-  if (NOT DEFINED ENV{HIP_PATH})
-    set(HIP_PATH "/opt/rocm/hip" CACHE PATH "HIP path")
+if (NOT DEFINED ROCM_PATH)
+  if (NOT DEFINED ENV{ROCM_PATH})
+      set(ROCM_PATH "/opt/rocm" CACHE PATH "HIP path")
   else()
-    set(HIP_PATH $ENV{HIP_PATH} CACHE PATH "HIP path")
+      set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "HIP path")
   endif()
 endif()
 
-include(${HIP_PATH}/cmake/FindHIP.cmake)
+set(CMAKE_PREFIX_PATH ${ROCM_PATH}/lib/cmake)
+include(${ROCM_PATH}/lib/cmake/hip/FindHIP.cmake)
 
 find_package(HIP REQUIRED)
 
