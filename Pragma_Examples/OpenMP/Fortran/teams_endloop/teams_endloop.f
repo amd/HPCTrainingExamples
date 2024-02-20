@@ -8,4 +8,6 @@ program loop
         end do
         !$omp end target teams loop
 
+        print *,"Success"
+
 end program loop

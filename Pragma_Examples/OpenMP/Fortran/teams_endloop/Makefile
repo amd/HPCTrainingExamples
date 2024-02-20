@@ -1,4 +1,4 @@
-EXEC = teamsloop
+EXEC = teams_endloop
 default: ${EXEC}
 all: ${EXEC}
 
