@@ -212,6 +212,21 @@ set_property(TEST OpenMP_Language_Constructs_C_Device_Routine_wGlobalData PROPER
 add_test(NAME OpenMP_Language_Constructs_C_Device_Routine_wDynGlobalData COMMAND ../openmp_language_constructs_c_device_routine_wdynglobaldata.sh )
 set_property(TEST OpenMP_Language_Constructs_C_Device_Routine_wDynGlobalData PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 5500.000000")
 
+# HIPFort Examples
+
+add_test(NAME HIPFort_GEMM_Global COMMAND ../hipfort_gemm_global.sh )
+set_property(TEST HIPFort_GEMM_Global PROPERTY PASS_REGULAR_EXPRESSION "Success")
+
+add_test(NAME HIPFort_GEMM_Local COMMAND ../hipfort_gemm_local.sh )
+set_property(TEST HIPFort_GEMM_Local PROPERTY PASS_REGULAR_EXPRESSION "Success")
+
+add_test(NAME HIPFort_GEMM_Global_SD COMMAND ../hipfort_gemm_global_sd.sh )
+set_property(TEST HIPFort_GEMM_Global_SD PROPERTY PASS_REGULAR_EXPRESSION "Success")
+
+add_test(NAME HIPFort_GEMM_Local_SD COMMAND ../hipfort_gemm_local_sd.sh )
+set_property(TEST HIPFort_GEMM_Local_SD PROPERTY PASS_REGULAR_EXPRESSION "Success")
+
+
 # Advanced OpenMP Examples
 
 if(${LIBOMPTARGET_INFO_SUPPORT} MATCHES "1")
