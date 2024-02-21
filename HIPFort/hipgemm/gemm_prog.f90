@@ -15,8 +15,8 @@ program gemm
         allocate(C(1024,1024))
 
         call do_gemm(A, B, C)
+#endif
 
         print *,"Success"
-#endif
 
 end program gemm
