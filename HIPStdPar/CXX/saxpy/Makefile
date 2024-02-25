@@ -17,7 +17,7 @@ LDFLAGS = -fno-lto -lm
 
 
 ${EXEC}: ${EXEC}.o
-	hipcc $(LDFLAGS) $^ -o $@
+	${CXX} ${STDPAR_FLAGS} $(LDFLAGS) $^ -o $@
 
 # Cleanup
 clean:
