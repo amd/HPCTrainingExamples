@@ -6,6 +6,7 @@ module load llvm-latest
 cd ~/HPCTrainingExamples/HIPStdPar/CXX/saxpy
 
 make
+export AMD_LOG_LEVEL=3
 ./saxpy
 
 make clean
