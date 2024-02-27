@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export HSA_XNACK=1
-module load llvm-latest-gcc11
+module load llvm-latest
 
 cd ~/HPCTrainingExamples/HIPStdPar/CXX/saxpy
 
