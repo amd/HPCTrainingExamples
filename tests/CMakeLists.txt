@@ -33,7 +33,7 @@ add_test(NAME Module_Test_Omnitrace_1.11.1 COMMAND ../module_test_omnitrace_1.11
 set_property(TEST Module_Test_Omnitrace_1.11.1 PROPERTY PASS_REGULAR_EXPRESSION "omnitrace-instrument v1.11.1")
 
 add_test(NAME Module_Test_AOMP_AMDClang COMMAND ../module_test_aomp_amdclang18.sh )
-set_property(TEST Module_Test_AOMP_AMDClang PROPERTY PASS_REGULAR_EXPRESSION "AMD clang version v18.0.0")
+set_property(TEST Module_Test_AOMP_AMDClang PROPERTY PASS_REGULAR_EXPRESSION "AOMP_STANDALONE_18.0.1 clang version 18.0.0_AOMP_STANDALONE_18.0.1")
 
 # Unified Shared Memory Examples (MI300A programming)
 add_test(NAME USM_Vector_Add COMMAND ../usm_vector_add.sh )
