@@ -1,6 +1,6 @@
 #!/bin/bash
 
-module load aomp-amdclang
+module load aomp
 
 cd ~/HPCTrainingExamples/Pragma_Examples/OpenACC/Fortran/vecadd
 
