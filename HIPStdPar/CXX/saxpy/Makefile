@@ -14,7 +14,7 @@ else ifeq ($(findstring clang++,$(CXX1)), clang++)
 endif
 ifeq (${ROCM_GPU},gfx1030)
 # Add --hipstdpar-interpose-alloc if HSA_XNACK is not set
-  STDPAR_FLAGS += --hipstdpar-interpos-alloc
+  STDPAR_FLAGS += --hipstdpar-interpose-alloc
 endif
 
 CXXFLAGS = -g -O3 -fstrict-aliasing ${STDPAR_FLAGS}
