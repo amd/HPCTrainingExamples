@@ -3,7 +3,7 @@
 To load the appropriate environment, you should be able to simply run:
 ```
 module use /autofs/nccs-svm1_sw/crusher/amdsw/modules
-module load PrgEnv-amd amd omniperf/1.1.0-PR1
+module load omniperf/1.1.0-PR1
 ```
 This should pull in Omniperf, ROCm, and all the dependencies necessary to run our exercises.
 It is worthy of note that this version of Omniperf is a pre-release candidate for 1.1.0.
