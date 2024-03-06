@@ -19,7 +19,11 @@ export STDPAR_TARGET=${ROCM_GPU}
 
 export AMD_LOG_LEVEL=3
 
-sed -i -e '/--hipstdpar/s/--hipstdpar /--hipstdpar --hipstdpar-interpose-alloc -lstdc++ /' Makefile
+if [ ${ROCM_GPU} =~ "gfx9" ]'; then
+   sed -i -e '/--hipstdpar/s/--hipstdpar /--hipstdpar -lstdc++ /' Makefile
+else
+   sed -i -e '/--hipstdpar/s/--hipstdpar /--hipstdpar --hipstdpar-interpose-alloc -lstdc++ /' Makefile
+fi
 
 make tsp_clang_stdpar_gpu
 ./tsp_clang_stdpar_gpu
