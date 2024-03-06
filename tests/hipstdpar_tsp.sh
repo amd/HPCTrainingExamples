@@ -4,7 +4,7 @@ mkdir tsp
 git clone https://github.com/pkestene/tsp
 cd tsp
 git checkout 51587
-git clone --no-checkout --dept 1 https://github.com/ROCm/roc-stdpar/blob/main/data/patches/tsp/TSP.patch
+git clone https://raw.githubusercontent.com/ROCm/roc-stdpar/main/data/patches/tsp/TSP.patch
 
 patch -p1 < TSP.patch
 
