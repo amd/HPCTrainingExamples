@@ -4,14 +4,11 @@ mkdir tsp
 git clone https://github.com/pkestene/tsp
 cd tsp
 git checkout 51587
-git clone https://raw.githubusercontent.com/ROCm/roc-stdpar/main/data/patches/tsp/TSP.patch
+wget -q https://raw.githubusercontent.com/ROCm/roc-stdpar/main/data/patches/tsp/TSP.patch
 
 patch -p1 < TSP.patch
 
 cd stdpar
-
-
-cd ~/HPCTrainingExamples/HIPStdPar/CXX/saxpy
 
 export HSA_XNACK=1
 module load llvm-latest
