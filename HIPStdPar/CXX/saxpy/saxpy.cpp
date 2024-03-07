@@ -7,8 +7,8 @@ int main(int argc, char *argv[])
 {
    vector<double> x(1024, 1);
 
-   for_each(execution::par_unseq, begin(x), end(x), [&x](int i) {
-       x[i] *= 5.0;
+   for_each(execution::par_unseq, x.begin(), x.end(), [&](double& x) {
+       x *= 5.0;
    });
 
 }

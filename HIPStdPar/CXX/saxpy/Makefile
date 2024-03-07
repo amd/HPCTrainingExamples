@@ -12,8 +12,8 @@ ifeq ($(findstring amdclang++,$(CXX1)), amdclang++)
 else ifeq ($(findstring clang++,$(CXX1)), clang++)
   STDPAR_FLAGS = --hipstdpar --offload-arch=$(ROCM_GPU) --hipstdpar-path=${STDPAR_PATH}
 endif
-ifeq (${ROCM_GPU},gfx1030)
 # Add --hipstdpar-interpose-alloc if HSA_XNACK is not set
+ifeq ($(findstring gfx1030,$(ROCM_GPU)),gfx1030)
   STDPAR_FLAGS += --hipstdpar-interpose-alloc
 endif
 
