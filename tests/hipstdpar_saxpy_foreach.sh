@@ -3,7 +3,7 @@
 export HSA_XNACK=1
 module load llvm-latest
 
-cd ~/HPCTrainingExamples/HIPStdPar/CXX/saxpy
+cd ~/HPCTrainingExamples/HIPStdPar/CXX/saxpy_foreach
 
 make
 export AMD_LOG_LEVEL=3
