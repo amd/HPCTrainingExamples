@@ -35,6 +35,16 @@ set_property(TEST Module_Test_Omnitrace_1.11.1 PROPERTY PASS_REGULAR_EXPRESSION 
 add_test(NAME Module_Test_AOMP_AMDClang COMMAND ../module_test_aomp_amdclang18.sh )
 set_property(TEST Module_Test_AOMP_AMDClang PROPERTY PASS_REGULAR_EXPRESSION "AOMP_STANDALONE_18.0.1 clang version 18.0.0_AOMP_STANDALONE_18.0.1")
 
+# HIPStdPar C++
+add_test(NAME HIPStdPar_saxpy_foreach COMMAND ../hipstdpar_saxpy_foreach.sh )
+set_property(TEST HIPStdPar_saxpy_foreach PROPERTY PASS_REGULAR_EXPRESSION "Finished Run")
+
+add_test(NAME HIPStdPar_saxpy_transform COMMAND ../hipstdpar_saxpy_transform.sh )
+set_property(TEST HIPStdPar_saxpy_transform PROPERTY PASS_REGULAR_EXPRESSION "Finished Run")
+
+add_test(NAME HIPStdPar_tsp COMMAND ../hipstdpar_tsp.sh )
+set_property(TEST HIPStdPar_tsp PROPERTY PASS_REGULAR_EXPRESSION "Solution route is")
+
 # Unified Shared Memory Examples (MI300A programming)
 add_test(NAME USM_Vector_Add COMMAND ../usm_vector_add.sh )
 set_property(TEST USM_Vector_Add PROPERTY PASS_REGULAR_EXPRESSION "Success")

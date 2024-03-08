@@ -8,8 +8,8 @@ int main(int argc, char *argv[])
 {
    vector<double> x(1024, 1);
 
-   for_each(execution::par_unseq, x.begin(), x.end(), [&](double& x) {
-       x *= 5.0;
+   transform(execution::par_unseq, x.begin(), x.end(), x.begin(), [&](double& x) {
+       return 5.0*x;
    });
 
    printf("Finished Run\n");
