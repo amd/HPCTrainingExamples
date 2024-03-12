@@ -8,9 +8,11 @@ int main(int argc, char *argv[])
 {
    vector<double> x(1024, 1);
 
-   transform(execution::par_unseq, x.begin(), x.end(), x.begin(), [&](const double& x) {
-       return 5.0*x;
-   });
+   transform(
+      execution::par_unseq, x.begin(), x.end(), x.begin(), [&](const double& x) {
+         return 5.0*x;
+      }
+   );
 
    printf("Finished Run\n");
 }
