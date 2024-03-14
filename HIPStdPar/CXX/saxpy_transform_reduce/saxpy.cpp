@@ -14,5 +14,5 @@ int main(int argc, char *argv[])
       }
    );
 
-   printf("Finished Run: Result %lf\n",lf);
+   printf("Finished Run: Result %lf\n",result);
 }
