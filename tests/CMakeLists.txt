@@ -48,7 +48,10 @@ set_property(TEST HIPStdPar_Saxpy_Transform_Reduce PROPERTY PASS_REGULAR_EXPRESS
 add_test(NAME HIPStdPar_TSP COMMAND ../hipstdpar_tsp.sh )
 set_property(TEST HIPStdPar_TSP PROPERTY PASS_REGULAR_EXPRESSION "Solution route is")
 
-add_test(NAME HIPStdPar_ShallowWater_StdPar COMMAND ../hipstdpar_shallowwater.sh )
+add_test(NAME HIPStdPar_ShallowWater_Orig COMMAND ../hipstdpar_shallowwater_orig.sh )
+set_property(TEST HIPStdPar_ShallowWater_Orig PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
+
+add_test(NAME HIPStdPar_ShallowWater_StdPar COMMAND ../hipstdpar_shallowwater_stdpar.sh )
 set_property(TEST HIPStdPar_ShallowWater_StdPar PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 
 # Unified Shared Memory Examples (MI300A programming)
