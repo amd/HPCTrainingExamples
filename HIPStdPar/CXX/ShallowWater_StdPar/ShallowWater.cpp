@@ -4,7 +4,7 @@
 #include "Var2D.hpp"
 /*********************************************************************************************
  * WAVE -- 2D Shallow Water Equation Model
- *                            Bob Robey, Advanced Micro Devices
+ *                            Bob Robey, AMD
  * ******************************************************************************************/
 
 //define macro for squaring a number
@@ -55,8 +55,8 @@ int main(int argc, char *argv[])
     flatindexrange.end(),
     // begin functor or lambda
     [=](int flatindex) {
-      const auto i = active_range.beginY + (flatindex / active_range.sizeX);
-      const auto j = active_range.beginX + (flatindex % active_range.sizeX);
+      const auto j = active_range.beginY + (flatindex / active_range.sizeX);
+      const auto i = active_range.beginX + (flatindex % active_range.sizeX);
 
       if (i<= (nx+1)/2)
         H(j,i)=10.0 - ((10.0 - 2.0)/ (double)((nx+1)/2))*(double)(i);
@@ -266,7 +266,7 @@ int main(int argc, char *argv[])
       SWAP_PTR(H.data, Hnew.data, temp);
       SWAP_PTR(U.data, Unew.data, temp);
       SWAP_PTR(V.data, Vnew.data, temp);
- 
+
     } // burst loop
 
     TotalMass = std::transform_reduce(

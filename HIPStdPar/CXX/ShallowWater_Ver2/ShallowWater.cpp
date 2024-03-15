@@ -1,10 +1,11 @@
+#define DEBUG 1
 #include <algorithm>
 #include "ShallowWater.h"
 
 #include "Var2D.hpp"
 /*********************************************************************************************
  * WAVE -- 2D Shallow Water Equation Model
- *                            Bob Robey, Advanced Micro Devices
+ *                            Bob Robey, AMD
  * ******************************************************************************************/
 
 //define macro for squaring a number
@@ -16,7 +17,7 @@ using namespace std::chrono;
 
 int main(int argc, char *argv[])
 {
-  const int      nx = 4, ny = 4; //nx = 500, ny = 200;
+  const int      nx = 6, ny = 4; //nx = 500, ny = 200;
   const int      ntimes = 2, nburst = 1; //ntimes = 2000, nburst = 100;
   const double   deltaX=1.0, deltaY=1.0;         //size of cell
   const double   g = 9.80;                       // gravitational constant
