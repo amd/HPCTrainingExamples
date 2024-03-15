@@ -69,10 +69,10 @@ int main(int argc, char *argv[])
   );
 
 #ifdef DEBUG
-  double *ptr = &H(0,0);
+  printf("After initialization of data\n");
   for (int j=0; j<=ny+1; j++){
     for (int i=0; i<=nx+1; i++){
-      printf(" i %d j %d H[j][i] %lf &H[j][i] - &H[0][0] %ld\n",i,j,H(j,i),&H(j,i) - &H(0,0));
+      printf(" i %d j %d H(j,i) %lf &H(j,i) - &H(0,0) %ld\n",i,j,H(j,i),&H(j,i) - &H(0,0));
     }
   }
 #endif
@@ -341,5 +341,19 @@ int main(int argc, char *argv[])
   duration<double> totaltime = duration_cast<duration<double>>(endtime - starttime);
   std::cout << " Flow finished in " << totaltime.count() << " seconds" << std::endl;
 
+  // Free memory allocated with malloc2D call
+  free(H.data);
+  free(U.data);
+  free(V.data);
+  free(Hnew.data);
+  free(Unew.data);
+  free(Vnew.data);
+  free(Hx.data);
+  free(Ux.data);
+  free(Vx.data);
+  free(Hy.data);
+  free(Uy.data);
+  free(Vy.data);
+  
   exit(0);
 }

@@ -304,5 +304,19 @@ int main(int argc, char *argv[])
   duration<double> totaltime = duration_cast<duration<double>>(endtime - starttime);
   std::cout << " Flow finished in " << totaltime.count() << " seconds" << std::endl;
 
+  // Free memory allocated with malloc2D call
+  free(H.data);
+  free(U.data);
+  free(V.data);
+  free(Hnew.data);
+  free(Unew.data);
+  free(Vnew.data);
+  free(Hx.data);
+  free(Ux.data);
+  free(Vx.data);
+  free(Hy.data);
+  free(Uy.data);
+  free(Vy.data);
+  
   exit(0);
 }
