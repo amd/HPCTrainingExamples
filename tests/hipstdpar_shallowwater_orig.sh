@@ -2,7 +2,10 @@
 
 cd ~/HPCTrainingExamples/HIPStdPar/CXX/ShallowWater_Orig
 
+mkdir build && cd build
+cmake ..
 make
 ./ShallowWater
 
-make clean
+cd ..
+rm -rf build

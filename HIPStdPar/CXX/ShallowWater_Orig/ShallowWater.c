@@ -22,8 +22,8 @@ double **malloc2D(int m, int n);
 
 int main(int argc, char *argv[])
 {
-  const int      nx = 4, ny = 4; //nx = 500, ny = 200;
-  const int      ntimes = 2, nburst = 1; //ntimes = 2000, nburst = 100;
+  const int      nx = 500, ny = 200;
+  const int      ntimes = 2000, nburst = 100;
   const double   deltaX=1.0, deltaY=1.0;         //size of cell
   const double   g = 9.80;                       // gravitational constant
   const double   sigma = 0.95;
@@ -66,14 +66,6 @@ int main(int argc, char *argv[])
     }
   }
 
-#ifdef DEBUG
-  for(int j=0;j<=ny+1;j++){
-    for(int i=0;i<=nx+1;i++){
-       printf(" i %d j %d H[j][i] %lf &H[j][i] - &H[0][0] %ld\n",i,j,H[j][i],&H[j][i] - &H[0][0]);
-    }
-  }
-#endif
-
   //calculate original total mass
   origTM=0.0;
   for(int j=1;j<=ny;j++){
@@ -91,9 +83,6 @@ int main(int argc, char *argv[])
       double yspeed = (fabs(V[j][i])+wavespeed)/deltaY;
       double my_deltaT = sigma/(xspeed+yspeed);
       if (my_deltaT < deltaT) deltaT = my_deltaT;
-#ifdef DEBUG
-      printf("i %d j %d H %lf dt %lf\n",i,j,H[j][i],my_deltaT);
-#endif
     }
   }
 
@@ -125,14 +114,6 @@ int main(int argc, char *argv[])
         V[ny+1][i]=-V[ny][i];
       }
 
-#ifdef DEBUG
-  for (int j=0; j<=ny+1; j++){
-    for (int i=0; i<=nx+1; i++){
-      printf(" i %d j %d H[j][i] %lf &H[j][i] - &H[0][0] %ld\n",i,j,H[j][i],&H[j][i] - &H[0][0]);
-    }
-  }
-#endif
-
       //set timestep
       deltaT = 1.0e30;
       for (int j = 1; j <= ny; j++) {
@@ -142,9 +123,6 @@ int main(int argc, char *argv[])
           double yspeed = (fabs(V[j][i])+wavespeed)/deltaY;
           double my_deltaT = sigma/(xspeed+yspeed);
           if (my_deltaT < deltaT) deltaT = my_deltaT;
-#ifdef DEBUG
-          printf("iter %d i %d j %d H %lf dt %lf\n",n,i,j,H[j][i],my_deltaT);
-#endif
         }
       }
 
@@ -163,9 +141,6 @@ int main(int argc, char *argv[])
           Vx[j][i]=0.5*(V[j+1][i+1]+V[j+1][i  ]) - deltaT/(2.0*deltaX)*
                              ((U[j+1][i+1]*V[j+1][i+1]/H[j+1][i+1]) -
                               (U[j+1][i  ]*V[j+1][i  ]/H[j+1][i  ]));
-#ifdef DEBUG
-          printf("iter %d i %d j %d Hx %lf Ux %lf Vx %lf\n",n,i,j,Hx[j][i],Ux[j][i],Vx[j][i]);
-#endif
         }
       }
     
@@ -184,9 +159,6 @@ int main(int argc, char *argv[])
           Vy[j][i]=0.5*(V[j+1][i+1]+V[j  ][i+1]) - deltaT/(2.0*deltaY)*
                              ((SQ(V[j+1][i+1])/H[j+1][i+1] + 0.5*g*SQ(H[j+1][i+1])) -
                               (SQ(V[j  ][i+1])/H[j  ][i+1] + 0.5*g*SQ(H[j  ][i+1])));
-#ifdef DEBUG
-          printf("iter %d i %d j %d Hy %lf Uy %lf Vy %lf\n",n,i,j,Hy[j][i],Uy[j][i],Vy[j][i]);
-#endif
         }
       }
 
@@ -210,23 +182,12 @@ int main(int argc, char *argv[])
                                - (deltaT/deltaY)*
                                   ((SQ(Vy[j  ][i-1])/Hy[j  ][i-1] +0.5*g*SQ(Hy[j  ][i-1])) -
                                    (SQ(Vy[j-1][i-1])/Hy[j-1][i-1] +0.5*g*SQ(Hy[j-1][i-1])));
-#ifdef DEBUG
-          printf("iter %d i %d j %d Hnew %lf Unew %lf Vnew %lf\n",n,i,j,Hnew[j][i],Unew[j][i],Vnew[j][i]);
-#endif
         }
       }
     
       SWAP_PTR(H, Hnew, temp);
       SWAP_PTR(U, Unew, temp);
       SWAP_PTR(V, Vnew, temp);
-
-#ifdef DEBUG
-      for (int j=0; j<=ny+1; j++){
-        for (int i=0; i<=nx+1; i++){
-          printf(" i %d j %d H[j][i] %lf &H[j][i] - &H[0][0] %ld\n",i,j,H[j][i],&H[j][i] - &H[0][0]);
-        }
-      }
-#endif
 
     } // burst loop
 
