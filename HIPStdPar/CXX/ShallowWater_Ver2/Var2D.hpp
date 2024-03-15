@@ -33,10 +33,10 @@ public:
         friend class range;
     public:
 
-        using difference_type = typename std::make_signed_t<int>;
+        using difference_type = int;
         using value_type = int;
         using pointer = const int*;
-        using reference = int;
+        using reference = const int&;
         using iterator_category = std::random_access_iterator_tag;
 
         reference operator *() const { return i_; }
