@@ -8,7 +8,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -g -O3")
 
 # Adds build target of ShallowWater with source code files
-add_executable(ShallowWater ShallowWater.cpp timer.c)
+add_executable(ShallowWater ShallowWater.cpp Var2D.hpp)
 target_link_libraries(ShallowWater -lm)
 
 # Cleanup
