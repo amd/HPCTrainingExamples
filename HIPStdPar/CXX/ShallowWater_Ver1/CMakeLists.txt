@@ -1,11 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project (ShallowWater)
 
-set (CMAKE_C_STANDARD 99)
 set (CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -g -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3")
 
 # Adds build target of ShallowWater with source code files
 add_executable(ShallowWater ShallowWater.cpp Var2D.hpp)
