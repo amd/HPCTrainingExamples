@@ -55,8 +55,8 @@ int main(int argc, char *argv[])
     flatindexrange.end(),
     // begin functor or lambda
     [=](int flatindex) {
-      const auto i = active_range.beginY + (flatindex / active_range.sizeX);
-      const auto j = active_range.beginX + (flatindex % active_range.sizeX);
+      const auto j = active_range.beginY + (flatindex / active_range.sizeX);
+      const auto i = active_range.beginX + (flatindex % active_range.sizeX);
 
       if (i<= (nx+1)/2)
         H(j,i)=10.0 - ((10.0 - 2.0)/ (double)((nx+1)/2))*(double)(i);
@@ -109,6 +109,9 @@ int main(int argc, char *argv[])
       double xspeed = (fabs(U(j,i))+wavespeed)/deltaX;
       double yspeed = (fabs(V(j,i))+wavespeed)/deltaY;
       double my_deltaT = sigma/(xspeed+yspeed);
+#ifdef DEBUG
+      printf("i %d j %d H %lf dt %lf\n",i,j,H(j,i),my_deltaT);
+#endif
       return my_deltaT;
     }
     // end functor or lambda
@@ -162,7 +165,7 @@ int main(int argc, char *argv[])
 #ifdef DEBUG
   for (int j=0; j<=ny+1; j++){
     for (int i=0; i<=nx+1; i++){
-      printf(" i %d j %d H[j][i] %lf &H[j][i] - &H[0][0] %ld\n",i,j,H(j,i),&H(j,i) - &H(0,0));
+      printf(" i %d j %d H(j,i) %lf &H(j,i) - &H(0,0) %ld\n",i,j,H(j,i),&H(j,i) - &H(0,0));
     }
   }
 #endif
@@ -295,11 +298,11 @@ int main(int argc, char *argv[])
       SWAP_PTR(H.data, Hnew.data, temp);
       SWAP_PTR(U.data, Unew.data, temp);
       SWAP_PTR(V.data, Vnew.data, temp);
- 
+
 #ifdef DEBUG
       for (int j=0; j<=ny+1; j++){
         for (int i=0; i<=nx+1; i++){
-          printf(" i %d j %d H[j][i] %lf &H[j][i] - &H[0][0] %ld\n",i,j,H(j,i),&H(j,i) - &H(0,0));
+          printf(" i %d j %d H(j,i) %lf &H(j,i) - &H(0,0) %ld\n",i,j,H(j,i),&H(j,i) - &H(0,0));
         }
       }
 #endif
