@@ -51,6 +51,12 @@ set_property(TEST HIPStdPar_TSP PROPERTY PASS_REGULAR_EXPRESSION "Solution route
 add_test(NAME HIPStdPar_ShallowWater_Orig COMMAND ../hipstdpar_shallowwater_orig.sh )
 set_property(TEST HIPStdPar_ShallowWater_Orig PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 
+add_test(NAME HIPStdPar_ShallowWater_Ver1 COMMAND ../hipstdpar_shallowwater_ver1.sh )
+set_property(TEST HIPStdPar_ShallowWater_Ver1 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
+
+add_test(NAME HIPStdPar_ShallowWater_Ver2 COMMAND ../hipstdpar_shallowwater_ver2.sh )
+set_property(TEST HIPStdPar_ShallowWater_Ver2 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
+
 add_test(NAME HIPStdPar_ShallowWater_StdPar COMMAND ../hipstdpar_shallowwater_stdpar.sh )
 set_property(TEST HIPStdPar_ShallowWater_StdPar PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 
