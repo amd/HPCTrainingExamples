@@ -1,15 +1,5 @@
 #include <cassert>
 
-struct Range {
-   const int beginX, endX;
-   const int sizeX;
-   Range(int beginX, int endX) : 
-      beginX(beginX), endX(endX), sizeX(endX-beginX) {
-         assert(beginX < endX);
-         assert(sizeX !=0);
-   }
-};
-
 struct Range2D {
    const int beginY, endY;
    const int beginX, endX;
