@@ -84,7 +84,7 @@ This could mean you reduce a large percentage in an 'insufficient' resource fiel
 <summary><h3>Background: A note on occupancy's relation to performance</h3></summary>
      Occupancy has a fairly complex relation to achieved performance. 
      In cases where the device is not saturated (where resources are available, but are unused) there is usually performance that can be gained by increasing occupancy, but not always.
-     For instance, adversarial data access patterns (see exercise 4-StridedDataAccess) can cause occupancy increases to result in degraded performance, due to overall poorer cache utilization.
+     For instance, adversarial data access patterns (see exercise 4-StridedAccess) can cause occupancy increases to result in degraded performance, due to overall poorer cache utilization.
      Typically adding to occupancy gains performance up to a point beyond which performance degrades, and this point may have already been reached by an application before optimizing.
 </br>
 </details>
