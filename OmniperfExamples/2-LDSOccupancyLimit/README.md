@@ -3,7 +3,8 @@
 Simple kernel implementing a version of yAx, to demonstrate the downside of allocating a large 
 amount of LDS, and the benefit of using a smaller amount of LDS due to occupancy limits.
 
-**Note:** This exercise was tested on a system with MI210s, on omniperf version `1.0.10` and ROCm 5.7.0
+**Note:** This exercise was tested on a system with MI210s, on omniperf version `2.0.0` and ROCm `6.0.2`
+**Omniperf `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
 <details>
 <summary><h3>Background: Acronyms and terms used in this exercise</h3></summary>
      <ul>
@@ -28,7 +29,7 @@ Regardless, to get started we need to get a roofline by running:
 ```
 omniperf profile -n problem_roof_only --roof-only --kernel-names -- ./problem.exe
 ```
-The plots will appear as PDF files in the `./workloads/problem_roof_only/mi200` directory, if generated on MI200 hardware.
+The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` directory, if generated on MI200 hardware.
 
 For convenience, the resulting plots on a representative system are below:
 | Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
@@ -67,15 +68,24 @@ This `omniperf profile` command will take a minute or two to run, as omniperf mu
 Once the profiling run completes, let's take a look at the occupancy stats related to LDS allocations:
 
 ```
-omniperf analyze -p workloads/problem/mi200 --dispatch 1 --metric 2.1.26 6.2.7
+omniperf analyze -p workloads/problem/MI200 --dispatch 1 --block 2.1.15 6.2.7
 ```
 The metrics we're looking at are:
-- `2.1.26` Wavefront occupancy -- a measure of how many wavefronts, on average, are active on the device
+- `2.1.15` Wavefront occupancy -- a measure of how many wavefronts, on average, are active on the device
 - `6.2.7` SPI: Insufficient CU LDS -- indicates whether wavefronts are not able to be scheduled due to insufficient LDS
 
 The SPI section (`6.2`) generally shows what resources limit occupancy, while Wavefront occupancy (`2.1.26`) shows how severely occupancy is limited in general. 
-The SPI 'insufficient' fields are typically either zero or very large numbers (on the order of 1 million), with large numbers indicating some resource preventing wavefronts from scheduling.
-If more than one field is nonzero, the relative magnitude of the nonzero fields correspond to how severely the resources are limiting occupancy, but if only one field is nonzero it is difficult to say how severely that field is limiting occupancy.
+As of Omniperf version `2.0.0`, the SPI 'insufficient' fields are a percentage showing how frequently a given resource prevented the SPI from scheduling a wavefront.
+If more than one field is nonzero, the relative magnitude of the nonzero fields correspond to the relative severity of the corresponding occupancy limitation (a larger percentage means a resource limits occupancy more than another resource with a smaller percentage), but it is usually impossible to correlate the SPI 'insufficient' percentage with the overall occupancy limit. 
+This could mean you reduce a large percentage in an 'insufficient' resource field to zero, and see overall occupancy only increase by a comparatively small amount.
+
+
+<details>
+<summary><h3>Background: A note on occupancy's relation to performance</h3></summary>
+     Occupancy has a fairly complex relation to achieved performance. 
+     In cases where the device is not saturated (where resources are available, but are unused) there is usually performance that can be gained by increasing occupancy, but not always.
+     For instance, as we explore later in these exercises, adversarial data access patterns can cause occupancy increases to cause degraded performance, due to poorer cache utilization. 
+</details>
 
 The output of the `omniperf analyze` command should look similar to this:
 
@@ -140,7 +150,7 @@ omniperf profile -n solution --no-roof -- ./solution.exe
 
 Once the profile command completes, run:
 ```
-omniperf analyze -p workloads/solution/mi200 --dispatch 1 --metric 2.1.26 6.2.7
+omniperf analyze -p workloads/solution/MI200 --dispatch 1 --metric 2.1.26 6.2.7
 ```
 
 The output should look something like:
@@ -207,7 +217,7 @@ omniperf profile -n solution --no-roof -- ./solution.exe
 
 Once the profile command completes, run:
 ```
-omniperf analyze -p workloads/solution/mi200 --dispatch 1 --metric 2.1.26 6.2.7
+omniperf analyze -p workloads/solution/MI200 --dispatch 1 --metric 2.1.26 6.2.7
 ```
 The output should look something like:
 
@@ -258,7 +268,7 @@ Let's take a look at the roofline for `solution`, which can be generated with:
 ```
 omniperf profile -n solution_roof_only --roof-only -- ./solution.exe
 ```
-The plots will appear as PDF files in the `./workloads/problem_roof_only/mi200` directory, if generated on MI200 hardware.
+The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` directory, if generated on MI200 hardware.
 
 The plots are shown here:
 | Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
