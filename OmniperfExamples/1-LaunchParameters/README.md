@@ -3,7 +3,13 @@
 Simple kernel implementing a version of yAx, to demonstrate effects of Launch Parameters on kernel 
 execution time. 
 
-**Note:** This exercise was tested on a system with MI210s, on Omniperf version `1.0.10` and ROCm `5.7.0`, the section on the omniperf comparison feature currently requires building a release candidate that is newer than Omniperf 1.0.10.
+**Note:** This exercise was tested on a system with MI210s, on a recent commit of Omniperf version `2.0.0` and ROCm `6.0.0`. **Any Omniperf version `2.0.0` or greater is incompatible with versions of ROCm less than `6.0.0`.**
+
+Client-side installation instructions are available in the official omniperf documentation, and provide all functionality demonstrated here.
+
+If your system has an older version of Omniperf, please refer to the archived READMEs in this directory and use a ROCm version lesser than `6.0.0`.
+
+
 <details>
 <summary><h3>Background: Acronyms and terms used in this exercise</h3></summary>
      <ul>
@@ -62,46 +68,55 @@ This command requires omniperf to run your code a few times to collect all the n
 
 After the profiling data is collected, we can view the profile by using this command:
 ```
-omniperf analyze -p workloads/problem/mi200 --dispatch 1 --metric 7.1.0 7.1.1 7.1.2
+omniperf analyze -p workloads/problem/MI200 --dispatch 1 --block 7.1.0 7.1.1 7.1.2
 ```
 This allows us to view nicely formatted profiling data directly in the command line.
 The command given here has a few arguments that are noteworthy:
 - `-p workloads/problem/mi200` must point to the output directory of your profile run. For the above `omniperf profile` command, this will be `workloads/problem/mi200`.
 - `--dispatch 1` filters kernel statistics by dispatch ID. In this case kernel 0 was a "warm-up" kernel, and kernel 1 is what the code reports timings for.
-- `--metric` displays only the requested metrics, in this case we want metrics specific to Launch Parameters:
+- `--block` displays only the requested metrics, in this case we want metrics specific to Launch Parameters:
    - `7.1.0` is the Grid Size
    - `7.1.1` is the Workgroup Size
    - `7.1.2` is the Total Wavefronts Launched
 
 The output of the `omniperf analyze` command should look something like this:
 ```
---------
-Analyze
---------
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
 
-
---------------------------------------------------------------------------------
-0. Top Stat
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
+                                                                                                                                                                                                                --------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
 ╒════╤══════════════════════════════════════════╤═════════╤══════════════╤══════════════╤══════════════╤════════╕
-│    │ KernelName                               │   Count │      Sum(ns) │     Mean(ns) │   Median(ns) │    Pct │
+│    │ Kernel_Name                              │   Count │      Sum(ns) │     Mean(ns) │   Median(ns) │    Pct │
 ╞════╪══════════════════════════════════════════╪═════════╪══════════════╪══════════════╪══════════════╪════════╡
-│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 755935180.00 │ 755935180.00 │ 755935180.00 │ 100.00 │
-│    │  double*)                                │         │              │              │              │        │
-╘════╧══════════════════════════════════════════╧═════════╧══════════════╧══════════════╧══════════════╧════════╛
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 751342314.00 │ 751342314.00 │ 751342314.00 │ 100.00 │
+│    │  double*) [clone .kd]                    │         │              │              │              │        │
+╘════╧══════════════════════════════════════════╧═════════╧══════════════╧══════════════╧══════════════╧════════╛                                                                                               0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        2 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
 
-
---------------------------------------------------------------------------------
+                                                                                                                                                                                                                --------------------------------------------------------------------------------
 7. Wavefront
 7.1 Wavefront Launch Stats
-╒═════════╤══════════════════╤════════╤════════╤════════╤════════════╕
-│ Index   │ Metric           │    Avg │    Min │    Max │ Unit       │
-╞═════════╪══════════════════╪════════╪════════╪════════╪════════════╡
-│ 7.1.0   │ Grid Size        │ 256.00 │ 256.00 │ 256.00 │ Work items │
-├─────────┼──────────────────┼────────┼────────┼────────┼────────────┤
-│ 7.1.1   │ Workgroup Size   │  64.00 │  64.00 │  64.00 │ Work items │
-├─────────┼──────────────────┼────────┼────────┼────────┼────────────┤
-│ 7.1.2   │ Total Wavefronts │   4.00 │   4.00 │   4.00 │ Wavefronts │
-╘═════════╧══════════════════╧════════╧════════╧════════╧════════════╛
+╒═════════════╤══════════════════╤════════╤════════╤════════╤════════════╕
+│ Metric_ID   │ Metric           │    Avg │    Min │    Max │ Unit       │
+╞═════════════╪══════════════════╪════════╪════════╪════════╪════════════╡
+│ 7.1.0       │ Grid Size        │ 256.00 │ 256.00 │ 256.00 │ Work items │
+├─────────────┼──────────────────┼────────┼────────┼────────┼────────────┤
+│ 7.1.1       │ Workgroup Size   │  64.00 │  64.00 │  64.00 │ Work items │
+├─────────────┼──────────────────┼────────┼────────┼────────┼────────────┤
+│ 7.1.2       │ Total Wavefronts │   4.00 │   4.00 │   4.00 │ Wavefronts │
+╘═════════════╧══════════════════╧════════╧════════╧════════╧════════════╛
 ```
 Looking through this data we see:
 - Workgroup Size (`7.1.1`) is 64 threads, which corresponds with the size of a wavefront.
@@ -133,38 +148,47 @@ This command is the same as before, except the workload name has changed to `sol
 Once the `profile` command has completed, run:
 
 ```
-omniperf analyze -p workloads/solution/mi200 --dispatch 1 --metric 7.1.0 7.1.1 7.1.2
+omniperf analyze -p workloads/solution/MI200 --dispatch 1 --block 7.1.0 7.1.1 7.1.2
 ```
 Again, this command largely uses the same arguments as before, except for the workload name.
 The output should look something like this:
 ```
---------
-Analyze
---------
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
 
-
---------------------------------------------------------------------------------
-0. Top Stat
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
+                                                                                                                                                                                                                --------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
 ╒════╤══════════════════════════════════════════╤═════════╤═════════════╤═════════════╤══════════════╤════════╕
-│    │ KernelName                               │   Count │     Sum(ns) │    Mean(ns) │   Median(ns) │    Pct │
+│    │ Kernel_Name                              │   Count │     Sum(ns) │    Mean(ns) │   Median(ns) │    Pct │
 ╞════╪══════════════════════════════════════════╪═════════╪═════════════╪═════════════╪══════════════╪════════╡
-│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 70115217.00 │ 70115217.00 │  70115217.00 │ 100.00 │
-│    │  double*)                                │         │             │             │              │        │
-╘════╧══════════════════════════════════════════╧═════════╧═════════════╧═════════════╧══════════════╧════════╛
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 69512860.00 │ 69512860.00 │  69512860.00 │ 100.00 │
+│    │  double*) [clone .kd]                    │         │             │             │              │        │
+╘════╧══════════════════════════════════════════╧═════════╧═════════════╧═════════════╧══════════════╧════════╛                                                                                                 0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        2 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
 
-
---------------------------------------------------------------------------------
+                                                                                                                                                                                                                --------------------------------------------------------------------------------
 7. Wavefront
 7.1 Wavefront Launch Stats
-╒═════════╤══════════════════╤═══════════╤═══════════╤═══════════╤════════════╕
-│ Index   │ Metric           │       Avg │       Min │       Max │ Unit       │
-╞═════════╪══════════════════╪═══════════╪═══════════╪═══════════╪════════════╡
-│ 7.1.0   │ Grid Size        │ 131072.00 │ 131072.00 │ 131072.00 │ Work items │
-├─────────┼──────────────────┼───────────┼───────────┼───────────┼────────────┤
-│ 7.1.1   │ Workgroup Size   │     64.00 │     64.00 │     64.00 │ Work items │
-├─────────┼──────────────────┼───────────┼───────────┼───────────┼────────────┤
-│ 7.1.2   │ Total Wavefronts │   2048.00 │   2048.00 │   2048.00 │ Wavefronts │
-╘═════════╧══════════════════╧═══════════╧═══════════╧═══════════╧════════════╛
+╒═════════════╤══════════════════╤═══════════╤═══════════╤═══════════╤════════════╕
+│ Metric_ID   │ Metric           │       Avg │       Min │       Max │ Unit       │
+╞═════════════╪══════════════════╪═══════════╪═══════════╪═══════════╪════════════╡
+│ 7.1.0       │ Grid Size        │ 131072.00 │ 131072.00 │ 131072.00 │ Work items │
+├─────────────┼──────────────────┼───────────┼───────────┼───────────┼────────────┤
+│ 7.1.1       │ Workgroup Size   │     64.00 │     64.00 │     64.00 │ Work items │
+├─────────────┼──────────────────┼───────────┼───────────┼───────────┼────────────┤
+│ 7.1.2       │ Total Wavefronts │   2048.00 │   2048.00 │   2048.00 │ Wavefronts │
+╘═════════════╧══════════════════╧═══════════╧═══════════╧═══════════╧════════════╛
 ```
 
 Looking through this data we see:
@@ -176,41 +200,54 @@ Looking through this data we see:
 
 **On releases newer than Omniperf 1.0.10**, the comparison feature of omniperf can be used to quickly compare two profiles.
 To use this feature, use the command:
+
 ```
-omniperf analyze -p workloads/problem/mi200 -p solution/workloads/solution/mi200 --dispatch 1 --metric 7.1.0 7.1.1 7.1.2
+omniperf analyze -p workloads/problem/mi200 -p solution/workloads/solution/mi200 --dispatch 1 --block 7.1.0 7.1.1 7.1.2
 ```
 
 This feature sets the first `-p` argument as the baseline, and the second as the comparison workload.
 In this case, problem is set as the baseline and is compared to solution.
 The output should look like:
 ```
---------
-Analyze
---------
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
 
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
 
 --------------------------------------------------------------------------------
-0. Top Stat
-╒════╤══════════════════════════════════════════╤═════════╤════════════╤══════════════╤══════════════════════╤══════════════╤══════════════════════╤══════════════╤══════════════════════╤════════╤══════════════╕
-│    │ KernelName                               │   Count │ Count      │      Sum(ns) │ Sum(ns)              │     Mean(ns) │ Mean(ns)             │   Median(ns) │ Median(ns)           │    Pct │ Pct          │
-╞════╪══════════════════════════════════════════╪═════════╪════════════╪══════════════╪══════════════════════╪══════════════╪══════════════════════╪══════════════╪══════════════════════╪════════╪══════════════╡
-│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 1.0 (0.0%) │ 754934306.50 │ 69702016.5 (-90.77%) │ 754934306.50 │ 69702016.5 (-90.77%) │ 754934306.50 │ 69702016.5 (-90.77%) │ 100.00 │ 100.0 (0.0%) │
-│    │  double*)                                │         │            │              │                      │              │                      │              │                      │        │              │
-╘════╧══════════════════════════════════════════╧═════════╧════════════╧══════════════╧══════════════════════╧══════════════╧══════════════════════╧══════════════╧══════════════════════╧════════╧══════════════╛
+0. Top Stats
+0.1 Top Kernels
+╒════╤══════════════════════════════════════════╤═════════╤════════════╤════════════╤══════════════╤══════════════════════╤══════════════╤══════════════════════╤══════════════╤══════════════════════╤════════╤══════════════╕
+│    │ Kernel_Name                              │   Count │ Count      │   Abs Diff │      Sum(ns) │ Sum(ns)              │     Mean(ns) │ Mean(ns)             │   Median(ns) │ Median(ns)           │    Pct │ Pct          │
+╞════╪══════════════════════════════════════════╪═════════╪════════════╪════════════╪══════════════╪══════════════════════╪══════════════╪══════════════════════╪══════════════╪══════════════════════╪════════╪══════════════╡
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 1.0 (0.0%) │       0.00 │ 751342314.00 │ 69512860.0 (-90.75%) │ 751342314.00 │ 69512860.0 (-90.75%) │ 751342314.00 │ 69512860.0 (-90.75%) │ 100.00 │ 100.0 (0.0%) │
+│    │  double*) [clone .kd]                    │         │            │            │              │                      │              │                      │              │                      │        │              │
+╘════╧══════════════════════════════════════════╧═════════╧════════════╧════════════╧══════════════╧══════════════════════╧══════════════╧══════════════════════╧══════════════╧══════════════════════╧════════╧══════════════╛
+0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        2 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
 
 
 --------------------------------------------------------------------------------
 7. Wavefront
 7.1 Wavefront Launch Stats
-╒═════════╤══════════════════╤════════╤═════════════════════╤════════╤═════════════════════╤════════╤═════════════════════╤════════════╕
-│ Index   │ Metric           │    Avg │ Avg                 │    Min │ Min                 │    Max │ Max                 │ Unit       │
-╞═════════╪══════════════════╪════════╪═════════════════════╪════════╪═════════════════════╪════════╪═════════════════════╪════════════╡
-│ 7.1.0   │ Grid Size        │ 256.00 │ 131072.0 (51100.0%) │ 256.00 │ 131072.0 (51100.0%) │ 256.00 │ 131072.0 (51100.0%) │ Work items │
-├─────────┼──────────────────┼────────┼─────────────────────┼────────┼─────────────────────┼────────┼─────────────────────┼────────────┤
-│ 7.1.1   │ Workgroup Size   │  64.00 │ 64.0 (0.0%)         │  64.00 │ 64.0 (0.0%)         │  64.00 │ 64.0 (0.0%)         │ Work items │
-├─────────┼──────────────────┼────────┼─────────────────────┼────────┼─────────────────────┼────────┼─────────────────────┼────────────┤
-│ 7.1.2   │ Total Wavefronts │   4.00 │ 2048.0 (51100.0%)   │   4.00 │ 2048.0 (51100.0%)   │   4.00 │ 2048.0 (51100.0%)   │ Wavefronts │
-╘═════════╧══════════════════╧════════╧═════════════════════╧════════╧═════════════════════╧════════╧═════════════════════╧════════════╛
+╒═════════════╤══════════════════╤════════╤═════════════════════╤════════════╤════════╤═════════════════════╤════════╤═════════════════════╤════════════╕
+│ Metric_ID   │ Metric           │    Avg │ Avg                 │   Abs Diff │    Min │ Min                 │    Max │ Max                 │ Unit       │
+╞═════════════╪══════════════════╪════════╪═════════════════════╪════════════╪════════╪═════════════════════╪════════╪═════════════════════╪════════════╡
+│ 7.1.0       │ Grid Size        │ 256.00 │ 131072.0 (51100.0%) │  130816.00 │ 256.00 │ 131072.0 (51100.0%) │ 256.00 │ 131072.0 (51100.0%) │ Work items │
+├─────────────┼──────────────────┼────────┼─────────────────────┼────────────┼────────┼─────────────────────┼────────┼─────────────────────┼────────────┤
+│ 7.1.1       │ Workgroup Size   │  64.00 │ 64.0 (0.0%)         │       0.00 │  64.00 │ 64.0 (0.0%)         │  64.00 │ 64.0 (0.0%)         │ Work items │
+├─────────────┼──────────────────┼────────┼─────────────────────┼────────────┼────────┼─────────────────────┼────────┼─────────────────────┼────────────┤
+│ 7.1.2       │ Total Wavefronts │   4.00 │ 2048.0 (51100.0%)   │    2044.00 │   4.00 │ 2048.0 (51100.0%)   │   4.00 │ 2048.0 (51100.0%)   │ Wavefronts │
+╘═════════════╧══════════════════╧════════╧═════════════════════╧════════════╧════════╧═════════════════════╧════════╧═════════════════════╧════════════╛
 ```
 Note that the comparison workload shows the percentage difference from the baseline.
 This feature can be used to quickly compare filtered stats to make sure code changes fix known issues.
@@ -224,26 +261,39 @@ However, there is another way to filter kernels that may be more applicable in r
 Typically real codes launch many kernels, and only a few of them take most of the overall kernel runtime.
 To see a ranking of the top kernels that take up most of the kernel runtime in your code, you can run:
 ```
-omniperf analyze -p workloads/problem/mi200 --list-kernels
+omniperf analyze -p workloads/problem/MI200 --list-stats
 ```
 
 This command will output something like:
 ```
---------
-Analyze
---------
+                                                                                                                                                                                                                  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
 
-
---------------------------------------------------------------------------------
-Detected Kernels
-╒════╤═══════════════════════════════════════════════════╕
-│    │ KernelName                                        │
-╞════╪═══════════════════════════════════════════════════╡
-│  0 │ yax(double*, double*, double*, int, int, double*) │
-╘════╧═══════════════════════════════════════════════════╛ 
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
+                                                                                                                                                                                                                --------------------------------------------------------------------------------
+Detected Kernels (sorted descending by duration)
+╒════╤═══════════════════════════════════════════════════════════════╕
+│    │ Kernel_Name                                                   │
+╞════╪═══════════════════════════════════════════════════════════════╡
+│  0 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │
+╘════╧═══════════════════════════════════════════════════════════════╛
+                                                                                                                                                                                                                --------------------------------------------------------------------------------
+Dispatch list
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             0 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        2 │
+├────┼───────────────┼───────────────────────────────────────────────────────────────┼──────────┤
+│  1 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        2 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
 ```
 
-Using Omniperf versions greater than `1.0.10`, `--list-kernels` will list all kernels launched by your code, in order of runtime (largest runtime first).
+Using Omniperf versions greater than `2.0.0`, `--list-stats` will list all kernels launched by your code, in order of runtime (largest runtime first).
 The number displayed beside the kernel in the output can be used to filter `omniperf analyze` commands.
 **Note that this will display aggregated stats for kernels of the same name**, meaning that the invocations could differ in terms of launch parameters, and vary widely in terms of work completed. 
 This filtering is accomplished with the `-k` argument:
@@ -252,36 +302,48 @@ omniperf analyze -p workloads/problem/mi200 -k 0 --metric 7.1.0 7.1.1 7.1.2
 ```
 Which should show something like:
 ```
---------
-Analyze
---------
+                                                                                                                                                                                                                  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
 
-
---------------------------------------------------------------------------------
-0. Top Stat
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
+                                                                                                                                                                                                                --------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
 ╒════╤══════════════════════════════════════════╤═════════╤═══════════════╤══════════════╤══════════════╤════════╤═════╕
-│    │ KernelName                               │   Count │       Sum(ns) │     Mean(ns) │   Median(ns) │    Pct │ S   │
+│    │ Kernel_Name                              │   Count │       Sum(ns) │     Mean(ns) │   Median(ns) │    Pct │ S   │
 ╞════╪══════════════════════════════════════════╪═════════╪═══════════════╪══════════════╪══════════════╪════════╪═════╡
-│  0 │ yax(double*, double*, double*, int, int, │    2.00 │ 1508098228.00 │ 754049114.00 │ 754049114.00 │ 100.00 │ *   │
-│    │  double*)                                │         │               │              │              │        │     │
-╘════╧══════════════════════════════════════════╧═════════╧═══════════════╧══════════════╧══════════════╧════════╧═════╛
+│  0 │ yax(double*, double*, double*, int, int, │    2.00 │ 1501207023.00 │ 750603511.50 │ 750603511.50 │ 100.00 │ *   │
+│    │  double*) [clone .kd]                    │         │               │              │              │        │     │
+╘════╧══════════════════════════════════════════╧═════════╧═══════════════╧══════════════╧══════════════╧════════╧═════╛                                                                                        0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             0 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        2 │
+├────┼───────────────┼───────────────────────────────────────────────────────────────┼──────────┤
+│  1 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        2 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
 
-
---------------------------------------------------------------------------------
+                                                                                                                                                                                                                --------------------------------------------------------------------------------
 7. Wavefront
 7.1 Wavefront Launch Stats
-╒═════════╤══════════════════╤════════╤════════╤════════╤════════════╕
-│ Index   │ Metric           │    Avg │    Min │    Max │ Unit       │
-╞═════════╪══════════════════╪════════╪════════╪════════╪════════════╡
-│ 7.1.0   │ Grid Size        │ 256.00 │ 256.00 │ 256.00 │ Work items │
-├─────────┼──────────────────┼────────┼────────┼────────┼────────────┤
-│ 7.1.1   │ Workgroup Size   │  64.00 │  64.00 │  64.00 │ Work items │
-├─────────┼──────────────────┼────────┼────────┼────────┼────────────┤
-│ 7.1.2   │ Total Wavefronts │   4.00 │   4.00 │   4.00 │ Wavefronts │
-╘═════════╧══════════════════╧════════╧════════╧════════╧════════════╛
+╒═════════════╤══════════════════╤════════╤════════╤════════╤════════════╕
+│ Metric_ID   │ Metric           │    Avg │    Min │    Max │ Unit       │
+╞═════════════╪══════════════════╪════════╪════════╪════════╪════════════╡
+│ 7.1.0       │ Grid Size        │ 256.00 │ 256.00 │ 256.00 │ Work items │
+├─────────────┼──────────────────┼────────┼────────┼────────┼────────────┤
+│ 7.1.1       │ Workgroup Size   │  64.00 │  64.00 │  64.00 │ Work items │
+├─────────────┼──────────────────┼────────┼────────┼────────┼────────────┤
+│ 7.1.2       │ Total Wavefronts │   4.00 │   4.00 │   4.00 │ Wavefronts │
+╘═════════════╧══════════════════╧════════╧════════╧════════╧════════════╛
 ```
 Note that the 'count' field in Top Stat is 2 here, where filtering by dispatch ID displays a count of 1, indicating that filtering with `-k` returns aggregated stats for two kernel invocations in this case.
-Also note that the "Top Stats" table will still show all the top kernels but the rightmost column titled "S" will have an asterisk beside the kernel for which data is being displayed.
+Also note that the "Top Stats" table will still show all the top kernels but the rightmost column titled "S" (think "Selected") will have an asterisk beside the kernel for which data is being displayed. Also note that the dispatch list displays two entries rather than the one we see when we filter by `--dispatch 1`.
+ 
 
 ### Solution Roofline
 We've demonstrated better performance than problem.cpp in solution.cpp, but could we potentially do better?
