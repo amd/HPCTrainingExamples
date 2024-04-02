@@ -74,9 +74,9 @@ The metrics we're looking at are:
 - `2.1.15` Wavefront occupancy -- a measure of how many wavefronts, on average, are active on the device
 - `6.2.7` SPI: Insufficient CU LDS -- indicates whether wavefronts are not able to be scheduled due to insufficient LDS
 
-The SPI section (`6.2`) generally shows what resources limit occupancy, while Wavefront occupancy (`2.1.26`) shows how severely occupancy is limited in general. 
+The SPI section (`6.2`) generally shows what resources limit occupancy, while Wavefront occupancy (`2.1.15`) shows how severely occupancy is limited in general. 
 As of Omniperf version `2.0.0`, the SPI 'insufficient' fields are a percentage showing how frequently a given resource prevented the SPI from scheduling a wavefront.
-If more than one field is nonzero, the relative magnitude of the nonzero fields correspond to the relative severity of the corresponding occupancy limitation (a larger percentage means a resource limits occupancy more than another resource with a smaller percentage), but it is usually impossible to correlate the SPI 'insufficient' percentage with the overall occupancy limit. 
+If more than one field is nonzero, the relative magnitude of the nonzero fields correspond to the relative severity of the corresponding occupancy limitation (a larger percentage means a resource limits occupancy more than another resource with a smaller percentage), but it is usually impossible to closely correlate the SPI 'insufficient' percentage with the overall occupancy limit. 
 This could mean you reduce a large percentage in an 'insufficient' resource field to zero, and see overall occupancy only increase by a comparatively small amount.
 
 
@@ -84,49 +84,64 @@ This could mean you reduce a large percentage in an 'insufficient' resource fiel
 <summary><h3>Background: A note on occupancy's relation to performance</h3></summary>
      Occupancy has a fairly complex relation to achieved performance. 
      In cases where the device is not saturated (where resources are available, but are unused) there is usually performance that can be gained by increasing occupancy, but not always.
-     For instance, as we explore later in these exercises, adversarial data access patterns can cause occupancy increases to cause degraded performance, due to poorer cache utilization. 
+     For instance, adversarial data access patterns (see exercise 4-StridedDataAccess) can cause occupancy increases to result in degraded performance, due to overall poorer cache utilization.
+     Typically adding to occupancy gains performance up to a point beyond which performance degrades, and this point may have already been reached by an application before optimizing.
+</br>
 </details>
+
 
 The output of the `omniperf analyze` command should look similar to this:
 
 ```
---------
-Analyze
---------
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
 
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
 
 --------------------------------------------------------------------------------
-0. Top Stat
+0. Top Stats
+0.1 Top Kernels
 ╒════╤══════════════════════════════════════════╤═════════╤══════════════╤══════════════╤══════════════╤════════╕
-│    │ KernelName                               │   Count │      Sum(ns) │     Mean(ns) │   Median(ns) │    Pct │
+│    │ Kernel_Name                              │   Count │      Sum(ns) │     Mean(ns) │   Median(ns) │    Pct │
 ╞════╪══════════════════════════════════════════╪═════════╪══════════════╪══════════════╪══════════════╪════════╡
-│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 175427205.00 │ 175427205.00 │ 175427205.00 │ 100.00 │
-│    │  double*)                                │         │              │              │              │        │
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 176224652.00 │ 176224652.00 │ 176224652.00 │ 100.00 │
+│    │  double*) [clone .kd]                    │         │              │              │              │        │
 ╘════╧══════════════════════════════════════════╧═════════╧══════════════╧══════════════╧══════════════╧════════╛
+0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        8 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
 
 
 --------------------------------------------------------------------------------
 2. System Speed-of-Light
 2.1 Speed-of-Light
-╒═════════╤════════════════╤═════════╤════════════╤═════════╤═══════╕
-│ Index   │ Metric         │   Value │ Unit       │    Peak │   PoP │
-╞═════════╪════════════════╪═════════╪════════════╪═════════╪═══════╡
-│ 2.1.26  │ Wave Occupancy │  102.70 │ Wavefronts │ 3328.00 │  3.09 │
-╘═════════╧════════════════╧═════════╧════════════╧═════════╧═══════╛
+╒═════════════╤═════════════════════╤════════╤════════════╤═════════╤═══════════════╕
+│ Metric_ID   │ Metric              │    Avg │ Unit       │    Peak │   Pct of Peak │
+╞═════════════╪═════════════════════╪════════╪════════════╪═════════╪═══════════════╡
+│ 2.1.15      │ Wavefront Occupancy │ 103.00 │ Wavefronts │ 3328.00 │          3.10 │
+╘═════════════╧═════════════════════╧════════╧════════════╧═════════╧═══════════════╛
 
 
 --------------------------------------------------------------------------------
-6. Shader Processor Input (SPI)
-6.2 SPI Resource Allocation
-╒═════════╤═════════════════════╤═══════════════╤═══════════════╤═══════════════╤════════╕
-│ Index   │ Metric              │           Avg │           Min │           Max │ Unit   │
-╞═════════╪═════════════════════╪═══════════════╪═══════════════╪═══════════════╪════════╡
-│ 6.2.7   │ Insufficient CU LDS │ 6015745446.00 │ 6015745446.00 │ 6015745446.00 │ Cu     │
-╘═════════╧═════════════════════╧═══════════════╧═══════════════╧═══════════════╧════════╛
+6. Workgroup Manager (SPI)
+6.2 Workgroup Manager - Resource Allocation
+╒═════════════╤═════════════════════╤═══════╤═══════╤═══════╤════════╕
+│ Metric_ID   │ Metric              │   Avg │   Min │   Max │ Unit   │
+╞═════════════╪═════════════════════╪═══════╪═══════╪═══════╪════════╡
+│ 6.2.7       │ Insufficient CU LDS │ 79.01 │ 79.01 │ 79.01 │ Pct    │
+╘═════════════╧═════════════════════╧═══════╧═══════╧═══════╧════════╛
 ```
 Looking through this data we see:
-- Wavefront occupancy (`2.1.26`) is 3%, which is very low
-- Insufficient CU LDS (`6.2.7`) contains a very large number, which indicates our occupancy is currently limited by LDS allocations.
+- Wavefront occupancy (`2.1.15`) is 3%, which is very low
+- Insufficient CU LDS (`6.2.7`) contains a fairly large percentage, which indicates our occupancy is currently limited by LDS allocations.
 
 There are two solution directories, which correspond to two ways that this occupancy limit can be addressed.
 First, we have `solution-no-lds`, which completely removes the LDS usage. Let's build and run this solution:
@@ -150,48 +165,61 @@ omniperf profile -n solution --no-roof -- ./solution.exe
 
 Once the profile command completes, run:
 ```
-omniperf analyze -p workloads/solution/MI200 --dispatch 1 --metric 2.1.26 6.2.7
+omniperf analyze -p workloads/solution/MI200 --dispatch 1 --metric 2.1.15 6.2.7
 ```
 
 The output should look something like:
 
 ```
---------
-Analyze
---------
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
 
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
 
 --------------------------------------------------------------------------------
-0. Top Stat
+0. Top Stats
+0.1 Top Kernels
 ╒════╤══════════════════════════════════════════╤═════════╤═════════════╤═════════════╤══════════════╤════════╕
-│    │ KernelName                               │   Count │     Sum(ns) │    Mean(ns) │   Median(ns) │    Pct │
+│    │ Kernel_Name                              │   Count │     Sum(ns) │    Mean(ns) │   Median(ns) │    Pct │
 ╞════╪══════════════════════════════════════════╪═════════╪═════════════╪═════════════╪══════════════╪════════╡
-│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 70512671.00 │ 70512671.00 │  70512671.00 │ 100.00 │
-│    │  double*)                                │         │             │             │              │        │
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 69513618.00 │ 69513618.00 │  69513618.00 │ 100.00 │
+│    │  double*) [clone .kd]                    │         │             │             │              │        │
 ╘════╧══════════════════════════════════════════╧═════════╧═════════════╧═════════════╧══════════════╧════════╛
+0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        8 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
 
 
 --------------------------------------------------------------------------------
 2. System Speed-of-Light
 2.1 Speed-of-Light
-╒═════════╤════════════════╤═════════╤════════════╤═════════╤═══════╕
-│ Index   │ Metric         │   Value │ Unit       │    Peak │   PoP │
-╞═════════╪════════════════╪═════════╪════════════╪═════════╪═══════╡
-│ 2.1.26  │ Wave Occupancy │  445.33 │ Wavefronts │ 3328.00 │ 13.38 │
-╘═════════╧════════════════╧═════════╧════════════╧═════════╧═══════╛
+╒═════════════╤═════════════════════╤════════╤════════════╤═════════╤═══════════════╕
+│ Metric_ID   │ Metric              │    Avg │ Unit       │    Peak │   Pct of Peak │
+╞═════════════╪═════════════════════╪════════╪════════════╪═════════╪═══════════════╡
+│ 2.1.15      │ Wavefront Occupancy │ 451.15 │ Wavefronts │ 3328.00 │         13.56 │
+╘═════════════╧═════════════════════╧════════╧════════════╧═════════╧═══════════════╛
 
 
 --------------------------------------------------------------------------------
-6. Shader Processor Input (SPI)
-6.2 SPI Resource Allocation
-╒═════════╤═════════════════════╤═══════╤═══════╤═══════╤════════╕
-│ Index   │ Metric              │   Avg │   Min │   Max │ Unit   │
-╞═════════╪═════════════════════╪═══════╪═══════╪═══════╪════════╡
-│ 6.2.7   │ Insufficient CU LDS │  0.00 │  0.00 │  0.00 │ Cu     │
-╘═════════╧═════════════════════╧═══════╧═══════╧═══════╧════════╛
+6. Workgroup Manager (SPI)
+6.2 Workgroup Manager - Resource Allocation
+╒═════════════╤═════════════════════╤═══════╤═══════╤═══════╤════════╕
+│ Metric_ID   │ Metric              │   Avg │   Min │   Max │ Unit   │
+╞═════════════╪═════════════════════╪═══════╪═══════╪═══════╪════════╡
+│ 6.2.7       │ Insufficient CU LDS │  0.00 │  0.00 │  0.00 │ Pct    │
+╘═════════════╧═════════════════════╧═══════╧═══════╧═══════╧════════╛
+
 ```
 Looking through this data we see:
-- Wave occupancy (`2.1.26`) is 10% higher than in problem.cpp
+- Wave occupancy (`2.1.15`) is 10% higher than in problem.cpp
 - Insufficient CU LDS (`6.2.7`) is now zero, indicating solution-no-lds is not occupancy limited by LDS allocations.
 
 Can we get some runtime advantage from using smaller LDS allocations?
@@ -217,47 +245,59 @@ omniperf profile -n solution --no-roof -- ./solution.exe
 
 Once the profile command completes, run:
 ```
-omniperf analyze -p workloads/solution/MI200 --dispatch 1 --metric 2.1.26 6.2.7
+omniperf analyze -p workloads/solution/MI200 --dispatch 1 --metric 2.1.15 6.2.7
 ```
 The output should look something like:
 
 ```
---------
-Analyze
---------
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
 
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
 
 --------------------------------------------------------------------------------
-0. Top Stat
+0. Top Stats
+0.1 Top Kernels
 ╒════╤══════════════════════════════════════════╤═════════╤═════════════╤═════════════╤══════════════╤════════╕
-│    │ KernelName                               │   Count │     Sum(ns) │    Mean(ns) │   Median(ns) │    Pct │
+│    │ Kernel_Name                              │   Count │     Sum(ns) │    Mean(ns) │   Median(ns) │    Pct │
 ╞════╪══════════════════════════════════════════╪═════════╪═════════════╪═════════════╪══════════════╪════════╡
-│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 50366185.00 │ 50366185.00 │  50366185.00 │ 100.00 │
-│    │  double*)                                │         │             │             │              │        │
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 51238856.00 │ 51238856.00 │  51238856.00 │ 100.00 │
+│    │  double*) [clone .kd]                    │         │             │             │              │        │
 ╘════╧══════════════════════════════════════════╧═════════╧═════════════╧═════════════╧══════════════╧════════╛
+0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        8 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
 
 
 --------------------------------------------------------------------------------
 2. System Speed-of-Light
 2.1 Speed-of-Light
-╒═════════╤════════════════╤═════════╤════════════╤═════════╤═══════╕
-│ Index   │ Metric         │   Value │ Unit       │    Peak │   PoP │
-╞═════════╪════════════════╪═════════╪════════════╪═════════╪═══════╡
-│ 2.1.26  │ Wave Occupancy │  487.32 │ Wavefronts │ 3328.00 │ 14.64 │
-╘═════════╧════════════════╧═════════╧════════════╧═════════╧═══════╛
+╒═════════════╤═════════════════════╤════════╤════════════╤═════════╤═══════════════╕
+│ Metric_ID   │ Metric              │    Avg │ Unit       │    Peak │   Pct of Peak │
+╞═════════════╪═════════════════════╪════════╪════════════╪═════════╪═══════════════╡
+│ 2.1.15      │ Wavefront Occupancy │ 494.05 │ Wavefronts │ 3328.00 │         14.85 │
+╘═════════════╧═════════════════════╧════════╧════════════╧═════════╧═══════════════╛
 
 
 --------------------------------------------------------------------------------
-6. Shader Processor Input (SPI)
-6.2 SPI Resource Allocation
-╒═════════╤═════════════════════╤═══════╤═══════╤═══════╤════════╕
-│ Index   │ Metric              │   Avg │   Min │   Max │ Unit   │
-╞═════════╪═════════════════════╪═══════╪═══════╪═══════╪════════╡
-│ 6.2.7   │ Insufficient CU LDS │  0.00 │  0.00 │  0.00 │ Cu     │
-╘═════════╧═════════════════════╧═══════╧═══════╧═══════╧════════╛
+6. Workgroup Manager (SPI)
+6.2 Workgroup Manager - Resource Allocation
+╒═════════════╤═════════════════════╤═══════╤═══════╤═══════╤════════╕
+│ Metric_ID   │ Metric              │   Avg │   Min │   Max │ Unit   │
+╞═════════════╪═════════════════════╪═══════╪═══════╪═══════╪════════╡
+│ 6.2.7       │ Insufficient CU LDS │  0.00 │  0.00 │  0.00 │ Pct    │
+╘═════════════╧═════════════════════╧═══════╧═══════╧═══════╧════════╛
 ```
 Looking at this data we see:
-- Wave Occupancy (`2.1.26`) is even higher than before
+- Wave Occupancy (`2.1.15`) is even higher than before
 - Insufficient CU LDS (`6.2.7`) shows we are not occupancy limited by LDS allocations.
 
 Pulling some data from global device memory to LDS can be an effective optimization strategy, if occupancy limits are carefully avoided.
