@@ -59,7 +59,7 @@ We need to confirm this hypothesis, let's start by running:
 ```
 omniperf profile -n problem --no-roof -- ./problem.exe
 ```
-The usage of `omniperf profile` arguments can be found [here](https://amdresearch.github.io/omniperf/profiling.html#omniperf-profiling), or by running `omniperf profile --help`.
+The usage of `omniperf profile` arguments can be found [here](https://rocm.github.io/omniperf/profiling.html), or by running `omniperf profile --help`.
 
 This `omniperf profile` command will take a minute or two to run, as omniperf must run your code a few times to collect all the hardware counters.
 
