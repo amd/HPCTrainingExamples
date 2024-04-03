@@ -33,7 +33,7 @@ This kernel is slightly different from the one we used in previous exercises. Le
 
 | Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
 |---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32           |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise3_problem_roofline_fp32.png"/>      |
+|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise3_problem_roofline_fp32_fp64.png"/>      |
 |FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise3_problem_roofline_int8_fp16.png"/> |
 
 You can generate these plots by running:
@@ -294,8 +294,8 @@ Let's see how the solution stacks up in the roofline:
 
 | Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
 |---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32           |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise3_solution_roofline_fp32.png"/>      |
-|FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise3_solution_roofline_int8_fp16.png"/> |
+|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise3_solution_roofline_fp32_fp64.png"/>|
+|FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise3_solution_roofline_int8_fp16.png"/>|
 
 
 You can generate these plots with:
@@ -311,7 +311,7 @@ We see there is still room for improvement in the solution, as this kernel is no
 
 | Roofline Type | Problem Roofline                                     | Solution Roofline                                      |
 |---------------|------------------------------------------------------|--------------------------------------------------------|
-| FP32          | <img src="exercise3_problem_roofline_fp32.png"/>     | <img src="exercise3_solution_roofline_fp32.png"/>      |
+| FP32/FP64     | <img src="exercise3_problem_roofline_fp32_fp64.png"/>| <img src="exercise3_solution_roofline_fp32_fp64.png"/> |
 | FP16/INT8     | <img src="exercise3_problem_roofline_int8_fp16.png"/>| <img src="exercise3_solution_roofline_int8_fp16.png"/> |
 
 The most notable change between these rooflines is that the L1/L2 arithmetic intensity spread is more pronounced in the problem, which shows that the call to `assert` was causing more data to be moved to the L1, while not adding floating-point operations.

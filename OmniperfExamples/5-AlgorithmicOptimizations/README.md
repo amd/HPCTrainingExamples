@@ -42,7 +42,7 @@ They are also provided below for easy reference:
 
 | Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
 |---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32           |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise5_problem_roofline_fp32.png"/>      |
+|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise5_problem_roofline_fp32.png"/>      |
 |FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise5_problem_roofline_int8_fp16.png"/> |
 
 The performance of this kernel looks pretty close to being HBM bandwidth bound.
@@ -563,7 +563,7 @@ They are also provided below for easy reference:
 
 | Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
 |---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32           |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise5_solution_roofline_fp32.png"/>      |
+|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise5_solution_roofline_fp32.png"/>      |
 |FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise5_solution_roofline_int8_fp16.png"/> |
 
 As the Omniperf stats indicate, we are moving most data through the L1, which shows in the roofline as a decrease in Arithmetic Intensity for that cache layer.
@@ -577,7 +577,7 @@ It is important to keep in mind that our solution runs **29x** faster than the p
 
 | Roofline Type | Problem Roofline                                     | Solution Roofline                                      |
 |---------------|------------------------------------------------------|--------------------------------------------------------|
-| FP32          | <img src="exercise5_problem_roofline_fp32.png"/>     | <img src="exercise5_solution_roofline_fp32.png"/>      |
+| FP32/FP64     | <img src="exercise5_problem_roofline_fp32.png"/>     | <img src="exercise5_solution_roofline_fp32.png"/>      |
 | FP16/INT8     | <img src="exercise5_problem_roofline_int8_fp16.png"/>| <img src="exercise5_solution_roofline_int8_fp16.png"/> |
 
 We see a significant speedup from problem to solution, but on the roofline it is difficult to determine which implementation is using the hardware more efficiently. The problem seems to be better, as the HBM point is very close to the achievable bandwidth, while the performance of the solution points seem to decrease.

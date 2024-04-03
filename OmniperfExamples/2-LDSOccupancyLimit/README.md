@@ -34,7 +34,7 @@ The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` 
 For convenience, the resulting plots on a representative system are below:
 | Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
 |---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32           |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise2_problem_roofline_fp32.png"/>      |
+|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise2_problem_roofline_fp32.png"/>      |
 |FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise2_problem_roofline_int8_fp16.png"/> |
 
 We see that there looks to be room for improvement here. We'll use omniperf to see what the current limiters are.
@@ -313,7 +313,7 @@ The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` 
 The plots are shown here:
 | Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
 |---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32           |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise2_solution_roofline_fp32.png"/>      |
+|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise2_solution_roofline_fp32.png"/>      |
 |FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise2_solution_roofline_int8_fp16.png"/> |
 
 We see that there is still room to move the solution roofline up towards the bandwidth limit.
@@ -321,7 +321,7 @@ We see that there is still room to move the solution roofline up towards the ban
 ### Roofline Comparison
 | Roofline Type | Problem Roofline                                     | Solution Roofline                                      |
 |---------------|------------------------------------------------------|--------------------------------------------------------|
-| FP32          | <img src="exercise2_problem_roofline_fp32.png"/>     | <img src="exercise2_solution_roofline_fp32.png"/>      |
+| FP32/FP64     | <img src="exercise2_problem_roofline_fp32.png"/>     | <img src="exercise2_solution_roofline_fp32.png"/>      |
 | FP16/INT8     | <img src="exercise2_problem_roofline_int8_fp16.png"/>| <img src="exercise2_solution_roofline_int8_fp16.png"/> |
 
 Again, we see that the solution's optimizations have resulted in the kernel moving up in the roofline, meaning the solution executes more efficiently than the problem.

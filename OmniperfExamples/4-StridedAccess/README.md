@@ -46,7 +46,7 @@ They are also provided below for easy reference:
 
 | Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
 |---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32           |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise4_problem_roofline_fp32.png"/>      |
+|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise4_problem_roofline_fp32.png"/>      |
 |FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise4_problem_roofline_int8_fp16.png"/> |
 
 We have plenty of space to improve this kernel, the next step is profiling.
@@ -257,7 +257,7 @@ They are also provided below for easy reference:
 
 | Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
 |---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32           |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise4_solution_roofline_fp32.png"/>      |
+|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise4_solution_roofline_fp32.png"/>      |
 |FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise4_solution_roofline_int8_fp16.png"/> |
 
 We appear to be very close to being bound by the HBM bandwidth from the fp32 roofline. 
@@ -267,7 +267,7 @@ To get more performance we need to look closer at our algorithm.
 
 | Roofline Type | Problem Roofline                                     | Solution Roofline                                      |
 |---------------|------------------------------------------------------|--------------------------------------------------------|
-| FP32          | <img src="exercise4_problem_roofline_fp32.png"/>     | <img src="exercise4_solution_roofline_fp32.png"/>      |
+| FP32/FP6      | <img src="exercise4_problem_roofline_fp32.png"/>     | <img src="exercise4_solution_roofline_fp32.png"/>      |
 | FP16/INT8     | <img src="exercise4_problem_roofline_int8_fp16.png"/>| <img src="exercise4_solution_roofline_int8_fp16.png"/> |
 
 We see that the HBM roofline point moves up, while the L1/L2 points move up and to the right from problem to solution. This means that our arithmetic intensity is increasing for the caches, so we are moving less data through the caches to do the same computation.
