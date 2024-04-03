@@ -224,8 +224,8 @@ Looking at this data, we see:
 - VGPRs (`7.1.5`), AGPRs (`7.1.6`), and SGPRs (`7.1.7`) show exactly the same register usage.
 - Wave Occupancy (`2.1.26`) shows our occupancy is also more or less the same.
 
-More generally, you can use this command to look at all SPI "insufficient resource" stats in the same screen, to determine if any resource is currently limiting occupancy:
-In fact, we can use this to ensure our problem implementation no longer has any SPI-related occupancy limiters with the newer version of ROCm.
+More generally, you can use this command to look at all SPI "insufficient resource" stats in the same screen, to determine if any resource is currently limiting occupancy.
+In fact, we can use this to ensure our problem implementation no longer has any SPI-related occupancy limiters with the newer version of ROCm:
 ```
 omniperf analyze -p workloads/problem/MI200 --dispatch 1 --metric 6.2
 ```
@@ -290,7 +290,7 @@ Analysis mode = cli
 ```
 
 ### Solution Roofline
-Let's see how the solution stacks up in the roofline:
+With similar performance, we expect to see similar plots in the roofline for problem and solution:
 
 | Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
 |---------------|----------------------------------------------------|------------------------------------------------------|
@@ -305,7 +305,8 @@ omniperf profile -n problem_roof_only --roof-only --kernel-names -- ./problem.ex
 ```
 The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` directory, if generated on MI200 hardware.
 
-We see there is still room for improvement in the solution, as this kernel is not getting the maximum achievable bandwidth.
+The plots are indistinguishable, which is further confirmation performance is now unchanged between problem and solution.
+However, we see there is still room for improvement as this kernel is not getting the maximum achievable bandwidth.
 
 ### Roofline Comparison
 
@@ -314,10 +315,8 @@ We see there is still room for improvement in the solution, as this kernel is no
 | FP32/FP64     | <img src="exercise3_problem_roofline_fp32_fp64.png"/>| <img src="exercise3_solution_roofline_fp32_fp64.png"/> |
 | FP16/INT8     | <img src="exercise3_problem_roofline_int8_fp16.png"/>| <img src="exercise3_solution_roofline_int8_fp16.png"/> |
 
-The most notable change between these rooflines is that the L1/L2 arithmetic intensity spread is more pronounced in the problem, which shows that the call to `assert` was causing more data to be moved to the L1, while not adding floating-point operations.
-
-**Note:** Arithmetic Intensity is computed as `(total floating point operations)/(total data movement)`
-
 ### Summary and Take-aways
 
-Function calls inside kernels can have surprisingly adverse performance side-effects. Calling assert, printf and even excessive use of math functions (e.g. pow, sin, cos) can limit performance in difficult-to-predict ways. If you see unexpected resource usage, try eliminating these sorts of function calls.
+Function calls inside kernels can have surprisingly adverse performance side-effects. However, performance issues in general may be subject to compiler versions or other environment details. 
+Calling assert, printf and even excessive use of math functions (e.g. pow, sin, cos) can limit performance in difficult-to-predict ways. 
+If you see unexpected resource usage, try eliminating or reducing the use of these sorts of function calls.
