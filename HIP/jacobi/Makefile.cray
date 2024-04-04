@@ -1,7 +1,6 @@
 ##**************************************************************************
 ##* Copyright (c) 2022, Advanced Micro Devices, Inc. All rights reserved.
 ##**************************************************************************
-export LD_LIBRARY_PATH=${CRAY_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}
 ROCM_PATH?=/opt/rocm
 
 # Compilers
