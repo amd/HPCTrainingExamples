@@ -3,7 +3,8 @@
 This exercise uses a simple implementation of a yAx kernel to show how difficult strided data access patterns can be to spot in code,
 and demonstrates how to use omniperf to begin to diagnose them.
 
-**Note:** This exercise was tested on a system with MI210s, on omniperf version `1.0.10` and ROCm 5.7.0
+**Note:** This exercise was tested on a system with MI210s, on omniperf version `2.0.0` and ROCm `6.0.2`
+**Omniperf `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
 
 <details>
 <summary><h3>Background: Acronyms and terms used in this exercise</h3></summary>
@@ -39,13 +40,13 @@ These plots can be generated with:
 ```
 omniperf profile -n problem_roof_only --roof-only --kernel-names -- ./problem.exe
 ```
-The plots will appear as PDF files in the `./workloads/problem_roof_only/mi200` directory, if generated on MI200 hardware.
+The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` directory, if generated on MI200 hardware.
 
 They are also provided below for easy reference:
 
 | Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
 |---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32           |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise4_problem_roofline_fp32.png"/>      |
+|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise4_problem_roofline_fp32.png"/>      |
 |FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise4_problem_roofline_int8_fp16.png"/> |
 
 We have plenty of space to improve this kernel, the next step is profiling.
@@ -70,7 +71,7 @@ omniperf profile -n problem --no-roof -- ./problem.exe
 ```
 (*omitted output*)
 ```
-omniperf analyze -p workloads/problem/mi200 --dispatch 1 --metric 16.1 17.1
+omniperf analyze -p workloads/problem/MI200 --dispatch 1 --block 16.1 17.1
 ```
 >Previous examples have used specific fields inside metrics, but we can also request a group of metrics with just two numbers (i.e. 16.1 vs. 16.1.1)
 
@@ -83,55 +84,70 @@ As such, they're great statistics for seeing if the memory system is generally b
 Output from the `analyze` command should look like this:
 
 ```
---------
-Analyze
---------
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
 
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
 
 --------------------------------------------------------------------------------
-0. Top Stat
+0. Top Stats
+0.1 Top Kernels
 ╒════╤══════════════════════════════════════════╤═════════╤═════════════╤═════════════╤══════════════╤════════╕
-│    │ KernelName                               │   Count │     Sum(ns) │    Mean(ns) │   Median(ns) │    Pct │
+│    │ Kernel_Name                              │   Count │     Sum(ns) │    Mean(ns) │   Median(ns) │    Pct │
 ╞════╪══════════════════════════════════════════╪═════════╪═════════════╪═════════════╪══════════════╪════════╡
-│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 69768072.00 │ 69768072.00 │  69768072.00 │ 100.00 │
-│    │  double*)                                │         │             │             │              │        │
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 70270856.00 │ 70270856.00 │  70270856.00 │ 100.00 │
+│    │  double*) [clone .kd]                    │         │             │             │              │        │
 ╘════╧══════════════════════════════════════════╧═════════╧═════════════╧═════════════╧══════════════╧════════╛
+0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        8 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
 
 
 --------------------------------------------------------------------------------
 16. Vector L1 Data Cache
 16.1 Speed-of-Light
-╒═════════╤═══════════════════╤═════════╤═════════════╕
-│ Index   │ Metric            │   Value │ Unit        │
-╞═════════╪═══════════════════╪═════════╪═════════════╡
-│ 16.1.0  │ Buffer Coalescing │   25.00 │ Pct of peak │
-├─────────┼───────────────────┼─────────┼─────────────┤
-│ 16.1.1  │ Cache Util        │   87.79 │ Pct of peak │
-├─────────┼───────────────────┼─────────┼─────────────┤
-│ 16.1.2  │ Cache BW          │    8.71 │ Pct of peak │
-├─────────┼───────────────────┼─────────┼─────────────┤
-│ 16.1.3  │ Cache Hit         │    0.00 │ Pct of peak │
-╘═════════╧═══════════════════╧═════════╧═════════════╛
+╒═════════════╤═════════════╤═══════╤═════════════╕
+│ Metric_ID   │ Metric      │   Avg │ Unit        │
+╞═════════════╪═════════════╪═══════╪═════════════╡
+│ 16.1.0      │ Hit rate    │  0.00 │ Pct of peak │
+├─────────────┼─────────────┼───────┼─────────────┤
+│ 16.1.1      │ Bandwidth   │  8.64 │ Pct of peak │
+├─────────────┼─────────────┼───────┼─────────────┤
+│ 16.1.2      │ Utilization │ 87.71 │ Pct of peak │
+├─────────────┼─────────────┼───────┼─────────────┤
+│ 16.1.3      │ Coalescing  │ 25.00 │ Pct of peak │
+╘═════════════╧═════════════╧═══════╧═════════════╛
 
 
 --------------------------------------------------------------------------------
 17. L2 Cache
 17.1 Speed-of-Light
-╒═════════╤═════════════╤═════════╤════════╕
-│ Index   │ Metric      │   Value │ Unit   │
-╞═════════╪═════════════╪═════════╪════════╡
-│ 17.1.0  │ L2 Util     │   98.72 │ Pct    │
-├─────────┼─────────────┼─────────┼────────┤
-│ 17.1.1  │ Cache Hit   │   93.46 │ Pct    │
-├─────────┼─────────────┼─────────┼────────┤
-│ 17.1.2  │ L2-EA Rd BW │  125.87 │ Gb/s   │
-├─────────┼─────────────┼─────────┼────────┤
-│ 17.1.3  │ L2-EA Wr BW │    0.00 │ Gb/s   │
-╘═════════╧═════════════╧═════════╧════════╛
+╒═════════════╤═══════════════════════════════╤════════╤════════╕
+│ Metric_ID   │ Metric                        │    Avg │ Unit   │
+╞═════════════╪═══════════════════════════════╪════════╪════════╡
+│ 17.1.0      │ Utilization                   │  98.66 │ Pct    │
+├─────────────┼───────────────────────────────┼────────┼────────┤
+│ 17.1.1      │ Bandwidth                     │  28.10 │ Pct    │
+├─────────────┼───────────────────────────────┼────────┼────────┤
+│ 17.1.2      │ Hit Rate                      │  93.45 │ Pct    │
+├─────────────┼───────────────────────────────┼────────┼────────┤
+│ 17.1.3      │ L2-Fabric Read BW             │ 125.05 │ Gb/s   │
+├─────────────┼───────────────────────────────┼────────┼────────┤
+│ 17.1.4      │ L2-Fabric Write and Atomic BW │   0.00 │ Gb/s   │
+╘═════════════╧═══════════════════════════════╧════════╧════════╛
+
 ```
 Looking at this data, we see:
-- L1 Cache Hit (`16.1.3`) is 0%, so the kernel's memory requests are never found in the L1.
-- L2 Cache Hit (`17.1.1`) is 93.46%, so most requests are found in the L2, with about 7% needing to go out to HBM.
+- L1 Cache Hit (`16.1.0`) is 0%, so the kernel's memory requests are never found in the L1.
+- L2 Cache Hit (`17.1.2`) is 93.46%, so most requests are found in the L2, with about 7% needing to go out to HBM.
 - We are never finding data in the L1 and generating a lot of requests to the L2, so restructuring our data accesses should provide better performance
 
 Since our implementation of yAx simply uses 1 for all values in y, A, and x, we do not have to change how we populate our data.
@@ -158,60 +174,75 @@ omniperf profile -n solution --no-roof -- ./solution.exe
 ```
 (*output omitted*)
 ```
-omniperf analyze -p workloads/solution/mi200 --dispatch 1 --metric 16.1 17.1
+omniperf analyze -p workloads/solution/MI200 --dispatch 1 --block 16.1 17.1
 ```
 The output from this analyze command should look like:
 ```
---------
-Analyze
---------
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
 
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
 
 --------------------------------------------------------------------------------
-0. Top Stat
+0. Top Stats
+0.1 Top Kernels
 ╒════╤══════════════════════════════════════════╤═════════╤═════════════╤═════════════╤══════════════╤════════╕
-│    │ KernelName                               │   Count │     Sum(ns) │    Mean(ns) │   Median(ns) │    Pct │
+│    │ Kernel_Name                              │   Count │     Sum(ns) │    Mean(ns) │   Median(ns) │    Pct │
 ╞════╪══════════════════════════════════════════╪═════════╪═════════════╪═════════════╪══════════════╪════════╡
-│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 12464570.00 │ 12464570.00 │  12464570.00 │ 100.00 │
-│    │  double*)                                │         │             │             │              │        │
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 12364156.00 │ 12364156.00 │  12364156.00 │ 100.00 │
+│    │  double*) [clone .kd]                    │         │             │             │              │        │
 ╘════╧══════════════════════════════════════════╧═════════╧═════════════╧═════════════╧══════════════╧════════╛
+0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        8 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
 
 
 --------------------------------------------------------------------------------
 16. Vector L1 Data Cache
 16.1 Speed-of-Light
-╒═════════╤═══════════════════╤═════════╤═════════════╕
-│ Index   │ Metric            │   Value │ Unit        │
-╞═════════╪═══════════════════╪═════════╪═════════════╡
-│ 16.1.0  │ Buffer Coalescing │   25.00 │ Pct of peak │
-├─────────┼───────────────────┼─────────┼─────────────┤
-│ 16.1.1  │ Cache Util        │   97.99 │ Pct of peak │
-├─────────┼───────────────────┼─────────┼─────────────┤
-│ 16.1.2  │ Cache BW          │   12.19 │ Pct of peak │
-├─────────┼───────────────────┼─────────┼─────────────┤
-│ 16.1.3  │ Cache Hit         │   49.98 │ Pct of peak │
-╘═════════╧═══════════════════╧═════════╧═════════════╛
+╒═════════════╤═════════════╤═══════╤═════════════╕
+│ Metric_ID   │ Metric      │   Avg │ Unit        │
+╞═════════════╪═════════════╪═══════╪═════════════╡
+│ 16.1.0      │ Hit rate    │ 49.98 │ Pct of peak │
+├─────────────┼─────────────┼───────┼─────────────┤
+│ 16.1.1      │ Bandwidth   │ 12.29 │ Pct of peak │
+├─────────────┼─────────────┼───────┼─────────────┤
+│ 16.1.2      │ Utilization │ 98.12 │ Pct of peak │
+├─────────────┼─────────────┼───────┼─────────────┤
+│ 16.1.3      │ Coalescing  │ 25.00 │ Pct of peak │
+╘═════════════╧═════════════╧═══════╧═════════════╛
 
 
 --------------------------------------------------------------------------------
 17. L2 Cache
 17.1 Speed-of-Light
-╒═════════╤═════════════╤═════════╤════════╕
-│ Index   │ Metric      │   Value │ Unit   │
-╞═════════╪═════════════╪═════════╪════════╡
-│ 17.1.0  │ L2 Util     │   98.67 │ Pct    │
-├─────────┼─────────────┼─────────┼────────┤
-│ 17.1.1  │ Cache Hit   │    0.52 │ Pct    │
-├─────────┼─────────────┼─────────┼────────┤
-│ 17.1.2  │ L2-EA Rd BW │  689.26 │ Gb/s   │
-├─────────┼─────────────┼─────────┼────────┤
-│ 17.1.3  │ L2-EA Wr BW │    0.00 │ Gb/s   │
-╘═════════╧═════════════╧═════════╧════════╛
+╒═════════════╤═══════════════════════════════╤════════╤════════╕
+│ Metric_ID   │ Metric                        │    Avg │ Unit   │
+╞═════════════╪═══════════════════════════════╪════════╪════════╡
+│ 17.1.0      │ Utilization                   │  98.56 │ Pct    │
+├─────────────┼───────────────────────────────┼────────┼────────┤
+│ 17.1.1      │ Bandwidth                     │  10.03 │ Pct    │
+├─────────────┼───────────────────────────────┼────────┼────────┤
+│ 17.1.2      │ Hit Rate                      │   0.52 │ Pct    │
+├─────────────┼───────────────────────────────┼────────┼────────┤
+│ 17.1.3      │ L2-Fabric Read BW             │ 694.86 │ Gb/s   │
+├─────────────┼───────────────────────────────┼────────┼────────┤
+│ 17.1.4      │ L2-Fabric Write and Atomic BW │   0.00 │ Gb/s   │
+╘═════════════╧═══════════════════════════════╧════════╧════════╛
+
 ```
 Looking at this data, we see:
-- L1 Cache Hit (`16.1.3`) is around 50%, so half the requests to the L1 need to go to the L2.
-- L2 Cache Hit (`17.1.1`) is 0.52%, so almost all the requests to the L2 have to go out to HBM.
-- L2-EA Rd BW (`17.1.2`) has increased significantly, due to the increase in L2 cache misses requiring HBM reads.
+- L1 Cache Hit (`16.1.0`) is around 50%, so half the requests to the L1 need to go to the L2.
+- L2 Cache Hit (`17.1.2`) is 0.52%, so almost all the requests to the L2 have to go out to HBM.
+- L2-Fabric Read BW (`17.1.3`) has increased significantly, due to the increase in L2 cache misses requiring HBM reads.
 
 ### Solution Roofline Analysis
 We should check where our new kernel stands on the roofline.
@@ -220,13 +251,13 @@ These plots can be generated with:
 ```
 omniperf profile -n solution_roof_only --roof-only --kernel-names -- ./solution.exe
 ```
-The plots will appear as PDF files in the `./workloads/problem_roof_only/mi200` directory, if generated on MI200 hardware.
+The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` directory, if generated on MI200 hardware.
 
 They are also provided below for easy reference:
 
 | Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
 |---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32           |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise4_solution_roofline_fp32.png"/>      |
+|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise4_solution_roofline_fp32.png"/>      |
 |FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise4_solution_roofline_int8_fp16.png"/> |
 
 We appear to be very close to being bound by the HBM bandwidth from the fp32 roofline. 
@@ -236,7 +267,7 @@ To get more performance we need to look closer at our algorithm.
 
 | Roofline Type | Problem Roofline                                     | Solution Roofline                                      |
 |---------------|------------------------------------------------------|--------------------------------------------------------|
-| FP32          | <img src="exercise4_problem_roofline_fp32.png"/>     | <img src="exercise4_solution_roofline_fp32.png"/>      |
+| FP32/FP6      | <img src="exercise4_problem_roofline_fp32.png"/>     | <img src="exercise4_solution_roofline_fp32.png"/>      |
 | FP16/INT8     | <img src="exercise4_problem_roofline_int8_fp16.png"/>| <img src="exercise4_solution_roofline_int8_fp16.png"/> |
 
 We see that the HBM roofline point moves up, while the L1/L2 points move up and to the right from problem to solution. This means that our arithmetic intensity is increasing for the caches, so we are moving less data through the caches to do the same computation.
