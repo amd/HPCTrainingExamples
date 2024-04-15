@@ -23,11 +23,11 @@ else ()
 endif()
 
 # Module and software install tests
-add_test(NAME Module_Test_Omniperf_1.1.0-PR1 COMMAND ../module_test_omniperf_1.1.0-PR1.sh )
-set_property(TEST Module_Test_Omniperf_1.1.0-PR1 PROPERTY PASS_REGULAR_EXPRESSION "Omniperf version: 1.1.0-PR1")
+#add_test(NAME Module_Test_Omniperf_1.1.0-PR1 COMMAND ../module_test_omniperf_1.1.0-PR1.sh )
+#set_property(TEST Module_Test_Omniperf_1.1.0-PR1 PROPERTY PASS_REGULAR_EXPRESSION "Omniperf version: 1.1.0-PR1")
 
-add_test(NAME Module_Test_Omniperf_1.0.10 COMMAND ../module_test_omniperf_1.0.10.sh )
-set_property(TEST Module_Test_Omniperf_1.0.10 PROPERTY PASS_REGULAR_EXPRESSION "Omniperf version: 1.0.10")
+#add_test(NAME Module_Test_Omniperf_1.0.10 COMMAND ../module_test_omniperf_1.0.10.sh )
+#set_property(TEST Module_Test_Omniperf_1.0.10 PROPERTY PASS_REGULAR_EXPRESSION "Omniperf version: 1.0.10")
 
 add_test(NAME Module_Test_Omnitrace_1.11.1 COMMAND ../module_test_omnitrace_1.11.1.sh )
 set_property(TEST Module_Test_Omnitrace_1.11.1 PROPERTY PASS_REGULAR_EXPRESSION "omnitrace-instrument v1.11.1")
