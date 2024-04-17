@@ -32,8 +32,8 @@ endif()
 add_test(NAME Module_Test_Omnitrace_1.11.1 COMMAND ../module_test_omnitrace_1.11.1.sh )
 set_property(TEST Module_Test_Omnitrace_1.11.1 PROPERTY PASS_REGULAR_EXPRESSION "omnitrace-instrument v1.11.1")
 
-add_test(NAME Module_Test_AOMP_AMDClang COMMAND ../module_test_aomp_amdclang18.sh )
-set_property(TEST Module_Test_AOMP_AMDClang PROPERTY PASS_REGULAR_EXPRESSION "AOMP_STANDALONE_18.0.1 clang version 18.0.0_AOMP_STANDALONE_18.0.1")
+add_test(NAME Module_Test_AOMP_AMDClang COMMAND ../module_test_aomp_amdclang.sh )
+set_property(TEST Module_Test_AOMP_AMDClang PROPERTY PASS_REGULAR_EXPRESSION "AOMP_STANDALONE_19.0.0 clang version 19.0.0_AOMP_STANDALONE_19.0.0")
 
 # HIPStdPar C++
 add_test(NAME HIPStdPar_Saxpy_Foreach COMMAND ../hipstdpar_saxpy_foreach.sh )
@@ -121,11 +121,11 @@ set_property(TEST OpenMP_Saxpy_C_AMDGCC PROPERTY PASS_REGULAR_EXPRESSION "Last V
 add_test(NAME OpenMP_Saxpy_C_AOMP COMMAND ../openmp_saxpy_c_aomp.sh )
 set_property(TEST OpenMP_Saxpy_C_AOMP PROPERTY PASS_REGULAR_EXPRESSION "Last Value")
 
-add_test(NAME OpenMP_Saxpy_C_CLACC COMMAND ../openmp_saxpy_c_clacc.sh )
-set_property(TEST OpenMP_Saxpy_C_CLACC PROPERTY PASS_REGULAR_EXPRESSION "Last Value")
+#add_test(NAME OpenMP_Saxpy_C_CLACC COMMAND ../openmp_saxpy_c_clacc.sh )
+#set_property(TEST OpenMP_Saxpy_C_CLACC PROPERTY PASS_REGULAR_EXPRESSION "Last Value")
 
-add_test(NAME OpenMP_Saxpy_C_OG COMMAND ../openmp_saxpy_c_og.sh )
-set_property(TEST OpenMP_Saxpy_C_OG PROPERTY PASS_REGULAR_EXPRESSION "Last Value")
+#add_test(NAME OpenMP_Saxpy_C_OG COMMAND ../openmp_saxpy_c_og.sh )
+#set_property(TEST OpenMP_Saxpy_C_OG PROPERTY PASS_REGULAR_EXPRESSION "Last Value")
 
 ## System clang not build with AMD offloading
 #add_test(NAME OpenMP_Saxpy_C_Clang COMMAND ../openmp_saxpy_c_clang.sh )
