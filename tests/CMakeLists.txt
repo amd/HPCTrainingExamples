@@ -29,8 +29,8 @@ endif()
 #add_test(NAME Module_Test_Omniperf_1.0.10 COMMAND ../module_test_omniperf_1.0.10.sh )
 #set_property(TEST Module_Test_Omniperf_1.0.10 PROPERTY PASS_REGULAR_EXPRESSION "Omniperf version: 1.0.10")
 
-add_test(NAME Module_Test_Omnitrace_1.11.1 COMMAND ../module_test_omnitrace_1.11.1.sh )
-set_property(TEST Module_Test_Omnitrace_1.11.1 PROPERTY PASS_REGULAR_EXPRESSION "omnitrace-instrument v1.11.1")
+add_test(NAME Module_Test_Omnitrace COMMAND ../module_test_omnitrace.sh )
+set_property(TEST Module_Test_Omnitrace PROPERTY PASS_REGULAR_EXPRESSION "omnitrace-instrument v1.11.2")
 
 add_test(NAME Module_Test_AOMP_AMDClang COMMAND ../module_test_aomp_amdclang.sh )
 set_property(TEST Module_Test_AOMP_AMDClang PROPERTY PASS_REGULAR_EXPRESSION "AOMP_STANDALONE_19.0.0 clang version 19.0.0_AOMP_STANDALONE_19.0.0")
