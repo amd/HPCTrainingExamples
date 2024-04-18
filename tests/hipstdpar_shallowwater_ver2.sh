@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export HSA_XNACK=1
-module load llvm-latest
+module load amdclang
 
 cd ~/HPCTrainingExamples/HIPStdPar/CXX/ShallowWater_Ver2
 

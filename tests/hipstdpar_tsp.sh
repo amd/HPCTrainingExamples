@@ -11,7 +11,7 @@ patch -p1 < TSP.patch
 cd stdpar
 
 export HSA_XNACK=1
-module load llvm-latest
+module load amdclang
 export STDPAR_PATH=${STDPAR_PATH}
 export STDPAR_CXX=${STDPAR_CXX}
 export ROCM_GPU=`rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'`
