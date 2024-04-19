@@ -12,15 +12,14 @@ cd stdpar
 
 export HSA_XNACK=1
 module load amdclang
-export STDPAR_PATH=${ROCM_PATH}/include
 export STDPAR_CXX=$CXX
 export ROCM_GPU=`rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'`
 export STDPAR_TARGET=${ROCM_GPU}
 
 export AMD_LOG_LEVEL=3
 
-if [ ${ROCM_GPU} =~ "gfx9" ]; then
-   sed -i -e '/--hipstdpar/s/--hipstdpar /--hipstdpar -lstdc++ /' Makefile
+if [[ ${ROCM_GPU} =~ "gfx9" ]]; then
+   sed -i -e '/--hipstdpar/s/--hipstdpar /--hipstdpar -lstdc++ /' -e '/--hipstdpar-path=/s/--hipstdpar-path=//' Makefile
 else
    sed -i -e '/--hipstdpar/s/--hipstdpar /--hipstdpar --hipstdpar-interpose-alloc -lstdc++ /' Makefile
 fi
