@@ -12,8 +12,8 @@ cd stdpar
 
 export HSA_XNACK=1
 module load amdclang
-export STDPAR_PATH=${STDPAR_PATH}
-export STDPAR_CXX=${STDPAR_CXX}
+export STDPAR_PATH=${ROCM_PATH}/include
+export STDPAR_CXX=$CXX
 export ROCM_GPU=`rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'`
 export STDPAR_TARGET=${ROCM_GPU}
 
