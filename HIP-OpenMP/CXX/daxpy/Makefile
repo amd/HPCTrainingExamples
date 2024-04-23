@@ -16,7 +16,7 @@ ifeq ($(HIPCC), nvcc)
 endif
 ifeq ($(HIPCC), hipcc)
    HIPCC_FLAGS += -munsafe-fp-atomics -D__DEVICE_CODE__
-   LDFLAGS = -L${ROCM_PATH}/hip/lib -lamdhip64
+   LDFLAGS = -L${ROCM_PATH}/lib -lamdhip64
 endif
 
 daxpy_hip.hip: daxpy.cc
