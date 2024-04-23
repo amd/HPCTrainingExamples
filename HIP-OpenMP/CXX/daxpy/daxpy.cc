@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 
    for (int i=0; i<n; i++)
    {
-           x[i] = 1.1;  // use 1.0
+           x[i] = 1.0;  // use 1.0
    };
 
    // allocate the device memory
