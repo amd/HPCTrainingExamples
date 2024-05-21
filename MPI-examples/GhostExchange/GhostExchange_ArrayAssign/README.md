@@ -1,7 +1,7 @@
 # MPI Ghost Exchange Optimization Examples
 
 <details>
-<summary><h3>Background Terminology: Wc're Exchanging <i>Ghosts?</i></h3></summary>
+<summary><h3>Background Terminology: We're Exchanging <i>Ghosts?</i></h3></summary>
 In a context where the problem we're trying to solve is spread across many compute resources, 
 it is usually inefficient to store the entire data set on every compute node working to solve our problem.
 Thus, we "chop up" the problem into small pieces we assign to each node working on our problem.
