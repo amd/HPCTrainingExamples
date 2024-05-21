@@ -35,8 +35,9 @@ given element by averaging the values at a 5-point stencil location centered at 
 `xnew[j][i] = (x[j][i] + x[j][i-1] + x[j][i+1] + x[j-1][i] + x[j+1][i])/5.0`
 
 The communication pattern used is best shown in a diagram that appears in [Parallel and high performance computing, by Robey and Zamora](https://www.manning.com/books/parallel-and-high-performance-computing):
-<img src="ghost_exchange2.png"\>
-
+<p>
+<img src="ghost_exchange2.png" \>
+</p>
 Here we see that each process is assigned a portion of the problem, and when communicating factors 
 its portion of the problem's locality: the MPI rank corresponding to the bottom left corner only communicates up and to the right, where as the rank that has the center of the problem must communicate in all directions to provide comprehensive updates.
 
