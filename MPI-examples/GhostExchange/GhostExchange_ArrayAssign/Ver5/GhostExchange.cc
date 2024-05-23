@@ -277,24 +277,24 @@ void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize, i
    }
    int jnum = jhgh-jlow;
    int bufcount = jnum*nhalo;
+   int offset = 0;
 
    roctxRangePush("LoadLeftRight");
-   int icount;
    if (nleft != MPI_PROC_NULL){
-      icount = 0;
       #pragma omp target teams distribute parallel for collapse(2)
       for (int j = jlow; j < jhgh; j++){
          for (int ll = 0; ll < nhalo; ll++){
-            xbuf_left_send[icount++] = xv(j,ll);
+	    offset = (j - jlow) * nhalo + ll;
+            xbuf_left_send[offset] = xv(j,ll);
          }
       }
    }
    if (nrght != MPI_PROC_NULL){
-      icount = 0;
       #pragma omp target teams distribute parallel for collapse(2)
       for (int j = jlow; j < jhgh; j++){
          for (int ll = 0; ll < nhalo; ll++){
-            xbuf_rght_send[icount++] = xv(j,isize-nhalo+ll);
+	    offset = (j - jlow) * nhalo + ll;
+            xbuf_rght_send[offset] = xv(j,isize-nhalo+ll);
          }
       }
    }
@@ -315,20 +315,20 @@ void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize, i
 
    roctxRangePush("UnpackLeftRight");
    if (nrght != MPI_PROC_NULL){
-      icount = 0;
       #pragma omp target teams distribute parallel for collapse(2)
       for (int j = jlow; j < jhgh; j++){
          for (int ll = 0; ll < nhalo; ll++){
-            xv(j,isize+ll) = xbuf_rght_recv[icount++];
+            offset = (j - jlow) * nhalo + ll;
+            xv(j,isize+ll) = xbuf_rght_recv[offset];
          }
       }
    }
    if (nleft != MPI_PROC_NULL){
-      icount = 0;
       #pragma omp target teams distribute parallel for collapse(2)
       for (int j = jlow; j < jhgh; j++){
          for (int ll = 0; ll < nhalo; ll++){
-            xv(j,-nhalo+ll) = xbuf_left_recv[icount++];
+            offset = (j - jlow) * nhalo + ll;
+            xv(j,-nhalo+ll) = xbuf_left_recv[offset];
          }
       }
    }

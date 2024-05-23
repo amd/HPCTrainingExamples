@@ -28,6 +28,17 @@ THE SOFTWARE.
 #define BLOCK_SIZE 256
 #define SOFTENING 1e-9f
 
+#define HIP_CHECK(call)                                   \
+do{                                                      \
+    hipError_t gpuErr = call;                            \
+    if(hipSuccess != gpuErr){                            \
+        printf("GPU API Error - %s:%d: '%s'\n",          \
+         __FILE__, __LINE__, hipGetErrorString(gpuErr)); \
+        exit(1);                                         \
+    }                                                    \
+}while(0)
+
+
 typedef struct { float x, y, z, vx, vy, vz; } Body;
 
 void randomizeBodies(float *data, int n) {
@@ -72,7 +83,7 @@ int main(const int argc, const char** argv) {
   randomizeBodies(buf, 6*nBodies); // Init pos / vel data
 
   float *d_buf;
-  hipMalloc(&d_buf, bytes);
+  HIP_CHECK(hipMalloc(&d_buf, bytes));
   Body *d_p = (Body*)d_buf;
 
   int nBlocks = (nBodies + BLOCK_SIZE - 1) / BLOCK_SIZE;
@@ -81,9 +92,9 @@ int main(const int argc, const char** argv) {
   for (int iter = 1; iter <= nIters; iter++) {
     StartTimer();
 
-    hipMemcpy(d_buf, buf, bytes, hipMemcpyHostToDevice);
+    HIP_CHECK(hipMemcpy(d_buf, buf, bytes, hipMemcpyHostToDevice));
     hipLaunchKernelGGL(bodyForce, nBlocks, BLOCK_SIZE, 0, 0, d_p, dt, nBodies); // compute interbody forces
-    hipMemcpy(buf, d_buf, bytes, hipMemcpyDeviceToHost);
+    HIP_CHECK(hipMemcpy(buf, d_buf, bytes, hipMemcpyDeviceToHost));
 
     for (int i = 0 ; i < nBodies; i++) { // integrate position
       p[i].x += p[i].vx*dt;
@@ -109,5 +120,5 @@ int main(const int argc, const char** argv) {
   printf("%d Bodies: average %0.3f Billion Interactions / second\n", nBodies, 1e-9 * nBodies * nBodies / avgTime);
 #endif
   free(buf);
-  hipFree(d_buf);
+  HIP_CHECK(hipFree(d_buf));
 }
