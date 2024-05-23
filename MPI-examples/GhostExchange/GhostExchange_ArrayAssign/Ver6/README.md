@@ -64,7 +64,7 @@ The `wall_clock-0.txt` file shows our overall run got much faster:
 
 <p><img src="timemory_output.png"/></p>
 
-Previously we ran in 42 seconds, and now the runtime is 1.15 seconds. However, we expect we
+Previously we ran in 42 seconds, and now the uninstrumented runtime is 1.15 seconds (from above), while `wall_clock-0.txt` shows our runtime is 2.3 seconds. However, we expect we
 should see a much more modest speedup, on the order of 2x. The exaggerated speedup is due to 
 our initial GPU examples running more slowly than expected.
 
