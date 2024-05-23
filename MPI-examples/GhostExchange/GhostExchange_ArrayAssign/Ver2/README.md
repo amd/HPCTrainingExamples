@@ -11,6 +11,23 @@ module load omnitrace/1.11.2
 module load craype-accel-amd-gfx90a cmake/3.23.2
 ```
 
+## Build and Run
+```
+cd Ver2
+mkdir build; cd build;
+cmake ..
+make -j8
+srun -N1 -n4 -c7 --gpu-bind=closest -A <account> -t 05:00 ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
+```
+
+Output of this run should look like this:
+
+```
+GhostExchange_ArrayAssign Timing is stencil 41.271637 boundary condition 0.065609 ghost cell 0.082028 total 42.522386
+```
+
+Again, we see an unexpectedly high runtime for a GPU port, likely due to some OpenMP configuration detail. On a different system, this runs in around 3 seconds.
+
 ## Get an Initial Trace
 
 Omnitrace enables `roctx` ranges by default, so we only needed to add them in the code.
