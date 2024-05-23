@@ -70,7 +70,7 @@ While the `instrumented` output file looks like this:
 We see in this case `omnitrace-instrument` seems to only instrument a few functions. This is because 
 by default Omnitrace excludes any functions smaller than a certain number of instructions from instrumentation to reduce the overhead of tracing, the size of the resulting trace, and increase readability of the trace visualization. This can be tuned by the `-i <instruction-count>` argument to `omnitrace-instrument`, which will include functions with at least `<instruction-count>` instructions in instrumentation. Specific functions can be included by providing a regular expression to the `-I <function-regex>`, which will include in instrumentation any function name matching the regular expression, despite heuristics.
 
-For more thorough details on Omnitrace options, we defer to the (Omnitrace documentation)[rocm.github.io/omnitrace].
+For more thorough details on Omnitrace options, we defer to the [Omnitrace documentation](rocm.github.io/omnitrace).
 
 For `omnitrace-run`, we look for the following output to ensure our run is correctly using Omnitrace, and for locating the output files:
 
