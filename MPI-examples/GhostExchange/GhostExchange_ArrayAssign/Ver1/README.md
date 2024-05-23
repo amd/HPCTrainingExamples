@@ -16,7 +16,27 @@ module load omnitrace/1.11.2
 module load craype-accel-amd-gfx90a cmake/3.23.2
 ```
 
-## Get Initial Trace
+## Build and Run
+
+```
+cd Ver1
+mkdir build; cd build;
+cmake ..
+make -j8
+srun -N1 -n4 -c7 --gpu-bind=closest -A <account> -t 05:00 ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
+```
+
+This run should show output that looks like this:
+
+```
+GhostExchange_ArrayAssign Timing is stencil 41.139365 boundary condition 0.096919 ghost cell 0.120836 total 42.683348
+```
+
+Now, this runtime is somewhat unexpected and points to some issue in our OpenMP configuration. Certainly, 
+using managed memory means sub-optimal memory movement, but we have observed on a different system that this 
+implementation runs in around 3 seconds. Using different compilers makes matching configurations complex, so we suspect there is some subtle configuration difference that is impacting performance here. We will use Omnitrace to narrow down where the additional overhead manifests throughout these examples.
+
+## Initial Trace
 
 Remember to enable the `HSA_XNACK` environment variable and ensure that the configuration file is
 known to Omnitrace:
@@ -58,9 +78,13 @@ Again, add `OMNITRACE_PROFILE=true` and `OMNITRACE_FLAT_PROFILE=true` to `~/.omn
 
 <p><img src="timemory_flat.png"/></p>
 
-We now see kernels with `__omp_offloading...` that show we are launching kernels, and we see that our runtime for `GhostExchange.inst` has increased to 42 seconds.
+We now see kernels with `__omp_offloading...` that show we are launching kernels, and we see that our
+runtime for `GhostExchange.inst` has increased to 42 seconds. We also see that the only function call
+that takes around that long in the profile is `hipStreamSynchronize`, so there is some overhead 
+associated with `hipStreams` that is manifesting in the synchronization taking much longer than we 
+expect. Omnitrace has helped us narrow down where this overhead is coming from.
 
-## See HSA Activity
+## HSA Activity
 
 The AMD compiler implements OpenMP target offload capability using the HSA layer. To see HSA activity, add this to `~/.omnitrace.cfg`:
 
