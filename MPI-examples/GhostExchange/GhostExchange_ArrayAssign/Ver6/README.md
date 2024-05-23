@@ -18,6 +18,26 @@ module load omnitrace/1.11.2
 module load craype-accel-amd-gfx90a cmake/3.23.2
 ```
 
+## Build and Run
+
+```
+cd Ver6
+mkdir build; cd build;
+cmake ..
+make -j8
+srun -N1 -n4 -c7 --gpu-bind=closest -A <account> -t 05:00 ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
+```
+
+The output for this run should look like:
+
+```
+GhostExchange_ArrayAssign Timing is stencil 0.555478 boundary condition 0.006301 ghost cell 0.095680 total 1.156549
+```
+
+Now we see a drastic improvement in our runtime. This should not be taken as typical for this type of
+optimization, as we saw a speedup of around 2x on a different system between the last example and this one. 
+This points to the fact that this change avoids the overheads we were seeing due to some OpenMP configuration detail in previous examples.
+
 ## Get a Trace
 
 ```
@@ -44,8 +64,10 @@ The `wall_clock-0.txt` file shows our overall run got much faster:
 
 <p><img src="timemory_output.png"/></p>
 
-Previously we ran in 42 seconds, and now the runtime is 2 seconds.
+Previously we ran in 42 seconds, and now the runtime is 1.15 seconds. However, we expect we
+should see a much more modest speedup, on the order of 2x. The exaggerated speedup is due to 
+our initial GPU examples running more slowly than expected.
 
-So we see that the location of our data on CPU+GPU system matters quite a lot to performance.
+However, we see that the location of our data on CPU+GPU system matters quite a lot to performance.
 Implicit memory movement may not get the best performance, and it is usually worth it to 
 pay the memory movement cost up front once than repeatedly for each kernel.
