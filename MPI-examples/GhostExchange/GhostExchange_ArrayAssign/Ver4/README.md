@@ -12,6 +12,24 @@ module load omnitrace/1.11.2
 module load craype-accel-amd-gfx90a cmake/3.23.2
 ```
 
+## Build and Run
+
+```
+cd Ver4
+mkdir build; cd build;
+cmake ..
+make -j8
+srun -N1 -n4 -c7 --gpu-bind=closest -A <account> -t 05:00 ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
+```
+
+The output for this run should look like:
+
+```
+GhostExchange_ArrayAssign Timing is stencil 41.207540 boundary condition 0.100581 ghost cell 0.102640 total 42.511851
+```
+
+Note we see similar runtimes to previous examples, so these changes do not fix the issue.
+
 ## Get an Initial Trace
 
 ```
