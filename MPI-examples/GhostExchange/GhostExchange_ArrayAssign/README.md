@@ -6,11 +6,11 @@ of optimization:
 - **Orig**: Shows a CPU-only implementation that uses MPI, and serves as the starting point for further optimizations. It is recommended to start here!
 - **Ver1**: Shows an OpenMP target offload implementation that uses the Managed memory model to port the code to GPUs using host allocated memory for MPI communication.
 - **Ver2**: Shows the usage and advantages of using `roctx` ranges to get more easily readable profiling output from Omnitrace.
-- **UNDER CONSTRUCTION Ver3**: Explores the effects of moving the allocation of communication buffers to the device.
+- **Ver3**: Under Construction, not expected to work at the moment
 - **Ver4**: Explores heap-allocating communication buffers once on host.
 - **Ver5**: Explores unrolling a 2D array to a 1D array.
 - **Ver6**: Explores using explicit memory management directives to specify when data movement should happen.
-- **UNDER CONSTRUCTION Ver7**: unclear what changes are present here
+- **Ver7**: Under Construction, not expected to work at this time.
 
 <details>
 <summary><h3>Background Terminology: We're Exchanging <i>Ghosts?</i></h3></summary>
