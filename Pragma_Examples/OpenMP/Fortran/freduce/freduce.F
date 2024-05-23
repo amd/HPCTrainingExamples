@@ -21,8 +21,8 @@ program freduce
         implicit none
 
         integer :: i, j
-        real    :: sum1, sum2
-        real, pointer :: array(:), buffer(:)
+        real(kind=8)    :: sum1, sum2
+        real(kind=8), pointer :: array(:), buffer(:)
         allocate(array(10))
         allocate(buffer(10))
 
