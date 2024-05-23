@@ -61,8 +61,10 @@ set_property(TEST HIPStdPar_ShallowWater_Ver2 PROPERTY PASS_REGULAR_EXPRESSION "
 #set_property(TEST HIPStdPar_ShallowWater_StdPar PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 
 # Unified Shared Memory Examples (MI300A programming)
-add_test(NAME USM_Vector_Add COMMAND ../usm_vector_add.sh )
-set_property(TEST USM_Vector_Add PROPERTY PASS_REGULAR_EXPRESSION "Success")
+if(${XNACK_COUNT} GREATER_EQUAL "1")
+   add_test(NAME USM_Vector_Add COMMAND ../usm_vector_add.sh )
+   set_property(TEST USM_Vector_Add PROPERTY PASS_REGULAR_EXPRESSION "Success")
+endif()
 
 add_test(NAME USM_Vector_Auto_Zero_Copy COMMAND ../usm_vector_auto_zero_copy.sh )
 set_property(TEST USM_Vector_Auto_Zero_Copy PROPERTY PASS_REGULAR_EXPRESSION "Success")
@@ -84,8 +86,10 @@ add_test(NAME HIP_Optimizations_daxpy_5 COMMAND ../hip_optimizations_daxpy_5.sh 
 set_property(TEST HIP_Optimizations_daxpy_5 PROPERTY PASS_REGULAR_EXPRESSION "PASSED")
 
 # HIP-OpenMP Interoperability Examples
-add_test(NAME HIP_OpenMP_Interoperability_daxpy COMMAND ../hip_openmp_interoperability_daxpy.sh )
-set_property(TEST HIP_OpenMP_Interoperability_daxpy PROPERTY PASS_REGULAR_EXPRESSION "PASS")
+if(${XNACK_COUNT} GREATER_EQUAL "1")
+   add_test(NAME HIP_OpenMP_Interoperability_daxpy COMMAND ../hip_openmp_interoperability_daxpy.sh )
+   set_property(TEST HIP_OpenMP_Interoperability_daxpy PROPERTY PASS_REGULAR_EXPRESSION "PASS")
+endif ()
 
 # Programming Model Examples
 
