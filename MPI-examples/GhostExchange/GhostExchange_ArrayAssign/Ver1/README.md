@@ -5,7 +5,7 @@ This uses OpenMP's target offload feature with a managed memory model, so the on
 the original code and this version are the addition of OpenMP pragmas.
 
 Using the managed memory model, the memory buffers are still initially allocated on host, but the OS
-will manage page migration and data movement across the Infinity Fabric link on MI250X.
+will manage page migration and data movement across the Infinity Fabric&trade; link on MI250X.
 
 ## Environment: Frontier
 
@@ -34,7 +34,9 @@ GhostExchange_ArrayAssign Timing is stencil 41.139365 boundary condition 0.09691
 
 Now, this runtime is somewhat unexpected and points to some issue in our OpenMP configuration. Certainly, 
 using managed memory means sub-optimal memory movement, but we have observed on a different system that this 
-implementation runs in around 3 seconds. Using different compilers makes matching configurations complex, so we suspect there is some subtle configuration difference that is impacting performance here. We will use Omnitrace to narrow down where the additional overhead manifests throughout these examples.
+implementation runs in around 3 seconds. Using different compilers makes matching configurations complex,
+so we suspect there is some subtle configuration difference that is impacting performance here. We will use
+Omnitrace to narrow down where the additional overhead manifests throughout these examples.
 
 ## Initial Trace
 
@@ -80,13 +82,20 @@ Again, add `OMNITRACE_PROFILE=true` and `OMNITRACE_FLAT_PROFILE=true` to `~/.omn
 
 We now see kernels with `__omp_offloading...` that show we are launching kernels, and we see that our
 runtime for `GhostExchange.inst` has increased to 42 seconds. We also see that the only function call
-that takes around that long in the profile is `hipStreamSynchronize`, so there is some overhead 
-associated with `hipStreams` that is manifesting in the synchronization taking much longer than we 
-expect. Omnitrace has helped us narrow down where this overhead is coming from.
+that takes around that long in the profile is `hipStreamSynchronize`. This indicates that the bulk of
+the time is spent in the GPU compute kernels, especially the blur kernel. We know that the kernel is
+memory bound, but the very long duration indicates that there is an overhead due to page
+migration. Omnitrace has helped us narrow down where this overhead is coming from, but it
+does not show page faults arising from GPU kernels. We are hoping that this feature would be
+available in a future update.
 
 ## HSA Activity
 
-The AMD compiler implements OpenMP target offload capability using the HSA layer. To see HSA activity, add this to `~/.omnitrace.cfg`:
+The AMD compiler implements OpenMP target offload capability using the
+[HSA](https://rocm.docs.amd.com/projects/ROCR-Runtime/en/latest/index.html) runtime library.
+The Cray compiler, on the other hand, implements OpenMP target offload functionality using the
+[HIP](https://rocm.docs.amd.com/projects/HIP/en/latest/index.html) runtime. Ultimately,
+the HIP runtime relies on the HSA runtime. To see HSA activity, add this to `~/.omnitrace.cfg`:
 
 ```
 OMNITRACE_ROCTRACER_HSA_ACTIVITY                   = true
