@@ -3,12 +3,15 @@
 In this example we explicitly manage the memory movement onto the device by using 
 `omp target enter data map`, `omp target update from`, and `omp target exit data map`, etc. 
 instead of requiring OpenMP to use managed memory and have the OS manage page migrations 
-automatically. 
+automatically. We no longer need either the pragma `omp requires unified_shared_memory` on
+each translation unit or the `HSA_XNACK=1` setting.
 
 Typically, startup costs of an application are not as important as the kernel runtimes. 
 In this case, by explicitly moving memory at the beginning of our run, 
 we're able to remove the overhead of memory movement from kernels. 
-However our startup is slightly slower since we need to move the data up-front.
+However our startup is slightly slower since we need to allocate a copy
+of all buffers on the device up-front.
+
 ## Environment: Frontier
 
 ```
@@ -35,13 +38,14 @@ GhostExchange_ArrayAssign Timing is stencil 0.555478 boundary condition 0.006301
 ```
 
 Now we see a drastic improvement in our runtime. This should not be taken as typical for this type of
-optimization, as we saw a speedup of around 2x on a different system between the last example and this one. 
-This points to the fact that this change avoids the overheads we were seeing due to some OpenMP configuration detail in previous examples.
+optimization, as we saw a speedup of around 2x on a different system between the last example and this one.
+This points to the fact that this change avoids the overheads we were seeing due to some OpenMP configuration detail
+in previous examples.
 
 ## Get a Trace
 
 ```
-export HSA_XNACK=1
+unset HSA_XNACK
 export OMNITRACE_CONFIG_FILE=~/.omnitrace.cfg
 srun -N1 -n4 -c7 --gpu-bind=closest -A <account> -t 05:00 ./GhostExchange.inst -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
 ```
@@ -64,7 +68,8 @@ The `wall_clock-0.txt` file shows our overall run got much faster:
 
 <p><img src="timemory_output.png"/></p>
 
-Previously we ran in 42 seconds, and now the uninstrumented runtime is 1.15 seconds (from above), while `wall_clock-0.txt` shows our runtime is 2.3 seconds. However, we expect we
+Previously we ran in 42 seconds, and now the uninstrumented runtime is 1.15 seconds (from above),
+while `wall_clock-0.txt` shows our runtime is 2.3 seconds. However, we expect we
 should see a much more modest speedup, on the order of 2x. The exaggerated speedup is due to 
 our initial GPU examples running more slowly than expected.
 
