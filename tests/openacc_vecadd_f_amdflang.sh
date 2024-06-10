@@ -2,7 +2,7 @@
 
 module load aomp
 
-cd ~/HPCTrainingExamples/Pragma_Examples/OpenACC/Fortran/vecadd
+cd ${REPO_DIR}/Pragma_Examples/OpenACC/Fortran/vecadd
 
 make
 ./vecadd

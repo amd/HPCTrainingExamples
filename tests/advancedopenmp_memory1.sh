@@ -1,7 +1,7 @@
 #!/bin/bash
 module load amdclang
 
-cd ~/HPCTrainingExamples/Pragma_Examples/OpenMP/CXX/memory_pragmas
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/CXX/memory_pragmas
 
 export LIBOMPTARGET_INFO=-1
 export OMP_TARGET_OFFLOAD=MANDATORY

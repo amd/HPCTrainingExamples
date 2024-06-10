@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ~/HPCTrainingExamples/HIP/jacobi
+cd ${REPO_DIR}/HIP/jacobi
 
 module load rocm
 module load openmpi

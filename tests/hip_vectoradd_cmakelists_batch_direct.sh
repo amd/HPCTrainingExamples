@@ -1,5 +1,5 @@
 #!/bin/bash
-cp ~/HPCTrainingExamples/HIP/vectorAdd/hip_cmakelists_batch.sh hip_cmakelists_batch.sh
+cp ${REPO_DIR}/HIP/vectorAdd/hip_cmakelists_batch.sh hip_cmakelists_batch.sh
 chmod +x hip_cmakelists_batch.sh
 ./hip_cmakelists_batch.sh
 

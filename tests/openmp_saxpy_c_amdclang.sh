@@ -2,7 +2,7 @@
 
 module load amdclang
 
-cd ~/HPCTrainingExamples/Pragma_Examples/OpenMP/C/saxpy
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/C/saxpy
 
 make
 ./saxpy

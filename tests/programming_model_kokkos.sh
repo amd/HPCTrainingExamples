@@ -25,7 +25,7 @@ rm -rf Kokkos_build
 
 export Kokkos_DIR=${PWDir}/Kokkos_HIP
 
-cd ~/HPCTrainingExamples/ManagedMemory/Kokkos_Code
+cd ${REPO_DIR}/ManagedMemory/Kokkos_Code
 
 # To run with managed memory
 export HSA_XNACK=1

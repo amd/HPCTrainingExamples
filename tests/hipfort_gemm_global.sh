@@ -1,7 +1,7 @@
 #!/bin/bash
 
 module load amdclang
-cd ~/HPCTrainingExamples/HIPFort/hipgemm
+cd ${REPO_DIR}/HIPFort/hipgemm
 make gemm_global
 ./gemm_global
 

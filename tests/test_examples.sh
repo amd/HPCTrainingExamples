@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rm -rf HPCTrainingExamples
+rm -rf ${REPO_DIR}
 git clone https://github.com/amd/HPCTrainingExamples.git
 
 #Slurm interactive test
@@ -8,7 +8,7 @@ git clone https://github.com/amd/HPCTrainingExamples.git
 #salloc -N 1 -p LocalQ --gpus=1 -t 10:00
 
 module load rocm
-cd ~/HPCTrainingExamples/HIP/vectorAdd
+cd ${REPO_DIR}/HIP/vectorAdd
 make vectoradd
 ./vectoradd
 make clean
@@ -22,7 +22,7 @@ cd
 
 # need to add slurm example
 
-cd ~/HPCTrainingExamples/HIP/hip-stream
+cd ${REPO_DIR}/HIP/hip-stream
 make stream
 ./stream
 make clean
@@ -34,7 +34,7 @@ cd ..
 rm -rf build
 cd
 
-cd ~/HPCTrainingExamples/HIP/saxpy
+cd ${REPO_DIR}/HIP/saxpy
 make saxpy
 ./saxpy
 make clean
@@ -46,7 +46,7 @@ cd ..
 rm -rf build
 cd
 
-cd ~/HPCTrainingExamples/HIP/jacobi
+cd ${REPO_DIR}/HIP/jacobi
 
 module load rocm
 module load openmpi
@@ -62,7 +62,7 @@ cd ..
 rm -rf build
 cd
 
-cd HPCTrainingExamples/HIPIFY/mini-nbody/cuda
+cd ${REPO_DIR}/HIPIFY/mini-nbody/cuda
 hipify-perl -examine nbody-orig.cu
 
 hipify-perl nbody-orig.cu > nbody-orig.cpp
@@ -104,14 +104,14 @@ cd PENNANT
 make
 build/pennant test/leblanc/leblanc.pnt
 
-cp ~/HPCTrainingExamples/HIP/saxpy/Makefile .
-cp ~/HPCTrainingExamples/HIP/saxpy/CMakeLists.txt .
+cp ${REPO_DIR}/HIP/saxpy/Makefile .
+cp ${REPO_DIR}/HIP/saxpy/CMakeLists.txt .
 cp Makefile Makefile.portable
 cp CMakeLists.txt CMakeLists.txt.portable
 cp ~/Makefile .
 cp ~/CMakeLists.txt .
 
-cd HPCTrainingExamples/Pragma_Examples/OpenMP/C/Make/saxpy/
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/C/Make/saxpy/
 module load rocm
 module load amdclang
 make
@@ -120,7 +120,7 @@ make clean
 
 cd
 
-cd HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/Make/freduce
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/Make/freduce
 module load rocm
 module load amdclang
 make

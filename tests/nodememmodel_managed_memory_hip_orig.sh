@@ -2,7 +2,7 @@
 
 module load rocm
 
-cd ~/HPCTrainingExamples/ManagedMemory/vectorAdd
+cd ${REPO_DIR}/ManagedMemory/vectorAdd
 
 sed -i 's/\/opt\/rocm/${ROCM_PATH}/g' Makefile
 

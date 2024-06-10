@@ -2,7 +2,7 @@
 
 module load gcc/13
 
-cd ~/HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/vecadd
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/vecadd
 
 make
 ./vecadd

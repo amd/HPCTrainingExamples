@@ -2,7 +2,7 @@
 
 module load amdclang
 
-cd ~/HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/vecadd
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/vecadd
 
 make
 ./vecadd

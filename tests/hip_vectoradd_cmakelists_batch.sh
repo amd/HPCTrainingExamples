@@ -1,5 +1,5 @@
 #!/bin/bash
-sbatch --wait ~/HPCTrainingExamples/HIP/vectorAdd/hip_cmakelists_batch.sh
+sbatch --wait ${REPO_DIR}/HIP/vectorAdd/hip_cmakelists_batch.sh
 
 grep PASSED! slurm-*.out
 ls

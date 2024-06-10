@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ~/HPCTrainingExamples/HIP-Optimizations/daxpy
+cd ${REPO_DIR}/HIP-Optimizations/daxpy
 make daxpy_5
 ./daxpy_5 1000000
 
