@@ -1,18 +1,13 @@
---------------------------------------------------------------
-
-\pagebreak{}
-
-
 # Kokkos examples
 
 ## Stream Triad
 
 ### Step 1: Build a separate Kokkos package
-```
+
 **NOTE**: these exercises have been tested on MI210 and MI300A accelerators using a container environment.
 To see details on the container environment (such as operating system and modules available) please see `README.md` on [this](https://github.com/amd/HPCTrainingDock) repo.
 
-
+```bash
 cd $HOME/HPCTraining/Examples
 git clone https://github.com/kokkos/kokkos Kokkos_build
 cd Kokkos_build

@@ -1,7 +1,3 @@
-
---------------------------------------------------------------
-\pagebreak{}
-
 # Programming Model Exercises -- Managed Memory and Single Address Space (APU)
 
 **NOTE**: these exercises have been tested on MI210 and MI300A accelerators using a container environment.

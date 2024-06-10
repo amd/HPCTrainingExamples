@@ -1,7 +1,3 @@
-
---------------------------------------------------------------
-\pagebreak{}
-
 # GPU Aware MPI
 ## Point-to-point and collective
 

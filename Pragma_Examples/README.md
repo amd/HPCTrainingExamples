@@ -1,8 +1,3 @@
-
-                    %------------------------%
-
-\pagebreak{}
-
 # OpenMP Intro Examples
 
 **NOTE**: these exercises have been tested on MI210 and MI300A accelerators using a container environment.
@@ -182,8 +177,6 @@ new input from the host to the device.
 make target_data_update
 ./target_data_update
 ```
-
-\pagebreak{}
 
 # Advanced OpenMP Presentation
 
@@ -396,7 +389,6 @@ Another option to explore is adding the attribute (std::align_val_t(128) ) to ea
 ```bash
 double *x = new (std::align_val_t(128) ) double[n];
 ```
-\pagebreak{}
 
 # Real-World OpenMP Language Constructs
 
