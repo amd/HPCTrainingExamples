@@ -1,4 +1,4 @@
-##AMD HPC Training Examples Repo
+## AMD HPC Training Examples Repo
 
 Welcome to AMD's HPC Training Examples Repo!
 Here you will find a variety of examples to showcase the capabilities of AMD's GPU software stack.
