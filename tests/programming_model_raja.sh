@@ -11,6 +11,7 @@ PWDir=`pwd`
 git clone --recursive https://github.com/LLNL/RAJA.git Raja_build
 cd Raja_build
 
+rm -rf build
 mkdir build_hip && cd build_hip
 
 cmake -DCMAKE_INSTALL_PREFIX=${PWDir}/Raja_HIP \
@@ -32,11 +33,13 @@ rm -rf Raja_build
 
 export Raja_DIR=${PWDir}/Raja_HIP
 
+REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/ManagedMemory/Raja_Code
 
 # To run with managed memory
 export HSA_XNACK=1
 
+rm -rf build
 mkdir build && cd build
 CXX=hipcc Raja_DIR=${PWDir}/Raja_HIP cmake ..
 make

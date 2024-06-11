@@ -4,6 +4,7 @@ wget https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.
 tar -xf osu-micro-benchmarks-7.1-1.tar.gz
 
 module load gcc/12 rocm openmpi
+rm -rf build
 mkdir build
 cd osu-micro-benchmarks-7.1-1
 

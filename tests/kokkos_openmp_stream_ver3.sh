@@ -11,6 +11,7 @@ PWDir=`pwd`
 git clone https://github.com/kokkos/kokkos Kokkos_build
 cd Kokkos_build
 
+rm -rf build
 mkdir build_openmp && cd build_openmp
 cmake -DCMAKE_INSTALL_PREFIX=${PWDir}/Kokkos_OpenMP -DKokkos_ENABLE_SERIAL=On \
       -DKokkos_ENABLE_OPENMP=On ..
@@ -31,6 +32,7 @@ sed -i -e 's/80000000/100000/' StreamTriad.cc
 export OMP_PROC_BIND=spread
 export OMP_PLACES=threads
 
+rm -rf build
 mkdir build && cd build
 cmake ..
 make
