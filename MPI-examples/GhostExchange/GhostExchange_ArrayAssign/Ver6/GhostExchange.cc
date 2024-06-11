@@ -108,6 +108,9 @@ int main(int argc, char *argv[])
    int jnum = jhgh-jlow;
    int bufcount = jnum*nhalo;
 
+   #pragma omp target
+   {}
+
    roctxRangePush("BufAlloc");
    xbuf_left_send = (double *)malloc(bufcount*sizeof(double));
    xbuf_rght_send = (double *)malloc(bufcount*sizeof(double));
