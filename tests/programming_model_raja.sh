@@ -32,7 +32,7 @@ rm -rf Raja_build
 
 export Raja_DIR=${PWDir}/Raja_HIP
 
-cd ~/HPCTrainingExamples/ManagedMemory/Raja_Code
+cd ${REPO_DIR}/ManagedMemory/Raja_Code
 
 # To run with managed memory
 export HSA_XNACK=1

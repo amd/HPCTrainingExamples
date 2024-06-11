@@ -13,7 +13,7 @@ else
    MPI_RUN_OPTIONS="--mca coll ^hcoll"
 fi
 
-cd ~/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign
+cd ${REPO_DIR}/MPI-examples/GhostExchange/GhostExchange_ArrayAssign
 
 cd Orig
 

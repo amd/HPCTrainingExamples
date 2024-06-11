@@ -2,7 +2,7 @@
 
 module load rocm
 
-cd ~/HPCTrainingExamples/HIP/saxpy
+cd ${REPO_DIR}/HIP/saxpy
 
 mkdir build && cd build
 cmake ..

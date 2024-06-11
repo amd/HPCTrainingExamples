@@ -2,7 +2,7 @@
 
 module load amdclang
 
-cd ~/HPCTrainingExamples/atomics_openmp
+cd ${REPO_DIR}/atomics_openmp
 
 make arraysum9
 export HSA_XNACK=1

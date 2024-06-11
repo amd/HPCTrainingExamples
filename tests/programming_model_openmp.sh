@@ -3,7 +3,7 @@ export HSA_XNACK=1
 
 module load amdclang
 
-cd ~/HPCTrainingExamples/ManagedMemory/OpenMP_Code
+cd ${REPO_DIR}/ManagedMemory/OpenMP_Code
 make openmp_code
 ./openmp_code
 

@@ -2,7 +2,7 @@
 
 module load rocm
 
-cd ~/HPCTrainingExamples/HIPIFY/mini-nbody/cuda
+cd ${REPO_DIR}/HIPIFY/mini-nbody/cuda
 hipify-perl -examine nbody-orig.cu
 
 hipify-perl nbody-orig.cu > nbody-orig.cpp

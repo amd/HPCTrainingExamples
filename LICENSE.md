@@ -1,6 +1,5 @@
-MIT License
-
-Copyright (c) 2022-2024 AMD HPC Application Performance Team
+**Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved**
+This software is distributed under the **MIT License**
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

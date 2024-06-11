@@ -2,7 +2,7 @@
 export HSA_XNACK=1
 module load amdclang
 
-cd ~/HPCTrainingExamples/HIP-OpenMP/CXX/daxpy
+cd ${REPO_DIR}/HIP-OpenMP/CXX/daxpy
 make
 ./daxpy
 

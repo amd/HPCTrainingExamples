@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ~/HPCTrainingExamples/HIPStdPar/CXX/ShallowWater_Orig
+cd ${REPO_DIR}/HIPStdPar/CXX/ShallowWater_Orig
 
 mkdir build && cd build
 cmake ..

@@ -2,7 +2,7 @@
 
 module load rocm
 
-cd ~/HPCTrainingExamples/HIP/vectorAdd
+cd ${REPO_DIR}/HIP/vectorAdd
 
 mkdir build && cd build
 cmake ..

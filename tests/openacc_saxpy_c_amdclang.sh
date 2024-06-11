@@ -2,7 +2,7 @@
 
 module load amd-clang
 
-cd HPCTrainingExamples/Pragma_Examples/OpenACC/C/saxpy
+cd ${REPO_DIR}/Pragma_Examples/OpenACC/C/saxpy
 
 make
 ./saxpy

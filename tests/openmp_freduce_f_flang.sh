@@ -2,7 +2,7 @@
 
 module load clang/15
 
-cd ~/HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/freduce
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/freduce
 
 make
 ./freduce

@@ -2,7 +2,7 @@
 
 module load rocm
 
-cd ~/HPCTrainingExamples/HIP/hip-stream
+cd ${REPO_DIR}/HIP/hip-stream
 
 make stream
 ./stream

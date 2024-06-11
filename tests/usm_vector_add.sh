@@ -2,7 +2,7 @@
 
 module load amdclang
 
-cd ~/HPCTrainingExamples/Pragma_Examples/OpenMP/USM/vector_add_usm
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/USM/vector_add_usm
 make
 make run
 
