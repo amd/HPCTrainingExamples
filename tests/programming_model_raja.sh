@@ -11,7 +11,7 @@ PWDir=`pwd`
 git clone --recursive https://github.com/LLNL/RAJA.git Raja_build
 cd Raja_build
 
-rm -rf build
+rm -rf build_hip
 mkdir build_hip && cd build_hip
 
 cmake -DCMAKE_INSTALL_PREFIX=${PWDir}/Raja_HIP \

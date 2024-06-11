@@ -9,7 +9,6 @@ git clone https://github.com/amd/HPCTrainingExamples.git
 #salloc -N 1 -p LocalQ --gpus=1 -t 10:00
 
 module load rocm
-REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIP/vectorAdd
 make vectoradd
 ./vectoradd
@@ -25,7 +24,6 @@ cd
 
 # need to add slurm example
 
-REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIP/hip-stream
 make stream
 ./stream
@@ -39,7 +37,6 @@ cd ..
 rm -rf build
 cd
 
-REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIP/saxpy
 make saxpy
 ./saxpy
@@ -53,7 +50,6 @@ cd ..
 rm -rf build
 cd
 
-REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIP/jacobi
 
 module load rocm
@@ -71,7 +67,6 @@ cd ..
 rm -rf build
 cd
 
-REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIPIFY/mini-nbody/cuda
 hipify-perl -examine nbody-orig.cu
 
@@ -114,16 +109,13 @@ cd PENNANT
 make
 build/pennant test/leblanc/leblanc.pnt
 
-REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cp ${REPO_DIR}/HIP/saxpy/Makefile .
-REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cp ${REPO_DIR}/HIP/saxpy/CMakeLists.txt .
 cp Makefile Makefile.portable
 cp CMakeLists.txt CMakeLists.txt.portable
 cp ~/Makefile .
 cp ~/CMakeLists.txt .
 
-REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/Pragma_Examples/OpenMP/C/Make/saxpy/
 module load rocm
 module load amdclang
@@ -133,7 +125,6 @@ make clean
 
 cd
 
-REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/Make/freduce
 module load rocm
 module load amdclang

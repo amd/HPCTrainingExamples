@@ -11,7 +11,7 @@ PWDir=`pwd`
 git clone https://github.com/kokkos/kokkos Kokkos_build
 cd Kokkos_build
 
-rm -rf build
+rm -rf build_openmp
 mkdir build_openmp && cd build_openmp
 cmake -DCMAKE_INSTALL_PREFIX=${PWDir}/Kokkos_OpenMP -DKokkos_ENABLE_SERIAL=On \
       -DKokkos_ENABLE_OPENMP=On ..
