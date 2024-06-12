@@ -11,6 +11,7 @@ PWDir=`pwd`
 git clone https://github.com/kokkos/kokkos Kokkos_build
 cd Kokkos_build
 
+rm -rf build_hip
 mkdir build_hip && cd build_hip
 cmake -DCMAKE_INSTALL_PREFIX=${PWDir}/Kokkos_HIP -DKokkos_ENABLE_SERIAL=ON \
       -DKokkos_ENABLE_HIP=ON -DKokkos_ARCH_ZEN=ON -DKokkos_ARCH_VEGA90A=ON \
@@ -25,11 +26,13 @@ rm -rf Kokkos_build
 
 export Kokkos_DIR=${PWDir}/Kokkos_HIP
 
+REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/ManagedMemory/Kokkos_Code
 
 # To run with managed memory
 export HSA_XNACK=1
 
+rm -rf build
 mkdir build && cd build
 CXX=hipcc cmake ..
 make

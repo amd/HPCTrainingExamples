@@ -1,10 +1,12 @@
 #!/bin/bash
 
+REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIP/jacobi
 
 module load rocm
 module load openmpi
 
+rm -rf build
 mkdir build && cd build
 cmake ..
 make

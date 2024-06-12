@@ -11,6 +11,7 @@ git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13
 cd Chapter13/Kokkos/StreamTriad/Orig
 sed -i -e 's/80000000/100000/' StreamTriad.cc
 
+rm -rf build
 mkdir build && cd build
 cmake ..
 make

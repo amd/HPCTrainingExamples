@@ -14,10 +14,12 @@ else
    MPI_RUN_OPTIONS="--mca coll ^hcoll"
 fi
 
+REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/MPI-examples/GhostExchange/GhostExchange_ArrayAssign
 
 cd Ver1
 
+rm -rf build
 mkdir build && cd build
 cmake ..
 make

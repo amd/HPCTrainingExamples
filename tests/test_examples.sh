@@ -1,5 +1,6 @@
 #!/bin/bash
 
+REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 rm -rf ${REPO_DIR}
 git clone https://github.com/amd/HPCTrainingExamples.git
 
@@ -12,6 +13,7 @@ cd ${REPO_DIR}/HIP/vectorAdd
 make vectoradd
 ./vectoradd
 make clean
+rm -rf build
 mkdir build && cd build
 cmake ..
 make
@@ -26,6 +28,7 @@ cd ${REPO_DIR}/HIP/hip-stream
 make stream
 ./stream
 make clean
+rm -rf build
 mkdir build && cd build
 cmake ..
 make
@@ -38,6 +41,7 @@ cd ${REPO_DIR}/HIP/saxpy
 make saxpy
 ./saxpy
 make clean
+rm -rf build
 mkdir build && cd build
 cmake ..
 make
@@ -51,6 +55,7 @@ cd ${REPO_DIR}/HIP/jacobi
 module load rocm
 module load openmpi
 
+rm -rf build
 mkdir build && cd build
 cmake ..
 make
