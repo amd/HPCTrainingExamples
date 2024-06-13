@@ -5,7 +5,7 @@ To see details on the container environment (such as operating system and module
 
 ## Checking out makefiles and compiler toolchain
 
-Running the first OpenMP example: `Pragma_Examples/OpenMP/C/Make/saxpy`
+Running the first OpenMP example: `Pragma_Examples/OpenMP/C/saxpy`
 
 ### Build with AMDClang compiler
 
