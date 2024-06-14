@@ -1,5 +1,6 @@
-#!/bin/sh
-for dir in OpenMP/C/Make/vecadd OpenMP/Fortran/Make/vecadd OpenMP/Fortran/Make/freduce OpenACC/C/Make/vecadd OpenACC/Fortran/Make/vecadd OpenACC/Fortran/Make/freduce OpenMP/C/Make/saxpy OpenACC/C/Make/saxpy OpenMP/C/Make/reduction OpenACC/C/Make/reduction
+#!/bin/bash
+module load aomp
+for dir in OpenMP/C/vecadd OpenMP/Fortran/vecadd OpenMP/Fortran/freduce OpenACC/C/vecadd OpenACC/Fortran/vecadd OpenACC/Fortran/freduce OpenMP/C/saxpy OpenACC/C/saxpy OpenMP/C/reduction OpenACC/C/reduction
 do
   pushd $dir
   make

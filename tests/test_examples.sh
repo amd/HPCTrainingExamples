@@ -1,8 +1,6 @@
 #!/bin/bash
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-rm -rf ${REPO_DIR}
-git clone https://github.com/amd/HPCTrainingExamples.git
 
 #Slurm interactive test
 
@@ -116,7 +114,7 @@ cp CMakeLists.txt CMakeLists.txt.portable
 cp ~/Makefile .
 cp ~/CMakeLists.txt .
 
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/C/Make/saxpy/
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/C/saxpy/
 module load rocm
 module load amdclang
 make
@@ -125,7 +123,7 @@ make clean
 
 cd
 
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/Make/freduce
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/freduce
 module load rocm
 module load amdclang
 make
