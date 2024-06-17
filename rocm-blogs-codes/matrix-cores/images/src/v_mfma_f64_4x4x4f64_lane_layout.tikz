@@ -1,0 +1,644 @@
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (16) at (0, 6) {};
+		\node [style=none] (17) at (2, 6) {};
+		\node [style=none] (18) at (2, 4) {};
+		\node [style=none] (19) at (0, 4) {};
+		\node [style=none] (20) at (1, 5) {1,1};
+		\node [style=none] (21) at (2, 6) {};
+		\node [style=none] (22) at (4, 6) {};
+		\node [style=none] (23) at (4, 4) {};
+		\node [style=none] (24) at (2, 4) {};
+		\node [style=none] (25) at (3, 5) {2,1};
+		\node [style=none] (26) at (4, 6) {};
+		\node [style=none] (27) at (6, 6) {};
+		\node [style=none] (28) at (6, 4) {};
+		\node [style=none] (29) at (4, 4) {};
+		\node [style=none] (30) at (5, 5) {3,1};
+		\node [style=none] (91) at (6, 6) {};
+		\node [style=none] (92) at (8, 6) {};
+		\node [style=none] (93) at (8, 4) {};
+		\node [style=none] (94) at (6, 4) {};
+		\node [style=none] (95) at (7, 5) {4,1};
+		\node [style=none] (96) at (8, 6) {};
+		\node [style=none] (97) at (8, 4) {};
+		\node [style=none] (98) at (10, 6) {};
+		\node [style=none] (99) at (10, 4) {};
+		\node [style=none] (100) at (9, 5) {1,1};
+		\node [style=none] (101) at (10, 6) {};
+		\node [style=none] (102) at (10, 4) {};
+		\node [style=none] (103) at (12, 6) {};
+		\node [style=none] (104) at (12, 4) {};
+		\node [style=none] (105) at (11, 5) {2,1};
+		\node [style=none] (106) at (12, 6) {};
+		\node [style=none] (107) at (12, 4) {};
+		\node [style=none] (108) at (14, 6) {};
+		\node [style=none] (109) at (14, 4) {};
+		\node [style=none] (110) at (13, 5) {3,1};
+		\node [style=none] (171) at (14, 6) {};
+		\node [style=none] (172) at (14, 4) {};
+		\node [style=none] (173) at (16, 6) {};
+		\node [style=none] (174) at (16, 4) {};
+		\node [style=none] (175) at (15, 5) {4,1};
+		\node [style=none] (176) at (16, 6) {};
+		\node [style=none] (177) at (18, 6) {};
+		\node [style=none] (178) at (16, 4) {};
+		\node [style=none] (179) at (18, 4) {};
+		\node [style=none] (180) at (17, 5) {1,1};
+		\node [style=none] (181) at (18, 6) {};
+		\node [style=none] (182) at (20, 6) {};
+		\node [style=none] (183) at (18, 4) {};
+		\node [style=none] (184) at (20, 4) {};
+		\node [style=none] (185) at (19, 5) {2,1};
+		\node [style=none] (186) at (20, 6) {};
+		\node [style=none] (187) at (22, 6) {};
+		\node [style=none] (188) at (20, 4) {};
+		\node [style=none] (189) at (22, 4) {};
+		\node [style=none] (190) at (21, 5) {3,1};
+		\node [style=none] (251) at (22, 6) {};
+		\node [style=none] (252) at (24, 6) {};
+		\node [style=none] (253) at (22, 4) {};
+		\node [style=none] (254) at (24, 4) {};
+		\node [style=none] (255) at (23, 5) {4,1};
+		\node [style=none] (256) at (24, 6) {};
+		\node [style=none] (257) at (26, 6) {};
+		\node [style=none] (258) at (24, 4) {};
+		\node [style=none] (259) at (26, 4) {};
+		\node [style=none] (260) at (25, 5) {1,1};
+		\node [style=none] (261) at (26, 6) {};
+		\node [style=none] (262) at (28, 6) {};
+		\node [style=none] (263) at (26, 4) {};
+		\node [style=none] (264) at (28, 4) {};
+		\node [style=none] (265) at (27, 5) {2,1};
+		\node [style=none] (266) at (28, 6) {};
+		\node [style=none] (267) at (30, 6) {};
+		\node [style=none] (268) at (28, 4) {};
+		\node [style=none] (269) at (30, 4) {};
+		\node [style=none] (270) at (29, 5) {3,1};
+		\node [style=none] (331) at (30, 6) {};
+		\node [style=none] (332) at (32, 6) {};
+		\node [style=none] (333) at (30, 4) {};
+		\node [style=none] (334) at (32, 4) {};
+		\node [style=none] (335) at (31, 5) {4,1};
+		\node [style=bare] (336) at (-2, 6.75) {Lane index};
+		\node [style=bare] (337) at (-2, 5) {A layout};
+		\node [style=bare] (338) at (-2, 1.25) {B layout};
+		\node [style=none] (339) at (0, 2) {};
+		\node [style=none] (340) at (2, 2) {};
+		\node [style=none] (341) at (2, 0) {};
+		\node [style=none] (342) at (0, 0) {};
+		\node [style=none] (343) at (1, 1) {1,1};
+		\node [style=none] (344) at (2, 2) {};
+		\node [style=none] (345) at (4, 2) {};
+		\node [style=none] (346) at (4, 0) {};
+		\node [style=none] (347) at (2, 0) {};
+		\node [style=none] (348) at (3, 1) {1,2};
+		\node [style=none] (349) at (4, 2) {};
+		\node [style=none] (350) at (6, 2) {};
+		\node [style=none] (351) at (6, 0) {};
+		\node [style=none] (352) at (4, 0) {};
+		\node [style=none] (353) at (5, 1) {1,3};
+		\node [style=none] (414) at (6, 2) {};
+		\node [style=none] (415) at (8, 2) {};
+		\node [style=none] (416) at (8, 0) {};
+		\node [style=none] (417) at (6, 0) {};
+		\node [style=none] (418) at (7, 1) {1,4};
+		\node [style=none] (419) at (8, 2) {};
+		\node [style=none] (420) at (8, 0) {};
+		\node [style=none] (421) at (10, 2) {};
+		\node [style=none] (422) at (10, 0) {};
+		\node [style=none] (423) at (9, 1) {1,1};
+		\node [style=none] (424) at (10, 2) {};
+		\node [style=none] (425) at (10, 0) {};
+		\node [style=none] (426) at (12, 2) {};
+		\node [style=none] (427) at (12, 0) {};
+		\node [style=none] (428) at (11, 1) {1,2};
+		\node [style=none] (429) at (12, 2) {};
+		\node [style=none] (430) at (12, 0) {};
+		\node [style=none] (431) at (14, 2) {};
+		\node [style=none] (432) at (14, 0) {};
+		\node [style=none] (433) at (13, 1) {1,3};
+		\node [style=none] (494) at (14, 2) {};
+		\node [style=none] (495) at (14, 0) {};
+		\node [style=none] (496) at (16, 2) {};
+		\node [style=none] (497) at (16, 0) {};
+		\node [style=none] (498) at (15, 1) {1,4};
+		\node [style=none] (499) at (16, 2) {};
+		\node [style=none] (500) at (18, 2) {};
+		\node [style=none] (501) at (16, 0) {};
+		\node [style=none] (502) at (18, 0) {};
+		\node [style=none] (503) at (17, 1) {1,1};
+		\node [style=none] (504) at (18, 2) {};
+		\node [style=none] (505) at (20, 2) {};
+		\node [style=none] (506) at (18, 0) {};
+		\node [style=none] (507) at (20, 0) {};
+		\node [style=none] (508) at (19, 1) {1,2};
+		\node [style=none] (509) at (20, 2) {};
+		\node [style=none] (510) at (22, 2) {};
+		\node [style=none] (511) at (20, 0) {};
+		\node [style=none] (512) at (22, 0) {};
+		\node [style=none] (513) at (21, 1) {1,3};
+		\node [style=none] (574) at (22, 2) {};
+		\node [style=none] (575) at (24, 2) {};
+		\node [style=none] (576) at (22, 0) {};
+		\node [style=none] (577) at (24, 0) {};
+		\node [style=none] (578) at (23, 1) {1,4};
+		\node [style=none] (579) at (24, 2) {};
+		\node [style=none] (580) at (26, 2) {};
+		\node [style=none] (581) at (24, 0) {};
+		\node [style=none] (582) at (26, 0) {};
+		\node [style=none] (583) at (25, 1) {1,1};
+		\node [style=none] (584) at (26, 2) {};
+		\node [style=none] (585) at (28, 2) {};
+		\node [style=none] (586) at (26, 0) {};
+		\node [style=none] (587) at (28, 0) {};
+		\node [style=none] (588) at (27, 1) {1,2};
+		\node [style=none] (589) at (28, 2) {};
+		\node [style=none] (590) at (30, 2) {};
+		\node [style=none] (591) at (28, 0) {};
+		\node [style=none] (592) at (30, 0) {};
+		\node [style=none] (593) at (29, 1) {1,3};
+		\node [style=none] (654) at (30, 2) {};
+		\node [style=none] (655) at (32, 2) {};
+		\node [style=none] (656) at (30, 0) {};
+		\node [style=none] (657) at (32, 0) {};
+		\node [style=none] (658) at (31, 1) {1,4};
+		\node [style=bare] (659) at (1, 6.75) {0};
+		\node [style=bare] (1365) at (-2, 2.75) {Lane index};
+		\node [style=etc] (1433) at (41, 1) {};
+		\node [style=etc] (1434) at (42, 1) {};
+		\node [style=etc] (1435) at (43, 1) {};
+		\node [style=etc] (1439) at (41, 5) {};
+		\node [style=etc] (1440) at (42, 5) {};
+		\node [style=etc] (1441) at (43, 5) {};
+		\node [style=etc] (1445) at (55, 1) {};
+		\node [style=etc] (1446) at (56, 1) {};
+		\node [style=etc] (1447) at (57, 1) {};
+		\node [style=etc] (1451) at (63, 1) {};
+		\node [style=etc] (1452) at (64, 1) {};
+		\node [style=etc] (1453) at (65, 1) {};
+		\node [style=none] (1454) at (32, 6) {};
+		\node [style=none] (1455) at (34, 6) {};
+		\node [style=none] (1456) at (34, 4) {};
+		\node [style=none] (1457) at (32, 4) {};
+		\node [style=none] (1458) at (33, 5) {1,2};
+		\node [style=none] (1459) at (34, 6) {};
+		\node [style=none] (1460) at (36, 6) {};
+		\node [style=none] (1461) at (36, 4) {};
+		\node [style=none] (1462) at (34, 4) {};
+		\node [style=none] (1463) at (35, 5) {2,2};
+		\node [style=none] (1464) at (36, 6) {};
+		\node [style=none] (1465) at (38, 6) {};
+		\node [style=none] (1466) at (38, 4) {};
+		\node [style=none] (1467) at (36, 4) {};
+		\node [style=none] (1468) at (37, 5) {3,2};
+		\node [style=none] (1469) at (38, 6) {};
+		\node [style=none] (1470) at (40, 6) {};
+		\node [style=none] (1471) at (40, 4) {};
+		\node [style=none] (1472) at (38, 4) {};
+		\node [style=none] (1473) at (39, 5) {4,2};
+		\node [style=none] (1514) at (44, 6) {};
+		\node [style=none] (1515) at (46, 6) {};
+		\node [style=none] (1516) at (44, 4) {};
+		\node [style=none] (1517) at (46, 4) {};
+		\node [style=none] (1518) at (45, 5) {1,2};
+		\node [style=none] (1519) at (46, 6) {};
+		\node [style=none] (1520) at (48, 6) {};
+		\node [style=none] (1521) at (46, 4) {};
+		\node [style=none] (1522) at (48, 4) {};
+		\node [style=none] (1523) at (47, 5) {2,2};
+		\node [style=none] (1524) at (48, 6) {};
+		\node [style=none] (1525) at (50, 6) {};
+		\node [style=none] (1526) at (48, 4) {};
+		\node [style=none] (1527) at (50, 4) {};
+		\node [style=none] (1528) at (49, 5) {3,2};
+		\node [style=none] (1529) at (50, 6) {};
+		\node [style=none] (1530) at (52, 6) {};
+		\node [style=none] (1531) at (50, 4) {};
+		\node [style=none] (1532) at (52, 4) {};
+		\node [style=none] (1533) at (51, 5) {4,2};
+		\node [style=none] (1577) at (52, 6) {};
+		\node [style=none] (1578) at (54, 6) {};
+		\node [style=none] (1579) at (54, 4) {};
+		\node [style=none] (1580) at (52, 4) {};
+		\node [style=none] (1581) at (53, 5) {1,3};
+		\node [style=none] (1652) at (58, 6) {};
+		\node [style=none] (1653) at (60, 6) {};
+		\node [style=none] (1654) at (58, 4) {};
+		\node [style=none] (1655) at (60, 4) {};
+		\node [style=none] (1656) at (59, 5) {4.3};
+		\node [style=none] (1657) at (60, 6) {};
+		\node [style=none] (1658) at (62, 6) {};
+		\node [style=none] (1659) at (62, 4) {};
+		\node [style=none] (1660) at (60, 4) {};
+		\node [style=none] (1661) at (61, 5) {1,4};
+		\node [style=none] (1732) at (66, 6) {};
+		\node [style=none] (1733) at (68, 6) {};
+		\node [style=none] (1734) at (66, 4) {};
+		\node [style=none] (1735) at (68, 4) {};
+		\node [style=none] (1736) at (67, 5) {4,4};
+		\node [style=etc] (1737) at (55, 5) {};
+		\node [style=etc] (1738) at (56, 5) {};
+		\node [style=etc] (1739) at (57, 5) {};
+		\node [style=etc] (1740) at (63, 5) {};
+		\node [style=etc] (1741) at (64, 5) {};
+		\node [style=etc] (1742) at (65, 5) {};
+		\node [style=none] (1743) at (52, 2) {};
+		\node [style=none] (1744) at (54, 2) {};
+		\node [style=none] (1745) at (54, 0) {};
+		\node [style=none] (1746) at (52, 0) {};
+		\node [style=none] (1747) at (53, 1) {3,1};
+		\node [style=none] (1818) at (58, 2) {};
+		\node [style=none] (1819) at (60, 2) {};
+		\node [style=none] (1820) at (58, 0) {};
+		\node [style=none] (1821) at (60, 0) {};
+		\node [style=none] (1822) at (59, 1) {3,4};
+		\node [style=none] (1823) at (60, 2) {};
+		\node [style=none] (1824) at (62, 2) {};
+		\node [style=none] (1825) at (62, 0) {};
+		\node [style=none] (1826) at (60, 0) {};
+		\node [style=none] (1827) at (61, 1) {4,1};
+		\node [style=none] (1898) at (66, 2) {};
+		\node [style=none] (1899) at (68, 2) {};
+		\node [style=none] (1900) at (66, 0) {};
+		\node [style=none] (1901) at (68, 0) {};
+		\node [style=none] (1902) at (67, 1) {4,4};
+		\node [style=none] (1903) at (32, 2) {};
+		\node [style=none] (1904) at (34, 2) {};
+		\node [style=none] (1905) at (34, 0) {};
+		\node [style=none] (1906) at (32, 0) {};
+		\node [style=none] (1907) at (33, 1) {2,1};
+		\node [style=none] (1908) at (34, 2) {};
+		\node [style=none] (1909) at (36, 2) {};
+		\node [style=none] (1910) at (36, 0) {};
+		\node [style=none] (1911) at (34, 0) {};
+		\node [style=none] (1912) at (35, 1) {2,2};
+		\node [style=none] (1913) at (36, 2) {};
+		\node [style=none] (1914) at (38, 2) {};
+		\node [style=none] (1915) at (38, 0) {};
+		\node [style=none] (1916) at (36, 0) {};
+		\node [style=none] (1917) at (37, 1) {2,3};
+		\node [style=none] (1918) at (38, 2) {};
+		\node [style=none] (1919) at (40, 2) {};
+		\node [style=none] (1920) at (40, 0) {};
+		\node [style=none] (1921) at (38, 0) {};
+		\node [style=none] (1922) at (39, 1) {2,4};
+		\node [style=none] (1963) at (44, 2) {};
+		\node [style=none] (1964) at (46, 2) {};
+		\node [style=none] (1965) at (44, 0) {};
+		\node [style=none] (1966) at (46, 0) {};
+		\node [style=none] (1967) at (45, 1) {2,1};
+		\node [style=none] (1968) at (46, 2) {};
+		\node [style=none] (1969) at (48, 2) {};
+		\node [style=none] (1970) at (46, 0) {};
+		\node [style=none] (1971) at (48, 0) {};
+		\node [style=none] (1972) at (47, 1) {2,2};
+		\node [style=none] (1973) at (48, 2) {};
+		\node [style=none] (1974) at (50, 2) {};
+		\node [style=none] (1975) at (48, 0) {};
+		\node [style=none] (1976) at (50, 0) {};
+		\node [style=none] (1977) at (49, 1) {2,3};
+		\node [style=none] (1978) at (50, 2) {};
+		\node [style=none] (1979) at (52, 2) {};
+		\node [style=none] (1980) at (50, 0) {};
+		\node [style=none] (1981) at (52, 0) {};
+		\node [style=none] (1982) at (51, 1) {2,4};
+		\node [style=bare] (1983) at (25, 6.75) {12};
+		\node [style=bare] (1984) at (27, 6.75) {13};
+		\node [style=bare] (1985) at (29, 6.75) {14};
+		\node [style=bare] (1986) at (31, 6.75) {15};
+		\node [style=bare] (1987) at (33, 6.75) {16};
+		\node [style=bare] (1988) at (35, 6.75) {17};
+		\node [style=bare] (1989) at (37, 6.75) {18};
+		\node [style=bare] (1990) at (39, 6.75) {19};
+		\node [style=bare] (1991) at (45, 6.75) {28};
+		\node [style=bare] (1992) at (47, 6.75) {29};
+		\node [style=bare] (1993) at (49, 6.75) {30};
+		\node [style=bare] (1994) at (51, 6.75) {31};
+		\node [style=bare] (1995) at (53, 6.75) {32};
+		\node [style=bare] (1996) at (59, 6.75) {47};
+		\node [style=bare] (1997) at (61, 6.75) {48};
+		\node [style=bare] (1998) at (67, 6.75) {63};
+		\node [style=bare] (2000) at (3, 6.75) {1};
+		\node [style=bare] (2001) at (5, 6.75) {2};
+		\node [style=bare] (2002) at (7, 6.75) {3};
+		\node [style=bare] (2003) at (9, 6.75) {4};
+		\node [style=bare] (2004) at (11, 6.75) {5};
+		\node [style=bare] (2005) at (13, 6.75) {6};
+		\node [style=bare] (2006) at (15, 6.75) {7};
+		\node [style=bare] (2007) at (17, 6.75) {8};
+		\node [style=bare] (2008) at (19, 6.75) {9};
+		\node [style=bare] (2009) at (21, 6.75) {10};
+		\node [style=bare] (2010) at (23, 6.75) {11};
+		\node [style=bare] (2011) at (1, 2.75) {0};
+		\node [style=bare] (2012) at (25, 2.75) {12};
+		\node [style=bare] (2013) at (27, 2.75) {13};
+		\node [style=bare] (2014) at (29, 2.75) {14};
+		\node [style=bare] (2015) at (31, 2.75) {15};
+		\node [style=bare] (2016) at (33, 2.75) {16};
+		\node [style=bare] (2017) at (35, 2.75) {17};
+		\node [style=bare] (2018) at (37, 2.75) {18};
+		\node [style=bare] (2019) at (39, 2.75) {19};
+		\node [style=bare] (2020) at (45, 2.75) {28};
+		\node [style=bare] (2021) at (47, 2.75) {29};
+		\node [style=bare] (2022) at (49, 2.75) {30};
+		\node [style=bare] (2023) at (51, 2.75) {31};
+		\node [style=bare] (2024) at (53, 2.75) {32};
+		\node [style=bare] (2025) at (59, 2.75) {47};
+		\node [style=bare] (2026) at (61, 2.75) {48};
+		\node [style=bare] (2027) at (67, 2.75) {63};
+		\node [style=bare] (2028) at (3, 2.75) {1};
+		\node [style=bare] (2029) at (5, 2.75) {2};
+		\node [style=bare] (2030) at (7, 2.75) {3};
+		\node [style=bare] (2031) at (9, 2.75) {4};
+		\node [style=bare] (2032) at (11, 2.75) {5};
+		\node [style=bare] (2033) at (13, 2.75) {6};
+		\node [style=bare] (2034) at (15, 2.75) {7};
+		\node [style=bare] (2035) at (17, 2.75) {8};
+		\node [style=bare] (2036) at (19, 2.75) {9};
+		\node [style=bare] (2037) at (21, 2.75) {10};
+		\node [style=bare] (2038) at (23, 2.75) {11};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=wf1] (19.center)
+			 to (16.center)
+			 to (17.center)
+			 to (18.center)
+			 to cycle;
+		\draw [style=wf1] (24.center)
+			 to (21.center)
+			 to (22.center)
+			 to (23.center)
+			 to cycle;
+		\draw [style=wf1] (29.center)
+			 to (26.center)
+			 to (27.center)
+			 to (28.center)
+			 to cycle;
+		\draw [style=wf1] (94.center)
+			 to (91.center)
+			 to (92.center)
+			 to (93.center)
+			 to cycle;
+		\draw [style=wf2] (98.center)
+			 to (99.center)
+			 to (97.center)
+			 to (96.center)
+			 to cycle;
+		\draw [style=wf2] (103.center)
+			 to (104.center)
+			 to (102.center)
+			 to (101.center)
+			 to cycle;
+		\draw [style=wf2] (108.center)
+			 to (109.center)
+			 to (107.center)
+			 to (106.center)
+			 to cycle;
+		\draw [style=wf2] (173.center)
+			 to (174.center)
+			 to (172.center)
+			 to (171.center)
+			 to cycle;
+		\draw [style=wf3] (178.center)
+			 to (176.center)
+			 to (177.center)
+			 to (179.center)
+			 to cycle;
+		\draw [style=wf3] (183.center)
+			 to (181.center)
+			 to (182.center)
+			 to (184.center)
+			 to cycle;
+		\draw [style=wf3] (188.center)
+			 to (186.center)
+			 to (187.center)
+			 to (189.center)
+			 to cycle;
+		\draw [style=wf3] (253.center)
+			 to (251.center)
+			 to (252.center)
+			 to (254.center)
+			 to cycle;
+		\draw [style=wf4] (258.center)
+			 to (256.center)
+			 to (257.center)
+			 to (259.center)
+			 to cycle;
+		\draw [style=wf4] (263.center)
+			 to (261.center)
+			 to (262.center)
+			 to (264.center)
+			 to cycle;
+		\draw [style=wf4] (268.center)
+			 to (266.center)
+			 to (267.center)
+			 to (269.center)
+			 to cycle;
+		\draw [style=wf4] (333.center)
+			 to (331.center)
+			 to (332.center)
+			 to (334.center)
+			 to cycle;
+		\draw [style=wf1] (342.center)
+			 to (339.center)
+			 to (340.center)
+			 to (341.center)
+			 to cycle;
+		\draw [style=wf1] (347.center)
+			 to (344.center)
+			 to (345.center)
+			 to (346.center)
+			 to cycle;
+		\draw [style=wf1] (352.center)
+			 to (349.center)
+			 to (350.center)
+			 to (351.center)
+			 to cycle;
+		\draw [style=wf1] (417.center)
+			 to (414.center)
+			 to (415.center)
+			 to (416.center)
+			 to cycle;
+		\draw [style=wf2] (421.center)
+			 to (422.center)
+			 to (420.center)
+			 to (419.center)
+			 to cycle;
+		\draw [style=wf2] (426.center)
+			 to (427.center)
+			 to (425.center)
+			 to (424.center)
+			 to cycle;
+		\draw [style=wf2] (431.center)
+			 to (432.center)
+			 to (430.center)
+			 to (429.center)
+			 to cycle;
+		\draw [style=wf2] (496.center)
+			 to (497.center)
+			 to (495.center)
+			 to (494.center)
+			 to cycle;
+		\draw [style=wf3] (501.center)
+			 to (499.center)
+			 to (500.center)
+			 to (502.center)
+			 to cycle;
+		\draw [style=wf3] (506.center)
+			 to (504.center)
+			 to (505.center)
+			 to (507.center)
+			 to cycle;
+		\draw [style=wf3] (511.center)
+			 to (509.center)
+			 to (510.center)
+			 to (512.center)
+			 to cycle;
+		\draw [style=wf3] (576.center)
+			 to (574.center)
+			 to (575.center)
+			 to (577.center)
+			 to cycle;
+		\draw [style=wf4] (581.center)
+			 to (579.center)
+			 to (580.center)
+			 to (582.center)
+			 to cycle;
+		\draw [style=wf4] (586.center)
+			 to (584.center)
+			 to (585.center)
+			 to (587.center)
+			 to cycle;
+		\draw [style=wf4] (591.center)
+			 to (589.center)
+			 to (590.center)
+			 to (592.center)
+			 to cycle;
+		\draw [style=wf4] (656.center)
+			 to (654.center)
+			 to (655.center)
+			 to (657.center)
+			 to cycle;
+		\draw [style=wf1] (1457.center)
+			 to (1454.center)
+			 to (1455.center)
+			 to (1456.center)
+			 to cycle;
+		\draw [style=wf1] (1462.center)
+			 to (1459.center)
+			 to (1460.center)
+			 to (1461.center)
+			 to cycle;
+		\draw [style=wf1] (1467.center)
+			 to (1464.center)
+			 to (1465.center)
+			 to (1466.center)
+			 to cycle;
+		\draw [style=wf1] (1472.center)
+			 to (1469.center)
+			 to (1470.center)
+			 to (1471.center)
+			 to cycle;
+		\draw [style=wf4] (1516.center)
+			 to (1514.center)
+			 to (1515.center)
+			 to (1517.center)
+			 to cycle;
+		\draw [style=wf4] (1521.center)
+			 to (1519.center)
+			 to (1520.center)
+			 to (1522.center)
+			 to cycle;
+		\draw [style=wf4] (1526.center)
+			 to (1524.center)
+			 to (1525.center)
+			 to (1527.center)
+			 to cycle;
+		\draw [style=wf4] (1531.center)
+			 to (1529.center)
+			 to (1530.center)
+			 to (1532.center)
+			 to cycle;
+		\draw [style=wf1] (1580.center)
+			 to (1577.center)
+			 to (1578.center)
+			 to (1579.center)
+			 to cycle;
+		\draw [style=wf4] (1654.center)
+			 to (1652.center)
+			 to (1653.center)
+			 to (1655.center)
+			 to cycle;
+		\draw [style=wf1] (1660.center)
+			 to (1657.center)
+			 to (1658.center)
+			 to (1659.center)
+			 to cycle;
+		\draw [style=wf4] (1734.center)
+			 to (1732.center)
+			 to (1733.center)
+			 to (1735.center)
+			 to cycle;
+		\draw [style=wf1] (1746.center)
+			 to (1743.center)
+			 to (1744.center)
+			 to (1745.center)
+			 to cycle;
+		\draw [style=wf4] (1820.center)
+			 to (1818.center)
+			 to (1819.center)
+			 to (1821.center)
+			 to cycle;
+		\draw [style=wf1] (1826.center)
+			 to (1823.center)
+			 to (1824.center)
+			 to (1825.center)
+			 to cycle;
+		\draw [style=wf4] (1900.center)
+			 to (1898.center)
+			 to (1899.center)
+			 to (1901.center)
+			 to cycle;
+		\draw [style=wf1] (1906.center)
+			 to (1903.center)
+			 to (1904.center)
+			 to (1905.center)
+			 to cycle;
+		\draw [style=wf1] (1911.center)
+			 to (1908.center)
+			 to (1909.center)
+			 to (1910.center)
+			 to cycle;
+		\draw [style=wf1] (1916.center)
+			 to (1913.center)
+			 to (1914.center)
+			 to (1915.center)
+			 to cycle;
+		\draw [style=wf1] (1921.center)
+			 to (1918.center)
+			 to (1919.center)
+			 to (1920.center)
+			 to cycle;
+		\draw [style=wf4] (1965.center)
+			 to (1963.center)
+			 to (1964.center)
+			 to (1966.center)
+			 to cycle;
+		\draw [style=wf4] (1970.center)
+			 to (1968.center)
+			 to (1969.center)
+			 to (1971.center)
+			 to cycle;
+		\draw [style=wf4] (1975.center)
+			 to (1973.center)
+			 to (1974.center)
+			 to (1976.center)
+			 to cycle;
+		\draw [style=wf4] (1980.center)
+			 to (1978.center)
+			 to (1979.center)
+			 to (1981.center)
+			 to cycle;
+	\end{pgfonlayer}
+\end{tikzpicture}

@@ -1,0 +1,5 @@
+"Name","Calls","TotalDurationNs","AverageNs","Percentage"
+"void laplacian_kernel<double>(double*, double const*, int, int, int, double, double, double, double) [clone .kd]",1001,2608618986,2606012,99.91694742846215
+"void test_function_kernel<double>(double*, int, int, int, double, double, double) [clone .kd]",1,1130883,1130883,0.04331578427710698
+"void check_kernel<double>(int*, double const*, int, int, int, double, double, double, double) [clone .kd]",1,1032003,1032003,0.0395284209960953
+"__amd_rocclr_fillBufferAligned.kd",1,5440,5440,0.00020836626465112835

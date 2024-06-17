@@ -1,0 +1,5 @@
+"Name","Calls","TotalDurationNs","AverageNs","Percentage"
+"laplacian_kernel",1001,2646378558,2643734,99.91776286922584
+"test_function_kernel",1,1087688,1087688,0.04106719778663749
+"check_kernel",1,1084968,1084968,0.04096450034216844
+"__amd_rocclr_fillBufferAligned.kd",1,5441,5441,0.00020543264535151127
