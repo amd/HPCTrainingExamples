@@ -43,6 +43,7 @@ Build and install OSU micro-benchmarks
 ./configure --prefix=`pwd`/../build/ \
                 CC=`which mpicc` \
                 CXX=`which mpicxx` \
+                CPPFLAGS=-D__HIP_PLATFORM_AMD__=1 \
                 --enable-rocm \
                 --with-rocm=${ROCM_PATH}
 make -j12
