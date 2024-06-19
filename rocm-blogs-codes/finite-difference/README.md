@@ -25,6 +25,9 @@ Additional instructions:
 3. Compile with single precision: `make DOUBLE=false`
 4. View the theoretical fetch and write sizes: `make THEORY=true`
 
+Configuring the loop tiling/unrolling factors `m`, launch bounds `LB`, or
+number of subdomain blocks `BY` is done manually inside each kernel header file.
+
 ## Kernel execution
 
 The program can be executed as follows:
@@ -37,3 +40,6 @@ where `nx`, `ny`, and `nz` corresponding to the grid sizes in the x, y, and z di
 and `bx`, `by`, and `bz` correspond to the number of threads per thread block.
 
 The default values are `512`, `512`, `512`, `256`, `1`, and `1`, respectively.
+
+Note that if `bx` * `by` * `bz` exceeds the launch bounds size `LB`, the program will automatically reset
+`bx` * `by` * `bz` to `LB` * 1 * 1
