@@ -2,7 +2,7 @@
 
 Code examples for the following blog:
 
-[Reading AMD GPU ISA](https://rocm.blogs.amd.com/software-tools-optimization/amdgcn-isa/README.html)
+[https://rocm.blogs.amd.com/software-tools-optimization/amdgcn-isa/README.html](https://rocm.blogs.amd.com/software-tools-optimization/amdgcn-isa/README.html)
 
 
 To generate kernel resource usage:

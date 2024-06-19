@@ -2,13 +2,13 @@
 
 Accompanying code examples for the following blogs:
 
-[Finite difference method - Laplacian part 1](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part1/README.html)
-
-[Finite difference method - Laplacian part 2](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part2/README.html)
-
-[Finite difference method - Laplacian part 3](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part3/README.html)
-
-[Finite difference method - Laplacian part 4](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part4/README.html)
+[https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part1/README.html](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part1/README.html)
+                                                                                                    
+[https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part2/README.html](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part2/README.html)
+                                                                                                    
+[https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part3/README.html](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part3/README.html)
+                                                                                                    
+[https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part4/README.html](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part4/README.html)
 
 ## Build instructions
 
