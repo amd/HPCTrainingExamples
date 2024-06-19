@@ -43,3 +43,9 @@ The default values are `512`, `512`, `512`, `256`, `1`, and `1`, respectively.
 
 Note that if `bx` * `by` * `bz` exceeds the launch bounds size `LB`, the program will automatically reset
 `bx` * `by` * `bz` to `LB` * 1 * 1
+
+Can also execute with the provided rocprof input file:
+
+```bash
+rocprof -i rocprof_input.txt -o kernel1.csv ./laplacian_dp_kernel1 ...
+```
