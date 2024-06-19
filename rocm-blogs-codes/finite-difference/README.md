@@ -1,6 +1,6 @@
 # Finite difference method - Laplacian blog series
 
-Accompanying code examples for the following blogs:
+Code examples for the following blogs:
 
 [https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part1/README.html](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part1/README.html)
                                                                                                     
