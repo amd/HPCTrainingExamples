@@ -2,13 +2,13 @@
 
 Accompanying code examples for the following blogs:
 
-[Finite difference method - Laplacian part 1](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part-1/README.html)
+[Finite difference method - Laplacian part 1](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part1/README.html)
 
-[Finite difference method - Laplacian part 2](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part-2/README.html)
+[Finite difference method - Laplacian part 2](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part2/README.html)
 
-[Finite difference method - Laplacian part 3](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part-3/README.html)
+[Finite difference method - Laplacian part 3](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part3/README.html)
 
-[Finite difference method - Laplacian part 4](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part-4/README.html)
+[Finite difference method - Laplacian part 4](https://rocm.blogs.amd.com/high-performance-computing/finite-difference/laplacian-part4/README.html)
 
 ## Build instructions
 
@@ -30,10 +30,10 @@ Additional instructions:
 The program can be executed as follows:
 
 ```bash
-./laplacian_dp_kernel1 <nx> <ny> <nz> <bx> <by> <bz>
+./laplacian_dp_kernel1 nx ny nz bx by bz
 ```
 
 where `nx`, `ny`, and `nz` corresponding to the grid sizes in the x, y, and z directions, respectively,
 and `bx`, `by`, and `bz` correspond to the number of threads per thread block.
 
-The default is a 512 x 512 x 512 grid with a 256 x 1 x 1 thread block configuration
+The default values are `512`, `512`, `512`, `256`, `1`, and `1`, respectively.
