@@ -580,4 +580,10 @@ set_property(TEST Rocprof_Mini_Nbody_HIP_Trace PROPERTY PASS_REGULAR_EXPRESSION 
 add_test(NAME Rocprof_Mini_Nbody_HSA_Trace COMMAND ../rocprof_mini_nbody_hsa_trace.sh )
 set_property(TEST Rocprof_Mini_Nbody_HSA_Trace PROPERTY PASS_REGULAR_EXPRESSION "hsa_system_get_info")
 
+# PyTorch tests
 
+add_test(NAME Pytorch_Check_Import COMMAND ../pytorch_check_import.sh )
+set_property(TEST Pytorch_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
+
+add_test(NAME Pytorch_Check_Gpu_Access COMMAND ../pytorch_check_gpu_access.sh )
+set_property(TEST Pytorch_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "True")
