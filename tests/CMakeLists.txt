@@ -587,3 +587,6 @@ set_property(TEST Pytorch_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success
 
 add_test(NAME Pytorch_Check_Gpu_Access COMMAND ../pytorch_check_gpu_access.sh )
 set_property(TEST Pytorch_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "True")
+
+add_test(NAME Pytorch_Mnist COMMAND ../pytorch_mnist.sh )
+set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "99%")
