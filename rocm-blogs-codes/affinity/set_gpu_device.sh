@@ -1,0 +1,3 @@
+#!/bin/bash 
+export HIP_VISIBLE_DEVICES=$OMPI_COMM_WORLD_LOCAL_RANK
+exec $*
