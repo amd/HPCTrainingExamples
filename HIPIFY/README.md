@@ -88,7 +88,7 @@ Notes:
 Load the proper environment
 
 ```bash
-cd $HOME/HPCTrainingExamples/HIPFY/
+cd $HOME/HPCTrainingExamples/HIPIFY/
 module load rocm
 ```
 
@@ -126,7 +126,7 @@ First cut at converting the Makefile. Testing with `make` can help identify the 
 * Change all occurances of CUDA to HIP
         (e.g.   sed -i 's/cuda/hip/g' Makefile)
 * Change the CXX variable to `clang++` located in `${ROCM_PATH}/llvm/bin/clang++`
-* Change all the HIPC variables to HIPCC
+* Change all the CUDAC variables to HIPCC
 * Change HIPCC to point to hipcc
 * Change HIPCCFLAGS with CUDA options to HIPCCFLAGS\_CUDA
 * Remove `-fast` and `-fno-alias` from the CXXFLAGS\_OPT
@@ -167,7 +167,7 @@ __MAKE_VECTOR_TYPE__(double, double);
 double2
 ```
 
-HIP defines double2. Let's look at Vec2.hh. At line 33 where the first error occurs. We see an `#ifdef __CUDACC__` around a block of code there. We also need the #ifdef to include HIP as well. Let's check the available compiler defines from the presentation to see what is available. It looks like we can use `__HIP_DEVICE_COMPILE__` or maybe `__HIPCC__`.
+HIP defines double2. Let's look at Vec2.hh. At line 33 where the first error occurs. We see an `#ifndef __CUDACC__` around a block of code there. We also need the #ifndef to include HIP as well. Let's check the available compiler defines from the presentation to see what is available. It looks like we can use `__HIP_DEVICE_COMPILE__` or maybe `__HIPCC__`.
 
 Change line 33 in Vec2.hh to #ifndef `__HIPCC__`
 
@@ -376,6 +376,8 @@ To test the makefile build system with CUDA (note that the system used for this 
 module load cuda
 HIPCC=nvcc CXX=g++ make
 ```
+
+## CMake option
 
 To create a cmake build system, we can copy a sample portable CMakeLists.txt and modify it for this applicaton.
 
