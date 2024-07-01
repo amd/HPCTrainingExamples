@@ -442,7 +442,7 @@ For this example
 ```bash
 cd ../device_routine
 ```
-there are multiple versions to choose from in Fortran, either with an interface and an external routine or using a module
+there are multiple versions to choose from in Fortran, either with an interface and an external routine or using a module. Hence one first needs to enter the selected subfolder, and then:
 
 ```bash
 make
