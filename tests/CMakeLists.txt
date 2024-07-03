@@ -590,3 +590,11 @@ set_property(TEST Pytorch_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "Tru
 
 add_test(NAME Pytorch_Mnist COMMAND ../pytorch_mnist.sh )
 set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "99%")
+
+#Cupy tests
+
+add_test(NAME Cupy_Check_Import COMMAND ../cupy_check_import.sh )
+set_property(TEST Cupy_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
+
+add_test(NAME Cupy_Install_Tests COMMAND ../cupy_install_tests.sh )
+set_property(TEST Cupy_Install_Tests PROPERTY PASS_REGULAR_EXPRESSION "11 passed")
