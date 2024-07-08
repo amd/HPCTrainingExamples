@@ -285,8 +285,11 @@ if (${GPUCOUNT} GREATER_EQUAL "2")
    set_property(TEST GPUAwareMPI_pt2pt PROPERTY PASS_REGULAR_EXPRESSION "Run successful: received buffer has the right value")
 endif()
 
-add_test(NAME GPUAwareMPI_OSUBenchmark COMMAND ../gpuawarempi_osubenchmark.sh )
-set_property(TEST GPUAwareMPI_OSUBenchmark PROPERTY PASS_REGULAR_EXPRESSION "8388608")
+add_test(NAME GPUAwareMPI_OSUBenchmark_Openmpi COMMAND ../gpuawarempi_osubenchmark_openmpi.sh )
+set_property(TEST GPUAwareMPI_OSUBenchmark_Openmpi PROPERTY PASS_REGULAR_EXPRESSION "8388608")
+
+add_test(NAME GPUAwareMPI_OSUBenchmark_Mvapich2 COMMAND ../gpuawarempi_osubenchmark_mvapich2.sh )
+set_property(TEST GPUAwareMPI_OSUBenchmark_Mvapich2 PROPERTY PASS_REGULAR_EXPRESSION "8388608")
 
 add_test(NAME MPI_Ghost_Exchange_Orig COMMAND ../mpi_ghost_exchange_orig.sh )
 set_property(TEST MPI_Ghost_Exchange_Orig PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
@@ -587,6 +590,9 @@ set_property(TEST Pytorch_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success
 
 add_test(NAME Pytorch_Check_Gpu_Access COMMAND ../pytorch_check_gpu_access.sh )
 set_property(TEST Pytorch_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "True")
+
+add_test(NAME Pytorch_Unit_Tests COMMAND ../pytorch_unit_tests.py )
+set_property(TEST Pytorch_Unit_Tests PROPERTY PASS_REGULAR_EXPRESSION "47559 passed")
 
 add_test(NAME Pytorch_Mnist COMMAND ../pytorch_mnist.sh )
 set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "99%")
