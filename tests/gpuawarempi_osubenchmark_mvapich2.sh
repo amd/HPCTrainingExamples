@@ -10,7 +10,9 @@ cd osu-micro-benchmarks-7.3
 
 module purge
 
-module load rocm mvapich2/2.3.7 
+#module load rocm mvapich2/2.3.7 
+
+module load rocm
 
 rm -rf build
 
@@ -31,7 +33,7 @@ ls -l ../build/libexec/osu-micro-benchmarks/mpi
 
 export HIP_VISIBLE_DEVICES=0,1
 
-mpirun -N 2 -n 2 -mca pml ucx ../build/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bw -m 10240000
+mpiexec -np 2  ../build/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bw -m 10240000
 
 cd ../..
 
