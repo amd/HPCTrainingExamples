@@ -10,9 +10,7 @@ cd osu-micro-benchmarks-7.3
 
 module purge
 
-#module load rocm mvapich2/2.3.7 
-
-module load rocm
+module load rocm mvapich2/2.3.7 
 
 rm -rf build
 
