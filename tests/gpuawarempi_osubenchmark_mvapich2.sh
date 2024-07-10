@@ -31,7 +31,12 @@ ls -l ../build/libexec/osu-micro-benchmarks/mpi
 
 export HIP_VISIBLE_DEVICES=0,1
 
-mpirun -N 2 -n 2 -mca pml ucx ../build/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bw -m 10240000
+# NOTE: since mvapich2 needs a hostfile to run on multiple nodes
+# this benchmark is run only on the local host unlike the openmpi
+# analog (i.e. gpuawarempi_osubenchmark_openmpi.sh) where we specify
+# -N 2 in the run command
+
+mpiexec -np 2  ../build/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bw -m 10240000
 
 cd ../..
 
