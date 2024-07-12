@@ -20,19 +20,28 @@ __global__ void cube(double *input, double *output,int offset)
 {
     // Get our global thread ID
     int id = blockIdx.x*blockDim.x+threadIdx.x+offset;
-    output[id] = input[id]*input[id]*input[id];
+    for (size_t i = 0; i < 1000; ++i)
+      output[id] = input[id]*input[id]*input[id];
       
 
 }
  
-
-
+void usage()
+{
+  printf("Usage: ./compute_comm_overlap <nstreams>\n");
+  exit(1);
+  return;
+}
 
 int main( int argc, char* argv[] )
 {
+    // Read input arg
+    if (argc < 2)
+      usage();
+    int num_streams = atoi(argv[1]);
+
     // Size of vectors
     int n = 100000000;
-    int num_streams = 4;
     int elements_per_stream = n/num_streams;
     int bytes_per_stream = elements_per_stream*sizeof(double);
 
@@ -100,6 +109,8 @@ int main( int argc, char* argv[] )
     hipEventRecord(start);
     // Copy and execute in loop
    
+#define SPLIT_DATACOPY_KERNEL_CALLS
+#ifndef SPLIT_DATACOPY_KERNEL_CALLS
     for(int i = 0; i < num_streams; i++)
     {
       int offset = i * elements_per_stream;
@@ -107,7 +118,24 @@ int main( int argc, char* argv[] )
       cube<<<gridSizePerStream,blockSize,0,streams[i]>>>(d_input1,d_output1,offset);
       HIP_ASSERT(hipMemcpyAsync(&h_output1[offset],&d_output1[offset], bytes_per_stream, hipMemcpyDeviceToHost,streams[i]));
     }
- 
+#else
+    // split H2D copies and kernel calls into separate loops
+    for(int i = 0; i < num_streams; i++)
+    {
+      int offset = i * elements_per_stream;
+      HIP_ASSERT(hipMemcpyAsync(&d_input1[offset],&h_input1[offset],bytes_per_stream,hipMemcpyHostToDevice,streams[i]));
+    }
+    for(int i = 0; i < num_streams; i++)
+    {
+      int offset = i * elements_per_stream;
+      cube<<<gridSizePerStream,blockSize,0,streams[i]>>>(d_input1,d_output1,offset);
+    }
+    for(int i = 0; i < num_streams; i++)
+    {
+      int offset = i * elements_per_stream;
+      HIP_ASSERT(hipMemcpyAsync(&h_output1[offset],&d_output1[offset], bytes_per_stream, hipMemcpyDeviceToHost,streams[i]));
+    }
+#endif //SPLIT_DATACOPY_KERNEL_CALLS
 
     hipEventRecord(stop);
     hipEventSynchronize(stop);
