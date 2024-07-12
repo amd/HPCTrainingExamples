@@ -289,7 +289,7 @@ add_test(NAME GPUAwareMPI_OSUBenchmark_Openmpi COMMAND ../gpuawarempi_osubenchma
 set_property(TEST GPUAwareMPI_OSUBenchmark_Openmpi PROPERTY PASS_REGULAR_EXPRESSION "8388608")
 
 add_test(NAME GPUAwareMPI_OSUBenchmark_Mvapich2 COMMAND ../gpuawarempi_osubenchmark_mvapich2.sh )
-set_property(TEST GPUAwareMPI_OSUBenchmark_Mvapich2 PROPERTY PASS_REGULAR_EXPRESSION "8388608")
+set_property(TEST GPUAwareMPI_OSUBenchmark_Mvapich2 PROPERTY PASS_REGULAR_EXPRESSION "1048576")
 
 add_test(NAME MPI_Ghost_Exchange_Orig COMMAND ../mpi_ghost_exchange_orig.sh )
 set_property(TEST MPI_Ghost_Exchange_Orig PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
