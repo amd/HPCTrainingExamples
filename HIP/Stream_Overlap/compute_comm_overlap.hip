@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+#define BLOCKDIM 64
+
 
 /* Macro for checking GPU API return values */
 #define HIP_ASSERT(call)                                                                        \
@@ -20,7 +22,7 @@ __global__ void cube(double *input, double *output,int offset)
 {
     // Get our global thread ID
     int id = blockIdx.x*blockDim.x+threadIdx.x+offset;
-    for (size_t i = 0; i < 1000; ++i)
+    for (size_t i = 0; i < 1000000; ++i)
       output[id] = input[id]*input[id]*input[id];
       
 
@@ -41,7 +43,7 @@ int main( int argc, char* argv[] )
     int num_streams = atoi(argv[1]);
 
     // Size of vectors
-    int n = 100000000;
+    int n = num_streams * BLOCKDIM * 104; //100000000;
     int elements_per_stream = n/num_streams;
     int bytes_per_stream = elements_per_stream*sizeof(double);
 
@@ -100,10 +102,11 @@ int main( int argc, char* argv[] )
     int blockSize, gridSizePerStream;
 
     // Number of threads in each thread block
-    blockSize = 256;
+    blockSize = BLOCKDIM; //256;
 
     // Number of thread blocks in grid
     gridSizePerStream = (int)ceil((float)elements_per_stream/blockSize);
+    printf("gridSizePerStream: %d\n", gridSizePerStream);
 
 
     hipEventRecord(start);
