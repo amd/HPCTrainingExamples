@@ -8,6 +8,7 @@ cd build
 cmake ../
 make -j
 
+export GPU_MAX_HW_QUEUES=8
 ./compute_comm_overlap <num-of-streams>
 ```
 
