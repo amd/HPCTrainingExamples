@@ -113,6 +113,7 @@ int main( int argc, char* argv[] )
     hipEventRecord(start);
     // Copy and execute in loop
    
+#define SPLIT_DATACOPY_KERNEL_CALLS
 #ifndef SPLIT_DATACOPY_KERNEL_CALLS
     for(int i = 0; i < num_streams; i++)
     {
