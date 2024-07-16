@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
     * the ghost cells only exist for multi-processor runs with MPI. The boundary halo cells are to set boundary
     * conditions. Halos refer to both the ghost cells and the boundary halo cells.
     */
-//   haloupdate_test(nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, jmax, imax, nprocy, nprocx, do_timing);
+   haloupdate_test(nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, jmax, imax, nprocy, nprocx, do_timing);
 
    double** xtmp;
    // This offsets the array addressing so that the real part of the array is from 0,0 to jsize,isize
@@ -85,8 +85,8 @@ int main(int argc, char *argv[])
    for (int j = jmax/2 - jspan; j < jmax/2 + jspan; j++){
       for (int i = imax/2 - ispan; i < imax/2 + ispan; i++){
          if (j >= jbegin && j < jend && i >= ibegin && i < iend) {
-            //x[j-jbegin][i-ibegin] = 400.0;
-            x[j-jbegin][i-ibegin] = 400.0 + 0.1 * (double)(rank + j);
+            x[j-jbegin][i-ibegin] = 400.0;
+            // x[j-jbegin][i-ibegin] = 400.0 + 0.1 * (double)(rank + j);
          }
       }
    }
@@ -94,8 +94,8 @@ int main(int argc, char *argv[])
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
    ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
-   if (rank == 0) printf("Initial State \n");
-   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+//   if (rank == 0) printf("Initial State \n");
+//   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
 
    for (int iter = 0; iter < maxIter; iter++){
       cpu_timer_start(&tstart_stencil);
@@ -115,13 +115,13 @@ int main(int argc, char *argv[])
 
       if (iter%10 == 0) {
          if (rank == 0) printf("Iter %d\n",iter);
-         Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+         // Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
       }
 
    }
    total_time = cpu_timer_stop(tstart_total);
 
-//   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
 
    if (rank == 0){
       printf("GhostExchange_ArrayAssign Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",

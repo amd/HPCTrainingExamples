@@ -18,6 +18,14 @@ void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, in
 
 double boundarycondition_time=0.0, ghostcell_time=0.0;
 
+// this version computes the solution first on the cells that
+// do not need to use information from the halo cells, then
+// performs a halo exchange, and finally advances the cells
+// that use information from the halo.
+// this version serves as an initial step towards having
+// an overlap of GPU kernel compute with CPU MPI exchange
+// (see Ver2 in HIP version of Ghost Exchange code)
+
 int main(int argc, char *argv[])
 {
    MPI_Init(&argc, &argv);
@@ -92,8 +100,8 @@ int main(int argc, char *argv[])
 
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
 
-   if (rank == 0) printf("Initial State \n");
-   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);   
+   // if (rank == 0) printf("Initial State \n");
+   // Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);   
 
    for (int iter = 0; iter < maxIter; iter++){
       cpu_timer_start(&tstart_stencil);
@@ -153,13 +161,15 @@ int main(int argc, char *argv[])
 
     stencil_time += cpu_timer_stop(tstart_stencil);
 
-    if (iter%1 == 0) {
+    if (iter%10 == 0) {
        if (rank == 0) printf("Iter %d\n",iter);
-          Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+          // Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
     }
  
    }
    total_time = cpu_timer_stop(tstart_total);
+
+   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
 
    if (rank == 0){
       printf("GhostExchange_ArrayAssign Timing is stencil %f boundary condition %f ghost cell %f total %f\n",

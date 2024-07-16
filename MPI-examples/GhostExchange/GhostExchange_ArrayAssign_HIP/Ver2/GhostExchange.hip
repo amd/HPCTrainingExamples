@@ -242,8 +242,8 @@ int main(int argc, char *argv[])
 
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
 
-   if (rank == 0) printf("Initial State \n");
-   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+//   if (rank == 0) printf("Initial State \n");
+//   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
 
    for (int iter = 0; iter < maxIter; iter++){
       cpu_timer_start(&tstart_stencil);
@@ -256,13 +256,9 @@ int main(int argc, char *argv[])
       hipDeviceSynchronize();
 
       blur_outer_left <<< grid, block >>> (x, xnew, jsize, isize, nhalo);
-      //hipDeviceSynchronize();
       blur_outer_right <<< grid, block >>> (x, xnew, jsize, isize, nhalo);
-      //hipDeviceSynchronize();
       blur_outer_top <<< grid, block >>> (x, xnew, jsize, isize, nhalo);
-      //hipDeviceSynchronize();
       blur_outer_bottom <<< grid, block >>> (x, xnew, jsize, isize, nhalo);
-      //hipDeviceSynchronize();
 
       boundarycondition_update(xnew, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
 
@@ -277,12 +273,14 @@ int main(int argc, char *argv[])
 
       stencil_time += cpu_timer_stop(tstart_stencil);
 
-      if (iter%1 == 0) {
+      if (iter%10 == 0) {
          if (rank == 0) printf("Iter %d\n",iter);
-         Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+         // Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
       }
    }
    total_time = cpu_timer_stop(tstart_total);
+
+   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
 
    if (rank == 0){
       printf("GhostExchange_ArrayAssign Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
