@@ -14,7 +14,14 @@ module purge
 
 module load pytorch
 
+git clone --recursive https://github.com/pytorch/pytorch
+      
+cd pytorch
+
 pip install -r .ci/docker/requirements-ci.txt
 
 PYTORCH_TEST_WITH_ROCM=1 python3 test/run_test.py --verbose --keep-going --include test_nn test_torch test_cuda test_unary_ufuncs test_binary_ufuncs test_autograd
 
+cd ..
+
+rm -rf pytorch
