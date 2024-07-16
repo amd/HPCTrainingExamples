@@ -1,6 +1,6 @@
 #!/bin/bash
 
-module load rocm
+module load kokkos-4.3.1
 
 git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 Chapter13
 cd Chapter13/Kokkos/StreamTriad/Ver1
