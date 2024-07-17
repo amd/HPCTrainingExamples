@@ -291,6 +291,21 @@ set_property(TEST OpenMPI_Hello_World_Run PROPERTY PASS_REGULAR_EXPRESSION "proc
 add_test(NAME Mvapich2_Hello_World_C_Compile COMMAND ../mvapich2_hello_world_c_compile.sh )
 set_property(TEST Mvapich2_Hello_World_C_Compile PROPERTY PASS_REGULAR_EXPRESSION "Executable created")
 
+add_test(NAME Mvapich2_Hello_World_CXX_Compile COMMAND ../mvapich2_hello_world_cxx_compile.sh )
+set_property(TEST Mvapich2_Hello_World_CXX_Compile PROPERTY PASS_REGULAR_EXPRESSION "Executable created")
+
+add_test(NAME Mvapich2_Hello_World_C++_Compile COMMAND ../mvapich2_hello_world_c++_compile.sh )
+set_property(TEST Mvapich2_Hello_World_C++_Compile PROPERTY PASS_REGULAR_EXPRESSION "Executable created")
+
+add_test(NAME Mvapich2_Hello_World_F77_Compile COMMAND ../mvapich2_hello_world_f77_compile.sh )
+set_property(TEST Mvapich2_Hello_World_F77_Compile PROPERTY PASS_REGULAR_EXPRESSION "Executable created")
+
+add_test(NAME Mvapich2_Hello_World_F90_Compile COMMAND ../mvapich2_hello_world_f90_compile.sh )
+set_property(TEST Mvapich2_Hello_World_F90_Compile PROPERTY PASS_REGULAR_EXPRESSION "Executable created")
+
+add_test(NAME Mvapich2_Hello_World_Fort_Compile COMMAND ../mvapich2_hello_world_fort_compile.sh )
+set_property(TEST Mvapich2_Hello_World_Fort_Compile PROPERTY PASS_REGULAR_EXPRESSION "Executable created")
+
 add_test(NAME Mvapich2_Hello_World_Run COMMAND ../mvapich2_hello_world_run.sh )
 set_property(TEST Mvapich2_Hello_World_Run PROPERTY PASS_REGULAR_EXPRESSION "processor")
 
