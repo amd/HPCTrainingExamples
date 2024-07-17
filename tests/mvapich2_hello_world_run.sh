@@ -35,7 +35,7 @@ cat <<-EOF > mpi_hello_world.c
 EOF
 
 mpicc -o mpi_hello_world mpi_hello_world.c
-mpirun -n 2 mpi_hello_world
+mpiexec -n 2 ./mpi_hello_world
 
 cd ..
 rm -rf mvapich2_hello_world_run
