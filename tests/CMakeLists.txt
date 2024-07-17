@@ -285,6 +285,9 @@ if (${GPUCOUNT} GREATER_EQUAL "2")
    set_property(TEST GPUAwareMPI_pt2pt PROPERTY PASS_REGULAR_EXPRESSION "Run successful: received buffer has the right value")
 endif()
 
+add_test(NAME Mvapich2_Hello_World COMMAND ../mvapich2_hellow_world.sh )
+set_property(TEST Mvapich2_Hello_World PROPERTY PASS_REGULAR_EXPRESSION "processor")
+
 add_test(NAME GPUAwareMPI_OSUBenchmark COMMAND ../gpuawarempi_osubenchmark.sh )
 set_property(TEST GPUAwareMPI_OSUBenchmark PROPERTY PASS_REGULAR_EXPRESSION "8388608")
 
