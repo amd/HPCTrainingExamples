@@ -286,13 +286,13 @@ if (${GPUCOUNT} GREATER_EQUAL "2")
 endif()
 
 add_test(NAME OpenMPI_Hello_World_Run COMMAND ../OpenMPI_hello_world_run.sh )
-set_property(TEST OpenMPI_Hello_World PROPERTY PASS_REGULAR_EXPRESSION "processor")
+set_property(TEST OpenMPI_Hello_World_Run PROPERTY PASS_REGULAR_EXPRESSION "processor")
 
 add_test(NAME Mvapich2_Hello_World_C_Compile COMMAND ../mvapich2_hello_world_c_compile.sh )
-set_property(TEST Mvapich2_Hello_World PROPERTY PASS_REGULAR_EXPRESSION "Executable created")
+set_property(TEST Mvapich2_Hello_World_C_Compile PROPERTY PASS_REGULAR_EXPRESSION "Executable created")
 
 add_test(NAME Mvapich2_Hello_World_Run COMMAND ../mvapich2_hello_world_run.sh )
-set_property(TEST Mvapich2_Hello_World PROPERTY PASS_REGULAR_EXPRESSION "processor")
+set_property(TEST Mvapich2_Hello_World_Run PROPERTY PASS_REGULAR_EXPRESSION "processor")
 
 add_test(NAME GPUAwareMPI_OSUBenchmark_Openmpi COMMAND ../gpuawarempi_osubenchmark_openmpi.sh )
 set_property(TEST GPUAwareMPI_OSUBenchmark_Openmpi PROPERTY PASS_REGULAR_EXPRESSION "8388608")
