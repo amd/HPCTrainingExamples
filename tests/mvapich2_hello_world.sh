@@ -34,5 +34,5 @@ cat <<-EOF > mpi_hello_world.c
         }
 EOF
 
-mpicc -o mpi_hello_world mpicc_hello_world.c
+mpicc -o mpi_hello_world mpi_hello_world.c
 mpirun -n 2 mpi_hello_world
