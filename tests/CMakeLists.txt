@@ -288,8 +288,11 @@ endif()
 add_test(NAME Mvapich2_Hello_World COMMAND ../mvapich2_hellow_world.sh )
 set_property(TEST Mvapich2_Hello_World PROPERTY PASS_REGULAR_EXPRESSION "processor")
 
-add_test(NAME GPUAwareMPI_OSUBenchmark COMMAND ../gpuawarempi_osubenchmark.sh )
-set_property(TEST GPUAwareMPI_OSUBenchmark PROPERTY PASS_REGULAR_EXPRESSION "8388608")
+add_test(NAME GPUAwareMPI_OSUBenchmark_Openmpi COMMAND ../gpuawarempi_osubenchmark_openmpi.sh )
+set_property(TEST GPUAwareMPI_OSUBenchmark_Openmpi PROPERTY PASS_REGULAR_EXPRESSION "8388608")
+
+add_test(NAME GPUAwareMPI_OSUBenchmark_Mvapich2 COMMAND ../gpuawarempi_osubenchmark_mvapich2.sh )
+set_property(TEST GPUAwareMPI_OSUBenchmark_Mvapich2 PROPERTY PASS_REGULAR_EXPRESSION "1048576")
 
 add_test(NAME MPI_Ghost_Exchange_Orig COMMAND ../mpi_ghost_exchange_orig.sh )
 set_property(TEST MPI_Ghost_Exchange_Orig PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
@@ -395,6 +398,9 @@ set_property(TEST Hipify_Nbody PROPERTY PASS_REGULAR_EXPRESSION "3000")
 #set_property(TEST OpenACC_Vecadd_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "Final result")
 
 # Kokkos
+
+add_test(NAME Test_Kokkos_Install COMMAND ../test_kokkos_install.sh )
+set_property( TEST Test_Kokkos_Install PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
 
 add_test(NAME Kokkos_OpenMP_Stream_Orig COMMAND ../kokkos_openmp_stream_orig.sh )
 set_property(TEST Kokkos_OpenMP_Stream_Orig PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
@@ -583,4 +589,24 @@ set_property(TEST Rocprof_Mini_Nbody_HIP_Trace PROPERTY PASS_REGULAR_EXPRESSION 
 add_test(NAME Rocprof_Mini_Nbody_HSA_Trace COMMAND ../rocprof_mini_nbody_hsa_trace.sh )
 set_property(TEST Rocprof_Mini_Nbody_HSA_Trace PROPERTY PASS_REGULAR_EXPRESSION "hsa_system_get_info")
 
+# PyTorch tests
 
+add_test(NAME Pytorch_Check_Import COMMAND ../pytorch_check_import.sh )
+set_property(TEST Pytorch_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
+
+add_test(NAME Pytorch_Check_Gpu_Access COMMAND ../pytorch_check_gpu_access.sh )
+set_property(TEST Pytorch_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "True")
+
+add_test(NAME Pytorch_Unit_Tests COMMAND ../pytorch_unit_tests.py )
+set_property(TEST Pytorch_Unit_Tests PROPERTY PASS_REGULAR_EXPRESSION "47559 passed")
+
+add_test(NAME Pytorch_Mnist COMMAND ../pytorch_mnist.sh )
+set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "99%")
+
+#Cupy tests
+
+add_test(NAME Cupy_Check_Import COMMAND ../cupy_check_import.sh )
+set_property(TEST Cupy_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
+
+add_test(NAME Cupy_Install_Tests COMMAND ../cupy_install_tests.sh )
+set_property(TEST Cupy_Install_Tests PROPERTY PASS_REGULAR_EXPRESSION "11 passed")

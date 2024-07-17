@@ -18,6 +18,14 @@ void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, in
 
 double boundarycondition_time=0.0, ghostcell_time=0.0;
 
+// this version computes the solution first on the cells that
+// do not need to use information from the halo cells, then
+// performs a halo exchange, and finally advances the cells
+// that use information from the halo.
+// this version serves as an initial step towards having
+// an overlap of GPU kernel compute with CPU MPI exchange
+// (see Ver2 in HIP version of Ghost Exchange code)
+
 int main(int argc, char *argv[])
 {
    MPI_Init(&argc, &argv);
@@ -58,7 +66,7 @@ int main(int argc, char *argv[])
     * the ghost cells only exist for multi-processor runs with MPI. The boundary halo cells are to set boundary
     * conditions. Halos refer to both the ghost cells and the boundary halo cells.
     */
-   haloupdate_test(nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, jmax, imax, nprocy, nprocx, do_timing);
+//   haloupdate_test(nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, jmax, imax, nprocy, nprocx, do_timing);
 
    double** xtmp;
    // This offsets the array addressing so that the real part of the array is from 0,0 to jsize,isize
@@ -85,46 +93,86 @@ int main(int argc, char *argv[])
    for (int j = jmax/2 - jspan; j < jmax/2 + jspan; j++){
       for (int i = imax/2 - ispan; i < imax/2 + ispan; i++){
          if (j >= jbegin && j < jend && i >= ibegin && i < iend) {
-            x[j-jbegin][i-ibegin] = 400.0;
-            // x[j-jbegin][i-ibegin] = 400.0 + 0.1 * (double)(rank + j);
+            x[j-jbegin][i-ibegin] = 400.0 + 0.1 * (double)(rank + j);
          }
       }
    }
 
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
-   ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
-//   if (rank == 0) printf("Initial State \n");
-//   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+   // if (rank == 0) printf("Initial State \n");
+   // Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);   
 
    for (int iter = 0; iter < maxIter; iter++){
       cpu_timer_start(&tstart_stencil);
 
-      for (int j = 0; j < jsize; j++){
-         for (int i = 0; i < isize; i++){
+      // advance soln on cells that don't need halo information
+      // note: we assume that the halo size is greater than or equal
+      // to the the operator's stencil reach (which for the blur is 1) 
+      for (int j = nhalo; j < jsize - nhalo; j++){
+         for (int i = nhalo; i < isize - nhalo; i++){
             xnew[j][i] = ( x[j][i] + x[j][i-1] + x[j][i+1] + x[j-1][i] + x[j+1][i] )/5.0;
          }
       }
 
-      SWAP_PTR(xnew, x, xtmp);
-
-      stencil_time += cpu_timer_stop(tstart_stencil);
-
-      boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
       ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
-      if (iter%10 == 0) {
-         if (rank == 0) printf("Iter %d\n",iter);
-         // Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
-      }
+     // now we advance the soln on those cells that need the halo
 
+     // left
+     for (int j = 0; j < jsize; j++){
+        for (int i = 0; i < nhalo; i++){
+           xnew[j][i] = ( x[j][i] + x[j][i-1] + x[j][i+1] + x[j-1][i] + x[j+1][i] )/5.0;
+        }
+     }
+
+     // right
+     for (int j = 0; j < jsize; j++){
+        for (int i = isize - nhalo; i < isize; i++){
+           xnew[j][i] = ( x[j][i] + x[j][i-1] + x[j][i+1] + x[j-1][i] + x[j+1][i] )/5.0;
+        }
+     }
+
+     //top
+     for (int j = jsize - nhalo; j < jsize; j++){
+        for (int i = nhalo; i < isize - nhalo; i++){
+           xnew[j][i] = ( x[j][i] + x[j][i-1] + x[j][i+1] + x[j-1][i] + x[j+1][i] )/5.0;
+        }
+     }
+
+     //bottom
+     for (int j = 0; j < nhalo; j++){
+        for (int i = nhalo; i < isize - nhalo; i++){
+           xnew[j][i] = ( x[j][i] + x[j][i-1] + x[j][i+1] + x[j-1][i] + x[j+1][i] )/5.0;
+        }
+     }
+
+    boundarycondition_update(xnew, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
+
+    // halo update on soln
+    // NOTE: this is just for visualziation
+    // we do not care in general what the solution is in the halo
+    // as long as it is correct when we need it to compute the next
+    // value of the solution
+    ghostcell_update(xnew, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
+      
+
+    SWAP_PTR(xnew, x, xtmp);
+
+    stencil_time += cpu_timer_stop(tstart_stencil);
+
+    if (iter%10 == 0) {
+       if (rank == 0) printf("Iter %d\n",iter);
+          // Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+    }
+ 
    }
    total_time = cpu_timer_stop(tstart_total);
 
    Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
 
    if (rank == 0){
-      printf("GhostExchange_ArrayAssign Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
+      printf("GhostExchange_ArrayAssign Timing is stencil %f boundary condition %f ghost cell %f total %f\n",
              stencil_time,boundarycondition_time,ghostcell_time,total_time);
    }
 
