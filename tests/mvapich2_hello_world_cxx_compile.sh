@@ -34,9 +34,13 @@ cat <<-EOF > mpi_hello_world.cxx
         }
 EOF
 
-mpicxx -o mpi_hello_world mpi_hello_world.cxx
-if [ -x mpi_hello_world ]; then
-  echo "Executable created"
+if [ `which mpicc` == "/usr/bin/mpicc" ]; then
+   echo "Getting system mpicc instead of the mvapich version"
+else 
+   mpicxx -o mpi_hello_world mpi_hello_world.cxx
+   if [ -x mpi_hello_world ]; then
+     echo "Executable created"
+   fi
 fi
 
 cd ..
