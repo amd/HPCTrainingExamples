@@ -1,10 +1,17 @@
 #!/bin/bash
-export HSA_XNACK=1
-module load amdclang
 
-REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/HIP-OpenMP/CXX/daxpy
-make
-./daxpy
+module load rocm
+XNACK_COUNT=`rocminfo | grep xnack | wc -l`
+if [ ${XNACK_COUNT} -lt 1 ]; then
+   echo "Skip"
+else
+   export HSA_XNACK=1
+   module load amdclang
 
-make clean
+   REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
+   cd ${REPO_DIR}/HIP-OpenMP/CXX/daxpy
+   make
+   ./daxpy
+
+   make clean
+fi   

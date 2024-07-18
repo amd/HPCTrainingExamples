@@ -1,17 +1,26 @@
 #!/bin/bash
-module load amdclang
 
-REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/CXX/memory_pragmas
+module load rocm
+GFX_MODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`
+if [ "${GFX_MODEL}" = "gfx1030" ] ; then
 
-export LIBOMPTARGET_INFO=-1
-export OMP_TARGET_OFFLOAD=MANDATORY
+else
+   module load amdclang
 
-rm -rf build
-mkdir build && cd build
-cmake ..
-make mem1
-./mem1
+   REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
+   cd ${REPO_DIR}/Pragma_Examples/OpenMP/CXX/memory_pragmas
 
-cd ..
-rm -rf build
+   export LIBOMPTARGET_INFO=-1
+   export LIBOMPTARGET_INFO_SUPPORT=0
+   export SLURM_BATCH_WAIT=0
+   export OMP_TARGET_OFFLOAD=MANDATORY
+
+   rm -rf build
+   mkdir build && cd build
+   cmake ..
+   make mem1
+   ./mem1
+
+   cd ..
+   rm -rf build
+fi
