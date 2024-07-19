@@ -20,7 +20,7 @@ contains
     invdx2 = mesh%dx**-2
     invdy2 = mesh%dy**-2
 
-    !$omp target teams distribute parallel do collapse(2) firstprivate(invdx2,invdy2)
+    !$omp target teams distribute parallel do collapse(2)
     do j = 2,n_y-1
       do i = 2,n_x-1
         au(i,j) = (-u(i-1,j)+2._real64*u(i,j)-u(i+1,j))*invdx2 &

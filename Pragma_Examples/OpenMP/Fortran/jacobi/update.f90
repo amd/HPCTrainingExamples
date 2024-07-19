@@ -20,7 +20,7 @@ contains
     n_y = mesh%n_y
     factor = (2._real64/mesh%dx**2+2._real64/mesh%dy**2)**-1
 
-    !$omp target teams distribute parallel do collapse(2) firstprivate(factor) private(temp)
+    !$omp target teams distribute parallel do collapse(2) private(temp)
     do j = 1,n_y
       do i = 1,n_x
         temp = rhs(i,j) - au(i,j)

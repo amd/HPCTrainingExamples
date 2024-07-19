@@ -23,7 +23,7 @@ contains
     norm_val = 0._real64
 
     !!$omp target update from(u)
-    !$omp target teams distribute parallel do collapse(2) reduction(+:norm_val) firstprivate(dx,dy)
+    !$omp target teams distribute parallel do collapse(2) reduction(+:norm_val)
     do j = 1,n_y
       do i = 1,n_x
         norm_val = norm_val + u(i,j)**2*dx*dy

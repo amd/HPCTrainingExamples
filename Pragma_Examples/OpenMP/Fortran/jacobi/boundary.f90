@@ -20,7 +20,7 @@ contains
     invdx2 = mesh%dx**-2
     invdy2 = mesh%dy**-2
 
-    !$omp target teams distribute parallel do firstprivate(n_x,n_y,invdx2,invdy2)
+    !$omp target teams distribute parallel do
     do i = 2,n_x-1
       au(i,1) = (-u(i-1,1)+2._real64*u(i,1)-u(i+1,1))*invdx2 &
               + (2._real64*u(i,1)-u(i,2))*invdy2
@@ -28,7 +28,7 @@ contains
               + (2._real64*u(i,1)-u(i,n_y-1))*invdy2
     end do
 
-    !$omp target teams distribute parallel do firstprivate(n_x,n_y,invdx2,invdy2)
+    !$omp target teams distribute parallel do
     do j = 1,n_y
       if (j == 1) then
         au(1,1) = (2._real64*u(1,1)-u(2,1))*invdx2 &
