@@ -3,7 +3,7 @@
 module load rocm
 GFX_MODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`
 if [ "${GFX_MODEL}" = "gfx1030" ] ; then
-
+   echo "Skip"
 else
 
    module load amdclang
