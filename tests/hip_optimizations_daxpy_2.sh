@@ -2,6 +2,7 @@
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIP-Optimizations/daxpy
+module load rocm
 make daxpy_2
 ./daxpy_2 1000000
 
