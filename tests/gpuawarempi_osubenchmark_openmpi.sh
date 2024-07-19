@@ -31,7 +31,7 @@ ls -l ../build/libexec/osu-micro-benchmarks/mpi
 
 export HIP_VISIBLE_DEVICES=0,1
 
-mpirun -N 2 -n 2 -mca pml ucx ../build/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bw -m 10240000
+mpirun -N 2 -n 2 -mca pml ucx -mca coll_ucc_enable 1  -mca coll_ucc_enable 1  ../build/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bw -m 10240000
 
 cd ../..
 
