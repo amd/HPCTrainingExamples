@@ -10,7 +10,7 @@ ifeq ($(findstring amdflang,$(FC1)), amdflang)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -Mfreeform
 else ifeq ($(findstring flang-new,$(FC1)), flang-new)
-  OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
+  OPENMP_FLAGS = #-fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -ffree-form
 else ifeq ($(findstring flang,$(FC1)), flang)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
@@ -24,7 +24,7 @@ else ifeq ($(findstring ftn,$(FC1)), ftn)
 endif
 
 ifeq ($(findstring ftn,$(FC1)), ftn)
-  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
+  FFLAGS = -G2 -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else ifeq ($(findstring flang-new,$(FC1)), flang-new)
   FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else
@@ -33,7 +33,7 @@ endif
 ifeq (${FC1},gfortran-13)
    LDFLAGS = ${OPENMP_FLAGS} -fno-lto
 else
-   LDFLAGS = ${OPENMP_FLAGS}
+   LDFLAGS = -fopenmp ${OPENMP_FLAGS}
 endif
 
 OBJS= \
@@ -46,7 +46,15 @@ OBJS= \
 	jacobi.o \
 	main.o \
 
-%.o : %.f90
+boundary.o: mesh.o
+input.o: mesh.o
+jacobi.o: input.o mesh.o norm.o laplacian.o boundary.o update.o
+laplacian.o: mesh.o
+norm.o: mesh.o
+update.o: mesh.o
+main.o: mesh.o jacobi.o
+
+%.o : %.f90 Makefile
 	$(FC) $(FFLAGS) -c $< -o $@
 
 ${EXEC}: ${OBJS}

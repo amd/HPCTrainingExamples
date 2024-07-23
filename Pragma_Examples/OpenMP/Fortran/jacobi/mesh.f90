@@ -18,7 +18,7 @@ module mesh_mod
 contains
 
   subroutine init_mesh(this,n_x,n_y)
-    class(mesh_t), intent(inout) :: this
+    type(mesh_t), intent(inout) :: this
     integer(int32) :: n_x, n_y, i
 
     this%N_x = n_x

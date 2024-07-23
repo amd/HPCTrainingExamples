@@ -1,5 +1,6 @@
 module jacobi_mod
   use, intrinsic :: ISO_Fortran_env, only : int32, real64, int64, stdout=>output_unit
+  use input_mod, only: debug
   use mesh_mod, only: mesh_t
   use norm_mod, only: norm
   use laplacian_mod, only: laplacian
@@ -13,7 +14,7 @@ module jacobi_mod
 
   real(real64), parameter :: pi = 4._real64*atan(1._real64)
   real(real64), parameter :: tolerance = 1.e-5_real64
-  real(real64), parameter :: max_iters = 1000
+  integer(int32) :: max_iters = 1000
 
   type :: jacobi_t
     !type(mesh_t), pointer :: p_mesh
@@ -25,7 +26,7 @@ module jacobi_mod
 contains
 
   subroutine init_jacobi(this,mesh)
-    class(jacobi_t), intent(inout) :: this
+    type(jacobi_t), intent(inout) :: this
     type(mesh_t), intent(inout) :: mesh
     integer(int32) :: i,j
     real(real64) :: rhs_bc
@@ -55,11 +56,21 @@ contains
       this%rhs(mesh%n_x,j) = this%rhs(mesh%n_x,j) + rhs_bc
     end do
 
+    if (debug) then
+      max_iters=10
+      write(stdout,'(*(E12.3E2))') mesh%x
+      write(stdout,'(*(E12.3E2))') mesh%y
+      write(*,*)
+      call print_2D(this%rhs)
+      write(*,*)
+    end if
+
     this%au = 0._real64
     this%res = this%rhs
     !write(stdout,*) this%res
     !!$omp target enter data map(to:mesh%n_x,mesh%n_y,mesh%dx,mesh%dy)
     !$omp target enter data map(to:this%u,this%rhs,this%au,this%res)
+    !!$omp target enter data map(to:this)
 
     !!$omp target update from(this%res)
     !write(stdout,*) this%res
@@ -84,23 +95,35 @@ contains
       call laplacian(mesh,this%u,this%au)
       !!$omp target update from(this%au)
       !write(stdout,*) this%au
-      !write(stdout,*)
+      if (debug) then
+        call print_2D(this%au)
+        write(stdout,*)
+      end if
       call boundary_conditions(mesh,this%u,this%au)
       !!$omp target update from(this%au)
       !write(stdout,*) this%au
-      !write(stdout,*)
+      if (debug) then
+        call print_2D(this%au)
+        write(stdout,*)
+      end if
       call update(mesh,this%rhs,this%au,this%u,this%res)
       !!$omp target update from(this%u)
       !write(stdout,*) this%u
-      !write(stdout,*)
+      if (debug) then
+        call print_2D(this%u)
+        write(stdout,*)
+      end if
       !!$omp target update from(this%res)
       !write(stdout,*) this%res
-      !write(stdout,*)
-      !write(stdout,*)
+      if (debug) then
+        call print_2D(this%res)
+        write(stdout,*)
+        write(stdout,*)
+      end if
       resid = norm(mesh,this%res)
       this%iters = this%iters + 1
-      !write(stdout,'(A,I4,A,ES11.5)') 'Iteration: ',this%iters,' - Residual: ',resid
-      if (mod(this%iters,100) == 0) write(stdout,'(A,I4,A,ES11.5)') 'Iteration: ',this%iters,' - Residual: ',resid
+      if (debug) write(stdout,'(A,I4,A,ES11.5)') 'Iteration: ',this%iters,' - Residual: ',resid
+      if (mod(this%iters,100) == 0 .and. .not. debug) write(stdout,'(A,I4,A,ES11.5)') 'Iteration: ',this%iters,' - Residual: ',resid
     end do
 
     this%t_stop = omp_get_wtime()
@@ -111,6 +134,17 @@ contains
     call print_results(this,mesh)
 
   end subroutine run_jacobi
+
+  subroutine print_2D(array)
+    real(real64), intent(in) :: array(:,:)
+
+    integer(int32) :: row, array_shape(2)
+
+    array_shape = shape(array)
+    do row = 1, array_shape(1)
+      write(stdout,'(*(E12.3E2))') array(row,:)
+    end do
+  end subroutine print_2D
 
   subroutine print_results(this,mesh)
     type(jacobi_t), intent(in) :: this

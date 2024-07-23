@@ -4,9 +4,10 @@ module input_mod
   implicit none
 
   private
-  public :: parse_arguments
+  public :: debug, parse_arguments
 
-  logical :: success
+  logical :: debug
+  character(len=4) :: debug_string
   integer(int32), parameter :: default_domain_size = 4096
 
 contains
@@ -44,6 +45,14 @@ contains
         end select
       case default
         call print_help_and_exit()
+    end select
+
+    call get_environment_variable("JACOBI_DEBUG", value=debug_string)
+    select case(trim(debug_string))
+      case ("TRUE","true","True","1")
+        debug = .true.
+      case default
+        debug = .false.
     end select
 
   end subroutine parse_arguments
