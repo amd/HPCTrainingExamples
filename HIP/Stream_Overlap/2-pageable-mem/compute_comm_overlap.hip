@@ -5,7 +5,6 @@
 
 #define BLOCKDIM 64
 
-
 /* Macro for checking GPU API return values */
 #define HIP_ASSERT(call)                                                                        \
 do{                                                                                             \
@@ -120,20 +119,23 @@ int main( int argc, char* argv[] )
     }
 #else
     // split H2D copies and kernel calls into separate loops
-    for(int i = 0; i < num_streams; i++)
+    for (int iter=0; iter<3; iter++)
     {
-      int offset = i * elements_per_stream;
-      HIP_ASSERT(hipMemcpyAsync(&d_input1[offset],&h_input1[offset],bytes_per_stream,hipMemcpyHostToDevice,streams[i]));
-    }
-    for(int i = 0; i < num_streams; i++)
-    {
-      int offset = i * elements_per_stream;
-      cube<<<gridSizePerStream,blockSize,0,streams[i]>>>(d_input1,d_output1,offset, elements_per_stream);
-    }
-    for(int i = 0; i < num_streams; i++)
-    {
-      int offset = i * elements_per_stream;
-      HIP_ASSERT(hipMemcpyAsync(&h_output1[offset],&d_output1[offset], bytes_per_stream, hipMemcpyDeviceToHost,streams[i]));
+      for(int i = 0; i < num_streams; i++)
+      {
+	int offset = i * elements_per_stream;
+	HIP_ASSERT(hipMemcpyAsync(&d_input1[offset],&h_input1[offset],bytes_per_stream,hipMemcpyHostToDevice,streams[i]));
+      }
+      for(int i = 0; i < num_streams; i++)
+      {
+	int offset = i * elements_per_stream;
+	cube<<<gridSizePerStream,blockSize,0,streams[i]>>>(d_input1,d_output1,offset, elements_per_stream);
+      }
+      for(int i = 0; i < num_streams; i++)
+      {
+	int offset = i * elements_per_stream;
+	HIP_ASSERT(hipMemcpyAsync(&h_output1[offset],&d_output1[offset], bytes_per_stream, hipMemcpyDeviceToHost,streams[i]));
+      }
     }
 #endif //SPLIT_DATACOPY_KERNEL_CALLS
 

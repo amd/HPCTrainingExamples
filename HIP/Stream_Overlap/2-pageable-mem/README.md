@@ -9,6 +9,9 @@ cmake ../
 make -j
 
 ./compute_comm_overlap <num-of-streams>
+
+# Unfied shared memory run
+HSA_XNACK=1 ./compute_comm_overlap <num-of-streams>
 ```
 
 ## Profile using Omnitrace (1.11.3)
