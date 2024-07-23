@@ -2,7 +2,7 @@ This is the original Stream Overlap example.
 
 ## Build and run
 ```
-cd /path/to/Stream_Overlap
+cd /path/to/Stream_Overlap/0-Orig
 mkdir build
 cd build
 cmake ../

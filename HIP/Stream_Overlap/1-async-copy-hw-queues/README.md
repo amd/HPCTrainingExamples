@@ -2,12 +2,13 @@ This Stream Overlap example uses asynchronous H2D data copy across streams.
 
 ## Build and run
 ```
-cd /path/to/Stream_Overlap
+cd /path/to/Stream_Overlap/1-async-copy-hw-queues
 mkdir build
 cd build
 cmake ../
 make -j
 
+export GPU_MAX_HW_QUEUES=8 # for more than 4 streams
 ./compute_comm_overlap <num-of-streams>
 ```
 
