@@ -257,8 +257,8 @@ set_property(TEST AdvancedOpenMP_Memory2 PROPERTY PASS_REGULAR_EXPRESSION "Exiti
 
 # GPU-Aware MPI tests
 
-add_test(NAME GPUAwareMPI_pt2pt COMMAND ../gpuawarempi_pt2pt.sh )
-set_property(TEST GPUAwareMPI_pt2pt PROPERTY PASS_REGULAR_EXPRESSION "Run successful: received buffer has the right value")
+add_test(NAME GPUAwareOpenMPI_pt2pt COMMAND ../gpuawarempi_pt2pt.sh )
+set_property(TEST GPUAwareOpenMPI_pt2pt PROPERTY PASS_REGULAR_EXPRESSION "Run successful: received buffer has the right value")
 set_tests_properties(GPUAwareMPI_pt2pt PROPERTIES SKIP_RETURN_CODE "Skip")
 
 add_test(NAME OpenMPI_Hello_World_Run COMMAND ../openmpi_hello_world_run.sh )
@@ -288,17 +288,17 @@ set_property(TEST OpenMPI_Check_ROCm_Support PROPERTY PASS_REGULAR_EXPRESSION "M
 #add_test(NAME Mvapich2_Hello_World_Run COMMAND ../mvapich2_hello_world_run.sh )
 #set_property(TEST Mvapich2_Hello_World_Run PROPERTY PASS_REGULAR_EXPRESSION "processor")
 
-add_test(NAME GPUAwareMPI_OSUBenchmark_Openmpi COMMAND ../gpuawarempi_osubenchmark_openmpi.sh )
-set_property(TEST GPUAwareMPI_OSUBenchmark_Openmpi PROPERTY PASS_REGULAR_EXPRESSION "8388608")
+add_test(NAME GPUAwareMPI_OSUBenchmark_OpenMPI COMMAND ../gpuawarempi_osubenchmark_openmpi.sh )
+set_property(TEST GPUAwareMPI_OSUBenchmark_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "8388608")
 
 #add_test(NAME GPUAwareMPI_OSUBenchmark_Mvapich2 COMMAND ../gpuawarempi_osubenchmark_mvapich2.sh )
 #set_property(TEST GPUAwareMPI_OSUBenchmark_Mvapich2 PROPERTY PASS_REGULAR_EXPRESSION "1048576")
 
-add_test(NAME MPI_Ghost_Exchange_Orig COMMAND ../mpi_ghost_exchange_orig.sh )
-set_property(TEST MPI_Ghost_Exchange_Orig PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+add_test(NAME MPI_Ghost_Exchange_Orig_OpenMPI COMMAND ../mpi_ghost_exchange_orig.sh )
+set_property(TEST MPI_Ghost_Exchange_Orig_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
 
-add_test(NAME MPI_Ghost_Exchange_Orig_Affinity COMMAND ../mpi_ghost_exchange_orig_affinity.sh )
-set_property(TEST MPI_Ghost_Exchange_Orig_Affinity PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+add_test(NAME MPI_Ghost_Exchange_Orig_Affinity_OpenMPI COMMAND ../mpi_ghost_exchange_orig_affinity.sh )
+set_property(TEST MPI_Ghost_Exchange_Orig_Affinity_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
 
 #   add_test(NAME MPI_Ghost_Exchange_Ver1 COMMAND ../mpi_ghost_exchange_ver1.sh )
 #   set_property(TEST MPI_Ghost_Exchange_Ver1 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
@@ -547,14 +547,14 @@ set_property(TEST NodeMemModel_OpenMP_Atomics10 PROPERTY PASS_REGULAR_EXPRESSION
 
 # Affinity tests
 
-add_test(NAME Affinity_MPI4_OpenMP2 COMMAND ../affinity_mpi4_openmp2.sh )
-set_property(TEST Affinity_MPI4_OpenMP2 PROPERTY PASS_REGULAR_EXPRESSION "MPI 003 - OMP 001")
+add_test(NAME Affinity_MPI4_OpenMP2_OpenMPI COMMAND ../affinity_mpi4_openmp2.sh )
+set_property(TEST Affinity_MPI4_OpenMP2_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "MPI 003 - OMP 001")
 
-add_test(NAME Affinity_MPI2_OpenMP2 COMMAND ../affinity_mpi2_openmp2.sh )
-set_property(TEST Affinity_MPI2_OpenMP2 PROPERTY PASS_REGULAR_EXPRESSION "MPI 001 - OMP 001")
+add_test(NAME Affinity_MPI2_OpenMP2_OpenMPI COMMAND ../affinity_mpi2_openmp2.sh )
+set_property(TEST Affinity_MPI2_OpenMP2_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "MPI 001 - OMP 001")
 
-add_test(NAME Affinity_MPI4_OpenMP2_Bind COMMAND ../affinity_mpi4_openmp2_bind.sh )
-set_property(TEST Affinity_MPI4_OpenMP2_Bind PROPERTY PASS_REGULAR_EXPRESSION "MCW rank 3 bound to socket 0")
+add_test(NAME Affinity_MPI4_OpenMP2_Bind_OpenMPI COMMAND ../affinity_mpi4_openmp2_bind.sh )
+set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "MCW rank 3 bound to socket 0")
 
 # Rocprof tests
 
