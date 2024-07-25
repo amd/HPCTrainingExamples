@@ -259,7 +259,7 @@ set_property(TEST AdvancedOpenMP_Memory2 PROPERTY PASS_REGULAR_EXPRESSION "Exiti
 
 add_test(NAME GPUAwareOpenMPI_pt2pt COMMAND ../gpuawarempi_pt2pt.sh )
 set_property(TEST GPUAwareOpenMPI_pt2pt PROPERTY PASS_REGULAR_EXPRESSION "Run successful: received buffer has the right value")
-set_tests_properties(GPUAwareMPI_pt2pt PROPERTIES SKIP_RETURN_CODE "Skip")
+set_tests_properties(GPUAwareOpenMPI_pt2pt PROPERTIES SKIP_RETURN_CODE "Skip")
 
 add_test(NAME OpenMPI_Hello_World_Run COMMAND ../openmpi_hello_world_run.sh )
 set_property(TEST OpenMPI_Hello_World_Run PROPERTY PASS_REGULAR_EXPRESSION "processor")
