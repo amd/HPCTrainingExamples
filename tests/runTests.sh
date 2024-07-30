@@ -5,7 +5,6 @@ CUPY=0
 PYTORCH=0
 HIP=0
 KOKKOS=0
-MPI=0
 OPENMPI=0
 OPENMP=0
 OPENACC=0
@@ -85,11 +84,6 @@ do
       "--kokkos")
           shift
           KOKKOS=1
-          reset-last
-          ;;
-      "--mpi")
-          shift
-          MPI=1
           reset-last
           ;;
       "--openmpi")
@@ -174,8 +168,6 @@ elif [ ${HIP} -eq 1 ]; then
    ctest -R Hipify
 elif [ ${KOKKOS} -eq 1 ]; then
    ctest -R Kokkos
-elif [ ${MPI} -eq 1 ]; then
-   ctest -R MPI
 elif [ ${OPENMPI} -eq 1 ]; then
    ctest -R OpenMPI
 elif [ ${OPENMP} -eq 1 ]; then
