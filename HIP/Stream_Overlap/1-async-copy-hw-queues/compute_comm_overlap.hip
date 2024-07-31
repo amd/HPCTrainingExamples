@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+#define BLOCKDIM 64
+
 
 /* Macro for checking GPU API return values */
 #define HIP_ASSERT(call)                                                                        \
@@ -16,25 +18,36 @@ do{                                                                             
 
 
 // HIP kernel. Each thread takes care of one element of input
-__global__ void cube(double *input, double *output,int offset)
+__global__ void cube(double *input, double *output,int offset, int elements_per_stream)
 {
-    // Get our global thread ID
-    int id = blockIdx.x*blockDim.x+threadIdx.x+offset;
-    output[id] = input[id]*input[id]*input[id];
-      
+  size_t tid = blockIdx.x*blockDim.x+threadIdx.x;
+  size_t gstride = blockDim.x * gridDim.x;
 
+  // Span all elements assigned to this stream
+  for (size_t id = tid + offset; id < offset + elements_per_stream; id += gstride)
+    for (size_t i = 0; i < 1000; ++i)
+      output[id] = input[id]*input[id]*input[id];
 }
  
-
-
+void usage()
+{
+  printf("Usage: ./compute_comm_overlap <nstreams>\n");
+  exit(1);
+  return;
+}
 
 int main( int argc, char* argv[] )
 {
+    // Read input arg
+    if (argc < 2)
+      usage();
+    int num_streams = atoi(argv[1]);
+
     // Size of vectors
     int n = 100000000;
-    int num_streams = 4;
     int elements_per_stream = n/num_streams;
     int bytes_per_stream = elements_per_stream*sizeof(double);
+    printf("bytes/stream: %f (MB)\n", bytes_per_stream*1.e-6);
 
 
     // Host input vectors
@@ -91,23 +104,42 @@ int main( int argc, char* argv[] )
     int blockSize, gridSizePerStream;
 
     // Number of threads in each thread block
-    blockSize = 256;
+    blockSize = BLOCKDIM; //256;
 
     // Number of thread blocks in grid
-    gridSizePerStream = (int)ceil((float)elements_per_stream/blockSize);
-
+    gridSizePerStream = 104; //(int)ceil((float)elements_per_stream/blockSize);
+    printf("gridSizePerStream: %d\n", gridSizePerStream);
 
     hipEventRecord(start);
     // Copy and execute in loop
    
+#define SPLIT_DATACOPY_KERNEL_CALLS
+#ifndef SPLIT_DATACOPY_KERNEL_CALLS
     for(int i = 0; i < num_streams; i++)
     {
       int offset = i * elements_per_stream;
       HIP_ASSERT(hipMemcpyAsync(&d_input1[offset],&h_input1[offset],bytes_per_stream,hipMemcpyHostToDevice,streams[i]));
-      cube<<<gridSizePerStream,blockSize,0,streams[i]>>>(d_input1,d_output1,offset);
+      cube<<<gridSizePerStream,blockSize,0,streams[i]>>>(d_input1,d_output1,offset, elements_per_stream);
       HIP_ASSERT(hipMemcpyAsync(&h_output1[offset],&d_output1[offset], bytes_per_stream, hipMemcpyDeviceToHost,streams[i]));
     }
- 
+#else
+    // split H2D copies and kernel calls into separate loops
+    for(int i = 0; i < num_streams; i++)
+    {
+      int offset = i * elements_per_stream;
+      HIP_ASSERT(hipMemcpyAsync(&d_input1[offset],&h_input1[offset],bytes_per_stream,hipMemcpyHostToDevice,streams[i]));
+    }
+    for(int i = 0; i < num_streams; i++)
+    {
+      int offset = i * elements_per_stream;
+      cube<<<gridSizePerStream,blockSize,0,streams[i]>>>(d_input1,d_output1,offset, elements_per_stream);
+    }
+    for(int i = 0; i < num_streams; i++)
+    {
+      int offset = i * elements_per_stream;
+      HIP_ASSERT(hipMemcpyAsync(&h_output1[offset],&d_output1[offset], bytes_per_stream, hipMemcpyDeviceToHost,streams[i]));
+    }
+#endif //SPLIT_DATACOPY_KERNEL_CALLS
 
     hipEventRecord(stop);
     hipEventSynchronize(stop);
