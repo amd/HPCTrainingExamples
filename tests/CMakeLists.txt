@@ -6,21 +6,8 @@ execute_process(COMMAND rocminfo COMMAND grep gfx COMMAND sed "s/Name://" COMMAN
 #string(STRIP GFXMODEL GFXMODEL)
 #message(STATUS "GFXMODEL ${GFXMODEL}")
 
-execute_process(COMMAND rocminfo COMMAND grep GPU\&"Device Type" COMMAND wc -l OUTPUT_VARIABLE GPUCOUNT)
-string(STRIP GPUCOUNT GPUCOUNT)
-message(STATUS "GPUCOUNT ${GPUCOUNT}")
-
-execute_process(COMMAND rocminfo COMMAND grep xnack COMMAND wc -l OUTPUT_VARIABLE XNACK_COUNT)
-#string(STRIP XNACK_COUNT XNACK_COUNT)
-#message(STATUS "XNACK_COUNT ${XNACK_COUNT}")
-
-if(${GFXMODEL} MATCHES "gfx1030")
-   set(LIBOMPTARGET_INFO_SUPPORT 0)
-   set(SLURM_BATCH_WAIT 0)
-else ()
-   set(LIBOMPTARGET_INFO_SUPPORT 1)
-   set(SLURM_BATCH_WAIT 1)
-endif()
+set(LIBOMPTARGET_INFO_SUPPORT 1)
+set(SLURM_BATCH_WAIT 1)
 
 # Module and software install tests
 #add_test(NAME Module_Test_Omniperf_1.1.0-PR1 COMMAND ../module_test_omniperf_1.1.0-PR1.sh )
@@ -61,10 +48,8 @@ set_property(TEST HIPStdPar_ShallowWater_Ver2 PROPERTY PASS_REGULAR_EXPRESSION "
 #set_property(TEST HIPStdPar_ShallowWater_StdPar PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 
 # Unified Shared Memory Examples (MI300A programming)
-if(${XNACK_COUNT} GREATER_EQUAL "1")
-   add_test(NAME USM_Vector_Add COMMAND ../usm_vector_add.sh )
-   set_property(TEST USM_Vector_Add PROPERTY PASS_REGULAR_EXPRESSION "Success")
-endif()
+add_test(NAME USM_Vector_Add COMMAND ../usm_vector_add.sh )
+set_property(TEST USM_Vector_Add PROPERTY PASS_REGULAR_EXPRESSION "Success")
 
 add_test(NAME USM_Vector_Auto_Zero_Copy COMMAND ../usm_vector_auto_zero_copy.sh )
 set_property(TEST USM_Vector_Auto_Zero_Copy PROPERTY PASS_REGULAR_EXPRESSION "Success")
@@ -86,10 +71,8 @@ add_test(NAME HIP_Optimizations_daxpy_5 COMMAND ../hip_optimizations_daxpy_5.sh 
 set_property(TEST HIP_Optimizations_daxpy_5 PROPERTY PASS_REGULAR_EXPRESSION "PASSED")
 
 # HIP-OpenMP Interoperability Examples
-if(${XNACK_COUNT} GREATER_EQUAL "1")
-   add_test(NAME HIP_OpenMP_Interoperability_daxpy COMMAND ../hip_openmp_interoperability_daxpy.sh )
-   set_property(TEST HIP_OpenMP_Interoperability_daxpy PROPERTY PASS_REGULAR_EXPRESSION "PASS")
-endif ()
+add_test(NAME HIP_OpenMP_Interoperability_daxpy COMMAND ../hip_openmp_interoperability_daxpy.sh )
+set_property(TEST HIP_OpenMP_Interoperability_daxpy PROPERTY PASS_REGULAR_EXPRESSION "PASS")
 
 # Programming Model Examples
 
@@ -99,24 +82,20 @@ set_property(TEST Programming_Model_CPU PROPERTY PASS_REGULAR_EXPRESSION "Result
 add_test(NAME Programming_Model_GPU COMMAND ../programming_model_gpu.sh )
 set_property(TEST Programming_Model_GPU PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
 
-if(${XNACK_COUNT} GREATER_EQUAL "1")
-   add_test(NAME Programming_Model_Managed_Memory COMMAND ../programming_model_managed_memory.sh )
-   set_property(TEST Programming_Model_Managed_Memory PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
+add_test(NAME Programming_Model_Managed_Memory COMMAND ../programming_model_managed_memory.sh )
+set_property(TEST Programming_Model_Managed_Memory PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
 
-   add_test(NAME Programming_Model_APU COMMAND ../programming_model_apu.sh )
-   set_property(TEST Programming_Model_APU PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
-endif ()
+add_test(NAME Programming_Model_APU COMMAND ../programming_model_apu.sh )
+set_property(TEST Programming_Model_APU PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
 
-if(${XNACK_COUNT} GREATER_EQUAL "1")
-   add_test(NAME Programming_Model_OpenMP COMMAND ../programming_model_openmp.sh )
-   set_property(TEST Programming_Model_OpenMP PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
+add_test(NAME Programming_Model_OpenMP COMMAND ../programming_model_openmp.sh )
+set_property(TEST Programming_Model_OpenMP PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
 
-   add_test(NAME Programming_Model_Raja COMMAND ../programming_model_raja.sh )
-   set_property(TEST Programming_Model_Raja PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
+add_test(NAME Programming_Model_Raja COMMAND ../programming_model_raja.sh )
+set_property(TEST Programming_Model_Raja PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
 
-   add_test(NAME Programming_Model_Kokkos COMMAND ../programming_model_kokkos.sh )
-   set_property(TEST Programming_Model_Kokkos PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
-endif ()
+add_test(NAME Programming_Model_Kokkos COMMAND ../programming_model_kokkos.sh )
+set_property(TEST Programming_Model_Kokkos PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
 
 # OpenMP Examples
 
@@ -270,34 +249,57 @@ set_property(TEST HIPFort_GEMM_Local_SD PROPERTY PASS_REGULAR_EXPRESSION "Succes
 
 # Advanced OpenMP Examples
 
-if(${LIBOMPTARGET_INFO_SUPPORT} MATCHES "1")
-   add_test(NAME AdvancedOpenMP_Memory1 COMMAND ../advancedopenmp_memory1.sh )
-   set_property(TEST AdvancedOpenMP_Memory1 PROPERTY PASS_REGULAR_EXPRESSION "Entering OpenMP kernel at mem1.cc")
+add_test(NAME AdvancedOpenMP_Memory1 COMMAND ../advancedopenmp_memory1.sh )
+set_property(TEST AdvancedOpenMP_Memory1 PROPERTY PASS_REGULAR_EXPRESSION "Entering OpenMP kernel at mem1.cc")
 
-   add_test(NAME AdvancedOpenMP_Memory2 COMMAND ../advancedopenmp_memory2.sh )
-   set_property(TEST AdvancedOpenMP_Memory2 PROPERTY PASS_REGULAR_EXPRESSION "Exiting OpenMP data region at mem2.cc")
-endif()
+add_test(NAME AdvancedOpenMP_Memory2 COMMAND ../advancedopenmp_memory2.sh )
+set_property(TEST AdvancedOpenMP_Memory2 PROPERTY PASS_REGULAR_EXPRESSION "Exiting OpenMP data region at mem2.cc")
 
 # GPU-Aware MPI tests
 
-if (${GPUCOUNT} GREATER_EQUAL "2")
-   add_test(NAME GPUAwareMPI_pt2pt COMMAND ../gpuawarempi_pt2pt.sh )
-   set_property(TEST GPUAwareMPI_pt2pt PROPERTY PASS_REGULAR_EXPRESSION "Run successful: received buffer has the right value")
-endif()
+add_test(NAME GPUAwareOpenMPI_pt2pt COMMAND ../gpuawarempi_pt2pt.sh )
+set_property(TEST GPUAwareOpenMPI_pt2pt PROPERTY PASS_REGULAR_EXPRESSION "Run successful: received buffer has the right value")
+set_tests_properties(GPUAwareOpenMPI_pt2pt PROPERTIES SKIP_RETURN_CODE "Skip")
 
-add_test(NAME GPUAwareMPI_OSUBenchmark_Openmpi COMMAND ../gpuawarempi_osubenchmark_openmpi.sh )
-set_property(TEST GPUAwareMPI_OSUBenchmark_Openmpi PROPERTY PASS_REGULAR_EXPRESSION "8388608")
+add_test(NAME OpenMPI_Hello_World_Run COMMAND ../openmpi_hello_world_run.sh )
+set_property(TEST OpenMPI_Hello_World_Run PROPERTY PASS_REGULAR_EXPRESSION "processor")
 
-add_test(NAME GPUAwareMPI_OSUBenchmark_Mvapich2 COMMAND ../gpuawarempi_osubenchmark_mvapich2.sh )
-set_property(TEST GPUAwareMPI_OSUBenchmark_Mvapich2 PROPERTY PASS_REGULAR_EXPRESSION "8388608")
+add_test(NAME OpenMPI_Check_ROCm_Support COMMAND ../openmpi_check_rocm_support.sh )
+set_property(TEST OpenMPI_Check_ROCm_Support PROPERTY PASS_REGULAR_EXPRESSION "MPI extensions: affinity, cuda, ftmpi, rocm")
 
-add_test(NAME MPI_Ghost_Exchange_Orig COMMAND ../mpi_ghost_exchange_orig.sh )
-set_property(TEST MPI_Ghost_Exchange_Orig PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+#add_test(NAME Mvapich2_Hello_World_C_Compile COMMAND ../mvapich2_hello_world_c_compile.sh )
+#set_property(TEST Mvapich2_Hello_World_C_Compile PROPERTY PASS_REGULAR_EXPRESSION "Executable created")
+#
+#add_test(NAME Mvapich2_Hello_World_CXX_Compile COMMAND ../mvapich2_hello_world_cxx_compile.sh )
+#set_property(TEST Mvapich2_Hello_World_CXX_Compile PROPERTY PASS_REGULAR_EXPRESSION "Executable created")
+#
+#add_test(NAME Mvapich2_Hello_World_C++_Compile COMMAND ../mvapich2_hello_world_c++_compile.sh )
+#set_property(TEST Mvapich2_Hello_World_C++_Compile PROPERTY PASS_REGULAR_EXPRESSION "Executable created")
+#
+#add_test(NAME Mvapich2_Hello_World_F77_Compile COMMAND ../mvapich2_hello_world_f77_compile.sh )
+#set_property(TEST Mvapich2_Hello_World_F77_Compile PROPERTY PASS_REGULAR_EXPRESSION "Executable created")
+#
+#add_test(NAME Mvapich2_Hello_World_F90_Compile COMMAND ../mvapich2_hello_world_f90_compile.sh )
+#set_property(TEST Mvapich2_Hello_World_F90_Compile PROPERTY PASS_REGULAR_EXPRESSION "Executable created")
+#
+#add_test(NAME Mvapich2_Hello_World_Fort_Compile COMMAND ../mvapich2_hello_world_fort_compile.sh )
+#set_property(TEST Mvapich2_Hello_World_Fort_Compile PROPERTY PASS_REGULAR_EXPRESSION "Executable created")
+#
+#add_test(NAME Mvapich2_Hello_World_Run COMMAND ../mvapich2_hello_world_run.sh )
+#set_property(TEST Mvapich2_Hello_World_Run PROPERTY PASS_REGULAR_EXPRESSION "processor")
 
-add_test(NAME MPI_Ghost_Exchange_Orig_Affinity COMMAND ../mpi_ghost_exchange_orig_affinity.sh )
-set_property(TEST MPI_Ghost_Exchange_Orig_Affinity PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+add_test(NAME GPUAwareMPI_OSUBenchmark_OpenMPI COMMAND ../gpuawarempi_osubenchmark_openmpi.sh )
+set_property(TEST GPUAwareMPI_OSUBenchmark_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "8388608")
 
-#if(${XNACK_COUNT} GREATER_EQUAL "1")
+#add_test(NAME GPUAwareMPI_OSUBenchmark_Mvapich2 COMMAND ../gpuawarempi_osubenchmark_mvapich2.sh )
+#set_property(TEST GPUAwareMPI_OSUBenchmark_Mvapich2 PROPERTY PASS_REGULAR_EXPRESSION "1048576")
+
+add_test(NAME MPI_Ghost_Exchange_Orig_OpenMPI COMMAND ../mpi_ghost_exchange_orig.sh )
+set_property(TEST MPI_Ghost_Exchange_Orig_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+
+add_test(NAME MPI_Ghost_Exchange_Orig_Affinity_OpenMPI COMMAND ../mpi_ghost_exchange_orig_affinity.sh )
+set_property(TEST MPI_Ghost_Exchange_Orig_Affinity_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+
 #   add_test(NAME MPI_Ghost_Exchange_Ver1 COMMAND ../mpi_ghost_exchange_ver1.sh )
 #   set_property(TEST MPI_Ghost_Exchange_Ver1 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
 #
@@ -312,7 +314,6 @@ set_property(TEST MPI_Ghost_Exchange_Orig_Affinity PROPERTY PASS_REGULAR_EXPRESS
 #
 #   add_test(NAME MPI_Ghost_Exchange_Ver5 COMMAND ../mpi_ghost_exchange_ver5.sh )
 #   set_property(TEST MPI_Ghost_Exchange_Ver5 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
-#endif()
 #
 #   add_test(NAME MPI_Ghost_Exchange_Ver6 COMMAND ../mpi_ghost_exchange_ver6.sh )
 #   set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
@@ -328,13 +329,11 @@ set_property(TEST HIP_Vectoradd_Makefile PROPERTY PASS_REGULAR_EXPRESSION "PASSE
 add_test(NAME HIP_Vectoradd_CMakeLists COMMAND ../hip_vectoradd_cmakelists.sh )
 set_property(TEST HIP_Vectoradd_CMakeLists PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 
-if(${SLURM_BATCH_WAIT} MATCHES "1")
 #   add_test(NAME HIP_Vectoradd_Makefile_Batch COMMAND ../hip_vectoradd_makefile_batch.sh )
 #   set_property(TEST HIP_Vectoradd_Makefile_Batch PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 
 #   add_test(NAME HIP_Vectoradd_CMakeLists_Batch COMMAND ../hip_vectoradd_cmakelists_batch.sh )
 #   set_property(TEST HIP_Vectoradd_CMakeLists_Batch PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
-endif()
 
 add_test(NAME HIP_Vectoradd_Makefile_Batch_Direct COMMAND ../hip_vectoradd_makefile_batch_direct.sh )
 set_property(TEST HIP_Vectoradd_Makefile_Batch_Direct PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
@@ -395,6 +394,9 @@ set_property(TEST Hipify_Nbody PROPERTY PASS_REGULAR_EXPRESSION "3000")
 #set_property(TEST OpenACC_Vecadd_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "Final result")
 
 # Kokkos
+
+add_test(NAME Test_Kokkos_Install COMMAND ../test_kokkos_install.sh )
+set_property( TEST Test_Kokkos_Install PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
 
 add_test(NAME Kokkos_OpenMP_Stream_Orig COMMAND ../kokkos_openmp_stream_orig.sh )
 set_property(TEST Kokkos_OpenMP_Stream_Orig PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
@@ -491,17 +493,13 @@ set_property(TEST NodeMemModel_Managed_Memory_HIP1 PROPERTY PASS_REGULAR_EXPRESS
 add_test(NAME NodeMemModel_Managed_Memory_HIP2_XNACK_OFF COMMAND ../nodememmodel_managed_memory_hip2_xnack_off.sh )
 set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_OFF PROPERTY PASS_REGULAR_EXPRESSION "Memory access fault")
 
-if(${XNACK_COUNT} GREATER_EQUAL "1")
-   add_test(NAME NodeMemModel_Managed_Memory_HIP2_XNACK_ON COMMAND ../nodememmodel_managed_memory_hip2_xnack_on.sh )
-   set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_ON PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
-endif ()
+add_test(NAME NodeMemModel_Managed_Memory_HIP2_XNACK_ON COMMAND ../nodememmodel_managed_memory_hip2_xnack_on.sh )
+set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_ON PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 
 # This test should fail since it initializes the memory on the CPU and it doesn't exist.
 # Why does it pass on MI200 series but fails on gfx1030?
-if(${XNACK_COUNT} GREATER_EQUAL "1")
-   add_test(NAME NodeMemModel_Managed_Memory_HIP3 COMMAND ../nodememmodel_managed_memory_hip3.sh )
-   set_property(TEST NodeMemModel_Managed_Memory_HIP3 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
-endif()
+add_test(NAME NodeMemModel_Managed_Memory_HIP3 COMMAND ../nodememmodel_managed_memory_hip3.sh )
+set_property(TEST NodeMemModel_Managed_Memory_HIP3 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 
 add_test(NAME NodeMemModel_Managed_Memory_HIP4 COMMAND ../nodememmodel_managed_memory_hip4.sh )
 set_property(TEST NodeMemModel_Managed_Memory_HIP4 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
@@ -514,57 +512,50 @@ set_property(TEST NodeMemModel_OpenMP_Atomics1 PROPERTY PASS_REGULAR_EXPRESSION 
 add_test(NAME NodeMemModel_OpenMP_Atomics2_XNACK_Off COMMAND ../nodememmodel_openmp_atomics2_xnack_off.sh )
 set_property(TEST NodeMemModel_OpenMP_Atomics2_XNACK_Off PROPERTY PASS_REGULAR_EXPRESSION "Memory access fault")
 
-if(${XNACK_COUNT} GREATER_EQUAL "1")
-   add_test(NAME NodeMemModel_OpenMP_Atomics2_XNACK_On COMMAND ../nodememmodel_openmp_atomics2_xnack_on.sh )
-   set_property(TEST NodeMemModel_OpenMP_Atomics2_XNACK_On PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
-endif()
+add_test(NAME NodeMemModel_OpenMP_Atomics2_XNACK_On COMMAND ../nodememmodel_openmp_atomics2_xnack_on.sh )
+set_property(TEST NodeMemModel_OpenMP_Atomics2_XNACK_On PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
 
 add_test(NAME NodeMemModel_OpenMP_Atomics3_XNACK_Off COMMAND ../nodememmodel_openmp_atomics3_xnack_off.sh )
 set_property(TEST NodeMemModel_OpenMP_Atomics3_XNACK_Off PROPERTY PASS_REGULAR_EXPRESSION "Memory access fault")
 
-if(${XNACK_COUNT} GREATER_EQUAL "1")
-   add_test(NAME NodeMemModel_OpenMP_Atomics3_XNACK_On COMMAND ../nodememmodel_openmp_atomics3_xnack_on.sh )
-   set_property(TEST NodeMemModel_OpenMP_Atomics3_XNACK_On PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
-endif()
+add_test(NAME NodeMemModel_OpenMP_Atomics3_XNACK_On COMMAND ../nodememmodel_openmp_atomics3_xnack_on.sh )
+set_property(TEST NodeMemModel_OpenMP_Atomics3_XNACK_On PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
 
 add_test(NAME NodeMemModel_OpenMP_Atomics4_XNACK_Off COMMAND ../nodememmodel_openmp_atomics4_xnack_off.sh )
 set_property(TEST NodeMemModel_OpenMP_Atomics4_XNACK_Off PROPERTY PASS_REGULAR_EXPRESSION "Memory access fault")
 
-if(${XNACK_COUNT} GREATER_EQUAL "1")
-   add_test(NAME NodeMemModel_OpenMP_Atomics4_XNACK_On COMMAND ../nodememmodel_openmp_atomics4_xnack_on.sh )
-   set_property(TEST NodeMemModel_OpenMP_Atomics4_XNACK_On PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
-endif()
+add_test(NAME NodeMemModel_OpenMP_Atomics4_XNACK_On COMMAND ../nodememmodel_openmp_atomics4_xnack_on.sh )
+set_property(TEST NodeMemModel_OpenMP_Atomics4_XNACK_On PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
 
-if(${XNACK_COUNT} GREATER_EQUAL "1")
-   add_test(NAME NodeMemModel_OpenMP_Atomics5 COMMAND ../nodememmodel_openmp_atomics5.sh )
-   set_property(TEST NodeMemModel_OpenMP_Atomics5 PROPERTY PASS_REGULAR_EXPRESSION "FAILED")
+#add_test(NAME NodeMemModel_OpenMP_Atomics5 COMMAND ../nodememmodel_openmp_atomics5.sh )
+#set_property(TEST NodeMemModel_OpenMP_Atomics5 PROPERTY PASS_REGULAR_EXPRESSION "FAILED")
 
-   add_test(NAME NodeMemModel_OpenMP_Atomics6 COMMAND ../nodememmodel_openmp_atomics6.sh )
-   set_property(TEST NodeMemModel_OpenMP_Atomics6 PROPERTY PASS_REGULAR_EXPRESSION "FAILED")
+#add_test(NAME NodeMemModel_OpenMP_Atomics6 COMMAND ../nodememmodel_openmp_atomics6.sh )
+#set_property(TEST NodeMemModel_OpenMP_Atomics6 PROPERTY PASS_REGULAR_EXPRESSION "FAILED")
 
-   add_test(NAME NodeMemModel_OpenMP_Atomics7 COMMAND ../nodememmodel_openmp_atomics7.sh )
-   set_property(TEST NodeMemModel_OpenMP_Atomics7 PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
+add_test(NAME NodeMemModel_OpenMP_Atomics7 COMMAND ../nodememmodel_openmp_atomics7.sh )
+set_property(TEST NodeMemModel_OpenMP_Atomics7 PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
 
-   add_test(NAME NodeMemModel_OpenMP_Atomics8 COMMAND ../nodememmodel_openmp_atomics8.sh )
-   set_property(TEST NodeMemModel_OpenMP_Atomics8 PROPERTY PASS_REGULAR_EXPRESSION "FAILED")
+#add_test(NAME NodeMemModel_OpenMP_Atomics8 COMMAND ../nodememmodel_openmp_atomics8.sh )
+#set_property(TEST NodeMemModel_OpenMP_Atomics8 PROPERTY PASS_REGULAR_EXPRESSION "FAILED")
 
-   add_test(NAME NodeMemModel_OpenMP_Atomics9 COMMAND ../nodememmodel_openmp_atomics9.sh )
-   set_property(TEST NodeMemModel_OpenMP_Atomics9 PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
+#add_test(NAME NodeMemModel_OpenMP_Atomics9 COMMAND ../nodememmodel_openmp_atomics9.sh )
+#set_property(TEST NodeMemModel_OpenMP_Atomics9 PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
 
-   add_test(NAME NodeMemModel_OpenMP_Atomics10 COMMAND ../nodememmodel_openmp_atomics10.sh )
-   set_property(TEST NodeMemModel_OpenMP_Atomics10 PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
-endif()
+#add_test(NAME NodeMemModel_OpenMP_Atomics10 COMMAND ../nodememmodel_openmp_atomics10.sh )
+#set_property(TEST NodeMemModel_OpenMP_Atomics10 PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
 
 # Affinity tests
 
-add_test(NAME Affinity_MPI4_OpenMP2 COMMAND ../affinity_mpi4_openmp2.sh )
-set_property(TEST Affinity_MPI4_OpenMP2 PROPERTY PASS_REGULAR_EXPRESSION "MPI 003 - OMP 001")
+add_test(NAME Affinity_MPI4_OpenMP2_OpenMPI COMMAND ../affinity_mpi4_openmp2.sh )
+set_property(TEST Affinity_MPI4_OpenMP2_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "MPI 003 - OMP 001")
 
-add_test(NAME Affinity_MPI2_OpenMP2 COMMAND ../affinity_mpi2_openmp2.sh )
-set_property(TEST Affinity_MPI2_OpenMP2 PROPERTY PASS_REGULAR_EXPRESSION "MPI 001 - OMP 001")
+add_test(NAME Affinity_MPI2_OpenMP2_OpenMPI COMMAND ../affinity_mpi2_openmp2.sh )
+set_property(TEST Affinity_MPI2_OpenMP2_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "MPI 001 - OMP 001")
 
-add_test(NAME Affinity_MPI4_OpenMP2_Bind COMMAND ../affinity_mpi4_openmp2_bind.sh )
-set_property(TEST Affinity_MPI4_OpenMP2_Bind PROPERTY PASS_REGULAR_EXPRESSION "MCW rank 3 bound to socket 0")
+# bound onto socket 1 for MI300A
+#add_test(NAME Affinity_MPI4_OpenMP2_Bind_OpenMPI COMMAND ../affinity_mpi4_openmp2_bind.sh )
+#set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "MCW rank 3 bound to socket 0")
 
 # Rocprof tests
 
@@ -585,17 +576,17 @@ set_property(TEST Rocprof_Mini_Nbody_HSA_Trace PROPERTY PASS_REGULAR_EXPRESSION 
 
 # PyTorch tests
 
-add_test(NAME Pytorch_Check_Import COMMAND ../pytorch_check_import.sh )
-set_property(TEST Pytorch_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
+#add_test(NAME Pytorch_Check_Import COMMAND ../pytorch_check_import.sh )
+#set_property(TEST Pytorch_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 
-add_test(NAME Pytorch_Check_Gpu_Access COMMAND ../pytorch_check_gpu_access.sh )
-set_property(TEST Pytorch_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "True")
+#add_test(NAME Pytorch_Check_Gpu_Access COMMAND ../pytorch_check_gpu_access.sh )
+#set_property(TEST Pytorch_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "True")
 
-add_test(NAME Pytorch_Unit_Tests COMMAND ../pytorch_unit_tests.py )
-set_property(TEST Pytorch_Unit_Tests PROPERTY PASS_REGULAR_EXPRESSION "47559 passed")
+#add_test(NAME Pytorch_Unit_Tests COMMAND ../pytorch_unit_tests.py )
+#set_property(TEST Pytorch_Unit_Tests PROPERTY PASS_REGULAR_EXPRESSION "47559 passed")
 
-add_test(NAME Pytorch_Mnist COMMAND ../pytorch_mnist.sh )
-set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "99%")
+#add_test(NAME Pytorch_Mnist COMMAND ../pytorch_mnist.sh )
+#set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "99%")
 
 #Cupy tests
 

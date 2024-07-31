@@ -86,12 +86,16 @@ int main(int argc, char *argv[])
       for (int i = imax/2 - ispan; i < imax/2 + ispan; i++){
          if (j >= jbegin && j < jend && i >= ibegin && i < iend) {
             x[j-jbegin][i-ibegin] = 400.0;
+            // x[j-jbegin][i-ibegin] = 400.0 + 0.1 * (double)(rank + j);
          }
       }
    }
 
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
    ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
+
+//   if (rank == 0) printf("Initial State \n");
+//   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
 
    for (int iter = 0; iter < maxIter; iter++){
       cpu_timer_start(&tstart_stencil);
@@ -109,7 +113,11 @@ int main(int argc, char *argv[])
       boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
       ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
-      if (iter%100 == 0 && rank == 0) printf("Iter %d\n",iter);
+      if (iter%10 == 0) {
+         if (rank == 0) printf("Iter %d\n",iter);
+         // Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+      }
+
    }
    total_time = cpu_timer_stop(tstart_total);
 

@@ -1,55 +1,60 @@
 #!/bin/bash
 
-module load amdclang
 module load rocm
+XNACK_COUNT=`rocminfo | grep xnack | wc -l`
+if [ ${XNACK_COUNT} -lt 1 ]; then
+   echo "Skip"
+else
+   module load amdclang
 
-PROB_NAME=programming_model_raja_code
-mkdir ${PROB_NAME} && cd ${PROB_NAME}
+   PROB_NAME=programming_model_raja_code
+   mkdir ${PROB_NAME} && cd ${PROB_NAME}
 
-PWDir=`pwd`
+   PWDir=`pwd`
 
-git clone --recursive https://github.com/LLNL/RAJA.git Raja_build
-cd Raja_build
+   git clone --recursive https://github.com/LLNL/RAJA.git Raja_build
+   cd Raja_build
 
-rm -rf build_hip
-mkdir build_hip && cd build_hip
+   rm -rf build_hip
+   mkdir build_hip && cd build_hip
 
-cmake -DCMAKE_INSTALL_PREFIX=${PWDir}/Raja_HIP \
-      -DROCM_ROOT_DIR=/opt/rocm \
-      -DHIP_ROOT_DIR=/opt/rocm \
-      -DHIP_PATH=/opt/rocm/bin \
-      -DENABLE_TESTS=Off \
-      -DENABLE_EXAMPLES=Off \
-      -DRAJA_ENABLE_EXERCISES=Off \
-      -DENABLE_HIP=On \
-      ..
+   cmake -DCMAKE_INSTALL_PREFIX=${PWDir}/Raja_HIP \
+         -DROCM_ROOT_DIR=/opt/rocm \
+         -DHIP_ROOT_DIR=/opt/rocm \
+         -DHIP_PATH=/opt/rocm/bin \
+         -DENABLE_TESTS=Off \
+         -DENABLE_EXAMPLES=Off \
+         -DRAJA_ENABLE_EXERCISES=Off \
+         -DENABLE_HIP=On \
+         ..
 
-make -j 8
-make install
+   make -j 8
+   make install
 
-cd ../..
+   cd ../..
 
-rm -rf Raja_build
+   rm -rf Raja_build
 
-export Raja_DIR=${PWDir}/Raja_HIP
+   export Raja_DIR=${PWDir}/Raja_HIP
 
-REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/ManagedMemory/Raja_Code
+   REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
+   cd ${REPO_DIR}/ManagedMemory/Raja_Code
 
-# To run with managed memory
-export HSA_XNACK=1
+   # To run with managed memory
+   export HSA_XNACK=1
 
-rm -rf build
-mkdir build && cd build
-CXX=hipcc Raja_DIR=${PWDir}/Raja_HIP cmake ..
-make
-./raja_code
+   rm -rf build
+   mkdir build && cd build
+   CXX=hipcc Raja_DIR=${PWDir}/Raja_HIP cmake ..
+   make
+   ./raja_code
 
-cd ..
-rm -rf build
+   cd ..
+   rm -rf build
 
-cd ${PWDir}
-rm -rf Raja_HIP
+   cd ${PWDir}
+   rm -rf Raja_HIP
 
-cd ..
-rm -rf ${PROB_NAME}
+   cd ..
+   rm -rf ${PROB_NAME}
+fi   

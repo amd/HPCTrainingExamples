@@ -16,14 +16,9 @@ git clone -q --depth 1 --recursive https://github.com/ROCm/cupy.git
 
 cd cupy/tests/install_tests
 
-sed -i '23d' test_build.py
-sed -i '31d' test_build.py
-sed -i '31d' test_build.py
+sed -i -e '23d' -e '31d' test_build.py
 
 python3 -m pytest -vvv
 
 cd ../../../
-
 rm -rf cupy
-
-

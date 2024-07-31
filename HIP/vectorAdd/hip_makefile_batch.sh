@@ -5,7 +5,9 @@
 #SBATCH -t 10:00
 
 module load rocm
-cd $HOME/HPCTrainingExamples/HIP/vectorAdd
+REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
+cd $REPO_DIR/HIP/vectorAdd
+
 
 make vectoradd
 ./vectoradd
