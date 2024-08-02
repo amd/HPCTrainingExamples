@@ -12,5 +12,7 @@ module purge
 module load pytorch
 
 python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import torchvision' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import torchaudio' 2> /dev/null && echo 'Success' || echo 'Failure'
 
 
