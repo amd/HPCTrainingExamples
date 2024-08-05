@@ -576,17 +576,17 @@ set_property(TEST Rocprof_Mini_Nbody_HSA_Trace PROPERTY PASS_REGULAR_EXPRESSION 
 
 # PyTorch tests
 
-#add_test(NAME Pytorch_Check_Import COMMAND ../pytorch_check_import.sh )
-#set_property(TEST Pytorch_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
+add_test(NAME Pytorch_Check_Import COMMAND ../pytorch_check_import.sh )
+set_property(TEST Pytorch_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 
-#add_test(NAME Pytorch_Check_Gpu_Access COMMAND ../pytorch_check_gpu_access.sh )
-#set_property(TEST Pytorch_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "True")
+add_test(NAME Pytorch_Check_Gpu_Access COMMAND ../pytorch_check_gpu_access.sh )
+set_property(TEST Pytorch_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "True")
 
 #add_test(NAME Pytorch_Unit_Tests COMMAND ../pytorch_unit_tests.py )
 #set_property(TEST Pytorch_Unit_Tests PROPERTY PASS_REGULAR_EXPRESSION "47559 passed")
 
-#add_test(NAME Pytorch_Mnist COMMAND ../pytorch_mnist.sh )
-#set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "99%")
+add_test(NAME Pytorch_Mnist COMMAND ../pytorch_mnist.sh )
+set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "99%")
 
 # Python MPI tests
 
