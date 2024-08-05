@@ -8,11 +8,16 @@ Please be aware that the repo is continuously updated to keep up with the most r
 
 Please refer to these instructions to locate the exercises you are interested in sorted by topic. 
 
-1. `HIP`
+1. [`HIP`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP)
    1. Basic Examples
       1. [`Stream_Overlap`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/Stream_Overlap): this example showcases how to share the workload of a GPU offload compation using several overlapping streams. The result is an additional gain in terms of time of execution due to the additional parallelism provided by the overlapping streams. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/HIP/Stream_Overlap/README.md).
       2. [`dgemm`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/dgemm): A simple (d)GEMM application created as an exercise to showcase simple matrix-matrix multiplications on AMD GPUs. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/dgemm/README.md).
       3. [`exercises`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/exercises): a collection of simple exercises such as device to host data transfer and basic GPU kernel implementation. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/exercises/README.md).
+      4. [`hip_stream`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/hip-stream): modification of the STREAM benchmark for HIP. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/HIP/hip-stream/README.md).
+      5. [`jacobi`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/jacobi): distributed Jacobi solver, using GPUs to perform the computation and MPI for halo exchanges. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/HIP/jacobi/README.md).
+      6. [`matrix_addition`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/matrix_addition): simple example of a HIP kernel performing a matrix addition. 
+      7. [`saxpy`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/saxpy): example of a HIP kernel performing a saxpy operation. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/saxpy/README.md)
+      8. [`stencil`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/stencil): example of a stencil operation with a HIP kernel. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/stencil).
  
 
 ## Run the Tests
