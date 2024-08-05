@@ -588,7 +588,13 @@ set_property(TEST Rocprof_Mini_Nbody_HSA_Trace PROPERTY PASS_REGULAR_EXPRESSION 
 #add_test(NAME Pytorch_Mnist COMMAND ../pytorch_mnist.sh )
 #set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "99%")
 
-#Cupy tests
+# Python MPI tests
+
+add_test(NAME MPI4PY_Check_Import COMMAND ../mpi4py_check_import.sh )
+set_property(TEST MPI4PY_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
+
+
+# Cupy tests
 
 add_test(NAME Cupy_Check_Import COMMAND ../cupy_check_import.sh )
 set_property(TEST Cupy_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
