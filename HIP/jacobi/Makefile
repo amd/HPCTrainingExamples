@@ -24,8 +24,8 @@ endif
 
 # Flags
 CFLAGS=-O3 -g -ggdb -fPIC -std=c++11 -march=native -Wall
-CFLAGS+=-I$(ROCM_PATH)roctracer/include -I${ROCM_PATH}include/roctracer
-LDFLAGS=-L$(ROCM_PATH)lib/ -lroctx64 -lroctracer64
+CFLAGS+=-I$(ROCM_PATH)/roctracer/include -I${ROCM_PATH}/include/roctracer
+LDFLAGS=-L$(ROCM_PATH)/lib/ -lroctx64 -lroctracer64
 MPICFLAGS+=$(CFLAGS)
 MPILDFLAGS+=$(LDFLAGS)
 HIPFLAGS=-lamdhip64
