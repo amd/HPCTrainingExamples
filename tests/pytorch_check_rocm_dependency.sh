@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This test checks that PyTorch
-# can see the GPU
+# has been built with ROCm
 
 # NOTE: this test assumes PyTorch has been installed according
 # to the instructions available in the model installation repo:
@@ -11,5 +11,16 @@ module purge
 
 module load pytorch
 
-python3 -c 'import torch; print(torch.cuda.is_available())'
+python3 -m torch.utils.collect_env | grep ROCM > output.txt
+cut -d : -f 2 output.txt > new.txt
+
+ROCM_VERSION=`cat new.txt | tr -d " tnr"`
+
+if [[ "${ROCM_VERSION}" != "N/A" ]]; then
+   echo "Success"
+else
+   echo "Failure"
+fi
+
+rm output.txt new.txt
 
