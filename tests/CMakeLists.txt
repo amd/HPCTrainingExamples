@@ -579,8 +579,20 @@ set_property(TEST Rocprof_Mini_Nbody_HSA_Trace PROPERTY PASS_REGULAR_EXPRESSION 
 add_test(NAME Pytorch_Check_Import COMMAND ../pytorch_check_import.sh )
 set_property(TEST Pytorch_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 
+add_test(NAME Pytorch_Torchvision_Check_Import COMMAND ../torchvision_check_import.sh )
+set_property(TEST Pytorch_Torchvision_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
+
+add_test(NAME Pytorch_Torchaudio_Check_Import COMMAND ../torchaudio_check_import.sh )
+set_property(TEST Pytorch_Torchaudio_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
+
 add_test(NAME Pytorch_Check_Gpu_Access COMMAND ../pytorch_check_gpu_access.sh )
 set_property(TEST Pytorch_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "True")
+
+add_test(NAME Pytorch_Check_Gpu_Name COMMAND ../pytorch_check_gpu_name.sh )
+set_property(TEST Pytorch_Check_Gpu_Name PROPERTY PASS_REGULAR_EXPRESSION "AMD")
+
+add_test(NAME Pytorch_Check_ROCm_Dependency COMMAND ../pytorch_check_rocm_dependency.sh )
+set_property(TEST Pytorch_Check_ROCm_Dependency PROPERTY PASS_REGULAR_EXPRESSION "Success")
 
 #add_test(NAME Pytorch_Unit_Tests COMMAND ../pytorch_unit_tests.py )
 #set_property(TEST Pytorch_Unit_Tests PROPERTY PASS_REGULAR_EXPRESSION "47559 passed")

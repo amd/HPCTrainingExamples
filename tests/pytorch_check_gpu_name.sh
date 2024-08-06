@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# This test checks that PyTorch
-# can see the GPU
+# This test checks that the GPU 
+# seen by PyTorch is an AMD GPU
 
 # NOTE: this test assumes PyTorch has been installed according
 # to the instructions available in the model installation repo:
@@ -11,5 +11,5 @@ module purge
 
 module load pytorch
 
-python3 -c 'import torch; print(torch.cuda.is_available())'
+python3 -c "import torch; print(f'device name [0]:', torch.cuda.get_device_name(0))"
 
