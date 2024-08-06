@@ -46,7 +46,7 @@ Please refer to this table of contents to locate the exercises you are intereste
 14. [**GPU_aware_MPI**](https://github.com/amd/HPCTrainingExamples/tree/main/GPU_aware_MPI): OSU Mini Benchmarks with GPU aware MPI. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/GPU_aware_MPI/README.md).[`Video of Presentation`](https://fs.hlrs.de/projects/par/events/2024/GPU-AMD/day4/AMD%20debugger.mp4). [`Video of Presentation`](https://fs.hlrs.de/projects/par/events/2024/GPU-AMD/day3/GPU-AwareMPI.mp4).
 15. [**rocm_blog_codes**](https://github.com/amd/HPCTrainingExamples/tree/main/rocm_blog_codes): this directory contains accompany source code examples for select HPC ROCm blogs found at [https://rocm.blogs.amd.com](https://rocm.blogs.amd.com). [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/rocm_blog_codesi/README.md).
 16. [**login_info**](https://github.com/amd/HPCTrainingExamples/tree/main/login_info)
-   1.[***AAC***](https://github.com/amd/HPCTrainingExamples/tree/main/login_info/AAC): instructions on how to log in to the AMD Accelerator Cloud (AAC) resource. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/login_info/AAC/README.md).
+   1. [***AAC***](https://github.com/amd/HPCTrainingExamples/tree/main/login_info/AAC): instructions on how to log in to the AMD Accelerator Cloud (AAC) resource. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/login_info/AAC/README.md).
 
 ## Run the Tests
 
