@@ -8,8 +8,8 @@ Please be aware that the repo is continuously updated to keep up with the most r
 
 Please refer to these instructions to locate the exercises you are interested in sorted by topic. 
 
-1. [`HIP`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP)
-   1. Basic Examples
+### 1. [`HIP`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP)
+   #### 1. Basic Examples
       1. [`Stream_Overlap`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/Stream_Overlap): this example showcases how to share the workload of a GPU offload compation using several overlapping streams. The result is an additional gain in terms of time of execution due to the additional parallelism provided by the overlapping streams. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/HIP/Stream_Overlap/README.md).
       2. [`dgemm`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/dgemm): A (d)GEMM application created as an exercise to showcase simple matrix-matrix multiplications on AMD GPUs. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/dgemm/README.md).
       3. [`exercises`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/exercises): a collection of introductory exercises such as device to host data transfer and basic GPU kernel implementation. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/exercises/README.md).
