@@ -624,3 +624,6 @@ set_property(TEST Cupy_Install_Tests PROPERTY PASS_REGULAR_EXPRESSION "11 passed
 add_test(NAME Omnitrace_Avail_Check COMMAND ../omnitrace-avail_check.sh )
 set_property(TEST Omnitrace_Avail_Check PROPERTY PASS_REGULAR_EXPRESSION "Outputting text configuration file ")
 
+add_test(NAME Omnitrace_Instrument_Check COMMAND ../omnitrace-instrument_check.sh )
+set_property(TEST Omnitrace_Instrument_Check PROPERTY PASS_REGULAR_EXPRESSION "The instrumented executable image is stored in ")
+
