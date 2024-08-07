@@ -11,6 +11,6 @@ module purge
 
 module load openmpi
 
-python3 -c 'import mpi4py' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'from mpi4py import MPI' 2> /dev/null && echo 'Success' || echo 'Failure'
 
 

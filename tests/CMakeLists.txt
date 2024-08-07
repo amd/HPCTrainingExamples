@@ -605,6 +605,9 @@ set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "99%")
 add_test(NAME MPI4PY_Check_Import COMMAND ../mpi4py_check_import.sh )
 set_property(TEST MPI4PY_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 
+add_test(NAME MPI4PY_Check_Import_MPI COMMAND ../mpi4py_check_import_mpi.sh )
+set_property(TEST MPI4PY_Check_Import_MPI PROPERTY PASS_REGULAR_EXPRESSION "Success")
+
 add_test(NAME MPI4PY_Cupy COMMAND ../mpi4py_cupy.sh )
 set_property(TEST MPI4PY_Cupy PROPERTY PASS_REGULAR_EXPRESSION "Success")
 
