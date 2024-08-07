@@ -10,9 +10,11 @@ module unload rocm
 if [[ "${result}" ]]; then
    module load omnitrace
    echo "loaded omnitrace from AMD Research"
+   echo " "
 else
    module load rocm
    echo "loaded omnitrace from ROCm"
+   echo " "
 fi   
 
 omnitrace-avail -G $PWD/.omnitrace.cfg
