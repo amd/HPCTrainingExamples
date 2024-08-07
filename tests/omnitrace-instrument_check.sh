@@ -5,7 +5,7 @@ module purge
 module load rocm
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 pushd ${REPO_DIR}/HIP/Stream_Overlap/0-Orig/
-mkdir build; cd build
+mkdir build_for_test; cd build_for_test
 cmake ../
 make -j
 
@@ -26,7 +26,7 @@ fi
 omnitrace-instrument -o compute_comm_overlap.inst -- compute_comm_overlap
 
 cd ..
-rm -rf build
+rm -rf build_for_test
 
 popd
 
