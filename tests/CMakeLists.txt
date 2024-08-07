@@ -618,3 +618,9 @@ set_property(TEST Cupy_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 
 add_test(NAME Cupy_Install_Tests COMMAND ../cupy_install_tests.sh )
 set_property(TEST Cupy_Install_Tests PROPERTY PASS_REGULAR_EXPRESSION "11 passed")
+
+# Omnitrace tests
+
+add_test(NAME Omnitrace_Avail_Check COMMAND ../omnitrace-avail_check.sh )
+set_property(TEST Omnitrace_Avail_Check PROPERTY PASS_REGULAR_EXPRESSION "Outputting text configuration file ")
+
