@@ -356,6 +356,9 @@ set_property(TEST HIP_Saxpy_CMakeLists PROPERTY PASS_REGULAR_EXPRESSION "PASSED!
 add_test(NAME HIP_Jacobi_CMakeLists COMMAND ../hip_jacobi_cmakelists.sh )
 set_property(TEST HIP_Jacobi_CMakeLists PROPERTY PASS_REGULAR_EXPRESSION "Measured FLOPS")
 
+add_test(NAME HIP_Babel_Stream COMMAND ../run_BabelStream.sh )
+set_property(TEST HIP_Babel_Stream PROPERTY PASS_REGULAR_EXPRESSION "Function")
+
 # HIPIFY Examples
 
 add_test(NAME Hipify_Nbody COMMAND ../hipify_nbody.sh )
