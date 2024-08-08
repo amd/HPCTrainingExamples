@@ -6,6 +6,7 @@ AI=0
 CUPY=0
 PYTORCH=0
 OMNITRACE=0
+OMNIPERF=0
 HIP=0
 KOKKOS=0
 OPENMPI=0
@@ -30,6 +31,7 @@ usage()
     echo "--cupy : runs the cupy tests"
     echo "--pytorch : runs the pytorch tests"
     echo "--omnitrace: runs omnitrace tests"
+    echo "--omniperf: runs omniperf tests"
     echo "--hip: runs the hip tests"
     echo "--kokkos: runs the kokkos tests"
     echo "--mpi : runs the mpi tests"
@@ -83,6 +85,11 @@ do
       "--omnitrace")
           shift	   
           OMNITRACE=1
+          reset-last
+          ;;	  
+      "--omniperf")
+          shift	   
+          OMNIPERF=1
           reset-last
           ;;	  
       "--hip")
@@ -174,6 +181,8 @@ elif [ ${PYTORCH} -eq 1 ]; then
    ctest -R Pytorch
 elif [ ${OMNITRACE} -eq 1 ]; then
    ctest -R Omnitrace
+elif [ ${OMNIPERF} -eq 1 ]; then
+   ctest -R Omniperf
 elif [ ${HIP} -eq 1 ]; then
    ctest -R HIP
    ctest -R Hipify
