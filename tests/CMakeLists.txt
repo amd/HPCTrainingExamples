@@ -643,3 +643,6 @@ set_property(TEST Omniperf_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "roof
 
 add_test(NAME Omniperf_Profile_Check COMMAND ../omniperf_profile_check.sh )
 set_property(TEST Omniperf_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "is generating")
+
+add_test(NAME Omniperf_Analyze_Check COMMAND ../omniperf_analyze_check.sh )
+set_property(TEST Omniperf_Analyze_Check PROPERTY PASS_REGULAR_EXPRESSION "deriving Omniperf metrics...")

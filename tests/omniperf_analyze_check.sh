@@ -31,7 +31,7 @@ export HSA_XNACK=1
 omniperf profile -n v1 --no-roof -- ./GhostExchange -x 1 -y 1 -i 200 -j 200 -h 2 -t -c -I 100
 sed -i "/dim3 block2(64, 4, 1);/c\dim3 block2(128, 4, 1);" ../GhostExchange.hip
 omniperf profile -n v2 --no-roof -- ./GhostExchange -x 1 -y 1 -i 200 -j 200 -h 2 -t -c -I 100
-omniperf analyze –p workloads/v1/* –p workloads/v2/* --dispatch 1 --block 7.1.0 7.1.1 7.1.2 7.1.0: Grid size 7.1.1: Workgroup size 7.1.2: Total Wavefronts
+omniperf analyze -p workloads/v1/* -p workloads/v2/* --dispatch 1 --block 7.1.0 7.1.1 7.1.2 7.1.0: Grid size 7.1.1: Workgroup size 7.1.2: Total Wavefronts
 
 cd ..
 rm -rf build_for_test
