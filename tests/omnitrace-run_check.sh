@@ -23,7 +23,7 @@ else
    echo " "
 fi  
 
-omnitrace-run -- ./compute_comm_overlap.inst 2
+omnitrace-run -- ./compute_comm_overlap 2
 
 cd ..
 rm -rf build_for_test
