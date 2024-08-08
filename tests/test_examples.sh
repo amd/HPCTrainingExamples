@@ -1,5 +1,7 @@
 #!/bin/bash
 
+pushd $(dirname $0)
+
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
 #Slurm interactive test
@@ -130,3 +132,4 @@ make
 ./freduce
 make clean
 
+popd

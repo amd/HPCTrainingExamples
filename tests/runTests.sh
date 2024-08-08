@@ -1,5 +1,7 @@
 #!/bin/bash
 
+pushd $(dirname $0)
+
 AI=0
 CUPY=0
 PYTORCH=0
@@ -200,3 +202,5 @@ elif [ ${USM} -eq 1 ]; then
 else
    ctest
 fi
+
+popd
