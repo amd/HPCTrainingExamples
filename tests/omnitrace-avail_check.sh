@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# This test checks that the omnitrace-avail
+# binary exists and it is able to write
+# an Omnitrace cfg file
+
 module purge
 
 module load rocm

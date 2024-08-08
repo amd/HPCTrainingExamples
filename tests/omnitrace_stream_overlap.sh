@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# This test checks that Omnitrace
+# is able to produce .proto files
+# NOTE: it does not check whether
+# what is in those files is correct
+
 module purge
 
 module load rocm

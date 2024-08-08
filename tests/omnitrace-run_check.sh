@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This test checks that the omnitrace-run
+# binary exists and it is able to run and complete
+
 module purge
 
 module load rocm

@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# This test checks that the omnitrace-instrument
+# binary exists and it is able to instrument
+# a binary
+
 module purge
 
 module load rocm
