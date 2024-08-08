@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This test checks that 
-# omniperf roofline generation works
+# omniperf profile runs
 
 module purge
 
@@ -28,8 +28,7 @@ else
 fi   
 
 export HSA_XNACK=1
-omniperf profile -n rooflines_PDF --roof-only --kernel-names -- ./GhostExchange -x 1 -y 1 -i 200 -j 200 -h 2 -t -c -I 100
-ls workloads/
+omniperf profile -n v1 --no-roof -- ./GhostExchange -x 1 -y 1 -i 200 -j 200 -h 2 -t -c -I 100
 
 cd ..
 rm -rf build_for_test

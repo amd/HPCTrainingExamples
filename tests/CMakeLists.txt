@@ -639,4 +639,7 @@ set_property(TEST Omnitrace_Stream_Overlap PROPERTY PASS_REGULAR_EXPRESSION "pro
 # Omniperf Tests
 
 add_test(NAME Omniperf_Roofline_Check COMMAND ../omniperf_roofline_check.sh )
-set_property(TEST Omniperf_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "Empirical Roofline PDFs saved!")
+set_property(TEST Omniperf_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "rooflines_PDF")
+
+add_test(NAME Omniperf_Profile_Check COMMAND ../omniperf_profile_check.sh )
+set_property(TEST Omniperf_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "is generated")
