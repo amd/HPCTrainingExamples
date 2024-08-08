@@ -635,3 +635,8 @@ set_property(TEST Omnitrace_Run_Check PROPERTY PASS_REGULAR_EXPRESSION "Tracing 
 
 add_test(NAME Omnitrace_Stream_Overlap COMMAND ../omnitrace_stream_overlap.sh )
 set_property(TEST Omnitrace_Stream_Overlap PROPERTY PASS_REGULAR_EXPRESSION "proto")
+
+# Omniperf Tests
+
+add_test(NAME Omniperf_Profile_Check COMMAND ../omniperf_profile_check.sh )
+set_property(TEST Omniperf_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "")
