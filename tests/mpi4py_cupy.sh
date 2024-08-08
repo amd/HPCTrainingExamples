@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Credits: Samuel Antao AMD
+
 # This test checks basic functionalities
 # of mpi4py using cupy 
 
