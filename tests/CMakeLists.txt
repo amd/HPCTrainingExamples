@@ -642,4 +642,4 @@ add_test(NAME Omniperf_Roofline_Check COMMAND ../omniperf_roofline_check.sh )
 set_property(TEST Omniperf_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "rooflines_PDF")
 
 add_test(NAME Omniperf_Profile_Check COMMAND ../omniperf_profile_check.sh )
-set_property(TEST Omniperf_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "is generated")
+set_property(TEST Omniperf_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "is generating")
