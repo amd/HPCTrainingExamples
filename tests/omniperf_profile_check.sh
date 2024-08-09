@@ -63,6 +63,10 @@ make -j
 result=`echo ${ROCM_VERSION} | awk '$1<=6.1.2'` && echo $result
 module unload rocm
 
+if [[ "${OMNIPERF_VERSION}" != "" ]]; then
+   OMNIPERF_VERSION="/${OMNIPERF_VERSION}"
+fi	
+
 if [[ "${result}" ]]; then
    echo " ------------------------------- "
    echo " "
