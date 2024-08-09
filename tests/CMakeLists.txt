@@ -644,8 +644,14 @@ set_property(TEST Omniperf_AMD_Research_Roofline_Check PROPERTY PASS_REGULAR_EXP
 add_test(NAME Omniperf_ROCm_Roofline_Check COMMAND ../omniperf_roofline_check.sh --omniperf-version 6.2.0)
 set_property(TEST Omniperf_ROCm_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "rooflines_PDF")
 
-add_test(NAME Omniperf_Profile_Check COMMAND ../omniperf_profile_check.sh )
+add_test(NAME Omniperf_AMD_Research_Profile_Check COMMAND ../omniperf_profile_check.sh --omniperf-version 2.0.0)
 set_property(TEST Omniperf_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "is generating")
 
-add_test(NAME Omniperf_Analyze_Check COMMAND ../omniperf_analyze_check.sh )
+add_test(NAME Omniperf_ROCm_Profile_Check COMMAND ../omniperf_profile_check.sh --omniperf-version 6.2.0)
+set_property(TEST Omniperf_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "is generating")
+
+add_test(NAME Omniperf_AMD_Research_Analyze_Check COMMAND ../omniperf_analyze_check.sh --omniperf-version 2.0.0)
+set_property(TEST Omniperf_Analyze_Check PROPERTY PASS_REGULAR_EXPRESSION "deriving Omniperf metrics...")
+
+add_test(NAME Omniperf_ROCm_Analyze_Check COMMAND ../omniperf_analyze_check.sh --omniperf-version 6.2.0)
 set_property(TEST Omniperf_Analyze_Check PROPERTY PASS_REGULAR_EXPRESSION "deriving Omniperf metrics...")
