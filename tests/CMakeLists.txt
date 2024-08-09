@@ -638,8 +638,11 @@ set_property(TEST Omnitrace_Stream_Overlap PROPERTY PASS_REGULAR_EXPRESSION "pro
 
 # Omniperf Tests
 
-add_test(NAME Omniperf_Roofline_Check COMMAND ../omniperf_roofline_check.sh )
-set_property(TEST Omniperf_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "rooflines_PDF")
+add_test(NAME Omniperf_AMD_Research_Roofline_Check COMMAND ../omniperf_roofline_check.sh --omniperf-version 2.0.0)
+set_property(TEST Omniperf_AMD_Research_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "rooflines_PDF")
+
+add_test(NAME Omniperf_ROCm_Roofline_Check COMMAND ../omniperf_roofline_check.sh --omniperf-version 6.2.0)
+set_property(TEST Omniperf_ROCm_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "rooflines_PDF")
 
 add_test(NAME Omniperf_Profile_Check COMMAND ../omniperf_profile_check.sh )
 set_property(TEST Omniperf_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "is generating")
