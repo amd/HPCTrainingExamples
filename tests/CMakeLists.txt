@@ -624,17 +624,29 @@ set_property(TEST Cupy_Install_Tests PROPERTY PASS_REGULAR_EXPRESSION "11 passed
 
 # Omnitrace tests
 
-add_test(NAME Omnitrace_Avail_Check COMMAND ../omnitrace-avail_check.sh )
-set_property(TEST Omnitrace_Avail_Check PROPERTY PASS_REGULAR_EXPRESSION "Outputting text configuration file ")
+add_test(NAME Omnitrace_AMD_Research_Avail_Check COMMAND ../omnitrace-avail_check.sh --omnitrace-version 1.11.3)
+set_property(TEST Omnitrace_AMD_Research_Avail_Check PROPERTY PASS_REGULAR_EXPRESSION "Outputting text configuration file ")
 
-add_test(NAME Omnitrace_Instrument_Check COMMAND ../omnitrace-instrument_check.sh )
-set_property(TEST Omnitrace_Instrument_Check PROPERTY PASS_REGULAR_EXPRESSION "The instrumented executable image is stored in ")
+add_test(NAME Omnitrace_ROCm_Avail_Check COMMAND ../omnitrace-avail_check.sh --omnitrace-version 6.2.0)
+set_property(TEST Omnitrace_ROCm_Avail_Check PROPERTY PASS_REGULAR_EXPRESSION "Outputting text configuration file ")
 
-add_test(NAME Omnitrace_Run_Check COMMAND ../omnitrace-run_check.sh )
-set_property(TEST Omnitrace_Run_Check PROPERTY PASS_REGULAR_EXPRESSION "Tracing session 1 ended, total sessions:0")
+add_test(NAME Omnitrace_AMD_Research_Instrument_Check COMMAND ../omnitrace-instrument_check.sh --omnitrace-version 1.11.3)
+set_property(TEST Omnitrace_AMD_Research_Instrument_Check PROPERTY PASS_REGULAR_EXPRESSION "The instrumented executable image is stored in ")
 
-add_test(NAME Omnitrace_Stream_Overlap COMMAND ../omnitrace_stream_overlap.sh )
-set_property(TEST Omnitrace_Stream_Overlap PROPERTY PASS_REGULAR_EXPRESSION "proto")
+add_test(NAME Omnitrace_ROCm_Instrument_Check COMMAND ../omnitrace-instrument_check.sh --omnitrace-version 6.2.0)
+set_property(TEST Omnitrace_ROCm_Instrument_Check PROPERTY PASS_REGULAR_EXPRESSION "The instrumented executable image is stored in ")
+
+add_test(NAME Omnitrace_AMD_Research_Run_Check COMMAND ../omnitrace-run_check.sh --omnitrace-version 1.11.3)
+set_property(TEST Omnitrace_AMD_Research_Run_Check PROPERTY PASS_REGULAR_EXPRESSION "Tracing session 1 ended, total sessions:0")
+
+add_test(NAME Omnitrace_ROCm_Run_Check COMMAND ../omnitrace-run_check.sh --omnitrace-version 6.2.0)
+set_property(TEST Omnitrace_ROCm_Run_Check PROPERTY PASS_REGULAR_EXPRESSION "Tracing session 1 ended, total sessions:0")
+
+add_test(NAME Omnitrace_AMD_Research_Stream_Overlap COMMAND ../omnitrace_stream_overlap.sh --omnitrace-version 1.11.3)
+set_property(TEST Omnitrace_AMD_Research_Stream_Overlap PROPERTY PASS_REGULAR_EXPRESSION "proto")
+
+add_test(NAME Omnitrace_ROCm_Stream_Overlap COMMAND ../omnitrace_stream_overlap.sh --omnitrace-version 6.2.0)
+set_property(TEST Omnitrace_ROCm_Stream_Overlap PROPERTY PASS_REGULAR_EXPRESSION "proto")
 
 # Omniperf Tests
 
