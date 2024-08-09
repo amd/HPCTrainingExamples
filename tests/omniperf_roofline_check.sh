@@ -3,6 +3,41 @@
 # This test checks that 
 # omniperf roofline generation works
 
+OMNIPERF_VERSION=""
+
+usage()
+{
+    echo ""
+    echo "--help : prints this message"
+    echo "--omniperf-version : specifies the omniperf version"
+    echo ""
+    exit
+}
+
+n=0
+while [[ $# -gt 0 ]]
+do
+   case "${1}" in
+      "--omniperf-version")
+          shift
+          OMNIPERF_VERSION=${1}
+          reset-last
+          ;;
+     "--help")
+          usage
+          ;;
+      "--*")
+          send-error "Unsupported argument at position $((${n} + 1)) :: ${1}"
+          ;;
+      *)
+         last ${1}
+         ;;
+   esac
+   n=$((${n} + 1))
+   shift
+done
+
+
 module purge
 
 module load rocm
@@ -17,13 +52,35 @@ make -j
 result=`echo ${ROCM_VERSION} | awk '$1<=6.1.2'` && echo $result
 module unload rocm
 
+if [[ "${OMNIPERF_VERSION}" != "" ]]; then
+   OMNIPERF_VERSION="/${OMNIPERF_VERSION}"
+fi	
+
 if [[ "${result}" ]]; then
-   module load omniperf
+   echo " ------------------------------- "
+   echo " "
    echo "loaded omniperf from AMD Research"
    echo " "
+   echo " ------------------------------- "
+   echo " "
+   echo "module load omniperf${OMNIPERF_VERSION}"
+   echo " "
+   echo " ------------------------------- "
+   module show omniperf${OMNIPERF_VERSION}
+   module load omniperf${OMNIPERF_VERSION}
 else
-   module load rocm
+   echo " ------------------------------- "
+   echo " "
    echo "loaded omniperf from ROCm"
+   echo " "
+   echo " ------------------------------- "
+   echo " "
+   echo "module load omniperf${OMNIPERF_VERSION}"
+   echo " "
+   echo " ------------------------------- "
+   module show omniperf${OMNIPERF_VERSION}
+   module load rocm
+   module load omniperf${OMNIPERF_VERSION}
    echo " "
 fi   
 
