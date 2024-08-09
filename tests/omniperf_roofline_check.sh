@@ -14,6 +14,18 @@ usage()
     exit
 }
 
+send-error()
+{
+    usage
+    echo -e "\nError: ${@}"
+    exit 1
+}
+
+reset-last()
+{
+   last() { send-error "Unsupported argument :: ${1}"; }
+}
+
 n=0
 while [[ $# -gt 0 ]]
 do

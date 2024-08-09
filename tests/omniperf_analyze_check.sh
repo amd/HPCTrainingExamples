@@ -35,4 +35,5 @@ omniperf analyze -p workloads/v1/* -p workloads/v2/* --dispatch 1 --block 7.1.0 
 
 cd ..
 rm -rf build_for_test
+git checkout ${REPO_DIR}/MPI-examples/GhostExchange/GhostExchange_ArrayAssign_HIP/Ver1/GhostExchange.hip
 popd
