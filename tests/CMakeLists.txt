@@ -873,4 +873,4 @@ set_property(TEST HPCToolkit_Unit_Tests PROPERTY SKIP_REGULAR_EXPRESSION "module
 
 add_test(NAME HPCToolkit_Check_ROCm_Dependency COMMAND ../hpctoolkit_check_rocm_dependency.sh)
 set_property(TEST HPCToolkit_Check_ROcm_Dependency PROPERTY PASS_REGULAR_EXPRESSION "AMD ROCm support: yes")
-set_property(TEST HPCToolkit_Check_ROCm_Depdenceny PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HPCToolkit_Check_ROCm_Dependency PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
