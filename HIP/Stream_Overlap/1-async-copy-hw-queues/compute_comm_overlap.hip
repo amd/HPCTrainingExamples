@@ -31,7 +31,7 @@ __global__ void cube(double *input, double *output,int offset, int elements_per_
  
 void usage()
 {
-  printf("Usage: ./compute_comm_overlap <nstreams>\n");
+  printf("Usage: ./compute_comm_overlap <nstreams> <blockSize (optional, default=64)>\n");
   exit(1);
   return;
 }
@@ -42,6 +42,11 @@ int main( int argc, char* argv[] )
     if (argc < 2)
       usage();
     int num_streams = atoi(argv[1]);
+
+    // Number of threads in each thread block
+    int blockSize = BLOCKDIM;
+    if (argc == 3)
+      blockSize = atoi(argv[2]);
 
     // Size of vectors
     int n = 100000000;
@@ -100,14 +105,8 @@ int main( int argc, char* argv[] )
         h_input1[i] = sin(i);
     }
 
-
-    int blockSize, gridSizePerStream;
-
-    // Number of threads in each thread block
-    blockSize = BLOCKDIM; //256;
-
     // Number of thread blocks in grid
-    gridSizePerStream = 104; //(int)ceil((float)elements_per_stream/blockSize);
+    int gridSizePerStream = 104; //(int)ceil((float)elements_per_stream/blockSize);
     printf("gridSizePerStream: %d\n", gridSizePerStream);
 
     hipEventRecord(start);
