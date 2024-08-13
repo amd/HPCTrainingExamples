@@ -9,6 +9,7 @@ OMNITRACE=0
 OMNIPERF=0
 HIP=0
 KOKKOS=0
+HPCTOOLKIT=0
 OPENMPI=0
 OPENMP=0
 OPENACC=0
@@ -34,6 +35,7 @@ usage()
     echo "--omniperf: runs omniperf tests"
     echo "--hip: runs the hip tests"
     echo "--kokkos: runs the kokkos tests"
+    echo "--hpctoolkit: runs the hpctoolkit tests"
     echo "--mpi : runs the mpi tests"
     echo "--openmpi : runs the openmpi tests"
     echo "--openmp : runs the openmp tests"
@@ -100,6 +102,11 @@ do
       "--kokkos")
           shift
           KOKKOS=1
+          reset-last
+          ;;
+      "--hpctoolkit")
+          shift
+          HPCTOOLKIT=1
           reset-last
           ;;
       "--openmpi")
@@ -188,6 +195,8 @@ elif [ ${HIP} -eq 1 ]; then
    ctest -R Hipify
 elif [ ${KOKKOS} -eq 1 ]; then
    ctest -R Kokkos
+elif [ ${HPCTOOLKIT} -eq 1 ]; then
+   ctest -R HPCToolkit
 elif [ ${OPENMPI} -eq 1 ]; then
    ctest -R OpenMPI
 elif [ ${OPENMP} -eq 1 ]; then

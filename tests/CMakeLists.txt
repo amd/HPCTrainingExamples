@@ -864,3 +864,9 @@ set_property(TEST Omniperf_AMD_Research_Analyze_Check PROPERTY SKIP_REGULAR_EXPR
 add_test(NAME Omniperf_ROCm_Analyze_Check COMMAND ../omniperf_analyze_check.sh --omniperf-version 6.2.0)
 set_property(TEST Omniperf_ROCm_Analyze_Check PROPERTY PASS_REGULAR_EXPRESSION "deriving Omniperf metrics...")
 set_property(TEST Omniperf_ROCm_Analyze_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+# HPCToolkit Tests
+
+add_test(NAME HPCToolkit_Unit_Tests COMMAND ../hpctoolkit_unit_tests.sh)
+set_property(TEST HPCToolkit_Unit_Tests PROPERTY PASS_REGULAR_EXPRESSION "Ok:                 231")
+set_property(TEST HPCToolkit_Unit_Tests PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "meson: command not found")
