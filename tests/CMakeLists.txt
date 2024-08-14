@@ -867,10 +867,18 @@ set_property(TEST Omniperf_ROCm_Analyze_Check PROPERTY SKIP_REGULAR_EXPRESSION "
 
 # HPCToolkit Tests
 
-#add_test(NAME HPCToolkit_Unit_Tests COMMAND ../hpctoolkit_unit_tests.sh)
-#set_property(TEST HPCToolkit_Unit_Tests PROPERTY PASS_REGULAR_EXPRESSION "Ok:                 231")
-#set_property(TEST HPCToolkit_Unit_Tests PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "meson: command not found")
-
 add_test(NAME HPCToolkit_Check_ROCm_Dependency COMMAND ../hpctoolkit_check_rocm_dependency.sh)
 set_property(TEST HPCToolkit_Check_ROCm_Dependency PROPERTY PASS_REGULAR_EXPRESSION "AMD ROCm support: yes")
 set_property(TEST HPCToolkit_Check_ROCm_Dependency PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HPCToolkit_HPCRun_Check COMMAND ../hpctoolkit_check_hpcrun.sh)
+set_property(TEST HPCToolkit_HPCRun_Check PROPERTY PASS_REGULAR_EXPRESSION "hpcrun")
+set_property(TEST HPCToolkit_HPCRun_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HPCToolkit_HPCStruct_Check COMMAND ../hpctoolkit_check_hpcstruct.sh)
+set_property(TEST HPCToolkit_HPCStruct_Check PROPERTY PASS_REGULAR_EXPRESSION "structs")
+set_property(TEST HPCToolkit_HPCStruct_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HPCToolkit_HPCProf_Check COMMAND ../hpctoolkit_check_hpcprof.sh)
+set_property(TEST HPCToolkit_HPCProf_Check PROPERTY PASS_REGULAR_EXPRESSION "metrics")
+set_property(TEST HPCToolkit_HPCProf_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")

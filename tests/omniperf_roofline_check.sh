@@ -53,6 +53,7 @@ done
 module purge
 
 module load rocm
+module load openmpi
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
 pushd ${REPO_DIR}/MPI-examples/GhostExchange/GhostExchange_ArrayAssign_HIP/Ver1
