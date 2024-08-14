@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This test checks that hpcrun 
+# This test checks that hpcstruct 
 # runs without errors
 
 module purge

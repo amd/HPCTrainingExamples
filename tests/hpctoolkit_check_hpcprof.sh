@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This test checks that hpcrun 
+# This test checks that hpcprof
 # runs without errors
 
 module purge
@@ -14,6 +14,8 @@ cmake ../
 make -j
 
 hpcrun -e CPUTIME -e gpu=amd -t ./compute_comm_overlap 2
+hpcstruct hpctoolkit-compute_comm_overlap-measurements/
+hpcprof hpctoolkit-compute_comm_overlap-measurements/
 ls hpctoolkit-compute_comm_overlap-database
 
 cd ..
