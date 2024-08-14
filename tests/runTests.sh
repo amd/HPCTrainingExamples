@@ -11,6 +11,8 @@ HIP=0
 KOKKOS=0
 HPCTOOLKIT=0
 OPENMPI=0
+MPI=0
+MPI4PY=0
 OPENMP=0
 OPENACC=0
 MVAPICH2=0
@@ -36,8 +38,9 @@ usage()
     echo "--hip: runs the hip tests"
     echo "--kokkos: runs the kokkos tests"
     echo "--hpctoolkit: runs the hpctoolkit tests"
-    echo "--mpi : runs the mpi tests"
+    echo "--mpi : runs all the mpi tests (same as including --opempi --mpi4py --mvapich2 --gpu-aware-mpi)"
     echo "--openmpi : runs the openmpi tests"
+    echo "--mpi4py : runs the mpi4py tests"
     echo "--openmp : runs the openmp tests"
     echo "--openacc : runs the openacc tests"
     echo "--mvapich2 : runs the mvapich2 tests"
@@ -112,6 +115,16 @@ do
       "--openmpi")
           shift
           OPENMPI=1
+          reset-last
+          ;;
+      "--mpi")
+          shift
+          MPI=1
+          reset-last
+          ;;
+      "--mpi4py")
+          shift
+          MPI4PY=1
           reset-last
           ;;
       "--openmp")
@@ -197,8 +210,15 @@ elif [ ${KOKKOS} -eq 1 ]; then
    ctest -R Kokkos
 elif [ ${HPCTOOLKIT} -eq 1 ]; then
    ctest -R HPCToolkit
+elif [ ${MPI} -eq 1 ]; then
+   ctest -R OpenMPI
+   ctest -R Mvapich2
+   ctest -R GPUAware
+   ctest -R MPI4PY
 elif [ ${OPENMPI} -eq 1 ]; then
    ctest -R OpenMPI
+elif [ ${MPI4PY} -eq 1 ]; then
+   ctest -R MPI4PY
 elif [ ${OPENMP} -eq 1 ]; then
    ctest -R OpenMP
 elif [ ${OPENACC} -eq 1 ]; then
