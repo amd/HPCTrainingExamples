@@ -3,8 +3,8 @@ OBJECTS = $(SOURCES:.hip=.o)
 EXECUTABLE = daxpy_1 daxpy_2 daxpy_3 daxpy_4 daxpy_5
 
 CXX=hipcc
-LDFLAGS=
-CXXFLAGS= -std=c++17 -Wno-unused-result -O2 -g --save-temps #-Rpass-analysis=kernel-resource-usage
+LDFLAGS=-L${ROCM_PATH}/lib -lroctx64
+CXXFLAGS= -std=c++17 -Wno-unused-result -O2 -g --save-temps -I${ROCM_PATH}/include/roctracer #-Rpass-analysis=kernel-resource-usage
 
 all: ${EXECUTABLE} 
 

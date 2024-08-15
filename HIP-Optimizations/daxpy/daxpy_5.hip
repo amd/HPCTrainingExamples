@@ -11,6 +11,7 @@ Author: Gina Sitaraman
 #include <stdio.h>
 #include <hip/hip_runtime.h>
 #include <sys/time.h>
+#include <roctx.h>
 
 #define ELAPSED(t1,t2) (t2.tv_sec-t1.tv_sec + (t2.tv_usec-t1.tv_usec)*1E-6)
 #define NITER 25
@@ -101,6 +102,7 @@ int main (int argc, char *argv[])
     HIP_CHECK(hipMalloc (&d_y, szbytes));
     HIP_CHECK(hipMalloc (&d_z, szbytes));
 
+    roctxRangePush("warmup");
     // copy input arrays to GPU memory
     HIP_CHECK(hipMemcpy (d_x, h_x, szbytes, hipMemcpyHostToDevice));
     HIP_CHECK(hipMemcpy (d_y, h_y, szbytes, hipMemcpyHostToDevice));
@@ -118,14 +120,17 @@ int main (int argc, char *argv[])
     // copy result back to host buffer
     HIP_CHECK(hipMemcpy (h_z, d_z, szbytes, hipMemcpyDeviceToHost));
     check_results (h_ref, h_z, N);
+    roctxRangePop();
 
     // Now measure bandwidth achieved
+    roctxRangePush("timing loop");
     gettimeofday (&t1, NULL);
     for (int iter=0; iter<NITER; iter++) {
         kernel_5 <<< grid_5, block_5 >>> ((double2 *)d_x, (double2 *)d_y, (double2 *)d_z, a, N/2);
     }
     hipDeviceSynchronize ();
     gettimeofday (&t2, NULL);
+    roctxRangePop();
     printf ("daxpy_5: Bandwidth achieved = %.2f GB/s\n", gbs/ELAPSED(t1,t2));
 
     return 0;
