@@ -876,7 +876,7 @@ set_property(TEST HPCToolkit_HPCRun_Check PROPERTY PASS_REGULAR_EXPRESSION "hpcr
 set_property(TEST HPCToolkit_HPCRun_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME HPCToolkit_HPCStruct_Check COMMAND ../hpctoolkit_check_hpcstruct.sh)
-set_property(TEST HPCToolkit_HPCStruct_Check PROPERTY PASS_REGULAR_EXPRESSION "structs")
+set_property(TEST HPCToolkit_HPCStruct_Check PROPERTY PASS_REGULAR_EXPRESSION "gpubins-used")
 set_property(TEST HPCToolkit_HPCStruct_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME HPCToolkit_HPCProf_Check COMMAND ../hpctoolkit_check_hpcprof.sh)
