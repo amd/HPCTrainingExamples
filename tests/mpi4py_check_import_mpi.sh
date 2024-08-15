@@ -55,7 +55,7 @@ done
 
 module purge
 
-module load openmpi
+module load ${MODULE_NAME}
 
 python3 -c 'from mpi4py import MPI' 2> /dev/null && echo 'Success' || echo 'Failure'
 

@@ -787,7 +787,7 @@ add_test(NAME MPI4PY_OpenMPI_Check_Import COMMAND ../mpi4py_check_import.sh --mo
 set_property(TEST MPI4PY_OpenMPI_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST MPI4PY_OpenMPI_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME MPI4PY_Check_Import_MPI COMMAND ../mpi4py_check_import_mpi.sh --module-name openmpi)
+add_test(NAME MPI4PY_OpenMPI_Check_Import_MPI COMMAND ../mpi4py_check_import_mpi.sh --module-name openmpi)
 set_property(TEST MPI4PY_OpenMPI_Check_Import_MPI PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST MPI4PY_OpenMPI_Check_Import_MPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 

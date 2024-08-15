@@ -59,7 +59,7 @@ REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
 module purge
 
-module load openmpi
+module load ${MODULE_NAME}
 module load cupy
 
 python3 ${REPO_DIR}/MLExamples/mpi4py_cupy.py
