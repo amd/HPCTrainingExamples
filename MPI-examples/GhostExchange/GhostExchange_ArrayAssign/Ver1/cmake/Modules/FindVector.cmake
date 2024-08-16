@@ -180,7 +180,12 @@ if(CMAKE_CXX_COMPILER_LOADED)
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") # using Clang
         set(VECTOR_ALIASING_CXX_FLAGS "${VECTOR_ALIASING_CXX_FLAGS} -fstrict-aliasing")
         if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
-           set(VECTOR_ARCH_CXX_FLAGS "${VECTOR_ARCH_CXX_FLAGS} -march=native -mtune=native")
+	   execute_process( COMMAND cat $ENV{ROCM_PATH}/.info/version | cut -f1 -d'-' OUTPUT_VARIABLE ROCM_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+	   if ( "$ROCM_VERSION" VERSION_GREATER_THAN 6.1.2 OR "$ROCM_VERSION" VERSION_LESS_THAN 6.1.0)
+              set(VECTOR_ARCH_CXX_FLAGS "${VECTOR_ARCH_CXX_FLAGS} -march=native -mtune=native")
+	   else
+              set(VECTOR_ARCH_CXX_FLAGS "${VECTOR_ARCH_CXX_FLAGS} -mtune=native")
+	   endif
         elseif ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "ppc64le")
             set(VECTOR_ARCH_CXX_FLAGS "${VECTOR_ARCH_CXX_FLAGS} -mcpu=powerpc64le")
         elseif ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
