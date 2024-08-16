@@ -1,3 +1,4 @@
+ROCM_PATH ?=/opt/rocm
 SOURCES = daxpy_1.hip daxpy_2.hip daxpy_3.hip daxpy_4.hip daxpy_5.hip
 OBJECTS = $(SOURCES:.hip=.o) 
 EXECUTABLE = daxpy_1 daxpy_2 daxpy_3 daxpy_4 daxpy_5
