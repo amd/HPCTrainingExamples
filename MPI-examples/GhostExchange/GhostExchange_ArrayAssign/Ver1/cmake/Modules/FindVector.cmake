@@ -180,7 +180,7 @@ if(CMAKE_CXX_COMPILER_LOADED)
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") # using Clang
         set(VECTOR_ALIASING_CXX_FLAGS "${VECTOR_ALIASING_CXX_FLAGS} -fstrict-aliasing")
         if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
-   	   if (DEFINED $ENV{ROCM_PATH} AND EXISTS "$ENV{ROCM_PATH}/.info/version")
+   	   if (EXISTS $ENV{ROCM_PATH}/.info/version)
               execute_process( COMMAND cat $ENV{ROCM_PATH}//.info//version OUTPUT_VARIABLE ROCM_FULL_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
               string(SUBSTRING ${ROCM_FULL_VERSION} 0 5 ROCM_VERSION)
               message("ROCM_VERSION is ${ROCM_VERSION}")
