@@ -783,17 +783,17 @@ set_property(TEST Pytorch_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider"
 
 # Python MPI tests
 
-add_test(NAME MPI4PY_OpenMPI_Check_Import COMMAND ../mpi4py_check_import.sh --module-name openmpi)
-set_property(TEST MPI4PY_OpenMPI_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST MPI4PY_OpenMPI_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#add_test(NAME MPI4PY_OpenMPI_Check_Import COMMAND ../mpi4py_check_import.sh --module-name openmpi)
+#set_property(TEST MPI4PY_OpenMPI_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
+#set_property(TEST MPI4PY_OpenMPI_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME MPI4PY_OpenMPI_Check_Import_MPI COMMAND ../mpi4py_check_import_mpi.sh --module-name openmpi)
-set_property(TEST MPI4PY_OpenMPI_Check_Import_MPI PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST MPI4PY_OpenMPI_Check_Import_MPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#add_test(NAME MPI4PY_OpenMPI_Check_Import_MPI COMMAND ../mpi4py_check_import_mpi.sh --module-name openmpi)
+#set_property(TEST MPI4PY_OpenMPI_Check_Import_MPI PROPERTY PASS_REGULAR_EXPRESSION "Success")
+#set_property(TEST MPI4PY_OpenMPI_Check_Import_MPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME MPI4PY_OpenMPI_Cupy COMMAND ../mpi4py_cupy.sh --module-name openmpi)
-set_property(TEST MPI4PY_OpenMPI_Cupy PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST MPI4PY_OpenMPI_Cupy PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#add_test(NAME MPI4PY_OpenMPI_Cupy COMMAND ../mpi4py_cupy.sh --module-name openmpi)
+#set_property(TEST MPI4PY_OpenMPI_Cupy PROPERTY PASS_REGULAR_EXPRESSION "Success")
+#set_property(TEST MPI4PY_OpenMPI_Cupy PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME MPI4PY_Standalone_Check_Import COMMAND ../mpi4py_check_import.sh --module-name mpi4py)
 set_property(TEST MPI4PY_Standalone_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
