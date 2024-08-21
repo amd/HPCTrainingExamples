@@ -97,8 +97,8 @@ else
 fi   
 
 export HSA_XNACK=1
+unset ROOFLINE_BIN
 omniperf profile -n rooflines_PDF --roof-only --kernel-names -- ./GhostExchange -x 1 -y 1 -i 200 -j 200 -h 2 -t -c -I 100
-ls workloads/
 
 cd ..
 rm -rf build_for_test
