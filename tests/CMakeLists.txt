@@ -862,19 +862,19 @@ set_property(TEST Omniperf_ROCm_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION 
 set_property(TEST Omniperf_ROCm_Roofline_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Omniperf_AMD_Research_Profile_Check COMMAND ../omniperf_profile_check.sh --omniperf-version 2.0.0)
-set_property(TEST Omniperf_AMD_Research_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "is generating")
+set_property(TEST Omniperf_AMD_Research_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "Skipping roofline")
 set_property(TEST Omniperf_AMD_Research_Profile_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Omniperf_ROCm_Profile_Check COMMAND ../omniperf_profile_check.sh --omniperf-version 6.2.0)
-set_property(TEST Omniperf_ROCm_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "is generating")
+set_property(TEST Omniperf_ROCm_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "Skipping roofline")
 set_property(TEST Omniperf_ROCm_Profile_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Omniperf_AMD_Research_Analyze_Check COMMAND ../omniperf_analyze_check.sh --omniperf-version 2.0.0)
-set_property(TEST Omniperf_AMD_Research_Analyze_Check PROPERTY PASS_REGULAR_EXPRESSION "deriving Omniperf metrics...")
+set_property(TEST Omniperf_AMD_Research_Analyze_Check PROPERTY PASS_REGULAR_EXPRESSION "7.1 Wavefront Launch Stats")
 set_property(TEST Omniperf_AMD_Research_Analyze_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Omniperf_ROCm_Analyze_Check COMMAND ../omniperf_analyze_check.sh --omniperf-version 6.2.0)
-set_property(TEST Omniperf_ROCm_Analyze_Check PROPERTY PASS_REGULAR_EXPRESSION "deriving Omniperf metrics...")
+set_property(TEST Omniperf_ROCm_Analyze_Check PROPERTY PASS_REGULAR_EXPRESSION "7.1 Wavefront Launch Stats")
 set_property(TEST Omniperf_ROCm_Analyze_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # HPCToolkit Tests
