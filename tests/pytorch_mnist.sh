@@ -15,7 +15,7 @@ module load pytorch
 
 rm -rf pytorch_mnist
 
-git clone https://github.com/pytorch/examples.git pytorch_mnist
+git clone https://github.com/pytorch/examples.git pytorch_mnist 2>/dev/null
 
 cd pytorch_mnist/mnist
 
