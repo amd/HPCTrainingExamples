@@ -896,5 +896,5 @@ set_property(TEST HPCToolkit_HPCProf_Check PROPERTY PASS_REGULAR_EXPRESSION "met
 set_property(TEST HPCToolkit_HPCProf_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME HPCToolkit_HPCViewer_Check COMMAND ../hpctoolkit_check_hpcviewer.sh)
-set_property(TEST HPCToolkit_HPCProf_Check PROPERTY PASS_REGULAR_EXPRESSION "Java version ")
-set_property(TEST HPCToolkit_HPCProf_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HPCToolkit_HPCViewer_Check PROPERTY PASS_REGULAR_EXPRESSION "Java version ")
+set_property(TEST HPCToolkit_HPCViewer_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
