@@ -97,8 +97,8 @@ fi
 
 export HSA_XNACK=1
 omniperf profile -n v1 --no-roof -- ./GhostExchange -x 1 -y 1 -i 200 -j 200 -h 2 -t -c -I 100
-sed -i "/dim3 grid((isize+63)\/64, (jsize+3)\/4, 1);/c\   dim3 grid((isize+255)\/256, (jsize+3)\/4, 1);" ./GhostExchange.hip
-sed -i "/dim3 block(64, 4, 1);/c\   dim3 block(256, 4, 1);" ./GhostExchange.hip
+sed -i "/dim3 grid((isize+63)\/64, (jsize+3)\/4, 1);/c\   dim3 grid((isize+255)\/256, (jsize+3)\/4, 1);" ../GhostExchange.hip
+sed -i "/dim3 block(64, 4, 1);/c\   dim3 block(256, 4, 1);" ../GhostExchange.hip
 omniperf profile -n v2 --no-roof -- ./GhostExchange -x 1 -y 1 -i 200 -j 200 -h 2 -t -c -I 100
 omniperf analyze -p workloads/v1/* -p workloads/v2/* --block 7.1.0 7.1.1 7.1.2 7.1.0: Grid size 7.1.1: Workgroup size 7.1.2: Total Wavefronts
 
