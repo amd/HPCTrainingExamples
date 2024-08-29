@@ -166,6 +166,7 @@ int main(int argc, char *argv[])
     * the ghost cells only exist for multi-processor runs with MPI. The boundary halo cells are to set boundary
     * conditions. Halos refer to both the ghost cells and the boundary halo cells.
     */
+   haloupdate_test(nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, jmax, imax, nprocy, nprocx, do_timing, do_print);
 
    double** xtmp;
    // This offsets the array addressing so that the real part of the array is from 0,0 to jsize,isize
@@ -488,7 +489,7 @@ void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int 
       isize_total += isizes[ii] + 2*nhalo;
    }
 
-   if (isize_total > 40) return;
+   if (isize_total > 100) return;
 
    if (rank == 0) {
       printf("     ");
