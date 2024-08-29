@@ -86,7 +86,6 @@ int main(int argc, char *argv[])
    for (int j = jmax/2 - jspan; j < jmax/2 + jspan; j++){
       for (int i = imax/2 - ispan; i < imax/2 + ispan; i++){
          if (j >= jbegin && j < jend && i >= ibegin && i < iend) {
-            //x[j-jbegin][i-ibegin] = 400.0;
             x[j-jbegin][i-ibegin] = 400.0 + 0.1 * (double)(rank + j);
          }
       }
