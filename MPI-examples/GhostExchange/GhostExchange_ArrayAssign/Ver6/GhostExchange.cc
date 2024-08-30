@@ -143,12 +143,15 @@ int main(int argc, char *argv[])
       }
    }
 
+   int nhalo_saved = nhalo;
+   nhalo = 0;
    #pragma omp target teams distribute parallel for collapse(2)
    for (int j = 0; j < jsize; j++){
       for (int i = 0; i < isize; i++){
          xv(j,i) = static_cast<double>(rank) + 5.0;
       }
    }
+   nhalo = nhalo_saved;
 
    int ispan=5, jspan=5;
    if (ispan > imax/2) ispan = imax/2;
