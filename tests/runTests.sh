@@ -5,6 +5,7 @@ pushd $(dirname $0)
 AI=0
 CUPY=0
 PYTORCH=0
+JAX=0
 OMNITRACE=0
 OMNIPERF=0
 HIP=0
@@ -41,6 +42,7 @@ usage()
     echo "--mpi : runs all the mpi tests (same as including --opempi --mpi4py --mvapich2 --gpu-aware-mpi)"
     echo "--openmpi : runs the openmpi tests"
     echo "--mpi4py : runs the mpi4py tests"
+    echo "--jax : runs the jax tests"
     echo "--openmp : runs the openmp tests"
     echo "--openacc : runs the openacc tests"
     echo "--mvapich2 : runs the mvapich2 tests"
@@ -110,6 +112,11 @@ do
       "--hpctoolkit")
           shift
           HPCTOOLKIT=1
+          reset-last
+          ;;
+      "--jax")
+          shift
+          JAX=1
           reset-last
           ;;
       "--openmpi")
@@ -195,8 +202,11 @@ cmake ..
 if [ ${AI} -eq 1 ]; then
    ctest -R Cupy
    ctest -R Pytorch
+   ctest -R JAX
 elif [ ${CUPY} -eq 1 ]; then
    ctest -R Cupy
+elif [ ${JAX} -eq 1 ]; then
+   ctest -R JAX
 elif [ ${PYTORCH} -eq 1 ]; then
    ctest -R Pytorch
 elif [ ${OMNITRACE} -eq 1 ]; then

@@ -898,3 +898,14 @@ set_property(TEST HPCToolkit_HPCProf_Check PROPERTY SKIP_REGULAR_EXPRESSION "mod
 add_test(NAME HPCToolkit_HPCViewer_Check COMMAND ../hpctoolkit_check_hpcviewer.sh)
 set_property(TEST HPCToolkit_HPCViewer_Check PROPERTY PASS_REGULAR_EXPRESSION "Java version ")
 set_property(TEST HPCToolkit_HPCViewer_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+# JAX Tests
+
+add_test(NAME JAX_Check_Import COMMAND ../jax_check_import.sh )
+set_property(TEST JAX_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST JAX_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME JAX_Check_Gpu_Access COMMAND ../jax_check_gpu_access.sh )
+set_property(TEST JAX_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "True")
+set_property(TEST JAX_Check_Gpu_Access PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
