@@ -190,6 +190,7 @@ int main(int argc, char *argv[])
     * conditions. Halos refer to both the ghost cells and the boundary halo cells.
     */
    haloupdate_test(nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, jmax, imax, nprocy, nprocx, do_timing, do_print);
+
    double* xtmp;
    // Using 1D representation of a 2D array with nhalo offsets
    int totcells=(jsize+2*nhalo)*(isize+2*nhalo);
@@ -257,7 +258,7 @@ int main(int argc, char *argv[])
    total_time = cpu_timer_stop(tstart_total);
 
    if (rank == 0){
-      printf("GhostExchange_ArrayAssign Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
+      printf("GhostExchange_ArrayAssign_HIP Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
              stencil_time,boundarycondition_time,ghostcell_time,total_time);
    }
 

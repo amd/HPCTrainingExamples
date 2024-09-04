@@ -268,7 +268,7 @@ int main(int argc, char *argv[])
    total_time = cpu_timer_stop(tstart_total);
 
    if (rank == 0){
-      printf("GhostExchange_ArrayAssign Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
+      printf("GhostExchange_ArrayAssign_HIP Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
              stencil_time,boundarycondition_time,ghostcell_time,total_time);
    }
 
