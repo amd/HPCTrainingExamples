@@ -5,7 +5,7 @@ indicating we were allocating our buffers several times. In this example, we mov
 the allocations so that we only need to allocate the buffers one time and explore
 how that impacts performance through Omnitrace.
 
-## Environment: Frontier
+## Environment Setup
 
 We recommend installing OpenMPI 5.0.3 with UCX 1.16.x. Instructions [here](https://github.com/amd/HPCTrainingDock/blob/main/comm/sources/scripts/openmpi_setup.sh) may be useful reference for this OpenMPI install. We also recommend using cmake version 3.23.2 or greater.
 
@@ -42,7 +42,7 @@ omnitrace-instrument -o ./GhostExchange.inst -- ./GhostExchange
 mpirun -np 4 -mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.sh omnitrace-run -- ./GhostExchange.inst -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
 ```
 
-This trace should look largely like the previous roctx trace:
+This trace should look largely like the previous roctx trace. Searching for the roctx region named "BufAlloc" yields only one result in the trace.
 
 <p><img src="bufalloc_once.png"/></p>
 
