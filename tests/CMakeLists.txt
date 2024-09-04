@@ -906,6 +906,6 @@ set_property(TEST JAX_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST JAX_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME JAX_Check_Gpu_Access COMMAND ../jax_check_gpu_access.sh )
-set_property(TEST JAX_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "True")
+set_property(TEST JAX_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "rocm")
 set_property(TEST JAX_Check_Gpu_Access PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
