@@ -28,7 +28,7 @@ mpirun -np 4 -mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.s
 Output of this run should look like this:
 
 ```
-mpirun -np 4 -mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
+GhostExchange_ArrayAssign_HIP Timing is stencil 1.397785 boundary condition 0.005424 ghost cell 0.195898 total 2.042325
 ```
 
 ## Get an Initial Trace
