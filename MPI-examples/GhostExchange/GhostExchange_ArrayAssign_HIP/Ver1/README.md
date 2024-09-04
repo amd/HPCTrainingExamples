@@ -4,7 +4,7 @@ In this version of the Ghost Exchange, we port the initial code to GPUs using th
 [the original code](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig) and this version are the addition of HIP kernels.
 
 Using the managed memory model, the memory buffers are still initially allocated on host, but the OS
-will manage page migration and data movement across the PCIe link between the host and device. In this series of examples, we will demonstrate profiling with Omnitrace on a non-Cray platform using an AMD Instinct&trade MI210 GPU. ROCm releases (6.2.0+) now include Omnitrace. Please install the additional package called `omnitrace` along with your ROCm install to find the Ommnitrace binaries in the `${ROCM_PATH}/bin` directory.
+will manage page migration and data movement across the PCIe link between the host and device. In this series of examples, we will demonstrate profiling with Omnitrace on a non-Cray platform using an AMD Instinct&trade; MI210 GPU. ROCm releases (6.2.0+) now include Omnitrace. Please install the additional package called `omnitrace` along with ROCm to find the Ommnitrace binaries in the `${ROCM_PATH}/bin` directory.
 
 ## Environment Setup
 
