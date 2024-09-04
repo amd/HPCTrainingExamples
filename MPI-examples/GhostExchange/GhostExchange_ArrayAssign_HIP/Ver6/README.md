@@ -1,54 +1,75 @@
-# Ghost Exchange: Changing Data Layout
+# Ghost Exchange: Explicit Memory Management
 
-In this example we explore changing our 2D array layout to 1D and use Omnitrace to investigate the performance impact.
+In this example we explicitly manage the memory movement onto the device by using
+hipMalloc, the device memory allocator, for all data arrays instead of using
+OS-managed page migrations. We no longer need the `HSA_XNACK=1` setting.
 
-This sort of change typically requires significant development overhead, as the indexing of the data must change everywhere in the application.
+Typically, startup costs of an application are not as important as the kernel runtimes. 
+In this case, by explicitly moving memory at the beginning of our run, 
+we're able to remove the overhead of memory movement from kernels. 
+However our startup is slightly slower since we need to allocate a copy
+of all buffers on the device up-front.
 
-## Environment: Frontier
+## Environment Setup
+
+We recommend installing OpenMPI 5.0.3 with UCX 1.16.x. Instructions
+[here](https://github.com/amd/HPCTrainingDock/blob/main/comm/sources/scripts/openmpi_setup.sh)
+may be useful reference for this OpenMPI install. We also recommend
+using cmake version 3.23.2 or greater.
 
 ```
-module load cce/17.0.0
-module load rocm/5.7.0
-module load omnitrace/1.11.2
-module load craype-accel-amd-gfx90a cmake/3.23.2
+module load rocm/6.2.0
+module load cmake/3.23.2
+module load openmpi/5.0.3_ucx1.16.x
 ```
 
 ## Build and Run
 
 ```
-cd Ver5
+cd Ver6
 mkdir build; cd build;
-cmake ..
+cmake -D CMAKE_CXX_COMPILER=${ROCM_PATH}/bin/amdclang++ -D CMAKE_C_COMPILER=${ROCM_PATH}/bin/amdclang ..
 make -j8
-srun -N1 -n4 -c7 --gpu-bind=closest -A <account> -t 05:00 ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
+mpirun -np 4 -mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
 ```
 
-The output from this run should look like:
+The output for this run should look like:
 
 ```
-GhostExchange_ArrayAssign Timing is stencil 40.865325 boundary condition 0.109544 ghost cell 0.207257 total 42.252296
+GhostExchange_ArrayAssign_HIP Timing is stencil 1.162936 boundary condition 0.004969 ghost cell 0.045186 total 1.522770
 ```
 
-We still see a similar runtime, indicating this code change did not fix our issue.
+Now we see an improvement in our runtime which can be attributed to the lack of 
+page migration.
 
 ## Get a Trace
 
 ```
-export HSA_XNACK=1
+unset HSA_XNACK
 export OMNITRACE_CONFIG_FILE=~/.omnitrace.cfg
-srun -N1 -n4 -c7 --gpu-bind=closest -A <account> -t 05:00 ./GhostExchange.inst -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
+omnitrace-instrument -o ./GhostExchange.inst -- ./GhostExchange
+mpirun -np 4 -mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.sh omnitrace-run -- ./GhostExchange.inst -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
 ```
 
-The initial trace for this example should look very similar to previous traces we have seen:
+Here's what the trace looks like for this run:
 
 <p><img src="initial_trace.png"/></p>
 
-That is, we cannot see an obvious change in performance from just looking at this trace. We will make a note of the runtime of the second kernel invocation as taking 702ms, and the fifth kernel invocation as taking 407ms. In the next version we will compare these numbers to another modification.
+The biggest difference we see is that the first invocation of the `blur` kernel is now
+just as fast as the subsequent invocations at 11ms. This indicates that we don't spend
+time in page migration anymore. The implicit data movement was a large portion of our
+kernel overhead.
 
 ## Look at Timemory output
 
-We also see that our `wall_clock-0.txt` file looks pretty similar to our previous example:
+The `wall_clock-0.txt` file shows our overall run got faster:
 
 <p><img src="timemory_output.png"/></p>
 
-To enable the output of this file, add `OMNITRACE_PROFILE=true` and `OMNITRACE_FLAT_PROFILE=true` to your `~/.omnitrace.cfg` file.
+Previously we ran in 1.9 seconds, and now the uninstrumented runtime is 1.5 seconds
+(from above), while `wall_clock-0.txt` shows our runtime is 2.23 seconds. 
+
+However, we see that the location of our data on CPU+GPU system matters quite a lot
+to performance. Implicit memory movement may not get the best performance, and it is
+usually worth it to pay the memory movement cost up front once than repeatedly for
+each kernel.

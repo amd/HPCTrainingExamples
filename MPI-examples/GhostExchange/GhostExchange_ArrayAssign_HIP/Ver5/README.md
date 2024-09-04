@@ -35,7 +35,7 @@ The output from this run should look like:
 GhostExchange_ArrayAssign_HIP Timing is stencil 1.364763 boundary condition 0.005312 ghost cell 0.156599 total 1.973974
 ```
 
-We still see a similar runtime, maybe very slightly faster, indicating this code change did not fix our issue.
+We still see a similar runtime indicating this code change did not fix our issue.
 
 ## Get a Trace
 

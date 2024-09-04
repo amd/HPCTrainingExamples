@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
     * the ghost cells only exist for multi-processor runs with MPI. The boundary halo cells are to set boundary
     * conditions. Halos refer to both the ghost cells and the boundary halo cells.
     */
-   haloupdate_test(nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, jmax, imax, nprocy, nprocx, do_timing, do_print);
+   //haloupdate_test(nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, jmax, imax, nprocy, nprocx, do_timing, do_print);
 
    double* xtmp;
    // Using 1D representation of a 2D array with nhalo offsets
@@ -206,6 +206,12 @@ int main(int argc, char *argv[])
    double *x=NULL, *xnew=NULL;
    HIP_CHECK(hipMalloc(&x, totcells * sizeof(double)));
    HIP_CHECK(hipMalloc(&xnew, totcells * sizeof(double)));
+
+   double *x_h=NULL;
+   if (do_print) {
+      // Allocate a host array once for use in printing/debugging
+      x_h = (double *) malloc (totcells * sizeof(double));
+   }
 
    if (! corners) { // need to initialize when not doing corners so there is no uninitialized memory
       dim3 grid((isize+2*nhalo+63)/64, (jsize+2*nhalo+3)/4, 1);
@@ -233,6 +239,7 @@ int main(int argc, char *argv[])
 
    if (do_print == 1) {
       if (rank == 0) printf("Initial State \n");
+      HIP_CHECK(hipMemcpy(x_h, x, totcells * sizeof(double), hipMemcpyDefault));
       Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx, jstride);
    }
 
@@ -259,7 +266,8 @@ int main(int argc, char *argv[])
 
       if (iter%10 == 0 && rank == 0) printf("Iter %d\n",iter);
       if (do_print == 1) {
-         Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx, jstride);
+         HIP_CHECK(hipMemcpy(x_h, x, totcells * sizeof(double), hipMemcpyDefault));
+         //Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx, jstride);
       }
    }
 
@@ -272,13 +280,17 @@ int main(int argc, char *argv[])
              stencil_time,boundarycondition_time,ghostcell_time,total_time);
    }
 
-   hipFree(x);
-   hipFree(xnew);
+   HIP_CHECK(hipFree(x));
+   HIP_CHECK(hipFree(xnew));
 
-   hipFree(xbuf_left_send);
-   hipFree(xbuf_rght_send);
-   hipFree(xbuf_rght_recv);
-   hipFree(xbuf_left_recv);
+   if (do_print) {
+      HIP_CHECK(hipFree(x_h));
+   }
+
+   HIP_CHECK(hipFree(xbuf_left_send));
+   HIP_CHECK(hipFree(xbuf_rght_send));
+   HIP_CHECK(hipFree(xbuf_rght_recv));
+   HIP_CHECK(hipFree(xbuf_left_recv));
 
    MPI_Finalize();
    exit(0);
@@ -430,18 +442,17 @@ void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, in
    int rank;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
    int totcells=(jsize+2*nhalo)*(isize+2*nhalo);
-   double* x = (double *)malloc(totcells*sizeof(double));
+   double *x=NULL;
+   HIP_CHECK(hipMalloc(&x, totcells*sizeof(double)));
 
    if (jsize > 12 || isize > 12) return;
 
-   #pragma omp target teams distribute parallel for collapse(2)
    for (int j = -nhalo; j < jsize+nhalo; j++){
       for (int i = -nhalo; i < isize+nhalo; i++){
          xv(j,i) = 0.0;
       }
    }
 
-   #pragma omp target teams distribute parallel for collapse(2)
    for (int j = 0; j < jsize; j++){
       for (int i = 0; i < isize; i++){
          xv(j,i) = rank * 1000 + j*10 + i;
@@ -452,10 +463,13 @@ void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, in
    ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
    if (do_print == 1) {
+      double *x_h = (double *) malloc (totcells*sizeof(double));
+      HIP_CHECK(hipMemcpy(x_h, x, totcells*sizeof(double), hipMemcpyDefault));
       Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx, jstride);
+      free(x_h);
    }
 
-   free(x);
+   HIP_CHECK(hipFree(x));
 }
 
 void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing, int &do_print)
