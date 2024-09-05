@@ -22,7 +22,7 @@ cd Ver4
 mkdir build; cd build;
 cmake -D CMAKE_CXX_COMPILER=${ROCM_PATH}/bin/amdclang++ -D CMAKE_C_COMPILER=${ROCM_PATH}/bin/amdclang ..
 make -j8
-mpirun -np 4 -mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
+mpirun -np 4 --mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
 ```
 
 The output for this run should look like:
@@ -39,7 +39,7 @@ Note we see similar runtimes to previous examples, so these changes do not fix t
 export HSA_XNACK=1
 export OMNITRACE_CONFIG_FILE=~/.omnitrace.cfg
 omnitrace-instrument -o ./GhostExchange.inst -- ./GhostExchange
-mpirun -np 4 -mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.sh omnitrace-run -- ./GhostExchange.inst -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
+mpirun -np 4 --mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.sh omnitrace-run -- ./GhostExchange.inst -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
 ```
 
 This trace should look largely like the previous roctx trace. Searching for the roctx region named "BufAlloc" yields only one result in the trace.

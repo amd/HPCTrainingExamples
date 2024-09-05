@@ -23,7 +23,7 @@ cd Ver1
 mkdir build; cd build;
 cmake -D CMAKE_CXX_COMPILER=${ROCM_PATH}/bin/amdclang++ -D CMAKE_C_COMPILER=${ROCM_PATH}/bin/amdclang ..
 make -j8
-mpirun -np 4 -mca pml ucx --mca coll ^hcoll ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
+mpirun -np 4 --mca pml ucx --mca coll ^hcoll ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
 ```
 
 This run should show output that looks like this:
@@ -37,8 +37,9 @@ GhostExchange_ArrayAssign_HIP Timing is stencil 5.370196 boundary condition 0.02
 Proper binding may affect the performance of this application. To test this, we
 will run the code with proper CPU core and GPU affinity for each of the processes.
 We will use a script to set GPU bindings and OpenMPI's options for CPU core
-bindings. The NUMA affinity for the first four GPU devices (out of 8) using the
-command `rocm-smi --showtoponuma` looks like the following.
+bindings. Note also that performance may vary on your system because of a different
+topology or software stack. The NUMA affinity for the first four GPU devices (out of 8)
+using the command `rocm-smi --showtoponuma` looks like the following.
 
 ```
 GPU[0]		: (Topology) Numa Node: 3
@@ -80,7 +81,7 @@ We then combine that with `mpirun` option, `--bind-to NUMA` to place each proces
 in a NUMA domain that is closest to the GPU device picked for that process.
 
 ```
-mpirun -np 4 -mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
+mpirun -np 4 --mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
 ```
 
 This run should show output that looks like this:
@@ -90,6 +91,7 @@ GhostExchange_ArrayAssign_HIP Timing is stencil 1.383771 boundary condition 0.00
 ```
 
 Observe that using proper affinity settings we achieve a 3x speedup of this application.
+Again, the performance you observe may be different based on the topology of the system you have.
 Note that using managed memory we must have sub-optimal memory movement which we will
 correct in subsequent versions of this example.
 We will use Omnitrace to narrow down where the additional overhead manifests throughout
@@ -105,7 +107,7 @@ the instrumented binary under the mpirun environment.
 export HSA_XNACK=1
 export OMNITRACE_CONFIG_FILE=~/.omnitrace.cfg
 omnitrace-instrument -o ./GhostExchange.inst -- ./GhostExchange
-mpirun -np 4 -mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.sh omnitrace-run -- ./GhostExchange.inst -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
+mpirun -np 4 --mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.sh omnitrace-run -- ./GhostExchange.inst -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
 ```
 
 ## Pin Rows for Easier Visualization
