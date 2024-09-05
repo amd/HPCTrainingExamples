@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
     * the ghost cells only exist for multi-processor runs with MPI. The boundary halo cells are to set boundary
     * conditions. Halos refer to both the ghost cells and the boundary halo cells.
     */
-   //haloupdate_test(nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, jmax, imax, nprocy, nprocx, do_timing, do_print);
+   haloupdate_test(nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, jmax, imax, nprocy, nprocx, do_timing, do_print);
 
    double* xtmp;
    // Using 1D representation of a 2D array with nhalo offsets
@@ -240,7 +240,7 @@ int main(int argc, char *argv[])
    if (do_print == 1) {
       if (rank == 0) printf("Initial State \n");
       HIP_CHECK(hipMemcpy(x_h, x, totcells * sizeof(double), hipMemcpyDefault));
-      Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx, jstride);
+      Cartesian_print(x_h, jmax, imax, nhalo, nprocy, nprocx, jstride);
    }
 
    roctxMark("Starting main iteration loop");
@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
       if (iter%10 == 0 && rank == 0) printf("Iter %d\n",iter);
       if (do_print == 1) {
          HIP_CHECK(hipMemcpy(x_h, x, totcells * sizeof(double), hipMemcpyDefault));
-         //Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx, jstride);
+         Cartesian_print(x_h, jmax, imax, nhalo, nprocy, nprocx, jstride);
       }
    }
 
@@ -465,7 +465,7 @@ void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, in
    if (do_print == 1) {
       double *x_h = (double *) malloc (totcells*sizeof(double));
       HIP_CHECK(hipMemcpy(x_h, x, totcells*sizeof(double), hipMemcpyDefault));
-      Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx, jstride);
+      Cartesian_print(x_h, jmax, imax, nhalo, nprocy, nprocx, jstride);
       free(x_h);
    }
 
