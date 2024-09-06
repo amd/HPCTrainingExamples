@@ -251,4 +251,6 @@ else
    ctest
 fi
 
+rm -rf build
+
 popd

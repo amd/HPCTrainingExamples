@@ -21,7 +21,7 @@ cd pytorch_mnist/mnist
 
 python3 main.py
 
-# CUDA_VISIBLE_DEVICES=2 python main.py  # to specify GPU id to ex. 2
-
 module purge
+
+rm -rf pytorch_mnist
 
