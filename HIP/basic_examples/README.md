@@ -1,4 +1,4 @@
-# HIP/exercises Documentation
+# HIP/basic_examples Documentation
 
 ## Table of Contents
 
