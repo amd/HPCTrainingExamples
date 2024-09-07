@@ -138,8 +138,8 @@ int main(int argc, char *argv[])
    int nprocx = 0, nprocy = 0;
    int nhalo = 2, corners = 0;
    int do_timing = 0;
-   int maxIter = 1000;
    int do_print = 0;
+   int maxIter = 1000;
 
    parse_input_args(argc, argv, jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, do_timing, do_print);
  
@@ -166,6 +166,7 @@ int main(int argc, char *argv[])
     * the ghost cells only exist for multi-processor runs with MPI. The boundary halo cells are to set boundary
     * conditions. Halos refer to both the ghost cells and the boundary halo cells.
     */
+   haloupdate_test(nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, jmax, imax, nprocy, nprocx, do_timing, do_print);
 
    double** xtmp;
    // This offsets the array addressing so that the real part of the array is from 0,0 to jsize,isize
@@ -200,8 +201,8 @@ int main(int argc, char *argv[])
    ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
    if (do_print == 1) {
-     if (rank == 0) printf("Initial State \n");
-     Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+      if (rank == 0) printf("Initial State \n");
+      Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
    }
 
    for (int iter = 0; iter < maxIter; iter++){
@@ -225,7 +226,7 @@ int main(int argc, char *argv[])
    total_time = cpu_timer_stop(tstart_total);
 
    if (rank == 0){
-      printf("GhostExchange_ArrayAssign Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
+      printf("GhostExchange_ArrayAssign_HIP Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
              stencil_time,boundarycondition_time,ghostcell_time,total_time);
    }
 
@@ -488,7 +489,7 @@ void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int 
       isize_total += isizes[ii] + 2*nhalo;
    }
 
-   if (isize_total > 40) return;
+   if (isize_total > 100) return;
 
    if (rank == 0) {
       printf("     ");
