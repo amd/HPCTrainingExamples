@@ -4,6 +4,8 @@
 #include <time.h>
 #include <mpi.h>
 
+#include <cuda_runtime.h>
+
 #include "malloc2D.h"
 #include "timer.h"
 
@@ -113,13 +115,13 @@ __global__ void ghost_left_recv (double *xbuf_left_recv, double **x, int jlow, i
 }
 
 #define SWAP_PTR(xnew,xold,xtmp) (xtmp=xnew, xnew=xold, xold=xtmp)
-void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing);
+void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing, int &do_print);
 void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx);
 void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop);
 void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize,
       int nleft, int nrght, int nbot, int ntop, int do_timing);
 void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, int nrght, int nbot, int ntop,
-      int jmax, int imax, int nprocy, int nprocx, int do_timing);
+      int jmax, int imax, int nprocy, int nprocx, int do_timing, int do_print);
 
 double boundarycondition_time=0.0, ghostcell_time=0.0;
 
@@ -137,9 +139,10 @@ int main(int argc, char *argv[])
    int nprocx = 0, nprocy = 0;
    int nhalo = 2, corners = 0;
    int do_timing = 0;
+   int do_print = 0;
    int maxIter = 1000;
 
-   parse_input_args(argc, argv, jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, do_timing);
+   parse_input_args(argc, argv, jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, do_timing, do_print);
  
    struct timespec tstart_stencil, tstart_total;
    double stencil_time=0.0, total_time;
@@ -164,6 +167,7 @@ int main(int argc, char *argv[])
     * the ghost cells only exist for multi-processor runs with MPI. The boundary halo cells are to set boundary
     * conditions. Halos refer to both the ghost cells and the boundary halo cells.
     */
+   haloupdate_test(nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, jmax, imax, nprocy, nprocx, do_timing, do_print);
 
    double** xtmp;
    // This offsets the array addressing so that the real part of the array is from 0,0 to jsize,isize
@@ -197,8 +201,10 @@ int main(int argc, char *argv[])
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
    ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
-   if (rank == 0) printf("Initial State \n");
-   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+   if (do_print == 1) {
+      if (rank == 0) printf("Initial State \n");
+      Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+   }
 
    for (int iter = 0; iter < maxIter; iter++){
       cpu_timer_start(&tstart_stencil);
@@ -213,15 +219,15 @@ int main(int argc, char *argv[])
       boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
       ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
-      if (iter%1 == 0) {
-         if (rank == 0) printf("Iter %d\n",iter);
+      if (iter%10 == 0 && rank == 0) printf("Iter %d\n",iter);
+      if (do_print == 1) {
          Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
       }
    }
    total_time = cpu_timer_stop(tstart_total);
 
    if (rank == 0){
-      printf("GhostExchange_ArrayAssign Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
+      printf("GhostExchange_ArrayAssign_CUDA Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
              stencil_time,boundarycondition_time,ghostcell_time,total_time);
    }
 
@@ -364,10 +370,10 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
 }
 
 void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, int nrght, int nbot, int ntop,
-      int jmax, int imax, int nprocy, int nprocx, int do_timing)
+      int jmax, int imax, int nprocy, int nprocx, int do_timing, int do_print)
 {
 
-   // NOTE: this function has not been ported to HIP
+   // NOTE: this function has not been ported to CUDA
    int rank;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
    double** x = malloc2D(jsize+2*nhalo, isize+2*nhalo, nhalo, nhalo);
@@ -389,18 +395,20 @@ void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, in
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
    ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
-   Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+   if (do_print == 1) {
+      Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+   }
 
    malloc2D_free(x, nhalo);
 }
 
-void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing)
+void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing, int &do_print)
 {
    int c;
    int rank;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-   while ((c = getopt(argc, argv, "ch:I:i:j:tx:y:")) != -1){
+   while ((c = getopt(argc, argv, "cph:I:i:j:tx:y:")) != -1){
       switch(c){
          case 'c':
             corners = 1;
@@ -419,6 +427,9 @@ void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, 
             break;
          case 't':
             do_timing = 1;
+            break;
+         case 'p':
+            do_print = 1;
             break;
          case 'x':
             nprocx = atoi(optarg);
@@ -479,7 +490,7 @@ void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int 
       isize_total += isizes[ii] + 2*nhalo;
    }
 
-   if (isize_total > 40) return;
+   if (isize_total > 100) return;
 
    if (rank == 0) {
       printf("     ");
