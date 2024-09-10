@@ -42,6 +42,7 @@ The code is controlled with the following arguments:
 - `-h nhalo`: number of halo layers, typically assumed to be 1 for our diagrams.
 - `-t (0|1)`: whether time synchronization should be performed.
 - `-c (0|1)`: whether corners of the ghost halos should also be communicated.
+- `-p (0|1)`: whether matrix, if small enough, should be printed. Used only for debugging.
 
 The computation done on each data element after setup is a blur kernel, that modifies the value of a
 given element by averaging the values at a 5-point stencil location centered at the given element:
