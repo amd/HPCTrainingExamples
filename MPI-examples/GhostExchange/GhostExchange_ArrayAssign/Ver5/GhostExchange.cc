@@ -12,6 +12,16 @@
 
 #define SWAP_PTR(xnew,xold,xtmp) (xtmp=xnew, xnew=xold, xold=xtmp)
 
+// Note that x is accessed as x[k] where k=0,...,totcells
+// and k=(j'*jstride+i')
+// where j'=0,...,(jsize+2*nhalo)-1
+// where i'=0,...,(isize+2*nhalo)-1
+// since the code already has loops  with
+// j=-nhalo,...,jsize+nhalo-1
+// i=-nhalo,...,isize+nhalo-1
+// to avoid changing these loops, below we define the mapping
+// j'=(j+nhalo) and given i'=(i+nhalo)
+// so that using xv, the array x will be filled as desired
 #define xv(j,i) x[(j+nhalo)*jstride+(i+nhalo)]
 #define xvnew(j,i) xnew[(j+nhalo)*jstride+(i+nhalo)]
 
@@ -137,15 +147,12 @@ int main(int argc, char *argv[])
       }
    }
 
-   int nhalo_saved = nhalo;
-   nhalo = 0;
    #pragma omp target teams distribute parallel for collapse(2)
    for (int j = 0; j < jsize; j++){
       for (int i = 0; i < isize; i++){
          xv(j,i) = static_cast<double>(rank) + 5.0;
       }
    }
-   nhalo = nhalo_saved;
 
    int ispan=5, jspan=5;
    if (ispan > imax/2) ispan = imax/2;
