@@ -8,7 +8,7 @@
 
 #include "timer.h"
 
-//#pragma omp requires unified_shared_memory
+#pragma omp requires unified_shared_memory
 
 #define SWAP_PTR(xnew,xold,xtmp) (xtmp=xnew, xnew=xold, xold=xtmp)
 

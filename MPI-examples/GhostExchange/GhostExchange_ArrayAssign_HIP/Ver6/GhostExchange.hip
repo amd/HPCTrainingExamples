@@ -223,7 +223,7 @@ int main(int argc, char *argv[])
    dim3 grid((isize+63)/64, (jsize+3)/4, 1);
    dim3 block(64, 4, 1);
    double val = static_cast<double>(rank) + 5.0;
-   init_core <<< grid, block >>> (x, 0, jsize, isize, val, jstride);
+   init_core <<< grid, block >>> (x, nhalo, jsize, isize, val, jstride);
    hipDeviceSynchronize();
 
    int ispan=5, jspan=5;
@@ -284,7 +284,7 @@ int main(int argc, char *argv[])
    HIP_CHECK(hipFree(xnew));
 
    if (do_print) {
-      HIP_CHECK(hipFree(x_h));
+      free(x_h);
    }
 
    HIP_CHECK(hipFree(xbuf_left_send));
