@@ -1,0 +1,649 @@
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeDetermineSystem.cmake:205 (message)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      The system is: Linux - 4.18.0-477.10.1.el8_8.x86_64 - x86_64
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler: /opt/rocm-6.2.0/bin/amdclang 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+      
+      The C compiler identification is Clang, found in:
+        /home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/3.30.0/CompilerIdC/a.out
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler: /opt/rocm-6.2.0/bin/amdclang++ 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+      
+      The CXX compiler identification is Clang, found in:
+        /home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/3.30.0/CompilerIdCXX/a.out
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeDetermineCompilerABI.cmake:74 (try_compile)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-q2mIkU"
+      binary: "/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-q2mIkU"
+    cmakeVariables:
+      CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS: "/opt/rocm-6.2.0/lib/llvm/bin/clang-scan-deps"
+      CMAKE_C_FLAGS: ""
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-q2mIkU'
+        
+        Run Build Command(s): /share/contrib-modules/Core/cmake/3.30.0/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_4236c/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_4236c.dir/build.make CMakeFiles/cmTC_4236c.dir/build
+        gmake[1]: Entering directory '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-q2mIkU'
+        Building C object CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o
+        /opt/rocm-6.2.0/bin/amdclang   -v -MD -MT CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o -c /share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeCCompilerABI.c
+        AMD clang version 18.0.0git (https://github.com/RadeonOpenCompute/llvm-project roc-6.2.0 24292 26466ce804ac523b398608f17388eb6d605a3f09)
+        Target: x86_64-unknown-linux-gnu
+        Thread model: posix
+        InstalledDir: /opt/rocm-6.2.0/lib/llvm/bin
+        Configuration file: /opt/rocm-6.2.0/lib/llvm/bin/clang.cfg
+        Found candidate GCC installation: /usr/lib/gcc/x86_64-redhat-linux/8
+        Selected GCC installation: /usr/lib/gcc/x86_64-redhat-linux/8
+        Candidate multilib: .;@m64
+        Candidate multilib: 32;@m32
+        Selected multilib: .;@m64
+        Found HIP installation: /opt/rocm-6.2.0/lib/llvm/bin/../../.., version 6.2.41133
+         (in-process)
+         "/opt/rocm-6.2.0/lib/llvm/bin/clang-18" -cc1 -triple x86_64-unknown-linux-gnu -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model static -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -fdebug-compilation-dir=/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-q2mIkU -v -fcoverage-compilation-dir=/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-q2mIkU -resource-dir /opt/rocm-6.2.0/lib/llvm/lib/clang/18 -dependency-file CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o.d -MT CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o -sys-header-deps -I/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include -I/opt/rocm-6.2.1-RC2/include -c-isystem /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include -c-isystem /opt/rocm-6.2.1-RC2/include -cxx-isystem /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include -cxx-isystem /opt/rocm-6.2.1-RC2/include -internal-isystem /opt/rocm-6.2.0/lib/llvm/lib/clang/18/include -internal-isystem /usr/local/include -internal-isystem /usr/lib/gcc/x86_64-redhat-linux/8/../../../../x86_64-redhat-linux/include -internal-externc-isystem /include -internal-externc-isystem /usr/include -ferror-limit 19 -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o -x c /share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeCCompilerABI.c
+        clang -cc1 version 18.0.0git based upon LLVM 18.0.0git default target x86_64-unknown-linux-gnu
+        ignoring nonexistent directory "/usr/local/include"
+        ignoring nonexistent directory "/usr/lib/gcc/x86_64-redhat-linux/8/../../../../x86_64-redhat-linux/include"
+        ignoring nonexistent directory "/include"
+        ignoring duplicate directory "/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include"
+          as it is a non-system directory that duplicates a system directory
+        ignoring duplicate directory "/opt/rocm-6.2.1-RC2/include"
+          as it is a non-system directory that duplicates a system directory
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include
+         /opt/rocm-6.2.1-RC2/include
+         /opt/rocm-6.2.0/lib/llvm/lib/clang/18/include
+         /usr/include
+        End of search list.
+        Linking C executable cmTC_4236c
+        /share/contrib-modules/Core/cmake/3.30.0/bin/cmake -E cmake_link_script CMakeFiles/cmTC_4236c.dir/link.txt --verbose=1
+        /opt/rocm-6.2.0/bin/amdclang  -v -Wl,-v -rdynamic CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o -o cmTC_4236c
+        AMD clang version 18.0.0git (https://github.com/RadeonOpenCompute/llvm-project roc-6.2.0 24292 26466ce804ac523b398608f17388eb6d605a3f09)
+        Target: x86_64-unknown-linux-gnu
+        Thread model: posix
+        InstalledDir: /opt/rocm-6.2.0/lib/llvm/bin
+        Configuration file: /opt/rocm-6.2.0/lib/llvm/bin/clang.cfg
+        Found candidate GCC installation: /usr/lib/gcc/x86_64-redhat-linux/8
+        Selected GCC installation: /usr/lib/gcc/x86_64-redhat-linux/8
+        Candidate multilib: .;@m64
+        Candidate multilib: 32;@m32
+        Selected multilib: .;@m64
+        Found HIP installation: /opt/rocm-6.2.0/lib/llvm/bin/../../.., version 6.2.41133
+         "/opt/rocm-6.2.0/lib/llvm/bin/ld.lld" --hash-style=gnu --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_4236c /usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crti.o /opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtbegin-x86_64.o -L/usr/lib/gcc/x86_64-redhat-linux/8 -L/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/lib -L/usr/lib -L/opt/rocm-6.2.1-RC2/lib64 -L/opt/rocm-6.2.1-RC2/llvm/lib -L/opt/rocm-6.2.1-RC2/lib --enable-new-dtags -v CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o /opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a --as-needed -lgcc_s --no-as-needed -lc /opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a --as-needed -lgcc_s --no-as-needed /opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtend-x86_64.o /usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crtn.o
+        AMD LLD 18.0.0 (compatible with GNU linkers)
+        gmake[1]: Leaving directory '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-q2mIkU'
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeDetermineCompilerABI.cmake:182 (message)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed C implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include]
+          add: [/opt/rocm-6.2.1-RC2/include]
+          add: [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/include]
+          add: [/usr/include]
+        end of search list found
+        collapse include dir [/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include] ==> [/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include]
+        collapse include dir [/opt/rocm-6.2.1-RC2/include] ==> [/opt/rocm-6.2.1-RC2/include]
+        collapse include dir [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/include] ==> [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/include]
+        collapse include dir [/usr/include] ==> [/usr/include]
+        implicit include dirs: [/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include;/opt/rocm-6.2.1-RC2/include;/opt/rocm-6.2.0/lib/llvm/lib/clang/18/include;/usr/include]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeDetermineCompilerABI.cmake:218 (message)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed C implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(\\.[a-z]+)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(\\.[a-z]+)?))("|,| |$)]
+        ignore line: [Change Dir: '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-q2mIkU']
+        ignore line: []
+        ignore line: [Run Build Command(s): /share/contrib-modules/Core/cmake/3.30.0/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_4236c/fast]
+        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_4236c.dir/build.make CMakeFiles/cmTC_4236c.dir/build]
+        ignore line: [gmake[1]: Entering directory '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-q2mIkU']
+        ignore line: [Building C object CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o]
+        ignore line: [/opt/rocm-6.2.0/bin/amdclang   -v -MD -MT CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o -c /share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeCCompilerABI.c]
+        ignore line: [AMD clang version 18.0.0git (https://github.com/RadeonOpenCompute/llvm-project roc-6.2.0 24292 26466ce804ac523b398608f17388eb6d605a3f09)]
+        ignore line: [Target: x86_64-unknown-linux-gnu]
+        ignore line: [Thread model: posix]
+        ignore line: [InstalledDir: /opt/rocm-6.2.0/lib/llvm/bin]
+        ignore line: [Configuration file: /opt/rocm-6.2.0/lib/llvm/bin/clang.cfg]
+        ignore line: [Found candidate GCC installation: /usr/lib/gcc/x86_64-redhat-linux/8]
+        ignore line: [Selected GCC installation: /usr/lib/gcc/x86_64-redhat-linux/8]
+        ignore line: [Candidate multilib: .]
+        ignore line: [@m64]
+        ignore line: [Candidate multilib: 32]
+        ignore line: [@m32]
+        ignore line: [Selected multilib: .]
+        ignore line: [@m64]
+        ignore line: [Found HIP installation: /opt/rocm-6.2.0/lib/llvm/bin/../../..  version 6.2.41133]
+        ignore line: [ (in-process)]
+        ignore line: [ "/opt/rocm-6.2.0/lib/llvm/bin/clang-18" -cc1 -triple x86_64-unknown-linux-gnu -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model static -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -fdebug-compilation-dir=/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-q2mIkU -v -fcoverage-compilation-dir=/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-q2mIkU -resource-dir /opt/rocm-6.2.0/lib/llvm/lib/clang/18 -dependency-file CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o.d -MT CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o -sys-header-deps -I/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include -I/opt/rocm-6.2.1-RC2/include -c-isystem /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include -c-isystem /opt/rocm-6.2.1-RC2/include -cxx-isystem /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include -cxx-isystem /opt/rocm-6.2.1-RC2/include -internal-isystem /opt/rocm-6.2.0/lib/llvm/lib/clang/18/include -internal-isystem /usr/local/include -internal-isystem /usr/lib/gcc/x86_64-redhat-linux/8/../../../../x86_64-redhat-linux/include -internal-externc-isystem /include -internal-externc-isystem /usr/include -ferror-limit 19 -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o -x c /share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeCCompilerABI.c]
+        ignore line: [clang -cc1 version 18.0.0git based upon LLVM 18.0.0git default target x86_64-unknown-linux-gnu]
+        ignore line: [ignoring nonexistent directory "/usr/local/include"]
+        ignore line: [ignoring nonexistent directory "/usr/lib/gcc/x86_64-redhat-linux/8/../../../../x86_64-redhat-linux/include"]
+        ignore line: [ignoring nonexistent directory "/include"]
+        ignore line: [ignoring duplicate directory "/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include"]
+        ignore line: [  as it is a non-system directory that duplicates a system directory]
+        ignore line: [ignoring duplicate directory "/opt/rocm-6.2.1-RC2/include"]
+        ignore line: [  as it is a non-system directory that duplicates a system directory]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include]
+        ignore line: [ /opt/rocm-6.2.1-RC2/include]
+        ignore line: [ /opt/rocm-6.2.0/lib/llvm/lib/clang/18/include]
+        ignore line: [ /usr/include]
+        ignore line: [End of search list.]
+        ignore line: [Linking C executable cmTC_4236c]
+        ignore line: [/share/contrib-modules/Core/cmake/3.30.0/bin/cmake -E cmake_link_script CMakeFiles/cmTC_4236c.dir/link.txt --verbose=1]
+        ignore line: [/opt/rocm-6.2.0/bin/amdclang  -v -Wl -v -rdynamic CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o -o cmTC_4236c]
+        ignore line: [AMD clang version 18.0.0git (https://github.com/RadeonOpenCompute/llvm-project roc-6.2.0 24292 26466ce804ac523b398608f17388eb6d605a3f09)]
+        ignore line: [Target: x86_64-unknown-linux-gnu]
+        ignore line: [Thread model: posix]
+        ignore line: [InstalledDir: /opt/rocm-6.2.0/lib/llvm/bin]
+        ignore line: [Configuration file: /opt/rocm-6.2.0/lib/llvm/bin/clang.cfg]
+        ignore line: [Found candidate GCC installation: /usr/lib/gcc/x86_64-redhat-linux/8]
+        ignore line: [Selected GCC installation: /usr/lib/gcc/x86_64-redhat-linux/8]
+        ignore line: [Candidate multilib: .]
+        ignore line: [@m64]
+        ignore line: [Candidate multilib: 32]
+        ignore line: [@m32]
+        ignore line: [Selected multilib: .]
+        ignore line: [@m64]
+        ignore line: [Found HIP installation: /opt/rocm-6.2.0/lib/llvm/bin/../../..  version 6.2.41133]
+        link line: [ "/opt/rocm-6.2.0/lib/llvm/bin/ld.lld" --hash-style=gnu --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_4236c /usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crti.o /opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtbegin-x86_64.o -L/usr/lib/gcc/x86_64-redhat-linux/8 -L/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/lib -L/usr/lib -L/opt/rocm-6.2.1-RC2/lib64 -L/opt/rocm-6.2.1-RC2/llvm/lib -L/opt/rocm-6.2.1-RC2/lib --enable-new-dtags -v CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o /opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a --as-needed -lgcc_s --no-as-needed -lc /opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a --as-needed -lgcc_s --no-as-needed /opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtend-x86_64.o /usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crtn.o]
+          arg [/opt/rocm-6.2.0/lib/llvm/bin/ld.lld] ==> ignore
+          arg [--hash-style=gnu] ==> ignore
+          arg [--eh-frame-hdr] ==> ignore
+          arg [-m] ==> ignore
+          arg [elf_x86_64] ==> ignore
+          arg [-export-dynamic] ==> ignore
+          arg [-dynamic-linker] ==> ignore
+          arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+          arg [-o] ==> ignore
+          arg [cmTC_4236c] ==> ignore
+          arg [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crt1.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crt1.o]
+          arg [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crti.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crti.o]
+          arg [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtbegin-x86_64.o] ==> obj [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtbegin-x86_64.o]
+          arg [-L/usr/lib/gcc/x86_64-redhat-linux/8] ==> dir [/usr/lib/gcc/x86_64-redhat-linux/8]
+          arg [-L/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64] ==> dir [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64]
+          arg [-L/lib/../lib64] ==> dir [/lib/../lib64]
+          arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
+          arg [-L/lib] ==> dir [/lib]
+          arg [-L/usr/lib] ==> dir [/usr/lib]
+          arg [-L/opt/rocm-6.2.1-RC2/lib64] ==> dir [/opt/rocm-6.2.1-RC2/lib64]
+          arg [-L/opt/rocm-6.2.1-RC2/llvm/lib] ==> dir [/opt/rocm-6.2.1-RC2/llvm/lib]
+          arg [-L/opt/rocm-6.2.1-RC2/lib] ==> dir [/opt/rocm-6.2.1-RC2/lib]
+          arg [--enable-new-dtags] ==> ignore
+          arg [-v] ==> ignore
+          arg [CMakeFiles/cmTC_4236c.dir/CMakeCCompilerABI.c.o] ==> ignore
+          arg [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a] ==> lib [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a]
+          arg [--as-needed] ==> ignore
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [--no-as-needed] ==> ignore
+          arg [-lc] ==> lib [c]
+          arg [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a] ==> lib [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a]
+          arg [--as-needed] ==> ignore
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [--no-as-needed] ==> ignore
+          arg [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtend-x86_64.o] ==> obj [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtend-x86_64.o]
+          arg [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crtn.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crtn.o]
+        linker tool for 'C': /opt/rocm-6.2.0/lib/llvm/bin/ld.lld
+        remove lib [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a]
+        remove lib [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a]
+        collapse obj [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crt1.o] ==> [/usr/lib64/crt1.o]
+        collapse obj [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crti.o] ==> [/usr/lib64/crti.o]
+        collapse obj [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crtn.o] ==> [/usr/lib64/crtn.o]
+        collapse library dir [/usr/lib/gcc/x86_64-redhat-linux/8] ==> [/usr/lib/gcc/x86_64-redhat-linux/8]
+        collapse library dir [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64] ==> [/usr/lib64]
+        collapse library dir [/lib/../lib64] ==> [/lib64]
+        collapse library dir [/usr/lib/../lib64] ==> [/usr/lib64]
+        collapse library dir [/lib] ==> [/lib]
+        collapse library dir [/usr/lib] ==> [/usr/lib]
+        collapse library dir [/opt/rocm-6.2.1-RC2/lib64] ==> [/opt/rocm-6.2.1-RC2/lib64]
+        collapse library dir [/opt/rocm-6.2.1-RC2/llvm/lib] ==> [/opt/rocm-6.2.1-RC2/llvm/lib]
+        collapse library dir [/opt/rocm-6.2.1-RC2/lib] ==> [/opt/rocm-6.2.1-RC2/lib]
+        implicit libs: [gcc_s;c;gcc_s]
+        implicit objs: [/usr/lib64/crt1.o;/usr/lib64/crti.o;/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtbegin-x86_64.o;/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtend-x86_64.o;/usr/lib64/crtn.o]
+        implicit dirs: [/usr/lib/gcc/x86_64-redhat-linux/8;/usr/lib64;/lib64;/lib;/usr/lib;/opt/rocm-6.2.1-RC2/lib64;/opt/rocm-6.2.1-RC2/llvm/lib;/opt/rocm-6.2.1-RC2/lib]
+        implicit fwks: []
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/Internal/CMakeDetermineLinkerId.cmake:40 (message)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeDetermineCompilerABI.cmake:255 (cmake_determine_linker_id)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Running the C compiler's linker: "/opt/rocm-6.2.0/lib/llvm/bin/ld.lld" "-v"
+      AMD LLD 18.0.0 (compatible with GNU linkers)
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeDetermineCompilerABI.cmake:74 (try_compile)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-xdQYvQ"
+      binary: "/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-xdQYvQ"
+    cmakeVariables:
+      CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS: "/opt/rocm-6.2.0/lib/llvm/bin/clang-scan-deps"
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_SCAN_FOR_MODULES: "OFF"
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-xdQYvQ'
+        
+        Run Build Command(s): /share/contrib-modules/Core/cmake/3.30.0/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_6d34c/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_6d34c.dir/build.make CMakeFiles/cmTC_6d34c.dir/build
+        gmake[1]: Entering directory '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-xdQYvQ'
+        Building CXX object CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o
+        /opt/rocm-6.2.0/bin/amdclang++   -v -MD -MT CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o -c /share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeCXXCompilerABI.cpp
+        AMD clang version 18.0.0git (https://github.com/RadeonOpenCompute/llvm-project roc-6.2.0 24292 26466ce804ac523b398608f17388eb6d605a3f09)
+        Target: x86_64-unknown-linux-gnu
+        Thread model: posix
+        InstalledDir: /opt/rocm-6.2.0/lib/llvm/bin
+        Configuration file: /opt/rocm-6.2.0/lib/llvm/bin/clang++.cfg
+        Found candidate GCC installation: /usr/lib/gcc/x86_64-redhat-linux/8
+        Selected GCC installation: /usr/lib/gcc/x86_64-redhat-linux/8
+        Candidate multilib: .;@m64
+        Candidate multilib: 32;@m32
+        Selected multilib: .;@m64
+        Found HIP installation: /opt/rocm-6.2.0/lib/llvm/bin/../../.., version 6.2.41133
+         (in-process)
+         "/opt/rocm-6.2.0/lib/llvm/bin/clang-18" -cc1 -triple x86_64-unknown-linux-gnu -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model static -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -fdebug-compilation-dir=/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-xdQYvQ -v -fcoverage-compilation-dir=/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-xdQYvQ -resource-dir /opt/rocm-6.2.0/lib/llvm/lib/clang/18 -dependency-file CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o.d -MT CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -I/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include -I/opt/rocm-6.2.1-RC2/include -c-isystem /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include -c-isystem /opt/rocm-6.2.1-RC2/include -cxx-isystem /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include -cxx-isystem /opt/rocm-6.2.1-RC2/include -internal-isystem /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8 -internal-isystem /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/x86_64-redhat-linux -internal-isystem /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/backward -internal-isystem /opt/rocm-6.2.0/lib/llvm/lib/clang/18/include -internal-isystem /usr/local/include -internal-isystem /usr/lib/gcc/x86_64-redhat-linux/8/../../../../x86_64-redhat-linux/include -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o -x c++ /share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeCXXCompilerABI.cpp
+        clang -cc1 version 18.0.0git based upon LLVM 18.0.0git default target x86_64-unknown-linux-gnu
+        ignoring nonexistent directory "/usr/local/include"
+        ignoring nonexistent directory "/usr/lib/gcc/x86_64-redhat-linux/8/../../../../x86_64-redhat-linux/include"
+        ignoring nonexistent directory "/include"
+        ignoring duplicate directory "/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include"
+          as it is a non-system directory that duplicates a system directory
+        ignoring duplicate directory "/opt/rocm-6.2.1-RC2/include"
+          as it is a non-system directory that duplicates a system directory
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include
+         /opt/rocm-6.2.1-RC2/include
+         /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8
+         /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/x86_64-redhat-linux
+         /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/backward
+         /opt/rocm-6.2.0/lib/llvm/lib/clang/18/include
+         /usr/include
+        End of search list.
+        Linking CXX executable cmTC_6d34c
+        /share/contrib-modules/Core/cmake/3.30.0/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6d34c.dir/link.txt --verbose=1
+        /opt/rocm-6.2.0/bin/amdclang++  -v -Wl,-v -rdynamic CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_6d34c
+        AMD clang version 18.0.0git (https://github.com/RadeonOpenCompute/llvm-project roc-6.2.0 24292 26466ce804ac523b398608f17388eb6d605a3f09)
+        Target: x86_64-unknown-linux-gnu
+        Thread model: posix
+        InstalledDir: /opt/rocm-6.2.0/lib/llvm/bin
+        Configuration file: /opt/rocm-6.2.0/lib/llvm/bin/clang++.cfg
+        Found candidate GCC installation: /usr/lib/gcc/x86_64-redhat-linux/8
+        Selected GCC installation: /usr/lib/gcc/x86_64-redhat-linux/8
+        Candidate multilib: .;@m64
+        Candidate multilib: 32;@m32
+        Selected multilib: .;@m64
+        Found HIP installation: /opt/rocm-6.2.0/lib/llvm/bin/../../.., version 6.2.41133
+         "/opt/rocm-6.2.0/lib/llvm/bin/ld.lld" --hash-style=gnu --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_6d34c /usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crti.o /opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtbegin-x86_64.o -L/usr/lib/gcc/x86_64-redhat-linux/8 -L/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/lib -L/usr/lib -L/opt/rocm-6.2.1-RC2/lib64 -L/opt/rocm-6.2.1-RC2/llvm/lib -L/opt/rocm-6.2.1-RC2/lib --enable-new-dtags -v CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm /opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a -lgcc_s -lc /opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a -lgcc_s /opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtend-x86_64.o /usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crtn.o
+        AMD LLD 18.0.0 (compatible with GNU linkers)
+        gmake[1]: Leaving directory '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-xdQYvQ'
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeDetermineCompilerABI.cmake:182 (message)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed CXX implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include]
+          add: [/opt/rocm-6.2.1-RC2/include]
+          add: [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8]
+          add: [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/x86_64-redhat-linux]
+          add: [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/backward]
+          add: [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/include]
+          add: [/usr/include]
+        end of search list found
+        collapse include dir [/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include] ==> [/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include]
+        collapse include dir [/opt/rocm-6.2.1-RC2/include] ==> [/opt/rocm-6.2.1-RC2/include]
+        collapse include dir [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8] ==> [/usr/include/c++/8]
+        collapse include dir [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/x86_64-redhat-linux] ==> [/usr/include/c++/8/x86_64-redhat-linux]
+        collapse include dir [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/backward] ==> [/usr/include/c++/8/backward]
+        collapse include dir [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/include] ==> [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/include]
+        collapse include dir [/usr/include] ==> [/usr/include]
+        implicit include dirs: [/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include;/opt/rocm-6.2.1-RC2/include;/usr/include/c++/8;/usr/include/c++/8/x86_64-redhat-linux;/usr/include/c++/8/backward;/opt/rocm-6.2.0/lib/llvm/lib/clang/18/include;/usr/include]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeDetermineCompilerABI.cmake:218 (message)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed CXX implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(\\.[a-z]+)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(\\.[a-z]+)?))("|,| |$)]
+        ignore line: [Change Dir: '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-xdQYvQ']
+        ignore line: []
+        ignore line: [Run Build Command(s): /share/contrib-modules/Core/cmake/3.30.0/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_6d34c/fast]
+        ignore line: [/usr/bin/gmake  -f CMakeFiles/cmTC_6d34c.dir/build.make CMakeFiles/cmTC_6d34c.dir/build]
+        ignore line: [gmake[1]: Entering directory '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-xdQYvQ']
+        ignore line: [Building CXX object CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o]
+        ignore line: [/opt/rocm-6.2.0/bin/amdclang++   -v -MD -MT CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o -c /share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [AMD clang version 18.0.0git (https://github.com/RadeonOpenCompute/llvm-project roc-6.2.0 24292 26466ce804ac523b398608f17388eb6d605a3f09)]
+        ignore line: [Target: x86_64-unknown-linux-gnu]
+        ignore line: [Thread model: posix]
+        ignore line: [InstalledDir: /opt/rocm-6.2.0/lib/llvm/bin]
+        ignore line: [Configuration file: /opt/rocm-6.2.0/lib/llvm/bin/clang++.cfg]
+        ignore line: [Found candidate GCC installation: /usr/lib/gcc/x86_64-redhat-linux/8]
+        ignore line: [Selected GCC installation: /usr/lib/gcc/x86_64-redhat-linux/8]
+        ignore line: [Candidate multilib: .]
+        ignore line: [@m64]
+        ignore line: [Candidate multilib: 32]
+        ignore line: [@m32]
+        ignore line: [Selected multilib: .]
+        ignore line: [@m64]
+        ignore line: [Found HIP installation: /opt/rocm-6.2.0/lib/llvm/bin/../../..  version 6.2.41133]
+        ignore line: [ (in-process)]
+        ignore line: [ "/opt/rocm-6.2.0/lib/llvm/bin/clang-18" -cc1 -triple x86_64-unknown-linux-gnu -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model static -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -fdebug-compilation-dir=/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-xdQYvQ -v -fcoverage-compilation-dir=/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-xdQYvQ -resource-dir /opt/rocm-6.2.0/lib/llvm/lib/clang/18 -dependency-file CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o.d -MT CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -I/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include -I/opt/rocm-6.2.1-RC2/include -c-isystem /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include -c-isystem /opt/rocm-6.2.1-RC2/include -cxx-isystem /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include -cxx-isystem /opt/rocm-6.2.1-RC2/include -internal-isystem /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8 -internal-isystem /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/x86_64-redhat-linux -internal-isystem /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/backward -internal-isystem /opt/rocm-6.2.0/lib/llvm/lib/clang/18/include -internal-isystem /usr/local/include -internal-isystem /usr/lib/gcc/x86_64-redhat-linux/8/../../../../x86_64-redhat-linux/include -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o -x c++ /share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [clang -cc1 version 18.0.0git based upon LLVM 18.0.0git default target x86_64-unknown-linux-gnu]
+        ignore line: [ignoring nonexistent directory "/usr/local/include"]
+        ignore line: [ignoring nonexistent directory "/usr/lib/gcc/x86_64-redhat-linux/8/../../../../x86_64-redhat-linux/include"]
+        ignore line: [ignoring nonexistent directory "/include"]
+        ignore line: [ignoring duplicate directory "/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include"]
+        ignore line: [  as it is a non-system directory that duplicates a system directory]
+        ignore line: [ignoring duplicate directory "/opt/rocm-6.2.1-RC2/include"]
+        ignore line: [  as it is a non-system directory that duplicates a system directory]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include]
+        ignore line: [ /opt/rocm-6.2.1-RC2/include]
+        ignore line: [ /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8]
+        ignore line: [ /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/x86_64-redhat-linux]
+        ignore line: [ /usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/backward]
+        ignore line: [ /opt/rocm-6.2.0/lib/llvm/lib/clang/18/include]
+        ignore line: [ /usr/include]
+        ignore line: [End of search list.]
+        ignore line: [Linking CXX executable cmTC_6d34c]
+        ignore line: [/share/contrib-modules/Core/cmake/3.30.0/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6d34c.dir/link.txt --verbose=1]
+        ignore line: [/opt/rocm-6.2.0/bin/amdclang++  -v -Wl -v -rdynamic CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_6d34c]
+        ignore line: [AMD clang version 18.0.0git (https://github.com/RadeonOpenCompute/llvm-project roc-6.2.0 24292 26466ce804ac523b398608f17388eb6d605a3f09)]
+        ignore line: [Target: x86_64-unknown-linux-gnu]
+        ignore line: [Thread model: posix]
+        ignore line: [InstalledDir: /opt/rocm-6.2.0/lib/llvm/bin]
+        ignore line: [Configuration file: /opt/rocm-6.2.0/lib/llvm/bin/clang++.cfg]
+        ignore line: [Found candidate GCC installation: /usr/lib/gcc/x86_64-redhat-linux/8]
+        ignore line: [Selected GCC installation: /usr/lib/gcc/x86_64-redhat-linux/8]
+        ignore line: [Candidate multilib: .]
+        ignore line: [@m64]
+        ignore line: [Candidate multilib: 32]
+        ignore line: [@m32]
+        ignore line: [Selected multilib: .]
+        ignore line: [@m64]
+        ignore line: [Found HIP installation: /opt/rocm-6.2.0/lib/llvm/bin/../../..  version 6.2.41133]
+        link line: [ "/opt/rocm-6.2.0/lib/llvm/bin/ld.lld" --hash-style=gnu --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_6d34c /usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crti.o /opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtbegin-x86_64.o -L/usr/lib/gcc/x86_64-redhat-linux/8 -L/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/lib -L/usr/lib -L/opt/rocm-6.2.1-RC2/lib64 -L/opt/rocm-6.2.1-RC2/llvm/lib -L/opt/rocm-6.2.1-RC2/lib --enable-new-dtags -v CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm /opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a -lgcc_s -lc /opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a -lgcc_s /opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtend-x86_64.o /usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crtn.o]
+          arg [/opt/rocm-6.2.0/lib/llvm/bin/ld.lld] ==> ignore
+          arg [--hash-style=gnu] ==> ignore
+          arg [--eh-frame-hdr] ==> ignore
+          arg [-m] ==> ignore
+          arg [elf_x86_64] ==> ignore
+          arg [-export-dynamic] ==> ignore
+          arg [-dynamic-linker] ==> ignore
+          arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+          arg [-o] ==> ignore
+          arg [cmTC_6d34c] ==> ignore
+          arg [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crt1.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crt1.o]
+          arg [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crti.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crti.o]
+          arg [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtbegin-x86_64.o] ==> obj [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtbegin-x86_64.o]
+          arg [-L/usr/lib/gcc/x86_64-redhat-linux/8] ==> dir [/usr/lib/gcc/x86_64-redhat-linux/8]
+          arg [-L/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64] ==> dir [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64]
+          arg [-L/lib/../lib64] ==> dir [/lib/../lib64]
+          arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
+          arg [-L/lib] ==> dir [/lib]
+          arg [-L/usr/lib] ==> dir [/usr/lib]
+          arg [-L/opt/rocm-6.2.1-RC2/lib64] ==> dir [/opt/rocm-6.2.1-RC2/lib64]
+          arg [-L/opt/rocm-6.2.1-RC2/llvm/lib] ==> dir [/opt/rocm-6.2.1-RC2/llvm/lib]
+          arg [-L/opt/rocm-6.2.1-RC2/lib] ==> dir [/opt/rocm-6.2.1-RC2/lib]
+          arg [--enable-new-dtags] ==> ignore
+          arg [-v] ==> ignore
+          arg [CMakeFiles/cmTC_6d34c.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+          arg [-lstdc++] ==> lib [stdc++]
+          arg [-lm] ==> lib [m]
+          arg [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a] ==> lib [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a]
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [-lc] ==> lib [c]
+          arg [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a] ==> lib [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a]
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtend-x86_64.o] ==> obj [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtend-x86_64.o]
+          arg [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crtn.o] ==> obj [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crtn.o]
+        linker tool for 'CXX': /opt/rocm-6.2.0/lib/llvm/bin/ld.lld
+        remove lib [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a]
+        remove lib [/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/libclang_rt.builtins-x86_64.a]
+        collapse obj [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crt1.o] ==> [/usr/lib64/crt1.o]
+        collapse obj [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crti.o] ==> [/usr/lib64/crti.o]
+        collapse obj [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64/crtn.o] ==> [/usr/lib64/crtn.o]
+        collapse library dir [/usr/lib/gcc/x86_64-redhat-linux/8] ==> [/usr/lib/gcc/x86_64-redhat-linux/8]
+        collapse library dir [/usr/lib/gcc/x86_64-redhat-linux/8/../../../../lib64] ==> [/usr/lib64]
+        collapse library dir [/lib/../lib64] ==> [/lib64]
+        collapse library dir [/usr/lib/../lib64] ==> [/usr/lib64]
+        collapse library dir [/lib] ==> [/lib]
+        collapse library dir [/usr/lib] ==> [/usr/lib]
+        collapse library dir [/opt/rocm-6.2.1-RC2/lib64] ==> [/opt/rocm-6.2.1-RC2/lib64]
+        collapse library dir [/opt/rocm-6.2.1-RC2/llvm/lib] ==> [/opt/rocm-6.2.1-RC2/llvm/lib]
+        collapse library dir [/opt/rocm-6.2.1-RC2/lib] ==> [/opt/rocm-6.2.1-RC2/lib]
+        implicit libs: [stdc++;m;gcc_s;c;gcc_s]
+        implicit objs: [/usr/lib64/crt1.o;/usr/lib64/crti.o;/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtbegin-x86_64.o;/opt/rocm-6.2.0/lib/llvm/lib/clang/18/lib/linux/clang_rt.crtend-x86_64.o;/usr/lib64/crtn.o]
+        implicit dirs: [/usr/lib/gcc/x86_64-redhat-linux/8;/usr/lib64;/lib64;/lib;/usr/lib;/opt/rocm-6.2.1-RC2/lib64;/opt/rocm-6.2.1-RC2/llvm/lib;/opt/rocm-6.2.1-RC2/lib]
+        implicit fwks: []
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/Internal/CMakeDetermineLinkerId.cmake:40 (message)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeDetermineCompilerABI.cmake:255 (cmake_determine_linker_id)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Running the CXX compiler's linker: "/opt/rocm-6.2.0/lib/llvm/bin/ld.lld" "-v"
+      AMD LLD 18.0.0 (compatible with GNU linkers)
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/CheckCCompilerFlag.cmake:51 (cmake_check_compiler_flag)"
+      - "cmake/Modules/FindVector.cmake:151 (CHECK_C_COMPILER_FLAG)"
+      - "CMakeLists.txt:12 (find_package)"
+    checks:
+      - "Performing Test HAVE_OPENMP_SIMD"
+    directories:
+      source: "/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-ugka0c"
+      binary: "/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-ugka0c"
+    cmakeVariables:
+      CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS: "/opt/rocm-6.2.0/lib/llvm/bin/clang-scan-deps"
+      CMAKE_C_FLAGS: " -g -O3"
+      CMAKE_MODULE_PATH: "/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/cmake/Modules"
+    buildResult:
+      variable: "HAVE_OPENMP_SIMD"
+      cached: true
+      stdout: |
+        Change Dir: '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-ugka0c'
+        
+        Run Build Command(s): /share/contrib-modules/Core/cmake/3.30.0/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_daf43/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_daf43.dir/build.make CMakeFiles/cmTC_daf43.dir/build
+        gmake[1]: Entering directory '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-ugka0c'
+        Building C object CMakeFiles/cmTC_daf43.dir/src.c.o
+        /opt/rocm-6.2.0/bin/amdclang -DHAVE_OPENMP_SIMD  -g -O3     -fopenmp-simd -MD -MT CMakeFiles/cmTC_daf43.dir/src.c.o -MF CMakeFiles/cmTC_daf43.dir/src.c.o.d -o CMakeFiles/cmTC_daf43.dir/src.c.o -c /home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-ugka0c/src.c
+        Linking C executable cmTC_daf43
+        /share/contrib-modules/Core/cmake/3.30.0/bin/cmake -E cmake_link_script CMakeFiles/cmTC_daf43.dir/link.txt --verbose=1
+        /opt/rocm-6.2.0/bin/amdclang  -g -O3  -rdynamic CMakeFiles/cmTC_daf43.dir/src.c.o -o cmTC_daf43
+        gmake[1]: Leaving directory '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-ugka0c'
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/FindMPI.cmake:1282 (try_compile)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/FindMPI.cmake:1326 (_MPI_try_staged_settings)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/FindMPI.cmake:1649 (_MPI_check_lang_works)"
+      - "CMakeLists.txt:28 (find_package)"
+    description: "The MPI test test_mpi for C in mode normal"
+    directories:
+      source: "/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-2OzG3M"
+      binary: "/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-2OzG3M"
+    cmakeVariables:
+      CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS: "/opt/rocm-6.2.0/lib/llvm/bin/clang-scan-deps"
+      CMAKE_C_FLAGS: " -g -O3  -fstrict-aliasing  -march=native -mtune=native   -fvectorize  -fno-math-errno  -fopenmp-simd"
+      CMAKE_MODULE_PATH: "/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/cmake/Modules"
+    buildResult:
+      variable: "MPI_RESULT_C_test_mpi_normal"
+      cached: true
+      stdout: |
+        Change Dir: '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-2OzG3M'
+        
+        Run Build Command(s): /share/contrib-modules/Core/cmake/3.30.0/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_88d1c/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_88d1c.dir/build.make CMakeFiles/cmTC_88d1c.dir/build
+        gmake[1]: Entering directory '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-2OzG3M'
+        Building C object CMakeFiles/cmTC_88d1c.dir/test_mpi.c.o
+        /opt/rocm-6.2.0/bin/amdclang  -isystem /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include -g -O3  -fstrict-aliasing  -march=native -mtune=native   -fvectorize  -fno-math-errno  -fopenmp-simd  -pthread -MD -MT CMakeFiles/cmTC_88d1c.dir/test_mpi.c.o -MF CMakeFiles/cmTC_88d1c.dir/test_mpi.c.o.d -o CMakeFiles/cmTC_88d1c.dir/test_mpi.c.o -c /home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-2OzG3M/test_mpi.c
+        Linking C executable cmTC_88d1c
+        /share/contrib-modules/Core/cmake/3.30.0/bin/cmake -E cmake_link_script CMakeFiles/cmTC_88d1c.dir/link.txt --verbose=1
+        /opt/rocm-6.2.0/bin/amdclang  -g -O3  -fstrict-aliasing  -march=native -mtune=native   -fvectorize  -fno-math-errno  -fopenmp-simd  -rdynamic -Wl,-rpath -Wl,/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/lib -Wl,--enable-new-dtags -pthread CMakeFiles/cmTC_88d1c.dir/test_mpi.c.o -o cmTC_88d1c  -Wl,-rpath,/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/lib /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/lib/libmpi.so
+        gmake[1]: Leaving directory '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-2OzG3M'
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/FindMPI.cmake:1282 (try_compile)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/FindMPI.cmake:1326 (_MPI_try_staged_settings)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/FindMPI.cmake:1649 (_MPI_check_lang_works)"
+      - "CMakeLists.txt:28 (find_package)"
+    description: "The MPI test test_mpi for CXX in mode normal"
+    directories:
+      source: "/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-T8oPrJ"
+      binary: "/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-T8oPrJ"
+    cmakeVariables:
+      CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS: "/opt/rocm-6.2.0/lib/llvm/bin/clang-scan-deps"
+      CMAKE_CXX_FLAGS: " -g -O3  -fstrict-aliasing  -mtune=native   -fvectorize  -fno-math-errno  -fopenmp-simd"
+      CMAKE_MODULE_PATH: "/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/cmake/Modules"
+    buildResult:
+      variable: "MPI_RESULT_CXX_test_mpi_normal"
+      cached: true
+      stdout: |
+        Change Dir: '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-T8oPrJ'
+        
+        Run Build Command(s): /share/contrib-modules/Core/cmake/3.30.0/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_059e6/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_059e6.dir/build.make CMakeFiles/cmTC_059e6.dir/build
+        gmake[1]: Entering directory '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-T8oPrJ'
+        Building CXX object CMakeFiles/cmTC_059e6.dir/test_mpi.cpp.o
+        /opt/rocm-6.2.0/bin/amdclang++  -isystem /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include -g -O3  -fstrict-aliasing  -mtune=native   -fvectorize  -fno-math-errno  -fopenmp-simd  -pthread -MD -MT CMakeFiles/cmTC_059e6.dir/test_mpi.cpp.o -MF CMakeFiles/cmTC_059e6.dir/test_mpi.cpp.o.d -o CMakeFiles/cmTC_059e6.dir/test_mpi.cpp.o -c /home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-T8oPrJ/test_mpi.cpp
+        Linking CXX executable cmTC_059e6
+        /share/contrib-modules/Core/cmake/3.30.0/bin/cmake -E cmake_link_script CMakeFiles/cmTC_059e6.dir/link.txt --verbose=1
+        /opt/rocm-6.2.0/bin/amdclang++  -g -O3  -fstrict-aliasing  -mtune=native   -fvectorize  -fno-math-errno  -fopenmp-simd  -rdynamic -Wl,-rpath -Wl,/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/lib -Wl,--enable-new-dtags -pthread CMakeFiles/cmTC_059e6.dir/test_mpi.cpp.o -o cmTC_059e6  -Wl,-rpath,/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/lib /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/lib/libmpi.so
+        gmake[1]: Leaving directory '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-T8oPrJ'
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/FindMPI.cmake:1282 (try_compile)"
+      - "/share/contrib-modules/Core/cmake/3.30.0/share/cmake-3.30/Modules/FindMPI.cmake:1676 (_MPI_try_staged_settings)"
+      - "CMakeLists.txt:28 (find_package)"
+    description: "The MPI test test_mpi for CXX in mode MPICXX"
+    directories:
+      source: "/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-ARjbyq"
+      binary: "/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-ARjbyq"
+    cmakeVariables:
+      CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS: "/opt/rocm-6.2.0/lib/llvm/bin/clang-scan-deps"
+      CMAKE_CXX_FLAGS: " -g -O3  -fstrict-aliasing  -mtune=native   -fvectorize  -fno-math-errno  -fopenmp-simd"
+      CMAKE_MODULE_PATH: "/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/cmake/Modules"
+    buildResult:
+      variable: "MPI_RESULT_CXX_test_mpi_MPICXX"
+      cached: true
+      stdout: |
+        Change Dir: '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-ARjbyq'
+        
+        Run Build Command(s): /share/contrib-modules/Core/cmake/3.30.0/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_8721c/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_8721c.dir/build.make CMakeFiles/cmTC_8721c.dir/build
+        gmake[1]: Entering directory '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-ARjbyq'
+        Building CXX object CMakeFiles/cmTC_8721c.dir/test_mpi.cpp.o
+        /opt/rocm-6.2.0/bin/amdclang++  -isystem /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/include -g -O3  -fstrict-aliasing  -mtune=native   -fvectorize  -fno-math-errno  -fopenmp-simd  -pthread -MD -MT CMakeFiles/cmTC_8721c.dir/test_mpi.cpp.o -MF CMakeFiles/cmTC_8721c.dir/test_mpi.cpp.o.d -o CMakeFiles/cmTC_8721c.dir/test_mpi.cpp.o -c /home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-ARjbyq/test_mpi.cpp
+        Linking CXX executable cmTC_8721c
+        /share/contrib-modules/Core/cmake/3.30.0/bin/cmake -E cmake_link_script CMakeFiles/cmTC_8721c.dir/link.txt --verbose=1
+        /opt/rocm-6.2.0/bin/amdclang++  -g -O3  -fstrict-aliasing  -mtune=native   -fvectorize  -fno-math-errno  -fopenmp-simd  -rdynamic -Wl,-rpath -Wl,/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/lib -Wl,--enable-new-dtags -pthread CMakeFiles/cmTC_8721c.dir/test_mpi.cpp.o -o cmTC_8721c  -Wl,-rpath,/share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/lib /share/contrib-modules/openmpi/ompi5.0.3-ucc1.3.x-ucx1.16.x-rocm6.2.0/lib/libmpi.so
+        gmake[1]: Leaving directory '/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/CMakeScratch/TryCompile-ARjbyq'
+        
+      exitCode: 0
+...

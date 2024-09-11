@@ -103,6 +103,11 @@ int main(int argc, char *argv[])
 
    if (do_print == 1) {
       if (rank == 0) printf("Initial State \n");
+      // note: this ghostcell_update is only for printing purposes to show that the
+      // solution matches the one produced by Orig also on the halo for debugging
+      // the value of the solution on the halo does not matter as long as
+      // it is up to date when it is used to compute the solution on cells that need it
+      ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
       Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
    }
 
@@ -152,12 +157,14 @@ int main(int argc, char *argv[])
 
     boundarycondition_update(xnew, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
 
-    // halo update on soln
-    // NOTE: this is just for visualziation
-    // we do not care in general what the solution is in the halo
-    // as long as it is correct when we need it to compute the next
-    // value of the solution
-    ghostcell_update(xnew, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
+    if (do_print == 1) {
+       // halo update on soln
+       // NOTE: this is just for visualziation
+       // we do not care in general what the solution is in the halo
+       // as long as it is correct when we need it to compute the next
+       // value of the solution
+       ghostcell_update(xnew, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
+    }
       
     SWAP_PTR(xnew, x, xtmp);
 
