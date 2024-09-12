@@ -1,6 +1,7 @@
 #include"hip/hip_runtime.h"
 #include<chrono>
 #include"hipCheck.h"
+#include<cmath>
 
 __global__ 
 __launch_bounds__(256) void yax(double* y,
@@ -9,8 +10,9 @@ __launch_bounds__(256) void yax(double* y,
 		                int n, int m, 
 		                double* result){
   __shared__ double res;
-
-  for(int i = blockDim.x * blockIdx.x; i < n; i += gridDim.x * blockDim.x){
+  if(threadIdx.x == 0) res = 0;
+  
+  for(int i = blockIdx.x; i < n; i += gridDim.x){
     double temp = 0.0;
 
     for(int j = threadIdx.x; j < m; j+=blockDim.x){
@@ -60,7 +62,7 @@ int main(int argc, char** argv){
   auto stop = std::chrono::high_resolution_clock::now();
   
   double expected = (double)n * (double)m;
-  if(result[0] - (double)n*(double)m >= 0.0001) {
+  if(std::abs(result[0] - (double)n*(double)m) >= 0.0001) {
     printf("Answer is incorrect!\n");
     printf("result = %f, expected = %f\n",result[0],expected);
   } else {

@@ -1,6 +1,7 @@
 #include"hip/hip_runtime.h"
 #include<chrono>
 #include"hipCheck.h"
+#include<cmath>
 
 __global__ void yax(double* y,
 	            double* A,
@@ -55,7 +56,7 @@ int main(int argc, char** argv){
   auto stop = std::chrono::high_resolution_clock::now();
   
   double expected = (double)n * (double)m;
-  if(result[0] - (double)n*(double)m >= 0.0001) {
+  if(std::abs(result[0] - (double)n*(double)m) >= 0.0001) {
     printf("Answer is incorrect!\n");
     printf("result = %f, expected = %f\n",result[0],expected);
   } else {
