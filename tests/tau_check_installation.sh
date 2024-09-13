@@ -9,3 +9,5 @@ cd tau2
 
 ./tau_validate ${TAU_LIB}
 
+rm -rf tau2
+
