@@ -909,3 +909,17 @@ add_test(NAME JAX_Check_Gpu_Access COMMAND ../jax_check_gpu_access.sh )
 set_property(TEST JAX_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "rocm")
 set_property(TEST JAX_Check_Gpu_Access PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# TAU Tests
+
+add_test(NAME TAU_Validate COMMAND ../tau_check_installation.sh )
+set_property(TEST TAU_Validate PROPERTY PASS_REGULAR_EXPRESSION "Encountered 0 errors")
+set_property(TEST TAU_Validate PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME TAU_Check_tau_exec COMMAND ../tau_check_tau_exec.sh )
+set_property(TEST TAU_Check_tau_exec PROPERTY PASS_REGULAR_EXPRESSION "Reading Profile files in profile.*")
+set_property(TEST TAU_Check_tau_exec PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME TAU_Check_tau_exec_HIP COMMAND ../tau_check_tau_exec.sh )
+set_property(TEST TAU_Check_tau_exec_HIP PROPERTY PASS_REGULAR_EXPRESSION "hipMemcpy")
+set_property(TEST TAU_Check_tau_exec_HIP PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
