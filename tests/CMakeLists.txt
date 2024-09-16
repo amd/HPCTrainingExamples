@@ -909,6 +909,11 @@ add_test(NAME JAX_Check_Gpu_Access COMMAND ../jax_check_gpu_access.sh )
 set_property(TEST JAX_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "RocmDevice")
 set_property(TEST JAX_Check_Gpu_Access PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME JAX_Mnist COMMAND ../jax_mnist.sh )
+set_property(TEST JAX_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Epoch 9 in")
+set_property(TEST JAX_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+
 # TAU Tests
 
 add_test(NAME TAU_Validate COMMAND ../tau_check_installation.sh )
