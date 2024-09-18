@@ -70,6 +70,7 @@ make clean
 make
 
 mpirun -n 2 tau_exec -T rocm -ebs   ./Jacobi_hip -g 2 1
+ls
 pprof
 
 make clean
