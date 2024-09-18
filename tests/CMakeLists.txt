@@ -924,8 +924,8 @@ add_test(NAME TAU_Profile_Check COMMAND ../tau_exec_check.sh --tau-profile)
 set_property(TEST TAU_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "profile.0")
 set_property(TEST TAU_Profile_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME TAU_Check_HIP_Profile_HIP COMMAND ../tau_exec_check.sh --tau-profile)
-set_property(TEST TAU_Check_HIP_Profile_HIP PROPERTY PASS_REGULAR_EXPRESSION "hipMemcpy")
+add_test(NAME TAU_Check_HIP_Profile COMMAND ../tau_exec_check.sh --tau-profile)
+set_property(TEST TAU_Check_HIP_Profile PROPERTY PASS_REGULAR_EXPRESSION "hipMemcpy")
 set_property(TEST TAU_Check_HIP_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME TAU_Check_MPI_Profile COMMAND ../tau_exec_check.sh --tau-profile)
