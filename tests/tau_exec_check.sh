@@ -69,7 +69,7 @@ rm -rf tautrace.0*
 make clean
 make
 
-mpirun -n 2 tau_exec -T rocm -ebs   ./Jacobi_hip -g 2 1
+mpirun -n 2 tau_exec -T rocm,ompt,openmp,rocprofiler,roctracer,pdt  ./Jacobi_hip -g 2 1
 ls
 pprof
 
