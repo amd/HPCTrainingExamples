@@ -64,9 +64,15 @@ module load tau
 export TAU_PROFILE=${TAU_PROFILE}
 export TAU_TRACE=${TAU_TRACE}
 
+rm -rf profile.0*
+rm -rf tautrace.0*
+make clean
 make
 
 mpirun -n 2 tau_exec -T rocm -ebs   ./Jacobi_hip -g 2 1
 pprof
 
+make clean
+rm -rf profile.0*
+rm -rf tautrace.0*
 
