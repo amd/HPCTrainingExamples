@@ -23,6 +23,7 @@ STD_PAR=0
 NODE_MEM_MODEL=0
 PROG_MODEL=0
 ROCPROF=0
+SCOREP=0
 USM=0
 
 
@@ -41,6 +42,7 @@ usage()
     echo "--kokkos: runs the kokkos tests"
     echo "--hpctoolkit: runs the hpctoolkit tests"
     echo "--tau: runs the tau tests"
+    echo "--scorep: runs the score-p tests"
     echo "--mpi : runs all the mpi tests (same as including --opempi --mpi4py --mvapich2 --gpu-aware-mpi)"
     echo "--openmpi : runs the openmpi tests"
     echo "--mpi4py : runs the mpi4py tests"
@@ -119,6 +121,12 @@ do
       "--tau")
           shift
           TAU=1
+          reset-last
+          ;;
+      "--scorep")
+          shift
+          SCOREP=1
+	  =1
           reset-last
           ;;
       "--jax")
@@ -229,6 +237,8 @@ elif [ ${HPCTOOLKIT} -eq 1 ]; then
    ctest -R HPCToolkit
 elif [ ${TAU} -eq 1 ]; then
    ctest -R TAU
+elif [ ${SCOREP} -eq 1 ]; then
+   ctest -R Score-P
 elif [ ${MPI} -eq 1 ]; then
    ctest -R OpenMPI
    ctest -R Mvapich2

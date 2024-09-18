@@ -913,6 +913,10 @@ add_test(NAME JAX_Mnist COMMAND ../jax_mnist.sh )
 set_property(TEST JAX_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Epoch 9 in")
 set_property(TEST JAX_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+#add_test(NAME JAX_Check_Performance COMMAND ../jax_check_performance.sh )
+#set_property(TEST JAX_Check_Performance PROPERTY PASS_REGULAR_EXPRESSION "Acheived bfloat16 TFLOPS: 129")
+#set_property(TEST JAX_Check_Performance PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 
 # TAU Tests
 
@@ -933,3 +937,8 @@ set_property(TEST TAU_Check_MPI_Profile PROPERTY PASS_REGULAR_EXPRESSION "MPI_Al
 set_property(TEST TAU_Check_MPI_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 
+# Score-P Tests
+
+add_test(NAME Score-P_Check_Version COMMAND ../scorep_check_version)
+set_property(TEST Score-P_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "Score-P 8.4")
+set_property(TEST Score-P_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
