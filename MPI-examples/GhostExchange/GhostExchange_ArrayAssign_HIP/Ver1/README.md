@@ -1,10 +1,8 @@
-# Ghost Exchange Version 1: OpenMP GPU port
+# Ghost Exchange Version 1: HIP GPU port
 
-In this version of the Ghost Exchange, we port the initial code to GPUs using the Heterogenous Interface for Portability (HIP) model. This uses offloading using HIP and a managed memory model, so the only differences between
-[the original code](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig) and this version are the addition of HIP kernels.
+In this version of the Ghost Exchange, we port the initial code to GPUs using the Heterogenous Interface for Portability (HIP) model. This uses offloading using HIP and a managed memory model, so the only differences between [the original code](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig) and this version are the addition of HIP kernels.
 
-Using the managed memory model, the memory buffers are still initially allocated on host, but the OS
-will manage page migration and data movement across the PCIe link between the host and device. In this series of examples, we will demonstrate profiling with Omnitrace on a non-Cray platform using an AMD Instinct&trade; MI210 GPU. ROCm releases (6.2.0+) now include Omnitrace. Please install the additional package called `omnitrace` along with ROCm to find the Ommnitrace binaries in the `${ROCM_PATH}/bin` directory.
+Using the managed memory model, the memory buffers are still initially allocated on host, but the OS will manage page migration and data movement across the PCIe link between the host and device. In this series of examples, we will demonstrate profiling with Omnitrace using an AMD Instinct&trade; MI210 GPU. ROCm releases (6.2.0+) now include Omnitrace. Please install the additional package called `omnitrace` along with ROCm to find the Omnitrace binaries in the `${ROCM_PATH}/bin` directory.
 
 ## Environment Setup
 
@@ -52,9 +50,10 @@ GPU[3]		: (Topology) Numa Node: 0
 GPU[3]		: (Topology) Numa Affinity: 0
 ```
 
-and `lscpu` shows the CPU hardware threads associated with each of these NUMA domains:
+and `lscpu | grep NUMA` shows the CPU hardware threads associated with each of these NUMA domains:
 
 ```
+NUMA node(s):        4
 NUMA node0 CPU(s):   0-15,128-143
 NUMA node1 CPU(s):   16-31,144-159
 NUMA node2 CPU(s):   32-47,160-175
@@ -77,7 +76,7 @@ export ROCR_VISIBLE_DEVICES=$mygpu
 exec $*
 ```
 
-We then combine that with `mpirun` option, `--bind-to NUMA` to place each process
+We then combine that with `mpirun` option, `--map-by NUMA` to place each process
 in a NUMA domain that is closest to the GPU device picked for that process.
 
 ```
@@ -150,20 +149,3 @@ the time is spent in the GPU compute kernels. In this example, we know that
 there is some page migration overhead, but Omnitrace does not show page
 faults arising from GPU kernels. We are hoping that this feature would be
 available in a future update.
-
-## HSA Activity
-
-The AMD compiler implements OpenMP target offload capability using the
-[HSA](https://rocm.docs.amd.com/projects/ROCR-Runtime/en/latest/index.html) runtime library.
-The Cray compiler, on the other hand, implements OpenMP target offload functionality using the
-[HIP](https://rocm.docs.amd.com/projects/HIP/en/latest/index.html) runtime. Ultimately,
-the HIP runtime relies on the HSA runtime. To see HSA activity, add this to `~/.omnitrace.cfg`:
-
-```
-OMNITRACE_ROCTRACER_HSA_ACTIVITY                   = true
-OMNITRACE_ROCTRACER_HSA_API                        = true
-```
-
-This will add HSA layer activities in the trace:
-
-<p><img src="hsa_trace.png"/></p>
