@@ -10,7 +10,7 @@ ifeq ($(findstring amdflang,$(FC1)), amdflang)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -Mfreeform
 else ifeq ($(findstring flang-new,$(FC1)), flang-new)
-  OPENMP_FLAGS = #-fopenmp --offload-arch=$(ROCM_GPU)
+  OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU) -fopenmp-version=52
   FREE_FORM_FLAG = -ffree-form
 else ifeq ($(findstring flang,$(FC1)), flang)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
@@ -26,14 +26,14 @@ endif
 ifeq ($(findstring ftn,$(FC1)), ftn)
   FFLAGS = -G2 -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else ifeq ($(findstring flang-new,$(FC1)), flang-new)
-  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
+  FFLAGS = -g -O3 -ffast-math ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else
   FFLAGS = -g -O3 ${FREE_FORM_FLAG} -fstrict-aliasing ${OPENMP_FLAGS}
 endif
 ifeq (${FC1},gfortran-13)
    LDFLAGS = ${OPENMP_FLAGS} -fno-lto
 else
-   LDFLAGS = -fopenmp ${OPENMP_FLAGS}
+   LDFLAGS = ${OPENMP_FLAGS}
 endif
 
 OBJS= \

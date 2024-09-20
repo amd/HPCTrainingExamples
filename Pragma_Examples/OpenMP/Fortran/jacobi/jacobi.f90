@@ -69,8 +69,12 @@ contains
     this%res = this%rhs
     !write(stdout,*) this%res
     !!$omp target enter data map(to:mesh%n_x,mesh%n_y,mesh%dx,mesh%dy)
-    !$omp target enter data map(to:this%u,this%rhs,this%au,this%res)
+    !!$omp target enter data map(to:this%u,this%rhs,this%au,this%res)
+    !!$omp target enter data map(to:this,this%u,this%rhs,this%au,this%res)
     !!$omp target enter data map(to:this)
+    associate(u=>this%u,rhs=>this%rhs,au=>this%au,res=>this%res)
+      !$omp target enter data map(to:u,rhs,au,res)
+    end associate
 
     !!$omp target update from(this%res)
     !write(stdout,*) this%res
