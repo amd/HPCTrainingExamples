@@ -241,27 +241,24 @@ They are also provided below for easy reference:
 |FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise5_solution_roofline_fp32.png"/>      |
 |FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise5_solution_roofline_int8_fp16.png"/> |
 
-As the Omniperf stats indicate, we are moving most data through the L1, which shows in the roofline as a decrease in Arithmetic Intensity for that cache layer.
-We have a high hit rate in L1, with a fairly low hit rate in L2, and we end up having to go to HBM much less frequently than we did previously, 
-thus our HBM bandwidth has decreased as a result of more efficient usage of our memory system.
+As the Omniperf stats indicate, we are more efficiently using the L1 cache, which shows in the roofline as a decrease in Arithmetic Intensity for that cache layer.
+We have a high hit rate in L1, with a comparatively lower hit rate in L2, and we were able to increase our L2-Fabric bandwidth for the same problem size, more efficiently requesting data from HBM.
 
 ### Roofline Comparison
 
-The comparison of these two rooflines is confusing, due to the fact that these algorithms use the memory system very differently.
-It is important to keep in mind that our solution runs **29x** faster than the problem.
+The comparison of these two rooflines is fairly straightforward.
 
 | Roofline Type | Problem Roofline                                     | Solution Roofline                                      |
 |---------------|------------------------------------------------------|--------------------------------------------------------|
 | FP32/FP64     | <img src="exercise5_problem_roofline_fp32.png"/>     | <img src="exercise5_solution_roofline_fp32.png"/>      |
 | FP16/INT8     | <img src="exercise5_problem_roofline_int8_fp16.png"/>| <img src="exercise5_solution_roofline_int8_fp16.png"/> |
 
-We see a significant speedup from problem to solution, but on the roofline it is difficult to determine which implementation is using the hardware more efficiently. The problem seems to be better, as the HBM point is very close to the achievable bandwidth, while the performance of the solution points seem to decrease.
-The roofline, though useful for estimating efficiencies of kernels, still only shows one perspective of performance.
+We see now that the optimization we apply in this example makes the kernel get very close to the HBM bandwidth-bound line. The fact that our kernel falls under the bandwidth line also confirms our suspicion that this kernel is, in fact, in the bandwidth bound regime. 
 
 ### Summary and Take-aways
 
-This algorithmic optimization is able to work more efficiently out of the L1, generating far fewer 
-L2 requests that require expensive memory operations. Algorithmic optimizations are all but guaranteed
+This algorithmic optimization is able to work more efficiently out of the L1 and L2. 
+Algorithmic optimizations are all but guaranteed
 to have significant development overhead, but finding a more efficient algorithm can have large impacts
 to performance. If profiling reveals inefficient use of the memory hardware, it could be worth thinking
 about alternative algorithms. 
