@@ -1,6 +1,6 @@
 # Ghost Exchange: Reduce Allocations
 
-In the first `roctx` range example we saw that BufAlloc was being called 101 times,
+In the `roctx` range example we saw that BufAlloc was being called 101 times,
 indicating we were allocating our buffers several times. In this example, we move
 the allocations so that we only need to allocate the buffers one time and explore
 how that impacts performance through Omnitrace.
