@@ -48,6 +48,7 @@ Please refer to this table of contents to locate the exercises you are intereste
 15. [**rocm-blog-codes**](https://github.com/amd/HPCTrainingExamples/tree/main/rocm-blogs-codes): this directory contains accompany source code examples for select HPC ROCm blogs found at [https://rocm.blogs.amd.com](https://rocm.blogs.amd.com). [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/rocm-blogs-codes/README.md).
 16. [**login_info**](https://github.com/amd/HPCTrainingExamples/tree/main/login_info)
     1. [***AAC***](https://github.com/amd/HPCTrainingExamples/tree/main/login_info/AAC): instructions on how to log in to the AMD Accelerator Cloud (AAC) resource. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/login_info/AAC/README.md).
+16. [**Doc**](https://github.com/amd/HPCTrainingExamples/tree/main/Doc): directory with a LaTeX and PDF documents that contain some of the most relevant README files properly formatted for ease of reading. The PDF document is obtained building the LaTeX document.
 
 
 ## Run the Tests

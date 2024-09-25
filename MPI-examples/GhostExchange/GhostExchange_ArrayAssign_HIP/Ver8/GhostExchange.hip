@@ -4,165 +4,178 @@
 #include <time.h>
 #include <mpi.h>
 #include <hip/hip_runtime.h>
+#include <roctx.h>
 
-#include "malloc2D.h"
 #include "timer.h"
 
-__global__ void init_core (double **x, int nhalo, int jsize, int isize, double val)
+#define SWAP_PTR(xnew,xold,xtmp) (xtmp=xnew, xnew=xold, xold=xtmp)
+
+#define xv(j,i) x[(j+nhalo)*jstride+(i+nhalo)]
+#define xvnew(j,i) xnew[(j+nhalo)*jstride+(i+nhalo)]
+
+#define HIP_CHECK(cmd) \
+{\
+    hipError_t error  = cmd;\
+    if (error != hipSuccess) { \
+        fprintf(stderr, "error: '%s'(%d) at %s:%d\n", hipGetErrorString(error), error,__FILE__, __LINE__); \
+        exit(EXIT_FAILURE);\
+      }\
+}
+
+__global__ void init_core (double *x, int nhalo, int jsize, int isize, double val)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x -nhalo;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y -nhalo;
     if (tidy < jsize+nhalo && tidx < isize+nhalo) {
-        x[tidy][tidx] = val;
+        xv(tidy,tidx) = val;
     }
 }
 
-__global__ void init_core2 (double **x, int jmax, int jspan, int jbegin, int jend, int imax, int ispan, int ibegin, int iend, int rank)
+__global__ void init_core2 (double *x, int jmax, int jspan, int jbegin, int jend, int imax, int ispan, int ibegin, int iend, int rank)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x + imax/2 - ispan;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y + jmax/2 - jspan;
     if (tidy < jmax/2 + jspan && tidx < imax/2 + ispan) {
         if (tidy >= jbegin && tidy < jend && tidx >= ibegin && tidx < iend) {
-           x[tidy-jbegin][tidx-ibegin] = 400.0 + 0.1 * (double)(rank + tidy);
+           xv(tidy-jbegin,tidx-ibegin) = 400.0 + 0.1 * (double)(rank + tidy);
         }
     }
 }
 
-__global__ void blur (double **x, double **xnew, int jsize, int isize)
+__global__ void blur (double *x, double *xnew, int jsize, int isize)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y;
     if (tidy < jsize && tidx < isize) {
-        xnew[tidy][tidx] = ( x[tidy][tidx] + x[tidy][tidx-1] + x[tidy][tidx+1] + x[tidy-1][tidx] + x[tidy+1][tidx] )/5.0;
+        xvnew(tidy,tidx) = ( xv(tidy,tidx) + xv(tidy,tidx-1) + xv(tidy,tidx+1) + xv(tidy-1,tidx) + xv(tidy+1,tidx) )/5.0;
     }
 }
 
-__global__ void blur_inner (double **x, double **xnew, int jsize, int isize, int nhalo)
+__global__ void blur_inner (double *x, double *xnew, int jsize, int isize, int nhalo)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x + nhalo;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y + nhalo;
     if (tidy < jsize - nhalo && tidx < isize - nhalo) {
-        xnew[tidy][tidx] = ( x[tidy][tidx] + x[tidy][tidx-1] + x[tidy][tidx+1] + x[tidy-1][tidx] + x[tidy+1][tidx] )/5.0;
+        xvnew(tidy,tidx) = ( xv(tidy,tidx) + xv(tidy,tidx-1) + xv(tidy,tidx+1) + xv(tidy-1,tidx) + xv(tidy+1,tidx) )/5.0;
     }
 }
 
-__global__ void blur_outer_left (double **x, double **xnew, int jsize, int isize, int nhalo)
+__global__ void blur_outer_left (double *x, double *xnew, int jsize, int isize, int nhalo)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y;
     if (tidy < jsize && tidx < nhalo) {
-        xnew[tidy][tidx] = ( x[tidy][tidx] + x[tidy][tidx-1] + x[tidy][tidx+1] + x[tidy-1][tidx] + x[tidy+1][tidx] )/5.0;
+        xvnew(tidy,tidx) = ( xv(tidy,tidx) + xv(tidy,tidx-1) + xv(tidy,tidx+1) + xv(tidy-1,tidx) + xv(tidy+1,tidx) )/5.0;
     }
 }
 
-__global__ void blur_outer_right (double **x, double **xnew, int jsize, int isize, int nhalo)
+__global__ void blur_outer_right (double *x, double *xnew, int jsize, int isize, int nhalo)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x + isize - nhalo;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y;
     if (tidy < jsize && tidx < isize) {
-        xnew[tidy][tidx] = ( x[tidy][tidx] + x[tidy][tidx-1] + x[tidy][tidx+1] + x[tidy-1][tidx] + x[tidy+1][tidx] )/5.0;
+        xvnew(tidy,tidx) = ( xv(tidy,tidx) + xv(tidy,tidx-1) + xv(tidy,tidx+1) + xv(tidy-1,tidx) + xv(tidy+1,tidx) )/5.0;
     }
 }
 
-__global__ void blur_outer_top (double **x, double **xnew, int jsize, int isize, int nhalo)
+__global__ void blur_outer_top (double *x, double *xnew, int jsize, int isize, int nhalo)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x + nhalo;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y + jsize - nhalo;
     if (tidy < jsize && tidx < isize - nhalo) {
-        xnew[tidy][tidx] = ( x[tidy][tidx] + x[tidy][tidx-1] + x[tidy][tidx+1] + x[tidy-1][tidx] + x[tidy+1][tidx] )/5.0;
+        xvnew(tidy,tidx) = ( xv(tidy,tidx) + xv(tidy,tidx-1) + xv(tidy,tidx+1) + xv(tidy-1,tidx) + xv(tidy+1,tidx) )/5.0;
     }
 }
 
-__global__ void blur_outer_bottom (double **x, double **xnew, int jsize, int isize, int nhalo)
+__global__ void blur_outer_bottom (double *x, double *xnew, int jsize, int isize, int nhalo)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x + nhalo;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y;
     if (tidy < nhalo && tidx < isize- nhalo) {
-        xnew[tidy][tidx] = ( x[tidy][tidx] + x[tidy][tidx-1] + x[tidy][tidx+1] + x[tidy-1][tidx] + x[tidy+1][tidx] )/5.0;
+        xvnew(tidy,tidx) = ( xv(tidy,tidx) + xv(tidy,tidx-1) + xv(tidy,tidx+1) + xv(tidy-1,tidx) + xv(tidy+1,tidx) )/5.0;
     }
 }
 
-__global__ void enforce_bcs_left (double **x, int nhalo, int jsize)
+__global__ void enforce_bcs_left (double *x, int nhalo, int jsize)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x - nhalo;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y;
     if (tidy < jsize && tidx < 0) {
-        x[tidy][tidx] = x[tidy][0];
+        xv(tidy,tidx) = xv(tidy,0);
     }
 }
 
-__global__ void enforce_bcs_rght (double **x, int nhalo, int jsize, int isize)
+__global__ void enforce_bcs_rght (double *x, int nhalo, int jsize, int isize)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y;
     if (tidy < jsize  && tidx < nhalo) {
-        x[tidy][isize+tidx] = x[tidy][isize-1];
+        xv(tidy,isize+tidx) = xv(tidy,isize-1);
     }
 }
 
-__global__ void enforce_bcs_bot (double **x, int nhalo, int isize)
+__global__ void enforce_bcs_bot (double *x, int nhalo, int isize)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x - nhalo;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y - nhalo;
     if (tidy < 0 && tidx < isize + nhalo) {
-        x[tidy][tidx] = x[0][tidx];
+        xv(tidy,tidx) = xv(0,tidx);
     }
 }
 
-__global__ void enforce_bcs_top (double **x, int nhalo, int jsize, int isize)
+__global__ void enforce_bcs_top (double *x, int nhalo, int jsize, int isize)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x - nhalo;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y;
     if (tidy < nhalo && tidx < isize + nhalo) {
-        x[jsize+tidy][tidx] = x[jsize-1][tidx];
+        xv(jsize+tidy,tidx) = xv(jsize-1,tidx);
     }
 }
 
-__global__ void ghost_left_send (double *xbuf_left_send, double **x, int jlow, int jhgh, int nhalo, int bufcount)
+__global__ void ghost_left_send (double *xbuf_left_send, double *x, int jlow, int jhgh, int nhalo, int bufcount)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y + jlow;
     int offset = (tidy - jlow) * nhalo + tidx;
     if (tidy < jhgh && tidx < nhalo && offset < bufcount) {
-        xbuf_left_send[offset] = x[tidy][tidx];
+        xbuf_left_send[offset] = xv(tidy,tidx);
     }
 }
 
-__global__ void ghost_rght_send (double *xbuf_rght_send, double **x, int jlow, int jhgh, int isize, int nhalo, int bufcount)
+__global__ void ghost_rght_send (double *xbuf_rght_send, double *x, int jlow, int jhgh, int isize, int nhalo, int bufcount)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y + jlow;
     int offset = (tidy - jlow) * nhalo + tidx;
     if (tidy < jhgh && tidx < nhalo && offset < bufcount) {
-        xbuf_rght_send[offset] = x[tidy][isize - nhalo + tidx];
+        xbuf_rght_send[offset] = xv(tidy,isize - nhalo + tidx);
     }
 }
 
-__global__ void ghost_rght_recv (double *xbuf_rght_recv, double **x, int jlow, int jhgh, int isize, int nhalo, int bufcount)
+__global__ void ghost_rght_recv (double *xbuf_rght_recv, double *x, int jlow, int jhgh, int isize, int nhalo, int bufcount)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y + jlow;
     int offset = (tidy - jlow) * nhalo + tidx;
     if (tidy < jhgh && tidx < nhalo && offset < bufcount) {
-        x[tidy][isize + tidx] = xbuf_rght_recv[offset];
+        xv(tidy,isize + tidx) = xbuf_rght_recv[offset];
     }
 }
 
-__global__ void ghost_left_recv (double *xbuf_left_recv, double **x, int jlow, int jhgh, int nhalo, int bufcount)
+__global__ void ghost_left_recv (double *xbuf_left_recv, double *x, int jlow, int jhgh, int nhalo, int bufcount)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y + jlow;
     int offset = (tidy - jlow) * nhalo + tidx;
     if (tidy < jhgh && tidx < nhalo && offset < bufcount) {
-        x[tidy][tidx - nhalo] = xbuf_left_recv[offset];
+        xv(tidy,tidx - nhalo) = xbuf_left_recv[offset];
     }
 }
 
-#define SWAP_PTR(xnew,xold,xtmp) (xtmp=xnew, xnew=xold, xold=xtmp)
 void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing, int &do_print);
-void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx);
-void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop);
-void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize,
+void Cartesian_print(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx);
+void boundarycondition_update(double *x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop);
+void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize,
       int nleft, int nrght, int nbot, int ntop, int do_timing);
 void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, int nrght, int nbot, int ntop,
       int jmax, int imax, int nprocy, int nprocx, int do_timing, int do_print);
