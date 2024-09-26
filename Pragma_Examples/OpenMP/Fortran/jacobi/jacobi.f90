@@ -155,16 +155,16 @@ contains
     type(mesh_t), intent(in) :: mesh
     real(real64) :: lattice_updates, flops, bandwidth
 
-    write(stdout,'(A,ES8.2,A)') 'Total Jacobi run time: ',this%elapsed,' sec.'
+    write(stdout,'(A,F5.3,A)') 'Total Jacobi run time: ',this%elapsed,' sec.'
 
     lattice_updates = real(mesh%n_x,real64)*mesh%n_y*this%iters
     flops = 17._real64*lattice_updates
     bandwidth = 12._real64*lattice_updates*real64
 
-    write(stdout,'(A,EN11.3,A)') 'Measured lattice updates: ',lattice_updates/this%elapsed,' LU/s'
-    write(stdout,'(A,EN11.3,A)') 'Measured FLOPS: ',flops/this%elapsed,' FLOPS'
-    write(stdout,'(A,EN11.3,A)') 'Measured device bandwidth: ',bandwidth/this%elapsed,' B/s'
-    write(stdout,'(A,F5.3)') 'Measured AI=',flops/bandwidth
+    write(stdout,'(A,F5.3,A)') 'Measured lattice updates: ',lattice_updates/this%elapsed/1.e9_real64,' LU/s'
+    write(stdout,'(A,F5.1,A)') 'Effective Flops: ',flops/this%elapsed/1.e9_real64,' GFlops'
+    write(stdout,'(A,F5.3,A)') 'Effective device bandwidth: ',bandwidth/this%elapsed/1.e12_real64,' TB/s'
+    write(stdout,'(A,F5.3)') 'Effective AI=',flops/bandwidth
 
   end subroutine print_results
 
