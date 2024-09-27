@@ -45,7 +45,7 @@ mpirun -np 4 --mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.
 
 With `roctx` regions, our trace looks like this:
 
-<p><img src="roctx_trace.png"/></p>
+<p><img src="images/mi210/roctx_range.png"/></p>
 
 Note: to reduce the number of rows of `rocm-smi` output you see, you may also need to add `OMNITRACE_SAMPLING_GPUS=0`. And to reduce the number of CPU rows you see, you can add `OMNITRACE_SAMPLING_CPUS=0` to the config file.
 
@@ -54,7 +54,7 @@ Note: to reduce the number of rows of `rocm-smi` output you see, you may also ne
 With `OMNITRACE_PROFILE=true` and `OMNITRACE_FLAT_PROFILE=true` in your
 `~/.omnitrace.cfg` you will see a `wall_clock-0.txt` file that looks like this:
 
-<p><img src="timemory_output.png"/></p>
+<p><img src="images/mi210/timemory_output.png"/></p>
 
 We see that `roctx` regions also show up in this file. Importantly we see the region
 called `BufAlloc` gets called 101 times, showing that the code allocating our buffers
