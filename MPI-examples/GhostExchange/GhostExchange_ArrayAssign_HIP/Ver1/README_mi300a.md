@@ -147,7 +147,7 @@ group the rows of interest together. In this screenshot, we show the
 "pin" icon that allows us to pin rows to the top of the visualization,
 allowing us to see relevant tracing data for our specific case:
 
-<p><img src="pinned_visualization.png"/></p>
+<p><img src="images/mi300a/pinned_visualization.png"/></p>
 
 This profile will also show information about each CPU core which clutters
 the profile making it very long to scroll. Since we are interested in mainly
@@ -160,24 +160,29 @@ OMNITRACE_SAMPLING_CPUS                            = none
 
 Before this is set, the profile looks like this:
 
-<p><img src="too_many_cpus.png"/></p>
+<p><img src="images/mi300a/too_many_cpus.png"/></p>
 
 And after we re-run `omnitrace-run` with `OMNITRACE_SAMPLING_CPUS=none`, we see:
 
-<p><img src="no_cpus.png"/></p>
+<p><img src="images/mi300a/no_cpus.png"/></p>
 
 ## Look at the Flat Timemory profile
 
-Again, add `OMNITRACE_PROFILE=true` and `OMNITRACE_FLAT_PROFILE=true` to `~/.omnitrace.cfg` to get 
-`wall_clock-0.txt` to see overall overhead in seconds for each function:
+Again, add `OMNITRACE_PROFILE=true` to get a hierarchical `wall_clock-0.txt` that shows
+the overhead of each function and the CPU call stack.
 
-<p><img src="timemory_flat.png"/></p>
+<p><img src="images/mi300a/timemory_hierarchial.png"/></p>
+
+Set `OMNITRACE_FLAT_PROFILE=true` in `~/.omnitrace.cfg` to get 
+`wall_clock-0.txt` to see overall overhead in seconds for each function without the hierarchies:
+
+<p><img src="images/mi300a/timemory_flat.png"/></p>
 
 We now see kernels such as `blur` that was called 100 times. The application
 itself seems to run longer under instrumentation.
-We also see that the only function call that takes around 2.8  seconds
+We also see that the only function call that takes around 0.8  seconds
 in the profile is `hipStreamSynchronize`. This indicates that the bulk of
 the time is spent in the GPU compute kernels. In this example, we know that
-there is some page migration overhead, but Omnitrace does not show page
+there is some address translation overhead, but Omnitrace does not show page
 faults arising from GPU kernels. We are hoping that this feature would be
 available in a future update.
