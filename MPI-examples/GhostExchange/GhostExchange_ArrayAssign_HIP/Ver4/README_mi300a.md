@@ -21,7 +21,7 @@ export PATH=${ROCM_PATH}/bin:$PATH
 ## Build and Run
 
 ```
-cd Ver2
+cd Ver4
 mkdir build; cd build;
 cmake -D CMAKE_CXX_COMPILER=${ROCM_PATH}/bin/amdclang++ -D CMAKE_C_COMPILER=${ROCM_PATH}/bin/amdclang ..
 make -j8
