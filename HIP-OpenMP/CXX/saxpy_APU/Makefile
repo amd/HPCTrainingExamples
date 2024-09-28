@@ -10,10 +10,6 @@ HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include
 
 HIPCC ?= hipcc
 
-ifeq ($(HIPCC), nvcc)
-   HIPCC_FLAGS += -x cu
-   LDFLAGS = -lcudadevrt -lcudart_static -lrt -lpthread -ldl
-endif
 ifeq ($(HIPCC), hipcc)
    HIPCC_FLAGS += -munsafe-fp-atomics -D__DEVICE_CODE__
    LDFLAGS = -L${ROCM_PATH}/lib -lamdhip64

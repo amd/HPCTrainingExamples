@@ -41,12 +41,8 @@ int main(int argc, char* argv[])
    float *x = new float[n];
    float *y = new float[n];
 
-   {
-      compute_1(n, x);
-      compute_2(n, y);
-      {
-         saxpy_hip(n, a, x, y);  // compute a * x[i] + y[i] in parallel
-      }
-   }
+   compute_1(n, x);
+   compute_2(n, y);
+   saxpy_hip(n, a, x, y);  // compute a * x[i] + y[i] in parallel
    compute_3(n, y);
 }
