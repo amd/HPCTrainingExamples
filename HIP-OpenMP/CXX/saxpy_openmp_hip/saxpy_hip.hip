@@ -1,3 +1,4 @@
+// Copyright AMD 2024, MIT License, contact Bob.Robey@amd.com
 #include <stdio.h>
 
 // N must be a multiple of 256

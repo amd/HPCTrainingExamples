@@ -1,3 +1,4 @@
+// Copyright AMD 2024, MIT License, contact Bob.Robey@amd.com
 #include <rocblas/rocblas.h>
 extern "C" {
     void omp_dgemm(void *ptr, int modeA, int modeB, int m, int n, 

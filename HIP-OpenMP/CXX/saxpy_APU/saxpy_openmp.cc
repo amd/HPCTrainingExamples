@@ -1,3 +1,4 @@
+// Copyright AMD 2024, MIT License, contact Bob.Robey@amd.com
 #include <stdio.h>
 
 void compute_1(int n, float *x){

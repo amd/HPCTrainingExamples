@@ -1,3 +1,4 @@
+! Copyright AMD 2024, MIT License, contact Bob.Robey@amd.com
 program example
     use rocm_interface
     use iso_c_binding

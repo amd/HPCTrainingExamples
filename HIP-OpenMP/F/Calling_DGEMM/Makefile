@@ -1,4 +1,3 @@
-
 EXECUTABLE = ./example
 all: $(EXECUTABLE) test
 

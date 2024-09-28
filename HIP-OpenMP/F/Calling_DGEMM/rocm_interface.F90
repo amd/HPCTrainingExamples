@@ -1,3 +1,4 @@
+! Copyright AMD 2024, MIT License, contact Bob.Robey@amd.com
 module rocm_interface
     interface
         subroutine init_rocblas(handle) bind(C)
