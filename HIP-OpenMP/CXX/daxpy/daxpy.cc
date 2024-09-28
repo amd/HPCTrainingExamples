@@ -18,6 +18,7 @@ void daxpy_hip(int n, double a, double * x, double * y) {
    assert(n % 256 == 0);
    daxpy_kernel<<<n/256,256,0,NULL>>>(n, a, x, y);
    int ret=hipDeviceSynchronize();
+}
 #endif
 
 
@@ -26,13 +27,13 @@ void daxpy_hip(int n, double a, double * x, double * y) {
 void compute_1(int n, double *x){
    for (int i=0; i<n; i++) {
       x[i] = 1.0;  // use 1.0
-   };
+   }
 }
 
 void compute_2(int n, double *y){
    for (int i=0; i<n; i++) {
       y[i] = 2.0;  // use 2.0
-   };
+   }
 }
 
 /**
