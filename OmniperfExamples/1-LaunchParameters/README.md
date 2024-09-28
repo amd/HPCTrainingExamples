@@ -418,6 +418,7 @@ omniperf analyze -p workloads/problem/MI300A_A1 --dispatch 1 --block 7.1.0 7.1.1
 
 Then inspect the output:
 
+```
   ___                  _                  __
  / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
 | | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
@@ -458,6 +459,8 @@ Then inspect the output:
 │ 7.1.2       │ Total Wavefronts │   4.00 │   4.00 │   4.00 │ Wavefronts │
 ╘═════════════╧══════════════════╧════════╧════════╧════════╧════════════╛
 
+```
+
 As for the MI210 case, the workgroup size is 64 and the number of Wavefronts launched is 4.
 
 To see improved performance, we turn to the code in the `solution` directory:
@@ -483,6 +486,7 @@ omniperf analyze -p workloads/solution/MI300A_A1 --dispatch 1 --block 7.1.0 7.1.
 
 Then see the number of Wavefronts now being 2048:
 
+```
   ___                  _                  __
  / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
 | | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
@@ -523,6 +527,8 @@ Then see the number of Wavefronts now being 2048:
 │ 7.1.2       │ Total Wavefronts │   2048.00 │   2048.00 │   2048.00 │ Wavefronts │
 ╘═════════════╧══════════════════╧═══════════╧═══════════╧═══════════╧════════════╛
 
+```
+
 ### Omniperf Command Line Comparison Feature
 
 We can compare the performance of `problem` and `solution` using `omniperf analyze`:
@@ -531,6 +537,7 @@ We can compare the performance of `problem` and `solution` using `omniperf analy
 omniperf analyze -p workloads/problem/MI300A_A1/ -p solution/workloads/solution/MI300A_A1/ --dispatch 1 --block 7.1.0 7.1.1 7.1.2
 ```
 
+```
   ___                  _                  __
  / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
 | | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
@@ -571,6 +578,8 @@ omniperf analyze -p workloads/problem/MI300A_A1/ -p solution/workloads/solution/
 │ 7.1.2       │ Total Wavefronts │   4.00 │ 2048.0 (51100.0%)   │    2044.00 │   4.00 │ 2048.0 (51100.0%)   │   4.00 │ 2048.0 (51100.0%)   │ Wavefronts │
 ╘═════════════╧══════════════════╧════════╧═════════════════════╧════════════╧════════╧═════════════════════╧════════╧═════════════════════╧════════════╛
 
+```
+
 Note that the new execution time for `solution` is about 1.75% of the original execution time for `problem`.
 
 ### More Kernel Filtering
@@ -581,6 +590,7 @@ Run the following command to once again see a ranking of the top kernels that ta
 omniperf analyze -p workloads/problem/MI300A_A1/ --list-stats
 ```
 
+```
   ___                  _                  __
  / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
 | | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
@@ -609,6 +619,8 @@ Dispatch list
 │  1 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
 ╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
 
+```
+
 To see aggregated stats for the `yax` kernel, run
 
 ```
@@ -618,6 +630,7 @@ omniperf analyze -p workloads/problem/MI300A_A1/ -k 0 --block 7.1.0 7.1.1 7.1.2
 
 Which will show an output similar to this one:
 
+```
   ___                  _                  __
  / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
 | | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
@@ -660,3 +673,4 @@ Which will show an output similar to this one:
 │ 7.1.2       │ Total Wavefronts │   4.00 │   4.00 │   4.00 │ Wavefronts │
 ╘═════════════╧══════════════════╧════════╧════════╧════════╧════════════╛
 
+```
