@@ -1,6 +1,42 @@
 # HIP and OpenMP Interoperability
 
-This hands-on exercise uses the code in HPCTrainingExamples/HIP-OpenMP/daxpy. We have code that uses both OpenMP and HIP. These require two separate passes with compilers: one with amdclang++ and the other with hipcc. Go to the directory containing the example and set up the environment:
+The first example is just a staightforward openmp offload version
+of saxpy. Any C++ compiler that supports OpenMP offload to hip should
+work.
+
+```
+cd HPCTrainingExamples/HIP-OpenMP/CXX/saxpy_openmp_offload
+module load rocm
+module load amdclang
+```
+
+Now we move on to an OpenMP main calling a HIP version of the SAXPY
+kernel. Note that we have to get the device version of the array
+pointers to pass into the HIP kernel.
+
+```
+cd HPCTrainingExamples/HIP-OpenMP/CXX/saxpy_openmp_hip
+module load rocm
+module load amdclang
+export HSA_XNACK=1
+```
+
+We can't leave this example without looking at what the code would
+be like with the APU programming model.
+
+```
+cd HPCTrainingExamples/HIP-OpenMP/CXX/saxpy_APU
+module load rocm
+module load amdclang
+export HSA_XNACK=1
+```
+
+You can put both OpenMP and HIP code in the same file with some care.
+This next hands-on exercise shows how in the code in
+HPCTrainingExamples/HIP-OpenMP/daxpy. We have code that uses both OpenMP
+and HIP. These require two separate passes with compilers: one with
+amdclang++ and the other with hipcc. Go to the directory containing the
+example and set up the environment:
 
 ```
 cd HPCTrainingExamples/HIP-OpenMP/CXX/daxpy
