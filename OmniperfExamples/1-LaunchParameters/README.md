@@ -55,7 +55,7 @@ make
 ```
 (*simulated output*)
 ```
-yAx time: 2911 milliseconds
+yAx time: 2911 ms
 ```
      
 The runtime of the problem should be very slow, due to sub-optimal launch parameters.
@@ -199,7 +199,7 @@ Looking through this data we see:
 - Total Wavefronts (`7.1.2`) corresponds to the first index of the grid launch parameter
 - Grid size (`7.1.0`) is Workgroup Size (`7.1.1`) times Total Wavefronts (`7.1.2`)
 
-### Omniperf Command Line Comparison Feature
+### Omniperf Command Line Comparison Feature:
 
 **On releases newer than Omniperf 1.0.10**, the comparison feature of omniperf can be used to quickly compare two profiles.
 To use this feature, use the command:
@@ -255,7 +255,7 @@ Analysis mode = cli
 Note that the comparison workload shows the percentage difference from the baseline.
 This feature can be used to quickly compare filtered stats to make sure code changes fix known issues.
 
-### More Kernel Filtering
+### More Kernel Filtering:
 
 For this exercise, it is appropriate to filter the `omniperf analyze` command with the `--dispatch 1` argument. 
 This `--dispatch 1` argument filters the data shown to only include the kernel invocation with dispatch ID 1, or the second kernel run during profiling.
@@ -401,7 +401,7 @@ make
 ```
 (*simulated output*)
 ```
-yAx time: 540 milliseconds
+yAx time: 540 ms
 ```
 
 Once again, we launch the following command:
@@ -529,7 +529,7 @@ Then see the number of Wavefronts now being 2048:
 
 ```
 
-### Omniperf Command Line Comparison Feature
+### Omniperf Command Line Comparison Feature:
 
 We can compare the performance of `problem` and `solution` using `omniperf analyze`:
 
@@ -582,7 +582,7 @@ omniperf analyze -p workloads/problem/MI300A_A1/ -p solution/workloads/solution/
 
 Note that the new execution time for `solution` is about 1.75% of the original execution time for `problem`.
 
-### More Kernel Filtering
+### More Kernel Filtering:
 
 Run the following command to once again see a ranking of the top kernels that take up most of the kernel runtime:
 
