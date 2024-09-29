@@ -35,8 +35,8 @@ omniperf profile -n problem_roof_only --roof-only --kernel-names -- ./problem.ex
 The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` directory, if generated on MI200 hardware.
 
 For convenience, the resulting plots on a representative system are below:
-| Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
-|---------------|----------------------------------------------------|------------------------------------------------------|
+| Roofline Type | Roofline Legend                                                  | Roofline Plot                                                      |
+|---------------|------------------------------------------------------------------|--------------------------------------------------------------------|
 |FP32/FP64      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise2_problem_roofline_fp32.png"/>      |
 |FP16/INT8      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise2_problem_roofline_int8_fp16.png"/> |
 
@@ -314,16 +314,16 @@ omniperf profile -n solution_roof_only --roof-only -- ./solution.exe
 The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` directory, if generated on MI200 hardware.
 
 The plots are shown here:
-| Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
-|---------------|----------------------------------------------------|------------------------------------------------------|
+| Roofline Type | Roofline Legend                                                  | Roofline Plot                                                       |
+|---------------|------------------------------------------------------------------|---------------------------------------------------------------------|
 |FP32/FP64      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise2_solution_roofline_fp32.png"/>      |
 |FP16/INT8      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise2_solution_roofline_int8_fp16.png"/> |
 
 We see that there is still room to move the solution roofline up towards the bandwidth limit.
 
 ### Roofline Comparison
-| Roofline Type | Problem Roofline                                     | Solution Roofline                                      |
-|---------------|------------------------------------------------------|--------------------------------------------------------|
+| Roofline Type | Problem Roofline                                                   | Solution Roofline                                                    |
+|---------------|--------------------------------------------------------------------|----------------------------------------------------------------------|
 | FP32/FP64     | <img src="figures/MI210/exercise2_problem_roofline_fp32.png"/>     | <img src="figures/MI210/exercise2_solution_roofline_fp32.png"/>      |
 | FP16/INT8     | <img src="figures/MI210/exercise2_problem_roofline_int8_fp16.png"/>| <img src="figures/MI210/exercise2_solution_roofline_int8_fp16.png"/> |
 

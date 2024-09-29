@@ -1,10 +1,7 @@
-## Exercise 4: Strided Data Access Patterns (and how to find them)
+# Exercise 4: Strided Data Access Patterns (and how to find them)
 
 This exercise uses a simple implementation of a yAx kernel to show how difficult strided data access patterns can be to spot in code,
 and demonstrates how to use omniperf to begin to diagnose them.
-
-**Note:** This exercise was tested on a system with MI210s, on omniperf version `2.0.0` and ROCm `6.0.2`
-**Omniperf `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
 
 <details>
 <summary><h3>Background: Acronyms and terms used in this exercise</h3></summary>
@@ -33,6 +30,11 @@ and demonstrates how to use omniperf to begin to diagnose them.
  so the result of this computation will be the same as the result of the previous data layout.
 </details>
 
+## Results on MI210
+
+**Note:** This exercise was tested on a system with MI210s, on omniperf version `2.0.0` and ROCm `6.0.2`
+**Omniperf `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
+
 ### Initial Roofline Analysis
 To start, we want to check the roofline of `problem.exe`, to make sure we are able to improve it.
 These plots can be generated with:
@@ -44,10 +46,10 @@ The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` 
 
 They are also provided below for easy reference:
 
-| Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
-|---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise4_problem_roofline_fp32.png"/>      |
-|FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise4_problem_roofline_int8_fp16.png"/> |
+| Roofline Type | Roofline Legend                                                  | Roofline Plot                                                      |
+|---------------|------------------------------------------------------------------|--------------------------------------------------------------------|
+|FP32/FP64      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise4_problem_roofline_fp32.png"/>      |
+|FP16/INT8      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise4_problem_roofline_int8_fp16.png"/> |
 
 We have plenty of space to improve this kernel, the next step is profiling.
 
@@ -255,20 +257,20 @@ The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` 
 
 They are also provided below for easy reference:
 
-| Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
-|---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise4_solution_roofline_fp32.png"/>      |
-|FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise4_solution_roofline_int8_fp16.png"/> |
+| Roofline Type | Roofline Legend                                                  | Roofline Plot                                                       |
+|---------------|------------------------------------------------------------------|---------------------------------------------------------------------|
+|FP32/FP64      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise4_solution_roofline_fp32.png"/>      |
+|FP16/INT8      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise4_solution_roofline_int8_fp16.png"/> |
 
 We appear to be very close to being bound by the HBM bandwidth from the fp32 roofline. 
 To get more performance we need to look closer at our algorithm.
 
 ### Roofline Comparison
 
-| Roofline Type | Problem Roofline                                     | Solution Roofline                                      |
-|---------------|------------------------------------------------------|--------------------------------------------------------|
-| FP32/FP6      | <img src="exercise4_problem_roofline_fp32.png"/>     | <img src="exercise4_solution_roofline_fp32.png"/>      |
-| FP16/INT8     | <img src="exercise4_problem_roofline_int8_fp16.png"/>| <img src="exercise4_solution_roofline_int8_fp16.png"/> |
+| Roofline Type | Problem Roofline                                                   | Solution Roofline                                                    |
+|---------------|--------------------------------------------------------------------|----------------------------------------------------------------------|
+| FP32/FP6      | <img src="figures/MI210/exercise4_problem_roofline_fp32.png"/>     | <img src="figures/MI210/exercise4_solution_roofline_fp32.png"/>      |
+| FP16/INT8     | <img src="figures/MI210/exercise4_problem_roofline_int8_fp16.png"/>| <img src="figures/MI210/exercise4_solution_roofline_int8_fp16.png"/> |
 
 We see that the HBM roofline point moves up, while the L1/L2 points move up and to the right from problem to solution. This means that our arithmetic intensity is increasing for the caches, so we are moving less data through the caches to do the same computation.
 
@@ -278,3 +280,7 @@ This exercise illustrates the at times insidious nature of strided data access p
 They can be difficult to spot in code, but profiling more readily shows when adversarial 
 access patterns occur, by showing poor cache hit rates, low cache bandwidth, and potentially low utilization. 
 Data access patterns can be non-trivial to change, so these sorts of optimizations can involve significant development and validation overhead.
+
+## Results on MI300A
+
+Under construction...

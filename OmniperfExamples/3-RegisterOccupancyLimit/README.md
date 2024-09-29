@@ -1,12 +1,9 @@
-## Exercise 3: Register Occupancy Limiter
+# Exercise 3: Register Occupancy Limiter
 
 More complex yAx implementation to demonstrate a register limited kernel using an innocuous looking
 function call. The register limit no longer shows up for recent versions of ROCm on certain accelerators.
 Nevertheless, this exercise is useful for learning how to find register limited kernels using Omniperf and asks you to imagine the limiter exists for the sake of the exercise.
 This is an example of how many things influence performance bugs: they exist on hardware, with a software stack, at a certain time. They may never exist outside that context.
-
-**Note:** This exercise was tested on a system with MI210s, on Omniperf version `2.0.0` and ROCm `6.0.2`
-**Omniperf versions `2.0.0` and greater are incompatible with ROCm versions lesser than `6.0.0`**
 
 <details>
 <summary><h3>Background: Acronyms and terms used in this exercise</h3></summary>
@@ -28,13 +25,19 @@ This is an example of how many things influence performance bugs: they exist on 
      </ul>
 </details>
 
+## Results on MI210
+
+**Note:** This exercise was tested on a system with MI210s, on omniperf version `2.0.0` and ROCm `6.0.2`
+**Omniperf `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
+
+
 ### Initial Roofline Analysis
 This kernel is slightly different from the one we used in previous exercises. Let's see how well it measures up in the roofline:
 
-| Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
-|---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise3_problem_roofline_fp32_fp64.png"/>      |
-|FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise3_problem_roofline_int8_fp16.png"/> |
+| Roofline Type | Roofline Legend                                                  | Roofline Plot                                                      |
+|---------------|------------------------------------------------------------------|--------------------------------------------------------------------|
+|FP32/FP64      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise3_problem_roofline_fp32_fp64.png"/> |
+|FP16/INT8      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise3_problem_roofline_int8_fp16.png"/> |
 
 You can generate these plots by running:
 ```
@@ -292,10 +295,10 @@ Analysis mode = cli
 ### Solution Roofline
 With similar performance, we expect to see similar plots in the roofline for problem and solution:
 
-| Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
-|---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise3_solution_roofline_fp32_fp64.png"/>|
-|FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise3_solution_roofline_int8_fp16.png"/>|
+| Roofline Type | Roofline Legend                                                  | Roofline Plot                                                      |
+|---------------|------------------------------------------------------------------|--------------------------------------------------------------------|
+|FP32/FP64      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise3_solution_roofline_fp32_fp64.png"/>|
+|FP16/INT8      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise3_solution_roofline_int8_fp16.png"/>|
 
 
 You can generate these plots with:
@@ -310,13 +313,188 @@ However, we see there is still room for improvement as this kernel is not gettin
 
 ### Roofline Comparison
 
-| Roofline Type | Problem Roofline                                     | Solution Roofline                                      |
-|---------------|------------------------------------------------------|--------------------------------------------------------|
-| FP32/FP64     | <img src="exercise3_problem_roofline_fp32_fp64.png"/>| <img src="exercise3_solution_roofline_fp32_fp64.png"/> |
-| FP16/INT8     | <img src="exercise3_problem_roofline_int8_fp16.png"/>| <img src="exercise3_solution_roofline_int8_fp16.png"/> |
+| Roofline Type | Problem Roofline                                                   | Solution Roofline                                                    |
+|---------------|--------------------------------------------------------------------|----------------------------------------------------------------------|
+| FP32/FP64     | <img src="figures/MI210/exercise3_problem_roofline_fp32_fp64.png"/>| <img src="figures/MI210/exercise3_solution_roofline_fp32_fp64.png"/> |
+| FP16/INT8     | <img src="figures/MI210/exercise3_problem_roofline_int8_fp16.png"/>| <img src="figures/MI210/exercise3_solution_roofline_int8_fp16.png"/> |
 
 ### Summary and Take-aways
 
 Function calls inside kernels can have surprisingly adverse performance side-effects. However, performance issues in general may be subject to compiler versions or other environment details. 
 Calling assert, printf and even excessive use of math functions (e.g. pow, sin, cos) can limit performance in difficult-to-predict ways. 
 If you see unexpected resource usage, try eliminating or reducing the use of these sorts of function calls.
+
+## Results on MI300A
+
+In this section, we show results obtained running this exercise on a system with MI300A, using ROCm `6.2.1` and the associated Omniperf, version `6.2.1`.
+
+### Roofline Analysis:
+
+At present (September 28th 2024), rooflines are disabled on MI300A.
+
+As for the MI210 case, build and run the problem code:
+
+```
+make
+./problem.exe
+```
+(*simulated output*)
+```
+yAx time: 10 ms
+```
+
+Let's run the following commands to explore some metrics:
+```
+omniperf profile -n problem --no-roof -- ./problem.exe
+omniperf analyze -p workloads/problem/MI300A_A1 --dispatch 1 --block 2.1.15 6.2.5 7.1.5 7.1.6 7.1.7
+```
+
+Then explore the output:
+
+```
+
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+   INFO Analysis mode = cli
+   INFO [analysis] deriving Omniperf metrics...
+
+--------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
+╒════╤══════════════════════════════════════════╤═════════╤═════════════╤═════════════╤══════════════╤════════╕
+│    │ Kernel_Name                              │   Count │     Sum(ns) │    Mean(ns) │   Median(ns) │    Pct │
+╞════╪══════════════════════════════════════════╪═════════╪═════════════╪═════════════╪══════════════╪════════╡
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 10064928.00 │ 10064928.00 │  10064928.00 │ 100.00 │
+│    │  double*) [clone .kd]                    │         │             │             │              │        │
+╘════╧══════════════════════════════════════════╧═════════╧═════════════╧═════════════╧══════════════╧════════╛
+0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
+
+
+--------------------------------------------------------------------------------
+2. System Speed-of-Light
+2.1 Speed-of-Light
+╒═════════════╤═════════════════════╤════════╤════════════╤═════════╤═══════════════╕
+│ Metric_ID   │ Metric              │    Avg │ Unit       │    Peak │   Pct of Peak │
+╞═════════════╪═════════════════════╪════════╪════════════╪═════════╪═══════════════╡
+│ 2.1.15      │ Wavefront Occupancy │ 432.15 │ Wavefronts │ 7296.00 │          5.92 │
+╘═════════════╧═════════════════════╧════════╧════════════╧═════════╧═══════════════╛
+
+
+--------------------------------------------------------------------------------
+6. Workgroup Manager (SPI)
+6.2 Workgroup Manager - Resource Allocation
+╒═════════════╤═════════════════════════╤═══════╤═══════╤═══════╤════════╕
+│ Metric_ID   │ Metric                  │   Avg │   Min │   Max │ Unit   │
+╞═════════════╪═════════════════════════╪═══════╪═══════╪═══════╪════════╡
+│ 6.2.5       │ Insufficient SIMD VGPRs │  0.06 │  0.06 │  0.06 │ Pct    │
+╘═════════════╧═════════════════════════╧═══════╧═══════╧═══════╧════════╛
+
+
+--------------------------------------------------------------------------------
+7. Wavefront
+7.1 Wavefront Launch Stats
+╒═════════════╤══════════╤════════╤════════╤════════╤═══════════╕
+│ Metric_ID   │ Metric   │    Avg │    Min │    Max │ Unit      │
+╞═════════════╪══════════╪════════╪════════╪════════╪═══════════╡
+│ 7.1.5       │ VGPRs    │  92.00 │  92.00 │  92.00 │ Registers │
+├─────────────┼──────────┼────────┼────────┼────────┼───────────┤
+│ 7.1.6       │ AGPRs    │ 132.00 │ 132.00 │ 132.00 │ Registers │
+├─────────────┼──────────┼────────┼────────┼────────┼───────────┤
+│ 7.1.7       │ SGPRs    │  48.00 │  48.00 │  48.00 │ Registers │
+╘═════════════╧══════════╧════════╧════════╧════════╧═══════════╛
+```
+
+As expected, there is no limiting due to Insufficient SIMD VGPRs, which is in practice zero. A similar scenario is seen when running solution:
+
+```
+cd solution
+make
+./solution.exe
+```
+(*simulated output*)
+```
+yAx time: 9.82 ms
+```
+The runtime is practically the same as the `problem` implementation.
+For performance metrics, let's run:
+
+```
+omniperf profile -n solution --no-roof -- ./solution.exe
+omniperf analyze -p workloads/solution/MI300A_A1 --dispatch 1 --block 2.1.15 6.2.5 7.1.5 7.1.6 7.1.7
+```
+
+With output:
+```
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+   INFO Analysis mode = cli
+   INFO [analysis] deriving Omniperf metrics...
+
+--------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
+╒════╤══════════════════════════════════════════╤═════════╤════════════╤════════════╤══════════════╤════════╕
+│    │ Kernel_Name                              │   Count │    Sum(ns) │   Mean(ns) │   Median(ns) │    Pct │
+╞════╪══════════════════════════════════════════╪═════════╪════════════╪════════════╪══════════════╪════════╡
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 9794300.00 │ 9794300.00 │   9794300.00 │ 100.00 │
+│    │  double*) [clone .kd]                    │         │            │            │              │        │
+╘════╧══════════════════════════════════════════╧═════════╧════════════╧════════════╧══════════════╧════════╛
+0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
+
+
+--------------------------------------------------------------------------------
+2. System Speed-of-Light
+2.1 Speed-of-Light
+╒═════════════╤═════════════════════╤════════╤════════════╤═════════╤═══════════════╕
+│ Metric_ID   │ Metric              │    Avg │ Unit       │    Peak │   Pct of Peak │
+╞═════════════╪═════════════════════╪════════╪════════════╪═════════╪═══════════════╡
+│ 2.1.15      │ Wavefront Occupancy │ 430.69 │ Wavefronts │ 7296.00 │          5.90 │
+╘═════════════╧═════════════════════╧════════╧════════════╧═════════╧═══════════════╛
+
+
+--------------------------------------------------------------------------------
+6. Workgroup Manager (SPI)
+6.2 Workgroup Manager - Resource Allocation
+╒═════════════╤═════════════════════════╤═══════╤═══════╤═══════╤════════╕
+│ Metric_ID   │ Metric                  │   Avg │   Min │   Max │ Unit   │
+╞═════════════╪═════════════════════════╪═══════╪═══════╪═══════╪════════╡
+│ 6.2.5       │ Insufficient SIMD VGPRs │  0.00 │  0.00 │  0.00 │ Pct    │
+╘═════════════╧═════════════════════════╧═══════╧═══════╧═══════╧════════╛
+
+
+--------------------------------------------------------------------------------
+7. Wavefront
+7.1 Wavefront Launch Stats
+╒═════════════╤══════════╤════════╤════════╤════════╤═══════════╕
+│ Metric_ID   │ Metric   │    Avg │    Min │    Max │ Unit      │
+╞═════════════╪══════════╪════════╪════════╪════════╪═══════════╡
+│ 7.1.5       │ VGPRs    │  32.00 │  32.00 │  32.00 │ Registers │
+├─────────────┼──────────┼────────┼────────┼────────┼───────────┤
+│ 7.1.6       │ AGPRs    │   0.00 │   0.00 │   0.00 │ Registers │
+├─────────────┼──────────┼────────┼────────┼────────┼───────────┤
+│ 7.1.7       │ SGPRs    │ 112.00 │ 112.00 │ 112.00 │ Registers │
+╘═════════════╧══════════╧════════╧════════╧════════╧═══════════╛
+```
+
+Unlike the case of MI210, the Wavefront Launch Stats differ between `problem` and `solution`.
+
