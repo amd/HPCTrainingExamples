@@ -156,7 +156,7 @@ omniperf profile -n solution --no-roof -- ./solution.exe
 ```
 (*omitted output*)
 ```
-omniperf analyze -p workloads/solution/MI200 --dispatch 1 --metric 2.1.15 6.2.5 7.1.5 7.1.6 7.1.7
+omniperf analyze -p workloads/solution/MI200 --dispatch 1 --block 2.1.15 6.2.5 7.1.5 7.1.6 7.1.7
 ```
 The output of this command should look something like:
 
@@ -230,7 +230,7 @@ Looking at this data, we see:
 More generally, you can use this command to look at all SPI "insufficient resource" stats in the same screen, to determine if any resource is currently limiting occupancy.
 In fact, we can use this to ensure our problem implementation no longer has any SPI-related occupancy limiters with the newer version of ROCm:
 ```
-omniperf analyze -p workloads/problem/MI200 --dispatch 1 --metric 6.2
+omniperf analyze -p workloads/problem/MI200 --dispatch 1 --block 6.2
 ```
 Which will show output similar to this (note, fields `6.2.4` to `6.2.8` show resources which currently limit occupancy):
 ```
@@ -496,5 +496,71 @@ With output:
 ╘═════════════╧══════════╧════════╧════════╧════════╧═══════════╛
 ```
 
-Unlike the case of MI210, the Wavefront Launch Stats differ between `problem` and `solution`.
+Unlike the case of MI210, the Wavefront Launch Stats differ between `problem` and `solution`. As we did for MI210, let's run:
 
+```
+cd ..
+omniperf analyze -p workloads/problem/MI300A_A1 --dispatch 1 --block 6.2
+```
+
+With output:
+
+```
+
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+   INFO Analysis mode = cli
+   INFO [analysis] deriving Omniperf metrics...
+
+--------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
+╒════╤══════════════════════════════════════════╤═════════╤═════════════╤═════════════╤══════════════╤════════╕
+│    │ Kernel_Name                              │   Count │     Sum(ns) │    Mean(ns) │   Median(ns) │    Pct │
+╞════╪══════════════════════════════════════════╪═════════╪═════════════╪═════════════╪══════════════╪════════╡
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 10226783.00 │ 10226783.00 │  10226783.00 │ 100.00 │
+│    │  double*) [clone .kd]                    │         │             │             │              │        │
+╘════╧══════════════════════════════════════════╧═════════╧═════════════╧═════════════╧══════════════╧════════╛
+0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
+
+
+--------------------------------------------------------------------------------
+6. Workgroup Manager (SPI)
+6.2 Workgroup Manager - Resource Allocation
+╒═════════════╤════════════════════════════════════════╤═══════╤═══════╤═══════╤════════╕
+│ Metric_ID   │ Metric                                 │   Avg │   Min │   Max │ Unit   │
+╞═════════════╪════════════════════════════════════════╪═══════╪═══════╪═══════╪════════╡
+│ 6.2.0       │ Not-scheduled Rate (Workgroup Manager) │  0.01 │  0.01 │  0.01 │ Pct    │
+├─────────────┼────────────────────────────────────────┼───────┼───────┼───────┼────────┤
+│ 6.2.1       │ Not-scheduled Rate (Scheduler-Pipe)    │  0.03 │  0.03 │  0.03 │ Pct    │
+├─────────────┼────────────────────────────────────────┼───────┼───────┼───────┼────────┤
+│ 6.2.2       │ Scheduler-Pipe Stall Rate              │  0.02 │  0.02 │  0.02 │ Pct    │
+├─────────────┼────────────────────────────────────────┼───────┼───────┼───────┼────────┤
+│ 6.2.3       │ Scratch Stall Rate                     │  0.00 │  0.00 │  0.00 │ Pct    │
+├─────────────┼────────────────────────────────────────┼───────┼───────┼───────┼────────┤
+│ 6.2.4       │ Insufficient SIMD Waveslots            │  0.00 │  0.00 │  0.00 │ Pct    │
+├─────────────┼────────────────────────────────────────┼───────┼───────┼───────┼────────┤
+│ 6.2.5       │ Insufficient SIMD VGPRs                │  0.06 │  0.06 │  0.06 │ Pct    │
+├─────────────┼────────────────────────────────────────┼───────┼───────┼───────┼────────┤
+│ 6.2.6       │ Insufficient SIMD SGPRs                │  0.00 │  0.00 │  0.00 │ Pct    │
+├─────────────┼────────────────────────────────────────┼───────┼───────┼───────┼────────┤
+│ 6.2.7       │ Insufficient CU LDS                    │  0.00 │  0.00 │  0.00 │ Pct    │
+├─────────────┼────────────────────────────────────────┼───────┼───────┼───────┼────────┤
+│ 6.2.8       │ Insufficient CU Barriers               │  0.00 │  0.00 │  0.00 │ Pct    │
+├─────────────┼────────────────────────────────────────┼───────┼───────┼───────┼────────┤
+│ 6.2.9       │ Reached CU Workgroup Limit             │  0.00 │  0.00 │  0.00 │ Pct    │
+├─────────────┼────────────────────────────────────────┼───────┼───────┼───────┼────────┤
+│ 6.2.10      │ Reached CU Wavefront Limit             │  0.00 │  0.00 │  0.00 │ Pct    │
+╘═════════════╧════════════════════════════════════════╧═══════╧═══════╧═══════╧════════╛
+
+```

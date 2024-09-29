@@ -366,7 +366,7 @@ omniperf profile -n problem --no-roof -- ./problem.exe
 Followed by:
 
 ```
-omniperf analyze -p workloads/problem/MI30A_A1 --dispatch 1 --block 2.1.15 6.2.7
+omniperf analyze -p workloads/problem/MI300A_A1 --dispatch 1 --block 2.1.15 6.2.7
 ```
 
 Then inspect the output:

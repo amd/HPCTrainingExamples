@@ -472,10 +472,10 @@ make
 ```
 (*simulated output*)
 ```
-yAx time: 9 ms
+yAx time: 9.7 ms
 ```
 
-For the MI210 case, the compute time was about 42 times smaller when going from `problem` to `solution`. For the MI300A case, we see it is about `70` times smaller.
+For the MI210 case, the compute time was about 42 times smaller when going from `problem` to `solution`. For the MI300A case, we see it is about 70 times smaller.
 
 To visually confirm the updated launch parameters in the `solution` code, run:
 
@@ -587,6 +587,7 @@ Note that the new execution time for `solution` is about 1.75% of the original e
 Run the following command to once again see a ranking of the top kernels that take up most of the kernel runtime:
 
 ```
+cd ..
 omniperf analyze -p workloads/problem/MI300A_A1/ --list-stats
 ```
 
