@@ -120,9 +120,11 @@ amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 ```
 The performance is not much better than version 4.
 
-6) with enter and exit data clauses the memory is only moved once at the beginning the time to solution should be roughly in the order of magnitude of the unified shared memory version.
+6) with enter and exit data clauses the memory is only moved once at the beginning the time to solution should be roughly in the order of magnitude of the unified shared memory version, but still slightly slower as the memory is copied like on discrete GPUs. Test yourself:
 ```
-cd ../6_saxpy_targetdata 
+cd ../6_saxpy_targetdata
+```
+```
 vi saxpy.f90
 ```
 - Compile again
@@ -133,8 +135,15 @@ amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 ```
 ./saxpy
 ```
-What happens to the result, if you comment the !$omp target update clause? (don't forget to recompile after commenting it)
-The results will be wrong. This shows, that proper validation of results is crutial when porting! Before you port a large app, think about your validation strategy before you start. Incremental testing is essential to capture such errors like missing data movement.
+Additional excercise: What happens to the result, if you comment the !$omp target update (in line 29)? 
+```
+vi saxpy.f90
+```
+Don't forget to recompile after commenting it.
+```
+amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
+```
+The results will be wrong! This shows, that proper validation of results is crutial when porting! Before you port a large app, think about your validation strategy before you start. Incremental testing is essential to capture such errors like missing data movement.
 
 7) experiment with num_teams
 ```
