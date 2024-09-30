@@ -17,6 +17,7 @@ Running the first OpenMP example: `Pragma_Examples/OpenMP/C/saxpy`
 
 ```bash
 module load amdclang
+export HSA_XNACK=0
 make clean 
 make 
 ./saxpy 
