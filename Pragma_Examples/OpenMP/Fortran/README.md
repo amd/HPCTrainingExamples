@@ -9,6 +9,19 @@ module load amdflang-new-beta-drop
 export FC=amdflang-new
 ```
 
+This flag
+```
+export HSA_XNACK=1
+```
+will enable no memory copies (use of unified_shared_memory) on MI300A
+```
+export HSA_XNACK=0
+```
+will disable this and behave similar to a discrete GPU.
+
+Note: In the beta release of the amdflang-new/4.0 compiler HSA_XNACK=0 with a code with !$omp requires unified_shared_memory can be compiled as if no unified_shared_memory is required. This is a behaviour not according to the intended behaviour and will lead to an error message in future releases!
+
+## the excercises
 The exercises in the folders numbered 1 to 6 are small examples of what one may encounter when porting a real world code. 
 Each excercise has it's own README with instructions.
 The excercises 1-5 have a CPU only code to try porting yourself and (intermediate steps) of a solution. Excercise 6 does not have a version to port yourself, but explains a common challenge for porting to discrete GPUs.
