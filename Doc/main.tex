@@ -2404,7 +2404,39 @@ the C version at the moment.
 \section{HIP and OpenMP
 Interoperability}\label{hip-and-openmp-interoperability}}
 
-This hands-on exercise uses the code in
+The first example is just a staightforward openmp offload version
+of saxpy. Any C++ compiler that supports OpenMP offload to hip should
+work.
+
+\begin{verbatim}
+cd HPCTrainingExamples/HIP-OpenMP/CXX/saxpy_openmp_offload
+module load rocm
+module load amdclang
+\end{verbatim}
+
+Now we move on to an OpenMP main calling a HIP version of the SAXPY
+kernel. Note that we have to get the device version of the array
+pointers to pass into the HIP kernel.
+
+\begin{verbatim}
+cd HPCTrainingExamples/HIP-OpenMP/CXX/saxpy_openmp_hip
+module load rocm
+module load amdclang
+export HSA_XNACK=1
+\end{verbatim}
+
+We can't leave this example without looking at what the code would
+look like with the APU programming model.
+
+\begin{verbatim}
+cd HPCTrainingExamples/HIP-OpenMP/CXX/saxpy_APU
+module load rocm
+module load amdclang
+export HSA_XNACK=1
+\end{verbatim}
+
+You can put both OpenMP and HIP code in the same file with some care.
+This next hands-on exercise shows how in the code in
 HPCTrainingExamples/HIP-OpenMP/daxpy. We have code that uses both OpenMP
 and HIP. These require two separate passes with compilers: one with
 amdclang++ and the other with hipcc. Go to the directory containing the
@@ -2413,7 +2445,8 @@ example and set up the environment:
 \begin{verbatim}
 cd HPCTrainingExamples/HIP-OpenMP/CXX/daxpy
 module load rocm
-export CXX=amdclang++
+module load amdclang
+export HSA_XNACK=1
 \end{verbatim}
 
 View the source code file daxpy.cc and note the two \#ifdef blocks.
@@ -3955,7 +3988,7 @@ to the \texttt{mpirun} command line --\textgreater{}
 
 Run the code with \texttt{omnitrace-instrument} to perform runtime
 instrumentation: this will produce a series of directories whose name is
-define by the time they were crated. In one of these directories, you
+define by the time they were created. In one of these directories, you
 can find the \texttt{wall\_clock-\textless{}proc\_ID\textgreater{}.txt}
 file, which includes information on the function calls made in the code,
 such as how many times these calls have been called (\texttt{COUNT}) and

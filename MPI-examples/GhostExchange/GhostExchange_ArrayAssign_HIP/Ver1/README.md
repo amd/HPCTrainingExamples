@@ -117,7 +117,7 @@ group the rows of interest together. In this screenshot, we show the
 "pin" icon that allows us to pin rows to the top of the visualization,
 allowing us to see relevant tracing data for our specific case:
 
-<p><img src="pinned_visualization.png"/></p>
+<p><img src="images/mi210/pinned_visualization.png"/></p>
 
 This profile will also show `rocm-smi` information about each GPU,
 though that data seems to indicate that only GPUs 0-3 are engaged.
@@ -129,18 +129,18 @@ OMNITRACE_SAMPLING_GPUS                            = 0-4
 
 Before this is set, the profile looks like this:
 
-<p><img src="too_many_gpus.png"/></p>
+<p><img src="images/mi210/too_many_gpus.png"/></p>
 
 And after we re-run `omnitrace-run` with `OMNITRACE_SAMPLING_GPUS=0-4`, we see:
 
-<p><img src="only_four_gpus.png"/></p>
+<p><img src="images/mi210/only_four_gpus.png"/></p>
 
 ## Look at the Flat Timemory profile
 
 Again, add `OMNITRACE_PROFILE=true` and `OMNITRACE_FLAT_PROFILE=true` to `~/.omnitrace.cfg` to get 
 `wall_clock-0.txt` to see overall overhead in seconds for each function:
 
-<p><img src="timemory_flat.png"/></p>
+<p><img src="images/mi210/timemory_flat.png"/></p>
 
 We now see kernels such as `blur` that was called 100 times. 
 We also see that the only function call that takes around 1.5 seconds

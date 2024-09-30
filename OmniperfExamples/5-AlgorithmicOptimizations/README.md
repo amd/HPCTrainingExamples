@@ -1,9 +1,6 @@
-## Exercise 5: Algorithmic Optimizations
+# Exercise 5: Algorithmic Optimizations
 
 A simple yAx kernel, and more efficient, but more complex yAx kernel to demonstrate algorithmic improvements.
-
-**Note:** This exercise was tested on a system with MI210s, on omniperf version `2.0.0` and ROCm `6.1.2`
-**Omniperf `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
 
 <details>
 <summary><h3>Background: Acronyms and terms used in this exercise</h3></summary>
@@ -29,6 +26,11 @@ A simple yAx kernel, and more efficient, but more complex yAx kernel to demonstr
  The expressed parallelism in each approach roughly corresponds to the number of red arrows in each figure.
 </details>
 
+## Results on MI210:
+
+**Note:** This exercise was tested on a system with MI210s, on omniperf version `2.0.0` and ROCm `6.1.2`
+**Omniperf `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
+
 ### Initial Roofline Analysis
 We should start by doing a roofline to see where the problem executable stands.
 These plots can be generated with:
@@ -40,10 +42,10 @@ The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` 
 
 They are also provided below for easy reference:
 
-| Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
-|---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise5_problem_roofline_fp32.png"/>      |
-|FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise5_problem_roofline_int8_fp16.png"/> |
+| Roofline Type | Roofline Legend                                                  | Roofline Plot                                                      |
+|---------------|------------------------------------------------------------------|--------------------------------------------------------------------|
+|FP32/FP64      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise5_problem_roofline_fp32.png"/>      |
+|FP16/INT8      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise5_problem_roofline_int8_fp16.png"/> |
 
 The performance of this kernel looks pretty close to being HBM bandwidth bound.
 In the case of algorithmic optimizations, there may not be obvious evidence other than a suspicion that poor 
@@ -236,10 +238,10 @@ The plots will appear as PDF files in the `./workloads/solution_roof_only/MI200`
 
 They are also provided below for easy reference:
 
-| Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
-|---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise5_solution_roofline_fp32.png"/>      |
-|FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise5_solution_roofline_int8_fp16.png"/> |
+| Roofline Type | Roofline Legend                                                  | Roofline Plot                                                       |
+|---------------|------------------------------------------------------------------|---------------------------------------------------------------------|
+|FP32/FP64      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise5_solution_roofline_fp32.png"/>      |
+|FP16/INT8      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise5_solution_roofline_int8_fp16.png"/> |
 
 As the Omniperf stats indicate, we are more efficiently using the L1 cache, which shows in the roofline as a decrease in Arithmetic Intensity for that cache layer.
 We have a high hit rate in L1, with a comparatively lower hit rate in L2, and we were able to increase our L2-Fabric bandwidth for the same problem size, more efficiently requesting data from HBM.
@@ -248,10 +250,10 @@ We have a high hit rate in L1, with a comparatively lower hit rate in L2, and we
 
 The comparison of these two rooflines is fairly straightforward.
 
-| Roofline Type | Problem Roofline                                     | Solution Roofline                                      |
-|---------------|------------------------------------------------------|--------------------------------------------------------|
-| FP32/FP64     | <img src="exercise5_problem_roofline_fp32.png"/>     | <img src="exercise5_solution_roofline_fp32.png"/>      |
-| FP16/INT8     | <img src="exercise5_problem_roofline_int8_fp16.png"/>| <img src="exercise5_solution_roofline_int8_fp16.png"/> |
+| Roofline Type | Problem Roofline                                                   | Solution Roofline                                                    |
+|---------------|--------------------------------------------------------------------|----------------------------------------------------------------------|
+| FP32/FP64     | <img src="figures/MI210/exercise5_problem_roofline_fp32.png"/>     | <img src="figures/MI210/exercise5_solution_roofline_fp32.png"/>      |
+| FP16/INT8     | <img src="figures/MI210/exercise5_problem_roofline_int8_fp16.png"/>| <img src="figures/MI210/exercise5_solution_roofline_int8_fp16.png"/> |
 
 We see now that the optimization we apply in this example makes the kernel get very close to the HBM bandwidth-bound line. The fact that our kernel falls under the bandwidth line also confirms our suspicion that this kernel is, in fact, in the bandwidth bound regime. 
 
@@ -262,3 +264,8 @@ Algorithmic optimizations are all but guaranteed
 to have significant development overhead, but finding a more efficient algorithm can have large impacts
 to performance. If profiling reveals inefficient use of the memory hardware, it could be worth thinking
 about alternative algorithms. 
+
+## Results on MI300A
+
+Under construction...
+

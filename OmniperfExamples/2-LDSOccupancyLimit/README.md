@@ -1,10 +1,8 @@
-## Exercise 2: LDS Occupancy Limiter
+# Exercise 2: LDS Occupancy Limiter
 
 Simple kernel implementing a version of yAx, to demonstrate the downside of allocating a large 
 amount of LDS, and the benefit of using a smaller amount of LDS due to occupancy limits.
 
-**Note:** This exercise was tested on a system with MI210s, on omniperf version `2.0.0` and ROCm `6.0.2`
-**Omniperf `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
 <details>
 <summary><h3>Background: Acronyms and terms used in this exercise</h3></summary>
      <ul>
@@ -22,6 +20,11 @@ amount of LDS, and the benefit of using a smaller amount of LDS due to occupancy
      </ul>
 </details>
 
+## Results on MI210
+
+**Note:** This exercise was tested on a system with MI210s, on omniperf version `2.0.0` and ROCm `6.0.2`
+**Omniperf `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
+
 ### Initial Roofline Analysis
 In this exercise we're using a problem code that is slightly different than where we left off in Exercise 1. 
 Regardless, to get started we need to get a roofline by running:
@@ -32,10 +35,10 @@ omniperf profile -n problem_roof_only --roof-only --kernel-names -- ./problem.ex
 The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` directory, if generated on MI200 hardware.
 
 For convenience, the resulting plots on a representative system are below:
-| Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
-|---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise2_problem_roofline_fp32.png"/>      |
-|FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise2_problem_roofline_int8_fp16.png"/> |
+| Roofline Type | Roofline Legend                                                  | Roofline Plot                                                      |
+|---------------|------------------------------------------------------------------|--------------------------------------------------------------------|
+|FP32/FP64      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise2_problem_roofline_fp32.png"/>      |
+|FP16/INT8      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise2_problem_roofline_int8_fp16.png"/> |
 
 We see that there looks to be room for improvement here. We'll use omniperf to see what the current limiters are.
 
@@ -165,7 +168,7 @@ omniperf profile -n solution --no-roof -- ./solution.exe
 
 Once the profile command completes, run:
 ```
-omniperf analyze -p workloads/solution/MI200 --dispatch 1 --metric 2.1.15 6.2.7
+omniperf analyze -p workloads/solution/MI200 --dispatch 1 --block 2.1.15 6.2.7
 ```
 
 The output should look something like:
@@ -245,7 +248,7 @@ omniperf profile -n solution --no-roof -- ./solution.exe
 
 Once the profile command completes, run:
 ```
-omniperf analyze -p workloads/solution/MI200 --dispatch 1 --metric 2.1.15 6.2.7
+omniperf analyze -p workloads/solution/MI200 --dispatch 1 --block 2.1.15 6.2.7
 ```
 The output should look something like:
 
@@ -311,18 +314,18 @@ omniperf profile -n solution_roof_only --roof-only -- ./solution.exe
 The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` directory, if generated on MI200 hardware.
 
 The plots are shown here:
-| Roofline Type | Roofline Legend                                    | Roofline Plot                                        |
-|---------------|----------------------------------------------------|------------------------------------------------------|
-|FP32/FP64      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise2_solution_roofline_fp32.png"/>      |
-|FP16/INT8      |<img src="exercise1_problem_kernelName_legend.png"/>|<img src="exercise2_solution_roofline_int8_fp16.png"/> |
+| Roofline Type | Roofline Legend                                                  | Roofline Plot                                                       |
+|---------------|------------------------------------------------------------------|---------------------------------------------------------------------|
+|FP32/FP64      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise2_solution_roofline_fp32.png"/>      |
+|FP16/INT8      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise2_solution_roofline_int8_fp16.png"/> |
 
 We see that there is still room to move the solution roofline up towards the bandwidth limit.
 
 ### Roofline Comparison
-| Roofline Type | Problem Roofline                                     | Solution Roofline                                      |
-|---------------|------------------------------------------------------|--------------------------------------------------------|
-| FP32/FP64     | <img src="exercise2_problem_roofline_fp32.png"/>     | <img src="exercise2_solution_roofline_fp32.png"/>      |
-| FP16/INT8     | <img src="exercise2_problem_roofline_int8_fp16.png"/>| <img src="exercise2_solution_roofline_int8_fp16.png"/> |
+| Roofline Type | Problem Roofline                                                   | Solution Roofline                                                    |
+|---------------|--------------------------------------------------------------------|----------------------------------------------------------------------|
+| FP32/FP64     | <img src="figures/MI210/exercise2_problem_roofline_fp32.png"/>     | <img src="figures/MI210/exercise2_solution_roofline_fp32.png"/>      |
+| FP16/INT8     | <img src="figures/MI210/exercise2_problem_roofline_int8_fp16.png"/>| <img src="figures/MI210/exercise2_solution_roofline_int8_fp16.png"/> |
 
 Again, we see that the solution's optimizations have resulted in the kernel moving up in the roofline, meaning the solution executes more efficiently than the problem.
 
@@ -332,3 +335,225 @@ Using LDS can be very helpful in reducing global memory reads where you have rep
 However, large LDS allocations can also negatively impact performance by limiting the amount of 
 wavefronts that can be resident in the device at any given time. Be wary of LDS usage, and check 
 the SPI stats to ensure your LDS usage is not negatively impacting occupancy.
+
+## Results on MI300A
+
+In this section, we show results obtained running this exercise on a system with MI300A, using ROCm `6.2.1` and the associated Omniperf, version `6.2.1`.
+
+### Roofline Analysis:
+
+At present (September 28th 2024), rooflines are disabled on MI300A.
+
+As for the MI210 case, build and run the problem code:
+
+```
+make
+./problem.exe
+```
+(*simulated output*)
+```
+yAx time: 7.27 ms
+```
+
+Unlike the MI210 case, the runtime of `problem` is already smaller than it was for `solution` on example `1-LaunchParameters`.
+
+Once again, we launch the following command:
+
+```
+omniperf profile -n problem --no-roof -- ./problem.exe
+```
+
+Followed by:
+
+```
+omniperf analyze -p workloads/problem/MI300A_A1 --dispatch 1 --block 2.1.15 6.2.7
+```
+
+Then inspect the output:
+
+```
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+   INFO Analysis mode = cli
+   INFO [analysis] deriving Omniperf metrics...
+
+--------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
+╒════╤══════════════════════════════════════════╤═════════╤════════════╤════════════╤══════════════╤════════╕
+│    │ Kernel_Name                              │   Count │    Sum(ns) │   Mean(ns) │   Median(ns) │    Pct │
+╞════╪══════════════════════════════════════════╪═════════╪════════════╪════════════╪══════════════╪════════╡
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 7241298.00 │ 7241298.00 │   7241298.00 │ 100.00 │
+│    │  double*) [clone .kd]                    │         │            │            │              │        │
+╘════╧══════════════════════════════════════════╧═════════╧════════════╧════════════╧══════════════╧════════╛
+0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
+
+
+--------------------------------------------------------------------------------
+2. System Speed-of-Light
+2.1 Speed-of-Light
+╒═════════════╤═════════════════════╤════════╤════════════╤═════════╤═══════════════╕
+│ Metric_ID   │ Metric              │    Avg │ Unit       │    Peak │   Pct of Peak │
+╞═════════════╪═════════════════════╪════════╪════════════╪═════════╪═══════════════╡
+│ 2.1.15      │ Wavefront Occupancy │ 177.86 │ Wavefronts │ 7296.00 │          2.44 │
+╘═════════════╧═════════════════════╧════════╧════════════╧═════════╧═══════════════╛
+
+
+--------------------------------------------------------------------------------
+6. Workgroup Manager (SPI)
+6.2 Workgroup Manager - Resource Allocation
+╒═════════════╤═════════════════════╤═══════╤═══════╤═══════╤════════╕
+│ Metric_ID   │ Metric              │   Avg │   Min │   Max │ Unit   │
+╞═════════════╪═════════════════════╪═══════╪═══════╪═══════╪════════╡
+│ 6.2.7       │ Insufficient CU LDS │ 58.11 │ 58.11 │ 58.11 │ Pct    │
+╘═════════════╧═════════════════════╧═══════╧═══════╧═══════╧════════╛
+```
+
+The results are similar to the MI210 case, in terms of Wavefront Occupancy (`2.44%`, for MI210 it was `3.10%`) and Insufficient CU LDS (around `58%`, for MI210 it was `79%`). Let us look first at the solution that completely eliminates LDS usage:
+
+```
+cd solution-no-lds
+make
+./solution.exe
+```
+(*simulated output*)
+```
+yAx time: 9.79 ms
+```
+Unlile the MI210 case, completely eliminating LDS usage actually makes the runtime worse.
+
+Let's run the following commands and inspect the output:
+```
+omniperf profile -n solution --no-roof -- ./solution.exe
+omniperf analyze -p workloads/solution/MI300A_A1/ --dispatch 1 --block 2.1.15 6.2.7
+```
+Output:
+```
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+   INFO Analysis mode = cli
+   INFO [analysis] deriving Omniperf metrics...
+
+--------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
+╒════╤══════════════════════════════════════════╤═════════╤════════════╤════════════╤══════════════╤════════╕
+│    │ Kernel_Name                              │   Count │    Sum(ns) │   Mean(ns) │   Median(ns) │    Pct │
+╞════╪══════════════════════════════════════════╪═════════╪════════════╪════════════╪══════════════╪════════╡
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 9484503.00 │ 9484503.00 │   9484503.00 │ 100.00 │
+│    │  double*) [clone .kd]                    │         │            │            │              │        │
+╘════╧══════════════════════════════════════════╧═════════╧════════════╧════════════╧══════════════╧════════╛
+0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
+
+
+--------------------------------------------------------------------------------
+2. System Speed-of-Light
+2.1 Speed-of-Light
+╒═════════════╤═════════════════════╤════════╤════════════╤═════════╤═══════════════╕
+│ Metric_ID   │ Metric              │    Avg │ Unit       │    Peak │   Pct of Peak │
+╞═════════════╪═════════════════════╪════════╪════════════╪═════════╪═══════════════╡
+│ 2.1.15      │ Wavefront Occupancy │ 437.16 │ Wavefronts │ 7296.00 │          5.99 │
+╘═════════════╧═════════════════════╧════════╧════════════╧═════════╧═══════════════╛
+
+
+--------------------------------------------------------------------------------
+6. Workgroup Manager (SPI)
+6.2 Workgroup Manager - Resource Allocation
+╒═════════════╤═════════════════════╤═══════╤═══════╤═══════╤════════╕
+│ Metric_ID   │ Metric              │   Avg │   Min │   Max │ Unit   │
+╞═════════════╪═════════════════════╪═══════╪═══════╪═══════╪════════╡
+│ 6.2.7       │ Insufficient CU LDS │  0.00 │  0.00 │  0.00 │ Pct    │
+╘═════════════╧═════════════════════╧═══════╧═══════╧═══════╧════════╛
+```
+
+From the ouput above, we see that Insufficient CU LDS is now zero as expected, and that Wavefront Occupancy has gone up to around `6%` from `2.44%` that it was before for MI210. Next, let's compare these results with the code in the `solution` directory: this implementation reduces the amount of LDS requested to address the occupancy limit. First, run:
+
+```
+cd ../solution
+make
+./solution.exe
+```
+(*simulated output*)
+```
+yAx time: 5.80 ms
+```
+
+This shows that an appropriate reduction of LDS usage did improve the performance of the example. To see the specific values of the metrics of interest, we run:
+
+```
+omniperf profile -n solution --no-roof -- ./solution.exe
+omniperf analyze -p workloads/solution/MI300A_A1 --dispatch 1 --block 2.1.15 6.2.7
+```
+
+With output:
+
+```
+
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+   INFO Analysis mode = cli
+   INFO [analysis] deriving Omniperf metrics...
+
+--------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
+╒════╤══════════════════════════════════════════╤═════════╤════════════╤════════════╤══════════════╤════════╕
+│    │ Kernel_Name                              │   Count │    Sum(ns) │   Mean(ns) │   Median(ns) │    Pct │
+╞════╪══════════════════════════════════════════╪═════════╪════════════╪════════════╪══════════════╪════════╡
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 5766574.00 │ 5766574.00 │   5766574.00 │ 100.00 │
+│    │  double*) [clone .kd]                    │         │            │            │              │        │
+╘════╧══════════════════════════════════════════╧═════════╧════════════╧════════════╧══════════════╧════════╛
+0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
+
+
+--------------------------------------------------------------------------------
+2. System Speed-of-Light
+2.1 Speed-of-Light
+╒═════════════╤═════════════════════╤════════╤════════════╤═════════╤═══════════════╕
+│ Metric_ID   │ Metric              │    Avg │ Unit       │    Peak │   Pct of Peak │
+╞═════════════╪═════════════════════╪════════╪════════════╪═════════╪═══════════════╡
+│ 2.1.15      │ Wavefront Occupancy │ 421.57 │ Wavefronts │ 7296.00 │          5.78 │
+╘═════════════╧═════════════════════╧════════╧════════════╧═════════╧═══════════════╛
+
+
+--------------------------------------------------------------------------------
+6. Workgroup Manager (SPI)
+6.2 Workgroup Manager - Resource Allocation
+╒═════════════╤═════════════════════╤═══════╤═══════╤═══════╤════════╕
+│ Metric_ID   │ Metric              │   Avg │   Min │   Max │ Unit   │
+╞═════════════╪═════════════════════╪═══════╪═══════╪═══════╪════════╡
+│ 6.2.7       │ Insufficient CU LDS │  0.00 │  0.00 │  0.00 │ Pct    │
+╘═════════════╧═════════════════════╧═══════╧═══════╧═══════╧════════╛
+```
+
+We see that the example is still not occupancy limited by LDS allocations (Insufficient CU LDS is zero). The Wavefront Occupancy has remained approximately the same. As seen above, the runtime has improved by approximately `20%` (going from `7.27` ms of `problem.exe`, to the current time of `5.8` ms).
