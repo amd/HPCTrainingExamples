@@ -182,6 +182,11 @@ make target_data_update
 ./target_data_update
 ```
 
+Reccomendations beyond the Introductory excercises:
+- There are more examples in the OpenMP/C folder, you may want to remove the pragmas and try to port yourself.
+- Check out how porting a small app may look like https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html
+- Do the Fortran exercises
+
 # Advanced OpenMP Presentation
 
 Here, we will discuss some examples that show more advanced OpenMP features.
