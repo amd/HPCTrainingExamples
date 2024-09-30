@@ -78,8 +78,8 @@ omniperf analyze -p workloads/problem/MI200 --dispatch 1 --block 2.1.15 6.2.5 7.
  \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
                         |_|
 
-Analysis mode = cli
-[analysis] deriving Omniperf metrics...
+   INFO Analysis mode = cli
+   INFO [analysis] deriving Omniperf metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -87,7 +87,7 @@ Analysis mode = cli
 ╒════╤══════════════════════════════════════════╤═════════╤═════════════╤═════════════╤══════════════╤════════╕
 │    │ Kernel_Name                              │   Count │     Sum(ns) │    Mean(ns) │   Median(ns) │    Pct │
 ╞════╪══════════════════════════════════════════╪═════════╪═════════════╪═════════════╪══════════════╪════════╡
-│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 69960451.00 │ 69960451.00 │  69960451.00 │ 100.00 │
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 77266823.00 │ 77266823.00 │  77266823.00 │ 100.00 │
 │    │  double*) [clone .kd]                    │         │             │             │              │        │
 ╘════╧══════════════════════════════════════════╧═════════╧═════════════╧═════════════╧══════════════╧════════╛
 0.2 Dispatch List
@@ -104,7 +104,7 @@ Analysis mode = cli
 ╒═════════════╤═════════════════════╤════════╤════════════╤═════════╤═══════════════╕
 │ Metric_ID   │ Metric              │    Avg │ Unit       │    Peak │   Pct of Peak │
 ╞═════════════╪═════════════════════╪════════╪════════════╪═════════╪═══════════════╡
-│ 2.1.15      │ Wavefront Occupancy │ 448.11 │ Wavefronts │ 3328.00 │         13.46 │
+│ 2.1.15      │ Wavefront Occupancy │ 433.52 │ Wavefronts │ 3328.00 │         13.03 │
 ╘═════════════╧═════════════════════╧════════╧════════════╧═════════╧═══════════════╛
 
 
@@ -114,30 +114,30 @@ Analysis mode = cli
 ╒═════════════╤═════════════════════════╤═══════╤═══════╤═══════╤════════╕
 │ Metric_ID   │ Metric                  │   Avg │   Min │   Max │ Unit   │
 ╞═════════════╪═════════════════════════╪═══════╪═══════╪═══════╪════════╡
-│ 6.2.5       │ Insufficient SIMD VGPRs │  0.00 │  0.00 │  0.00 │ Pct    │
+│ 6.2.5       │ Insufficient SIMD VGPRs │  0.10 │  0.10 │  0.10 │ Pct    │
 ╘═════════════╧═════════════════════════╧═══════╧═══════╧═══════╧════════╛
 
 
 --------------------------------------------------------------------------------
 7. Wavefront
 7.1 Wavefront Launch Stats
-╒═════════════╤══════════╤═══════╤═══════╤═══════╤═══════════╕
-│ Metric_ID   │ Metric   │   Avg │   Min │   Max │ Unit      │
-╞═════════════╪══════════╪═══════╪═══════╪═══════╪═══════════╡
-│ 7.1.5       │ VGPRs    │ 32.00 │ 32.00 │ 32.00 │ Registers │
-├─────────────┼──────────┼───────┼───────┼───────┼───────────┤
-│ 7.1.6       │ AGPRs    │  0.00 │  0.00 │  0.00 │ Registers │
-├─────────────┼──────────┼───────┼───────┼───────┼───────────┤
-│ 7.1.7       │ SGPRs    │ 96.00 │ 96.00 │ 96.00 │ Registers │
-╘═════════════╧══════════╧═══════╧═══════╧═══════╧═══════════╛
+╒═════════════╤══════════╤════════╤════════╤════════╤═══════════╕
+│ Metric_ID   │ Metric   │    Avg │    Min │    Max │ Unit      │
+╞═════════════╪══════════╪════════╪════════╪════════╪═══════════╡
+│ 7.1.5       │ VGPRs    │  92.00 │  92.00 │  92.00 │ Registers │
+├─────────────┼──────────┼────────┼────────┼────────┼───────────┤
+│ 7.1.6       │ AGPRs    │ 132.00 │ 132.00 │ 132.00 │ Registers │
+├─────────────┼──────────┼────────┼────────┼────────┼───────────┤
+│ 7.1.7       │ SGPRs    │  48.00 │  48.00 │  48.00 │ Registers │
+╘═════════════╧══════════╧════════╧════════╧════════╧═══════════╛
 
 ```
 Looking at this data, we see:
-- Insufficient SIMD VGPRs (`6.2.5`) shows that we are not occupancy limited by VGPRs (this example used to be register limited for earlier versions of ROCm)
-- VGPRs (`7.1.5`) shows we are using a moderate amount of VGPRs and AGPRs (`7.1.6`) shows we are using no AGPRs, which can indicate low-cost register spills in the absence of MFMA instructions.
+- Insufficient SIMD VGPRs (`6.2.5`) shows that we are slightly occupancy limited by VGPRs
+- VGPRs (`7.1.5`) shows we are using a moderate amount of VGPRs and we are using 132 AGPRs (`7.1.6`), which can indicate low-cost register spills in the absence of MFMA instructions.
 
-In previous versions of ROCm, the limiter was due to a call to `assert` that checks if our result is zeroed out on device.
-To make sure the problem is gone in this newer ROCm, let's look at the solution code:
+In problem.cpp, the limiter is due to a call to `assert` that checks if our result is zeroed out on device.
+To make sure the problem is gone in solution.cpp, let's look at the solution code:
 
 ```
 cd solution
@@ -149,7 +149,7 @@ make
 yAx time: 70 ms
 ```
 
-Our runtime seems fairly similar with or without the `assert`, but we should also check that omniperf reports that our limiters remain gone:
+Our runtime seems fairly similar with or without the `assert`, but we should also check that omniperf reports that our limiters are gone:
 
 ```
 omniperf profile -n solution --no-roof -- ./solution.exe
@@ -168,8 +168,8 @@ The output of this command should look something like:
  \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
                         |_|
 
-Analysis mode = cli
-[analysis] deriving Omniperf metrics...
+   INFO Analysis mode = cli
+   INFO [analysis] deriving Omniperf metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -177,7 +177,7 @@ Analysis mode = cli
 ╒════╤══════════════════════════════════════════╤═════════╤═════════════╤═════════════╤══════════════╤════════╕
 │    │ Kernel_Name                              │   Count │     Sum(ns) │    Mean(ns) │   Median(ns) │    Pct │
 ╞════╪══════════════════════════════════════════╪═════════╪═════════════╪═════════════╪══════════════╪════════╡
-│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 69955651.00 │ 69955651.00 │  69955651.00 │ 100.00 │
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 71714804.00 │ 71714804.00 │  71714804.00 │ 100.00 │
 │    │  double*) [clone .kd]                    │         │             │             │              │        │
 ╘════╧══════════════════════════════════════════╧═════════╧═════════════╧═════════════╧══════════════╧════════╛
 0.2 Dispatch List
@@ -194,7 +194,7 @@ Analysis mode = cli
 ╒═════════════╤═════════════════════╤════════╤════════════╤═════════╤═══════════════╕
 │ Metric_ID   │ Metric              │    Avg │ Unit       │    Peak │   Pct of Peak │
 ╞═════════════╪═════════════════════╪════════╪════════════╪═════════╪═══════════════╡
-│ 2.1.15      │ Wavefront Occupancy │ 437.49 │ Wavefronts │ 3328.00 │         13.15 │
+│ 2.1.15      │ Wavefront Occupancy │ 439.96 │ Wavefronts │ 3328.00 │         13.22 │
 ╘═════════════╧═════════════════════╧════════╧════════════╧═════════╧═══════════════╛
 
 
@@ -220,12 +220,11 @@ Analysis mode = cli
 ├─────────────┼──────────┼───────┼───────┼───────┼───────────┤
 │ 7.1.7       │ SGPRs    │ 96.00 │ 96.00 │ 96.00 │ Registers │
 ╘═════════════╧══════════╧═══════╧═══════╧═══════╧═══════════╛
-
 ```
 Looking at this data, we see:
-- Insufficient SIMD VGPRs (`6.2.5`) shows we are still not occupancy limited by VGPR usage.
-- VGPRs (`7.1.5`), AGPRs (`7.1.6`), and SGPRs (`7.1.7`) show exactly the same register usage.
-- Wave Occupancy (`2.1.26`) shows our occupancy is also more or less the same.
+- Insufficient SIMD VGPRs (`6.2.5`) shows we are now not occupancy limited by VGPR usage.
+- VGPRs (`7.1.5`) are down by 60, AGPRs (`7.1.6`) are down by 132, and SGPRs (`7.1.7`) are up, showing more efficient register usage.
+- Wave Occupancy (`2.1.26`) shows our occupancy is slightly increased.
 
 More generally, you can use this command to look at all SPI "insufficient resource" stats in the same screen, to determine if any resource is currently limiting occupancy.
 In fact, we can use this to ensure our problem implementation no longer has any SPI-related occupancy limiters with the newer version of ROCm:
@@ -414,7 +413,7 @@ Then explore the output:
 ╘═════════════╧══════════╧════════╧════════╧════════╧═══════════╛
 ```
 
-As expected, there is no limiting due to Insufficient SIMD VGPRs, which is in practice zero. A similar scenario is seen when running solution:
+As expected, there is minor limiting due to Insufficient SIMD VGPRs, which is similar to the MI210 case. A similar scenario is seen when running solution:
 
 ```
 cd solution
@@ -496,7 +495,7 @@ With output:
 ╘═════════════╧══════════╧════════╧════════╧════════╧═══════════╛
 ```
 
-Unlike the case of MI210, the Wavefront Launch Stats differ between `problem` and `solution`. As we did for MI210, let's run:
+Just like the case of MI210, the Wavefront Launch Stats differ between `problem` and `solution`. As we did for MI210, let's run:
 
 ```
 cd ..
