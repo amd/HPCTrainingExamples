@@ -10,7 +10,7 @@ in this folder four are three versions:
 - Only port the Makefile and the reduction itself.
 This excercise focusses on how to implement a reduction, not on porting the full example. Decide if you want to use unified memory (```export HSA_XNACK=1```) or not (```export HSA_XNACK=0```), but for this excercise this is of minor importance.
 
-How to build
+How to build all four versions
 ```
 make
 ```
