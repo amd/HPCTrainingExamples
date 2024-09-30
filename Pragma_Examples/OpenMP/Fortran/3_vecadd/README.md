@@ -4,7 +4,7 @@ This excercise combines what you learned in the previous two excercises: porting
 Decide, if you want to use the APU or discrete GPU programming model. Set export ```HSA_XNACK=1``` or ```=0``` appropriately.
 
 0) CPU code to port yourself. Don't forget to port the Makefile, too, and validate you application runs on the GPU!
-````
+```
 cd 0_vecadd_portyourself
 ```
 Build
@@ -24,3 +24,4 @@ The other three folders contain different flavors of the solution. Build and run
 1_vecadd_usm  - unified memory version don't forget to set ```HSA_XNACK=1```
 2_vecadd_map  - simple mapping clauses, set ```HSA_XNACK=0``` to observe behaviour similar to discrete GPUs
 3_vecadd_targetdata - move data only were necessary, set ```HSA_XNACK=0``` to observe behaviour similar to discrete GPUs
+
