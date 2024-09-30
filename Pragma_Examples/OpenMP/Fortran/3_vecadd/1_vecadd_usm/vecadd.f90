@@ -4,7 +4,7 @@ program main
 
     use omp_lib 
     implicit none
-!    !$omp requires unified_shared_memory
+    !$omp requires unified_shared_memory
     ! Size of vectors
     integer :: n = 10000000
  
@@ -22,6 +22,7 @@ program main
     do i=1,n
         a(i) = sin(dble(i)*1.0d0)*sin(dble(i)*1.0d0)
         b(i) = cos(dble(i)*1.0d0)*cos(dble(i)*1.0d0) 
+        c(i) = 0.0
     enddo
     !$omp end target teams distribute parallel do simd
 
