@@ -19,7 +19,7 @@ else
   OPENMP_FLAGS = -fopenmp --foffload=-march=$(ROCM_GPU) -fopt-info-optimized-omp
 endif
 
-CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
+CFLAGS = -g -fstrict-aliasing ${OPENMP_FLAGS}
 LDFLAGS = ${OPENMP_FLAGS} -fno-lto -lm
 
 ${EXEC}: ${EXEC}.o compute.o global_data.o
