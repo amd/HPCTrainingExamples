@@ -42,7 +42,7 @@ vi saxpy.f90
 add ```!$omp target``` to move the loop in the saxpy subroutine to the device.
 - Compile this first GPU version. Make sure you add ```--offload-arch=gfx942``` (on MI300A, find out what your system's gfx... is with ```rocminfo```)
 ```
-amdflang-new -fopenmp --ofload-arch=gfx942 saxpy.F90 -o saxpy
+amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 ```
 - Run
 ```
@@ -58,7 +58,7 @@ vi saxpy.f90
 add "teams distribute"
 - Compile again
 ```
-amdflang-new -fopenmp --ofload-arch=gfx942 saxpy.F90 -o saxpy
+amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 ```
 - run again
 ```
@@ -74,7 +74,7 @@ vi saxpy.f90
 add "parallel do" for more parellelism
 - Compile again
 ```
-amdflang-new -fopenmp --ofload-arch=gfx942 saxpy.F90 -o saxpy
+amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 ```
 - run again
 ```
@@ -91,7 +91,7 @@ vi saxpy.f90
 The ```!$omp requires...``` line is removed.
 - Compile again
 ```
-amdflang-new -fopenmp --ofload-arch=gfx942 saxpy.F90 -o saxpy
+amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 ```
 - run again
 ```
@@ -112,7 +112,7 @@ vi saxpy.f90
 see where the map clasues where added. The x vector only has to be maped "to".
 - Compile again
 ```
-amdflang-new -fopenmp --ofload-arch=gfx942 saxpy.F90 -o saxpy
+amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 ```
 - run again
 ```
@@ -127,7 +127,7 @@ vi saxpy.f90
 ```
 - Compile again
 ```
-amdflang-new -fopenmp --ofload-arch=gfx942 saxpy.F90 -o saxpy
+amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 ```
 - run again
 ```
@@ -144,7 +144,7 @@ vi saxpy.f90
 specify num_teams(...) choose a number of teams you want to test 
 - Compile again
 ```
-amdflang-new -fopenmp --ofload-arch=gfx942 saxpy.F90 -o saxpy
+amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 ```
 - run again
 ```
