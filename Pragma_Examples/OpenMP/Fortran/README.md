@@ -1,7 +1,7 @@
 # Porting excercises
 The Fortran porting excercises can be found here (this is the directory of this README): 
 ```
-cd $HOME/HPCTrainingExamples-Fortran/Pragma_Examples/OpenMP/Fortran
+cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran
 ```
 load the amdflang-new compiler and set up the environment 
 ```
