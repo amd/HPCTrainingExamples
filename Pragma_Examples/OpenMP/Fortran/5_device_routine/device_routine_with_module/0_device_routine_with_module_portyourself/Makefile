@@ -9,10 +9,10 @@ ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name
 
 FC1=$(notdir $(FC))
 
-ifeq ($(findstring amdflang,$(FC1)), amdflang)
-  OPENMP_FLAGS = 
-  FREE_FORM_FLAG = -Mfreeform
-else ifeq ($(findstring flang-new,$(FC1)), flang-new)
+#ifeq ($(findstring amdflang,$(FC1)), amdflang)
+#  OPENMP_FLAGS = 
+#  FREE_FORM_FLAG = -Mfreeform
+ifeq ($(findstring amdflang-new,$(FC1)), amdflang-new)
   OPENMP_FLAGS = 
   FREE_FORM_FLAG = -ffree-form
 else ifeq ($(findstring flang,$(FC1)), flang)
