@@ -1,5 +1,10 @@
-# OpenMP Intro Examples
+# OpenMP Offload Fortran examples
+The Fortran OpenMP porting examples can be found in the README.md in the Fortran directory
+```
+cd OpenMP/Fortran
+```
 
+# OpenMP Offload Intro Examples
 **NOTE**: these exercises have been tested on MI210 and MI300A accelerators using a container environment.
 To see details on the container environment (such as operating system and modules available) please see `README.md` on [this](https://github.com/amd/HPCTrainingDock) repo.
 
@@ -74,18 +79,6 @@ Note:
 
 rocminfo can be used to get target architecture information.
 
-
-The Fortran version of the saxpy code is shown in saxpy1f.F90. It is very similar to the
-C and C++ OpenMP pragmas. In Fortran, the compiler hints are technically directives that
-are contained in specially formatted comments. One of the strengths of OpenMP is that 
-the language can be used in C, C++, and Fortran code and they can even be mixed in an
-application. Here is how to run the Fortran example.
-
-```
-make saxpy1f
-./saxpy1f
-```
-
 The compile line uses the specific GPU architecture type. It grabs it from the rocminfo
 command with a little bit of string manipulation. 
 
@@ -114,7 +107,17 @@ make saxpy4
 ./saxpy4
 ```
 
-Try removing the map clause -- the program will now fail.
+Try removing the map clause -- the program will now fail when you are working on discrete GPUs or with HSA_XNACK=0 on MI300A.
+```
+export HSA_XNACK=0
+./saxpy4
+```
+and 
+```
+export HSA_XNACK=1
+./saxpy4
+```
+
 
 ## Multilevel Parallelism
 
