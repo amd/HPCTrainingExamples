@@ -81,7 +81,7 @@ amdflang-new -fopenmp --ofload-arch=gfx942 saxpy.F90 -o saxpy
 ./saxpy
 ```
 The observed time is much better than all previous versions.
-Note that the initialization kernel is a warm-up kernel here. If we do not have a warm-up kernel, the observed performance would be significantly worse. Hence the benefit of the accelerator is usually seen only after the first kernel. You can try this by commenting the !$omp target... in the initialize subroutine, then the meassured kernel is the first.
+Note that the initialization kernel is a warm-up kernel here. If we do not have a warm-up kernel, the observed performance would be significantly worse. Hence the benefit of the accelerator is usually seen only after the first kernel. You can try this by commenting the !$omp target... in the initialize subroutine, then the meassured kernel is the first which touches the arrays used in the kernel.
 
 4) Explore impact of unified memory:
 ```
