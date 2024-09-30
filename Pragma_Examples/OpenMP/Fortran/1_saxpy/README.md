@@ -16,7 +16,6 @@ to make use of the APU programming model (unified memory).
 
 There are 6 different enumerated folders. (Reccomendation: ```vimdiff saxpy.f90 ../<X_saxpy_version>/saxpy.f90``` may help you to see the differences):
 
-Porting yourself:
 0) the serial CPU code.
 ```
 cd 0_saxpy_serial_portyourself
@@ -31,7 +30,8 @@ amdflang-new -fopenmp saxpy.F90 -o saxpy
 ```
 ./saxpy
 ```
-Step by step solution:
+You can now try to port the serial CPU version to the GPU or follow the
+step by step solution:
 1) Move the computation to the device
 ```
 cd ../1_saxpy_omptarget
