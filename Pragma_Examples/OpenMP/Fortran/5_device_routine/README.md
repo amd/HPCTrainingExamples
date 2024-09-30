@@ -1,14 +1,12 @@
-Porting excercise device routines and unified shared memory
+# Porting excercise device routine and unified shared memory
 
 This exercise will show how to port kernels which call a subroutine. (The same would apply to function calls.)
+Note: Make and build analogous to the previous excercises.
 
-prepare the environment:
-module load rocm-afar-drop
-export FC=flang-new
-
-port kernel with a subroutine call in an other file used via interface
+Part 1: Port the kernel with a subroutine call in an other file used using interface
+```
 cd device_routine_with_interface
-
+```
 there are five code versions in enumerated folders:
 0) a serial CPU version. Try to port this yourself. Decide if you want to do a unified_shared_memory version (export HSA_XNACK=1) ore one with manual memory management (relevant for discrete GPUs). If you are stuck, explore solution versions in folders enumerated 1-4 (explanation below). Hint: Don't forget to adapt the Makefile and check, if your kernel really runs on the GPU.
 
@@ -20,8 +18,10 @@ there are five code versions in enumerated folders:
 
 4) a unified shared memory version (make sure to use export HSA_XNACK=1 to run)
 
+Part 2: Port the kernel with a subroutine call in an oter file using module
+´´´
 cd device_routine_with_module
-
+´´´
 there are three code versions in enumerated folders:
 0) a serial CPU version. Try to port this yourself. Decide if you want to do a unified_shared_memory version (export HSA_XNACK=1) ore one with manual memory management (relevant for discrete GPUs). If you are stuck, explore solution versions in folders enumerated as 1 and 2 (explanation below). Hint: Don't forget to adapt the Makefile and check, if your kernel really runs on the GPU.
 
