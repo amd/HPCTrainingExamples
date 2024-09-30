@@ -5,7 +5,7 @@ PROGRAM problem
 
   !$omp requires unified_shared_memory
 
-  integer, parameter :: NI=1024, NJ=1024, NK=1024, rk=8, maxrepeat=100
+  integer, parameter :: NI=512, NJ=512, NK=512, rk=8
   integer :: i,j,k, i_rb, repeat
   real(kind=rk), allocatable, dimension(:,:,:) :: f
   real(kind=rk) :: starttime
@@ -18,7 +18,7 @@ PROGRAM problem
     !$omp target teams distribute parallel do collapse(3) private(i,j,k) shared(f,i_rb)
     do k = 0,NK+1
       do j = 0,NJ+1
-        do i = 0,NI/2-1
+        do i = 0,NI+1
           if(mod(i+j+k+i_rb,2) == 0) then
             f(i,j,k) = real(i_rb, kind=rk) 
           end if
@@ -57,10 +57,7 @@ PROGRAM problem
   !reset timer:
   
   starttime=omp_get_wtime()
-  !time 100 iterations  after warmup loop:
-  do repeat=1,maxrepeat-1
     do i_rb =1,2
-      !!$omp target teams distribute parallel do collapse(3) private(i,j,k) shared(f,i_rb)
       !$omp target teams distribute parallel do collapse(3) private(i,j,k) shared(f,i_rb)
       do k = 1,NK
         do j = 1,NJ
@@ -77,15 +74,14 @@ PROGRAM problem
         end do
       end do
     end do
-  end do
   
 
-  write(*,*) "after",maxrepeat,"red and black smoothing steps:"
+  write(*,*) "after red and black smoothing:"
   write(*,*) f(1,1,1), f(2,1,1),f(3,1,1),f(4,1,1),"..."
   write(*,*) f(1,2,1), f(2,2,1),f(3,2,1),f(4,2,1),"..."
   write(*,*) f(1,3,1), f(2,3,1),f(3,3,1),f(4,3,1),"..."
   
-  write(*,*) "time", (omp_get_wtime()-starttime)/maxrepeat*1000.0_rk,"ms"
+  write(*,*) "time", (omp_get_wtime()-starttime)*1000.0_rk,"ms"
   
   deallocate(f)
 

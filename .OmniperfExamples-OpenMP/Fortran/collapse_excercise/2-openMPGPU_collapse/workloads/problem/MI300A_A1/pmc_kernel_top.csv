@@ -1,0 +1,4 @@
+Kernel_Name,Count,Sum(ns),Mean(ns),Median(ns),Pct
+__omp_offloading_32_6b6b__QQmain_l18.kd,2,431275823.0,215637911.5,215637911.5,98.51284075053185
+__omp_offloading_32_6b6b__QQmain_l61.kd,2,3489811.0,1744905.5,1744905.5,0.7971492417567175
+__omp_offloading_32_6b6b__QQmain_l41.kd,2,3020770.0,1510385.0,1510385.0,0.6900100077114317

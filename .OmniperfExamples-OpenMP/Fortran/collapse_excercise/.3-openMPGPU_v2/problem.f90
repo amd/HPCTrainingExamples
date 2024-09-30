@@ -59,7 +59,7 @@ PROGRAM problem
   do repeat=1,maxrepeat-1
     do i_rb =1,2
       !!$omp target teams distribute parallel do collapse(3) private(i,j,k) shared(f,i_rb) num_teams(2048)
-      !$omp target teams distribute parallel do collapse(3) private(i,j,k) shared(f,i_rb)^
+      !$omp target teams distribute parallel do collapse(3) private(i,j,k) shared(f,i_rb)
       do k = 1,NK
         do j = 1,NJ
           do i = 1,NI,2

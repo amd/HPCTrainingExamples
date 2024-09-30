@@ -34,7 +34,7 @@ PROGRAM problem
   starttime = omp_get_wtime()
   !warm up loop
   do i_rb =1,2
-    !$omp target teams distribute parallel do collapse(3) private(i,j,k) shared(f,i_rb)
+    !$omp target teams distribute parallel do collapse(2) private(i,j,k) shared(f,i_rb)
     do k = 1,NK
       do j = 1,NJ
         do i = 1+MOD(j + k + i_rb, 2), NI, 2
@@ -50,10 +50,8 @@ PROGRAM problem
   write(*,*) "warmup loop time:",(omp_get_wtime()-starttime)*1000.0_rk,"ms"
   !reset timer:
   starttime=omp_get_wtime()
-  !time 100 iterations  after warmup loop:
-  do repeat=1,maxrepeat-1
     do i_rb =1,2
-      !$omp target teams distribute parallel do collapse(3) private(i,j,k) shared(f,i_rb)
+      !$omp target teams distribute parallel do collapse(2) private(i,j,k) shared(f,i_rb)
       do k = 1,NK
         do j = 1,NJ
           do i = 1+MOD(j + k + i_rb, 2), NI, 2
@@ -66,15 +64,14 @@ PROGRAM problem
         end do
       end do
     end do
-  end do
   
 
-  write(*,*) "after",maxrepeat,"red and black smoothing steps:"
+  write(*,*) "after red and black smoothing step:"
   write(*,*) f(1,1,1), f(2,1,1),f(3,1,1),f(4,1,1),"..."
   write(*,*) f(1,2,1), f(2,2,1),f(3,2,1),f(4,2,1),"..."
   write(*,*) f(1,3,1), f(2,3,1),f(3,3,1),f(4,3,1),"..."
   
-  write(*,*) "time", (omp_get_wtime()-starttime)/maxrepeat*1000.0_rk,"ms"
+  write(*,*) "time", (omp_get_wtime()-starttime)*1000.0_rk,"ms"
   
   deallocate(f)
 
