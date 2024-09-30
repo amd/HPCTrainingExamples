@@ -3,7 +3,7 @@ The Fortran OpenMP porting examples can be found in the README.md in the Fortran
 ```
 cd OpenMP/Fortran
 ```
-The following examples focus on C/C++.
+The following examples in this Readme focus on C/C++. Change to the above mentioned one for Fortran.
 
 # OpenMP Offload Intro Examples (C/C++)
 **NOTE**: these exercises have been tested on MI210 and MI300A accelerators using a container environment.
