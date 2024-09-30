@@ -1,4 +1,4 @@
-* Porting saxpy step by step:
+# Introduction to OpenMP offload: Porting saxpy step by step and explore the discrete GPU and APU programming models:
 
 This excercise will show in a step by step solution how to port a your first kernels. 
 This simple example will not use a Makefile to practice how to compile for the GPU or APU. 
