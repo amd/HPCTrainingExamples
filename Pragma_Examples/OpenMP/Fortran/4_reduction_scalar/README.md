@@ -2,7 +2,10 @@
 
 This folder has two code versions:
 
-0) a serial cpu version to port yourself. Hint: don't forget to port the Makefile.
+0) a serial cpu version to port yourself. 
+
+Hint: don't forget to port the Makefile.
+
 Build:
 ```
 make
