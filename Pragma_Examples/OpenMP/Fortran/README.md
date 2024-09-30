@@ -28,7 +28,7 @@ The instructions assume you work on MI300A and some of the excercises explore th
 The reccomended order to do the exercises is the order in which they are numbered, but any sub-folder with excercises has instructions to do them stand-alone.
 Excercise 7 is a small app with a Jacobi solver. (Note: A C/C++ version of this Fortran code is explained in detail a Blogpost https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-jacobi-readme/.) 
 
-Choose one of the excercises in the sub-directories and use the README there for instructions:
+Choose one of the excercises in the sub-directories and use the README there for instructions (reccomended: follow them as they are numbered):
 ```
 cd 1_saxpy
 cd 2_vecadd  
