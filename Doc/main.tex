@@ -155,8 +155,8 @@
 \setcounter{secnumdepth}{-\maxdimen} % remove section numbering
 
 \author{\it AMD HPC Solutions \& Performance Analysis Team }
-\date{Last Review - September 9th 2024}
-\title{\bf AMD HPC Training Examples Document \\
+\date{Last Review - October 1st 2024}
+\title{\bf AMD HPC Training Examples Guide \\
       \large \href{https://github.com/amd/HPCTrainingExamples}
                   {\texttt{https://github.com/amd/HPCTrainingExamples}}}
 
@@ -173,17 +173,14 @@
 \hypertarget{amd-hpc-training-examples-repo}{%
 \section{Summary}\label{amd-hpc-training-examples-repo}}
 
-Welcome to AMD's HPC Training Examples Document
+Welcome to AMD's HPC Training Examples Guide: this document represents a collection of instructions on how to compile and run some of the examples that are included in the GitHub repo \href{https://github.com/amd/HPCTrainingExamples}{\texttt{https://github.com/amd/HPCTrainingExamples}}. This instruction is collected in a series of README files that are associated with a specific topic. While not all README files available in the repo are reported here, the full list is reported below, with clickable links that will direct you to the specific location in the GitHub repo.
 
-Here you will find a variety of examples to showcase the capabilities of
-AMD's GPU software stack. Please be aware that this document is continuously
-updated to keep up with the most recent releases of the AMD software.
+Please be aware that this document (and the GitHub repo) are continuously updated to keep up with the most recent releases of the AMD software.
 
 \hypertarget{repository-structure}{%
 \subsection{Examples Repository Structure}\label{repository-structure}}
 
-Please refer to this table of contents to locate the exercises you are
-interested in sorted by topic.
+The following table of contents will point you to the location in the HPC Training Examples repo where exercises or associated README files are located. Note that a selection of these is included in this document, properly formatted for ease of reading.
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -401,9 +398,9 @@ interested in sorted by topic.
 \end{enumerate}
 
 \hypertarget{run-the-tests}{%
-\subsection{Run the Tests}\label{run-the-tests}}
+\subsection{How to Run the Tests}\label{run-the-tests}}
 
-Most of the exercises in this repo can be run as a test suite by doing:
+Most of the exercises in the HPC Training Examples repo can be run with a test suite, by doing:
 
 \begin{verbatim}
 git clone https://github.com/amd/HPCTrainingExamples && \
@@ -418,18 +415,1477 @@ script. For instance: \texttt{./runTests.sh\ -\/-pytorch}. To see a full
 list of the possible subsets that can be run:
 \texttt{./runTests.sh\ -\/-help}.
 
-\textbf{NOTE}: tests can also be run manually from their respective
+\textbf{NOTE}: the test suite will only report a PASS or FAIL result and will not print to terminal the output of the single examples. To print output to terminal, tests should be run manually from their respective
 directories, provided the necessary modules have been loaded and they
-have been compiled appropriately.
+have been compiled appropriately. Please follow the instructions in the single READMEs to do so.
 
-\hypertarget{feedback}{%
-\subsection{Feedback}\label{feedback}}
+%\hypertarget{feedback}{%
+%\subsection{Feedback}\label{feedback}}
 
-We welcome your feedback and contributions, feel free to use this repo
-to bring up any issues or submit pull requests. The software made
-available here is released under the MIT license, more details can be
-found in
-\href{https://github.com/amd/HPCTrainingExamples/blob/main/LICENSE.md}{\texttt{LICENSE.md}}.
+%We welcome your feedback and contributions, feel free to use the GitHub repo
+%to bring up any issues or submit pull requests. The software made
+%available in the repo is released under the MIT license, more details can be
+%found in
+%\href{https://github.com/amd/HPCTrainingExamples/blob/main/LICENSE.md}{\texttt{LICENSE.md}}.
+
+\pagebreak
+
+\hypertarget{amd-accelerator-cloud-aac}{%
+\section{AMD Accelerator Cloud (AAC)}\label{amd-accelerator-cloud-aac}}
+
+To support trainings, we often upload training containers to the AMD
+Accelerator Cloud (AAC), and have attendees login using the instructions
+below. This set of instructions assumes that users have already received
+their \texttt{\textless{}username\textgreater{}} and
+\texttt{\textless{}port\_number\textgreater{}} for the container, and
+that they have either provided an ssh key to the training team, or they
+have received a password from the training team.
+
+\hypertarget{login-instructions}{%
+\subsection{Login Instructions}\label{login-instructions}}
+
+The instructions below rely on ssh to access the AAC. Remember that when
+a container is brought down, it will not be possible to access the user
+data on it, so {\textbf{make sure to backup your data frequently if you want to
+keep it}}.
+
+\hypertarget{ssh-key-generation}{%
+\subsubsection{SSH-Key Generation}\label{ssh-key-generation}}
+
+Generate an ssh key on your local system, which will be stored in
+\texttt{.ssh}:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd} \VariableTok{$HOME}
+\FunctionTok{ssh{-}keygen}\NormalTok{ {-}t ed25519 {-}N }\StringTok{\textquotesingle{}\textquotesingle{}}
+\end{Highlighting}
+\end{Shaded}
+
+To examine the content of your public key do:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{cat} \VariableTok{$HOME}\NormalTok{/.ssh/id\_ed25519.pub}
+\end{Highlighting}
+\end{Shaded}
+
+\textbf{NOTE}: at first login, you will be presented with the AAC user
+agreement form. This covers the terms of use of the compute hardware as
+well as how we will handle your data. Scroll down with the down arrow
+and type \texttt{yes} when prompted. Note that if you will scroll down
+too much, then \texttt{no} will be received as answer and you will be
+logged out.
+
+\hypertarget{login-with-ssh-key}{%
+\subsubsection{Login with SSH-Key}\label{login-with-ssh-key}}
+
+\textbf{IMPORTANT}: if you are supposed to login with an ssh key and you
+are prompted a password, do not type any password! Instead, type
+\texttt{Ctrl+C} and contact us to let us know about the incident.
+
+To login to AAC using the ssh key use the
+\texttt{\textless{}username\textgreater{}} and
+\texttt{\textless{}port\_number\textgreater{}} that the training team
+has provided you, for instance:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ssh} \OperatorTok{\textless{}}\NormalTok{username}\OperatorTok{\textgreater{}}\NormalTok{@aac6.amd.com {-}i }\OperatorTok{\textless{}}\NormalTok{path/to/ssh/key}\OperatorTok{\textgreater{}}\NormalTok{ {-}p }\OperatorTok{\textless{}}\NormalTok{port\_number}\OperatorTok{\textgreater{}}\NormalTok{ (1)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{login-with-password}{%
+\subsubsection{Login with password}\label{login-with-password}}
+
+With a password login, the command is the same as in \texttt{(1)}, except that it is not
+necessary to specify a path to the ssh key. Just type the password that
+has been given to you when prompted:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ssh} \OperatorTok{\textless{}}\NormalTok{username}\OperatorTok{\textgreater{}}\NormalTok{@aac6.amd.com {-}p }\OperatorTok{\textless{}}\NormalTok{port\_number}\OperatorTok{\textgreater{}}
+\end{Highlighting}
+\end{Shaded}
+
+\textbf{IMPORTANT}: It is fundamental to not type the wrong password
+more than two times otherwise your I.P. address will be blacklisted and
+you will not be allowed access to AAC until we modify our firewall to
+get you back in. This is especially important if you are at an event
+where all the attendees are connecting to the same wireless network.
+
+In the commands above, \texttt{-p} refers to the port number and
+\texttt{-i} points to the path of your ssh key. Note that different port
+numbers will be associated with different containers on the AAC, and
+anytime a container is brought up, the port number will change in
+general.
+
+To simplify the login even further, you can add the following to your
+\texttt{.ssh/config} file:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# AMD AAC cluster}
+\ExtensionTok{Host}\NormalTok{ aac}
+   \ExtensionTok{User} \OperatorTok{\textless{}}\NormalTok{username}\OperatorTok{\textgreater{}}
+   \ExtensionTok{Hostname}\NormalTok{ aac6.amd.com // this may be different depending on the container}
+   \ExtensionTok{IdentityFile} \OperatorTok{\textless{}}\NormalTok{path/to/ssh/key}\OperatorTok{\textgreater{}}
+   \ExtensionTok{Port} \OperatorTok{\textless{}}\NormalTok{port\_number}\OperatorTok{\textgreater{}}
+   \ExtensionTok{ServerAliveInterval}\NormalTok{ 600}
+   \ExtensionTok{ServerAliveCountMax}\NormalTok{ 30}
+\end{Highlighting}
+\end{Shaded}
+
+The \texttt{ServerAlive*} lines in the config file may be added to avoid
+timeouts when idle. you can then login using:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ssh}\NormalTok{ aac {-}p }\OperatorTok{\textless{}}\NormalTok{port\_number}\OperatorTok{\textgreater{}}
+\end{Highlighting}
+\end{Shaded}
+
+It may also happen that a message like the following will show after
+logging into AAC:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@}
+\ExtensionTok{@}\NormalTok{    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @}
+\ExtensionTok{@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@}
+\ExtensionTok{IT}\NormalTok{ IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!}
+\ExtensionTok{Someone}\NormalTok{ could be eavesdropping on you right now (man{-}in{-}the{-}middle attack)!}
+\ExtensionTok{It}\NormalTok{ is also possible that a host key has just been changed.}
+\end{Highlighting}
+\end{Shaded}
+
+In such a case, remove in your local system the offending keys located
+in \texttt{.ssh/known\_hosts}, as indicated by the warning message.
+
+\hypertarget{login-troubleshooting}{%
+\subsubsection{Login Troubleshooting}\label{login-troubleshooting}}
+
+Here are some troubleshooting tips if you cannot login to AAC following
+the instructions above:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Check the spelling of the command ssh, in particular
+  \texttt{\textless{}username\textgreater{}},
+  \texttt{\textless{}port\_number\textgreater{}} and password.
+\item
+  Turn off VPN if on.
+\item
+  Try logging in from a different machine if available (and migrate the
+  ssh key to the new machine or generate a new one and send it to us).
+\item
+  Try a \textbf{\emph{jump host}}: this is a local server that you ssh
+  to and then do a second ssh command from there.
+\end{enumerate}
+
+In case none of these options work, send us the output of the ssh
+command followed by \texttt{-vv} and also the output of
+\texttt{traceroute\ aac6.amd.com}. Additionally, let us know if the
+command \texttt{ping\ aac6.amd.com} works on your end.
+
+\hypertarget{directories-and-files}{%
+\subsubsection{Directories and Files}\label{directories-and-files}}
+
+Persistent storage is at
+\texttt{/datasets/teams/hackathon-testing/\textless{}group\textgreater{}/\textless{}username\textgreater{}}.
+Your home directory will be set to this directory:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\VariableTok{$HOME}\NormalTok{=}\ExtensionTok{/datasets/teams/hackathon{-}testing}\NormalTok{/}\OperatorTok{\textless{}}\ExtensionTok{group}\OperatorTok{\textgreater{}}\NormalTok{/}\OperatorTok{\textless{}}\ExtensionTok{username}\OperatorTok{\textgreater{}}
+\end{Highlighting}
+\end{Shaded}
+
+Files in the above directory will persist across container starts and
+stops and even be available from another container with the same
+\texttt{\textless{}username\textgreater{}} on systems at the same
+hosting location. Remember that it will not be possible to retrieve your
+data once the container has been brought down.
+
+You can copy files in or out of AAC with the \texttt{scp} or the
+\texttt{rsync} command.
+
+Copy into AAC from your local system, for instance:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{scp}\NormalTok{ {-}i }\OperatorTok{\textless{}}\NormalTok{path/to/ssh/key}\OperatorTok{\textgreater{}}\NormalTok{ {-}P }\OperatorTok{\textless{}}\NormalTok{port\_number}\OperatorTok{\textgreater{}} \OperatorTok{\textless{}}\NormalTok{file}\OperatorTok{\textgreater{}} \OperatorTok{\textless{}}\NormalTok{username}\OperatorTok{\textgreater{}}\NormalTok{@aac6.amd.com:\textasciitilde{}/}\OperatorTok{\textless{}}\NormalTok{path/to/file}\OperatorTok{\textgreater{}}
+\end{Highlighting}
+\end{Shaded}
+
+Copy from AAC to your local system:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{scp}\NormalTok{ {-}i }\OperatorTok{\textless{}}\NormalTok{path/to/ssh/key}\OperatorTok{\textgreater{}}\NormalTok{ {-}P }\OperatorTok{\textless{}}\NormalTok{port\_number}\OperatorTok{\textgreater{}} \OperatorTok{\textless{}}\NormalTok{username}\OperatorTok{\textgreater{}}\NormalTok{@aac6.amd.com:\textasciitilde{}/}\OperatorTok{\textless{}}\NormalTok{path/to/file}\OperatorTok{\textgreater{}}\NormalTok{ .}
+\end{Highlighting}
+\end{Shaded}
+
+To copy files in or out of the container, you can also use
+\texttt{rsync} as shown below:
+{\small
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{rsync}\NormalTok{ {-}avz {-}e }\StringTok{"ssh {-}i \textless{}path/to/ssh/key\textgreater{} {-}p \textless{}port\_number\textgreater{}"} \OperatorTok{\textless{}}\NormalTok{file}\OperatorTok{\textgreater{}} \OperatorTok{\textless{}}\NormalTok{username}\OperatorTok{\textgreater{}}\NormalTok{@aac6.amd.com:\textasciitilde{}/}\OperatorTok{\textless{}}\NormalTok{path/to/file}\OperatorTok{\textgreater{}}
+\end{Highlighting}
+\end{Shaded}
+}
+\hypertarget{container-environment}{%
+\subsection{Container Environment}\label{container-environment}}
+
+Please consult the container's
+\href{https://github.com/amd/HPCTrainingDock/blob/main/README.md}{README}
+to learn about the latest specs of the training container.
+
+The container is based on the Ubuntu 22.04 Operating System
+with the ROCm 6.2.1 software stack. It contains multiple versions of
+AMD, GCC, and LLVM compilers, hip libraries, GPU-Aware MPI, AMD Profiling tools as well as HPC community tools. The
+container also has modules set up with the lua modules package and a
+slurm package and configuration. It includes the following additional
+packages:
+
+\begin{itemize}
+\tightlist
+\item
+  emacs
+\item
+  vim
+\item
+  autotools
+\item
+  cmake
+\item
+  tmux
+\item
+  boost
+\item
+  eigen
+\item
+  fftw
+\item
+  gmp
+\item
+  gsl
+\item
+  hdf5-openmpi
+\item
+  lapack
+\item
+  magma
+\item
+  matplotlib
+\item
+  parmetis
+\item
+  mpfr
+\item
+  mpi4py
+\item
+  openblas
+\item
+  openssl
+\item
+  swig
+\item
+  numpy
+\item
+  scipy
+\item
+  h5sparse
+\end{itemize}
+
+\hypertarget{explore-modules}{%
+\subsubsection{Explore Modules}\label{explore-modules}}
+
+To see what modules are available do:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{module}\NormalTok{ avail }
+\end{Highlighting}
+\end{Shaded}
+
+The output list of \texttt{module\ avail} should show:
+
+{\tiny
+\begin{verbatim}
+
+----------------------------------------------------------------------- /etc/lmod/modules/Linux ------------------------------------------------------------------------
+   clang/base    clang/14 (D)    clang/15    gcc/base    gcc/11 (D)    gcc/12    gcc/13    miniconda3/23.11.0
+
+------------------------------------------------------------------------ /etc/lmod/modules/ROCm ------------------------------------------------------------------------
+   amdclang/17.0-6.2.1    hipfort/6.2.1    omniperf/6.2.1 (D)    omnitrace/6.2.1 (D)    opencl/6.2.1    rocm/6.2.1
+
+-------------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-MPI --------------------------------------------------------------------
+   mpi4py/dev    mvapich/3.0    openmpi/5.0.5-ucc1.3.0-ucx1.17.0-xpmem2.7.3
+
+------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-AMDResearchTools --------------------------------------------------------------
+   omniperf/2.0.0    omniperf/2.0.1    omnitrace/1.11.3
+
+-------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-LatestCompilers --------------------------------------------------------------
+   amd-gcc/13.2.0    aomp/amdclang-19.0
+
+-------------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-AI ---------------------------------------------------------------------
+   cupy/13.0.0b1    jax/0.4.32.dev    pytorch/2.4
+
+------------------------------------------------------------------------ /etc/lmod/modules/misc ------------------------------------------------------------------------
+   hpctoolkit/dev    kokkos/4.4.0    tau/dev
+
+Where:   D:  Default Module
+\end{verbatim}
+}
+There are three modules associated with each ROCm version. One is the
+ROCm module which is needed by many of the other modules. The second is
+the amdclang module when using the amdclang compiler that comes bundled
+with ROCm. The third is the hipfort module for the Fortran interfaces to
+HIP.
+
+Compiler modules set the C, CXX, FC flags. Note, only one compiler
+module can be loaded at a time. hipcc is in the path when the rocm
+module is loaded.
+
+\hypertarget{slurm-information}{%
+\subsection{Slurm Information}\label{slurm-information}}
+
+The training container comes equipped with Slurm. Slurm configuration is
+for a single queue that is shared with the rest of the node. Run the
+following command to get info on Slurm:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{sinfo}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}llllll@{}}
+\toprule
+PARTITION & AVAIL & TIMELIMIT & NODES & STATE & NODELIST\tabularnewline
+\midrule
+\endhead
+LocalQ & up & 2:00:00 & 1 & idle & localhost\tabularnewline
+\bottomrule
+\end{longtable}
+
+The Slurm \texttt{salloc} command may be used to acquire a long term
+session that exclusively grants access to one or more GPUs.
+Alternatively, the \texttt{srun} or \texttt{sbatch} commands may be used
+to acquire a session with one or more GPUs and only exclusively use the
+session for the life of the run of an application. \texttt{squeue} will
+show information on who is currently running jobs.
+
+
+\hypertarget{examples-repo}{%
+\subsubsection{Examples Repo}\label{examples-repo}}
+
+The examples can also be obtained from our repo, which contains all the
+code that we will use for the exercises discussed during the training.
+To clone the repo, do:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd} \VariableTok{$HOME}
+\FunctionTok{git}\NormalTok{ clone https://github.com/amd/HPCTrainingExamples.git}
+\end{Highlighting}
+\end{Shaded}
+
+\pagebreak
+
+\hypertarget{programming-model-exercises-managed-memory-and-single-address-space-apu}{%
+\section{Programming Model Exercises -- Managed Memory and Single
+Address Space
+(APU)}\label{programming-model-exercises-managed-memory-and-single-address-space-apu}}
+
+\textbf{NOTE}: these exercises have been tested on MI210 and MI300A
+accelerators using a container environment. To see details on the
+container environment (such as operating system and modules available)
+please see \texttt{README.md} on
+\href{https://github.com/amd/HPCTrainingDock}{this} repo.
+
+The source code for these exercises is based on those in the
+presentation, but with details filled in so that there is a working
+code. You may want to examine the code in these exercises and compare it
+to the code in the presentation and to the code in the other exercises.
+
+\hypertarget{cpu-code-baseline}{%
+\subsection{CPU Code baseline}\label{cpu-code-baseline}}
+
+\begin{verbatim}
+git clone https://github.com/amd/HPCTrainingExamples.git
+cd HPCTrainingExamples/ManagedMemory
+\end{verbatim}
+
+First run the standard CPU code. This is a working version of the
+original CPU code from the programming model presentation.
+
+\begin{verbatim}
+cd HPCTrainingExamples/ManagedMemory/CPU_Code
+module load amdclang
+make
+\end{verbatim}
+
+will compile with
+\texttt{amdclang\ -g\ -O3\ -fopenmp\ cpu\_code.c\ -o\ cpu\_code} Then
+run code with
+
+\begin{verbatim}
+./cpu_code
+\end{verbatim}
+
+\hypertarget{standard-gpu-code-example}{%
+\subsection{Standard GPU Code example}\label{standard-gpu-code-example}}
+
+This example adds the GPU memory corresponding to the CPU arrays and
+explicitly manages the memory transfers.
+
+\begin{verbatim}
+cd ../GPU_Code
+make
+\end{verbatim}
+
+This will compile with
+\texttt{hipcc\ -g\ -O3\ -fopenmp\ -\/-offload-arch=gfx90a\ gpu\_code.hip\ -o\ gpu\_code}
+Then run the code with
+
+\begin{verbatim}
+./gpu_code
+\end{verbatim}
+
+\hypertarget{managed-memory-code}{%
+\subsection{Managed Memory Code}\label{managed-memory-code}}
+
+In this example, we will set the \texttt{HSA\_XNACK} environment
+variable to 1 and let the Operating System move the memory for us.
+
+\begin{verbatim}
+export HSA_XNACK=1
+cd ../Managed_Memory_Code
+make
+./gpu_code
+\end{verbatim}
+
+\hypertarget{apu-code-single-address-space-in-hip}{%
+\subsection{APU Code -- Single Address Space in
+HIP}\label{apu-code-single-address-space-in-hip}}
+
+This example is shown on slide 29. We'll run the same code as we used in
+the managed memory example. Because the memory pointers are addressable
+on both the CPU and the GPU, no memory managment is necessary. First,
+log onto an MI300A node. Then compile and run the code as follows.
+
+\begin{verbatim}
+cd ../APU_Code
+make
+./gpu_code
+\end{verbatim}
+
+\hypertarget{openmp-apu-or-single-address-space}{%
+\subsection{OpenMP APU or single address
+space}\label{openmp-apu-or-single-address-space}}
+
+For this example, we have a simple code with the loop offloading in the
+main code, \texttt{openmp\_code}, and a second version,
+\texttt{openmp\_code1}, with the offloaded loop in a subroutine where
+the compiler cannot tell the size of the array. Running this on the
+MI200 series, it passes, despite that it does not have a single address
+space. We add \texttt{export\ LIBOMPTARGET\_INFO=-1} to verify that it
+is running on the GPU.
+
+\begin{verbatim}
+export HSA_XNACK=1
+module load amdclang
+cd ../OpenMP_Code
+make
+./openmp_code
+./openmp_code1
+export LIBOMPTARGET_INFO=-1
+./openmp_code
+./openmp_code1
+\end{verbatim}
+
+For more experimentation with this example, comment out the first line
+of the two source codes.
+
+\begin{verbatim}
+//#pragma omp requires unified_shared_memory
+make
+export LIBOMPTARGET_INFO=-1
+./openmp_code
+./openmp_code1
+\end{verbatim}
+
+Now with the \texttt{LIBOMPTARGET\_INFO} variable set, we get a report
+that memory is being copied to the device and back. The OpenMP compiler
+is helping out a lot more than might be expected even without an APU.
+
+\hypertarget{raja-single-address-code}{%
+\subsection{RAJA Single Address Code}\label{raja-single-address-code}}
+
+First, set up the environment
+
+\begin{verbatim}
+module load amdclang
+module load rocm
+\end{verbatim}
+
+For the Raja example, we need to build the Raja code first
+
+\begin{verbatim}
+cd ~/HPCTrainingExamples/ManagedMemory/Raja_Code
+
+PWDir=`pwd`
+
+git clone --recursive https://github.com/LLNL/RAJA.git Raja_build
+cd Raja_build
+
+mkdir build_hip && cd build_hip
+
+cmake -DCMAKE_INSTALL_PREFIX=${PWDir}/Raja_HIP \
+      -DROCM_ROOT_DIR=/opt/rocm \
+      -DHIP_ROOT_DIR=/opt/rocm \
+      -DHIP_PATH=/opt/rocm/bin \
+      -DENABLE_TESTS=Off \
+      -DENABLE_EXAMPLES=Off \
+      -DRAJA_ENABLE_EXERCISES=Off \
+      -DENABLE_HIP=On \
+      ..
+
+make -j 8
+make install
+
+cd ../..
+
+rm -rf Raja_build
+
+export Raja_DIR=${PWDir}/Raja_HIP
+\end{verbatim}
+
+Now we build the example. Note that we just allocated the arrays on the
+host with malloc. To run it on the MI200 series, we need to set the
+\texttt{HSA\_XNACK} variable.
+
+\begin{verbatim}
+# To run with managed memory
+export HSA_XNACK=1
+
+mkdir build && cd build
+CXX=hipcc cmake ..
+make
+./raja_code
+
+cd ..
+rm -rf build
+
+cd ${PWDir}
+rm -rf Raja_HIP
+
+cd ..
+rm -rf ${PROB_NAME}
+\end{verbatim}
+
+\hypertarget{kokkos-unified-address-code}{%
+\subsection{Kokkos Unified Address
+Code}\label{kokkos-unified-address-code}}
+
+First, set up the environment
+
+\begin{verbatim}
+module load amdclang
+module load rocm
+\end{verbatim}
+
+For the Kokkos example, we need to build the Kokkos code first
+
+\begin{verbatim}
+cd ~/HPCTrainingExamples/ManagedMemory/Kokkos_Code
+
+PWDir=`pwd`
+
+git clone https://github.com/kokkos/kokkos Kokkos_build
+cd Kokkos_build
+
+mkdir build_hip && cd build_hip
+cmake -DCMAKE_INSTALL_PREFIX=${PWDir}/Kokkos_HIP -DKokkos_ENABLE_SERIAL=ON \
+      -DKokkos_ENABLE_HIP=ON -DKokkos_ARCH_ZEN=ON -DKokkos_ARCH_VEGA90A=ON \
+      -DCMAKE_CXX_COMPILER=hipcc ..
+
+make -j 8
+make install
+
+cd ../..
+
+rm -rf Kokkos_build
+
+export Kokkos_DIR=${PWDir}/Kokkos_HIP
+\end{verbatim}
+
+Now we build the example. Note that we have not had to declare the
+arrays in Kokkos Views. To run it on the MI200 series, we need to set
+the \texttt{HSA\_XNACK} variable.
+
+\begin{verbatim}
+# To run with managed memory
+export HSA_XNACK=1
+
+mkdir build && cd build
+CXX=hipcc cmake ..
+make
+./kokkos_code
+
+cd ${PWDir}
+rm -rf Kokkos_HIP
+
+cd ..
+rm -rf ${PROB_NAME}
+\end{verbatim}
+
+\pagebreak
+
+\hypertarget{openmp-intro-examples}{%
+\section{OpenMP Intro Examples}\label{openmp-intro-examples}}
+
+\textbf{NOTE}: these exercises have been tested on MI210 and MI300A
+accelerators using a container environment. To see details on the
+container environment (such as operating system and modules available)
+please see \texttt{README.md} on
+\href{https://github.com/amd/HPCTrainingDock}{this} repo.
+
+\hypertarget{checking-out-makefiles-and-compiler-toolchain}{%
+\subsection{Checking out makefiles and compiler
+toolchain}\label{checking-out-makefiles-and-compiler-toolchain}}
+
+Running the first OpenMP example:
+\texttt{Pragma\_Examples/OpenMP/C/saxpy}
+
+\hypertarget{build-with-amdclang-compiler}{%
+\subsubsection{Build with AMDClang
+compiler}\label{build-with-amdclang-compiler}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{module}\NormalTok{ load amdclang}
+\FunctionTok{make}\NormalTok{ clean }
+\FunctionTok{make}
+\ExtensionTok{./saxpy}
+\end{Highlighting}
+\end{Shaded}
+
+Confirm running on GPU with
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_KERNEL\_TRACE=}\NormalTok{1 }
+\ExtensionTok{./saxpy}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{itemize}
+\tightlist
+\item
+  confirms that we are running on the GPU and also gives us the register
+  usage
+\item
+  Also could use
+  \texttt{AMD\_LOG\_LEVEL={[}0\textbar{}1\textbar{}2\textbar{}3\textbar{}4{]}}
+  or \texttt{LIBOMPTARGET\_KERNEL\_TRACE=2}
+\end{itemize}
+
+\hypertarget{openmp-offload-the-basics}{%
+\subsection{OpenMP Offload -- The
+Basics}\label{openmp-offload-the-basics}}
+
+We start out with the OpenMP threaded code for the CPU. This code is in
+
+\texttt{\textasciitilde{}/HPCTrainingExamples/Pragma\_Examples/OpenMP/Intro}
+
+in the saxpy\_cpu.cpp file. This is the code on slide 16. We first load
+the amdclang module which will set the CXX environment variable. This
+variable will get picked up by the Makefile for the build.
+
+\begin{verbatim}
+module load amdclang
+make saxpy_cpu
+./saxpy_cpu
+\end{verbatim}
+
+The next example, saxpy1, is from slide 18 where the first version of
+OpenMP offloading is tried. In this code, there is no map clause. The
+compiler can figure out the arrays that need to be copied over and their
+sizes.
+
+\begin{verbatim}
+make saxpy1
+./saxpy1
+\end{verbatim}
+
+While running one of these codelets, it may be useful to watch the GPU
+usage. Here are two approaches.
+
+\begin{itemize}
+\item
+  open another terminal and \texttt{ssh} to the AAC node you are working
+  on, or
+\item
+  use the tmux command
+\item
+  run \texttt{watch\ -n\ 0.5\ rocm-smi} command line from that terminal
+  to visualize GPU activities.
+\end{itemize}
+
+Note that the basic tmux survival commands are:
+
+\begin{verbatim}
+cntl+b \"  - splits the screen
+cntl+b (up arrow) - move to the upper session
+cntl+b (down arrow) - move to lower session
+exit - end tmux session
+\end{verbatim}
+
+Next, run the codelet on your preferred GPU device if you have allocated
+more than 1 GPU. For example, to execute on GPU ID \#2, set the
+following environment variable:
+\texttt{export\ ROCR\_VISIBLE\_DEVICES=2} then run the code.
+
+Profile the codelet and then compare output by setting
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_KERNEL\_TRACE=}\NormalTok{1}
+\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_KERNEL\_TRACE=}\NormalTok{2}
+\end{Highlighting}
+\end{Shaded}
+
+Note:
+
+rocminfo can be used to get target architecture information.
+
+The Fortran version of the saxpy code is shown in saxpy1f.F90. It is
+very similar to the C and C++ OpenMP pragmas. In Fortran, the compiler
+hints are technically directives that are contained in specially
+formatted comments. One of the strengths of OpenMP is that the language
+can be used in C, C++, and Fortran code and they can even be mixed in an
+application. Here is how to run the Fortran example.
+
+\begin{verbatim}
+make saxpy1f
+./saxpy1f
+\end{verbatim}
+
+The compile line uses the specific GPU architecture type. It grabs it
+from the rocminfo command with a little bit of string manipulation.
+
+Let's now add a map clause as shown in quotes on slide 18 --
+map(tofrom:y{[}0:N{]})
+
+\begin{verbatim}
+make saxpy2
+./saxpy2
+\end{verbatim}
+
+A lot of the initial optimization of an OpenMP offloading port is to
+minimize the data movement from host to device and back. What is the
+optimum mapping of data for this example? See saxpy3.cpp for the optimal
+map clauses.
+
+\begin{verbatim}
+make saxpy3
+./saxpy3
+\end{verbatim}
+
+In the example we have been working with so far, the compiler can
+determine the sizes and will move the data for you. Let's see what
+happens when we have a subroutine with pointers where the compiler does
+not know the sizes.
+
+\begin{verbatim}
+make saxpy4
+./saxpy4
+\end{verbatim}
+
+Try removing the map clause -- the program will now fail.
+
+\hypertarget{multilevel-parallelism}{%
+\subsection{Multilevel Parallelism}\label{multilevel-parallelism}}
+
+We have been running on the GPU, but with only one thread in serial.
+Let's start adding parallelism. The first thing we can do is add
+\texttt{\#pragma\ omp\ parallel\ for\ simd} before the loop to tell it
+to run in parallel.
+
+\begin{verbatim}
+make saxpy5
+./saxpy5
+\end{verbatim}
+
+We have told it to run the loop in parallel, but we haven't given it any
+hardware resources. To add more compute units, we need to add the teams
+clause. Then to spread the work across the threads, we need the
+distribute clause. (This code is currently not working \ldots)
+
+\begin{verbatim}
+make saxpy6
+./saxpy6
+\end{verbatim}
+
+More commonly, we add the triplet of \texttt{target\ teams\ distribute}
+to the pragma to enable all hardware elements to the computation.
+
+\begin{verbatim}
+make saxpy7
+./saxpy7
+\end{verbatim}
+
+And in Fortran.
+
+\begin{verbatim}
+make saxpy2f
+./saxpy2f
+\end{verbatim}
+
+\hypertarget{structured-and-unstructured-target-data-regions}{%
+\subsection{Structured and Unstructured Target Data
+Regions}\label{structured-and-unstructured-target-data-regions}}
+
+This example from slide 29 shows the use of a structured block region
+that encompasses several compute loops. The data region persists across
+all of them, eliminating the need for map clauses and data transfers.
+
+\begin{verbatim}
+make target_data_structured
+./target_data_structured
+\end{verbatim}
+
+This example shows the use of the target data to map the data to the
+device and then updating it with the target update in the middle of the
+target data block.
+
+\begin{verbatim}
+make target_data_unstructured
+./target_data_unstructured
+\end{verbatim}
+
+When using larger data regions, it can be necessary to move data in the
+middle of the region to support MPI communication or I/O. This example
+shows the use of the update clause to copy new input from the host to
+the device.
+
+\begin{verbatim}
+make target_data_update
+./target_data_update
+\end{verbatim}
+
+\hypertarget{advanced-openmp-presentation}{%
+\section{Advanced OpenMP
+Presentation}\label{advanced-openmp-presentation}}
+
+Here, we will discuss some examples that show more advanced OpenMP
+features.
+
+\hypertarget{memory-pragmas}{%
+\subsection{Memory Pragmas}\label{memory-pragmas}}
+
+First, we will consider the examples in the \texttt{CXX/memory\_pragmas}
+directory:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ \textasciitilde{}/HPCTrainingExamples/Pragma\_Examples/OpenMP/CXX/memory\_pragmas}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{exercises-setup}{%
+\subsubsection{Exercises Setup}\label{exercises-setup}}
+
+Setup your environment:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_INFO=}\NormalTok{{-}1}
+\BuiltInTok{export} \VariableTok{OMP\_TARGET\_OFFLOAD=}\NormalTok{MANDATORY}
+\end{Highlighting}
+\end{Shaded}
+
+The first flag above will allow you to see OpenMP activity, while the
+second terminates the program if code fails to be executed on device (as
+opposed to falling back on the host). You can also be more selective in
+the output generated by using the individual bit masks:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_INFO=$((}\NormalTok{0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20}\VariableTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+Create a build directory and compile using \texttt{cmake}: this will
+place all executables in the \texttt{build} directory:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{mkdir}\NormalTok{ build }\KeywordTok{\&\&} \BuiltInTok{cd}\NormalTok{ build}
+\FunctionTok{cmake}\NormalTok{ ..}
+\FunctionTok{make}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{mem1-initial-version}{%
+\subsubsection{Mem1 (Initial Version)}\label{mem1-initial-version}}
+
+There are 12 versions of an initial example code called
+\texttt{mem1.cc}, which is an implementation of a \texttt{daxpy} kernel
+with a single pragma with a map clause at the computational loop:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{void}\NormalTok{ daxpy(int n, double a, double *\_\_restrict\_\_ x, double *\_\_restrict\_\_ y, double *\_\_restrict\_\_ z)}
+\KeywordTok{\{}
+\CommentTok{\#pragma omp target teams distribute parallel for simd map(to: x[0:n], y[0:n]) map(from: z[0:n])}
+        \KeywordTok{for} \KeywordTok{(}\ExtensionTok{int}\NormalTok{ i = 0}\KeywordTok{;} \ExtensionTok{i} \OperatorTok{\textless{}}\NormalTok{ n}\KeywordTok{;} \ExtensionTok{i++}\KeywordTok{)}
+                \ExtensionTok{z}\NormalTok{[i] = a*x[i] + y[i]}\KeywordTok{;}
+\KeywordTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Run \texttt{mem1} to have an idea of what output is produced by the
+\texttt{LIBOMPTARGET\_INFO=-1} flag, which should include OpenMP calls
+like the following:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Entering OpenMP kernel at mem1.cc:89:1 with 5 arguments:}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: firstprivate(n)[}\ExtensionTok{4}\NormalTok{] (implicit)}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: from(z[0:n])[}\ExtensionTok{80000}\NormalTok{]}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: firstprivate(a)[}\ExtensionTok{8}\NormalTok{] (implicit)}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: to(x[0:n])[}\ExtensionTok{80000}\NormalTok{]}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: to(y[0:n])[}\ExtensionTok{80000}\NormalTok{]}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Creating new map entry with HstPtrBase=0x0000000001772200, ... }
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Creating new map entry with HstPtrBase=0x000000000174b0e0, ... }
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Copying data from host to device, HstPtr=0x000000000174b0e0, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Creating new map entry with HstPtrBase=0x000000000175e970, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Copying data from host to device, HstPtr=0x000000000175e970, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x0000000001772200, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x000000000174b0e0, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x000000000175e970, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x000000000175e970, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x000000000174b0e0, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x0000000001772200, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Copying data from device to host, TgtPtr=0x00007f617c420000, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Removing map entry with HstPtrBegin=0x000000000175e970, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Removing map entry with HstPtrBegin=0x000000000174b0e0, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Removing map entry with HstPtrBegin=0x0000000001772200, ...}
+\ExtensionTok{{-}Timing}\NormalTok{ in Seconds: min=0.010115, max=0.010115, avg=0.010115}
+\ExtensionTok{{-}Overall}\NormalTok{ time is 0.010505}
+\ExtensionTok{Last}\NormalTok{ Value: z[9999]=7.000000}
+\end{Highlighting}
+\end{Shaded}
+
+Not all versions are discussed in this document. Using \texttt{vimdiff}
+to compare versions is useful to explore the differences, e.g.:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{vimdiff}\NormalTok{ mem1.cc mem2.cc}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{mem2-add-enterexit-data-allocdelete-when-memory-is-createdfreed}{%
+\subsubsection{Mem2 (Add enter/exit data alloc/delete when memory is
+created/freed)}\label{mem2-add-enterexit-data-allocdelete-when-memory-is-createdfreed}}
+
+The initial code in \texttt{mem1.cc} is modified to obtain
+\texttt{mem2.cc} with the following additions:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#pragma omp target enter data map(alloc: x[0:n], y[0:n], z[0:n]) // line 52}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#pragma omp target exit data map(delete: x[0:n], y[0:n], z[0:n]) // line 82}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{mem3-replace-map-tofrom-with-updates-to-bypass-unneeded-device-memory-check}{%
+\subsubsection{Mem3 (Replace map to/from with updates to bypass unneeded
+device memory
+check)}\label{mem3-replace-map-tofrom-with-updates-to-bypass-unneeded-device-memory-check}}
+
+In \texttt{mem3.cc}, in addition to the changes in \texttt{mem2.cc}, the
+\texttt{daxpy} kernel is modified as follows:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{void}\NormalTok{ daxpy(int n, double a, double *\_\_restrict\_\_ x, double *\_\_restrict\_\_ y, double *\_\_restrict\_\_ z)}
+\KeywordTok{\{}
+\CommentTok{\#pragma omp target update to (x[0:n], y[0:n])}
+\CommentTok{\#pragma omp target teams distribute parallel for simd}
+        \KeywordTok{for} \KeywordTok{(}\ExtensionTok{int}\NormalTok{ i = 0}\KeywordTok{;} \ExtensionTok{i} \OperatorTok{\textless{}}\NormalTok{ n}\KeywordTok{;} \ExtensionTok{i++}\KeywordTok{)}
+                \ExtensionTok{z}\NormalTok{[i] = a*x[i] + y[i]}\KeywordTok{;}
+\CommentTok{\#pragma omp target update from (z[0:n])}
+\KeywordTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{mem4-replace-delete-with-release-to-use-reference-counting}{%
+\subsubsection{Mem4 (Replace delete with release to use reference
+counting)}\label{mem4-replace-delete-with-release-to-use-reference-counting}}
+
+Compared to \texttt{mem2.cc}, \texttt{mem4.cc} differs only at line 82,
+where a delete is replaced with a release:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#pragma omp target exit data map(release: x[0:n], y[0:n], z[0:n]) // line 82}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{mem5-use-enter-data-map-tofrom-allocdelete-to-reduce-memory-copies}{%
+\subsubsection{Mem5 (Use enter data map to/from alloc/delete to reduce
+memory
+copies)}\label{mem5-use-enter-data-map-tofrom-allocdelete-to-reduce-memory-copies}}
+
+Similar to \texttt{mem2.cc}. this version differs from the original only
+at lines 52 and 82:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#pragma omp target enter data map(to: x[0:n], y[0:n]) map(alloc: z[0:n]) // line 52}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#pragma omp target exit data map(from: z[0:n]) map(delete: x[0:n], y[0:n]) // line 82}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{mem7-use-managed-memory-to-automatically-move-data}{%
+\subsubsection{Mem7 (Use managed memory to automatically move
+data)}\label{mem7-use-managed-memory-to-automatically-move-data}}
+
+In this example, we epxloit automatic memory management by the operating
+system. To enable it, export:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{export} \VariableTok{HSA\_XNACK=}\NormalTok{1}
+\end{Highlighting}
+\end{Shaded}
+
+We also need to include the following pragma:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#pragma omp requires unified\_shared\_memory // line 22}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{mem8-use-unified-shared-memory-with-maps-for-backward-compatibility}{%
+\subsubsection{Mem8 (Use unified shared memory with maps for backward
+compatibility)}\label{mem8-use-unified-shared-memory-with-maps-for-backward-compatibility}}
+
+Compared to \texttt{mem7.cc}, \texttt{mem8.cc} supports backward
+compatibility using maps and also:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#ifndef NO\_UNIFIED\_SHARED\_MEMORY}
+\CommentTok{\#pragma omp requires unified\_shared\_memory}
+\CommentTok{\#endif}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{mem12-only-runs-on-mi300a}{%
+\subsubsection{Mem12 (Only runs on
+MI300A)}\label{mem12-only-runs-on-mi300a}}
+
+This example uses the APU programming model of MI300A and unified
+addresses in OpenMP.
+
+\hypertarget{kernel-pragmas}{%
+\subsection{Kernel Pragmas}\label{kernel-pragmas}}
+
+This set of exercises is in:
+\texttt{HPCTrainingExamples/Pragma\_Examples/OpenMP/CXX/kernel\_pragmas}.
+
+\hypertarget{exercises-setup-1}{%
+\subsubsection{Exercises Setup}\label{exercises-setup-1}}
+
+You should unset the \texttt{LIBOMPTARGET\_INFO} environment flag if
+previously set.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{unset} \VariableTok{LIBOMPTARGET\_INFO}
+\end{Highlighting}
+\end{Shaded}
+
+Then, set these environment variable
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{export} \VariableTok{CXX=}\NormalTok{amdclang++}
+\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_KERNEL\_TRACE=}\NormalTok{1}
+\BuiltInTok{export} \VariableTok{OMP\_TARGET\_OFFLOAD=}\NormalTok{MANDATORY}
+\BuiltInTok{export} \VariableTok{HSA\_XNACK=}\NormalTok{1}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{brief-exercises-description}{%
+\subsubsection{Brief Exercises
+Description}\label{brief-exercises-description}}
+
+The example \texttt{kernel1.cc} is the same as
+\texttt{memory\_pragmas/mem11.cc} except for the pragma line below (from
+\texttt{kernel1.cc}):
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{cout} \OperatorTok{\textless{}\textless{} "{-}Overall} \BuiltInTok{time}\NormalTok{ is }\StringTok{" \textless{}\textless{} main\_timer \textless{}\textless{} endl;}
+\StringTok{\#pragma omp target update from(z[0])}
+\end{Highlighting}
+\end{Shaded}
+
+The example \texttt{kernel2.cc} differs from \texttt{kernel1.cc} as it
+adds \texttt{num\_threads(64)} to the pragma line in the \texttt{daxpy}
+kernel:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{void}\NormalTok{ daxpy(int n, double a, double *\_\_restrict\_\_ x, double *\_\_restrict\_\_ y, double *\_\_restrict\_\_ z)}
+\KeywordTok{\{}
+\CommentTok{\#pragma omp target teams distribute parallel for simd num\_threads(64)}
+        \KeywordTok{for} \KeywordTok{(}\ExtensionTok{int}\NormalTok{ i = 0}\KeywordTok{;} \ExtensionTok{i} \OperatorTok{\textless{}}\NormalTok{ n}\KeywordTok{;} \ExtensionTok{i++}\KeywordTok{)}
+                \ExtensionTok{z}\NormalTok{[i] = a*x[i] + y[i]}\KeywordTok{;}
+\KeywordTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Similarly, example \texttt{kernel3.cc} differs from \texttt{kernel1.cc}
+as it adds \texttt{num\_threads(64)\ thread\_limit(64)} to the pragma
+line in the \texttt{daxpy} kernel:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{void}\NormalTok{ daxpy(int n, double a, double *\_\_restrict\_\_ x, double *\_\_restrict\_\_ y, double *\_\_restrict\_\_ z)}
+\KeywordTok{\{}
+\CommentTok{\#pragma omp target teams distribute parallel for simd num\_threads(64) thread\_limit(64)}
+        \KeywordTok{for} \KeywordTok{(}\ExtensionTok{int}\NormalTok{ i = 0}\KeywordTok{;} \ExtensionTok{i} \OperatorTok{\textless{}}\NormalTok{ n}\KeywordTok{;} \ExtensionTok{i++}\KeywordTok{)}
+                \ExtensionTok{z}\NormalTok{[i] = a*x[i] + y[i]}\KeywordTok{;}
+\KeywordTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Something to test On your own: uncomment line 15 in CMakeLists.txt (the
+one with -faligned-allocation -fnew-alignment=256).
+
+Another option to explore is adding the attribute
+(std::align\_val\_t(128) ) to each new line, for example:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{double}\NormalTok{ *x = new (std::align\_val\_t(128) ) }\ExtensionTok{double}\NormalTok{[n]}\KeywordTok{;}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{real-world-openmp-language-constructs}{%
+\section{Real-World OpenMP Language
+Constructs}\label{real-world-openmp-language-constructs}}
+
+For all excercises in this section:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{module}\NormalTok{ load amdclang}
+\FunctionTok{git}\NormalTok{ clone https://github.com/AMD/HPCTrainingExamples}
+\end{Highlighting}
+\end{Shaded}
+
+either choose
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ \textasciitilde{}/HPCTrainingExamples/Pragma\_Examples/OpenMP/Fortran}
+\end{Highlighting}
+\end{Shaded}
+
+or
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ \textasciitilde{}/HPCTrainingExamples/Pragma\_Examples/OpenMP/C}
+\end{Highlighting}
+\end{Shaded}
+
+\textbf{\emph{Note}}: make sure the compilers are set to your
+preference. This can be obtained by exporting the \texttt{FC} and
+\texttt{CC} environment variables:
+
+\begin{verbatim}
+export FC=<my favorite Fortran compiler>
+export CC=<my favorite C compiler>
+\end{verbatim}
+
+It is suggested for those that want to truly experience the effort, that
+you take all the pragma statements out of these examples and do the port
+yourself.
+
+\hypertarget{simple-reduction}{%
+\subsection{Simple Reduction}\label{simple-reduction}}
+
+The first example is a simple reduction:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ reduction\_scalar}
+\FunctionTok{make}
+\ExtensionTok{./reduction\_scalar}
+\end{Highlighting}
+\end{Shaded}
+
+Now try the array form
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ ../reduction\_array}
+\FunctionTok{make}
+\ExtensionTok{./reduction\_array}
+\end{Highlighting}
+\end{Shaded}
+
+If your compiler passes, it supports at least simple array reduction
+clauses
+
+\hypertarget{device-routine}{%
+\subsection{Device Routine}\label{device-routine}}
+
+Subroutines called from within a target region also cause some
+difficulties. We must tell the compiler that we want these compiled for
+the GPU. Note that device routines are not (yet) supported by all
+compilers!
+
+For this example
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ ../device\_routine}
+\end{Highlighting}
+\end{Shaded}
+
+there are multiple versions to choose from in Fortran, either with an
+interface and an external routine or using a module. Hence one first
+needs to enter the selected subfolder, and then:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{make}
+\ExtensionTok{./device\_routine}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{device-routine-with-global-data}{%
+\subsection{Device Routine with Global
+Data}\label{device-routine-with-global-data}}
+
+Including the use of data from global scope in device routines also
+causes difficulties. We have examples for both statically sized arrays
+and dynamically allocated global data. Note that device routines are not
+(yet) supported by all compilers! Also, this excercise only exists in
+the C version at the moment.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ ../device\_routine\_wglobaldata}
+\FunctionTok{make}
+\ExtensionTok{./device\_routine}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ ../device\_routine\_wdynglobaldata}
+\FunctionTok{make}
+\ExtensionTok{./device\_routine}
+\end{Highlighting}
+\end{Shaded}
+
+\pagebreak
+
+\hypertarget{introduction-to-hip-exercises}{%
+\section{Introduction to HIP
+Exercises}\label{introduction-to-hip-exercises}}
+
+\textbf{NOTE}: these exercises have been tested on MI210 and MI300A
+accelerators using a container environment. To see details on the
+container environment (such as operating system and modules available)
+please see \texttt{README.md} on
+\href{https://github.com/amd/HPCTrainingDock}{this} repo.
+
+\texttt{git\ clone\ https://github.com/amd/HPCTrainingExamples.git}
+
+For the first interactive example, get an slurm interactive session
+
+\texttt{salloc\ -N\ 1\ -p\ LocalQ\ -\/-gpus=1\ -t\ 10:00}
+
+\hypertarget{basic-examples}{%
+\subsection{Basic examples}\label{basic-examples}}
+
+\texttt{cd\ HPCTrainingExamples/HIP/vectorAdd}
+
+Examine files here - README, Makefile, CMakeLists.txt and vectoradd.hip.
+Notice that Makefile requires \texttt{ROCM\_PATH} to be set. Check with
+module show rocm or echo \texttt{\$ROCM\_PATH} Also, the Makefile builds
+and runs the code. We'll do the steps separately. Check also the
+HIPFLAGS in the Makefile. There is also a CMakeLists.txt file to use for
+a cmake build.
+
+For the portable Makefile system
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{module}\NormalTok{ load rocm}
+
+\FunctionTok{make}\NormalTok{ vectoradd}
+\ExtensionTok{./vectoradd}
+\end{Highlighting}
+\end{Shaded}
+
+Pro tip for Makefile builds. Run \texttt{make\ clean} before
+\texttt{make} to be sure nothing is left over from a previous build.
+
+This example also runs with the cmake system
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{module}\NormalTok{ load rocm}
+
+\FunctionTok{mkdir}\NormalTok{ build }\KeywordTok{\&\&} \BuiltInTok{cd}\NormalTok{ build}
+\FunctionTok{cmake}\NormalTok{ ..}
+\FunctionTok{make}
+\ExtensionTok{./vectoradd}
+\end{Highlighting}
+\end{Shaded}
+
+Pro tip for cmake builds. To rebuild after changing CMake options or
+using a different compiler, either
+
+\begin{itemize}
+\tightlist
+\item
+  Remove the CMakeCache.txt, or
+\item
+  clean out all files from the ./build directory
+\end{itemize}
+
+We can use a SLURM submission script, let's call it
+\texttt{hip\_batch.sh}. There is a sample script for some systems in the
+example directory.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#!/bin/bash}
+\CommentTok{\#SBATCH {-}N 1}
+\CommentTok{\#SBATCH {-}p LocalQ}
+\CommentTok{\#SBATCH {-}{-}gpus=1}
+\CommentTok{\#SBATCH {-}t 10:00}
+
+\ExtensionTok{module}\NormalTok{ load rocm}
+\BuiltInTok{cd} \VariableTok{$HOME}\NormalTok{/HPCTrainingExamples/HIP/vectorAdd }
+
+\FunctionTok{make}\NormalTok{ vectoradd}
+\ExtensionTok{./vectoradd}
+\end{Highlighting}
+\end{Shaded}
+
+Submit the script \texttt{sbatch\ hip\_batch.sh}
+
+Check for output in \texttt{slurm-\textless{}job-id\textgreater{}.out}
+or error in \texttt{slurm-\textless{}job-id\textgreater{}.err}
+
+To use the cmake option in the batch file, change the build to
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{mkdir}\NormalTok{ build }\KeywordTok{\&\&} \BuiltInTok{cd}\NormalTok{ build}
+\FunctionTok{cmake}\NormalTok{ ..}
+\FunctionTok{make}
+\ExtensionTok{./vectoradd}
+\end{Highlighting}
+\end{Shaded}
+
+Now let's try the hip-stream example. This example is from the original
+McCalpin code as ported to CUDA by Nvidia. This version has been ported
+to use HIP.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{module}\NormalTok{ load rocm}
+\BuiltInTok{cd} \VariableTok{$HOME}\NormalTok{/HPCTrainingExamples/HIP/hip{-}stream}
+\FunctionTok{make}
+\ExtensionTok{./stream}
+\end{Highlighting}
+\end{Shaded}
+
+Note that it builds with the hipcc compiler. You should get a report of
+the Copy, Scale, Add, and Triad cases.
+
+On your own:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Check out the saxpy example in \texttt{HPCTrainingExamples/HIP}
+\item
+  Write your own kernel and run it
+\item
+  Test the code on an Nvidia system -- Add \texttt{HIPCC=nvcc} before
+  the make command or \texttt{-DCMAKE\_GPU\_RUNTIME=CUDA} to the cmake
+  command. (See README file)
+\end{enumerate}
+
+\hypertarget{more-advanced-hip-makefile}{%
+\subsection{More advanced HIP
+makefile}\label{more-advanced-hip-makefile}}
+
+The jacobi example has a more complex build that incorporates MPI. The
+original Makefile has not been modified, but a CMakeLists.txt has been
+added to demonstrate a portable cmake build. From an interactive
+session, build the example.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd} \VariableTok{$HOME}\NormalTok{/HPCTrainingExamples/HIP/jacobi}
+
+\ExtensionTok{module}\NormalTok{ load rocm}
+\ExtensionTok{module}\NormalTok{ load openmpi}
+
+\FunctionTok{mkdir}\NormalTok{ build }\KeywordTok{\&\&} \BuiltInTok{cd}\NormalTok{ build}
+\FunctionTok{cmake}\NormalTok{ ..}
+\FunctionTok{make}
+\end{Highlighting}
+\end{Shaded}
+
+Since we will be running on two MPI ranks, you will need to alloc 2 GPUs
+for a quick run. Exit your current allocation with \texttt{exit} and
+then get the two GPUs. Keep the requested time short to avoid tying up
+the GPUs so others can run the examples. The requested time shown is in
+the format hours:minutes:seconds so it is for one minute.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{salloc}\NormalTok{ {-}p LocalQ {-}{-}gpus=2 {-}n 2 {-}t 00:01:00}
+\ExtensionTok{module}\NormalTok{ load rocm openmpi}
+\ExtensionTok{mpirun}\NormalTok{ {-}n 2 ./Jacobi\_hip {-}g 2}
+\end{Highlighting}
+\end{Shaded}
 
 \pagebreak
 
@@ -1075,7 +2531,7 @@ Now testing for CUDA
 \end{Shaded}
 
 \hypertarget{hipifly-example-vector-addition}{%
-\subsection{HIPifly Example: Vector
+\subsection{HIPIFLY Example: Vector
 Addition}\label{hipifly-example-vector-addition}}
 
 Original author was Trey White, at the time with HPE and now with ORNL.
@@ -1103,1302 +2559,6 @@ or \texttt{ROCM\_PATH} are needed to compile.
 After compiling run the program: \texttt{./vector\_add}
 
 \pagebreak
-
-Copyright (c) 2022, Advanced Micro Devices, Inc.~All rights reserved.
-
-This training example is released under the MIT license as listed in the
-top-level directory. If this example is separated from the main
-directory, include the LICENSE file with it.
-
-Contributions from Suyash Tandon, Noel Chalmers, Nick Curtis, Justin
-Chang, and Gina Sitaraman.
-
-\hypertarget{description-document-for-the-gpu-based-jacobi-solver}{%
-\section{Description document for the GPU-based Jacobi
-solver}\label{description-document-for-the-gpu-based-jacobi-solver}}
-
-\hypertarget{contents}{%
-\subsection{Contents:}\label{contents}}
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\item
-  \protect\hyperlink{application-overview}{Application overview}
-\item
-  \protect\hyperlink{prerequisites}{Prerequisites}
-\item
-  \protect\hyperlink{build-instructions}{Build instructions}
-\item 
-  \protect\hyperlink{run-instructions}{Run instructions}
-\end{enumerate}
-
-\subsection{Application overview}\label{application-overview}
-This is a distributed Jacobi solver, using GPUs to perform the
-computation and MPI for halo exchanges. It uses a 2D domain
-decomposition scheme to allow for a better computation-to-communication
-ratio than just 1D domain decomposition.
-
-The flow of the application is as follows: * The MPI environment is
-initialized * The command-line arguments are parsed, and a MPI grid and
-mesh are created * Resources (including host and device memory blocks,
-streams etc.) are initialized * The Jacobi loop is executed; in every
-iteration, the local block is updated and then the halo values are
-exchanged; the algorithm converges when the global residue for an
-iteration falls below a threshold, but it is also limited by a maximum
-number of iterations (irrespective if convergence has been achieved or
-not) * Run measurements are displayed and resources are disposed
-
-The application uses the following command-line arguments: *
-\texttt{-g\ x\ y} - mandatory argument for the process topology,
-\texttt{x} denotes the number of processes on the X direction (i.e.~per
-row) and \texttt{y} denotes the number of processes on the Y direction
-(i.e.~per column); the topology size must always match the number of
-available processes (i.e.~the number of launched MPI processes must be
-equal to x * y) * \texttt{-m\ dx\ dy} - optional argument indicating the
-size of the local (per-process) domain size; if it is omitted, the size
-will default to \texttt{DEFAULT\_DOMAIN\_SIZE} as defined in
-\texttt{defines.h} * \texttt{-h\ \textbar{}\ -\/-help} - optional
-argument for printing help information; this overrides all other
-arguments
-
-\hypertarget{prerequisites}{%
-\subsection{Prerequisites}\label{prerequisites}}
-
-To build and run the jacobi application on A+A hardware, the following
-dependencies must be installed first:
-
-\begin{itemize}
-\tightlist
-\item
-  an MPI implementation (openMPI, MPICH, etc.)
-\item
-  ROCm 2.1 or later.
-\end{itemize}
-
-\hypertarget{build-instructions}{%
-\subsection{Build Instructions}\label{build-instructions}}
-
-A \texttt{Makefile} is included along with the source files that
-configures and builds multiple objects and then stitches them together
-to build the binary for the application \texttt{Jacobi\_hip}. To build,
-simply run:
-
-\begin{verbatim}
-make
-\end{verbatim}
-
-An alternative cmake build system is also include
-
-\begin{verbatim}
-mkdir build && cd build
-cmake ..
-make
-\end{verbatim}
-
-\hypertarget{run-instructions-1}{%
-\subsection{Run instructions}\label{run-instructions-1}}
-
-To run use:
-
-\begin{verbatim}
-mpirun -np 2 ./Jacobi_hip -g 2 1
-\end{verbatim}
-
-\pagebreak
-
-Copyright (c) 2022, Advanced Micro Devices, Inc.~All rights reserved.
-
-This training example is released under the MIT license as listed in the
-top-level directory. If this example is separated from the main
-directory, include the LICENSE file with it.
-
-Major revisions by Suyash Tandon.
-
-\hypertarget{dgemm-application}{%
-\section{(d)GEMM Application}\label{dgemm-application}}
-
-\hypertarget{about}{%
-\subsection{About}\label{about}}
-
-A simple (d)GEMM application created as an exercise to showcase simple
-matrix-matrix multiplications on AMD GPUs. The simpler interface makes
-it easier to be used in training modules as opposed to other optimized
-and complicated gemm libraries.
-
-\hypertarget{requirements}{%
-\subsection{Requirements}\label{requirements}}
-
-\begin{itemize}
-\tightlist
-\item
-  cmake \textgreater{} 2.8
-\item
-  ROCm \textgreater{} 3.9
-\end{itemize}
-
-\hypertarget{build}{%
-\subsection{Build}\label{build}}
-
-Follow the instructions below to configure and build the \texttt{dgemm}
-binary using the commands:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{mkdir}\NormalTok{ build}
-\BuiltInTok{cd}\NormalTok{ build}
-\FunctionTok{cmake}\NormalTok{ ..}
-\FunctionTok{make}
-\end{Highlighting}
-\end{Shaded}
-
-To install at a specific location, provide
-\texttt{-DCMAKE\_INSTALL\_PREFIX=\textless{}path-to-install\textgreater{}},
-for example to install in \texttt{\$HOME} dir:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{cmake}\NormalTok{ {-}DCMAKE\_INSTALL\_PREFIX=}\VariableTok{$HOME}\NormalTok{ ..}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{usage}{%
-\subsection{Usage}\label{usage}}
-
-Sample usage is shown below:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{dgemm} \KeywordTok{\textbackslash{}}
-   \ExtensionTok{{-}m}\NormalTok{ 8192 }\KeywordTok{\textbackslash{}}
-   \ExtensionTok{{-}n}\NormalTok{ 8192 }\KeywordTok{\textbackslash{}}
-   \ExtensionTok{{-}k}\NormalTok{ 8192 }\KeywordTok{\textbackslash{}}
-   \ExtensionTok{{-}i}\NormalTok{ 10 }\KeywordTok{\textbackslash{}}
-   \ExtensionTok{{-}r}\NormalTok{ 10 }\KeywordTok{\textbackslash{}}
-   \ExtensionTok{{-}d}\NormalTok{ DEVICE\_LIST }\KeywordTok{\textbackslash{}}
-   \ExtensionTok{{-}o} \VariableTok{$(}\FunctionTok{hostname}\VariableTok{)}\NormalTok{\_dgemm.json}
-\end{Highlighting}
-\end{Shaded}
-
-where, - \texttt{m} is row count of matrix A - \texttt{n} is column
-count of matrix A - \texttt{k} is column count of matrix B - \texttt{i}
-is iteration count to perform - \texttt{r} is number of repetitions of
-dgemm to perform when evaluating flops - \texttt{d} is a comma separated
-list of devices to use, indexed at zero (e.g.~0,1,\ldots) - \texttt{o}
-to give filename to write all data. If not \texttt{.csv}, will write in
-\texttt{.json} (optional)
-
-\hypertarget{output}{%
-\subsection{Output}\label{output}}
-
-GEMM operations on each GPU are run asynchronously, and the data printed
-to \texttt{stdout} aims only to show the progress for each GPU:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{./dgemm}\NormalTok{ {-}m 8192 {-}n 8192 {-}k 8192 {-}i 3 {-}r 10 {-}d 0,1,2,3 {-}o dgemm.csv}
-\ExtensionTok{2}\NormalTok{     1   27.56}
-\ExtensionTok{0}\NormalTok{     1   27.63}
-\ExtensionTok{3}\NormalTok{     1   27.56}
-\ExtensionTok{1}\NormalTok{     1   27.63}
-\ExtensionTok{2}\NormalTok{     2   27.56}
-\ExtensionTok{0}\NormalTok{     2   27.63}
-\ExtensionTok{3}\NormalTok{     2   27.56}
-\ExtensionTok{1}\NormalTok{     2   27.63}
-\ExtensionTok{2}\NormalTok{     3   27.56}
-\ExtensionTok{0}\NormalTok{     3   27.63}
-\ExtensionTok{3}\NormalTok{     3   27.56}
-\ExtensionTok{1}\NormalTok{     3   27.63}
-\end{Highlighting}
-\end{Shaded}
-
-Summary of the results are dumped to \texttt{stdout} at the end of the
-run:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-  \ExtensionTok{DEV} \KeywordTok{|}        \ExtensionTok{MIN} \KeywordTok{|}        \ExtensionTok{MAX} \KeywordTok{|}    \ExtensionTok{AVERAGE} \KeywordTok{|}    \ExtensionTok{STD}\NormalTok{ Dev}
-\ExtensionTok{{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
-    \ExtensionTok{0} \KeywordTok{|}    \ExtensionTok{27.6259} \KeywordTok{|}    \ExtensionTok{27.6259} \KeywordTok{|}    \ExtensionTok{27.6259} \KeywordTok{|}          \ExtensionTok{0}
-    \ExtensionTok{1} \KeywordTok{|}    \ExtensionTok{27.6259} \KeywordTok{|}    \ExtensionTok{27.6259} \KeywordTok{|}    \ExtensionTok{27.6259} \KeywordTok{|}          \ExtensionTok{0}
-    \ExtensionTok{2} \KeywordTok{|}    \ExtensionTok{27.5567} \KeywordTok{|}    \ExtensionTok{27.5567} \KeywordTok{|}    \ExtensionTok{27.5567} \KeywordTok{|}          \ExtensionTok{0}
-    \ExtensionTok{3} \KeywordTok{|}    \ExtensionTok{27.5567} \KeywordTok{|}    \ExtensionTok{27.5567} \KeywordTok{|}    \ExtensionTok{27.5567} \KeywordTok{|}          \ExtensionTok{0}
-\end{Highlighting}
-\end{Shaded}
-
-If an output file is specified, the complete data for each iteration
-including timestamps are printed to file in either \texttt{json} or
-\texttt{csv} format, depending on the specific output file extension via
-\texttt{-o}.
-
-\hypertarget{json}{%
-\subsubsection{json}\label{json}}
-
-Default output format is json unless \texttt{csv} extension is specified
-in output filename. The results per iteration are recorded along with
-the local timestamp when the flop-rate was estimated. Output format is
-
-\begin{verbatim}
-{
-  "flop_rates": {
-     "<device_id_1>": [<flop_rates>, ...],
-     "<device_id_2>": [<flop_rates>, ...],
-     ...
-  },
-  "times": {
-     "<device_id_1>": ["<timestamp>", ...],
-     "<device_id_2>": ["<timestamp>", ...],
-     ...
-  },
-  "args": {
-     <input args as key-value pairs>
-  }
-}
-\end{verbatim}
-
-where \texttt{\textless{}timestamp\textgreater{}} format is
-\texttt{YYYY-mm-dd\ HH:MM:SS.ZZZ}, and
-\texttt{\textless{}device\_id\_N\textgreater{}} are specified input
-device ids (0, 1, 2, \ldots).
-
-\hypertarget{csv}{%
-\subsubsection{csv}\label{csv}}
-
-If the output file name has \texttt{csv} as extension, data is written
-in comma-saparated format. There is a single header line, followed by
-data, where the header for this case is as follows
-
-\begin{verbatim}
-t_<N>,flops_<N>,[...]
-\end{verbatim}
-
-where \texttt{N} is an integer representing the device id. Device ids
-are not guaranteed to be ordered.
-
-Example \texttt{csv} output:
-
-{\scriptsize
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{$ }\FunctionTok{cat}\NormalTok{ dgemm.csv}
-\ExtensionTok{t\_3}\NormalTok{,flops\_3,t\_2,flops\_2,t\_0,flops\_0,t\_1,flops\_1}
-\StringTok{"2022{-}12{-}08 15:17:15.232"}\NormalTok{,}\ExtensionTok{27.556682}\NormalTok{,}\StringTok{"2022{-}12{-}08 15:17:15.087"}\NormalTok{,27.556682,}\StringTok{"2022{-}12{-}08 15:17:15.228"}\NormalTok{,27.625920,}\StringTok{"2022{-}12{-}08 15:17:15.437"}\NormalTok{,27.625920}
-\StringTok{"2022{-}12{-}08 15:17:15.631"}\NormalTok{,}\ExtensionTok{27.556682}\NormalTok{,}\StringTok{"2022{-}12{-}08 15:17:15.486"}\NormalTok{,27.556682,}\StringTok{"2022{-}12{-}08 15:17:15.627"}\NormalTok{,27.625920,}\StringTok{"2022{-}12{-}08 15:17:15.836"}\NormalTok{,27.625920}
-\StringTok{"2022{-}12{-}08 15:17:16.030"}\NormalTok{,}\ExtensionTok{27.556682}\NormalTok{,}\StringTok{"2022{-}12{-}08 15:17:15.885"}\NormalTok{,27.556682,}\StringTok{"2022{-}12{-}08 15:17:16.025"}\NormalTok{,27.625920,}\StringTok{"2022{-}12{-}08 15:17:16.234"}\NormalTok{,27.625920}
-\end{Highlighting}
-\end{Shaded}
-}
-
-\pagebreak
-
-\hypertarget{optimizing-daxpy-hip}{%
-\section{Optimizing DAXPY HIP}\label{optimizing-daxpy-hip}}
-
-In this exercise, we will progressively make changes to optimize the
-DAXPY kernel on GPU. Any AMD GPU can be used to test this.
-
-DAXPY Problem:
-
-\begin{verbatim}
-Z = aX + Y
-\end{verbatim}
-
-where \texttt{a} is a scalar, \texttt{X}, \texttt{Y} and \texttt{Z} are
-arrays of double precision values.
-
-In DAXPY, we load 2 FP64 values (8 bytes each) and store 1 FP64 value (8
-bytes). We can ignore the scalar load because it is constant. We have 1
-multiplication and 1 addition operation for the 24 bytes moved per
-element of the array. This yields a low arithmetic intensity of 2/24.
-So, this kernel is not compute bound, so we will only measure the
-achieved memory bandwith instead of FLOPS.
-
-\hypertarget{inputs}{%
-\subsection{Inputs}\label{inputs}}
-
-\begin{itemize}
-\tightlist
-\item
-  \texttt{N}, the number of elements in \texttt{X}, \texttt{Y} and
-  \texttt{Z}. \texttt{N} may be reset to suit some optimizations. Choose
-  a sufficiently large array size to see some differences in
-  performance.
-\end{itemize}
-
-\hypertarget{build-code}{%
-\subsection{Build Code}\label{build-code}}
-
-\begin{verbatim}
-make
-\end{verbatim}
-
-\hypertarget{run-exercises}{%
-\subsection{Run exercises}\label{run-exercises}}
-
-\begin{verbatim}
-./daxpy_1 10000000
-./daxpy_2 10000000
-./daxpy_3 10000000
-./daxpy_4 10000000
-./daxpy_5 10000000
-\end{verbatim}
-
-\hypertarget{things-to-ponder-about}{%
-\subsection{Things to ponder about}\label{things-to-ponder-about}}
-
-\subsubsection{daxpy\_1}\label{daxpy_1}
-
-This shows a naive implementation of the daxpy problem on the GPU where
-only 1 wavefront is launched and the 64 work-items in that wavefront
-loop over the entire array and process 64 elements at a time. We expect
-this kernel to perform very poorly because it simply utilizes a part of
-1 CU, and leaves the rest of the GPU unutilized.
-
-\subsubsection{daxpy\_2}\label{daxpy_2}
-
-This time, we are launching multiple wavefronts, each work-item now
-processing only 1 element of each array. This launches \texttt{N/64}
-wavefronts, enough to be scheduled on all CUs. We see a big improvement
-in performance here.
-
-\subsubsection{daxpy\_3}\label{daxpy_3}
-
-In this experiment, we check to see if launching larger workgroups can
-help lower our kernel launch overhead because we launch fewer workgroups
-if each workgroup has 256 work-items. In this case too, an improvement
-in measured bandwidth achieved is seen.
-
-\subsubsection{daxpy\_4}\label{daxpy_4}
-
-If we ensured that the array has a multiple of \texttt{BLOCK\_SIZE}
-elements so that all work-items in each workgroup have an element to
-process, then we can avoid the conditional statement in the kernel. This
-could reduce some instructions in the kernel.. Do we see any
-improvement? In this trivial case, this does not matter. Nevertheless,
-it is something we could keep in mind.
-
-Question: What happens if \texttt{BLOCK\_SIZE} is \texttt{1024}? Why?
-
-\subsubsection{daxpy\_5}\label{daxpy_5}
-
-In this experiment, we will use double2 type in the kernel to see if the
-compiler can generate \texttt{global\_load\_dwordx4} instructions
-instead of \texttt{global\_load\_dwordx2} instructions. So, with same
-number of load and store instructions, we are able to read/write two
-elements from each array in each thread. This should help amortize on
-the cost of index calculations.
-
-To show this difference, we need to generate the assembly for these two
-kernels. To generate the assembly code for these kernels, ensure that
-the \texttt{-g\ -\/-save-temps} flags are passed to \texttt{hipcc}. Then
-you can find the assembly code in
-\texttt{daxpy\_*-host-x86\_64-unknown-linux-gnu.s} files. Examining
-\texttt{daxpy\_3} and \texttt{daxpy\_5}, we see the two cases (edited
-here for clarity):
-
-\texttt{daxpy\_3}:
-
-\begin{verbatim}
-    global_load_dwordx2 v[2:3], v[2:3], off
-    v_mov_b32_e32 v6, s5
-    global_load_dwordx2 v[4:5], v[4:5], off
-    v_add_co_u32_e32 v0, vcc, s4, v0
-    v_addc_co_u32_e32 v1, vcc, v6, v1, vcc
-    s_waitcnt vmcnt(0)
-    v_fmac_f64_e32 v[4:5], s[6:7], v[2:3]
-    global_store_dwordx2 v[0:1], v[4:5], off
-\end{verbatim}
-
-\texttt{daxpy\_5}:
-
-\begin{verbatim}
-    global_load_dwordx4 v[0:3], v[0:1], off
-    v_mov_b32_e32 v10, s5
-    global_load_dwordx4 v[4:7], v[4:5], off
-    s_waitcnt vmcnt(0)
-    v_fmac_f64_e32 v[4:5], s[6:7], v[0:1]
-    v_add_co_u32_e32 v0, vcc, s4, v8
-    v_fmac_f64_e32 v[6:7], s[6:7], v[2:3]
-    v_addc_co_u32_e32 v1, vcc, v10, v9, vcc
-    global_store_dwordx4 v[0:1], v[4:7], off
-\end{verbatim}
-
-We observe that, in the \texttt{daxpy\_5} case, there are two
-\texttt{v\_fmac\_f64\_e32} instructions as expected, one for each
-element being processed.
-
-
-\hypertarget{notes}{%
-\subsection{Notes}\label{notes}}
-
-\begin{itemize}
-\tightlist
-\item
-  Before timing kernels, it is best to launch the kernel at least once
-  as warmup so that those initial GPU launch latencies do not affect
-  your timing measurements.
-\item
-  The timing loop is typically several hundred iterations.
-\end{itemize}
-
-\hypertarget{rocgdb}{%
-\section{ROCgdb}\label{rocgdb}}
-
-\textbf{NOTE}: these exercises have been tested on MI210 and MI300A
-accelerators using a container environment. To see details on the
-container environment (such as operating system and modules available)
-please see \texttt{README.md} on
-\href{https://github.com/amd/HPCTrainingDock}{this} repo.
-
-We show a simple example on how to use the main features of the ROCm
-debugger \texttt{rocgdb}.
-
-\hypertarget{saxpy-debugging}{%
-\subsection{Saxpy Debugging}\label{saxpy-debugging}}
-
-Let us consider the \texttt{saxpy} kernel in the HIP examples:
-
-\begin{verbatim}
-cd HPCTrainingExamples/HIP/saxpy
-\end{verbatim}
-
-Get an allocation of a GPU and load software modules:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{salloc}\NormalTok{ {-}N 1 {-}{-}gpus=1}
-\ExtensionTok{module}\NormalTok{ load rocm}
-\end{Highlighting}
-\end{Shaded}
-
-You can see some information on the GPU you will be running on by doing:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{rocm{-}smi}
-\end{Highlighting}
-\end{Shaded}
-
-To introduce an error in your program, comment out the
-\texttt{hipMalloc} calls at line 71 and 72, then compile with:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{mkdir}\NormalTok{ build }\KeywordTok{\&\&} \BuiltInTok{cd}\NormalTok{ build}
-\FunctionTok{cmake}\NormalTok{ ..}
-\FunctionTok{make}\NormalTok{ VERBOSE=1}
-\end{Highlighting}
-\end{Shaded}
-
-Running the program, you will see the expected runtime error:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{./saxpy}
-\ExtensionTok{Memory}\NormalTok{ access fault by GPU node{-}2 (Agent handle: 0x2284d90) }\ExtensionTok{on}\NormalTok{ address (nil)}\BuiltInTok{.} \ExtensionTok{Reason}\NormalTok{: Unknown.}
-\ExtensionTok{Aborted}\NormalTok{ (core dumped)}
-\end{Highlighting}
-\end{Shaded}
-
-To run the code with the \texttt{rocgdb} debugger, do:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{rocgdb}\NormalTok{ saxpy}
-\end{Highlighting}
-\end{Shaded}
-
-Note that there are also two options for graphical user interfaces that
-can be turned on by doing:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{rocgdb}\NormalTok{ {-}tui saxpy}
-\ExtensionTok{cgdb}\NormalTok{ {-}d rocgdb saxpy }
-\end{Highlighting}
-\end{Shaded}
-
-For the latter command above, you need to have \texttt{cgdb} installed
-on your system.
-
-In the debugger, type \texttt{run} (or just \texttt{r}) and you will get
-an error similar to this one:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{Thread}\NormalTok{ 3 }\StringTok{"saxpy"}\NormalTok{ received signal SIGSEGV, Segmentation fault.}
-\NormalTok{[}\ExtensionTok{Switching}\NormalTok{ to thread 3, lane 0 (AMDGPU Lane 1:2:1:1/0 (0,0,0)[}\ExtensionTok{0}\NormalTok{,0,0])]}
-\ExtensionTok{0x00007ffff7ec1094}\NormalTok{ in saxpy() }\ExtensionTok{at}\NormalTok{ saxpy.cpp:57}
-\ExtensionTok{57}\NormalTok{    y[i] += a*x[i]}\KeywordTok{;}
-\end{Highlighting}
-\end{Shaded}
-
-Note that the cmake build type is set to \texttt{RelWithDebInfo} (see
-line 8 in CMakeLists.txt). With this build type, the debugger will be
-aware of the debug symbols. If that was not the case (for instance if
-compiling in \texttt{Release} mode), running the code with the debugger
-you would get an error message \textbf{\emph{without}} line info, and
-also a warning like this one:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{Reading}\NormalTok{ symbols from saxpy...}
-\KeywordTok{(}\ExtensionTok{No}\NormalTok{ debugging symbols found in saxpy}\KeywordTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-The error report is at a thread on the GPU. We can display information
-on the threads by typing \texttt{info\ threads} (or \texttt{i\ th}). It
-is also possible to move to a specific thread with
-\texttt{thread\ \textless{}ID\textgreater{}} (or
-\texttt{t\ \textless{}ID\textgreater{}}) and see the location of this
-thread with \texttt{where}. For instance, if we are interested in the
-thread with ID 1:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{i}\NormalTok{ th}
-\ExtensionTok{th}\NormalTok{ 1}
-\ExtensionTok{where}
-\end{Highlighting}
-\end{Shaded}
-
-You can add breakpoints with \texttt{break} (or \texttt{b}) followed by
-the line number. For instance to put a breakpoint right after the
-\texttt{hipMalloc} lines do \texttt{b\ 72}.
-
-When possible, it is also advised to compile without optimization flags
-(so using \texttt{-O0}) to avoid seeing breakpoints placed on lines
-different than those specified with the breakpoint command.
-
-You can also add a breakpoint directly at the start of the GPU kernel
-with \texttt{b\ saxpy}. To run to the next breakpoint, type
-\texttt{continue} (or \texttt{c}).
-
-To list all the breakpoints that have been inserted type
-\texttt{info\ break} (or \texttt{i\ b}):
-{\small
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{(}\FunctionTok{gdb}\KeywordTok{)} \ExtensionTok{i}\NormalTok{ b}
-\ExtensionTok{Num}\NormalTok{     Type           Disp Enb Address            What}
-\ExtensionTok{1}\NormalTok{       breakpoint     keep y   0x000000000020b334 in main() }\ExtensionTok{at}\NormalTok{ /HPCTrainingExamples/HIP/saxpy/saxpy.hip:74}
-\ExtensionTok{2}\NormalTok{       breakpoint     keep y   0x000000000020b350 in main() }\ExtensionTok{at}\NormalTok{ /HPCTrainingExamples/HIP/saxpy/saxpy.hip:78}
-\end{Highlighting}
-\end{Shaded}
-}
-
-A breakpoint can be removed with
-\texttt{delete\ \textless{}Num\textgreater{}} (or
-\texttt{d\ \textless{}Num\textgreater{}}): note that
-\texttt{\textless{}Num\textgreater{}} is the breakpoint ID displayed
-above. For instance, to remove the breakpoint at line 74, you have to do
-\texttt{d\ 1}.
-
-To proceed to the next line you can do \texttt{next} (or \texttt{n}). To
-step into a function, do \texttt{step} (or \texttt{s}) and to get out do
-\texttt{finish}. Note that if a breakpoint is at a kernel, doing
-\texttt{n} or \texttt{s} will switch between different threads. To avoid
-this behavior, it is necessary to disable the breakpoint at the kernel
-with \texttt{disable\ \textless{}Num\textgreater{}}.
-
-It is possible to have information on the architecture (below shown on
-MI250):
-
-{\scriptsize
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{(}\FunctionTok{gdb}\KeywordTok{)} \ExtensionTok{info}\NormalTok{ agents}
-  \ExtensionTok{Id}\NormalTok{ State Target Id                  Architecture Device Name                             Cores Threads Location}
-\ExtensionTok{*}\NormalTok{ 1  A     AMDGPU Agent (GPUID 64146) }\ExtensionTok{gfx90a}\NormalTok{       Aldebaran/MI200 [Instinct MI250X/MI250] 416   3328    29:00.0}
-\end{Highlighting}
-\end{Shaded}
-}
-
-We can also get information on the thread grid:
-
-{\small
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{(}\FunctionTok{gdb}\KeywordTok{)} \ExtensionTok{info}\NormalTok{ dispatches}
-  \ExtensionTok{Id}\NormalTok{   Target Id                      Grid      Workgroup Fence   Kernel Function}
-\ExtensionTok{*}\NormalTok{ 1    AMDGPU Dispatch 1:1:1 (PKID 0) [}\ExtensionTok{256}\NormalTok{,1,1] [128,1,1] B}\KeywordTok{|}\ExtensionTok{Aa}\KeywordTok{|}\ExtensionTok{Ra}\NormalTok{ saxpy(int, float const*, int, float*, int)}
-\end{Highlighting}
-\end{Shaded}
-}
-
-For the rocgdb documentation, please see:
-\texttt{/opt/rocm-\textless{}version\textgreater{}/share/doc/rocgdb}.
-
-\pagebreak
-
-\hypertarget{openmp-intro-examples}{%
-\section{OpenMP Intro Examples}\label{openmp-intro-examples}}
-
-\textbf{NOTE}: these exercises have been tested on MI210 and MI300A
-accelerators using a container environment. To see details on the
-container environment (such as operating system and modules available)
-please see \texttt{README.md} on
-\href{https://github.com/amd/HPCTrainingDock}{this} repo.
-
-\hypertarget{checking-out-makefiles-and-compiler-toolchain}{%
-\subsection{Checking out makefiles and compiler
-toolchain}\label{checking-out-makefiles-and-compiler-toolchain}}
-
-Running the first OpenMP example:
-\texttt{Pragma\_Examples/OpenMP/C/saxpy}
-
-\hypertarget{build-with-amdclang-compiler}{%
-\subsubsection{Build with AMDClang
-compiler}\label{build-with-amdclang-compiler}}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{module}\NormalTok{ load amdclang}
-\FunctionTok{make}\NormalTok{ clean }
-\FunctionTok{make} 
-\ExtensionTok{./saxpy} 
-\end{Highlighting}
-\end{Shaded}
-
-Confirm running on GPU with
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_KERNEL\_TRACE=}\NormalTok{1 }
-\ExtensionTok{./saxpy}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{itemize}
-\tightlist
-\item
-  confirms that we are running on the GPU and also gives us the register
-  usage
-\item
-  Also could use
-  \texttt{AMD\_LOG\_LEVEL={[}0\textbar{}1\textbar{}2\textbar{}3\textbar{}4{]}}
-  or \texttt{LIBOMPTARGET\_KERNEL\_TRACE=2}
-\end{itemize}
-
-\hypertarget{openmp-offload-the-basics}{%
-\subsection{OpenMP Offload -- The
-Basics}\label{openmp-offload-the-basics}}
-
-We start out with the OpenMP threaded code for the CPU. This code is in
-
-\texttt{\textasciitilde{}/HPCTrainingExamples/Pragma\_Examples/OpenMP/Intro}
-
-in the saxpy\_cpu.cpp file. This is the code on slide 16. We first load
-the amdclang module which will set the CXX environment variable. This
-variable will get picked up by the Makefile for the build.
-
-\begin{verbatim}
-module load amdclang
-make saxpy_cpu
-./saxpy_cpu
-\end{verbatim}
-
-The next example, saxpy1, is from slide 18 where the first version of
-OpenMP offloading is tried. In this code, there is no map clause. The
-compiler can figure out the arrays that need to be copied over and their
-sizes.
-
-\begin{verbatim}
-make saxpy1
-./saxpy1
-\end{verbatim}
-
-While running one of these codelets, it may be useful to watch the GPU
-usage. Here are two approaches.
-
-\begin{itemize}
-\item
-  open another terminal and \texttt{ssh} to the AAC node you are working
-  on, or
-\item
-  use the tmux command
-\item
-  run \texttt{watch\ -n\ 0.5\ rocm-smi} command line from that terminal
-  to visualize GPU activities.
-\end{itemize}
-
-Note that the basic tmux survival commands are:
-
-\begin{verbatim}
-cntl+b \"  - splits the screen  
-cntl+b (up arrow) - move to the upper session
-cntl+b (down arrow) - move to lower session
-exit - end tmux session
-\end{verbatim}
-
-Next, run the codelet on your preferred GPU device if you have allocated
-more than 1 GPU. For example, to execute on GPU ID \#2, set the
-following environment variable:
-\texttt{export\ ROCR\_VISIBLE\_DEVICES=2} then run the code.
-
-Profile the codelet and then compare output by setting
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_KERNEL\_TRACE=}\NormalTok{1}
-\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_KERNEL\_TRACE=}\NormalTok{2}
-\end{Highlighting}
-\end{Shaded}
-
-Note:
-
-rocminfo can be used to get target architecture information.
-
-The Fortran version of the saxpy code is shown in saxpy1f.F90. It is
-very similar to the C and C++ OpenMP pragmas. In Fortran, the compiler
-hints are technically directives that are contained in specially
-formatted comments. One of the strengths of OpenMP is that the language
-can be used in C, C++, and Fortran code and they can even be mixed in an
-application. Here is how to run the Fortran example.
-
-\begin{verbatim}
-make saxpy1f
-./saxpy1f
-\end{verbatim}
-
-The compile line uses the specific GPU architecture type. It grabs it
-from the rocminfo command with a little bit of string manipulation.
-
-Let's now add a map clause as shown in quotes on slide 18 --
-map(tofrom:y{[}0:N{]})
-
-\begin{verbatim}
-make saxpy2
-./saxpy2
-\end{verbatim}
-
-A lot of the initial optimization of an OpenMP offloading port is to
-minimize the data movement from host to device and back. What is the
-optimum mapping of data for this example? See saxpy3.cpp for the optimal
-map clauses.
-
-\begin{verbatim}
-make saxpy3
-./saxpy3
-\end{verbatim}
-
-In the example we have been working with so far, the compiler can
-determine the sizes and will move the data for you. Let's see what
-happens when we have a subroutine with pointers where the compiler does
-not know the sizes.
-
-\begin{verbatim}
-make saxpy4
-./saxpy4
-\end{verbatim}
-
-Try removing the map clause -- the program will now fail.
-
-\hypertarget{multilevel-parallelism}{%
-\subsection{Multilevel Parallelism}\label{multilevel-parallelism}}
-
-We have been running on the GPU, but with only one thread in serial.
-Let's start adding parallelism. The first thing we can do is add
-\texttt{\#pragma\ omp\ parallel\ for\ simd} before the loop to tell it
-to run in parallel.
-
-\begin{verbatim}
-make saxpy5
-./saxpy5
-\end{verbatim}
-
-We have told it to run the loop in parallel, but we haven't given it any
-hardware resources. To add more compute units, we need to add the teams
-clause. Then to spread the work across the threads, we need the
-distribute clause. (This code is currently not working \ldots)
-
-\begin{verbatim}
-make saxpy6
-./saxpy6
-\end{verbatim}
-
-More commonly, we add the triplet of \texttt{target\ teams\ distribute}
-to the pragma to enable all hardware elements to the computation.
-
-\begin{verbatim}
-make saxpy7
-./saxpy7
-\end{verbatim}
-
-And in Fortran.
-
-\begin{verbatim}
-make saxpy2f
-./saxpy2f
-\end{verbatim}
-
-\hypertarget{structured-and-unstructured-target-data-regions}{%
-\subsection{Structured and Unstructured Target Data
-Regions}\label{structured-and-unstructured-target-data-regions}}
-
-This example from slide 29 shows the use of a structured block region
-that encompasses several compute loops. The data region persists across
-all of them, eliminating the need for map clauses and data transfers.
-
-\begin{verbatim}
-make target_data_structured
-./target_data_structured
-\end{verbatim}
-
-This example shows the use of the target data to map the data to the
-device and then updating it with the target update in the middle of the
-target data block.
-
-\begin{verbatim}
-make target_data_unstructured
-./target_data_unstructured
-\end{verbatim}
-
-When using larger data regions, it can be necessary to move data in the
-middle of the region to support MPI communication or I/O. This example
-shows the use of the update clause to copy new input from the host to
-the device.
-
-\begin{verbatim}
-make target_data_update
-./target_data_update
-\end{verbatim}
-
-\hypertarget{advanced-openmp-presentation}{%
-\section{Advanced OpenMP
-Presentation}\label{advanced-openmp-presentation}}
-
-Here, we will discuss some examples that show more advanced OpenMP
-features.
-
-\hypertarget{memory-pragmas}{%
-\subsection{Memory Pragmas}\label{memory-pragmas}}
-
-First, we will consider the examples in the \texttt{CXX/memory\_pragmas}
-directory:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\BuiltInTok{cd}\NormalTok{ \textasciitilde{}/HPCTrainingExamples/Pragma\_Examples/OpenMP/CXX/memory\_pragmas}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{exercises-setup}{%
-\subsubsection{Exercises Setup}\label{exercises-setup}}
-
-Setup your environment:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_INFO=}\NormalTok{{-}1}
-\BuiltInTok{export} \VariableTok{OMP\_TARGET\_OFFLOAD=}\NormalTok{MANDATORY}
-\end{Highlighting}
-\end{Shaded}
-
-The first flag above will allow you to see OpenMP activity, while the
-second terminates the program if code fails to be executed on device (as
-opposed to falling back on the host). You can also be more selective in
-the output generated by using the individual bit masks:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_INFO=$((}\NormalTok{0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20}\VariableTok{))}
-\end{Highlighting}
-\end{Shaded}
-
-Create a build directory and compile using \texttt{cmake}: this will
-place all executables in the \texttt{build} directory:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{mkdir}\NormalTok{ build }\KeywordTok{\&\&} \BuiltInTok{cd}\NormalTok{ build}
-\FunctionTok{cmake}\NormalTok{ ..}
-\FunctionTok{make} 
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{mem1-initial-version}{%
-\subsubsection{Mem1 (Initial Version)}\label{mem1-initial-version}}
-
-There are 12 versions of an initial example code called
-\texttt{mem1.cc}, which is an implementation of a \texttt{daxpy} kernel
-with a single pragma with a map clause at the computational loop:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{void}\NormalTok{ daxpy(int n, double a, double *\_\_restrict\_\_ x, double *\_\_restrict\_\_ y, double *\_\_restrict\_\_ z)}
-\KeywordTok{\{}
-\CommentTok{\#pragma omp target teams distribute parallel for simd map(to: x[0:n], y[0:n]) map(from: z[0:n])}
-        \KeywordTok{for} \KeywordTok{(}\ExtensionTok{int}\NormalTok{ i = 0}\KeywordTok{;} \ExtensionTok{i} \OperatorTok{\textless{}}\NormalTok{ n}\KeywordTok{;} \ExtensionTok{i++}\KeywordTok{)}
-                \ExtensionTok{z}\NormalTok{[i] = a*x[i] + y[i]}\KeywordTok{;}
-\KeywordTok{\}}
-\end{Highlighting}
-\end{Shaded}
-
-Run \texttt{mem1} to have an idea of what output is produced by the
-\texttt{LIBOMPTARGET\_INFO=-1} flag, which should include OpenMP calls
-like the following:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Entering OpenMP kernel at mem1.cc:89:1 with 5 arguments:}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: firstprivate(n)[}\ExtensionTok{4}\NormalTok{] (implicit)}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: from(z[0:n])[}\ExtensionTok{80000}\NormalTok{]}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: firstprivate(a)[}\ExtensionTok{8}\NormalTok{] (implicit)}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: to(x[0:n])[}\ExtensionTok{80000}\NormalTok{]}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: to(y[0:n])[}\ExtensionTok{80000}\NormalTok{]}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Creating new map entry with HstPtrBase=0x0000000001772200, ... }
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Creating new map entry with HstPtrBase=0x000000000174b0e0, ... }
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Copying data from host to device, HstPtr=0x000000000174b0e0, ...}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Creating new map entry with HstPtrBase=0x000000000175e970, ...}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Copying data from host to device, HstPtr=0x000000000175e970, ...}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x0000000001772200, ...}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x000000000174b0e0, ...}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x000000000175e970, ...}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x000000000175e970, ...}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x000000000174b0e0, ...}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x0000000001772200, ...}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Copying data from device to host, TgtPtr=0x00007f617c420000, ...}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Removing map entry with HstPtrBegin=0x000000000175e970, ...}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Removing map entry with HstPtrBegin=0x000000000174b0e0, ...}
-\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Removing map entry with HstPtrBegin=0x0000000001772200, ...}
-\ExtensionTok{{-}Timing}\NormalTok{ in Seconds: min=0.010115, max=0.010115, avg=0.010115}
-\ExtensionTok{{-}Overall}\NormalTok{ time is 0.010505}
-\ExtensionTok{Last}\NormalTok{ Value: z[9999]=7.000000}
-\end{Highlighting}
-\end{Shaded}
-
-Not all versions are discussed in this document. Using \texttt{vimdiff}
-to compare versions is useful to explore the differences, e.g.:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{vimdiff}\NormalTok{ mem1.cc mem2.cc}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{mem2-add-enterexit-data-allocdelete-when-memory-is-createdfreed}{%
-\subsubsection{Mem2 (Add enter/exit data alloc/delete when memory is
-created/freed)}\label{mem2-add-enterexit-data-allocdelete-when-memory-is-createdfreed}}
-
-The initial code in \texttt{mem1.cc} is modified to obtain
-\texttt{mem2.cc} with the following additions:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\#pragma omp target enter data map(alloc: x[0:n], y[0:n], z[0:n]) // line 52}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\#pragma omp target exit data map(delete: x[0:n], y[0:n], z[0:n]) // line 82}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{mem3-replace-map-tofrom-with-updates-to-bypass-unneeded-device-memory-check}{%
-\subsubsection{Mem3 (Replace map to/from with updates to bypass unneeded
-device memory
-check)}\label{mem3-replace-map-tofrom-with-updates-to-bypass-unneeded-device-memory-check}}
-
-In \texttt{mem3.cc}, in addition to the changes in \texttt{mem2.cc}, the
-\texttt{daxpy} kernel is modified as follows:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{void}\NormalTok{ daxpy(int n, double a, double *\_\_restrict\_\_ x, double *\_\_restrict\_\_ y, double *\_\_restrict\_\_ z)}
-\KeywordTok{\{}
-\CommentTok{\#pragma omp target update to (x[0:n], y[0:n])}
-\CommentTok{\#pragma omp target teams distribute parallel for simd}
-        \KeywordTok{for} \KeywordTok{(}\ExtensionTok{int}\NormalTok{ i = 0}\KeywordTok{;} \ExtensionTok{i} \OperatorTok{\textless{}}\NormalTok{ n}\KeywordTok{;} \ExtensionTok{i++}\KeywordTok{)}
-                \ExtensionTok{z}\NormalTok{[i] = a*x[i] + y[i]}\KeywordTok{;}
-\CommentTok{\#pragma omp target update from (z[0:n])}
-\KeywordTok{\}}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{mem4-replace-delete-with-release-to-use-reference-counting}{%
-\subsubsection{Mem4 (Replace delete with release to use reference
-counting)}\label{mem4-replace-delete-with-release-to-use-reference-counting}}
-
-Compared to \texttt{mem2.cc}, \texttt{mem4.cc} differs only at line 82,
-where a delete is replaced with a release:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\#pragma omp target exit data map(release: x[0:n], y[0:n], z[0:n]) // line 82}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{mem5-use-enter-data-map-tofrom-allocdelete-to-reduce-memory-copies}{%
-\subsubsection{Mem5 (Use enter data map to/from alloc/delete to reduce
-memory
-copies)}\label{mem5-use-enter-data-map-tofrom-allocdelete-to-reduce-memory-copies}}
-
-Similar to \texttt{mem2.cc}. this version differs from the original only
-at lines 52 and 82:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\#pragma omp target enter data map(to: x[0:n], y[0:n]) map(alloc: z[0:n]) // line 52}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\#pragma omp target exit data map(from: z[0:n]) map(delete: x[0:n], y[0:n]) // line 82}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{mem7-use-managed-memory-to-automatically-move-data}{%
-\subsubsection{Mem7 (Use managed memory to automatically move
-data)}\label{mem7-use-managed-memory-to-automatically-move-data}}
-
-In this example, we epxloit automatic memory management by the operating
-system. To enable it, export:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\BuiltInTok{export} \VariableTok{HSA\_XNACK=}\NormalTok{1}
-\end{Highlighting}
-\end{Shaded}
-
-We also need to include the following pragma:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\#pragma omp requires unified\_shared\_memory // line 22}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{mem8-use-unified-shared-memory-with-maps-for-backward-compatibility}{%
-\subsubsection{Mem8 (Use unified shared memory with maps for backward
-compatibility)}\label{mem8-use-unified-shared-memory-with-maps-for-backward-compatibility}}
-
-Compared to \texttt{mem7.cc}, \texttt{mem8.cc} supports backward
-compatibility using maps and also:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\#ifndef NO\_UNIFIED\_SHARED\_MEMORY}
-\CommentTok{\#pragma omp requires unified\_shared\_memory}
-\CommentTok{\#endif}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{mem12-only-runs-on-mi300a}{%
-\subsubsection{Mem12 (Only runs on
-MI300A)}\label{mem12-only-runs-on-mi300a}}
-
-This example uses the APU programming model of MI300A and unified
-addresses in OpenMP.
-
-\hypertarget{kernel-pragmas}{%
-\subsection{Kernel Pragmas}\label{kernel-pragmas}}
-
-This set of exercises is in:
-\texttt{HPCTrainingExamples/Pragma\_Examples/OpenMP/CXX/kernel\_pragmas}.
-
-\hypertarget{exercises-setup-1}{%
-\subsubsection{Exercises Setup}\label{exercises-setup-1}}
-
-You should unset the \texttt{LIBOMPTARGET\_INFO} environment flag if
-previously set.
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\BuiltInTok{unset} \VariableTok{LIBOMPTARGET\_INFO}
-\end{Highlighting}
-\end{Shaded}
-
-Then, set these environment variable
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\BuiltInTok{export} \VariableTok{CXX=}\NormalTok{amdclang++}
-\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_KERNEL\_TRACE=}\NormalTok{1}
-\BuiltInTok{export} \VariableTok{OMP\_TARGET\_OFFLOAD=}\NormalTok{MANDATORY}
-\BuiltInTok{export} \VariableTok{HSA\_XNACK=}\NormalTok{1}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{brief-exercises-description}{%
-\subsubsection{Brief Exercises
-Description}\label{brief-exercises-description}}
-
-The example \texttt{kernel1.cc} is the same as
-\texttt{memory\_pragmas/mem11.cc} except for the pragma line below (from
-\texttt{kernel1.cc}):
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{cout} \OperatorTok{\textless{}\textless{} "{-}Overall} \BuiltInTok{time}\NormalTok{ is }\StringTok{" \textless{}\textless{} main\_timer \textless{}\textless{} endl;}
-\StringTok{\#pragma omp target update from(z[0])}
-\end{Highlighting}
-\end{Shaded}
-
-The example \texttt{kernel2.cc} differs from \texttt{kernel1.cc} as it
-adds \texttt{num\_threads(64)} to the pragma line in the \texttt{daxpy}
-kernel:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{void}\NormalTok{ daxpy(int n, double a, double *\_\_restrict\_\_ x, double *\_\_restrict\_\_ y, double *\_\_restrict\_\_ z)}
-\KeywordTok{\{}
-\CommentTok{\#pragma omp target teams distribute parallel for simd num\_threads(64)}
-        \KeywordTok{for} \KeywordTok{(}\ExtensionTok{int}\NormalTok{ i = 0}\KeywordTok{;} \ExtensionTok{i} \OperatorTok{\textless{}}\NormalTok{ n}\KeywordTok{;} \ExtensionTok{i++}\KeywordTok{)}
-                \ExtensionTok{z}\NormalTok{[i] = a*x[i] + y[i]}\KeywordTok{;}
-\KeywordTok{\}}
-\end{Highlighting}
-\end{Shaded}
-
-Similarly, example \texttt{kernel3.cc} differs from \texttt{kernel1.cc}
-as it adds \texttt{num\_threads(64)\ thread\_limit(64)} to the pragma
-line in the \texttt{daxpy} kernel:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{void}\NormalTok{ daxpy(int n, double a, double *\_\_restrict\_\_ x, double *\_\_restrict\_\_ y, double *\_\_restrict\_\_ z)}
-\KeywordTok{\{}
-\CommentTok{\#pragma omp target teams distribute parallel for simd num\_threads(64) thread\_limit(64)}
-        \KeywordTok{for} \KeywordTok{(}\ExtensionTok{int}\NormalTok{ i = 0}\KeywordTok{;} \ExtensionTok{i} \OperatorTok{\textless{}}\NormalTok{ n}\KeywordTok{;} \ExtensionTok{i++}\KeywordTok{)}
-                \ExtensionTok{z}\NormalTok{[i] = a*x[i] + y[i]}\KeywordTok{;}
-\KeywordTok{\}}
-\end{Highlighting}
-\end{Shaded}
-
-Something to test On your own: uncomment line 15 in CMakeLists.txt (the
-one with -faligned-allocation -fnew-alignment=256).
-
-Another option to explore is adding the attribute
-(std::align\_val\_t(128) ) to each new line, for example:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{double}\NormalTok{ *x = new (std::align\_val\_t(128) ) }\ExtensionTok{double}\NormalTok{[n]}\KeywordTok{;}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{real-world-openmp-language-constructs}{%
-\section{Real-World OpenMP Language
-Constructs}\label{real-world-openmp-language-constructs}}
-
-For all excercises in this section:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\ExtensionTok{module}\NormalTok{ load amdclang}
-\FunctionTok{git}\NormalTok{ clone https://github.com/AMD/HPCTrainingExamples}
-\end{Highlighting}
-\end{Shaded}
-
-either choose
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\BuiltInTok{cd}\NormalTok{ \textasciitilde{}/HPCTrainingExamples/Pragma\_Examples/OpenMP/Fortran}
-\end{Highlighting}
-\end{Shaded}
-
-or
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\BuiltInTok{cd}\NormalTok{ \textasciitilde{}/HPCTrainingExamples/Pragma\_Examples/OpenMP/C}
-\end{Highlighting}
-\end{Shaded}
-
-\textbf{\emph{Note}}: make sure the compilers are set to your
-preference. This can be obtained by exporting the \texttt{FC} and
-\texttt{CC} environment variables:
-
-\begin{verbatim}
-export FC=<my favorite Fortran compiler>
-export CC=<my favorite C compiler>
-\end{verbatim}
-
-It is suggested for those that want to truly experience the effort, that
-you take all the pragma statements out of these examples and do the port
-yourself.
-
-\hypertarget{simple-reduction}{%
-\subsection{Simple Reduction}\label{simple-reduction}}
-
-The first example is a simple reduction:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\BuiltInTok{cd}\NormalTok{ reduction\_scalar}
-\FunctionTok{make}
-\ExtensionTok{./reduction\_scalar}
-\end{Highlighting}
-\end{Shaded}
-
-Now try the array form
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\BuiltInTok{cd}\NormalTok{ ../reduction\_array}
-\FunctionTok{make}
-\ExtensionTok{./reduction\_array}
-\end{Highlighting}
-\end{Shaded}
-
-If your compiler passes, it supports at least simple array reduction
-clauses
-
-\hypertarget{device-routine}{%
-\subsection{Device Routine}\label{device-routine}}
-
-Subroutines called from within a target region also cause some
-difficulties. We must tell the compiler that we want these compiled for
-the GPU. Note that device routines are not (yet) supported by all
-compilers!
-
-For this example
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\BuiltInTok{cd}\NormalTok{ ../device\_routine}
-\end{Highlighting}
-\end{Shaded}
-
-there are multiple versions to choose from in Fortran, either with an
-interface and an external routine or using a module. Hence one first
-needs to enter the selected subfolder, and then:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{make}
-\ExtensionTok{./device\_routine}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{device-routine-with-global-data}{%
-\subsection{Device Routine with Global
-Data}\label{device-routine-with-global-data}}
-
-Including the use of data from global scope in device routines also
-causes difficulties. We have examples for both statically sized arrays
-and dynamically allocated global data. Note that device routines are not
-(yet) supported by all compilers! Also, this excercise only exists in
-the C version at the moment.
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\BuiltInTok{cd}\NormalTok{ ../device\_routine\_wglobaldata}
-\FunctionTok{make}
-\ExtensionTok{./device\_routine}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\BuiltInTok{cd}\NormalTok{ ../device\_routine\_wdynglobaldata}
-\FunctionTok{make}
-\ExtensionTok{./device\_routine}
-\end{Highlighting}
-\end{Shaded}
 
 \hypertarget{hip-and-openmp-interoperability}{%
 \section{HIP and OpenMP
@@ -2690,6 +2850,587 @@ mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:2:numa \
 
 \pagebreak
 
+\hypertarget{kokkos-examples}{%
+\section{Kokkos examples}\label{kokkos-examples}}
+
+\hypertarget{stream-triad}{%
+\subsection{Stream Triad}\label{stream-triad}}
+
+\hypertarget{step-1-build-a-separate-kokkos-package}{%
+\subsubsection{Step 1: Build a separate Kokkos
+package}\label{step-1-build-a-separate-kokkos-package}}
+
+\textbf{NOTE}: these exercises have been tested on MI210 and MI300A
+accelerators using a container environment. To see details on the
+container environment (such as operating system and modules available)
+please see \texttt{README.md} on
+\href{https://github.com/amd/HPCTrainingDock}{this} repo.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd} \VariableTok{$HOME}\NormalTok{/HPCTraining/Examples}
+\FunctionTok{git}\NormalTok{ clone https://github.com/kokkos/kokkos Kokkos\_build}
+\BuiltInTok{cd}\NormalTok{ Kokkos\_build}
+\end{Highlighting}
+\end{Shaded}
+
+Build Kokkos with OpenMP backend
+
+\begin{verbatim}
+mkdir build_openmp && cd build_openmp
+cmake -DCMAKE_INSTALL_PREFIX=${HOME}/Kokkos_OpenMP -DKokkos_ENABLE_SERIAL=On \
+      -DKokkos_ENABLE_OPENMP=On ..
+
+make -j 8
+make install
+
+cd ..
+\end{verbatim}
+
+Build Kokkos with HIP backend
+
+\begin{verbatim}
+mkdir build_hip && cd build_hip
+cmake -DCMAKE_INSTALL_PREFIX=${HOME}/Kokkos_HIP -DKokkos_ENABLE_SERIAL=ON \
+      -DKokkos_ENABLE_HIP=ON -DKokkos_ARCH_ZEN=ON -DKokkos_ARCH_VEGA90A=ON \
+      -DCMAKE_CXX_COMPILER=hipcc ..
+
+make -j 8; make install
+cd ..
+\end{verbatim}
+
+Set Kokkos\_DIR to point to external Kokkos package to use
+
+\begin{verbatim}
+export Kokkos_DIR=${HOME}/Kokkos_HIP
+\end{verbatim}
+
+\hypertarget{step-2-modify-build}{%
+\subsubsection{Step 2: Modify Build}\label{step-2-modify-build}}
+
+Get example
+
+\begin{verbatim}
+git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 Chapter13
+cd Chapter13/Kokkos/StreamTriad
+cd Orig
+\end{verbatim}
+
+Test serial version with
+
+\begin{verbatim}
+mkdir build && cd build; cmake ..; make; ./StreamTriad
+\end{verbatim}
+
+If the run fails (SEGV), try reducing the size of the arrays, by
+reducing the value of the nsize variable in StreamTriad.cc.
+
+Add to CMakeLists.txt
+
+\begin{verbatim}
+(add) find_package(Kokkos REQUIRED)
+add_executables(StreamTriad ....)
+(add) target_link_libraries(StreamTriad Kokkos::kokkos)
+\end{verbatim}
+
+Retest with
+
+\begin{verbatim}
+cmake ..; make
+\end{verbatim}
+
+and run ./StreamTriad again
+
+Check Ver1 for solution. These modifications have already been made in
+Ver1 version.
+
+\hypertarget{step-3-add-kokkos-views-for-memory-allocation-of-arrays}{%
+\subsubsection{Step 3: Add Kokkos views for memory allocation of
+arrays}\label{step-3-add-kokkos-views-for-memory-allocation-of-arrays}}
+
+(peek at ver4/StreamTriad.cc to see the end result)
+
+Add include file
+
+\begin{verbatim}
+#include <Kokkos_Core.hpp>
+\end{verbatim}
+
+Add initialize and finalize
+
+\begin{verbatim}
+Kokkos::initialize(argc, argv);  {
+
+} Kokkos::finalize();
+\end{verbatim}
+
+Replace static array declarations with Kokkos views
+
+\begin{verbatim}
+int nsize=80000000;
+Kokkos::View<double *> a( "a", nsize);
+Kokkos::View<double *> b( "b", nsize);
+Kokkos::View<double *> c( "c", nsize);
+\end{verbatim}
+
+Rebuild and run
+
+\begin{verbatim}
+CXX=hipcc cmake ..
+make
+./StreamTriad
+\end{verbatim}
+
+\hypertarget{step-4-add-kokkos-execution-pattern---parallel_for}{%
+\paragraph{Step 4: Add Kokkos execution pattern -
+parallel\_for}\label{step-4-add-kokkos-execution-pattern---parallel_for}}
+
+Change for loops to Kokkos parallel fors.
+
+At start of loop
+
+\begin{verbatim}
+Kokkos::parallel_for(nsize, KOKKOS_LAMBDA (int i) {
+\end{verbatim}
+
+At end of loop, replace closing brace with
+
+\begin{verbatim}
+});
+\end{verbatim}
+
+Rebuild and run. Add environment variables as Kokkos message suggests:
+
+\begin{verbatim}
+ export OMP_PROC_BIND=spread
+ export OMP_PLACES=threads
+ export OMP_PROC_BIND=true
+\end{verbatim}
+
+How much speedup do you observe?
+
+\hypertarget{step-5-add-kokkos-timers}{%
+\subsubsection{Step 5: Add Kokkos
+timers}\label{step-5-add-kokkos-timers}}
+
+Add Kokkos calls
+
+\begin{verbatim}
+Kokkos::Timer timer;
+timer.reset(); // for timer start
+time_sum += timer.seconds();
+\end{verbatim}
+
+Remove
+
+\begin{verbatim}
+#include <timer.h>
+struct timespec tstart;
+cpu_timer_start(&tstart);
+time_sum += cpu_timer_stop(tstart);
+\end{verbatim}
+
+\hypertarget{run-and-measure-performance-with-openmp}{%
+\subsubsection{6. Run and measure performance with
+OpenMP}\label{run-and-measure-performance-with-openmp}}
+
+Find out how many virtual cores are on your CPU
+
+\begin{verbatim}
+lscpu
+\end{verbatim}
+
+First run with a single processor:
+
+Average runtime \_\_\_\_\_\_\_\_\_\_\_
+
+Then run the OpenMP version:
+
+Average runtime \_\_\_\_\_\_\_\_\_\_\_
+
+\hypertarget{portability-exercises}{%
+\subsubsection{Portability Exercises}\label{portability-exercises}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Rebuild Stream Triad using Kokkos build with HIP
+\end{enumerate}
+
+Set Kokkos\_DIR to point to external Kokkos build with HIP
+
+\begin{verbatim}
+export Kokkos_DIR=${HOME}/Kokkos_HIP/lib/cmake/Kokkos_HIP
+cmake ..
+make
+\end{verbatim}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{1}
+\tightlist
+\item
+  Run and measure performance with AMD Radeon GPUs
+\end{enumerate}
+
+HIP build with ROCm
+
+Ver4 - Average runtime is \_\_\_\_\_\_ msecs
+
+\pagebreak
+
+\hypertarget{c-standard-parallelism-on-amd-gpus}{%
+\section{C++ Standard Parallelism on AMD
+GPUs}\label{c-standard-parallelism-on-amd-gpus}}
+
+Here are some instructions on how to compile and run some tests that
+exploit C++ standard parallelism. \textbf{NOTE}: these exercises have
+been tested on MI210 and MI300A accelerators using a container
+environment. To see details on the container environment (such as
+operating system and modules available) please see \texttt{README.md} on
+\href{https://github.com/amd/HPCTrainingDock}{this} repo.
+
+\begin{verbatim}
+git clone https://github.com/amd/HPCTrainingExamples.git
+\end{verbatim}
+
+\hypertarget{hipstdpar_saxpy_foreach-example}{%
+\subsection{hipstdpar\_saxpy\_foreach
+example}\label{hipstdpar_saxpy_foreach-example}}
+
+\begin{verbatim}
+export HSA_XNACK=1
+module load amdclang
+
+cd ~/HPCTrainingExamples/HIPStdPar/CXX/saxpy_foreach
+
+make
+export AMD_LOG_LEVEL=3
+./saxpy
+clean
+\end{verbatim}
+
+\hypertarget{hipstdpar_saxpy_transform-example}{%
+\subsection{hipstdpar\_saxpy\_transform
+example}\label{hipstdpar_saxpy_transform-example}}
+
+\begin{verbatim}
+export HSA_XNACK=1
+module load amdclang
+
+cd ~/HPCTrainingExamples/HIPStdPar/CXX/saxpy_transform
+
+make
+export AMD_LOG_LEVEL=3
+./saxpy
+clean
+\end{verbatim}
+
+\hypertarget{hipstdpar_saxpy_transform_reduce-example}{%
+\subsection{hipstdpar\_saxpy\_transform\_reduce
+example}\label{hipstdpar_saxpy_transform_reduce-example}}
+
+\begin{verbatim}
+export HSA_XNACK=1
+module load amdclang
+
+cd ~/HPCTrainingExamples/HIPStdPar/CXX/saxpy_transform_reduce
+
+make
+export AMD_LOG_LEVEL=3
+./saxpy
+clean
+\end{verbatim}
+
+\hypertarget{traveling-salesperson-problem}{%
+\subsection{Traveling Salesperson
+Problem}\label{traveling-salesperson-problem}}
+
+\begin{verbatim}
+#!/bin/bash
+
+git clone https://github.com/pkestene/tsp
+cd tsp
+git checkout 51587
+wget -q https://raw.githubusercontent.com/ROCm/roc-stdpar/main/data/patches/tsp/TSP.patch
+
+patch -p1 < TSP.patch
+
+cd stdpar
+
+export HSA_XNACK=1
+module load amdclang
+export STDPAR_CXX=$CXX
+export ROCM_GPU=`rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'`
+export STDPAR_TARGET=${ROCM_GPU}
+
+export AMD_LOG_LEVEL=3 #optional
+
+make tsp_clang_stdpar_gpu
+./tsp_clang_stdpar_gpu 13 #or more...
+
+make clean
+cd ../..
+rm -rf tsp
+\end{verbatim}
+
+\hypertarget{hipstdpar_shallowwater_orig.sh}{%
+\subsection{hipstdpar\_shallowwater\_orig.sh}\label{hipstdpar_shallowwater_orig.sh}}
+
+\begin{verbatim}
+cd ~/HPCTrainingExamples/HIPStdPar/CXX/ShallowWater_Orig
+
+mkdir build && cd build
+cmake ..
+make
+./ShallowWater
+
+cd ..
+rm -rf build
+\end{verbatim}
+
+\hypertarget{hipstdpar_shallowwater_ver1.sh}{%
+\subsection{hipstdpar\_shallowwater\_ver1.sh}\label{hipstdpar_shallowwater_ver1.sh}}
+
+\begin{verbatim}
+cd ~/HPCTrainingExamples/HIPStdPar/CXX/ShallowWater_Ver1
+
+mkdir build && cd build
+cmake ..
+make
+./ShallowWater
+
+cd ..
+rm -rf build
+\end{verbatim}
+
+\hypertarget{hipstdpar_shallowwater_ver2.sh}{%
+\subsection{hipstdpar\_shallowwater\_ver2.sh}\label{hipstdpar_shallowwater_ver2.sh}}
+
+\begin{verbatim}
+export HSA_XNACK=1
+module load amdclang
+
+cd ~/HPCTrainingExamples/HIPStdPar/CXX/ShallowWater_Ver2
+
+make
+#export AMD_LOG_LEVEL=3
+./ShallowWater
+
+make clean
+\end{verbatim}
+
+\hypertarget{hipstdpar_shallowwater_stdpar.sh}{%
+\subsection{hipstdpar\_shallowwater\_stdpar.sh}\label{hipstdpar_shallowwater_stdpar.sh}}
+
+\begin{verbatim}
+export HSA_XNACK=1
+module load amdclang
+
+cd ~/HPCTrainingExamples/HIPStdPar/CXX/ShallowWater_StdPar
+
+make
+#export AMD_LOG_LEVEL=3
+./ShallowWater
+
+make clean
+\end{verbatim}
+
+
+\pagebreak
+
+\hypertarget{rocgdb}{%
+\section{ROCgdb}\label{rocgdb}}
+
+\textbf{NOTE}: these exercises have been tested on MI210 and MI300A
+accelerators using a container environment. To see details on the
+container environment (such as operating system and modules available)
+please see \texttt{README.md} on
+\href{https://github.com/amd/HPCTrainingDock}{this} repo.
+
+We show a simple example on how to use the main features of the ROCm
+debugger \texttt{rocgdb}.
+
+\hypertarget{saxpy-debugging}{%
+\subsection{Saxpy Debugging}\label{saxpy-debugging}}
+
+Let us consider the \texttt{saxpy} kernel in the HIP examples:
+
+\begin{verbatim}
+cd HPCTrainingExamples/HIP/saxpy
+\end{verbatim}
+
+Get an allocation of a GPU and load software modules:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{salloc}\NormalTok{ {-}N 1 {-}{-}gpus=1}
+\ExtensionTok{module}\NormalTok{ load rocm}
+\end{Highlighting}
+\end{Shaded}
+
+You can see some information on the GPU you will be running on by doing:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{rocm{-}smi}
+\end{Highlighting}
+\end{Shaded}
+
+To introduce an error in your program, comment out the
+\texttt{hipMalloc} calls at line 71 and 72, then compile with:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{mkdir}\NormalTok{ build }\KeywordTok{\&\&} \BuiltInTok{cd}\NormalTok{ build}
+\FunctionTok{cmake}\NormalTok{ ..}
+\FunctionTok{make}\NormalTok{ VERBOSE=1}
+\end{Highlighting}
+\end{Shaded}
+
+Running the program, you will see the expected runtime error:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{./saxpy}
+\ExtensionTok{Memory}\NormalTok{ access fault by GPU node{-}2 (Agent handle: 0x2284d90) }\ExtensionTok{on}\NormalTok{ address (nil)}\BuiltInTok{.} \ExtensionTok{Reason}\NormalTok{: Unknown.}
+\ExtensionTok{Aborted}\NormalTok{ (core dumped)}
+\end{Highlighting}
+\end{Shaded}
+
+To run the code with the \texttt{rocgdb} debugger, do:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{rocgdb}\NormalTok{ saxpy}
+\end{Highlighting}
+\end{Shaded}
+
+Note that there are also two options for graphical user interfaces that
+can be turned on by doing:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{rocgdb}\NormalTok{ {-}tui saxpy}
+\ExtensionTok{cgdb}\NormalTok{ {-}d rocgdb saxpy }
+\end{Highlighting}
+\end{Shaded}
+
+For the latter command above, you need to have \texttt{cgdb} installed
+on your system.
+
+In the debugger, type \texttt{run} (or just \texttt{r}) and you will get
+an error similar to this one:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{Thread}\NormalTok{ 3 }\StringTok{"saxpy"}\NormalTok{ received signal SIGSEGV, Segmentation fault.}
+\NormalTok{[}\ExtensionTok{Switching}\NormalTok{ to thread 3, lane 0 (AMDGPU Lane 1:2:1:1/0 (0,0,0)[}\ExtensionTok{0}\NormalTok{,0,0])]}
+\ExtensionTok{0x00007ffff7ec1094}\NormalTok{ in saxpy() }\ExtensionTok{at}\NormalTok{ saxpy.cpp:57}
+\ExtensionTok{57}\NormalTok{    y[i] += a*x[i]}\KeywordTok{;}
+\end{Highlighting}
+\end{Shaded}
+
+Note that the cmake build type is set to \texttt{RelWithDebInfo} (see
+line 8 in CMakeLists.txt). With this build type, the debugger will be
+aware of the debug symbols. If that was not the case (for instance if
+compiling in \texttt{Release} mode), running the code with the debugger
+you would get an error message \textbf{\emph{without}} line info, and
+also a warning like this one:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{Reading}\NormalTok{ symbols from saxpy...}
+\KeywordTok{(}\ExtensionTok{No}\NormalTok{ debugging symbols found in saxpy}\KeywordTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+The error report is at a thread on the GPU. We can display information
+on the threads by typing \texttt{info\ threads} (or \texttt{i\ th}). It
+is also possible to move to a specific thread with
+\texttt{thread\ \textless{}ID\textgreater{}} (or
+\texttt{t\ \textless{}ID\textgreater{}}) and see the location of this
+thread with \texttt{where}. For instance, if we are interested in the
+thread with ID 1:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{i}\NormalTok{ th}
+\ExtensionTok{th}\NormalTok{ 1}
+\ExtensionTok{where}
+\end{Highlighting}
+\end{Shaded}
+
+You can add breakpoints with \texttt{break} (or \texttt{b}) followed by
+the line number. For instance to put a breakpoint right after the
+\texttt{hipMalloc} lines do \texttt{b\ 72}.
+
+When possible, it is also advised to compile without optimization flags
+(so using \texttt{-O0}) to avoid seeing breakpoints placed on lines
+different than those specified with the breakpoint command.
+
+You can also add a breakpoint directly at the start of the GPU kernel
+with \texttt{b\ saxpy}. To run to the next breakpoint, type
+\texttt{continue} (or \texttt{c}).
+
+To list all the breakpoints that have been inserted type
+\texttt{info\ break} (or \texttt{i\ b}):
+{\small
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{(}\FunctionTok{gdb}\KeywordTok{)} \ExtensionTok{i}\NormalTok{ b}
+\ExtensionTok{Num}\NormalTok{     Type           Disp Enb Address            What}
+\ExtensionTok{1}\NormalTok{       breakpoint     keep y   0x000000000020b334 in main() }\ExtensionTok{at}\NormalTok{ /HPCTrainingExamples/HIP/saxpy/saxpy.hip:74}
+\ExtensionTok{2}\NormalTok{       breakpoint     keep y   0x000000000020b350 in main() }\ExtensionTok{at}\NormalTok{ /HPCTrainingExamples/HIP/saxpy/saxpy.hip:78}
+\end{Highlighting}
+\end{Shaded}
+}
+
+A breakpoint can be removed with
+\texttt{delete\ \textless{}Num\textgreater{}} (or
+\texttt{d\ \textless{}Num\textgreater{}}): note that
+\texttt{\textless{}Num\textgreater{}} is the breakpoint ID displayed
+above. For instance, to remove the breakpoint at line 74, you have to do
+\texttt{d\ 1}.
+
+To proceed to the next line you can do \texttt{next} (or \texttt{n}). To
+step into a function, do \texttt{step} (or \texttt{s}) and to get out do
+\texttt{finish}. Note that if a breakpoint is at a kernel, doing
+\texttt{n} or \texttt{s} will switch between different threads. To avoid
+this behavior, it is necessary to disable the breakpoint at the kernel
+with \texttt{disable\ \textless{}Num\textgreater{}}.
+
+It is possible to have information on the architecture (below shown on
+MI250):
+
+{\scriptsize
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{(}\FunctionTok{gdb}\KeywordTok{)} \ExtensionTok{info}\NormalTok{ agents}
+  \ExtensionTok{Id}\NormalTok{ State Target Id                  Architecture Device Name                             Cores Threads Location}
+\ExtensionTok{*}\NormalTok{ 1  A     AMDGPU Agent (GPUID 64146) }\ExtensionTok{gfx90a}\NormalTok{       Aldebaran/MI200 [Instinct MI250X/MI250] 416   3328    29:00.0}
+\end{Highlighting}
+\end{Shaded}
+}
+
+We can also get information on the thread grid:
+
+{\small
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{(}\FunctionTok{gdb}\KeywordTok{)} \ExtensionTok{info}\NormalTok{ dispatches}
+  \ExtensionTok{Id}\NormalTok{   Target Id                      Grid      Workgroup Fence   Kernel Function}
+\ExtensionTok{*}\NormalTok{ 1    AMDGPU Dispatch 1:1:1 (PKID 0) [}\ExtensionTok{256}\NormalTok{,1,1] [128,1,1] B}\KeywordTok{|}\ExtensionTok{Aa}\KeywordTok{|}\ExtensionTok{Ra}\NormalTok{ saxpy(int, float const*, int, float*, int)}
+\end{Highlighting}
+\end{Shaded}
+}
+
+For the rocgdb documentation, please see:
+\texttt{/opt/rocm-\textless{}version\textgreater{}/share/doc/rocgdb}.
+
+\pagebreak
+
 \hypertarget{rocprof}{%
 \section{Rocprof}\label{rocprof}}
 
@@ -2894,7 +3635,6 @@ counter values for each invocation of each kernel:
 cat rocprof\_counters.csv
 \end{verbatim}
 
-\pagebreak
 
 \hypertarget{omniperf-examples}{%
 \section{Omniperf Examples}\label{omniperf-examples}}
@@ -4109,7 +4849,7 @@ using the Chrome browser open the web page
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{scp}\NormalTok{ {-}i }\OperatorTok{\textless{}}\NormalTok{path/to/ssh/key}\OperatorTok{\textgreater{}}\NormalTok{ {-}P }\OperatorTok{\textless{}}\NormalTok{port\_number}\OperatorTok{\textgreater{}} \OperatorTok{\textless{}}\NormalTok{username}\OperatorTok{\textgreater{}}\NormalTok{@aac1.amd.com:\textasciitilde{}/}\OperatorTok{\textless{}}\NormalTok{path/to/proto/file}\OperatorTok{\textgreater{}}\NormalTok{ .}
+\FunctionTok{scp}\NormalTok{ {-}i }\OperatorTok{\textless{}}\NormalTok{path/to/ssh/key}\OperatorTok{\textgreater{}}\NormalTok{ {-}P }\OperatorTok{\textless{}}\NormalTok{port\_number}\OperatorTok{\textgreater{}} \OperatorTok{\textless{}}\NormalTok{username}\OperatorTok{\textgreater{}}\NormalTok{@aac6.amd.com:\textasciitilde{}/}\OperatorTok{\textless{}}\NormalTok{path/to/proto/file}\OperatorTok{\textgreater{}}\NormalTok{ .}
 \end{Highlighting}
 \end{Shaded}
 
@@ -4278,6 +5018,26 @@ variables to achieve the same effect.
 \end{Highlighting}
 \end{Shaded}
 }
+
+\pagebreak
+
+\hypertarget{disclaimer}{%
+\section{Disclaimer}\label{disclaimer}}
+
+The information presented in this document is for informational purposes only and may contain technical inaccuracies, omissions, and typographical errors. The information contained herein is subject to change and may be rendered inaccurate for many reasons, including but not limited to product and roadmap changes, component and motherboard version changes, new model and/or product releases, product differences between differing manufacturers, software changes, BIOS flashes, firmware upgrades, or the like. Any computer system has risks of security vulnerabilities that cannot be completely prevented or mitigated.  AMD assumes no obligation to update or otherwise correct or revise this information. However, AMD reserves the right to revise this information and to make changes from time to time to the content hereof without obligation of AMD to notify any person of such revisions or changes.
+
+
+
+THIS INFORMATION IS PROVIDED ‘AS IS.” AMD MAKES NO REPRESENTATIONS OR WARRANTIES WITH RESPECT TO THE CONTENTS HEREOF AND ASSUMES NO RESPONSIBILITY FOR ANY INACCURACIES, ERRORS, OR OMISSIONS THAT MAY APPEAR IN THIS INFORMATION. AMD SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR ANY PARTICULAR PURPOSE. IN NO EVENT WILL AMD BE LIABLE TO ANY PERSON FOR ANY RELIANCE, DIRECT, INDIRECT, SPECIAL, OR OTHER CONSEQUENTIAL DAMAGES ARISING FROM THE USE OF ANY INFORMATION CONTAINED HEREIN, EVEN IF AMD IS EXPRESSLY ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+
+
+Third-party content is licensed to you directly by the third party that owns the content and is not licensed to you by AMD.  ALL LINKED THIRD-PARTY CONTENT IS PROVIDED “AS IS” WITHOUT A WARRANTY OF ANY KIND.  USE OF SUCH THIRD-PARTY CONTENT IS DONE AT YOUR SOLE DISCRETION AND UNDER NO CIRCUMSTANCES WILL AMD BE LIABLE TO YOU FOR ANY THIRD-PARTY CONTENT.  YOU ASSUME ALL RISK AND ARE SOLELY RESPONSIBLE FOR ANY DAMAGES THAT MAY ARISE FROM YOUR USE OF THIRD-PARTY CONTENT.
+
+
+
+© 2024 Advanced Micro Devices, Inc. All rights reserved. AMD, the AMD Arrow logo, AMD CDNA, AMD ROCm, AMD Instinct, and combinations thereof are trademarks of Advanced Micro Devices, Inc. in the United States and/or other jurisdictions. Other names are for informational purposes only and may be trademarks of their respective owners.
+
 
 
 \end{document}
