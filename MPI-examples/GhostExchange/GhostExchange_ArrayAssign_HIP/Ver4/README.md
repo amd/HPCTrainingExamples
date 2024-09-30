@@ -44,12 +44,12 @@ mpirun -np 4 --mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.
 
 This trace should look largely like the previous roctx trace. Searching for the roctx region named "BufAlloc" yields only one result in the trace.
 
-<p><img src="bufalloc_once.png"/></p>
+<p><img src="images/mi210/bufalloc_once.png"/></p>
 
 An easier way to see how this code has changed is to look at `wall_clock-0.txt`, by adding 
 `OMNITRACE_PROFILE=true` and `OMNITRACE_FLAT_PROFILE=true` to `~/.omnitrace.cfg`:
 
-<p><img src="timemory_output.png"/></p>
+<p><img src="images/mi210/timemory_output.png"/></p>
 
 Here we see that the change has the intended effect of reducing the number of calls
 to `BufAlloc` to one, rather than 101.

@@ -68,7 +68,7 @@ mpirun -np 1 ./Jacobi_hip -g 1 1
 
 ## Runtime Instrumentation
 
-Run the code with `omnitrace-instrument` to perform runtime instrumentation: this will produce a series of directories whose name is define by the time they were crated. In one of these directories, you can find the `wall_clock-<proc_ID>.txt` file, which includes information on the function calls made in the code, such as how many times these calls have been called (`COUNT`) and the time in seconds they took in total (`SUM`):
+Run the code with `omnitrace-instrument` to perform runtime instrumentation: this will produce a series of directories whose name is define by the time they were created. In one of these directories, you can find the `wall_clock-<proc_ID>.txt` file, which includes information on the function calls made in the code, such as how many times these calls have been called (`COUNT`) and the time in seconds they took in total (`SUM`):
 
 ```bash
 mpirun -np 1 omnitrace-instrument -- ./Jacobi_hip -g 1 1

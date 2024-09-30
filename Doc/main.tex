@@ -1,0 +1,4283 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+%%%%%%%%%%%%% FROM THE OMNIPERF PART 
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{longtable,booktabs}
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+%%%%%%%%%%%%%
+\usepackage{lmodern}
+\usepackage{fvextra}
+\usepackage{graphics}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+%%%%   BACKGROUND FOR INLINE TEXT   %%%%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{fancyvrb,newverbs,xcolor}
+
+\definecolor{Light}{HTML}{ffedf6}
+
+\let\oldtexttt\texttt
+\renewcommand{\texttt}[1]{
+  \colorbox{Light}{\oldtexttt{#1}}
+}
+%%%%%%   BACKGROUND FOR VERBATIM  %%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\let\oldv\verbatim
+\let\oldendv\endverbatim
+
+\def\verbatim{\par\setbox0\vbox\bgroup\oldv}
+\def\endverbatim{\oldendv\egroup\fboxsep0pt \noindent\colorbox[gray]{0.85}{\usebox0}\par}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\newenvironment{Shaded}{}{}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.53,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.56,0.13,0.00}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.73,0.13,0.13}{\textit{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.02,0.16,0.49}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.40,0.40,0.40}{#1}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.74,0.48,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.73,0.40,0.53}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.10,0.09,0.49}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+
+\author{\it AMD HPC Solutions \& Performance Analysis Team }
+\date{Last Review - September 9th 2024}
+\title{\bf AMD HPC Training Examples Document \\
+      \large \href{https://github.com/amd/HPCTrainingExamples}
+                  {\texttt{https://github.com/amd/HPCTrainingExamples}}}
+
+\begin{document}
+
+\maketitle
+
+{
+\setcounter{tocdepth}{3}
+\tableofcontents
+}
+
+\pagebreak
+\hypertarget{amd-hpc-training-examples-repo}{%
+\section{Summary}\label{amd-hpc-training-examples-repo}}
+
+Welcome to AMD's HPC Training Examples Document
+
+Here you will find a variety of examples to showcase the capabilities of
+AMD's GPU software stack. Please be aware that this document is continuously
+updated to keep up with the most recent releases of the AMD software.
+
+\hypertarget{repository-structure}{%
+\subsection{Examples Repository Structure}\label{repository-structure}}
+
+Please refer to this table of contents to locate the exercises you are
+interested in sorted by topic.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP}{\textbf{HIP}}
+
+  \begin{enumerate}
+  \def\labelenumii{\arabic{enumii}.}
+  \tightlist
+  \item
+    \textbf{\emph{Basic Examples}}
+
+    \begin{enumerate}
+    \def\labelenumiii{\arabic{enumiii}.}
+    \tightlist
+    \item
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP/Stream_Overlap}{\texttt{Stream\_Overlap}}:
+      this example shows how to share the workload of a GPU offload
+      compation using several overlapping streams. The result is an
+      additional gain in terms of time of execution due to the
+      additional parallelism provided by the overlapping streams.
+      \href{https://github.com/amd/HPCTrainingExamples/blob/main/HIP/Stream_Overlap/README.md}{\texttt{README}}.
+    \item
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP/dgemm}{\texttt{dgemm}}:
+      a (d)GEMM application created as an exercise to showcase simple
+      matrix-matrix multiplications on AMD GPUs.
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP/dgemm/README.md}{\texttt{README}}.
+    \item
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP/basic_examples}{\texttt{basic\_examples}}:
+      a collection of introductory exercises such as device to host data
+      transfer and basic GPU kernel implementation.
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP/exercises/README.md}{\texttt{README}}.
+    \item
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP/hip-stream}{\texttt{hip\_stream}}:
+      modification of the STREAM benchmark for HIP.
+      \href{https://github.com/amd/HPCTrainingExamples/blob/main/HIP/hip-stream/README.md}{\texttt{README}}.
+    \item
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP/jacobi}{\texttt{jacobi}}:
+      distributed Jacobi solver, using GPUs to perform the computation
+      and MPI for halo exchanges.
+      \href{https://github.com/amd/HPCTrainingExamples/blob/main/HIP/jacobi/README.md}{\texttt{README}}.
+    \item
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP/matrix_addition}{\texttt{matrix\_addition}}:
+      example of a HIP kernel performing a matrix addition.
+    \item
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP/saxpy}{\texttt{saxpy}}:
+      example of a HIP kernel performing a saxpy operation.
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP/saxpy/README.md}{\texttt{README}}.
+    \item
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP/stencil_examples}{\texttt{stencil\_examples}}:
+      examples stencils operation with a HIP kernel, including the use
+      of timers and asyncronous copies.
+    \item
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP/vectorAdd}{\texttt{vectorAdd}}:
+      example of a HIP kernel to perform a vector add.
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP/vectorAdd/README.md}{\texttt{README}}.
+    \item
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP/vector_addition_examples}{\texttt{vector\_addition\_examples}}:
+      another example of a HIP kernel to perform vector addition,
+      including different versions such as one using shared memory, one
+      with timers, and a CUDA one to try
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIPIFY}{\texttt{HIPIFY}}
+      and
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/hipifly}{\texttt{hipifly}}
+      tools on. The examples in this directory are not part of the HIP
+      test suite.
+    \end{enumerate}
+  \item
+    \textbf{\emph{CUDA to HIP Porting}}
+
+    \begin{enumerate}
+    \def\labelenumiii{\arabic{enumiii}.}
+    \tightlist
+    \item
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIPIFY}{\texttt{HIPIFY}}:
+      example to show how to port CUDA code to HIP with HIPIFY tools.
+      \href{https://github.com/amd/HPCTrainingExamples/blob/main/HIPIFY/README.md}{\texttt{README}}.
+    \item
+      \href{https://github.com/amd/HPCTrainingExamples/tree/main/hipifly}{\texttt{hipifly}}:
+      example to show how to port CUDA code to HIP with hipifly tools.
+      \href{https://github.com/amd/HPCTrainingExamples/blob/main/hipifly/vector_add/README.md}{\texttt{README}}.
+    \end{enumerate}
+  \item
+    \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP-Optimizations}{\texttt{HIP-Optimizations}}:
+    a daxpy HIP kernel is used to show how an initial version can be
+    optimized to improve performance.
+    \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP-Optimizations/daxpy/README.md}{\texttt{README}}.
+  \item
+    \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIPFort}{\texttt{HIPFort}}:
+    a gemm example in Fortran using hipfort.
+  \item
+    \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIPStdPar}{\texttt{HIPStdPar}}:
+    several examples showing C++ Std Parallelism on AMD GPUs.
+    \href{https://github.com/amd/HPCTrainingExamples/blob/main/HIPStdPar/CXX/README.md}{\texttt{README}}.
+  \item
+    \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP-OpenMP}{\texttt{HIP-OpenMP}}:
+    example on HIP/OpenMP interoperability.
+  \end{enumerate}
+\item
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples}{\textbf{MPI-examples}}
+
+  \begin{enumerate}
+  \def\labelenumii{\arabic{enumii}.}
+  \tightlist
+  \item
+    \textbf{\emph{Benchmarks}}: GPU aware benchmarks
+    (\texttt{collective.cpp} and \texttt{pt2pt.cpp}) to assess the
+    performance of the communication libraries.
+    \href{https://github.com/amd/HPCTrainingExamples/blob/main/MPI-examples/README.md}{\texttt{README}}.
+    \textbf{NOTE}: for more detailed instructions on how to run GPU
+    aware MPI examples, see
+    \href{https://github.com/amd/HPCTrainingExamples/tree/main/GPU_aware_MPI/README.md}{GPU\_aware\_MPI}.
+  \item
+    \href{https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange}{\textbf{\emph{GhostExchange}}}:
+    slimmed down example of an actual physics application where the
+    solution is initialized on a square domain discretized with a
+    Cartesian grid, and then advanced in parallel using MPI
+    communications. \textbf{NOTE}: detailed
+    \href{https://github.com/amd/HPCTrainingExamples/blob/main/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/README.md}{\texttt{README}}
+    files are provided here for the different versions of the
+    \texttt{GhostExchange\_ArrayAssign} code, that showcase how to use
+    \texttt{Omnitrace} to profile this application.
+  \end{enumerate}
+\item
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/ManagedMemory}{\textbf{ManagedMemory}}:
+  programming model exercises, topics covered are APU programming model,
+  OpenMP, performance protability frameworks (Kokkos and RAJA) and
+  discrete GPU programming model.
+  \href{https://github.com/amd/HPCTrainingExamples/blob/main/ManagedMemory/README.md}{\texttt{README}}.
+\item
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples}{\textbf{MLExamples}}:
+  a variation of PyTorch's MNIST example code and a smoke test for
+  mpi4py using cupy. Instructions on how to run and test other ML
+  frameworks are in the
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples/README.md}{\texttt{README}}.
+\item
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/Occupancy}{\textbf{Occupancy}}:
+  example on modifying thread occupancy, using several variants of a
+  matrix vector multiplication leveraging shared memory and launch
+  bounds.
+\item
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/OmniperfExamples}{\textbf{OmniperfExamples}}:
+  several examples showing how to leverage Omniperf to perform kernel
+  level optimization. \textbf{NOTE}: detailed READMEs are provided on
+  each subdirectory.
+  \href{https://github.com/amd/HPCTrainingExamples/blob/main/OmniperfExamples/README.md}{\texttt{README}}.\href{https://fs.hlrs.de/projects/par/events/2024/GPU-AMD/day4/Introdution\%20to\%20omniperf.mp4}{\texttt{Video\ of\ Presentation}}.
+\item
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/Omnitrace}{\textbf{Omnitrace}}
+
+  \begin{enumerate}
+  \def\labelenumii{\arabic{enumii}.}
+  \tightlist
+  \item
+    \textbf{\emph{Omnitrace on Jacobi}}: Omnitrace used on the Jacobi
+    solver example.
+    \href{https://github.com/amd/HPCTrainingExamples/tree/main/Omnitrace/README.md}{\texttt{README}}.
+  \item
+    \textbf{\emph{Omnitrace by Example}}: Omnitrace used on several
+    versions of the Ghost Exchange example.
+    \href{https://github.com/amd/HPCTrainingExamples/blob/main/MPI-examples/GhostExchange/GhostExchange_ArrayAssign}{\texttt{READMEs}}
+    available for each of the different versions of the example code.
+    \href{https://vimeo.com/951998260}{\texttt{Video\ of\ Presentation}}.
+  \end{enumerate}
+\item
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples}{\textbf{Pragma\_Examples}}:
+  OpenMP (in Fortran, C, and C++) and OpenACC examples.
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples}{\texttt{README}}.
+\item
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/Speedup_Examples}{\textbf{Speedup\_Examples}}:
+  examples to show the speedup obtained going from a CPU to a GPU
+  implementation.
+  \href{https://github.com/amd/HPCTrainingExamples/blob/main/Speedup_Examples/rzf_training/README.md}{\texttt{README}}.
+\item
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/atomics_openmp}{\textbf{atomics\_openmp}}:
+  examples on atomic operations using OpenMP.
+\item
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/Kokkos}{\textbf{Kokkos}}:
+  runs the Stream Triad example with a Kokkos implementation.
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/Kokkos/README.md}{\texttt{README}}.
+\item
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/Rocgdb}{\textbf{Rocgdb}}:
+  debugs the
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIP/saxpy}{\texttt{HPCTrainingExamples/HIP/saxpy}}
+  example with
+  Rocgdb.\href{https://github.com/amd/HPCTrainingExamples/tree/main/Rocgdb/README.md}{\texttt{README}}.
+  \href{https://fs.hlrs.de/projects/par/events/2024/GPU-AMD/day4/AMD\%20debugger.mp4}{\texttt{Video\ of\ Presentation}}.
+\item
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/Rocprof}{\textbf{Rocprof}}:
+  uses Rocprof to profile
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/HIPIFY/mini-nbody/hip}{\texttt{HPCTrainingExamples/HIPIFY/mini-nbody/hip/}}.
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/Rocprof/README.md}{\texttt{README}}.
+\item
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/GPU_aware_MPI}{\textbf{GPU\_aware\_MPI}}:
+  OSU Mini Benchmarks with GPU aware MPI.
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/GPU_aware_MPI/README.md}{\texttt{README}}.
+  \href{https://fs.hlrs.de/projects/par/events/2024/GPU-AMD/day3/GPU-AwareMPI.mp4}{\texttt{Video\ of\ Presentation}}.
+\item
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/rocm_blog_codes}{\textbf{rocm\_blog\_codes}}:
+  this directory contains accompany source code examples for select HPC
+  ROCm blogs found at \url{https://rocm.blogs.amd.com}.
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/rocm_blog_codesi/README.md}{\texttt{README}}.
+\item
+  \href{https://github.com/amd/HPCTrainingExamples/tree/main/login_info}{\textbf{login\_info}}
+
+  \begin{enumerate}
+  \def\labelenumii{\arabic{enumii}.}
+  \tightlist
+  \item
+    \href{https://github.com/amd/HPCTrainingExamples/tree/main/login_info/AAC}{\textbf{\emph{AAC}}}:
+    instructions on how to log in to the AMD Accelerator Cloud (AAC)
+    resource.
+    \href{https://github.com/amd/HPCTrainingExamples/tree/main/login_info/AAC/README.md}{\texttt{README}}.
+  \end{enumerate}
+\end{enumerate}
+
+\hypertarget{run-the-tests}{%
+\subsection{Run the Tests}\label{run-the-tests}}
+
+Most of the exercises in this repo can be run as a test suite by doing:
+
+\begin{verbatim}
+git clone https://github.com/amd/HPCTrainingExamples && \
+cd HPCTrainingExamples && \
+cd tests && \
+./runTests.sh
+\end{verbatim}
+
+You can also run a subset of the whole test suite by specifying the
+subset you are interested in as an input to the \texttt{runTests.sh}
+script. For instance: \texttt{./runTests.sh\ -\/-pytorch}. To see a full
+list of the possible subsets that can be run:
+\texttt{./runTests.sh\ -\/-help}.
+
+\textbf{NOTE}: tests can also be run manually from their respective
+directories, provided the necessary modules have been loaded and they
+have been compiled appropriately.
+
+\hypertarget{feedback}{%
+\subsection{Feedback}\label{feedback}}
+
+We welcome your feedback and contributions, feel free to use this repo
+to bring up any issues or submit pull requests. The software made
+available here is released under the MIT license, more details can be
+found in
+\href{https://github.com/amd/HPCTrainingExamples/blob/main/LICENSE.md}{\texttt{LICENSE.md}}.
+
+\pagebreak
+
+\hypertarget{porting-applications-to-hip}{%
+\section{Porting Applications to
+HIP}\label{porting-applications-to-hip}}
+
+\hypertarget{hipify-examples}{%
+\subsection{Hipify Examples}\label{hipify-examples}}
+
+\textbf{NOTE}: these exercises have been tested on MI210 and MI300A
+accelerators using a container environment. To see details on the
+container environment (such as operating system and modules available)
+please see \texttt{README.md} on
+\href{https://github.com/amd/HPCTrainingDock}{this} repo.
+
+\hypertarget{exercise-1-manual-code-conversion-from-cuda-to-hip-10-min}{%
+\subsubsection{Exercise 1: Manual code conversion from CUDA to HIP (10
+min)}\label{exercise-1-manual-code-conversion-from-cuda-to-hip-10-min}}
+
+Choose one or more of the CUDA samples in
+\texttt{HPCTrainingExamples/HIPIFY/mini-nbody/cuda} directory. Manually
+convert it to HIP. Tip: for example, the cudaMalloc will be called
+hipMalloc. You can choose from
+\texttt{nbody-block.cu,\ nbody-orig.cu,\ nbody-soa.cu}
+
+You'll want to compile on the node you've been allocated so that hipcc
+will choose the correct GPU architecture.
+
+\hypertarget{exercise-2-code-conversion-from-cuda-to-hip-using-hipify-tools-10-min}{%
+\subsubsection{Exercise 2: Code conversion from CUDA to HIP using HIPify
+tools (10
+min)}\label{exercise-2-code-conversion-from-cuda-to-hip-using-hipify-tools-10-min}}
+
+Use the \texttt{hipify-perl} script to ``hipify'' the CUDA samples you
+used to manually convert to HIP in Exercise 1. hipify-perl is in
+\texttt{\$ROCM\_PATH/hip/bin} directory and should be in your path.
+
+First test the conversion to see what will be converted
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{hipify{-}perl}\NormalTok{ {-}examine nbody{-}orig.cu}
+\end{Highlighting}
+\end{Shaded}
+
+You'll see the statistics of HIP APIs that will be generated. The output
+might be different depending on the ROCm version.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{[}\ExtensionTok{HIPIFY}\NormalTok{] info: file }\StringTok{\textquotesingle{}nbody{-}orig.cu\textquotesingle{}}\NormalTok{ statistics:}
+  \ExtensionTok{CONVERTED}\NormalTok{ refs count: 7}
+  \ExtensionTok{TOTAL}\NormalTok{ lines of code: 91}
+  \ExtensionTok{WARNINGS}\NormalTok{: 0}
+\NormalTok{[}\ExtensionTok{HIPIFY}\NormalTok{] info: CONVERTED refs by names:}
+  \ExtensionTok{cudaFree}\NormalTok{ =}\OperatorTok{\textgreater{}}\NormalTok{ hipFree: 1}
+  \ExtensionTok{cudaMalloc}\NormalTok{ =}\OperatorTok{\textgreater{}}\NormalTok{ hipMalloc: 1}
+  \ExtensionTok{cudaMemcpyDeviceToHost}\NormalTok{ =}\OperatorTok{\textgreater{}}\NormalTok{ hipMemcpyDeviceToHost: 1}
+  \ExtensionTok{cudaMemcpyHostToDevice}\NormalTok{ =}\OperatorTok{\textgreater{}}\NormalTok{ hipMemcpyHostToDevice: 1}
+\end{Highlighting}
+\end{Shaded}
+
+\texttt{hipify-perl} is in \texttt{\$ROCM\_PATH/hip/bin} directory and
+should be in your path. In some versions of ROCm, the script is called
+\texttt{hipify-perl}.
+
+Now let's actually do the conversion.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{hipify{-}perl}\NormalTok{ nbody{-}orig.cu }\OperatorTok{\textgreater{}}\NormalTok{ nbody{-}orig.cpp}
+\end{Highlighting}
+\end{Shaded}
+
+Compile the HIP programs.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{hipcc}\NormalTok{ {-}DSHMOO {-}I ../ nbody{-}orig.cpp {-}o nbody{-}orig}
+\end{Highlighting}
+\end{Shaded}
+
+The \texttt{\#define\ SHMOO} fixes some timer printouts. Add
+\texttt{-\/-offload-arch=\textless{}gpu\_type\textgreater{}} to specify
+the GPU type and avoid the autodetection issues when running on a single
+GPU on a node.
+
+\begin{itemize}
+\tightlist
+\item
+  Fix any compiler issues, for example, if there was something that
+  didn't hipify correctly.
+\item
+  Be on the lookout for hard-coded Nvidia specific things like warp
+  sizes and PTX.
+\end{itemize}
+
+Run the program
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{./nbody{-}orig}
+\end{Highlighting}
+\end{Shaded}
+
+A batch version of Exercise 2 is:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#!/bin/bash}
+\CommentTok{\#SBATCH {-}N 1}
+\CommentTok{\#SBATCH {-}{-}ntasks=1}
+\CommentTok{\#SBATCH {-}{-}gpus=1}
+\CommentTok{\#SBATCH {-}p LocalQ}
+\CommentTok{\#SBATCH {-}t 00:10:00}
+
+\BuiltInTok{pwd}
+\ExtensionTok{module}\NormalTok{ load rocm}
+
+\BuiltInTok{cd}\NormalTok{ HPCTrainingExamples/HIPIFY/mini{-}nbody/cuda}
+\ExtensionTok{hipify{-}perl}\NormalTok{ {-}print{-}stats nbody{-}orig.cu }\OperatorTok{\textgreater{}}\NormalTok{ nbody{-}orig.cpp}
+\ExtensionTok{hipcc}\NormalTok{ {-}DSHMOO {-}I ../ nbody{-}orig.cpp {-}o nbody{-}orig}
+\ExtensionTok{./nbody{-}orig}
+\end{Highlighting}
+\end{Shaded}
+
+Notes:
+
+\begin{itemize}
+\tightlist
+\item
+  Hipify tools do not check correctness
+\item
+  \texttt{hipconvertinplace-perl} is a convenience script that does
+  \texttt{hipify-perl\ -inplace\ -print-stats} command
+\end{itemize}
+
+\hypertarget{mini-app-conversion-example}{%
+\subsubsection{Mini-App conversion
+example}\label{mini-app-conversion-example}}
+
+Load the proper environment
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd} \VariableTok{$HOME}\NormalTok{/HPCTrainingExamples/HIPIFY/}
+\ExtensionTok{module}\NormalTok{ load rocm}
+\end{Highlighting}
+\end{Shaded}
+
+Get the CUDA version of the Pennant mini-app.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{wget}\NormalTok{ https://asc.llnl.gov/sites/asc/files/2020{-}09/pennant{-}singlenode{-}cude.tgz}
+\FunctionTok{tar}\NormalTok{ {-}xzvf pennant{-}singlenode{-}cude.tgz}
+
+\BuiltInTok{cd}\NormalTok{ PENNANT}
+
+\ExtensionTok{hipexamine{-}perl.sh}
+\end{Highlighting}
+\end{Shaded}
+
+And review the output
+
+Now do the actual conversion. We want to do the conversion for the whole
+directory tree, so we'll use hipconvertinplace-sh
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{hipconvertinplace{-}perl.sh}
+\end{Highlighting}
+\end{Shaded}
+
+We want to use \texttt{.hip} extensions rather than \texttt{.cu}, so
+change all files with \texttt{.cu} to \texttt{.hip}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{mv}\NormalTok{ src/HydroGPU.cu src/HydroGPU.hip}
+\end{Highlighting}
+\end{Shaded}
+
+Now we have two options to convert the build system to work with both
+ROCm and CUDA
+
+\hypertarget{makefile-option}{%
+\subsection{Makefile option}\label{makefile-option}}
+
+First cut at converting the Makefile. Testing with \texttt{make} can
+help identify the next step.
+
+\begin{itemize}
+\tightlist
+\item
+  Change all occurances of CUDA to HIP (e.g.~sed -i `s/cuda/hip/g'
+  Makefile)
+\item
+  Change the CXX variable to \texttt{clang++} located in
+  \texttt{\$\{ROCM\_PATH\}/llvm/bin/clang++}
+\item
+  Change all the CUDAC variables to HIPCC
+\item
+  Change HIPCC to point to hipcc
+\item
+  Change HIPCCFLAGS with CUDA options to HIPCCFLAGS\_CUDA
+\item
+  Remove \texttt{-fast} and \texttt{-fno-alias} from the CXXFLAGS\_OPT
+\item
+  Change all \texttt{.cu} to \texttt{.hip} in the Makefile
+\end{itemize}
+
+Now we are just getting compile errors from the source files. We will
+have to do fixes there. We'll tackle them one-by-one.
+
+The first errors are related to the double2 type.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{compiling}\NormalTok{ src/HydroGPU.hip}
+\KeywordTok{(}\VariableTok{CPATH=}\NormalTok{;}\ExtensionTok{hipcc}\NormalTok{ {-}O3 {-}I.  {-}c {-}o build/HydroGPU.o src/HydroGPU.hip}\KeywordTok{)}
+\ExtensionTok{In}\NormalTok{ file included from src/HydroGPU.hip:14:}
+\ExtensionTok{In}\NormalTok{ file included from src/HydroGPU.hh:16:}
+\end{Highlighting}
+\end{Shaded}
+
+{\small
+\texttt{src/Vec2.hh:35:8:\ error:\ definition\ of\ type\ \textquotesingle{}double2\textquotesingle{}\ conflicts\ with\ type\ alias\ of\ the\ same\ name}
+}
+
+\begin{verbatim}
+struct double2
+       ^
+\end{verbatim}
+
+{\small
+\texttt{/opt/rocm-5.6.0/include/hip/amd\_detail/amd\_hip\_vector\_types.h:1098:1:\ note:\ \textquotesingle{}double2\textquotesingle{}\ declared\ here}
+}
+
+\begin{verbatim}
+__MAKE_VECTOR_TYPE__(double, double);
+
+^
+\end{verbatim}
+
+{\footnotesize
+\texttt{/opt/rocm-5.6.0/include/hip/amd\_detail/amd\_hip\_vector\_types.h:1062:15:\ note:\ expanded\ from\ macro\ \textquotesingle{}\_\_MAKE\_VECTOR\_TYPE\_\_\textquotesingle{}}
+}
+
+\begin{verbatim}
+        using CUDA_name##2 = HIP_vector_type<T, 2>;\
+
+              ^
+<scratch space>:316:1: note: expanded from here
+double2
+\end{verbatim}
+
+HIP defines double2. Let's look at Vec2.hh. At line 33 where the first
+error occurs. We see an \texttt{\#ifndef\ \_\_CUDACC\_\_} around a block
+of code there. We also need the \#ifndef to include HIP as well. Let's
+check the available compiler defines from the presentation to see what
+is available. It looks like we can use
+\texttt{\_\_HIP\_DEVICE\_COMPILE\_\_} or maybe \texttt{\_\_HIPCC\_\_}.
+
+Change line 33 in Vec2.hh to \#ifndef \texttt{\_\_HIPCC\_\_}
+
+The next error is about function attributes that are incorrect for
+device code.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{compiling}\NormalTok{ src/HydroGPU.hip}
+\KeywordTok{(}\VariableTok{CPATH=}\NormalTok{;}\ExtensionTok{hipcc}\NormalTok{ {-}O3 {-}I.  {-}c {-}o build/HydroGPU.o src/HydroGPU.hip}
+\ExtensionTok{src}\NormalTok{/HydroGPU.hip:}\ExtensionTok{168}\NormalTok{:23: error: no matching function for call to }\StringTok{\textquotesingle{}cross}
+\StringTok{    double sa = 0.5 * cross(px[p2] {-} px[p1],  zx[z] {-} px[p1]);}
+\StringTok{                      \^{}\textasciitilde{}\textasciitilde{}\textasciitilde{}}
+\end{Highlighting}
+\end{Shaded}
+
+{\small
+\texttt{src/Vec2.hh:206:15:\ note:\ candidate\ function\ not\ viable:\ call\ to\ \_\_host\_\_\ function\ from\ \_\_device\_\_\ function}
+}
+
+The FNQUALIFIER macro is what handles the attributes in the code. We
+find that defined at line 22 and again we see a
+\texttt{\#ifdef\ \_\_CUDACC\_\_}. It is another
+\texttt{\#ifdef\ \_\_CUDACC\_\_}. We can see that we need to pay
+attention to all the CUDA ifdef statements.
+
+Change line 22 to \texttt{\#ifdef\ \_\_HIPCC\_\_}
+
+Finally we get an error about already defined operators on double2
+types. These appear to be defined in HIP, but not in CUDA. So we change
+line 84
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{compiling}\NormalTok{ src/HydroGPU.hip}
+\KeywordTok{(}\VariableTok{CPATH=}\NormalTok{;}\ExtensionTok{hipcc}\NormalTok{ {-}O3 {-}I.  {-}c {-}o build/HydroGPU.o src/HydroGPU.hip}\KeywordTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+{\scriptsize
+\texttt{src/HydroGPU.hip:149:15:\ error:\ use\ of\ overloaded\ operator\ \textquotesingle{}+=\textquotesingle{}\ is\ ambiguous\ (with\ operand\ types\ \textquotesingle{}double2  [...]}
+}
+
+\begin{verbatim}
+        zxtot += ctemp2[sn];
+        ~~~~~ ^  ~~~~~~~~~~
+/opt/rocm-5.6.0/include/hip/amd_detail/amd_hip_vector_types.h:510:26: 
+note: candidate function
+        HIP_vector_type& operator+=(const HIP_vector_type& x) noexcept
+                         ^
+src/Vec2.hh:88:17: note: candidate function
+inline double2& operator+=(double2& v, const double2& v2)
+\end{verbatim}
+
+Change line 85 to \texttt{\#elif\ defined(\_\_CUDACC\_\_)}
+
+Now we start getting errors for HydroGPU.hip. The first is for the
+atomicMin function. It is already defined in HIP, so we need to add an
+ifdef for CUDA around the code.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{compiling}\NormalTok{ src/HydroGPU.hip}
+\KeywordTok{(}\VariableTok{CPATH=}\NormalTok{;}\ExtensionTok{hipcc}\NormalTok{ {-}O3 {-}I.  {-}c {-}o build/HydroGPU.o src/HydroGPU.hip}\KeywordTok{)}
+\ExtensionTok{src}\NormalTok{/HydroGPU.hip:}\ExtensionTok{725}\NormalTok{:26: error: static declaration of }\StringTok{\textquotesingle{}atomicMin\textquotesingle{}}\NormalTok{ follows non{-}static declaration}
+\ExtensionTok{static}\NormalTok{ \_\_device\_\_ double atomicMin(double* address, double val)}
+\NormalTok{                         \^{}}
+\ExtensionTok{/opt/rocm{-}5.6.0/include/hip/amd\_detail}\NormalTok{/amd\_hip\_atomic.h:}\ExtensionTok{478}\NormalTok{:8: note: previous definition is here}
+\ExtensionTok{double}\NormalTok{ atomicMin(double* addr, double val) }\KeywordTok{\{}\NormalTok{                                                                                                                          \^{}}
+\NormalTok{       \^{}}
+\ExtensionTok{1}\NormalTok{ error generated when compiling for gfx90a.}
+\end{Highlighting}
+\end{Shaded}
+
+Add \texttt{\#ifdef\ \_\_CUDACC\_\_/endif} to the more block of code in
+\texttt{HydroGPU.hip} from line 725 to 737
+
+We finally got through the compiler errors and move on to link errors
+
+\begin{verbatim}
+ linking  build/pennant
+/opt/rocm-5.6.0//llvm/bin/clang++ -o build/pennant
+build/ExportGold.o build/ImportGMV.o
+build/Parallel.o build/WriteXY.o 
+build/HydroBC.o build/QCS.o build/TTS.o build/main.o build/Mesh.o
+build/InputFile.o build/GenMesh.o
+build/Driver.o build/Hydro.o build/PolyGas.o build/HydroGPU.o -L/lib64 -lcudart
+ld.lld: error: unable to find library -lcudart
+\end{verbatim}
+
+In the Makefile, change the LDFLAGS while keeping the old settings for
+when we set up the switch between GPU platforms.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{LDFLAGS\_CUDA}\NormalTok{ := {-}L}\VariableTok{$(}\ExtensionTok{HIP\_INSTALL\_PATH}\VariableTok{)}\NormalTok{/lib64 {-}lcudart}
+\ExtensionTok{LDFLAGS}\NormalTok{ := {-}L}\VariableTok{$\{ROCM\_PATH\}}\NormalTok{/hip/lib {-}lamdhip64}
+\end{Highlighting}
+\end{Shaded}
+
+We then get the link error
+
+\begin{verbatim}
+linking  build/pennant
+
+/opt/rocm-5.6.0//llvm/bin/clang++ -o build/pennant build/ExportGold.o build/ImportGMV.o 
+build/Parallel.o build/WriteXY.o build/HydroBC.o build/QCS.o build/TTS.o build/main.o
+build/Mesh.o build/InputFile.o build/GenMesh.o build/Driver.o build/Hydro.o 
+build/PolyGas.o build/HydroGPU.o -L/opt/rocm-5.6.0//hip/lib -lamdhip64}
+
+ld.lld: error: undefined symbol: hydroInit(int, int, int, int, int, double, double, 
+double, double, double, double, double, double, double, int, double const*, 
+int, double const*, double2 const*, double2 const*, double const*, double const*, 
+double const*, double const*, double const*, double const*, double const*,
+int const*, int const*, int const*, int const*, int const*, int const*)}
+
+\begin{verbatim}
+>>> referenced by Hydro.cc
+>>>               build/Hydro.o:(Hydro::Hydro(InputFile const*, Mesh*))
+
+ld.lld: error: undefined symbol: hydroGetData(int,int,double2*,double*,double*,double*)
+>>> referenced by Hydro.cc
+>>>               build/Hydro.o:(Hydro::getData())
+\end{verbatim}
+
+This one is a little harder. We can get more information by using
+\texttt{nm\ build/Hydro.o\ \textbar{}grep\ hydroGetData} and
+\texttt{nm\ build/HydroGPU.o\ \textbar{}grep\ hydroGetData}. We can see
+that the subroutine signatures are slightly different due to the double2
+type on the host and GPU. You can also switch the compiler from clang++
+to g++ to get a slightly more informative error. We are in a tough spot
+here because we need the hipmemcpy in the body of the subroutine, but
+the types for double2 are for the device instead of the host. One
+solution is to just compile and link everything with hipcc, but we
+really don't want to do that if only one routine needs to use the device
+compiler. So we cheat by declaring the prototype arguments as
+\texttt{void\ *} and casting the type in the call with
+\texttt{(void\ *)}. The types are really the same and it is just arguing
+with the compiler.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{nm}\NormalTok{ build/Hydro.o }\KeywordTok{|}\FunctionTok{grep}\NormalTok{ hydroGetData}
+                 \ExtensionTok{U}\NormalTok{ \_Z12hydroGetDataiiP7double2PdS1\_S1\_}
+\FunctionTok{nm}\NormalTok{ build/HydroGPU.o }\KeywordTok{|}\FunctionTok{grep}\NormalTok{ hydroGetData}
+\ExtensionTok{0000000000003750}\NormalTok{ T \_Z12hydroGetDataiiP15HIP\_vector\_typeIdLj2EEPdS2\_S2\_}
+\end{Highlighting}
+\end{Shaded}
+
+In HydroGPU.hh
+
+\begin{itemize}
+\tightlist
+\item
+  Change line 38 and 39 to from \texttt{const\ double2*} to
+  \texttt{const\ void*}
+\item
+  Change line 62 from \texttt{double2*} to \texttt{void*}
+\end{itemize}
+
+In HydroGPU.hip
+
+\begin{itemize}
+\tightlist
+\item
+  Change line 1031 and 1032 to \texttt{const\ void*}
+\item
+  Change line 1284 to \texttt{const\ void*}
+\end{itemize}
+
+In Hydro.cc
+
+\begin{itemize}
+\tightlist
+\item
+  Add \texttt{(void\ *)} before the arguments on lines 59, 60, and 145
+\end{itemize}
+
+Now it compiles and we can test the run with
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{build/pennant}\NormalTok{ test/sedovbig/sedovbig.pnt}
+\end{Highlighting}
+\end{Shaded}
+
+So we have the code converted to HIP and fixed the build system for it.
+But we haven't accomplished our original goal of running with both ROCm
+and CUDA.
+
+We can copy a sample portable Makefile from
+\texttt{HPCTrainingExamples/HIP/saxpy/Makefile} and modify it for this
+application.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{EXECUTABLE}\NormalTok{ = pennant}
+\ExtensionTok{BUILDDIR}\NormalTok{ := build}
+\ExtensionTok{SRCDIR}\NormalTok{ = src}
+\ExtensionTok{all}\NormalTok{: }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/}\VariableTok{$(}\ExtensionTok{EXECUTABLE}\VariableTok{)}\NormalTok{ test}
+
+\ExtensionTok{.PHONY}\NormalTok{: test}
+
+\ExtensionTok{OBJECTS}\NormalTok{ =  }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/Driver.o }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/GenMesh.o }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/HydroBC.o}
+\ExtensionTok{OBJECTS}\NormalTok{ += }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/ImportGMV.o }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/Mesh.o }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/PolyGas.o}
+\ExtensionTok{OBJECTS}\NormalTok{ += }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/TTS.o }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/main.o }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/ExportGold.o}
+\ExtensionTok{OBJECTS}\NormalTok{ += }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/Hydro.o }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/HydroGPU.o }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/InputFile.o}
+\ExtensionTok{OBJECTS}\NormalTok{ += }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/Parallel.o }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/QCS.o }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/WriteXY.o}
+
+\ExtensionTok{CXXFLAGS}\NormalTok{ = {-}g {-}O3}
+\ExtensionTok{HIPCC\_FLAGS}\NormalTok{ = {-}O3 {-}g {-}DNDEBUG}
+
+\ExtensionTok{HIPCC}\NormalTok{ ?= hipcc}
+
+\ExtensionTok{ifeq}\NormalTok{ (}\VariableTok{$(}\ExtensionTok{HIPCC}\VariableTok{)}\NormalTok{, nvcc)}
+   \ExtensionTok{HIPCC\_FLAGS}\NormalTok{ += {-}x cu}
+   \ExtensionTok{LDFLAGS}\NormalTok{ = {-}lcudadevrt {-}lcudart\_static {-}lrt {-}lpthread {-}ldl}
+\ExtensionTok{endif}
+\ExtensionTok{ifeq}\NormalTok{ (}\VariableTok{$(}\ExtensionTok{HIPCC}\VariableTok{)}\NormalTok{, hipcc)}
+   \ExtensionTok{HIPCC\_FLAGS}\NormalTok{ += {-}munsafe{-}fp{-}atomics}
+   \ExtensionTok{LDFLAGS}\NormalTok{ = {-}L}\VariableTok{$\{ROCM\_PATH\}}\NormalTok{/hip/lib {-}lamdhip64}
+\ExtensionTok{endif}
+
+\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\ExtensionTok{/\%.d}\NormalTok{ : }\VariableTok{$(}\ExtensionTok{SRCDIR}\VariableTok{)}\NormalTok{/\%.cc}
+    \ExtensionTok{@echo}\NormalTok{ making depends for $}\OperatorTok{\textless{}}
+    \VariableTok{$(}\ExtensionTok{maketargetdir}\VariableTok{)}
+    \ExtensionTok{@}\VariableTok{$(}\ExtensionTok{CXX}\VariableTok{)} \VariableTok{$(}\ExtensionTok{CXXFLAGS}\VariableTok{)} \VariableTok{$(}\ExtensionTok{CXXINCLUDES}\VariableTok{)}\NormalTok{ {-}M $}\OperatorTok{\textless{}} \KeywordTok{|} \FunctionTok{sed} \StringTok{"1s![\^{} \textbackslash{}t]\textbackslash{}+\textbackslash{}.o!}\VariableTok{$(}\ExtensionTok{@}\NormalTok{:.d=.o}\VariableTok{)}\StringTok{ }\VariableTok{$@}\StringTok{!"} \OperatorTok{\textgreater{}}\VariableTok{$@}
+
+\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\ExtensionTok{/\%.d}\NormalTok{ : }\VariableTok{$(}\ExtensionTok{SRCDIR}\VariableTok{)}\NormalTok{/\%.hip}
+    \ExtensionTok{@echo}\NormalTok{ making depends for $}\OperatorTok{\textless{}}
+    \VariableTok{$(}\ExtensionTok{maketargetdir}\VariableTok{)}
+    \ExtensionTok{@}\VariableTok{$(}\ExtensionTok{HIPCC}\VariableTok{)} \VariableTok{$(}\ExtensionTok{HIPCCFLAGS}\VariableTok{)} \VariableTok{$(}\ExtensionTok{HIPCCINCLUDES}\VariableTok{)}\NormalTok{ {-}M $}\OperatorTok{\textless{}} \KeywordTok{|} \FunctionTok{sed} \StringTok{"1s![\^{} \textbackslash{}t]\textbackslash{}+\textbackslash{}.o!}\VariableTok{$(}\ExtensionTok{@}\NormalTok{:.d=.o}\VariableTok{)}\StringTok{ }\VariableTok{$@}\StringTok{!"} \OperatorTok{\textgreater{}}\VariableTok{$@}
+
+\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\ExtensionTok{/\%.o}\NormalTok{ : }\VariableTok{$(}\ExtensionTok{SRCDIR}\VariableTok{)}\NormalTok{/\%.cc}
+    \ExtensionTok{@echo}\NormalTok{ compiling $}\OperatorTok{\textless{}}
+    \VariableTok{$(}\ExtensionTok{maketargetdir}\VariableTok{)}
+    \VariableTok{$(}\ExtensionTok{CXX}\VariableTok{)} \VariableTok{$(}\ExtensionTok{CXXFLAGS}\VariableTok{)} \VariableTok{$(}\ExtensionTok{CXXINCLUDES}\VariableTok{)} \ExtensionTok{{-}c}\NormalTok{ {-}o }\VariableTok{$@}\NormalTok{ $}\OperatorTok{\textless{}}
+
+\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\ExtensionTok{/\%.o}\NormalTok{ : }\VariableTok{$(}\ExtensionTok{SRCDIR}\VariableTok{)}\NormalTok{/\%.hip}
+    \ExtensionTok{@echo}\NormalTok{ compiling $}\OperatorTok{\textless{}}
+    \VariableTok{$(}\ExtensionTok{maketargetdir}\VariableTok{)}
+    \VariableTok{$(}\ExtensionTok{HIPCC}\VariableTok{)} \VariableTok{$(}\ExtensionTok{HIPCC\_FLAGS}\VariableTok{)} \ExtensionTok{{-}c}\NormalTok{ $\^{} {-}o }\VariableTok{$@}
+
+\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\ExtensionTok{/}\VariableTok{$(}\ExtensionTok{EXECUTABLE}\VariableTok{)} \BuiltInTok{:} \VariableTok{$(}\ExtensionTok{OBJECTS}\VariableTok{)}
+    \ExtensionTok{@echo}\NormalTok{ linking }\VariableTok{$@}
+    \VariableTok{$(}\ExtensionTok{maketargetdir}\VariableTok{)}
+    \VariableTok{$(}\ExtensionTok{CXX}\VariableTok{)} \VariableTok{$(}\ExtensionTok{OBJECTS}\VariableTok{)} \VariableTok{$(}\ExtensionTok{LDFLAGS}\VariableTok{)} \ExtensionTok{{-}o} \VariableTok{$@}
+
+\BuiltInTok{test}\NormalTok{ : }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\NormalTok{/}\VariableTok{$(}\ExtensionTok{EXECUTABLE}\VariableTok{)}
+    \VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}\ExtensionTok{/}\VariableTok{$(}\ExtensionTok{EXECUTABLE}\VariableTok{)} \ExtensionTok{test/sedovbig/sedovbig.pnt}
+
+\ExtensionTok{define}\NormalTok{ maketargetdir}
+    \ExtensionTok{{-}@mkdir}\NormalTok{ {-}p }\VariableTok{$(}\FunctionTok{dir} \VariableTok{$@)} \OperatorTok{\textgreater{}}\NormalTok{ /dev/null }\OperatorTok{2\textgreater{}\&1}
+\ExtensionTok{endef}
+
+\ExtensionTok{clean}\NormalTok{ :}
+    \FunctionTok{rm}\NormalTok{ {-}rf }\VariableTok{$(}\ExtensionTok{BUILDDIR}\VariableTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+To test the makefile,
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{make}\NormalTok{ build/pennant}
+\FunctionTok{make}\NormalTok{ test}
+\end{Highlighting}
+\end{Shaded}
+
+or just \texttt{make} to both build and run the test
+
+To test the makefile build system with CUDA (note that the system used
+for this training does not have CUDA installed so this exercise is left
+to the student)
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{module}\NormalTok{ load cuda}
+\VariableTok{HIPCC=}\NormalTok{nvcc }\VariableTok{CXX=}\NormalTok{g++ }\FunctionTok{make}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{cmake-option}{%
+\subsection{CMake option}\label{cmake-option}}
+
+To create a cmake build system, we can copy a sample portable
+CMakeLists.txt and modify it for this applicaton.
+
+\texttt{HPCTrainingExamples/HIP/saxpy/CMakeLists.txt}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{cmake\_minimum\_required}\NormalTok{(}\OtherTok{VERSION}\NormalTok{ 3.21 }\OtherTok{FATAL\_ERROR}\NormalTok{)}
+\KeywordTok{project}\NormalTok{(Pennant }\OtherTok{LANGUAGES} \OtherTok{CXX}\NormalTok{)}
+\KeywordTok{include}\NormalTok{(CTest)}
+
+\KeywordTok{set}\NormalTok{ (}\DecValTok{CMAKE\_CXX\_STANDARD}\NormalTok{ 14)}
+
+\KeywordTok{if}\NormalTok{ (}\OtherTok{NOT} \DecValTok{CMAKE\_BUILD\_TYPE}\NormalTok{)}
+   \KeywordTok{set}\NormalTok{(}\DecValTok{CMAKE\_BUILD\_TYPE}\NormalTok{ RelWithDebInfo)}
+\KeywordTok{endif}\NormalTok{(NOT CMAKE\_BUILD\_TYPE)}
+
+\KeywordTok{string}\NormalTok{(}\OtherTok{REPLACE}\NormalTok{ {-}O2 {-}O3 }\DecValTok{CMAKE\_CXX\_FLAGS\_RELWITHDEBINFO} \DecValTok{$\{CMAKE\_CXX\_FLAGS\_RELWITHDEBINFO\}}\NormalTok{)}
+
+\KeywordTok{if}\NormalTok{ (}\OtherTok{NOT}\NormalTok{ CMAKE\_GPU\_RUNTIME)}
+   \KeywordTok{set}\NormalTok{(GPU\_RUNTIME }\StringTok{"ROCM"} \OtherTok{CACHE} \OtherTok{STRING} \StringTok{"Switches between ROCM and CUDA"}\NormalTok{)}
+\KeywordTok{else}\NormalTok{ (NOT CMAKE\_GPU\_RUNTIME)}
+   \KeywordTok{set}\NormalTok{(GPU\_RUNTIME }\StringTok{"}\DecValTok{$\{}\NormalTok{CMAKE\_GPU\_RUNTIME}\DecValTok{\}}\StringTok{"} \OtherTok{CACHE} \OtherTok{STRING} \StringTok{"Switches between ROCM and CUDA"}\NormalTok{)}
+\KeywordTok{endif}\NormalTok{ (NOT CMAKE\_GPU\_RUNTIME)}
+\CommentTok{\# Really should only be ROCM or CUDA, but allowing HIP because it is the currently built{-}in option}
+\KeywordTok{set}\NormalTok{(GPU\_RUNTIMES }\StringTok{"ROCM"} \StringTok{"CUDA"} \StringTok{"HIP"}\NormalTok{)}
+\KeywordTok{if}\NormalTok{(}\OtherTok{NOT} \StringTok{"}\DecValTok{$\{}\NormalTok{GPU\_RUNTIME}\DecValTok{\}}\StringTok{"} \OtherTok{IN\_LIST}\NormalTok{ GPU\_RUNTIMES)}
+    \KeywordTok{set}\NormalTok{(ERROR\_MESSAGE }\StringTok{"GPU\_RUNTIME is set to }\CharTok{\textbackslash{}"}\DecValTok{$\{}\NormalTok{GPU\_RUNTIME}\DecValTok{\}}\CharTok{\textbackslash{}"}\StringTok{.}\CharTok{\textbackslash{}n}\StringTok{GPU\_RUNTIME must be either HIP, }
+\StringTok{        ROCM, or CUDA."}\NormalTok{)}
+    \KeywordTok{message}\NormalTok{(}\OtherTok{FATAL\_ERROR} \DecValTok{$\{}\NormalTok{ERROR\_MESSAGE}\DecValTok{\}}\NormalTok{)}
+\KeywordTok{endif}\NormalTok{()}
+\CommentTok{\# GPU\_RUNTIME for AMD GPUs should really be ROCM, if selecting AMD GPUs}
+\CommentTok{\# so manually resetting to HIP if ROCM is selected}
+\KeywordTok{if}\NormalTok{ (}\DecValTok{$\{}\NormalTok{GPU\_RUNTIME}\DecValTok{\}} \OtherTok{MATCHES} \StringTok{"ROCM"}\NormalTok{)}
+   \KeywordTok{set}\NormalTok{(GPU\_RUNTIME }\StringTok{"HIP"}\NormalTok{)}
+\KeywordTok{endif}\NormalTok{ ($\{GPU\_RUNTIME\} MATCHES "ROCM")}
+\KeywordTok{set\_property}\NormalTok{(}\OtherTok{CACHE}\NormalTok{ GPU\_RUNTIME }\OtherTok{PROPERTY} \OtherTok{STRINGS} \DecValTok{$\{}\NormalTok{GPU\_RUNTIMES}\DecValTok{\}}\NormalTok{)}
+
+\KeywordTok{enable\_language}\NormalTok{(}\DecValTok{$\{}\NormalTok{GPU\_RUNTIME}\DecValTok{\}}\NormalTok{)}
+\KeywordTok{set}\NormalTok{(CMAKE\_}\DecValTok{$\{}\NormalTok{GPU\_RUNTIME}\DecValTok{\}}\NormalTok{\_EXTENSIONS OFF)}
+\KeywordTok{set}\NormalTok{(CMAKE\_}\DecValTok{$\{}\NormalTok{GPU\_RUNTIME}\DecValTok{\}}\NormalTok{\_STANDARD\_REQUIRED ON)}
+
+\KeywordTok{set}\NormalTok{(PENNANT\_CXX\_SRCS src/Driver.cc src/ExportGold.cc src/GenMesh.cc src/Hydro.cc src/HydroBC.cc}
+\NormalTok{                     src/ImportGMV.cc src/InputFile.cc src/Mesh.cc src/Parallel.cc src/PolyGas.cc}
+\NormalTok{                     src/QCS.cc src/TTS.cc src/WriteXY.cc src/main.cc)}
+
+\KeywordTok{set}\NormalTok{(PENNANT\_HIP\_SRCS src/HydroGPU.hip)}
+
+\KeywordTok{add\_executable}\NormalTok{(pennant }\DecValTok{$\{}\NormalTok{PENNANT\_CXX\_SRCS}\DecValTok{\}} \DecValTok{$\{}\NormalTok{PENNANT\_HIP\_SRCS}\DecValTok{\}}\NormalTok{ )}
+
+\CommentTok{\# Make example runnable using ctest}
+\KeywordTok{add\_test}\NormalTok{(}\OtherTok{NAME}\NormalTok{ Pennant }\OtherTok{COMMAND}\NormalTok{ pennant ../test/sedovbig/sedovbig.pnt )}
+\KeywordTok{set\_property}\NormalTok{(}\OtherTok{TEST}\NormalTok{ Pennant }
+             \OtherTok{PROPERTY} \OtherTok{PASS\_REGULAR\_EXPRESSION} \StringTok{"End cycle   3800, time = 9.64621e{-}01"}\NormalTok{)}
+
+\KeywordTok{set}\NormalTok{(ROCMCC\_FLAGS }\StringTok{"}\DecValTok{$\{}\NormalTok{ROCMCC\_FLAGS}\DecValTok{\}}\StringTok{ {-}munsafe{-}fp{-}atomics"}\NormalTok{)}
+\KeywordTok{set}\NormalTok{(CUDACC\_FLAGS }\StringTok{"}\DecValTok{$\{}\NormalTok{CUDACC\_FLAGS}\DecValTok{\}}\StringTok{ "}\NormalTok{)}
+
+\KeywordTok{if}\NormalTok{ (}\DecValTok{$\{}\NormalTok{GPU\_RUNTIME}\DecValTok{\}} \OtherTok{MATCHES} \StringTok{"HIP"}\NormalTok{)}
+   \KeywordTok{set}\NormalTok{(HIPCC\_FLAGS }\StringTok{"}\DecValTok{$\{}\NormalTok{ROCMCC\_FLAGS}\DecValTok{\}}\StringTok{"}\NormalTok{)}
+\KeywordTok{else}\NormalTok{ ($\{GPU\_RUNTIME\} MATCHES "HIP")}
+   \KeywordTok{set}\NormalTok{(HIPCC\_FLAGS }\StringTok{"}\DecValTok{$\{}\NormalTok{CUDACC\_FLAGS}\DecValTok{\}}\StringTok{"}\NormalTok{)}
+\KeywordTok{endif}\NormalTok{ ($\{GPU\_RUNTIME\} MATCHES "HIP")}
+
+\KeywordTok{set}\NormalTok{\_source\_files\_properties(}\DecValTok{$\{}\NormalTok{PENNANT\_HIP\_SRCS}\DecValTok{\}}\NormalTok{ PROPERTIES LANGUAGE }\DecValTok{$\{}\NormalTok{GPU\_RUNTIME}\DecValTok{\}}\NormalTok{)}
+\KeywordTok{set}\NormalTok{\_source\_files\_properties(HydroGPU.hip PROPERTIES COMPILE\_FLAGS }\DecValTok{$\{}\NormalTok{HIPCC\_FLAGS}\DecValTok{\}}\NormalTok{)}
+
+\KeywordTok{install}\NormalTok{(}\OtherTok{TARGETS}\NormalTok{ pennant)}
+\end{Highlighting}
+\end{Shaded}
+
+To test the cmake build system, do the following
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{mkdir}\NormalTok{ build }\KeywordTok{\&\&} \BuiltInTok{cd}\NormalTok{ build}
+\FunctionTok{cmake}\NormalTok{ ..}
+\FunctionTok{make}\NormalTok{ VERBOSE=1}
+\ExtensionTok{ctest}
+\end{Highlighting}
+\end{Shaded}
+
+Now testing for CUDA
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{module}\NormalTok{ load cuda}
+
+\FunctionTok{mkdir}\NormalTok{ build }\KeywordTok{\&\&} \BuiltInTok{cd}\NormalTok{ build}
+\FunctionTok{cmake}\NormalTok{ {-}DCMAKE\_GPU\_RUNTIME=CUDA ..}
+\FunctionTok{make}\NormalTok{ VERBOSE=1}
+\ExtensionTok{ctest}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{hipifly-example-vector-addition}{%
+\subsection{HIPifly Example: Vector
+Addition}\label{hipifly-example-vector-addition}}
+
+Original author was Trey White, at the time with HPE and now with ORNL.
+
+The HIPifly method for converting CUDA code to HIP, is straight-forward
+and works with minimal modifications to the source code. This example
+applies the HIPifly method to a simple vector addition problem offloaded
+to the GPU using CUDA.
+
+All CUDA functions are defined in the \texttt{src/gpu\_functions.cu}
+file. By including the \texttt{cuda\_to\_hip.h} file when using HIP, all
+the CUDA functions will be automatically replaced with the analogous HIP
+function during compile time.
+
+By default, the program is compiled for NVIDIA GPUs using \texttt{nvcc}.
+To compile for CUDA just run \texttt{make}.
+
+To compile for AMD GPUs using \texttt{hipcc} run
+\texttt{make\ DFLAGS=-DENABLE\_HIP}. Note that the Makefile applies
+different GPU compilation flags when compiling for CUDA or for HIP.
+
+The paths to the CUDA or the ROCm software stack as \texttt{CUDA\_PATH}
+or \texttt{ROCM\_PATH} are needed to compile.
+
+After compiling run the program: \texttt{./vector\_add}
+
+\pagebreak
+
+Copyright (c) 2022, Advanced Micro Devices, Inc.~All rights reserved.
+
+This training example is released under the MIT license as listed in the
+top-level directory. If this example is separated from the main
+directory, include the LICENSE file with it.
+
+Contributions from Suyash Tandon, Noel Chalmers, Nick Curtis, Justin
+Chang, and Gina Sitaraman.
+
+\hypertarget{description-document-for-the-gpu-based-jacobi-solver}{%
+\section{Description document for the GPU-based Jacobi
+solver}\label{description-document-for-the-gpu-based-jacobi-solver}}
+
+\hypertarget{contents}{%
+\subsection{Contents:}\label{contents}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \protect\hyperlink{application-overview}{Application overview}
+\item
+  \protect\hyperlink{prerequisites}{Prerequisites}
+\item
+  \protect\hyperlink{build-instructions}{Build instructions}
+\item 
+  \protect\hyperlink{run-instructions}{Run instructions}
+\end{enumerate}
+
+\subsection{Application overview}\label{application-overview}
+This is a distributed Jacobi solver, using GPUs to perform the
+computation and MPI for halo exchanges. It uses a 2D domain
+decomposition scheme to allow for a better computation-to-communication
+ratio than just 1D domain decomposition.
+
+The flow of the application is as follows: * The MPI environment is
+initialized * The command-line arguments are parsed, and a MPI grid and
+mesh are created * Resources (including host and device memory blocks,
+streams etc.) are initialized * The Jacobi loop is executed; in every
+iteration, the local block is updated and then the halo values are
+exchanged; the algorithm converges when the global residue for an
+iteration falls below a threshold, but it is also limited by a maximum
+number of iterations (irrespective if convergence has been achieved or
+not) * Run measurements are displayed and resources are disposed
+
+The application uses the following command-line arguments: *
+\texttt{-g\ x\ y} - mandatory argument for the process topology,
+\texttt{x} denotes the number of processes on the X direction (i.e.~per
+row) and \texttt{y} denotes the number of processes on the Y direction
+(i.e.~per column); the topology size must always match the number of
+available processes (i.e.~the number of launched MPI processes must be
+equal to x * y) * \texttt{-m\ dx\ dy} - optional argument indicating the
+size of the local (per-process) domain size; if it is omitted, the size
+will default to \texttt{DEFAULT\_DOMAIN\_SIZE} as defined in
+\texttt{defines.h} * \texttt{-h\ \textbar{}\ -\/-help} - optional
+argument for printing help information; this overrides all other
+arguments
+
+\hypertarget{prerequisites}{%
+\subsection{Prerequisites}\label{prerequisites}}
+
+To build and run the jacobi application on A+A hardware, the following
+dependencies must be installed first:
+
+\begin{itemize}
+\tightlist
+\item
+  an MPI implementation (openMPI, MPICH, etc.)
+\item
+  ROCm 2.1 or later.
+\end{itemize}
+
+\hypertarget{build-instructions}{%
+\subsection{Build Instructions}\label{build-instructions}}
+
+A \texttt{Makefile} is included along with the source files that
+configures and builds multiple objects and then stitches them together
+to build the binary for the application \texttt{Jacobi\_hip}. To build,
+simply run:
+
+\begin{verbatim}
+make
+\end{verbatim}
+
+An alternative cmake build system is also include
+
+\begin{verbatim}
+mkdir build && cd build
+cmake ..
+make
+\end{verbatim}
+
+\hypertarget{run-instructions-1}{%
+\subsection{Run instructions}\label{run-instructions-1}}
+
+To run use:
+
+\begin{verbatim}
+mpirun -np 2 ./Jacobi_hip -g 2 1
+\end{verbatim}
+
+\pagebreak
+
+Copyright (c) 2022, Advanced Micro Devices, Inc.~All rights reserved.
+
+This training example is released under the MIT license as listed in the
+top-level directory. If this example is separated from the main
+directory, include the LICENSE file with it.
+
+Major revisions by Suyash Tandon.
+
+\hypertarget{dgemm-application}{%
+\section{(d)GEMM Application}\label{dgemm-application}}
+
+\hypertarget{about}{%
+\subsection{About}\label{about}}
+
+A simple (d)GEMM application created as an exercise to showcase simple
+matrix-matrix multiplications on AMD GPUs. The simpler interface makes
+it easier to be used in training modules as opposed to other optimized
+and complicated gemm libraries.
+
+\hypertarget{requirements}{%
+\subsection{Requirements}\label{requirements}}
+
+\begin{itemize}
+\tightlist
+\item
+  cmake \textgreater{} 2.8
+\item
+  ROCm \textgreater{} 3.9
+\end{itemize}
+
+\hypertarget{build}{%
+\subsection{Build}\label{build}}
+
+Follow the instructions below to configure and build the \texttt{dgemm}
+binary using the commands:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{mkdir}\NormalTok{ build}
+\BuiltInTok{cd}\NormalTok{ build}
+\FunctionTok{cmake}\NormalTok{ ..}
+\FunctionTok{make}
+\end{Highlighting}
+\end{Shaded}
+
+To install at a specific location, provide
+\texttt{-DCMAKE\_INSTALL\_PREFIX=\textless{}path-to-install\textgreater{}},
+for example to install in \texttt{\$HOME} dir:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{cmake}\NormalTok{ {-}DCMAKE\_INSTALL\_PREFIX=}\VariableTok{$HOME}\NormalTok{ ..}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{usage}{%
+\subsection{Usage}\label{usage}}
+
+Sample usage is shown below:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{dgemm} \KeywordTok{\textbackslash{}}
+   \ExtensionTok{{-}m}\NormalTok{ 8192 }\KeywordTok{\textbackslash{}}
+   \ExtensionTok{{-}n}\NormalTok{ 8192 }\KeywordTok{\textbackslash{}}
+   \ExtensionTok{{-}k}\NormalTok{ 8192 }\KeywordTok{\textbackslash{}}
+   \ExtensionTok{{-}i}\NormalTok{ 10 }\KeywordTok{\textbackslash{}}
+   \ExtensionTok{{-}r}\NormalTok{ 10 }\KeywordTok{\textbackslash{}}
+   \ExtensionTok{{-}d}\NormalTok{ DEVICE\_LIST }\KeywordTok{\textbackslash{}}
+   \ExtensionTok{{-}o} \VariableTok{$(}\FunctionTok{hostname}\VariableTok{)}\NormalTok{\_dgemm.json}
+\end{Highlighting}
+\end{Shaded}
+
+where, - \texttt{m} is row count of matrix A - \texttt{n} is column
+count of matrix A - \texttt{k} is column count of matrix B - \texttt{i}
+is iteration count to perform - \texttt{r} is number of repetitions of
+dgemm to perform when evaluating flops - \texttt{d} is a comma separated
+list of devices to use, indexed at zero (e.g.~0,1,\ldots) - \texttt{o}
+to give filename to write all data. If not \texttt{.csv}, will write in
+\texttt{.json} (optional)
+
+\hypertarget{output}{%
+\subsection{Output}\label{output}}
+
+GEMM operations on each GPU are run asynchronously, and the data printed
+to \texttt{stdout} aims only to show the progress for each GPU:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{./dgemm}\NormalTok{ {-}m 8192 {-}n 8192 {-}k 8192 {-}i 3 {-}r 10 {-}d 0,1,2,3 {-}o dgemm.csv}
+\ExtensionTok{2}\NormalTok{     1   27.56}
+\ExtensionTok{0}\NormalTok{     1   27.63}
+\ExtensionTok{3}\NormalTok{     1   27.56}
+\ExtensionTok{1}\NormalTok{     1   27.63}
+\ExtensionTok{2}\NormalTok{     2   27.56}
+\ExtensionTok{0}\NormalTok{     2   27.63}
+\ExtensionTok{3}\NormalTok{     2   27.56}
+\ExtensionTok{1}\NormalTok{     2   27.63}
+\ExtensionTok{2}\NormalTok{     3   27.56}
+\ExtensionTok{0}\NormalTok{     3   27.63}
+\ExtensionTok{3}\NormalTok{     3   27.56}
+\ExtensionTok{1}\NormalTok{     3   27.63}
+\end{Highlighting}
+\end{Shaded}
+
+Summary of the results are dumped to \texttt{stdout} at the end of the
+run:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+  \ExtensionTok{DEV} \KeywordTok{|}        \ExtensionTok{MIN} \KeywordTok{|}        \ExtensionTok{MAX} \KeywordTok{|}    \ExtensionTok{AVERAGE} \KeywordTok{|}    \ExtensionTok{STD}\NormalTok{ Dev}
+\ExtensionTok{{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+    \ExtensionTok{0} \KeywordTok{|}    \ExtensionTok{27.6259} \KeywordTok{|}    \ExtensionTok{27.6259} \KeywordTok{|}    \ExtensionTok{27.6259} \KeywordTok{|}          \ExtensionTok{0}
+    \ExtensionTok{1} \KeywordTok{|}    \ExtensionTok{27.6259} \KeywordTok{|}    \ExtensionTok{27.6259} \KeywordTok{|}    \ExtensionTok{27.6259} \KeywordTok{|}          \ExtensionTok{0}
+    \ExtensionTok{2} \KeywordTok{|}    \ExtensionTok{27.5567} \KeywordTok{|}    \ExtensionTok{27.5567} \KeywordTok{|}    \ExtensionTok{27.5567} \KeywordTok{|}          \ExtensionTok{0}
+    \ExtensionTok{3} \KeywordTok{|}    \ExtensionTok{27.5567} \KeywordTok{|}    \ExtensionTok{27.5567} \KeywordTok{|}    \ExtensionTok{27.5567} \KeywordTok{|}          \ExtensionTok{0}
+\end{Highlighting}
+\end{Shaded}
+
+If an output file is specified, the complete data for each iteration
+including timestamps are printed to file in either \texttt{json} or
+\texttt{csv} format, depending on the specific output file extension via
+\texttt{-o}.
+
+\hypertarget{json}{%
+\subsubsection{json}\label{json}}
+
+Default output format is json unless \texttt{csv} extension is specified
+in output filename. The results per iteration are recorded along with
+the local timestamp when the flop-rate was estimated. Output format is
+
+\begin{verbatim}
+{
+  "flop_rates": {
+     "<device_id_1>": [<flop_rates>, ...],
+     "<device_id_2>": [<flop_rates>, ...],
+     ...
+  },
+  "times": {
+     "<device_id_1>": ["<timestamp>", ...],
+     "<device_id_2>": ["<timestamp>", ...],
+     ...
+  },
+  "args": {
+     <input args as key-value pairs>
+  }
+}
+\end{verbatim}
+
+where \texttt{\textless{}timestamp\textgreater{}} format is
+\texttt{YYYY-mm-dd\ HH:MM:SS.ZZZ}, and
+\texttt{\textless{}device\_id\_N\textgreater{}} are specified input
+device ids (0, 1, 2, \ldots).
+
+\hypertarget{csv}{%
+\subsubsection{csv}\label{csv}}
+
+If the output file name has \texttt{csv} as extension, data is written
+in comma-saparated format. There is a single header line, followed by
+data, where the header for this case is as follows
+
+\begin{verbatim}
+t_<N>,flops_<N>,[...]
+\end{verbatim}
+
+where \texttt{N} is an integer representing the device id. Device ids
+are not guaranteed to be ordered.
+
+Example \texttt{csv} output:
+
+{\scriptsize
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{$ }\FunctionTok{cat}\NormalTok{ dgemm.csv}
+\ExtensionTok{t\_3}\NormalTok{,flops\_3,t\_2,flops\_2,t\_0,flops\_0,t\_1,flops\_1}
+\StringTok{"2022{-}12{-}08 15:17:15.232"}\NormalTok{,}\ExtensionTok{27.556682}\NormalTok{,}\StringTok{"2022{-}12{-}08 15:17:15.087"}\NormalTok{,27.556682,}\StringTok{"2022{-}12{-}08 15:17:15.228"}\NormalTok{,27.625920,}\StringTok{"2022{-}12{-}08 15:17:15.437"}\NormalTok{,27.625920}
+\StringTok{"2022{-}12{-}08 15:17:15.631"}\NormalTok{,}\ExtensionTok{27.556682}\NormalTok{,}\StringTok{"2022{-}12{-}08 15:17:15.486"}\NormalTok{,27.556682,}\StringTok{"2022{-}12{-}08 15:17:15.627"}\NormalTok{,27.625920,}\StringTok{"2022{-}12{-}08 15:17:15.836"}\NormalTok{,27.625920}
+\StringTok{"2022{-}12{-}08 15:17:16.030"}\NormalTok{,}\ExtensionTok{27.556682}\NormalTok{,}\StringTok{"2022{-}12{-}08 15:17:15.885"}\NormalTok{,27.556682,}\StringTok{"2022{-}12{-}08 15:17:16.025"}\NormalTok{,27.625920,}\StringTok{"2022{-}12{-}08 15:17:16.234"}\NormalTok{,27.625920}
+\end{Highlighting}
+\end{Shaded}
+}
+
+\pagebreak
+
+\hypertarget{optimizing-daxpy-hip}{%
+\section{Optimizing DAXPY HIP}\label{optimizing-daxpy-hip}}
+
+In this exercise, we will progressively make changes to optimize the
+DAXPY kernel on GPU. Any AMD GPU can be used to test this.
+
+DAXPY Problem:
+
+\begin{verbatim}
+Z = aX + Y
+\end{verbatim}
+
+where \texttt{a} is a scalar, \texttt{X}, \texttt{Y} and \texttt{Z} are
+arrays of double precision values.
+
+In DAXPY, we load 2 FP64 values (8 bytes each) and store 1 FP64 value (8
+bytes). We can ignore the scalar load because it is constant. We have 1
+multiplication and 1 addition operation for the 24 bytes moved per
+element of the array. This yields a low arithmetic intensity of 2/24.
+So, this kernel is not compute bound, so we will only measure the
+achieved memory bandwith instead of FLOPS.
+
+\hypertarget{inputs}{%
+\subsection{Inputs}\label{inputs}}
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{N}, the number of elements in \texttt{X}, \texttt{Y} and
+  \texttt{Z}. \texttt{N} may be reset to suit some optimizations. Choose
+  a sufficiently large array size to see some differences in
+  performance.
+\end{itemize}
+
+\hypertarget{build-code}{%
+\subsection{Build Code}\label{build-code}}
+
+\begin{verbatim}
+make
+\end{verbatim}
+
+\hypertarget{run-exercises}{%
+\subsection{Run exercises}\label{run-exercises}}
+
+\begin{verbatim}
+./daxpy_1 10000000
+./daxpy_2 10000000
+./daxpy_3 10000000
+./daxpy_4 10000000
+./daxpy_5 10000000
+\end{verbatim}
+
+\hypertarget{things-to-ponder-about}{%
+\subsection{Things to ponder about}\label{things-to-ponder-about}}
+
+\subsubsection{daxpy\_1}\label{daxpy_1}
+
+This shows a naive implementation of the daxpy problem on the GPU where
+only 1 wavefront is launched and the 64 work-items in that wavefront
+loop over the entire array and process 64 elements at a time. We expect
+this kernel to perform very poorly because it simply utilizes a part of
+1 CU, and leaves the rest of the GPU unutilized.
+
+\subsubsection{daxpy\_2}\label{daxpy_2}
+
+This time, we are launching multiple wavefronts, each work-item now
+processing only 1 element of each array. This launches \texttt{N/64}
+wavefronts, enough to be scheduled on all CUs. We see a big improvement
+in performance here.
+
+\subsubsection{daxpy\_3}\label{daxpy_3}
+
+In this experiment, we check to see if launching larger workgroups can
+help lower our kernel launch overhead because we launch fewer workgroups
+if each workgroup has 256 work-items. In this case too, an improvement
+in measured bandwidth achieved is seen.
+
+\subsubsection{daxpy\_4}\label{daxpy_4}
+
+If we ensured that the array has a multiple of \texttt{BLOCK\_SIZE}
+elements so that all work-items in each workgroup have an element to
+process, then we can avoid the conditional statement in the kernel. This
+could reduce some instructions in the kernel.. Do we see any
+improvement? In this trivial case, this does not matter. Nevertheless,
+it is something we could keep in mind.
+
+Question: What happens if \texttt{BLOCK\_SIZE} is \texttt{1024}? Why?
+
+\subsubsection{daxpy\_5}\label{daxpy_5}
+
+In this experiment, we will use double2 type in the kernel to see if the
+compiler can generate \texttt{global\_load\_dwordx4} instructions
+instead of \texttt{global\_load\_dwordx2} instructions. So, with same
+number of load and store instructions, we are able to read/write two
+elements from each array in each thread. This should help amortize on
+the cost of index calculations.
+
+To show this difference, we need to generate the assembly for these two
+kernels. To generate the assembly code for these kernels, ensure that
+the \texttt{-g\ -\/-save-temps} flags are passed to \texttt{hipcc}. Then
+you can find the assembly code in
+\texttt{daxpy\_*-host-x86\_64-unknown-linux-gnu.s} files. Examining
+\texttt{daxpy\_3} and \texttt{daxpy\_5}, we see the two cases (edited
+here for clarity):
+
+\texttt{daxpy\_3}:
+
+\begin{verbatim}
+    global_load_dwordx2 v[2:3], v[2:3], off
+    v_mov_b32_e32 v6, s5
+    global_load_dwordx2 v[4:5], v[4:5], off
+    v_add_co_u32_e32 v0, vcc, s4, v0
+    v_addc_co_u32_e32 v1, vcc, v6, v1, vcc
+    s_waitcnt vmcnt(0)
+    v_fmac_f64_e32 v[4:5], s[6:7], v[2:3]
+    global_store_dwordx2 v[0:1], v[4:5], off
+\end{verbatim}
+
+\texttt{daxpy\_5}:
+
+\begin{verbatim}
+    global_load_dwordx4 v[0:3], v[0:1], off
+    v_mov_b32_e32 v10, s5
+    global_load_dwordx4 v[4:7], v[4:5], off
+    s_waitcnt vmcnt(0)
+    v_fmac_f64_e32 v[4:5], s[6:7], v[0:1]
+    v_add_co_u32_e32 v0, vcc, s4, v8
+    v_fmac_f64_e32 v[6:7], s[6:7], v[2:3]
+    v_addc_co_u32_e32 v1, vcc, v10, v9, vcc
+    global_store_dwordx4 v[0:1], v[4:7], off
+\end{verbatim}
+
+We observe that, in the \texttt{daxpy\_5} case, there are two
+\texttt{v\_fmac\_f64\_e32} instructions as expected, one for each
+element being processed.
+
+
+\hypertarget{notes}{%
+\subsection{Notes}\label{notes}}
+
+\begin{itemize}
+\tightlist
+\item
+  Before timing kernels, it is best to launch the kernel at least once
+  as warmup so that those initial GPU launch latencies do not affect
+  your timing measurements.
+\item
+  The timing loop is typically several hundred iterations.
+\end{itemize}
+
+\hypertarget{rocgdb}{%
+\section{ROCgdb}\label{rocgdb}}
+
+\textbf{NOTE}: these exercises have been tested on MI210 and MI300A
+accelerators using a container environment. To see details on the
+container environment (such as operating system and modules available)
+please see \texttt{README.md} on
+\href{https://github.com/amd/HPCTrainingDock}{this} repo.
+
+We show a simple example on how to use the main features of the ROCm
+debugger \texttt{rocgdb}.
+
+\hypertarget{saxpy-debugging}{%
+\subsection{Saxpy Debugging}\label{saxpy-debugging}}
+
+Let us consider the \texttt{saxpy} kernel in the HIP examples:
+
+\begin{verbatim}
+cd HPCTrainingExamples/HIP/saxpy
+\end{verbatim}
+
+Get an allocation of a GPU and load software modules:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{salloc}\NormalTok{ {-}N 1 {-}{-}gpus=1}
+\ExtensionTok{module}\NormalTok{ load rocm}
+\end{Highlighting}
+\end{Shaded}
+
+You can see some information on the GPU you will be running on by doing:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{rocm{-}smi}
+\end{Highlighting}
+\end{Shaded}
+
+To introduce an error in your program, comment out the
+\texttt{hipMalloc} calls at line 71 and 72, then compile with:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{mkdir}\NormalTok{ build }\KeywordTok{\&\&} \BuiltInTok{cd}\NormalTok{ build}
+\FunctionTok{cmake}\NormalTok{ ..}
+\FunctionTok{make}\NormalTok{ VERBOSE=1}
+\end{Highlighting}
+\end{Shaded}
+
+Running the program, you will see the expected runtime error:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{./saxpy}
+\ExtensionTok{Memory}\NormalTok{ access fault by GPU node{-}2 (Agent handle: 0x2284d90) }\ExtensionTok{on}\NormalTok{ address (nil)}\BuiltInTok{.} \ExtensionTok{Reason}\NormalTok{: Unknown.}
+\ExtensionTok{Aborted}\NormalTok{ (core dumped)}
+\end{Highlighting}
+\end{Shaded}
+
+To run the code with the \texttt{rocgdb} debugger, do:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{rocgdb}\NormalTok{ saxpy}
+\end{Highlighting}
+\end{Shaded}
+
+Note that there are also two options for graphical user interfaces that
+can be turned on by doing:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{rocgdb}\NormalTok{ {-}tui saxpy}
+\ExtensionTok{cgdb}\NormalTok{ {-}d rocgdb saxpy }
+\end{Highlighting}
+\end{Shaded}
+
+For the latter command above, you need to have \texttt{cgdb} installed
+on your system.
+
+In the debugger, type \texttt{run} (or just \texttt{r}) and you will get
+an error similar to this one:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{Thread}\NormalTok{ 3 }\StringTok{"saxpy"}\NormalTok{ received signal SIGSEGV, Segmentation fault.}
+\NormalTok{[}\ExtensionTok{Switching}\NormalTok{ to thread 3, lane 0 (AMDGPU Lane 1:2:1:1/0 (0,0,0)[}\ExtensionTok{0}\NormalTok{,0,0])]}
+\ExtensionTok{0x00007ffff7ec1094}\NormalTok{ in saxpy() }\ExtensionTok{at}\NormalTok{ saxpy.cpp:57}
+\ExtensionTok{57}\NormalTok{    y[i] += a*x[i]}\KeywordTok{;}
+\end{Highlighting}
+\end{Shaded}
+
+Note that the cmake build type is set to \texttt{RelWithDebInfo} (see
+line 8 in CMakeLists.txt). With this build type, the debugger will be
+aware of the debug symbols. If that was not the case (for instance if
+compiling in \texttt{Release} mode), running the code with the debugger
+you would get an error message \textbf{\emph{without}} line info, and
+also a warning like this one:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{Reading}\NormalTok{ symbols from saxpy...}
+\KeywordTok{(}\ExtensionTok{No}\NormalTok{ debugging symbols found in saxpy}\KeywordTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+The error report is at a thread on the GPU. We can display information
+on the threads by typing \texttt{info\ threads} (or \texttt{i\ th}). It
+is also possible to move to a specific thread with
+\texttt{thread\ \textless{}ID\textgreater{}} (or
+\texttt{t\ \textless{}ID\textgreater{}}) and see the location of this
+thread with \texttt{where}. For instance, if we are interested in the
+thread with ID 1:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{i}\NormalTok{ th}
+\ExtensionTok{th}\NormalTok{ 1}
+\ExtensionTok{where}
+\end{Highlighting}
+\end{Shaded}
+
+You can add breakpoints with \texttt{break} (or \texttt{b}) followed by
+the line number. For instance to put a breakpoint right after the
+\texttt{hipMalloc} lines do \texttt{b\ 72}.
+
+When possible, it is also advised to compile without optimization flags
+(so using \texttt{-O0}) to avoid seeing breakpoints placed on lines
+different than those specified with the breakpoint command.
+
+You can also add a breakpoint directly at the start of the GPU kernel
+with \texttt{b\ saxpy}. To run to the next breakpoint, type
+\texttt{continue} (or \texttt{c}).
+
+To list all the breakpoints that have been inserted type
+\texttt{info\ break} (or \texttt{i\ b}):
+{\small
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{(}\FunctionTok{gdb}\KeywordTok{)} \ExtensionTok{i}\NormalTok{ b}
+\ExtensionTok{Num}\NormalTok{     Type           Disp Enb Address            What}
+\ExtensionTok{1}\NormalTok{       breakpoint     keep y   0x000000000020b334 in main() }\ExtensionTok{at}\NormalTok{ /HPCTrainingExamples/HIP/saxpy/saxpy.hip:74}
+\ExtensionTok{2}\NormalTok{       breakpoint     keep y   0x000000000020b350 in main() }\ExtensionTok{at}\NormalTok{ /HPCTrainingExamples/HIP/saxpy/saxpy.hip:78}
+\end{Highlighting}
+\end{Shaded}
+}
+
+A breakpoint can be removed with
+\texttt{delete\ \textless{}Num\textgreater{}} (or
+\texttt{d\ \textless{}Num\textgreater{}}): note that
+\texttt{\textless{}Num\textgreater{}} is the breakpoint ID displayed
+above. For instance, to remove the breakpoint at line 74, you have to do
+\texttt{d\ 1}.
+
+To proceed to the next line you can do \texttt{next} (or \texttt{n}). To
+step into a function, do \texttt{step} (or \texttt{s}) and to get out do
+\texttt{finish}. Note that if a breakpoint is at a kernel, doing
+\texttt{n} or \texttt{s} will switch between different threads. To avoid
+this behavior, it is necessary to disable the breakpoint at the kernel
+with \texttt{disable\ \textless{}Num\textgreater{}}.
+
+It is possible to have information on the architecture (below shown on
+MI250):
+
+{\scriptsize
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{(}\FunctionTok{gdb}\KeywordTok{)} \ExtensionTok{info}\NormalTok{ agents}
+  \ExtensionTok{Id}\NormalTok{ State Target Id                  Architecture Device Name                             Cores Threads Location}
+\ExtensionTok{*}\NormalTok{ 1  A     AMDGPU Agent (GPUID 64146) }\ExtensionTok{gfx90a}\NormalTok{       Aldebaran/MI200 [Instinct MI250X/MI250] 416   3328    29:00.0}
+\end{Highlighting}
+\end{Shaded}
+}
+
+We can also get information on the thread grid:
+
+{\small
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{(}\FunctionTok{gdb}\KeywordTok{)} \ExtensionTok{info}\NormalTok{ dispatches}
+  \ExtensionTok{Id}\NormalTok{   Target Id                      Grid      Workgroup Fence   Kernel Function}
+\ExtensionTok{*}\NormalTok{ 1    AMDGPU Dispatch 1:1:1 (PKID 0) [}\ExtensionTok{256}\NormalTok{,1,1] [128,1,1] B}\KeywordTok{|}\ExtensionTok{Aa}\KeywordTok{|}\ExtensionTok{Ra}\NormalTok{ saxpy(int, float const*, int, float*, int)}
+\end{Highlighting}
+\end{Shaded}
+}
+
+For the rocgdb documentation, please see:
+\texttt{/opt/rocm-\textless{}version\textgreater{}/share/doc/rocgdb}.
+
+\pagebreak
+
+\hypertarget{openmp-intro-examples}{%
+\section{OpenMP Intro Examples}\label{openmp-intro-examples}}
+
+\textbf{NOTE}: these exercises have been tested on MI210 and MI300A
+accelerators using a container environment. To see details on the
+container environment (such as operating system and modules available)
+please see \texttt{README.md} on
+\href{https://github.com/amd/HPCTrainingDock}{this} repo.
+
+\hypertarget{checking-out-makefiles-and-compiler-toolchain}{%
+\subsection{Checking out makefiles and compiler
+toolchain}\label{checking-out-makefiles-and-compiler-toolchain}}
+
+Running the first OpenMP example:
+\texttt{Pragma\_Examples/OpenMP/C/saxpy}
+
+\hypertarget{build-with-amdclang-compiler}{%
+\subsubsection{Build with AMDClang
+compiler}\label{build-with-amdclang-compiler}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{module}\NormalTok{ load amdclang}
+\FunctionTok{make}\NormalTok{ clean }
+\FunctionTok{make} 
+\ExtensionTok{./saxpy} 
+\end{Highlighting}
+\end{Shaded}
+
+Confirm running on GPU with
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_KERNEL\_TRACE=}\NormalTok{1 }
+\ExtensionTok{./saxpy}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{itemize}
+\tightlist
+\item
+  confirms that we are running on the GPU and also gives us the register
+  usage
+\item
+  Also could use
+  \texttt{AMD\_LOG\_LEVEL={[}0\textbar{}1\textbar{}2\textbar{}3\textbar{}4{]}}
+  or \texttt{LIBOMPTARGET\_KERNEL\_TRACE=2}
+\end{itemize}
+
+\hypertarget{openmp-offload-the-basics}{%
+\subsection{OpenMP Offload -- The
+Basics}\label{openmp-offload-the-basics}}
+
+We start out with the OpenMP threaded code for the CPU. This code is in
+
+\texttt{\textasciitilde{}/HPCTrainingExamples/Pragma\_Examples/OpenMP/Intro}
+
+in the saxpy\_cpu.cpp file. This is the code on slide 16. We first load
+the amdclang module which will set the CXX environment variable. This
+variable will get picked up by the Makefile for the build.
+
+\begin{verbatim}
+module load amdclang
+make saxpy_cpu
+./saxpy_cpu
+\end{verbatim}
+
+The next example, saxpy1, is from slide 18 where the first version of
+OpenMP offloading is tried. In this code, there is no map clause. The
+compiler can figure out the arrays that need to be copied over and their
+sizes.
+
+\begin{verbatim}
+make saxpy1
+./saxpy1
+\end{verbatim}
+
+While running one of these codelets, it may be useful to watch the GPU
+usage. Here are two approaches.
+
+\begin{itemize}
+\item
+  open another terminal and \texttt{ssh} to the AAC node you are working
+  on, or
+\item
+  use the tmux command
+\item
+  run \texttt{watch\ -n\ 0.5\ rocm-smi} command line from that terminal
+  to visualize GPU activities.
+\end{itemize}
+
+Note that the basic tmux survival commands are:
+
+\begin{verbatim}
+cntl+b \"  - splits the screen  
+cntl+b (up arrow) - move to the upper session
+cntl+b (down arrow) - move to lower session
+exit - end tmux session
+\end{verbatim}
+
+Next, run the codelet on your preferred GPU device if you have allocated
+more than 1 GPU. For example, to execute on GPU ID \#2, set the
+following environment variable:
+\texttt{export\ ROCR\_VISIBLE\_DEVICES=2} then run the code.
+
+Profile the codelet and then compare output by setting
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_KERNEL\_TRACE=}\NormalTok{1}
+\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_KERNEL\_TRACE=}\NormalTok{2}
+\end{Highlighting}
+\end{Shaded}
+
+Note:
+
+rocminfo can be used to get target architecture information.
+
+The Fortran version of the saxpy code is shown in saxpy1f.F90. It is
+very similar to the C and C++ OpenMP pragmas. In Fortran, the compiler
+hints are technically directives that are contained in specially
+formatted comments. One of the strengths of OpenMP is that the language
+can be used in C, C++, and Fortran code and they can even be mixed in an
+application. Here is how to run the Fortran example.
+
+\begin{verbatim}
+make saxpy1f
+./saxpy1f
+\end{verbatim}
+
+The compile line uses the specific GPU architecture type. It grabs it
+from the rocminfo command with a little bit of string manipulation.
+
+Let's now add a map clause as shown in quotes on slide 18 --
+map(tofrom:y{[}0:N{]})
+
+\begin{verbatim}
+make saxpy2
+./saxpy2
+\end{verbatim}
+
+A lot of the initial optimization of an OpenMP offloading port is to
+minimize the data movement from host to device and back. What is the
+optimum mapping of data for this example? See saxpy3.cpp for the optimal
+map clauses.
+
+\begin{verbatim}
+make saxpy3
+./saxpy3
+\end{verbatim}
+
+In the example we have been working with so far, the compiler can
+determine the sizes and will move the data for you. Let's see what
+happens when we have a subroutine with pointers where the compiler does
+not know the sizes.
+
+\begin{verbatim}
+make saxpy4
+./saxpy4
+\end{verbatim}
+
+Try removing the map clause -- the program will now fail.
+
+\hypertarget{multilevel-parallelism}{%
+\subsection{Multilevel Parallelism}\label{multilevel-parallelism}}
+
+We have been running on the GPU, but with only one thread in serial.
+Let's start adding parallelism. The first thing we can do is add
+\texttt{\#pragma\ omp\ parallel\ for\ simd} before the loop to tell it
+to run in parallel.
+
+\begin{verbatim}
+make saxpy5
+./saxpy5
+\end{verbatim}
+
+We have told it to run the loop in parallel, but we haven't given it any
+hardware resources. To add more compute units, we need to add the teams
+clause. Then to spread the work across the threads, we need the
+distribute clause. (This code is currently not working \ldots)
+
+\begin{verbatim}
+make saxpy6
+./saxpy6
+\end{verbatim}
+
+More commonly, we add the triplet of \texttt{target\ teams\ distribute}
+to the pragma to enable all hardware elements to the computation.
+
+\begin{verbatim}
+make saxpy7
+./saxpy7
+\end{verbatim}
+
+And in Fortran.
+
+\begin{verbatim}
+make saxpy2f
+./saxpy2f
+\end{verbatim}
+
+\hypertarget{structured-and-unstructured-target-data-regions}{%
+\subsection{Structured and Unstructured Target Data
+Regions}\label{structured-and-unstructured-target-data-regions}}
+
+This example from slide 29 shows the use of a structured block region
+that encompasses several compute loops. The data region persists across
+all of them, eliminating the need for map clauses and data transfers.
+
+\begin{verbatim}
+make target_data_structured
+./target_data_structured
+\end{verbatim}
+
+This example shows the use of the target data to map the data to the
+device and then updating it with the target update in the middle of the
+target data block.
+
+\begin{verbatim}
+make target_data_unstructured
+./target_data_unstructured
+\end{verbatim}
+
+When using larger data regions, it can be necessary to move data in the
+middle of the region to support MPI communication or I/O. This example
+shows the use of the update clause to copy new input from the host to
+the device.
+
+\begin{verbatim}
+make target_data_update
+./target_data_update
+\end{verbatim}
+
+\hypertarget{advanced-openmp-presentation}{%
+\section{Advanced OpenMP
+Presentation}\label{advanced-openmp-presentation}}
+
+Here, we will discuss some examples that show more advanced OpenMP
+features.
+
+\hypertarget{memory-pragmas}{%
+\subsection{Memory Pragmas}\label{memory-pragmas}}
+
+First, we will consider the examples in the \texttt{CXX/memory\_pragmas}
+directory:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ \textasciitilde{}/HPCTrainingExamples/Pragma\_Examples/OpenMP/CXX/memory\_pragmas}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{exercises-setup}{%
+\subsubsection{Exercises Setup}\label{exercises-setup}}
+
+Setup your environment:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_INFO=}\NormalTok{{-}1}
+\BuiltInTok{export} \VariableTok{OMP\_TARGET\_OFFLOAD=}\NormalTok{MANDATORY}
+\end{Highlighting}
+\end{Shaded}
+
+The first flag above will allow you to see OpenMP activity, while the
+second terminates the program if code fails to be executed on device (as
+opposed to falling back on the host). You can also be more selective in
+the output generated by using the individual bit masks:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_INFO=$((}\NormalTok{0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20}\VariableTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+Create a build directory and compile using \texttt{cmake}: this will
+place all executables in the \texttt{build} directory:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{mkdir}\NormalTok{ build }\KeywordTok{\&\&} \BuiltInTok{cd}\NormalTok{ build}
+\FunctionTok{cmake}\NormalTok{ ..}
+\FunctionTok{make} 
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{mem1-initial-version}{%
+\subsubsection{Mem1 (Initial Version)}\label{mem1-initial-version}}
+
+There are 12 versions of an initial example code called
+\texttt{mem1.cc}, which is an implementation of a \texttt{daxpy} kernel
+with a single pragma with a map clause at the computational loop:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{void}\NormalTok{ daxpy(int n, double a, double *\_\_restrict\_\_ x, double *\_\_restrict\_\_ y, double *\_\_restrict\_\_ z)}
+\KeywordTok{\{}
+\CommentTok{\#pragma omp target teams distribute parallel for simd map(to: x[0:n], y[0:n]) map(from: z[0:n])}
+        \KeywordTok{for} \KeywordTok{(}\ExtensionTok{int}\NormalTok{ i = 0}\KeywordTok{;} \ExtensionTok{i} \OperatorTok{\textless{}}\NormalTok{ n}\KeywordTok{;} \ExtensionTok{i++}\KeywordTok{)}
+                \ExtensionTok{z}\NormalTok{[i] = a*x[i] + y[i]}\KeywordTok{;}
+\KeywordTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Run \texttt{mem1} to have an idea of what output is produced by the
+\texttt{LIBOMPTARGET\_INFO=-1} flag, which should include OpenMP calls
+like the following:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Entering OpenMP kernel at mem1.cc:89:1 with 5 arguments:}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: firstprivate(n)[}\ExtensionTok{4}\NormalTok{] (implicit)}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: from(z[0:n])[}\ExtensionTok{80000}\NormalTok{]}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: firstprivate(a)[}\ExtensionTok{8}\NormalTok{] (implicit)}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: to(x[0:n])[}\ExtensionTok{80000}\NormalTok{]}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: to(y[0:n])[}\ExtensionTok{80000}\NormalTok{]}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Creating new map entry with HstPtrBase=0x0000000001772200, ... }
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Creating new map entry with HstPtrBase=0x000000000174b0e0, ... }
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Copying data from host to device, HstPtr=0x000000000174b0e0, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Creating new map entry with HstPtrBase=0x000000000175e970, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Copying data from host to device, HstPtr=0x000000000175e970, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x0000000001772200, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x000000000174b0e0, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x000000000175e970, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x000000000175e970, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x000000000174b0e0, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Mapping exists with HstPtrBegin=0x0000000001772200, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Copying data from device to host, TgtPtr=0x00007f617c420000, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Removing map entry with HstPtrBegin=0x000000000175e970, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Removing map entry with HstPtrBegin=0x000000000174b0e0, ...}
+\ExtensionTok{Libomptarget}\NormalTok{ device 0 info: Removing map entry with HstPtrBegin=0x0000000001772200, ...}
+\ExtensionTok{{-}Timing}\NormalTok{ in Seconds: min=0.010115, max=0.010115, avg=0.010115}
+\ExtensionTok{{-}Overall}\NormalTok{ time is 0.010505}
+\ExtensionTok{Last}\NormalTok{ Value: z[9999]=7.000000}
+\end{Highlighting}
+\end{Shaded}
+
+Not all versions are discussed in this document. Using \texttt{vimdiff}
+to compare versions is useful to explore the differences, e.g.:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{vimdiff}\NormalTok{ mem1.cc mem2.cc}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{mem2-add-enterexit-data-allocdelete-when-memory-is-createdfreed}{%
+\subsubsection{Mem2 (Add enter/exit data alloc/delete when memory is
+created/freed)}\label{mem2-add-enterexit-data-allocdelete-when-memory-is-createdfreed}}
+
+The initial code in \texttt{mem1.cc} is modified to obtain
+\texttt{mem2.cc} with the following additions:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#pragma omp target enter data map(alloc: x[0:n], y[0:n], z[0:n]) // line 52}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#pragma omp target exit data map(delete: x[0:n], y[0:n], z[0:n]) // line 82}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{mem3-replace-map-tofrom-with-updates-to-bypass-unneeded-device-memory-check}{%
+\subsubsection{Mem3 (Replace map to/from with updates to bypass unneeded
+device memory
+check)}\label{mem3-replace-map-tofrom-with-updates-to-bypass-unneeded-device-memory-check}}
+
+In \texttt{mem3.cc}, in addition to the changes in \texttt{mem2.cc}, the
+\texttt{daxpy} kernel is modified as follows:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{void}\NormalTok{ daxpy(int n, double a, double *\_\_restrict\_\_ x, double *\_\_restrict\_\_ y, double *\_\_restrict\_\_ z)}
+\KeywordTok{\{}
+\CommentTok{\#pragma omp target update to (x[0:n], y[0:n])}
+\CommentTok{\#pragma omp target teams distribute parallel for simd}
+        \KeywordTok{for} \KeywordTok{(}\ExtensionTok{int}\NormalTok{ i = 0}\KeywordTok{;} \ExtensionTok{i} \OperatorTok{\textless{}}\NormalTok{ n}\KeywordTok{;} \ExtensionTok{i++}\KeywordTok{)}
+                \ExtensionTok{z}\NormalTok{[i] = a*x[i] + y[i]}\KeywordTok{;}
+\CommentTok{\#pragma omp target update from (z[0:n])}
+\KeywordTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{mem4-replace-delete-with-release-to-use-reference-counting}{%
+\subsubsection{Mem4 (Replace delete with release to use reference
+counting)}\label{mem4-replace-delete-with-release-to-use-reference-counting}}
+
+Compared to \texttt{mem2.cc}, \texttt{mem4.cc} differs only at line 82,
+where a delete is replaced with a release:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#pragma omp target exit data map(release: x[0:n], y[0:n], z[0:n]) // line 82}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{mem5-use-enter-data-map-tofrom-allocdelete-to-reduce-memory-copies}{%
+\subsubsection{Mem5 (Use enter data map to/from alloc/delete to reduce
+memory
+copies)}\label{mem5-use-enter-data-map-tofrom-allocdelete-to-reduce-memory-copies}}
+
+Similar to \texttt{mem2.cc}. this version differs from the original only
+at lines 52 and 82:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#pragma omp target enter data map(to: x[0:n], y[0:n]) map(alloc: z[0:n]) // line 52}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#pragma omp target exit data map(from: z[0:n]) map(delete: x[0:n], y[0:n]) // line 82}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{mem7-use-managed-memory-to-automatically-move-data}{%
+\subsubsection{Mem7 (Use managed memory to automatically move
+data)}\label{mem7-use-managed-memory-to-automatically-move-data}}
+
+In this example, we epxloit automatic memory management by the operating
+system. To enable it, export:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{export} \VariableTok{HSA\_XNACK=}\NormalTok{1}
+\end{Highlighting}
+\end{Shaded}
+
+We also need to include the following pragma:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#pragma omp requires unified\_shared\_memory // line 22}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{mem8-use-unified-shared-memory-with-maps-for-backward-compatibility}{%
+\subsubsection{Mem8 (Use unified shared memory with maps for backward
+compatibility)}\label{mem8-use-unified-shared-memory-with-maps-for-backward-compatibility}}
+
+Compared to \texttt{mem7.cc}, \texttt{mem8.cc} supports backward
+compatibility using maps and also:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#ifndef NO\_UNIFIED\_SHARED\_MEMORY}
+\CommentTok{\#pragma omp requires unified\_shared\_memory}
+\CommentTok{\#endif}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{mem12-only-runs-on-mi300a}{%
+\subsubsection{Mem12 (Only runs on
+MI300A)}\label{mem12-only-runs-on-mi300a}}
+
+This example uses the APU programming model of MI300A and unified
+addresses in OpenMP.
+
+\hypertarget{kernel-pragmas}{%
+\subsection{Kernel Pragmas}\label{kernel-pragmas}}
+
+This set of exercises is in:
+\texttt{HPCTrainingExamples/Pragma\_Examples/OpenMP/CXX/kernel\_pragmas}.
+
+\hypertarget{exercises-setup-1}{%
+\subsubsection{Exercises Setup}\label{exercises-setup-1}}
+
+You should unset the \texttt{LIBOMPTARGET\_INFO} environment flag if
+previously set.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{unset} \VariableTok{LIBOMPTARGET\_INFO}
+\end{Highlighting}
+\end{Shaded}
+
+Then, set these environment variable
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{export} \VariableTok{CXX=}\NormalTok{amdclang++}
+\BuiltInTok{export} \VariableTok{LIBOMPTARGET\_KERNEL\_TRACE=}\NormalTok{1}
+\BuiltInTok{export} \VariableTok{OMP\_TARGET\_OFFLOAD=}\NormalTok{MANDATORY}
+\BuiltInTok{export} \VariableTok{HSA\_XNACK=}\NormalTok{1}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{brief-exercises-description}{%
+\subsubsection{Brief Exercises
+Description}\label{brief-exercises-description}}
+
+The example \texttt{kernel1.cc} is the same as
+\texttt{memory\_pragmas/mem11.cc} except for the pragma line below (from
+\texttt{kernel1.cc}):
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{cout} \OperatorTok{\textless{}\textless{} "{-}Overall} \BuiltInTok{time}\NormalTok{ is }\StringTok{" \textless{}\textless{} main\_timer \textless{}\textless{} endl;}
+\StringTok{\#pragma omp target update from(z[0])}
+\end{Highlighting}
+\end{Shaded}
+
+The example \texttt{kernel2.cc} differs from \texttt{kernel1.cc} as it
+adds \texttt{num\_threads(64)} to the pragma line in the \texttt{daxpy}
+kernel:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{void}\NormalTok{ daxpy(int n, double a, double *\_\_restrict\_\_ x, double *\_\_restrict\_\_ y, double *\_\_restrict\_\_ z)}
+\KeywordTok{\{}
+\CommentTok{\#pragma omp target teams distribute parallel for simd num\_threads(64)}
+        \KeywordTok{for} \KeywordTok{(}\ExtensionTok{int}\NormalTok{ i = 0}\KeywordTok{;} \ExtensionTok{i} \OperatorTok{\textless{}}\NormalTok{ n}\KeywordTok{;} \ExtensionTok{i++}\KeywordTok{)}
+                \ExtensionTok{z}\NormalTok{[i] = a*x[i] + y[i]}\KeywordTok{;}
+\KeywordTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Similarly, example \texttt{kernel3.cc} differs from \texttt{kernel1.cc}
+as it adds \texttt{num\_threads(64)\ thread\_limit(64)} to the pragma
+line in the \texttt{daxpy} kernel:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{void}\NormalTok{ daxpy(int n, double a, double *\_\_restrict\_\_ x, double *\_\_restrict\_\_ y, double *\_\_restrict\_\_ z)}
+\KeywordTok{\{}
+\CommentTok{\#pragma omp target teams distribute parallel for simd num\_threads(64) thread\_limit(64)}
+        \KeywordTok{for} \KeywordTok{(}\ExtensionTok{int}\NormalTok{ i = 0}\KeywordTok{;} \ExtensionTok{i} \OperatorTok{\textless{}}\NormalTok{ n}\KeywordTok{;} \ExtensionTok{i++}\KeywordTok{)}
+                \ExtensionTok{z}\NormalTok{[i] = a*x[i] + y[i]}\KeywordTok{;}
+\KeywordTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Something to test On your own: uncomment line 15 in CMakeLists.txt (the
+one with -faligned-allocation -fnew-alignment=256).
+
+Another option to explore is adding the attribute
+(std::align\_val\_t(128) ) to each new line, for example:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{double}\NormalTok{ *x = new (std::align\_val\_t(128) ) }\ExtensionTok{double}\NormalTok{[n]}\KeywordTok{;}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{real-world-openmp-language-constructs}{%
+\section{Real-World OpenMP Language
+Constructs}\label{real-world-openmp-language-constructs}}
+
+For all excercises in this section:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{module}\NormalTok{ load amdclang}
+\FunctionTok{git}\NormalTok{ clone https://github.com/AMD/HPCTrainingExamples}
+\end{Highlighting}
+\end{Shaded}
+
+either choose
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ \textasciitilde{}/HPCTrainingExamples/Pragma\_Examples/OpenMP/Fortran}
+\end{Highlighting}
+\end{Shaded}
+
+or
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ \textasciitilde{}/HPCTrainingExamples/Pragma\_Examples/OpenMP/C}
+\end{Highlighting}
+\end{Shaded}
+
+\textbf{\emph{Note}}: make sure the compilers are set to your
+preference. This can be obtained by exporting the \texttt{FC} and
+\texttt{CC} environment variables:
+
+\begin{verbatim}
+export FC=<my favorite Fortran compiler>
+export CC=<my favorite C compiler>
+\end{verbatim}
+
+It is suggested for those that want to truly experience the effort, that
+you take all the pragma statements out of these examples and do the port
+yourself.
+
+\hypertarget{simple-reduction}{%
+\subsection{Simple Reduction}\label{simple-reduction}}
+
+The first example is a simple reduction:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ reduction\_scalar}
+\FunctionTok{make}
+\ExtensionTok{./reduction\_scalar}
+\end{Highlighting}
+\end{Shaded}
+
+Now try the array form
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ ../reduction\_array}
+\FunctionTok{make}
+\ExtensionTok{./reduction\_array}
+\end{Highlighting}
+\end{Shaded}
+
+If your compiler passes, it supports at least simple array reduction
+clauses
+
+\hypertarget{device-routine}{%
+\subsection{Device Routine}\label{device-routine}}
+
+Subroutines called from within a target region also cause some
+difficulties. We must tell the compiler that we want these compiled for
+the GPU. Note that device routines are not (yet) supported by all
+compilers!
+
+For this example
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ ../device\_routine}
+\end{Highlighting}
+\end{Shaded}
+
+there are multiple versions to choose from in Fortran, either with an
+interface and an external routine or using a module. Hence one first
+needs to enter the selected subfolder, and then:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{make}
+\ExtensionTok{./device\_routine}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{device-routine-with-global-data}{%
+\subsection{Device Routine with Global
+Data}\label{device-routine-with-global-data}}
+
+Including the use of data from global scope in device routines also
+causes difficulties. We have examples for both statically sized arrays
+and dynamically allocated global data. Note that device routines are not
+(yet) supported by all compilers! Also, this excercise only exists in
+the C version at the moment.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ ../device\_routine\_wglobaldata}
+\FunctionTok{make}
+\ExtensionTok{./device\_routine}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ ../device\_routine\_wdynglobaldata}
+\FunctionTok{make}
+\ExtensionTok{./device\_routine}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{hip-and-openmp-interoperability}{%
+\section{HIP and OpenMP
+Interoperability}\label{hip-and-openmp-interoperability}}
+
+The first example is just a staightforward openmp offload version
+of saxpy. Any C++ compiler that supports OpenMP offload to hip should
+work.
+
+\begin{verbatim}
+cd HPCTrainingExamples/HIP-OpenMP/CXX/saxpy_openmp_offload
+module load rocm
+module load amdclang
+\end{verbatim}
+
+Now we move on to an OpenMP main calling a HIP version of the SAXPY
+kernel. Note that we have to get the device version of the array
+pointers to pass into the HIP kernel.
+
+\begin{verbatim}
+cd HPCTrainingExamples/HIP-OpenMP/CXX/saxpy_openmp_hip
+module load rocm
+module load amdclang
+export HSA_XNACK=1
+\end{verbatim}
+
+We can't leave this example without looking at what the code would
+look like with the APU programming model.
+
+\begin{verbatim}
+cd HPCTrainingExamples/HIP-OpenMP/CXX/saxpy_APU
+module load rocm
+module load amdclang
+export HSA_XNACK=1
+\end{verbatim}
+
+You can put both OpenMP and HIP code in the same file with some care.
+This next hands-on exercise shows how in the code in
+HPCTrainingExamples/HIP-OpenMP/daxpy. We have code that uses both OpenMP
+and HIP. These require two separate passes with compilers: one with
+amdclang++ and the other with hipcc. Go to the directory containing the
+example and set up the environment:
+
+\begin{verbatim}
+cd HPCTrainingExamples/HIP-OpenMP/CXX/daxpy
+module load rocm
+module load amdclang
+export HSA_XNACK=1
+\end{verbatim}
+
+View the source code file daxpy.cc and note the two \#ifdef blocks.
+
+The first one is \textbf{DEVICE\_CODE} that we want to compile with
+hipcc.
+
+The second is \textbf{HOST\_CODE} that we will use the C++ compiler to
+compile.
+
+All of the HIP calls and variables are in the first block. The second
+block contains the OpenMP pragmas.
+
+While we can use hipcc to compile standard C++ code, it will not work on
+code with OpenMP pragmas. The call to the HIP daxpy kernel occurs near
+the end of the host code block. We could split out these two code blocks
+into separate files, but this may be more intrusive with a code design.
+
+Now we can take a look at the Makefile we use to compile the code in the
+single file. In the file, we create two object files for the executable
+to be dependent on.
+
+We then compile one with the CXX compiler with
+\texttt{-D\_\_HOST\_CODE\_\_} defined.
+
+The second object file is compiled using hipcc and with
+\texttt{-D\_\_DEVICE\_CODE\_\_} defined.
+
+This doesn't completely solve all the issues with separate translation
+units, but it does help workaround some code organization constraints.
+
+Now on to building and running the example.
+
+\begin{verbatim}
+make
+./daxpy
+\end{verbatim}
+
+\pagebreak
+
+\hypertarget{gpu-aware-mpi}{%
+\section{GPU Aware MPI}\label{gpu-aware-mpi}}
+
+\hypertarget{point-to-point-and-collective}{%
+\subsection{Point-to-point and
+collective}\label{point-to-point-and-collective}}
+
+\textbf{NOTE}: these exercises have been tested on MI210 and MI300A
+accelerators using a container environment. To see details on the
+container environment (such as operating system and modules available)
+please see \texttt{README.md} on
+\href{https://github.com/amd/HPCTrainingDock}{this} repo.
+
+Allocate at least two GPUs and set up your environment
+
+\begin{verbatim}
+module load openmpi rocm
+export OMPI_CXX=hipcc
+\end{verbatim}
+
+Find the code and compile
+
+\begin{verbatim}
+cd HPCTrainingExamples/MPI-examples
+mpicxx -o ./pt2pt ./pt2pt.cpp
+\end{verbatim}
+
+Set the environment variable and run the code
+
+\begin{verbatim}
+mpirun -n 2 -mca pml ucx ./pt2pt
+\end{verbatim}
+
+\hypertarget{osu-benchmark}{%
+\subsection{OSU Benchmark}\label{osu-benchmark}}
+
+Get the OSU micro-benchmark tarball and extract it
+
+\begin{verbatim}
+mkdir OMB
+cd OMB
+wget https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.3.tar.gz
+tar -xvf osu-micro-benchmarks-7.3.tar.gz
+\end{verbatim}
+
+Create a build directory and cd to osu-micro-benchmarks-7.3
+
+\begin{verbatim}
+mkdir build
+cd osu-micro-benchmarks-7.3
+module load rocm openmpi
+\end{verbatim}
+
+Build and install OSU micro-benchmarks
+
+\begin{verbatim}
+./configure --prefix=`pwd`/../build/ \
+                CC=`which mpicc` \
+                CXX=`which mpicxx` \
+                CPPFLAGS=-D__HIP_PLATFORM_AMD__=1 \
+                --enable-rocm \
+                --with-rocm=${ROCM_PATH}
+make -j12
+make install
+\end{verbatim}
+
+If you get the error ``cannot include hip/hip\_runtime\_api.h'', grep
+for \textbf{HIP\_PLATFORM\_HCC} and replace it with
+\textbf{HIP\_PLATFORM\_AMD} in configure.ac and configure files.
+
+Check if osu microbenchmark is actually built
+
+\begin{verbatim}
+ls -l ../build/libexec/osu-micro-benchmarks/mpi/
+\end{verbatim}
+
+if you see files collective, one-sided, pt2pt, and startup, your build
+is successful.
+
+Allocate 2 GPUs, and make those visible
+
+\begin{verbatim}
+export HIP_VISIBLE_DEVICES=0,1
+\end{verbatim}
+
+Make sure GPU-Aware communication is enabled and run the benchmark
+
+\begin{verbatim}
+mpirun -n 2 -mca pml ucx ../build/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bw \
+                -m $((16*1024*1024)) D D
+\end{verbatim}
+
+Notes: - Try different pairs of GPUs. - Run the command ``rocm-smi
+--showtopo'' to see the link type between the pairs of GPUs. - How does
+the bandwidth vary for xGMI connected GPUs vs PCIE connected GPUs?
+
+\hypertarget{ghost-exchange-example}{%
+\subsection{Ghost Exchange example}\label{ghost-exchange-example}}
+
+This example takes an MPI Ghost Exchange code that runs on the CPU and
+ports it to the GPU and GPU-aware MPI.
+
+\begin{verbatim}
+module load amdclang openmpi
+git clone https://github.com/amd/HPCTrainingExamples.git
+cd HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig
+mkdir build && cd build
+cmake ..
+make
+mpirun -n 8 --mca pml ucx ./GhostExchange \
+-x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
+\end{verbatim}
+
+We can improve this performance by using process placement so that we
+are using all the memory channels.
+
+On MI2100 nodes, we have 2 NUMA per node. So we can assign 4 ranks per
+NUMA when running with 8 ranks:
+
+\begin{verbatim}
+mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:4:numa --report-bindings \
+
+./GhostExchange  -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
+\end{verbatim}
+
+On MI300A node, we have 4 NUMA per node. So we can assign 2 ranks per
+NUMA when running with 8 ranks:
+
+\begin{verbatim}
+mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:2:numa --report-bindings \
+./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
+\end{verbatim}
+
+For the port to the GPU, we are going to take advantage of Managed
+Memory (or single memory space on MI300A)
+
+\begin{verbatim}
+export HSA_XNACK=1
+cd ../Ver1
+mkdir build && cd build
+cmake ..
+make
+mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:4:numa \
+-x HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \ 
+                    ./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
+\end{verbatim}
+
+Alternatively, on MI300A, we can run with:
+
+\begin{verbatim}
+mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:2:numa \
+-x HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
+                    ./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
+\end{verbatim}
+
+The MPI buffers are only used on the GPU, so we can just allocate them
+there and save memory on the CPU.
+
+\begin{verbatim}
+export HSA_XNACK=1
+cd ../Ver3
+mkdir build && cd build
+cmake ..
+make
+mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:4:numa \
+-x HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \ 
+
+                    ./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
+\end{verbatim}
+
+Alternatively, on MI300A, we can run with:
+
+\begin{verbatim}
+mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:2:numa \
+-x HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
+                    ./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
+\end{verbatim}
+
+Memory allocations can be expensive for the GPU. This next version just
+allocates the MPI buffers once in the main routine.
+
+\begin{verbatim}
+export HSA_XNACK=1
+cd ../Ver3
+mkdir build && cd build
+cmake ..
+make
+mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:4:numa \
+-x HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
+                    ./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000cd
+\end{verbatim}
+
+Alternatively, on MI300A, we can run with:
+
+\begin{verbatim}
+mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:2:numa \
+-x HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
+                   ./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
+\end{verbatim}
+
+
+\pagebreak
+
+\hypertarget{rocprof}{%
+\section{Rocprof}\label{rocprof}}
+
+\textbf{NOTE}: these exercises have been tested on MI210 and MI300A
+accelerators using a container environment. To see details on the
+container environment (such as operating system and modules available)
+please see \texttt{README.md} on
+\href{https://github.com/amd/HPCTrainingDock}{this} repo.
+
+We discuss an example on how to use the tools from \texttt{rocprof}.
+
+\hypertarget{initial-setup}{%
+\subsection{Initial Setup}\label{initial-setup}}
+
+First, setup the environment:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{salloc}\NormalTok{ {-}{-}cpus{-}per{-}task=8 {-}{-}mem=0 {-}{-}ntasks{-}per{-}node=4 {-}{-}gpus=1}
+\ExtensionTok{module}\NormalTok{ load rocm}
+\end{Highlighting}
+\end{Shaded}
+
+Download the examples repo and navigate to the \texttt{HIPIFY}
+exercises:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ \textasciitilde{}/HPCTrainingExamples/HIPIFY/mini{-}nbody/hip/}
+\end{Highlighting}
+\end{Shaded}
+
+Update the bash scripts with \texttt{\$ROCM\_PATH}:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sed}\NormalTok{ {-}i }\StringTok{\textquotesingle{}s/\textbackslash{}/opt\textbackslash{}/rocm/$\{ROCM\_PATH\}/g\textquotesingle{}}\NormalTok{ *.sh}
+\end{Highlighting}
+\end{Shaded}
+
+Compile and run the \texttt{nbody-orig.hip} program (the script below
+will do both, for several values of \texttt{nBodies}):
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{./HIP{-}nbody{-}orig.sh}
+\end{Highlighting}
+\end{Shaded}
+
+To compile explicitly without \texttt{make} you can do (considering for
+example \texttt{nbody-orig}):
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{hipcc}\NormalTok{ {-}I../ {-}DSHMOO nbody{-}orig.hip {-}o nbody{-}orig}
+\end{Highlighting}
+\end{Shaded}
+
+And then run with:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{./nbody{-}orig} \OperatorTok{\textless{}}\NormalTok{nBodies}\OperatorTok{\textgreater{}}
+\end{Highlighting}
+\end{Shaded}
+
+The procedure for compiling and running a single example applies to the
+other programs in the directory. The default value for \texttt{nBodies}
+is 30000 for all the examples.
+
+\hypertarget{run-rocprof-and-inspect-the-output}{%
+\subsection{Run ROCprof and Inspect the
+Output}\label{run-rocprof-and-inspect-the-output}}
+
+Run \texttt{rocprof} to obtain the hotspots list (considering for
+example \texttt{nbody-orig}):
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{rocprof}\NormalTok{ {-}{-}stats {-}{-}basenames on nbody{-}orig 65536}
+\end{Highlighting}
+\end{Shaded}
+
+In the above command, the \texttt{-\/-basenames\ on} flag removes the
+kernel arguments from the output, for ease of reading. Throughout this
+example, we will always use 65536 as a value for \texttt{nBodies}, since
+\texttt{nBodies} is used to define the number of work groups in the
+thread grid:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{nBlocks}\NormalTok{ = (nBodies + BLOCK\_SIZE {-} 1) }\ExtensionTok{/}\NormalTok{ BLOCK\_SIZE}
+\end{Highlighting}
+\end{Shaded}
+
+Check \texttt{results.csv} to find, for each invocation of each kernel,
+details such as grid size (\texttt{grd}), workgroup size (\texttt{wgr}),
+LDS used (\texttt{lds}), scratch used if register spilling happened
+(\texttt{scr}), number of SGPRs and VGPRs used, etc. Note that grid size
+is equal to the total number of \textbf{\emph{work-items (threads)}},
+not the number of work groups. This is the output that is useful if you
+allocate shared memory dynamically, for instance.
+
+Additionally, you can check the statistics result file called
+\texttt{results.stats.csv}, displayed one line per kernel, sorted in
+descending order of durations.
+
+You can trace HIP, GPU and Copy activity with \texttt{-\/-hip-trace}:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{rocprof}\NormalTok{ {-}{-}hip{-}trace nbody{-}orig 65536}
+\end{Highlighting}
+\end{Shaded}
+
+The output is the file \texttt{results.hip\_stats.csv}, which lists the
+HIP API calls and their durations, sorted in descending order. This can
+be useful to find HIP API calls that may be bottlenecks.
+
+You can also profile the HSA API by adding the \texttt{-\/-hsa-trace}
+option. This is useful if you are profiling OpenMP target offload code,
+for instance, as the compiler implements all GPU offloading via the HSA
+layer:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{rocprof}\NormalTok{ {-}{-}hip{-}trace {-}{-}hsa{-}trace nbody{-}orig 65536}
+\end{Highlighting}
+\end{Shaded}
+
+In addition to\texttt{results.hip\_stats.csv}, the command above will
+create the file \texttt{results.hsa\_stats.csv} which contains the
+statistics information for HSA calls.
+
+\hypertarget{visualization-with-perfetto}{%
+\subsection{Visualization with
+Perfetto}\label{visualization-with-perfetto}}
+
+The \texttt{results.json} JSON file produced by \texttt{rocprof} can be
+downloaded to your local machine and viewed in Perfetto UI. This file
+contains the timeline trace for this application, but shows only GPU,
+Copy and HIP API activity.
+
+Once you have downloaded the file, open a browser and go to
+\url{https://ui.perfetto.dev/}. Click on \texttt{Open\ trace\ file} in
+the top left corner. Navigate to the \texttt{results.json} you just
+downloaded. Use WASD to navigate the GUI
+
+\begin{figure}
+\centering
+\includegraphics{rocprof/4548abe6eeb76b1896e88fbd38299521eef0d2cd.png}
+\caption{image}
+\end{figure}
+
+To read about the GPU hardware counters available, inspect the output of
+the following command:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{less} \VariableTok{$ROCM\_PATH}\NormalTok{/lib/rocprofiler/gfx\_metrics.xml}
+\end{Highlighting}
+\end{Shaded}
+
+In the output displayed, look for the section associated with the
+hardware on which you are running (for instance gfx90a).
+
+Create a \texttt{rocprof\_counters.txt} file with the counters you would
+like to collect, for instance:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{touch}\NormalTok{ rocprof\_counters.txt}
+\end{Highlighting}
+\end{Shaded}
+
+and write this in \texttt{rocprof\_counters.txt} as an example:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{pmc}\NormalTok{ : Wavefronts VALUInsts}
+\ExtensionTok{pmc}\NormalTok{ : SALUInsts SFetchInsts GDSInsts}
+\ExtensionTok{pmc}\NormalTok{ : MemUnitBusy ALUStalledByLDS}
+\end{Highlighting}
+\end{Shaded}
+
+Execute with the counters we just added, including the
+\texttt{timestamp\ on} option which turns on GPU kernel timestamps:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{rocprof}\NormalTok{ {-}{-}timestamp on {-}i rocprof\_counters.txt  nbody{-}orig 65536}
+\end{Highlighting}
+\end{Shaded}
+
+You'll notice that \texttt{rocprof} runs 3 passes, one for each set of
+counters we have in that file.
+
+View the contents of \texttt{rocprof\_counters.csv} for the collected
+counter values for each invocation of each kernel:
+
+\begin{verbatim}
+cat rocprof\_counters.csv
+\end{verbatim}
+
+\pagebreak
+
+\hypertarget{omniperf-examples}{%
+\section{Omniperf Examples}\label{omniperf-examples}}
+
+\hypertarget{exercise-1-launch-parameter-tuning}{%
+\subsection{Exercise 1: Launch Parameter
+Tuning}\label{exercise-1-launch-parameter-tuning}}
+
+Simple kernel implementing a version of yAx, to demonstrate effects of
+Launch Parameters on kernel execution time.
+
+\textbf{Note:} This exercise was tested on a system with MI210s, on a
+recent commit of Omniperf version \texttt{2.0.0} and ROCm
+\texttt{6.0.0}. \textbf{Any Omniperf version \texttt{2.0.0} or greater
+is incompatible with versions of ROCm less than \texttt{6.0.0}.}
+
+Client-side installation instructions are available in the official
+omniperf documentation, and provide all functionality demonstrated here.
+
+If your system has an older version of Omniperf, please refer to the
+archived READMEs in this directory and use a ROCm version lesser than
+\texttt{6.0.0}.
+
+\subsubsection*{Background: Acronyms and terms used in this exercise}
+
+\begin{itemize}
+     
+\item yAx: a vector-matrix-vector product, y\emph{A}x, where y and x are
+vectors, and A is a matrix
+
+\item FP(32/16): 32- or 16-bit Floating Point numeric types
+
+\item FLOPs: Floating Point Operations Per second
+
+\item HBM: High Bandwidth Memory is globally accessible from the GPU, and is a
+level of memory above the L2 cache
+
+\end{itemize}
+
+\hypertarget{initial-roofline-analysis}{%
+\subsubsection{Initial Roofline
+Analysis:}\label{initial-roofline-analysis}}
+
+The roofline model is a way to gauge kernel performance in terms of
+maximum achievable bandwidth and floating-point operations. It can be
+used to determine how efficiently a kernel makes use of the available
+hardware. It is a key tool in initially determining which kernels are
+performing well, and which kernels should be able to perform better.
+Below are roofline plots for the yAx kernel in problem.cpp:
+
+\begin{longtable}[]{@{}lll@{}}
+\toprule
+Roofline Type & Roofline Legend & Roofline Plot\tabularnewline
+\midrule
+\endhead
+FP32/FP64 &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/launch_parameters/8575851bf3f9ac056a2eae0e721d44cde6e9378a.png} &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/launch_parameters/1c1e7ac9bcf47ad1d9ab16625d90a45bcc6dc51f.png}\tabularnewline
+FP16/INT8 &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/launch_parameters/8575851bf3f9ac056a2eae0e721d44cde6e9378a.png} &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/launch_parameters/aeb466a8cd337877bd21ecfe9b9a109f5a42050b.png}\tabularnewline
+\bottomrule
+\end{longtable}
+
+These plots were generated by running:
+
+\begin{Verbatim}
+omniperf profile -n problem_roof_only --roof-only --kernel-names -- ./problem.exe
+\end{Verbatim}
+
+The plots will appear as PDF files in the
+\texttt{./workloads/problem\_roof\_only/MI200} directory, if generated
+on MI200 hardware.
+
+We see that the kernel's performance is not near the achievable
+bandwidth possible on the hardware, which makes it a good candidate to
+consider optimizing.
+
+\hypertarget{exercise-instructions}{%
+\subsubsection{Exercise instructions:}\label{exercise-instructions}}
+
+From the roofline we were able to see that there is room for improvement
+in this kernel. One of the first things to check is whether or not we
+have reasonable launch parameters for this kernel.
+
+To get started, build and run the problem code:
+
+\begin{Verbatim}
+make
+./problem.exe
+\end{Verbatim}
+
+(\emph{simulated output})
+
+\begin{Verbatim}
+yAx time: 2911 milliseconds
+\end{Verbatim}
+
+The runtime of the problem should be very slow, due to sub-optimal
+launch parameters. Let's confirm this hypothesis by looking at the
+omniperf profile. Start by running:
+
+\begin{Verbatim}
+omniperf profile -n problem --no-roof -- ./problem.exe
+\end{Verbatim}
+
+This command requires omniperf to run your code a few times to collect
+all the necessary hardware counters. - \texttt{-n\ problem} names the
+workload, meaning that the profile will appear in the
+\texttt{./workloads/problem/MI200/} directory, if you are profiling on
+an MI200 device. - \texttt{-\/-no-roof} turns off the roofline, which
+will save some profiling time by avoiding the collection of achievable
+bandwidths and FLOPs on the device. - Everything after the \texttt{-\/-}
+is the command that will be profiled.
+
+After the profiling data is collected, we can view the profile by using
+this command:
+
+\begin{Verbatim}
+omniperf analyze -p workloads/problem/MI200 --dispatch 1 --block 7.1.0 7.1.1 7.1.2
+\end{Verbatim}
+
+This allows us to view nicely formatted profiling data directly in the
+command line. The command given here has a few arguments that are
+noteworthy: - \texttt{-p\ workloads/problem/MI200} must point to the
+output directory of your profile run. For the above
+\texttt{omniperf\ profile} command, this will be
+\texttt{workloads/problem/MI200}. - \texttt{-\/-dispatch\ 1} filters
+kernel statistics by dispatch ID. In this case kernel 0 was a
+``warm-up'' kernel, and kernel 1 is what the code reports timings for. -
+\texttt{-\/-block} displays only the requested metrics, in this case we
+want metrics specific to Launch Parameters: - \texttt{7.1.0} is the Grid
+Size - \texttt{7.1.1} is the Workgroup Size - \texttt{7.1.2} is the
+Total Wavefronts Launched
+
+The output of the \texttt{omniperf\ analyze} command should look
+something like this:
+
+\begin{Verbatim}[fontsize=\footnotesize] 
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
+                                                                                                                                                                                                                --------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
+-----------------------------------------------------------------------------------------------------------------
+|    | Kernel_Name                              |   Count |      Sum(ns) |     Mean(ns) |   Median(ns) |    Pct |
+-----|------------------------------------------|---------|--------------|--------------|--------------|---------
+|  0 | yax(double*, double*, double*, int, int, |    1.00 | 751342314.00 | 751342314.00 | 751342314.00 | 100.00 |
+|    |  double*) [clone .kd]                    |         |              |              |              |        |
+-----------------------------------------------------------------------------------------------------------------                                                                                               0.2 Dispatch List
+-------------------------------------------------------------------------------------------------
+|    |   Dispatch_ID | Kernel_Name                                                   |   GPU_ID |
+-----|---------------|---------------------------------------------------------------|-----------
+|  0 |             1 | yax(double*, double*, double*, int, int, double*) [clone .kd] |        2 |
+-------------------------------------------------------------------------------------------------
+
+                                                                                                                                                                                                                --------------------------------------------------------------------------------
+7. Wavefront
+7.1 Wavefront Launch Stats
+--------------------------------------------------------------------------
+| Metric_ID   | Metric           |    Avg |    Min |    Max | Unit       |
+--------------|------------------|--------|--------|--------|-------------
+| 7.1.0       | Grid Size        | 256.00 | 256.00 | 256.00 | Work items |
+--------------|------------------|--------|--------|--------|-------------
+| 7.1.1       | Workgroup Size   |  64.00 |  64.00 |  64.00 | Work items |
+--------------|------------------|--------|--------|--------|-------------
+| 7.1.2       | Total Wavefronts |   4.00 |   4.00 |   4.00 | Wavefronts |
+--------------------------------------------------------------------------
+\end{Verbatim}
+
+Looking through this data we see: - Workgroup Size (\texttt{7.1.1}) is
+64 threads, which corresponds with the size of a wavefront. - Total
+Wavefronts (\texttt{7.1.2}) shows that we are launching only 4
+Wavefronts.
+
+We can definitely get better performance by adjusting the launch
+parameters of our kernel. Either try out some new values for the launch
+bounds, or run the provided solution to see its performance:
+
+\begin{verbatim}
+cd solution
+make
+./solution.exe
+\end{verbatim}
+
+(\emph{simulated output})
+
+\begin{verbatim}
+yAx time: 70 ms
+\end{verbatim}
+
+We get much better performance with the new launch parameters. Note that
+in general it can be difficult to find the most optimal launch
+parameters for a given kernel due to the many factors that impact
+performance, so determining launch parameters experimentally is usually
+necessary.
+
+We should also confirm that our updated launch parameters are reported
+by omniperf, we need to run:
+
+\begin{verbatim}
+omniperf profile -n solution --no-roof -- ./solution.exe
+\end{verbatim}
+
+This command is the same as before, except the workload name has changed
+to \texttt{solution}. Once the \texttt{profile} command has completed,
+run:
+
+\begin{Verbatim}
+omniperf analyze -p workloads/solution/MI200 --dispatch 1 --block 7.1.0 7.1.1 7.1.2
+\end{Verbatim}
+
+Again, this command largely uses the same arguments as before, except
+for the workload name. The output should look something like this:
+
+\begin{Verbatim}[fontsize=\footnotesize] 
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
+                                                                                                                                                                                                                --------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
+---------------------------------------------------------------------------------------------------------------
+|    | Kernel_Name                              |   Count |     Sum(ns) |    Mean(ns) |   Median(ns) |    Pct |
+-----|------------------------------------------|---------|-------------|-------------|--------------|---------
+|  0 | yax(double*, double*, double*, int, int, |    1.00 | 69512860.00 | 69512860.00 |  69512860.00 | 100.00 |
+|    |  double*) [clone .kd]                    |         |             |             |              |        |
+---------------------------------------------------------------------------------------------------------------                                                                                                 0.2 Dispatch List
+-------------------------------------------------------------------------------------------------
+|    |   Dispatch_ID | Kernel_Name                                                   |   GPU_ID |
+-----|---------------|---------------------------------------------------------------|-----------
+|  0 |             1 | yax(double*, double*, double*, int, int, double*) [clone .kd] |        2 |
+-------------------------------------------------------------------------------------------------
+
+                                                                                                                                                                                                                --------------------------------------------------------------------------------
+7. Wavefront
+7.1 Wavefront Launch Stats
+-----------------------------------------------------------------------------------
+| Metric_ID   | Metric           |       Avg |       Min |       Max | Unit       |
+--------------|------------------|-----------|-----------|-----------|-------------
+| 7.1.0       | Grid Size        | 131072.00 | 131072.00 | 131072.00 | Work items |
+--------------|------------------|-----------|-----------|-----------|-------------
+| 7.1.1       | Workgroup Size   |     64.00 |     64.00 |     64.00 | Work items |
+--------------|------------------|-----------|-----------|-----------|-------------
+| 7.1.2       | Total Wavefronts |   2048.00 |   2048.00 |   2048.00 | Wavefronts |
+-----------------------------------------------------------------------------------
+\end{Verbatim}
+
+Looking through this data we see: - Workgroup Size (\texttt{7.1.1})
+corresponds to the first argument of the block launch parameter - Total
+Wavefronts (\texttt{7.1.2}) corresponds to the first index of the grid
+launch parameter - Grid size (\texttt{7.1.0}) is Workgroup Size
+(\texttt{7.1.1}) times Total Wavefronts (\texttt{7.1.2})
+
+\hypertarget{omniperf-command-line-comparison-feature}{%
+\subsubsection{Omniperf Command Line Comparison
+Feature}\label{omniperf-command-line-comparison-feature}}
+
+\textbf{On releases newer than Omniperf 1.0.10}, the comparison feature
+of omniperf can be used to quickly compare two profiles. To use this
+feature, use the command:
+
+\begin{Verbatim}
+omniperf analyze -p workloads/problem/MI200 -p solution/workloads/solution/MI200 --dispatch 1 --block 7.1.0 7.1.1 7.1.2
+\end{Verbatim}
+
+This feature sets the first \texttt{-p} argument as the baseline, and
+the second as the comparison workload. In this case, problem is set as
+the baseline and is compared to solution. The output should look like:
+
+\begin{Verbatim}[fontsize=\tiny] 
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
+
+--------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
+---------------------------------------------------------------------------------------------------------------------------
+|    | Kernel_Name                              |   Count | Count      |   Abs Diff |      Sum(ns) | Sum(ns)              |
+-----|------------------------------------------|---------|------------|------------|--------------|----------------------|
+|  0 | yax(double*, double*, double*, int, int, |    1.00 | 1.0 (0.0%) |       0.00 | 751342314.00 | 69512860.0 (-90.75%) |
+|    |  double*) [clone .kd]                    |         |            |            |              |                      |
+---------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------------------
+|    | Kernel_Name                              | Mean(ns)             |   Median(ns) | Median(ns)           |    Pct | Pct          |
+-----|------------------------------------------|----------------------|--------------|----------------------|--------|---------------
+|  0 | yax(double*, double*, double*, int, int, | 69512860.0 (-90.75%) | 751342314.00 | 69512860.0 (-90.75%) | 100.00 | 100.0 (0.0%) |
+|    |  double*) [clone .kd]                    |                      |              |                      |        |              |
+--------------------------------------------------------------------------------------------------------------------------------------
+
+0.2 Dispatch List
+-------------------------------------------------------------------------------------------------
+|    |   Dispatch_ID | Kernel_Name                                                   |   GPU_ID |
+-----|---------------|---------------------------------------------------------------|-----------
+|  0 |             1 | yax(double*, double*, double*, int, int, double*) [clone .kd] |        2 |
+-------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+7. Wavefront
+7.1 Wavefront Launch Stats
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+| Metric_ID   | Metric           |    Avg | Avg                 |   Abs Diff |    Min | Min                 |    Max | Max                 | Unit       |
+--------------|------------------|--------|---------------------|------------|--------|---------------------|--------|---------------------|-------------
+| 7.1.0       | Grid Size        | 256.00 | 131072.0 (51100.0%) |  130816.00 | 256.00 | 131072.0 (51100.0%) | 256.00 | 131072.0 (51100.0%) | Work items |
+--------------|------------------|--------|---------------------|------------|--------|---------------------|--------|---------------------|-------------
+| 7.1.1       | Workgroup Size   |  64.00 | 64.0 (0.0%)         |       0.00 |  64.00 | 64.0 (0.0%)         |  64.00 | 64.0 (0.0%)         | Work items |
+--------------|------------------|--------|---------------------|------------|--------|---------------------|--------|---------------------|-------------
+| 7.1.2       | Total Wavefronts |   4.00 | 2048.0 (51100.0%)   |    2044.00 |   4.00 | 2048.0 (51100.0%)   |   4.00 | 2048.0 (51100.0%)   | Wavefronts |
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+\end{Verbatim}
+
+Note that the comparison workload shows the percentage difference from
+the baseline. This feature can be used to quickly compare filtered stats
+to make sure code changes fix known issues.
+
+\hypertarget{more-kernel-filtering}{%
+\subsubsection{More Kernel Filtering}\label{more-kernel-filtering}}
+
+For this exercise, it is appropriate to filter the
+\texttt{omniperf\ analyze} command with the \texttt{-\/-dispatch\ 1}
+argument. This \texttt{-\/-dispatch\ 1} argument filters the data shown
+to only include the kernel invocation with dispatch ID 1, or the second
+kernel run during profiling.
+
+However, there is another way to filter kernels that may be more
+applicable in real use-cases. Typically real codes launch many kernels,
+and only a few of them take most of the overall kernel runtime. To see a
+ranking of the top kernels that take up most of the kernel runtime in
+your code, you can run:
+
+\begin{Verbatim}
+omniperf analyze -p workloads/problem/MI200 --list-stats
+\end{Verbatim}
+
+This command will output something like:
+
+\begin{Verbatim}[fontsize=\footnotesize] 
+                                                                                                                                                                                                                  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
+                                                                                                                                                                                                                --------------------------------------------------------------------------------
+Detected Kernels (sorted descending by duration)
+----------------------------------------------------------------------
+|    | Kernel_Name                                                   |
+-----|----------------------------------------------------------------
+|  0 | yax(double*, double*, double*, int, int, double*) [clone .kd] |
+----------------------------------------------------------------------
+                                                                                                                                                                                                                --------------------------------------------------------------------------------
+Dispatch list
+-------------------------------------------------------------------------------------------------
+|    |   Dispatch_ID | Kernel_Name                                                   |   GPU_ID |
+-----|---------------|---------------------------------------------------------------|-----------
+|  0 |             0 | yax(double*, double*, double*, int, int, double*) [clone .kd] |        2 |
+-----|---------------|---------------------------------------------------------------|-----------
+|  1 |             1 | yax(double*, double*, double*, int, int, double*) [clone .kd] |        2 |
+-------------------------------------------------------------------------------------------------
+\end{Verbatim}
+
+Using Omniperf versions greater than \texttt{2.0.0},
+\texttt{-\/-list-stats} will list all kernels launched by your code, in
+order of runtime (largest runtime first). The number displayed beside
+the kernel in the output can be used to filter
+\texttt{omniperf\ analyze} commands. \textbf{Note that this will display
+aggregated stats for kernels of the same name}, meaning that the
+invocations could differ in terms of launch parameters, and vary widely
+in terms of work completed. This filtering is accomplished with the
+\texttt{-k} argument:
+
+\begin{Verbatim}
+omniperf analyze -p workloads/problem/MI200 -k 0 --block 7.1.0 7.1.1 7.1.2
+\end{Verbatim}
+
+Which should show something like:
+
+\begin{Verbatim}[fontsize=\footnotesize] 
+                                                                                                                                                                                                                  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
+                                                                                                                                                                                                                --------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
+------------------------------------------------------------------------------------------------------------------------
+|    | Kernel_Name                              |   Count |       Sum(ns) |     Mean(ns) |   Median(ns) |    Pct | S   |
+-----|------------------------------------------|---------|---------------|--------------|--------------|--------|------
+|  0 | yax(double*, double*, double*, int, int, |    2.00 | 1501207023.00 | 750603511.50 | 750603511.50 | 100.00 | *   |
+|    |  double*) [clone .kd]                    |         |               |              |              |        |     |
+------------------------------------------------------------------------------------------------------------------------                                                                                        0.2 Dispatch List
+-------------------------------------------------------------------------------------------------
+|    |   Dispatch_ID | Kernel_Name                                                   |   GPU_ID |
+-----|---------------|---------------------------------------------------------------|-----------
+|  0 |             0 | yax(double*, double*, double*, int, int, double*) [clone .kd] |        2 |
+-----|---------------|---------------------------------------------------------------|-----------
+|  1 |             1 | yax(double*, double*, double*, int, int, double*) [clone .kd] |        2 |
+-------------------------------------------------------------------------------------------------
+
+                                                                                                                                                                                                                --------------------------------------------------------------------------------
+7. Wavefront
+7.1 Wavefront Launch Stats
+--------------------------------------------------------------------------
+| Metric_ID   | Metric           |    Avg |    Min |    Max | Unit       |
+--------------|------------------|--------|--------|--------|-------------
+| 7.1.0       | Grid Size        | 256.00 | 256.00 | 256.00 | Work items |
+--------------|------------------|--------|--------|--------|-------------
+| 7.1.1       | Workgroup Size   |  64.00 |  64.00 |  64.00 | Work items |
+--------------|------------------|--------|--------|--------|-------------
+| 7.1.2       | Total Wavefronts |   4.00 |   4.00 |   4.00 | Wavefronts |
+--------------------------------------------------------------------------
+\end{Verbatim}
+
+Note that the `count' field in Top Stat is 2 here, where filtering by
+dispatch ID displays a count of 1, indicating that filtering with
+\texttt{-k} returns aggregated stats for two kernel invocations in this
+case. Also note that the ``Top Stats'' table will still show all the top
+kernels but the rightmost column titled ``S'' (think ``Selected'') will
+have an asterisk beside the kernel for which data is being displayed.
+Also note that the dispatch list displays two entries rather than the
+one we see when we filter by \texttt{-\/-dispatch\ 1}.
+
+\hypertarget{solution-roofline}{%
+\subsubsection{Solution Roofline}\label{solution-roofline}}
+
+We've demonstrated better performance than problem.cpp in solution.cpp,
+but could we potentially do better? To answer that we again turn to the
+roofline model:
+
+\begin{longtable}[]{@{}lll@{}}
+\toprule
+Roofline Type & Roofline Legend & Roofline Plot\tabularnewline
+\midrule
+\endhead
+FP32/FP64 &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/launch_parameters/8575851bf3f9ac056a2eae0e721d44cde6e9378a.png} &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/launch_parameters/ff410f6f69cbebe8bb4a9c8661ed8e6dcb35e6bc.png}\tabularnewline
+FP16/INT8 &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/launch_parameters/8575851bf3f9ac056a2eae0e721d44cde6e9378a.png} &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/launch_parameters/a31cee3a36401e534a18b717c66f33144d89c7e5.png}\tabularnewline
+\bottomrule
+\end{longtable}
+
+These plots were generated with:
+
+\begin{Verbatim}
+omniperf profile -n solution_roof_only --roof-only --kernel-names -- ./solution.exe
+\end{Verbatim}
+
+The plots will appear as PDF files in the
+\texttt{./workloads/solution\_roof\_only/MI200} directory, if generated
+on MI200 hardware.
+
+We see that the solution is solidly in the bandwidth-bound regime, but
+even still there seems to be room for improvement. Further performance
+improvements will be a topic for later exercises.
+
+\hypertarget{roofline-comparison}{%
+\subsubsection{Roofline Comparison}\label{roofline-comparison}}
+
+\begin{longtable}[]{@{}lll@{}}
+\toprule
+Roofline Type & Problem Roofline & Solution Roofline\tabularnewline
+\midrule
+\endhead
+FP32/FP64 &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/launch_parameters/1c1e7ac9bcf47ad1d9ab16625d90a45bcc6dc51f.png} &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/launch_parameters/ff410f6f69cbebe8bb4a9c8661ed8e6dcb35e6bc.png}\tabularnewline
+FP16/INT8 &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/launch_parameters/aeb466a8cd337877bd21ecfe9b9a109f5a42050b.png} &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/launch_parameters/a31cee3a36401e534a18b717c66f33144d89c7e5.png}\tabularnewline
+\bottomrule
+\end{longtable}
+
+We see that the solution has drastically increased performance over the
+problem code, as shown by the solution points moving up closer to the
+line plotted by the bandwidth limit.
+
+\textbf{Note:} on statically generated roofline images, it is possible
+for the L1, L2, or HBM points to overlap and hide one another.
+
+\hypertarget{summary-and-take-aways}{%
+\subsubsection{Summary and Take-aways}\label{summary-and-take-aways}}
+
+Launch parameters should be the first check in optimizing performance,
+due to the fact that they are usually easy to change, but can have a
+large performance impact if they aren't tuned to your workload. It is
+difficult to predict the optimal launch parameters for any given kernel,
+so some experimentation may be required to achieve the best performance.
+
+\hypertarget{exercise-2-lds-occupancy-limiter}{%
+\subsection{Exercise 2: LDS Occupancy
+Limiter}\label{exercise-2-lds-occupancy-limiter}}
+
+Simple kernel implementing a version of yAx, to demonstrate the downside
+of allocating a large amount of LDS, and the benefit of using a smaller
+amount of LDS due to occupancy limits.
+
+\textbf{Note:} This exercise was tested on a system with MI210s, on
+omniperf version \texttt{2.0.0} and ROCm \texttt{6.0.2} \textbf{Omniperf
+\texttt{2.0.0} is incompatible with ROCm versions lesser than
+\texttt{6.0.0}}
+
+\subsubsection*{Background: Acronyms and terms used in this exercise}
+\begin{itemize}
+\item Wavefront: A collection of threads, usually 64.
+
+\item Workgroup: A collection of Wavefronts (at least 1), which can be
+scheduled on a Compute Unit (CU)
+
+\item LDS: Local Data Store is Shared Memory that is accessible to the entire
+workgroup on a Compute Unit (CU)
+
+\item CU: The Compute Unit is responsible for executing the User's kernels
+
+\item SPI: Shader Processor Input, also referred to as the Workgroup Manager,
+is responsible for scheduling workgroups on Compute Units
+
+\item Occupancy: A measure of how many wavefronts are executing on the GPU on average through the duration of the kernel
+
+\item PoP: Percent of Peak refers to the ratio of an achieved value and a
+theoretical or actual maximum. In terms of occupancy, it is how many
+wavefronts on average were on the device divided by how many can fit on
+the device.
+
+\item yAx: a vector-matrix-vector product, y\emph{A}x, where y and x are
+vectors, and A is a matrix
+
+\item FP(32/16): 32- or 16-bit Floating Point numeric 
+
+\item FLOPs: Floating Point Operations Per second
+
+\item HBM: High Bandwidth Memory is globally accessible from the GPU, and is a level of memory above the L2 cache
+ 
+\end{itemize}
+
+\hypertarget{initial-roofline-analysis2}{%
+\subsubsection{Initial Roofline
+Analysis}\label{initial-roofline-analysis2}}
+
+In this exercise we're using a problem code that is slightly different
+than where we left off in Exercise 1. Regardless, to get started we need
+to get a roofline by running:
+
+\begin{verbatim}
+omniperf profile -n problem_roof_only --roof-only --kernel-names -- ./problem.exe
+\end{verbatim}
+
+The plots will appear as PDF files in the
+\texttt{./workloads/problem\_roof\_only/MI200} directory, if generated
+on MI200 hardware.
+
+For convenience, the resulting plots on a representative system are
+below: 
+\begin{longtable}[]{@{}lll@{}}
+\toprule
+Roofline Type & Roofline Legend & Roofline Plot\tabularnewline
+\midrule
+\endhead
+FP32/FP64 &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/lds_occupancy_limit/8575851bf3f9ac056a2eae0e721d44cde6e9378a.png}&
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/lds_occupancy_limit/4d764154064d3674ca5c2af5fb80628acc72ed5f.png}
+\tabularnewline
+FP16/INT8 &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight] {omniperf/lds_occupancy_limit/8575851bf3f9ac056a2eae0e721d44cde6e9378a.png}&\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/lds_occupancy_limit/3358562c2f0191026aa2588c4523ff78fb2e6a6a.png}\tabularnewline
+\bottomrule
+\end{longtable}
+
+We see that there looks to be room for improvement here. We'll use
+omniperf to see what the current limiters are.
+
+\hypertarget{exercise-instructions2}{%
+\subsubsection{Exercise Instructions:}\label{exercise-instructions2}}
+
+First, we should get an idea of the code's runtime:
+
+\begin{verbatim}
+make
+./problem.exe
+\end{verbatim}
+
+(\emph{simulated output})
+
+\begin{verbatim}
+yAx time: 140 ms
+\end{verbatim}
+
+This problem.cpp uses LDS allocations to move the x vector closer to the
+compute resources, a common optimization. However, we see that it ends
+up slower than the previous solution that didn't use LDS at all. In
+kernels that request a lot of LDS, it is common to see that the LDS
+usage limits the occupancy of the kernel. That is, more wavefronts
+cannot be resident on the device, because all of them need more LDS than
+is available. We need to confirm this hypothesis, let's start by
+running:
+
+\begin{verbatim}
+omniperf profile -n problem --no-roof -- ./problem.exe
+\end{verbatim}
+
+The usage of \texttt{omniperf\ profile} arguments can be found
+\href{https://rocm.github.io/omniperf/profiling.html}{here}, or by
+running \texttt{omniperf\ profile\ -\/-help}.
+
+This \texttt{omniperf\ profile} command will take a minute or two to
+run, as omniperf must run your code a few times to collect all the
+hardware counters.
+
+\begin{quote}
+\textbf{Note:} For large scientific codes, it can be useful to profile a
+small representative workload if possible, as profiling a full run may
+take prohibitively long.
+\end{quote}
+
+Once the profiling run completes, let's take a look at the occupancy
+stats related to LDS allocations:
+
+\begin{verbatim}
+omniperf analyze -p workloads/problem/MI200 --dispatch 1 --block 2.1.15 6.2.7
+\end{verbatim}
+
+The metrics we're looking at are: - \texttt{2.1.15} Wavefront occupancy
+-- a measure of how many wavefronts, on average, are active on the
+device - \texttt{6.2.7} SPI: Insufficient CU LDS -- indicates whether
+wavefronts are not able to be scheduled due to insufficient LDS
+
+The SPI section (\texttt{6.2}) generally shows what resources limit
+occupancy, while Wavefront occupancy (\texttt{2.1.15}) shows how
+severely occupancy is limited in general. As of Omniperf version
+\texttt{2.0.0}, the SPI `insufficient' fields are a percentage showing
+how frequently a given resource prevented the SPI from scheduling a
+wavefront. If more than one field is nonzero, the relative magnitude of
+the nonzero fields correspond to the relative severity of the
+corresponding occupancy limitation (a larger percentage means a resource
+limits occupancy more than another resource with a smaller percentage),
+but it is usually impossible to closely correlate the SPI `insufficient'
+percentage with the overall occupancy limit. This could mean you reduce
+a large percentage in an `insufficient' resource field to zero, and see
+overall occupancy only increase by a comparatively small amount.
+
+Background: A note on occupancy's relation to performance
+
+Occupancy has a fairly complex relation to achieved performance. In
+cases where the device is not saturated (where resources are available,
+but are unused) there is usually performance that can be gained by
+increasing occupancy, but not always. For instance, adversarial data
+access patterns (see exercise 4-StridedAccess) can cause occupancy
+increases to result in degraded performance, due to overall poorer cache
+utilization. Typically adding to occupancy gains performance up to a
+point beyond which performance degrades, and this point may have already
+been reached by an application before optimizing.
+
+The output of the \texttt{omniperf\ analyze} command should look similar
+to this:
+
+\begin{Verbatim}[fontsize=\footnotesize]
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
+
+--------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
+-----------------------------------------------------------------------------------------------------------------
+|    | Kernel_Name                              |   Count |      Sum(ns) |     Mean(ns) |   Median(ns) |    Pct |
+-----|------------------------------------------|---------|--------------|--------------|--------------|---------
+|  0 | yax(double*, double*, double*, int, int, |    1.00 | 176224652.00 | 176224652.00 | 176224652.00 | 100.00 |
+|    |  double*) [clone .kd]                    |         |              |              |              |        |
+-----------------------------------------------------------------------------------------------------------------
+0.2 Dispatch List
+-------------------------------------------------------------------------------------------------
+|    |   Dispatch_ID | Kernel_Name                                                   |   GPU_ID |
+-----|---------------|---------------------------------------------------------------|-----------
+|  0 |             1 | yax(double*, double*, double*, int, int, double*) [clone .kd] |        8 |
+-------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+2. System Speed-of-Light
+2.1 Speed-of-Light
+-------------------------------------------------------------------------------------
+| Metric_ID   | Metric              |    Avg | Unit       |    Peak |   Pct of Peak |
+--------------|---------------------|--------|------------|---------|----------------
+| 2.1.15      | Wavefront Occupancy | 103.00 | Wavefronts | 3328.00 |          3.10 |
+-------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+6. Workgroup Manager (SPI)
+6.2 Workgroup Manager - Resource Allocation
+----------------------------------------------------------------------
+| Metric_ID   | Metric              |   Avg |   Min |   Max | Unit   |
+--------------|---------------------|-------|-------|-------|---------
+| 6.2.7       | Insufficient CU LDS | 79.01 | 79.01 | 79.01 | Pct    |
+----------------------------------------------------------------------
+\end{Verbatim}
+
+Looking through this data we see: - Wavefront occupancy
+(\texttt{2.1.15}) is 3\%, which is very low - Insufficient CU LDS
+(\texttt{6.2.7}) contains a fairly large percentage, which indicates our
+occupancy is currently limited by LDS allocations.
+
+There are two solution directories, which correspond to two ways that
+this occupancy limit can be addressed. First, we have
+\texttt{solution-no-lds}, which completely removes the LDS usage. Let's
+build and run this solution:
+
+\begin{verbatim}
+cd solution-no-lds
+make
+./solution.exe
+\end{verbatim}
+
+(\emph{simulated output})
+
+\begin{verbatim}
+yAx time: 70 ms
+\end{verbatim}
+
+We see that the runtime is much better for this solution than the
+problem, let's see if removing LDS did indeed increase occupancy:
+
+\begin{verbatim}
+omniperf profile -n solution --no-roof -- ./solution.exe
+\end{verbatim}
+
+(\emph{output omitted})
+
+Once the profile command completes, run:
+
+\begin{verbatim}
+omniperf analyze -p workloads/solution/MI200 --dispatch 1 --block 2.1.15 6.2.7
+\end{verbatim}
+
+The output should look something like:
+
+\begin{Verbatim}[fontsize=\footnotesize]
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
+
+--------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
+---------------------------------------------------------------------------------------------------------------
+|    | Kernel_Name                              |   Count |     Sum(ns) |    Mean(ns) |   Median(ns) |    Pct |
+-----|------------------------------------------|---------|-------------|-------------|--------------|---------
+|  0 | yax(double*, double*, double*, int, int, |    1.00 | 69513618.00 | 69513618.00 |  69513618.00 | 100.00 |
+|    |  double*) [clone .kd]                    |         |             |             |              |        |
+---------------------------------------------------------------------------------------------------------------
+0.2 Dispatch List
+-------------------------------------------------------------------------------------------------
+|    |   Dispatch_ID | Kernel_Name                                                   |   GPU_ID |
+-----|---------------|---------------------------------------------------------------|-----------
+|  0 |             1 | yax(double*, double*, double*, int, int, double*) [clone .kd] |        8 |
+-------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+2. System Speed-of-Light
+2.1 Speed-of-Light
+-------------------------------------------------------------------------------------
+| Metric_ID   | Metric              |    Avg | Unit       |    Peak |   Pct of Peak |
+--------------|---------------------|--------|------------|---------|----------------
+| 2.1.15      | Wavefront Occupancy | 451.15 | Wavefronts | 3328.00 |         13.56 |
+-------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+6. Workgroup Manager (SPI)
+6.2 Workgroup Manager - Resource Allocation
+----------------------------------------------------------------------
+| Metric_ID   | Metric              |   Avg |   Min |   Max | Unit   |
+--------------|---------------------|-------|-------|-------|---------
+| 6.2.7       | Insufficient CU LDS |  0.00 |  0.00 |  0.00 | Pct    |
+----------------------------------------------------------------------
+\end{Verbatim}
+
+Looking through this data we see: - Wave occupancy (\texttt{2.1.15}) is
+10\% higher than in problem.cpp - Insufficient CU LDS (\texttt{6.2.7})
+is now zero, indicating solution-no-lds is not occupancy limited by LDS
+allocations.
+
+Can we get some runtime advantage from using smaller LDS allocations?
+
+This is the solution implemented in the \texttt{solution} directory:
+
+\begin{verbatim}
+cd ../solution
+make
+./solution.exe
+\end{verbatim}
+
+(\emph{simulated output})
+
+\begin{verbatim}
+yAx time: 50 ms
+\end{verbatim}
+
+This solution, rather than removing the LDS allocation, simply reduces
+the amount of LDS requested to address the occupancy limit. This gives
+us the benefit of having some data pulled closer than it was in
+\texttt{solution-no-lds} which is validated through the speedup we see.
+But is this solution still occupancy limited by LDS?
+
+\begin{verbatim}
+omniperf profile -n solution --no-roof -- ./solution.exe
+\end{verbatim}
+
+(\emph{output omitted})
+
+Once the profile command completes, run:
+
+\begin{verbatim}
+omniperf analyze -p workloads/solution/MI200 --dispatch 1 --block 2.1.15 6.2.7
+\end{verbatim}
+
+The output should look something like:
+
+\begin{Verbatim}[fontsize=\footnotesize]
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+Analysis mode = cli
+[analysis] deriving Omniperf metrics...
+
+--------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
+---------------------------------------------------------------------------------------------------------------
+|    | Kernel_Name                              |   Count |     Sum(ns) |    Mean(ns) |   Median(ns) |    Pct |
+-----|------------------------------------------|---------|-------------|-------------|--------------|---------
+|  0 | yax(double*, double*, double*, int, int, |    1.00 | 51238856.00 | 51238856.00 |  51238856.00 | 100.00 |
+|    |  double*) [clone .kd]                    |         |             |             |              |        |
+---------------------------------------------------------------------------------------------------------------
+0.2 Dispatch List
+-------------------------------------------------------------------------------------------------
+|    |   Dispatch_ID | Kernel_Name                                                   |   GPU_ID |
+-----|---------------|---------------------------------------------------------------|-----------
+|  0 |             1 | yax(double*, double*, double*, int, int, double*) [clone .kd] |        8 |
+-------------------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+2. System Speed-of-Light
+2.1 Speed-of-Light
+-------------------------------------------------------------------------------------
+| Metric_ID   | Metric              |    Avg | Unit       |    Peak |   Pct of Peak |
+--------------|---------------------|--------|------------|---------|----------------
+| 2.1.15      | Wavefront Occupancy | 494.05 | Wavefronts | 3328.00 |         14.85 |
+-------------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+6. Workgroup Manager (SPI)
+6.2 Workgroup Manager - Resource Allocation
+----------------------------------------------------------------------
+| Metric_ID   | Metric              |   Avg |   Min |   Max | Unit   |
+--------------|---------------------|-------|-------|-------|---------
+| 6.2.7       | Insufficient CU LDS |  0.00 |  0.00 |  0.00 | Pct    |
+----------------------------------------------------------------------
+\end{Verbatim}
+
+Looking at this data we see: - Wave Occupancy (\texttt{2.1.15}) is even
+higher than before - Insufficient CU LDS (\texttt{6.2.7}) shows we are
+not occupancy limited by LDS allocations.
+
+Pulling some data from global device memory to LDS can be an effective
+optimization strategy, if occupancy limits are carefully avoided.
+
+\hypertarget{solution-roofline2}{%
+\subsubsection{Solution Roofline}\label{solution-roofline2}}
+
+Let's take a look at the roofline for \texttt{solution}, which can be
+generated with:
+
+\begin{verbatim}
+omniperf profile -n solution_roof_only --roof-only -- ./solution.exe
+\end{verbatim}
+
+The plots will appear as PDF files in the
+\texttt{./workloads/problem\_roof\_only/MI200} directory, if generated
+on MI200 hardware.
+
+The plots are shown here:
+\begin{longtable}[]{@{}lll@{}}
+\toprule
+Roofline Type & Roofline Legend & Roofline Plot\tabularnewline
+\midrule
+\endhead
+FP32/FP64 &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/lds_occupancy_limit/8575851bf3f9ac056a2eae0e721d44cde6e9378a.png} &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/lds_occupancy_limit/4bf3d5203e97551cf1af4e09bb575a9494da6c67.png} \tabularnewline
+FP16/INT8 &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/lds_occupancy_limit/8575851bf3f9ac056a2eae0e721d44cde6e9378a.png} & \includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/lds_occupancy_limit/b90d84aa86564be3a7741b32c5d05083b7b9f881.png}
+\tabularnewline
+\bottomrule
+\end{longtable}
+
+
+We see that there is still room to move the solution roofline up towards
+the bandwidth limit.
+
+\hypertarget{roofline-comparison2}{%
+\subsubsection{Roofline Comparison}\label{roofline-comparison2}}
+
+\begin{longtable}[]{@{}lll@{}}
+\toprule
+Roofline Type & Roofline Legend & Roofline Plot\tabularnewline
+\midrule
+\endhead
+FP32/FP64 &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/lds_occupancy_limit/4d764154064d3674ca5c2af5fb80628acc72ed5f.png} &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/lds_occupancy_limit/4bf3d5203e97551cf1af4e09bb575a9494da6c67.png}\tabularnewline
+FP16/INT8 &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/lds_occupancy_limit/3358562c2f0191026aa2588c4523ff78fb2e6a6a.png} &
+\includegraphics[width=0.4\textwidth,height=0.4\textheight]{omniperf/lds_occupancy_limit/b90d84aa86564be3a7741b32c5d05083b7b9f881.png}\tabularnewline
+\bottomrule
+\end{longtable}
+
+Again, we see that the solution's optimizations have resulted in the
+kernel moving up in the roofline, meaning the solution executes more
+efficiently than the problem.
+
+\hypertarget{summary-and-take-aways2}{%
+\subsubsection{Summary and Take-aways}\label{summary-and-take-aways2}}
+
+Using LDS can be very helpful in reducing global memory reads where you
+have repeated use of the same data. However, large LDS allocations can
+also negatively impact performance by limiting the amount of wavefronts
+that can be resident in the device at any given time. Be wary of LDS
+usage, and check the SPI stats to ensure your LDS usage is not
+negatively impacting occupancy.
+
+\pagebreak
+
+\hypertarget{omnitrace}{%
+\section{Omnitrace}\label{omnitrace}}
+
+\textbf{\emph{NOTE}}: extensive documentation on how to use
+\texttt{omnitrace} for the \texttt{GhostExchange\_Array} example is now
+available as \texttt{README.md} files in this exercises repo. While the
+testing has been done on Frontier in that documentation, most of the
+\texttt{omnitrace} tools apply in the same way, hence it could provide
+additional training matieral.
+
+Here, we show how to use \texttt{omnitrace} tools considering the
+example in \texttt{HPCTrainingExamples/HIP/jacobi}.
+
+\hypertarget{initial-setup2}{%
+\subsection{Initial Setup}\label{initial-setup2}}
+
+Setup environment:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{module}\NormalTok{ purge}
+\ExtensionTok{module}\NormalTok{ load omnitrace gcc/13}
+\end{Highlighting}
+\end{Shaded}
+
+Next, create a configuration file for \texttt{omnitrace}:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{omnitrace{-}avail}\NormalTok{ {-}G \textasciitilde{}/omnitrace.cfg}
+\end{Highlighting}
+\end{Shaded}
+
+If you do not provide a path to the config file, it will generate one in
+the current directory: \texttt{./omnitrace-config.cfg}. This config file
+contains several flags that can be modified to turn on or off several
+options that impact the visualization of the traces in
+\texttt{Perfetto}. You can see what flags can be included in the config
+file by doing:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{omnitrace{-}avail}\NormalTok{ {-}{-}categories omnitrace}
+\end{Highlighting}
+\end{Shaded}
+
+To add brief descriptions, use the \texttt{-bd} option:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{omnitrace{-}avail}\NormalTok{ {-}bd {-}{-}categories omnitrace}
+\end{Highlighting}
+\end{Shaded}
+
+Note that the list of flags displayed by the commands above may not
+include all actual flags that can be set in the config.
+
+You can also create a configuration file with description per option.
+Beware, this is quite verbose:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{omnitrace{-}avail}\NormalTok{ {-}G \textasciitilde{}/omnitrace\_all.cfg {-}{-}all}
+\end{Highlighting}
+\end{Shaded}
+
+Next you have to declare that you want to use this configuration file.
+Note, this is only necessary if you had provided a custom path and/or
+filename for the config file when you created it.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{export} \VariableTok{OMNITRACE\_CONFIG\_FILE=}\NormalTok{\textasciitilde{}/omnitrace.cfg}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{setup-jacobi-example}{%
+\subsection{Setup Jacobi Example}\label{setup-jacobi-example}}
+
+Go to the Jacobi code in the examples repo:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\BuiltInTok{cd}\NormalTok{ \textasciitilde{}/HPCTrainingExamples/HIP/jacobi}
+\end{Highlighting}
+\end{Shaded}
+
+Compile the code:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{make}
+\end{Highlighting}
+\end{Shaded}
+
+Execute the binary to make sure it runs successfully: \textless! --Note:
+To get rid of \texttt{Read\ -1,\ expected\ 4136,\ errno\ =\ 1} add
+\texttt{-\/-mca\ pml\ ucx\ -\/-mca\ pml\_ucx\_tls\ ib,sm,tcp,self,cuda,rocm}
+to the \texttt{mpirun} command line --\textgreater{}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{mpirun}\NormalTok{ {-}np 1 ./Jacobi\_hip {-}g 1 1}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{runtime-instrumentation}{%
+\subsection{Runtime Instrumentation}\label{runtime-instrumentation}}
+
+Run the code with \texttt{omnitrace-instrument} to perform runtime
+instrumentation: this will produce a series of directories whose name is
+define by the time they were created. In one of these directories, you
+can find the \texttt{wall\_clock-\textless{}proc\_ID\textgreater{}.txt}
+file, which includes information on the function calls made in the code,
+such as how many times these calls have been called (\texttt{COUNT}) and
+the time in seconds they took in total (\texttt{SUM}):
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{mpirun}\NormalTok{ {-}np 1 omnitrace{-}instrument {-}{-} ./Jacobi\_hip {-}g 1 1}
+\end{Highlighting}
+\end{Shaded}
+
+The above command produces a folder called \texttt{instrumentation} that
+contains the \texttt{available.txt} file, which shows all the functions
+that can be instrumented. To instrument a specific function, include the
+\texttt{-\/-function-include\ \textless{}fnc\textgreater{}} option in
+the \texttt{omnitrace-instrument} command, for example:
+{\small
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{mpirun}\NormalTok{ {-}np 1 omnitrace{-}instrument {-}v 1 {-}I }\StringTok{\textquotesingle{}Jacobi\_t::Run\textquotesingle{}} \StringTok{\textquotesingle{}JacobiIteration\textquotesingle{}}\NormalTok{ {-}{-} ./Jacobi\_hip {-}g 1 1}
+\end{Highlighting}
+\end{Shaded}
+}
+
+The output provided by the above command will show that only those
+functions have been instrumented:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{[}\ExtensionTok{...}\NormalTok{]}
+\NormalTok{[}\ExtensionTok{omnitrace}\NormalTok{][exe]    1 instrumented funcs in JacobiIteration.hip}
+\NormalTok{[}\ExtensionTok{omnitrace}\NormalTok{][exe]    1 instrumented funcs in JacobiRun.hip}
+\NormalTok{[}\ExtensionTok{omnitrace}\NormalTok{][exe]    1 instrumented funcs in Jacobi\_hip}
+\NormalTok{[}\ExtensionTok{omnitrace}\NormalTok{][exe]    2 instrumented funcs in librocprofiler{-}register.so.0.3.0}
+\NormalTok{[}\ExtensionTok{...}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+Alternatively, you can use the \texttt{-\/-print-available\ functions}
+option as shown below. The \texttt{-\/-simulate} option will exit after
+outputting the diagnostics, the \texttt{-\ v} option is for verbose
+output:
+
+(NOTE: the output of the next command may be lengthy, you may want to
+pipe it to a file using \textgreater\textgreater{} out.txt at the end of
+the line to make searching it easier afterwards.)
+
+{\small
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{mpirun}\NormalTok{ {-}np 1 omnitrace{-}instrument {-}v 1 {-}{-}simulate {-}{-}print{-}available functions {-}{-} ./Jacobi\_hip {-}g 1 1}
+\end{Highlighting}
+\end{Shaded}
+}
+
+\hypertarget{binary-rewrite}{%
+\subsection{Binary Rewrite}\label{binary-rewrite}}
+
+You can create an instrumented binary using
+\texttt{omnitrace-instrument} (notice that this doesn't take very long
+to run):
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{omnitrace{-}instrument}\NormalTok{ {-}o ./Jacobi\_hip.inst {-}{-} ./Jacobi\_hip}
+\end{Highlighting}
+\end{Shaded}
+
+Execute the new instrumented binary using the \texttt{omnitrace-run}
+command inside \texttt{mpirun}. This is the recommended way to profile
+MPI applications as \texttt{omnitrace} will \textbf{separate the output
+files for each rank}:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{mpirun}\NormalTok{ {-}np 1 omnitrace{-}run {-}{-} ./Jacobi\_hip.inst {-}g 1 1}
+\end{Highlighting}
+\end{Shaded}
+
+To see the list of the instrumented GPU calls, make sure to turn on the
+\texttt{OMNITRACE\_PROFILE} flag in your config file:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{OMNITRACE\_PROFILE}\NormalTok{                                  = true}
+\end{Highlighting}
+\end{Shaded}
+
+Running the instrumented binary again, you can see that it generated a
+few extra files. One of those has a list of instrumented GPU calls and
+durations of those calls:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{cat}\NormalTok{ omnitrace{-}Jacobi\_hip.inst{-}output/}\OperatorTok{\textless{}}\NormalTok{TIMESTAMP}\OperatorTok{\textgreater{}}\NormalTok{/roctracer{-}0.txt}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{debugging-omnitrace-run}{%
+\subsection{Debugging omnitrace-run}\label{debugging-omnitrace-run}}
+
+If you get errors when you run an instrumented binary or when you run
+with runtime instrumentation, add the following options
+\texttt{-\/-monochrome\ -v\ 2\ -\/-debug} and try the following command.
+This would give you additional debug information to assist you in
+figuring out where the problem may lie:
+
+\begin{verbatim}
+mpirun -np 1 omnitrace-run --monochrome -v 1 --debug -- ./Jacobi_hip.inst -g 1 1
+\end{verbatim}
+
+\hypertarget{visualization}{%
+\subsection{Visualization}\label{visualization}}
+
+Copy the \texttt{perfetto-trace-0.proto} to your local machine, and
+using the Chrome browser open the web page
+\url{https://ui.perfetto.dev/}:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{scp}\NormalTok{ {-}i }\OperatorTok{\textless{}}\NormalTok{path/to/ssh/key}\OperatorTok{\textgreater{}}\NormalTok{ {-}P }\OperatorTok{\textless{}}\NormalTok{port\_number}\OperatorTok{\textgreater{}} \OperatorTok{\textless{}}\NormalTok{username}\OperatorTok{\textgreater{}}\NormalTok{@aac1.amd.com:\textasciitilde{}/}\OperatorTok{\textless{}}\NormalTok{path/to/proto/file}\OperatorTok{\textgreater{}}\NormalTok{ .}
+\end{Highlighting}
+\end{Shaded}
+
+Click \texttt{Open\ trace\ file} and select the \texttt{.proto} file.
+Below, you can see an example of how a \texttt{.proto} file would be
+visualized on \texttt{Perfetto}:
+
+\begin{figure}
+\centering
+\includegraphics{omnitrace/6451d7916f1e33bcdf33ec974bc45cc3420c1421.png}
+\caption{image}
+\end{figure}
+
+\hypertarget{hardware-counters}{%
+\subsection{Hardware Counters}\label{hardware-counters}}
+
+To see a list of all the counters for all the devices on the node, do:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{omnitrace{-}avail}\NormalTok{ {-}{-}all}
+\end{Highlighting}
+\end{Shaded}
+
+Declare in your configuration file:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{OMNITRACE\_ROCM\_EVENTS}\NormalTok{ = VALUUtilization,FetchSize}
+\end{Highlighting}
+\end{Shaded}
+
+Check again:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{grep}\NormalTok{ OMNITRACE\_ROCM\_EVENTS }\VariableTok{$OMNITRACE\_CONFIG\_FILE}
+\end{Highlighting}
+\end{Shaded}
+
+Run the instrumented binary, and you will observe an output file for
+each hardware counter specified. You should also see a row for each
+hardware counter in the \texttt{Perfetto} trace generated by
+\texttt{omnitrace}.
+
+Note that you do not have to instrument again after making changes to
+the config file. Just running the instrumented binary picks up the
+changes you make in the config file. Ensure that the
+\texttt{OMNITRACE\_CONFIG\_FILE} environment variable is pointing to
+your config file.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{mpirun}\NormalTok{ {-}np 1 omnitrace{-}run {-}{-} ./Jacobi\_hip.inst {-}g 1 1}
+\end{Highlighting}
+\end{Shaded}
+
+The output should show something like this:
+{\small
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{...}\NormalTok{]}\OperatorTok{\textgreater{}}\NormalTok{ Outputting }\StringTok{\textquotesingle{}omnitrace{-}Jacobi\_hip.inst{-}output/\textless{}TIMESTAMP\textgreater{}/rocprof{-}device{-}0{-}VALUUtilization{-}0.json\textquotesingle{}}
+\ExtensionTok{...}\NormalTok{]}\OperatorTok{\textgreater{}}\NormalTok{ Outputting }\StringTok{\textquotesingle{}omnitrace{-}Jacobi\_hip.inst{-}output/\textless{}TIMESTAMP\textgreater{}/rocprof{-}device{-}0{-}VALUUtilization{-}0.txt\textquotesingle{}}
+\ExtensionTok{...}\NormalTok{]}\OperatorTok{\textgreater{}}\NormalTok{ Outputting }\StringTok{\textquotesingle{}omnitrace{-}Jacobi\_hip.inst{-}output/\textless{}TIMESTAMP\textgreater{}/rocprof{-}device{-}0{-}FetchSize{-}0.json\textquotesingle{}}
+\ExtensionTok{...}\NormalTok{]}\OperatorTok{\textgreater{}}\NormalTok{ Outputting }\StringTok{\textquotesingle{}omnitrace{-}Jacobi\_hip.inst{-}output/\textless{}TIMESTAMP\textgreater{}/rocprof{-}device{-}0{-}FetchSize{-}0.txt\textquotesingle{}}
+\end{Highlighting}
+\end{Shaded}
+}
+
+If you do not want to see the details for every CPU core, modify the
+config file to select only what you want to see, say CPU cores 0-2 only:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{OMNITRACE\_SAMPLING\_CPUS}\NormalTok{                            = 0{-}2}
+\end{Highlighting}
+\end{Shaded}
+
+Now running the instrumented binary again will show significantly fewer
+CPU lines in the profile:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{mpirun}\NormalTok{ {-}np 1 omnitrace{-}run {-}{-} ./Jacobi\_hip.inst {-}g 1 1}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{profiling-multiple-ranks}{%
+\subsection{Profiling Multiple Ranks}\label{profiling-multiple-ranks}}
+
+Run the instrumented binary with multiple ranks. You'll find multiple
+\texttt{perfetto-trace-*.proto} files, one for each rank (note that
+depending on your system it may be necessary to do a \texttt{salloc}
+prior to the command below to ensure enough resources ara available):
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{mpirun}\NormalTok{ {-}np 2 omnitrace{-}run {-}{-} ./Jacobi\_hip.inst {-}g 2 1}
+\end{Highlighting}
+\end{Shaded}
+
+You can visualize them separately in \texttt{Perfetto}, or combine them
+using \texttt{cat} and visualize them in the same \texttt{Perfetto}
+window (trace concatenation is not available in all \texttt{omnitrace}
+versions):
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{cat}\NormalTok{ perfetto{-}trace{-}0.proto perfetto{-}trace{-}1.proto }\OperatorTok{\textgreater{}}\NormalTok{ allprocesses.proto}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{sampling}{%
+\subsection{Sampling}\label{sampling}}
+
+Set the following in your configuration file:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{OMNITRACE\_USE\_SAMPLING}\NormalTok{ = true}
+\ExtensionTok{OMNITRACE\_SAMPLING\_FREQ}\NormalTok{ = 100}
+\end{Highlighting}
+\end{Shaded}
+
+Execute the instrumented binary and visualize the \texttt{Perfetto}
+trace:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{mpirun}\NormalTok{ {-}np 1 omnitrace{-}run {-}{-} ./Jacobi\_hip.inst {-}g 1 1}
+\end{Highlighting}
+\end{Shaded}
+
+Scroll down to the very bottom to see the sampling output. Those traces
+will be annotated with a \texttt{(S)} as well.
+
+\hypertarget{kernel-timings}{%
+\subsection{Kernel Timings}\label{kernel-timings}}
+
+Open the \texttt{wall\_clock-0.txt} file:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{cat}\NormalTok{ omnitrace{-}Jacobi\_hip.inst{-}output/}\OperatorTok{\textless{}}\NormalTok{TIMESTAMP}\OperatorTok{\textgreater{}}\NormalTok{/wall\_clock{-}0.txt}
+\end{Highlighting}
+\end{Shaded}
+
+In order to see the kernel durations aggregated in your configuration
+file, make sure to set in your config file or in the environment:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{OMNITRACE\_PROFILE}\NormalTok{ = true}
+\ExtensionTok{OMNITRACE\_FLAT\_PROFILE}\NormalTok{ = true}
+\end{Highlighting}
+\end{Shaded}
+
+Execute the code and check the \texttt{wall\_clock-0.txt} file again.
+Instead of updating the config file, you can also set the environment
+variables to achieve the same effect.
+
+{\small
+\begin{Shaded}
+\begin{Highlighting}[]
+\VariableTok{OMNITRACE\_PROFILE=}\NormalTok{true }\VariableTok{OMNITRACE\_FLAT\_PROFILE=}\NormalTok{true }\ExtensionTok{mpirun}\NormalTok{ {-}np 1 omnitrace{-}run {-}{-} ./Jacobi\_hip.inst {-}g 1 1}
+\end{Highlighting}
+\end{Shaded}
+}
+
+
+\end{document}

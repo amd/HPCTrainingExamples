@@ -2,7 +2,7 @@
 
 In this example we explicitly manage the memory movement onto the device by using
 hipMalloc, the device memory allocator, for all data arrays instead of using
-OS-managed page migrations. We no longer need the `HSA_XNACK=1` setting.
+OS-managed page migrations.
 
 Typically, startup costs of an application are not as important as the kernel runtimes. 
 In this case, by explicitly moving memory at the beginning of our run, 
@@ -45,7 +45,7 @@ page migration.
 ## Get a Trace
 
 ```
-unset HSA_XNACK
+export HSA_XNACK=1
 export OMNITRACE_CONFIG_FILE=~/.omnitrace.cfg
 omnitrace-instrument -o ./GhostExchange.inst -- ./GhostExchange
 mpirun -np 4 --mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.sh omnitrace-run -- ./GhostExchange.inst -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
@@ -53,7 +53,7 @@ mpirun -np 4 --mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.
 
 Here's what the trace looks like for this run:
 
-<p><img src="initial_trace.png"/></p>
+<p><img src="images/mi210/initial_trace.png"/></p>
 
 The biggest difference we see is that the first invocation of the `blur` kernel is now
 just as fast as the subsequent invocations at 11ms. This indicates that we don't spend
@@ -64,7 +64,7 @@ kernel overhead.
 
 The `wall_clock-0.txt` file shows our overall run got faster:
 
-<p><img src="timemory_output.png"/></p>
+<p><img src="images/mi210/timemory_output.png"/></p>
 
 Previously we ran in 1.9 seconds, and now the uninstrumented runtime is 1.5 seconds
 (from above), while `wall_clock-0.txt` shows our runtime is 2.23 seconds. 
