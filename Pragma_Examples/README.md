@@ -36,7 +36,7 @@ export LIBOMPTARGET_KERNEL_TRACE=1
 ## OpenMP Offload -- The Basics
 
 We start out with the OpenMP threaded code for the CPU. This code is in 
-`~/HPCTrainingExamples/Pragma_Examples/OpenMP/Intro` in the saxpy_cpu.cpp file. This
+`~/HPCTrainingExamples/Pragma_Examples/OpenMP/C/0_Intro` in the saxpy_cpu.cpp file. This
 is the code on slide 16. We first load the amdclang module which will set the CXX
 environment variable. This variable will get picked up by the Makefile for the build.
 
