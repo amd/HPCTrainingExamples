@@ -24,7 +24,7 @@ program offload_types
         my_instance%e=1024
 
 
-        !$omp target teams distribute parallel do shared(my_instance) &
+        !$omp target teams distribute parallel do  &
         !$omp              map(tofrom:my_instance)
         do i = 1,1024
                 my_instance%values(i) = i
