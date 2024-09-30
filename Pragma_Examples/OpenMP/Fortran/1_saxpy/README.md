@@ -22,7 +22,7 @@ Porting yourself:
 cd 0_saxpy_serial_portyourself
 vi saxpy.f90
 ´´´
- Try to port this yourself. If you are stuck, use the step by step solution in folders 1-6 and read the instructions for those excersices below. Recommendation for your first port: use ´´´!$omp requires unified_shared memory´´´ (in the code after implicit none in each module) and ´´´export HSA_XNACK=1´´´ (before running) that you do not have to worry about map clauses. Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behaviour of ´´´HSA_XNACK=0´´´ or ´´´1´´´ is added in the later steps.
+ Try to port this yourself. If you are stuck, use the step by step solution in folders 1-6 and read the instructions for those excersices below. Recommendation for your first port: use ´!$omp requires unified_shared memory´ (in the code after implicit none in each module) and ´export HSA_XNACK=1´ (before running) that you do not have to worry about map clauses. Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behaviour of ´HSA_XNACK=0´ or ´1´ is added in the later steps.
 
 - Compile the serial version. Note that -fopenmp is required as omp_get_wtime is used to time the loop execution.
 amdflang-new -fopenmp saxpy.F90 -o saxpy
