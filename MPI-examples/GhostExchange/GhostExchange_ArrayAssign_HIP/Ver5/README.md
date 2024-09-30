@@ -48,7 +48,7 @@ mpirun -np 4 --mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.
 
 The initial trace for this example should look very similar to previous traces we have seen:
 
-<p><img src="initial_trace.png"/></p>
+<p><img src="images/mi210/initial_trace.png"/></p>
 
 That is, we cannot see an obvious change in performance from just looking at this trace. We will make a note of the runtime of the first `blur` kernel invocation as taking 128ms, and a subsequent `blur` kernel invocation as taking 12ms. In the next version we will compare these numbers to another modification.
 
@@ -56,6 +56,6 @@ That is, we cannot see an obvious change in performance from just looking at thi
 
 We also see that our `wall_clock-0.txt` file looks pretty similar to our previous example:
 
-<p><img src="timemory_output.png"/></p>
+<p><img src="images/mi210/timemory_output.png"/></p>
 
 To enable the output of this file, add `OMNITRACE_PROFILE=true` and `OMNITRACE_FLAT_PROFILE=true` to your `~/.omnitrace.cfg` file.
