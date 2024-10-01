@@ -8,7 +8,7 @@ void cpu_func(double *in_h, double *out_h, int M){
 }
 
 int main(int argc, char *argv[]) {
-   int M=1000;
+   int M=100000;
    int Msize=M*sizeof(double);
    double sum=0.0;
 

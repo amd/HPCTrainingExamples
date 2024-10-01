@@ -2,7 +2,7 @@
 
 ***NOTE***: extensive documentation on how to use `omnitrace` for the `GhostExchange_Array` example is now available as `README.md` files in this exercises repo. While the testing has been done on Frontier in that documentation, most of the `omnitrace` tools apply in the same way, hence it could provide additional training matieral.
 
-Here, we show how to use `omnitrace` tools considering the example in `HPCTrainingExamples/HIP/jacobi`.
+Here, we show how to use `omnitrace` tools considering the example in `HPCTrainingExamples/HIP/jacobi` on AMD Instinct&trade; MI210 GPU.
 
 ## Initial Setup
 
