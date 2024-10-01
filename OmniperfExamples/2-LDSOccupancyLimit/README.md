@@ -355,9 +355,9 @@ make
 yAx time: 7.27 ms
 ```
 
-Unlike the MI210 case, the runtime of `problem` is already smaller than it was for `solution` on example `1-LaunchParameters`.
+Unlike the MI210 case, the runtime of `problem` is already smaller than it was for the previous `solution` on example `1-LaunchParameters`.
 
-Once again, we launch the following command:
+Once again, we launch the following command to collect complete profiling data for analysis:
 
 ```
 omniperf profile -n problem --no-roof -- ./problem.exe
@@ -430,7 +430,7 @@ make
 ```
 yAx time: 9.79 ms
 ```
-Unlile the MI210 case, completely eliminating LDS usage actually makes the runtime worse.
+As in the MI210 case, completely eliminating LDS usage makes the runtime worse.
 
 Let's run the following commands and inspect the output:
 ```
@@ -486,7 +486,7 @@ Output:
 ╘═════════════╧═════════════════════╧═══════╧═══════╧═══════╧════════╛
 ```
 
-From the ouput above, we see that Insufficient CU LDS is now zero as expected, and that Wavefront Occupancy has gone up to around `6%` from `2.44%` that it was before for MI210. Next, let's compare these results with the code in the `solution` directory: this implementation reduces the amount of LDS requested to address the occupancy limit. First, run:
+From the ouput above, we see that Insufficient CU LDS is now zero as expected, and that Wavefront Occupancy has gone up to around `6%` from `2.44%` that it was before for MI210. Next, let's compare these results with the code in the `solution` directory: this implementation reduces the amount of LDS requested to address the occupancy limit, but still uses some LDS to speed up memory accesses. First, run:
 
 ```
 cd ../solution
