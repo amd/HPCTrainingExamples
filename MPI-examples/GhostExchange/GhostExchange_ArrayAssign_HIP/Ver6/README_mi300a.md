@@ -1,7 +1,7 @@
 # Ghost Exchange: Explicit Memory Management
 
-In this example we explicitly manage the memory movement onto the device by using
-hipMalloc, the device memory allocator, for all data arrays instead of using
+In this example we explicitly allocate buffers using hipMalloc, the device memory allocator,
+for all data arrays instead of using the system memory allocator and relying on
 OS-managed address translations. 
 
 Typically, startup costs of an application are not as important as the kernel runtimes. 
@@ -12,15 +12,15 @@ of all buffers on the device up-front.
 
 ## Environment Setup
 
-We recommend installing OpenMPI 5.0.3 with UCX 1.16.x. Instructions
-[here](https://github.com/amd/HPCTrainingDock/blob/main/comm/sources/scripts/openmpi_setup.sh)
-may be useful reference for this OpenMPI install. We also recommend
-using cmake version 3.23.2 or greater.
+We recommend installing OpenMPI 5.0.5 with UCX 1.17.0, UCC 1.3.0 and xpmem. Instructions in the
+[AMD Training Container repo](https://github.com/amd/HPCTrainingDock/blob/main/comm/sources/scripts/openmpi_setup.sh)
+may be useful reference for this OpenMPI install. We also recommend using cmake version 3.23.2 or greater.
+These examples were run with ROCm 6.2.1 and CMake 3.30.2.
 
 ```
-module load rocm/6.2.0
-module load cmake/3.23.2
-module load openmpi/5.0.3_ucx1.16.x
+module load openmpi/5.0.5-ucc1.3.0-ucx1.17.0-xpmem2.7.3
+export ROCM_PATH=/opt/rocm-6.2.1
+export PATH=${ROCM_PATH}/bin:$PATH
 ```
 
 ## Build and Run
