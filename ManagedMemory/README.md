@@ -37,7 +37,8 @@ cd ../GPU_Code
 make
 ```
 
-This will compile with `hipcc -g -O3 -fopenmp --offload-arch=gfx90a gpu_code.hip -o gpu_code`
+This will compile with `hipcc -g -O3 -fopenmp --offload-arch=$AMDGPU_GFXMODEL gpu_code.hip -o gpu_code`, where `AMDGPU_GFXMODEL=rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`. The `AMDGPU_GFXMODEL` is `gfx90a` for MI200 series and `gfx942` for MI300A.
+
 Then run the code with
 
 ```

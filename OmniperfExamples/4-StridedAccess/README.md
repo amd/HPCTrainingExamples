@@ -283,4 +283,257 @@ Data access patterns can be non-trivial to change, so these sorts of optimizatio
 
 ## Results on MI300A
 
-Under construction...
+**Note: Roofline is not available on MI300A at the time of this writing**
+
+For MI300A, if we run the problem.exe and solution.exe, we see different performance.
+
+Running the problem:
+```
+./problem.exe
+```
+Shows a runtime like this:
+```
+9.64 milliseconds
+```
+
+While running solution:
+```
+./solution.exe
+```
+Shows a runtime like this:
+```
+12.17 milliseconds
+```
+
+Now, if we use omniperf to profile these executables we see much the same stats for MI300A as MI200:
+```
+omniperf analyze -p workloads/problem/MI300A_A1 --dispatch 1 --block 16.1 17.1
+```
+Shows
+```
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+   INFO Analysis mode = cli
+   INFO [analysis] deriving Omniperf metrics...
+
+--------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
+╒════╤══════════════════════════════════════════╤═════════╤════════════╤════════════╤══════════════╤════════╕
+│    │ Kernel_Name                              │   Count │    Sum(ns) │   Mean(ns) │   Median(ns) │    Pct │
+╞════╪══════════════════════════════════════════╪═════════╪════════════╪════════════╪══════════════╪════════╡
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 9599042.00 │ 9599042.00 │   9599042.00 │ 100.00 │
+│    │  double*) [clone .kd]                    │         │            │            │              │        │
+╘════╧══════════════════════════════════════════╧═════════╧════════════╧════════════╧══════════════╧════════╛
+0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
+
+
+--------------------------------------------------------------------------------
+16. Vector L1 Data Cache
+16.1 Speed-of-Light
+╒═════════════╤═════════════╤═══════╤═════════════╕
+│ Metric_ID   │ Metric      │   Avg │ Unit        │
+╞═════════════╪═════════════╪═══════╪═════════════╡
+│ 16.1.0      │ Hit rate    │  0.00 │ Pct of peak │
+├─────────────┼─────────────┼───────┼─────────────┤
+│ 16.1.1      │ Bandwidth   │ 23.36 │ Pct of peak │
+├─────────────┼─────────────┼───────┼─────────────┤
+│ 16.1.2      │ Utilization │ 85.90 │ Pct of peak │
+├─────────────┼─────────────┼───────┼─────────────┤
+│ 16.1.3      │ Coalescing  │ 25.00 │ Pct of peak │
+╘═════════════╧═════════════╧═══════╧═════════════╛
+
+
+--------------------------------------------------------------------------------
+17. L2 Cache
+17.1 Speed-of-Light
+╒═════════════╤═══════════════════════════════╤════════╤════════╕
+│ Metric_ID   │ Metric                        │    Avg │ Unit   │
+╞═════════════╪═══════════════════════════════╪════════╪════════╡
+│ 17.1.0      │ Utilization                   │  96.87 │ Pct    │
+├─────────────┼───────────────────────────────┼────────┼────────┤
+│ 17.1.1      │ Bandwidth                     │  55.52 │ Pct    │
+├─────────────┼───────────────────────────────┼────────┼────────┤
+│ 17.1.2      │ Hit Rate                      │  93.67 │ Pct    │
+├─────────────┼───────────────────────────────┼────────┼────────┤
+│ 17.1.3      │ L2-Fabric Read BW             │ 908.10 │ Gb/s   │
+├─────────────┼───────────────────────────────┼────────┼────────┤
+│ 17.1.4      │ L2-Fabric Write and Atomic BW │   0.01 │ Gb/s   │
+╘═════════════╧═══════════════════════════════╧════════╧════════╛
+```
+
+While analyzing the solution with:
+```
+omniperf analyze -p workloads/solution/MI300A_A1 --dispatch 1 --block 16.1 17.1
+```
+Shows:
+```
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+   INFO Analysis mode = cli
+   INFO [analysis] deriving Omniperf metrics...
+
+--------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
+╒════╤══════════════════════════════════════════╤═════════╤═════════════╤═════════════╤══════════════╤════════╕
+│    │ Kernel_Name                              │   Count │     Sum(ns) │    Mean(ns) │   Median(ns) │    Pct │
+╞════╪══════════════════════════════════════════╪═════════╪═════════════╪═════════════╪══════════════╪════════╡
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 12104495.00 │ 12104495.00 │  12104495.00 │ 100.00 │
+│    │  double*) [clone .kd]                    │         │             │             │              │        │
+╘════╧══════════════════════════════════════════╧═════════╧═════════════╧═════════════╧══════════════╧════════╛
+0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
+
+
+--------------------------------------------------------------------------------
+16. Vector L1 Data Cache
+16.1 Speed-of-Light
+╒═════════════╤═════════════╤════════╤═════════════╕
+│ Metric_ID   │ Metric      │    Avg │ Unit        │
+╞═════════════╪═════════════╪════════╪═════════════╡
+│ 16.1.0      │ Hit rate    │  75.00 │ Pct of peak │
+├─────────────┼─────────────┼────────┼─────────────┤
+│ 16.1.1      │ Bandwidth   │   4.63 │ Pct of peak │
+├─────────────┼─────────────┼────────┼─────────────┤
+│ 16.1.2      │ Utilization │ 100.00 │ Pct of peak │
+├─────────────┼─────────────┼────────┼─────────────┤
+│ 16.1.3      │ Coalescing  │  25.00 │ Pct of peak │
+╘═════════════╧═════════════╧════════╧═════════════╛
+
+
+--------------------------------------------------------------------------------
+17. L2 Cache
+17.1 Speed-of-Light
+╒═════════════╤═══════════════════════════════╤════════╤════════╕
+│ Metric_ID   │ Metric                        │    Avg │ Unit   │
+╞═════════════╪═══════════════════════════════╪════════╪════════╡
+│ 17.1.0      │ Utilization                   │  98.72 │ Pct    │
+├─────────────┼───────────────────────────────┼────────┼────────┤
+│ 17.1.1      │ Bandwidth                     │   2.77 │ Pct    │
+├─────────────┼───────────────────────────────┼────────┼────────┤
+│ 17.1.2      │ Hit Rate                      │   0.68 │ Pct    │
+├─────────────┼───────────────────────────────┼────────┼────────┤
+│ 17.1.3      │ L2-Fabric Read BW             │ 710.06 │ Gb/s   │
+├─────────────┼───────────────────────────────┼────────┼────────┤
+│ 17.1.4      │ L2-Fabric Write and Atomic BW │   0.01 │ Gb/s   │
+╘═════════════╧═══════════════════════════════╧════════╧════════╛
+
+```
+
+So we see a slowdown despite increasing our L1 hit rate (`16.1.0`) by a large amount. Let's see how the runtime compares to the number of cycles required for problem and solution, as well as atomic latencies per channel for both approaches:
+
+```
+omniperf analyze -p workloads/problem/MI300A_A1 -p workloads/solution/MI300A_A1 --dispatch 1 --block 7.2.0 7.2.1 17.2.11 18.8
+```
+Which shows:
+```
+  ___                  _                  __
+ / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
+| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
+| |_| | | | | | | | | | | |_) |  __/ |  |  _|
+ \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
+                        |_|
+
+   INFO Analysis mode = cli
+   INFO [analysis] deriving Omniperf metrics...
+
+--------------------------------------------------------------------------------
+0. Top Stats
+0.1 Top Kernels
+╒════╤══════════════════════════════════════════╤═════════╤════════════╤════════════╤════════════╤════════════════════╤════════════╤════════════════════╤══════════════╤════════════════════╤════════╤══════════════╕
+│    │ Kernel_Name                              │   Count │ Count      │   Abs Diff │    Sum(ns) │ Sum(ns)            │   Mean(ns) │ Mean(ns)           │   Median(ns) │ Median(ns)         │    Pct │ Pct          │
+╞════╪══════════════════════════════════════════╪═════════╪════════════╪════════════╪════════════╪════════════════════╪════════════╪════════════════════╪══════════════╪════════════════════╪════════╪══════════════╡
+│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 1.0 (0.0%) │       0.00 │ 9599042.00 │ 12104495.0 (26.1%) │ 9599042.00 │ 12104495.0 (26.1%) │   9599042.00 │ 12104495.0 (26.1%) │ 100.00 │ 100.0 (0.0%) │
+│    │  double*) [clone .kd]                    │         │            │            │            │                    │            │                    │              │                    │        │              │
+╘════╧══════════════════════════════════════════╧═════════╧════════════╧════════════╧════════════╧════════════════════╧════════════╧════════════════════╧══════════════╧════════════════════╧════════╧══════════════╛
+0.2 Dispatch List
+╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
+╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
+│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
+╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
+
+
+--------------------------------------------------------------------------------
+7. Wavefront
+7.2 Wavefront Runtime Stats
+╒═════════════╤═══════════════════════╤═════════════╤═════════════════════╤════════════╤═════════════╤═════════════════════╤═════════════╤═════════════════════╤════════╕
+│ Metric_ID   │ Metric                │         Avg │ Avg                 │   Abs Diff │         Min │ Min                 │         Max │ Max                 │ Unit   │
+╞═════════════╪═══════════════════════╪═════════════╪═════════════════════╪════════════╪═════════════╪═════════════════════╪═════════════╪═════════════════════╪════════╡
+│ 7.2.0       │ Kernel Time (Nanosec) │  9599042.00 │ 12104495.0 (26.1%)  │ 2505453.00 │  9599042.00 │ 12104495.0 (26.1%)  │  9599042.00 │ 12104495.0 (26.1%)  │ Ns     │
+├─────────────┼───────────────────────┼─────────────┼─────────────────────┼────────────┼─────────────┼─────────────────────┼─────────────┼─────────────────────┼────────┤
+│ 7.2.1       │ Kernel Time (Cycles)  │ 19350602.00 │ 25141619.0 (29.93%) │ 5791017.00 │ 19350602.00 │ 25141619.0 (29.93%) │ 19350602.00 │ 25141619.0 (29.93%) │ Cycle  │
+╘═════════════╧═══════════════════════╧═════════════╧═════════════════════╧════════════╧═════════════╧═════════════════════╧═════════════╧═════════════════════╧════════╛
+
+
+--------------------------------------------------------------------------------
+17. L2 Cache
+17.2 L2 - Fabric Transactions
+╒═════════════╤════════════════╤═════════╤══════════════════╤════════════╤═════════╤══════════════════╤═════════╤══════════════════╤════════╕
+│ Metric_ID   │ Metric         │     Avg │ Avg              │   Abs Diff │     Min │ Min
+│     Max │ Max              │ Unit   │
+╞═════════════╪════════════════╪═════════╪══════════════════╪════════════╪═════════╪══════════════════╪═════════╪══════════════════╪════════╡
+│ 17.2.11     │ Atomic Latency │ 6406.73 │ 9547.67 (49.03%) │    3140.94 │ 6406.73 │ 9547.67 (49.03%) │ 6406.73 │ 9547.67 (49.03%) │ Cycles │
+╘═════════════╧════════════════╧═════════╧══════════════════╧════════════╧═════════╧══════════════════╧═════════╧══════════════════╧════════╛
+```
+
+Atomic Latency `17.2.11` shows that our solution is more stressful on atomics, likely due to our more highly optimized cache access. Fixing striding ironically caused our threads to issue atomics more quickly, degrading our performance!
+
+To fix this, we can attempt to mitigate contention by doing what is called a "shuffle reduction" on each wavefront. This utilizes a HIP intrinsic called `__shfl_down` to reduce numbers across threads in a wavefront without requiring atomics. These implementations can be found in `mi300a_problem` and mi300a_solution`. The code contained in those subdirectories simply implements this shuffle reduction, which allows both problem and solution to only have the first thread of each wavefront issue the atomic add, rather than all threads.
+
+Let's run mi300a_problem.exe and mi300a_solution.exe to see if this addresses our problem:
+```
+./mi300a_problem.exe
+```
+shows:
+```
+yAx time: 9.577708 milliseconds
+```
+While
+```
+./mi300a_solution.exe
+```
+Shows:
+```
+yAx time: 12.381036 milliseconds
+```
+
+Strangely, this seems to have little effect on our runtimes. The reader may notice that these problems are running very quickly, and the reader would be right. The mi300a_problem.exe and mi300a_solution.exe both provide an argument to test different problem sizes. Since we assume our matrix in question is square (for the time being this is an arbitrary assumption -- the kernel is capable of handling rectangular matrices as well), increasing the argument by one increases the problem size nonlinearly. Let's try running at problem size 15:
+
+```
+./mi300a_problem.exe 15
+```
+Shows
+```
+yAx time: 312.857488 milliseconds
+```
+And
+```
+./mi300a_solution.exe 15
+```
+Shows
+```
+yAx time: 25.878859 milliseconds
+```
+
+It appears that at a smaller problem size, this kernel is more bounded by atomic contention than efficient cache memory usage. It is important to test different problem sizes to ensure that a run of a code being profiled is representative, otherwise the limiters shown in profiling may point optimizations in the wrong direction for a full scale run. As proof of this, you can try manually setting the problem.cpp and solution.cpp problem size to 15, and see that they run in a similar amount of time to mi300a_problem and mi300a_solution. At scale, the memory bandwidth dominates this specific kernel.
