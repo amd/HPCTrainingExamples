@@ -1,13 +1,13 @@
 # Exercise 1: 
-Client-side installation instructions are available in the official omniperf documentation, and provide all functionality demonstrated here.
+Note: Client-side installation instructions are available in the official omniperf documentation (https://rocm.docs.amd.com/projects/omniperf/en/latest/install/core-install.html), and provide all functionality demonstrated here.
 
-<details>
-<summary><h3>Background: Acronyms and terms used in this exercise</h3></summary>
-     <ul>
-          <li>yAx: a vector-matrix-vector product, y*A*x, where y and x are vectors, and A is a matrix</li>
-     </ul>
-</details>
-## Results on MI300A
+This example was tested on MI300A.
+```
+module load  amdflang-new-beta-drop/4.0
+module load rocm/6.2.1
+module load omniperf/6.2.1
+export HSA_XNACK=1
+```
 
 In this section, we show results obtained running this exercise on a system with MI300A, using ROCm `6.2.1` and the associated Omniperf, version `6.2.1`.
 
