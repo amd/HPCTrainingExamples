@@ -172,7 +172,8 @@ The number of active CUs is now close to 96.49% and the wavefront occupancy is i
 We can compare the performance of `problem` and `solution` using `omniperf analyze`:
 
 ```
-omniperf analyze -p ../workloads/problem/MI300A_A1/ -p workloads/solution/MI300A_A1/ --dispatch 3 --block 7.1.0 7.1.1 7.1.2 2.1.7 2.1.15
+cd ..
+omniperf analyze -p workloads/problem/MI300A_A1/ -p solution/workloads/solution/MI300A_A1/ --dispatch 3 --block 7.1.0 7.1.1 7.1.2 2.1.7 2.1.15
 ```
 
 ```
@@ -237,7 +238,6 @@ Note that the new execution time for `solution` is reduced by 99.06% of the orig
 Run the following command to once again see a ranking of the top kernels that take up most of the runtime:
 
 ```
-cd ..
 omniperf analyze -p workloads/problem/MI300A_A1/ --list-stats
 ```
 
