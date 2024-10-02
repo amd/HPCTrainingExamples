@@ -18,7 +18,6 @@ PROGRAM problem
     do k = 0,NK+1
       do j = 0,NJ+1
         do i=0,NI+1
-        !do i = 1+MOD(j + k + i_rb + 1, 2), NI, 2
           if(mod(i+j+k+i_rb,2) == 0) then
             f(i,j,k) = real(i_rb, kind=rk) 
           end if
@@ -27,10 +26,6 @@ PROGRAM problem
     end do
   end do
  
-!  write(*,*) "initialization:" 
-!  write(*,*) f(1,1,1), f(2,1,1),f(3,1,1),f(4,1,1),"..."
-!  write(*,*) f(1,2,1), f(2,2,1),f(3,2,1),f(4,2,1),"..."
-!  write(*,*) f(1,3,1), f(2,3,1),f(3,3,1),f(4,3,1),"..."
 
   !timer
 
@@ -41,9 +36,7 @@ PROGRAM problem
     do k = 1,NK
       do j = 1,NJ
          do i = 1,NI,2
-         !do i = 1+MOD(j + k + i_rb, 2), NI, 2
           if(mod(i+j+k+i_rb,2) == 0) then
-            !this is a silly prototype for smoothing in a 7 point stencil
             f(i,j,k) = (f(i-1,j,k) + f(i+1,j,k) +      &
                         f(i,j-1,k) + f(i,j+1,k) +      &
                         f(i,j,k-1) + f(i,j,k+1) +      &
@@ -61,9 +54,7 @@ PROGRAM problem
       do k = 1,NK
         do j = 1,NJ
           do i = 1,NI
-          !do i = 1+MOD(j + k + i_rb, 2), NI, 2
             if(mod(i+j+k+i_rb,2) == 0) then
-              !this is a silly prototype for smoothing in a 7 point stencil
               f(i,j,k) = (f(i-1,j,k) + f(i+1,j,k) +      &
                           f(i,j-1,k) + f(i,j+1,k) +      &
                           f(i,j,k-1) + f(i,j,k+1) +      &
@@ -75,13 +66,6 @@ PROGRAM problem
     end do
   
   write(*,*) "time", (omp_get_wtime()-starttime)*1000.0_rk,"ms"
-
-!  write(*,*) "after red and black smoothing step:"
-!  write(*,*) f(1,1,1), f(2,1,1),f(3,1,1),f(4,1,1),"..."
-!  write(*,*) f(1,2,1), f(2,2,1),f(3,2,1),f(4,2,1),"..."
-!  write(*,*) f(1,3,1), f(2,3,1),f(3,3,1),f(4,3,1),"..."
-  
-
   
   deallocate(f)
 

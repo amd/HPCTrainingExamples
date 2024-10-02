@@ -6,8 +6,8 @@
 
         !$OMP REQUIRES UNIFIED_SHARED_MEMORY
 
-        INTEGER,PARAMETER :: n = 2048
-        INTEGER,PARAMETER :: m = 2048
+        INTEGER,PARAMETER :: n = 20480
+        INTEGER,PARAMETER :: m = 20480
 
         INTEGER,PARAMETER :: rk = 8
 
@@ -31,7 +31,7 @@
          temp = 0.0_rk
          !warm up loop
          !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO DEFAULT(SHARED) &
-         !$OMP PRIVATE(i,j,temp) REDUCTION(+:res) THREAD_LIMIT(96)
+         !$OMP PRIVATE(i,j,temp) REDUCTION(+:res)
          DO i=1,n
            temp = 0.0_rk
            DO j=1,m
@@ -41,15 +41,12 @@
          END DO
          !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
          
-
+         res = 0.0_rk
 
          !timinig loop
          starttime = omp_get_wtime()
-        
-         !reset result
-         res = 0.0_rk
          !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO DEFAULT(SHARED) &
-         !$OMP PRIVATE(i,j,temp) REDUCTION(+:res) THREAD_LIMIT(96)
+         !$OMP PRIVATE(i,j,temp) REDUCTION(+:res)
          DO i=1,n
            temp = 0.0_rk
            DO j=1,m
@@ -58,12 +55,12 @@
             res = res + y(i) * temp
          END DO
 
+         WRITE(*,*)  "yAx time",(omp_get_wtime()-starttime)*1.0e3_rk,"ms"
 
          IF(ABS(res - REAL(n,KIND=rk)*REAL(m, KIND=rk)) > 0.0001) THEN
                  WRITE(*,*) "the result is incorrect:"
                  WRITE(*,*) "result", res,"expected result", REAL(n,KIND=rk)*REAL(m, KIND=rk)
          END IF
-         WRITE(*,*)  "yAx time",(omp_get_wtime()-starttime)*1.0e3_rk,"ms"
 
 
         END PROGRAM problem

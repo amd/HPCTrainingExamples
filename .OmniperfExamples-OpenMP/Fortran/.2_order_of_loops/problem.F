@@ -6,8 +6,8 @@
 
         !$OMP REQUIRES UNIFIED_SHARED_MEMORY
 
-        INTEGER,PARAMETER :: n = 2048
-        INTEGER,PARAMETER :: m = 2048
+        INTEGER,PARAMETER :: n = 20480
+        INTEGER,PARAMETER :: m = 20480
 
         INTEGER,PARAMETER :: rk = 8
 
@@ -56,11 +56,14 @@
          END DO
          !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
 
+         WRITE(*,*)  "yAx time",(omp_get_wtime()-starttime)*1.0e3_rk,"ms"
+
+
          IF(ABS(res - REAL(n,KIND=rk)*REAL(m, KIND=rk)) > 0.0001) THEN
                  WRITE(*,*) "the result is incorrect:"
                  WRITE(*,*) "result", res,"expected result", REAL(n,KIND=rk)*REAL(m, KIND=rk)
          END IF
-         WRITE(*,*)  "yAx time",(omp_get_wtime()-starttime)*1.0e3_rk,"ms"
+
 
 
         END PROGRAM problem
