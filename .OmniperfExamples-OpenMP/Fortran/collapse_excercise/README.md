@@ -16,7 +16,7 @@ In this section, we show results obtained running this exercise on a system with
 At present (September 28th 2024), rooflines are disabled on MI300A.
 
 ### Exercise Instructions:
-Inspect the code: it is a prototype of a red-black smoother. Note that the innermost loop has strides such that the data is acceced in a checkerboard pattern.
+Inspect the code in ```problem.F```: it is a prototype of a red-black smoother. Note that the innermost loop has strides such that the data is acceced in a checkerboard pattern.
 
 Build and run the problem code:
 
