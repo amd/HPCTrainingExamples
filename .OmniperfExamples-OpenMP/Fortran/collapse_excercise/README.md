@@ -5,9 +5,6 @@ Client-side installation instructions are available in the official omniperf doc
 <summary><h3>Background: Acronyms and terms used in this exercise</h3></summary>
      <ul>
           <li>yAx: a vector-matrix-vector product, y*A*x, where y and x are vectors, and A is a matrix</li>
-          <li>FP(32/16): 32- or 16-bit Floating Point numeric types</li>
-          <li>FLOPs: Floating Point Operations Per second</li>
-          <li>HBM: High Bandwidth Memory is globally accessible from the GPU, and is a level of memory above the L2 cache</li>
      </ul>
 </details>
 ## Results on MI300A
@@ -87,9 +84,9 @@ We are interested in the kernel in the last kernel, as the other two are initial
 ╘════╧═══════════════╧═════════════════════════════════════════╧══════════╛
 
 ```
-This lists the time the execution of each kernel took in ```0.1 Top Kernels``` we can see that three kernels were launched and each of them was launced two times (´´´Count´´´). The last column shows how much of the overall time was spent in each of the kernels. The first kernel is the initialization, the second the warm-up loop. The third kernel is the one we are interested in. This is the kernel in line 54 in our source code and is thus marked as __omp_offloading_32_6140__QQmain_l54.kd. Note the l54 at the end provides the line.
-In ```0.2 Dispatch List``` we see the dispatch ID of each of the kernels. The ones we are interested in are the the ones with ´´´Dispatch_ID´´´ 3 and 4.
-For now, lets choos dispatch 3 and choose a few blocks of interest (you can view all availa:
+This lists the time the execution of each kernel took in ```0.1 Top Kernels``` we can see that three kernels were launched and each of them was launced two times (```Count```) The last column shows how much of the overall time was spent in each of the kernels. The first kernel is the initialization, the second the warm-up loop. The third kernel is the one we are interested in. This is the kernel in line 54 in our source code and is thus marked as __omp_offloading_32_6140__QQmain_l54.kd. Note the l54 at the end provides the line.
+In ```0.2 Dispatch List``` we see the dispatch ID of each of the kernels. The ones we are interested in are the the ones with ```Dispatch_ID``` 3 and 4.
+For now, lets choose dispatch 3 and choose a few blocks of interest (you can view all available blocks by not filtering for ```--block```):
 ```
 omniperf analyze -p workloads/problem/MI300A_A1 --dispatch 3 --block 7.1.0 7.1.1 7.1.2 2.1.7 2.1.15
 ```
@@ -97,31 +94,16 @@ omniperf analyze -p workloads/problem/MI300A_A1 --dispatch 3 --block 7.1.0 7.1.1
 Then inspect the output:
 
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
-
-   INFO Analysis mode = cli
-   INFO [analysis] deriving Omniperf metrics...
-
---------------------------------------------------------------------------------
-0. Top Stats
-0.1 Top Kernels
-╒════╤══════════════════════════════════════════╤═════════╤══════════════╤══════════════╤══════════════╤════════╕
-│    │ Kernel_Name                              │   Count │      Sum(ns) │     Mean(ns) │   Median(ns) │    Pct │
-╞════╪══════════════════════════════════════════╪═════════╪══════════════╪══════════════╪══════════════╪════════╡
-│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 541264224.00 │ 541264224.00 │ 541264224.00 │ 100.00 │
-│    │  double*) [clone .kd]                    │         │              │              │              │        │
-╘════╧══════════════════════════════════════════╧═════════╧══════════════╧══════════════╧══════════════╧════════╛
-0.2 Dispatch List
-╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
-│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
-╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
-│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
-╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
+ 
+2. System Speed-of-Light
+2.1 Speed-of-Light
+╒═════════════╤═════════════════════╤═══════╤════════════╤═════════╤═══════════════╕
+│ Metric_ID   │ Metric              │   Avg │ Unit       │    Peak │   Pct of Peak │
+╞═════════════╪═════════════════════╪═══════╪════════════╪═════════╪═══════════════╡
+│ 2.1.7       │ Active CUs          │ 12.00 │ Cus        │  228.00 │          5.26 │
+├─────────────┼─────────────────────┼───────┼────────────┼─────────┼───────────────┤
+│ 2.1.15      │ Wavefront Occupancy │ 15.82 │ Wavefronts │ 7296.00 │          0.22 │
+╘═════════════╧═════════════════════╧═══════╧════════════╧═════════╧═══════════════╛
 
 
 --------------------------------------------------------------------------------
@@ -130,67 +112,48 @@ Then inspect the output:
 ╒═════════════╤══════════════════╤════════╤════════╤════════╤════════════╕
 │ Metric_ID   │ Metric           │    Avg │    Min │    Max │ Unit       │
 ╞═════════════╪══════════════════╪════════╪════════╪════════╪════════════╡
-│ 7.1.0       │ Grid Size        │ 256.00 │ 256.00 │ 256.00 │ Work items │
+│ 7.1.0       │ Grid Size        │ 512.00 │ 512.00 │ 512.00 │ Work items │
 ├─────────────┼──────────────────┼────────┼────────┼────────┼────────────┤
-│ 7.1.1       │ Workgroup Size   │  64.00 │  64.00 │  64.00 │ Work items │
+│ 7.1.1       │ Workgroup Size   │  32.00 │  32.00 │  32.00 │ Work items │
 ├─────────────┼──────────────────┼────────┼────────┼────────┼────────────┤
-│ 7.1.2       │ Total Wavefronts │   4.00 │   4.00 │   4.00 │ Wavefronts │
+│ 7.1.2       │ Total Wavefronts │  16.00 │  16.00 │  16.00 │ Wavefronts │
 ╘═════════════╧══════════════════╧════════╧════════╧════════╧════════════╛
 
 ```
-
-As for the MI210 case, the workgroup size is 64 and the number of Wavefronts launched is 4.
-
+We see that the ``` 2. System Speed-of-Light``` shows only 5.26% of the CUs are active and the wavefront occupancy is 0.22%. This means that there is not enough paralellism in our kernel to use the GPU efficiently.
+A simple way to introduce more parallelism is using the collapse clause on the nested loops. The compiler does not allow collapsing of the innermost loop with strides. Hence, the red-black scheme was implemented in an other way to be able to use collapse(3) to have enough iterations to improve the occupancy.
 To see improved performance, we turn to the code in the `solution` directory:
-
 ```
 cd solution
+```
+Inspect the code in solution.F.
+```
 make
-./solution.exe
+./solution
 ```
 (*simulated output*)
 ```
-yAx time: 9.7 ms
+time 5.27191162109375 ms
 ```
+The compute time is now about 34 times smaller when going from `problem` to `solution`.
 
-For the MI210 case, the compute time was about 42 times smaller when going from `problem` to `solution`. For the MI300A case, we see it is about 70 times smaller.
-
-To visually confirm the updated launch parameters in the `solution` code, run:
-
-```
-omniperf profile -n solution --no-roof -- ./solution.exe
-omniperf analyze -p workloads/solution/MI300A_A1 --dispatch 1 --block 7.1.0 7.1.1 7.1.2
-```
-
-Then see the number of Wavefronts now being 2048:
+To visually confirm the hypothesis that this improvement is due to improved usage of CUs and improved occupancy of the `solution` code, run:
 
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
-
-   INFO Analysis mode = cli
-   INFO [analysis] deriving Omniperf metrics...
-
---------------------------------------------------------------------------------
-0. Top Stats
-0.1 Top Kernels
-╒════╤══════════════════════════════════════════╤═════════╤════════════╤════════════╤══════════════╤════════╕
-│    │ Kernel_Name                              │   Count │    Sum(ns) │   Mean(ns) │   Median(ns) │    Pct │
-╞════╪══════════════════════════════════════════╪═════════╪════════════╪════════════╪══════════════╪════════╡
-│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 9482864.00 │ 9482864.00 │   9482864.00 │ 100.00 │
-│    │  double*) [clone .kd]                    │         │            │            │              │        │
-╘════╧══════════════════════════════════════════╧═════════╧════════════╧════════════╧══════════════╧════════╛
-0.2 Dispatch List
-╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
-│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
-╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
-│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
-╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
-
+omniperf profile -n solution --no-roof -- ./solution
+omniperf analyze -p workloads/solution/MI300A_A1 --dispatch 3 --block 7.1.0 7.1.1 7.1.2 2.1.7 2.1.15
+```
+The output shows:
+```
+ 2. System Speed-of-Light
+2.1 Speed-of-Light
+╒═════════════╤═════════════════════╤═════════╤════════════╤═════════╤═══════════════╕
+│ Metric_ID   │ Metric              │     Avg │ Unit       │    Peak │   Pct of Peak │
+╞═════════════╪═════════════════════╪═════════╪════════════╪═════════╪═══════════════╡
+│ 2.1.7       │ Active CUs          │  220.00 │ Cus        │  228.00 │         96.49 │
+├─────────────┼─────────────────────┼─────────┼────────────┼─────────┼───────────────┤
+│ 2.1.15      │ Wavefront Occupancy │ 3444.16 │ Wavefronts │ 7296.00 │         47.21 │
+╘═════════════╧═════════════════════╧═════════╧════════════╧═════════╧═══════════════╛
 
 --------------------------------------------------------------------------------
 7. Wavefront
@@ -198,24 +161,26 @@ Then see the number of Wavefronts now being 2048:
 ╒═════════════╤══════════════════╤═══════════╤═══════════╤═══════════╤════════════╕
 │ Metric_ID   │ Metric           │       Avg │       Min │       Max │ Unit       │
 ╞═════════════╪══════════════════╪═══════════╪═══════════╪═══════════╪════════════╡
-│ 7.1.0       │ Grid Size        │ 131072.00 │ 131072.00 │ 131072.00 │ Work items │
+│ 7.1.0       │ Grid Size        │ 233472.00 │ 233472.00 │ 233472.00 │ Work items │
 ├─────────────┼──────────────────┼───────────┼───────────┼───────────┼────────────┤
-│ 7.1.1       │ Workgroup Size   │     64.00 │     64.00 │     64.00 │ Work items │
+│ 7.1.1       │ Workgroup Size   │    256.00 │    256.00 │    256.00 │ Work items │
 ├─────────────┼──────────────────┼───────────┼───────────┼───────────┼────────────┤
-│ 7.1.2       │ Total Wavefronts │   2048.00 │   2048.00 │   2048.00 │ Wavefronts │
+│ 7.1.2       │ Total Wavefronts │   3648.00 │   3648.00 │   3648.00 │ Wavefronts │
 ╘═════════════╧══════════════════╧═══════════╧═══════════╧═══════════╧════════════╛
 
 ```
+The number of active CUs is now close to 96.49% and the wavefront occupancy is improved to 47.21%. Note that also the workgroup size the grid size and the total number of wavefronts changed significantly through the improved usage of the device through the introduction of more parallelism.
 
 ### Omniperf Command Line Comparison Feature:
 
 We can compare the performance of `problem` and `solution` using `omniperf analyze`:
 
 ```
-omniperf analyze -p workloads/problem/MI300A_A1/ -p solution/workloads/solution/MI300A_A1/ --dispatch 1 --block 7.1.0 7.1.1 7.1.2
+omniperf analyze -p ../workloads/problem/MI300A_A1/ -p workloads/solution/MI300A_A1/ --dispatch 3 --block 7.1.0 7.1.1 7.1.2 2.1.7 2.1.15
 ```
 
 ```
+
   ___                  _                  __
  / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
 | | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
@@ -229,18 +194,29 @@ omniperf analyze -p workloads/problem/MI300A_A1/ -p solution/workloads/solution/
 --------------------------------------------------------------------------------
 0. Top Stats
 0.1 Top Kernels
-╒════╤══════════════════════════════════════════╤═════════╤════════════╤════════════╤══════════════╤═════════════════════╤══════════════╤═════════════════════╤══════════════╤═════════════════════╤════════╤══════════════╕
-│    │ Kernel_Name                              │   Count │ Count      │   Abs Diff │      Sum(ns) │ Sum(ns)             │     Mean(ns) │ Mean(ns)            │   Median(ns) │ Median(ns)          │    Pct │ Pct          │
-╞════╪══════════════════════════════════════════╪═════════╪════════════╪════════════╪══════════════╪═════════════════════╪══════════════╪═════════════════════╪══════════════╪═════════════════════╪════════╪══════════════╡
-│  0 │ yax(double*, double*, double*, int, int, │    1.00 │ 1.0 (0.0%) │       0.00 │ 541264224.00 │ 9482864.0 (-98.25%) │ 541264224.00 │ 9482864.0 (-98.25%) │ 541264224.00 │ 9482864.0 (-98.25%) │ 100.00 │ 100.0 (0.0%) │
-│    │  double*) [clone .kd]                    │         │            │            │              │                     │              │                     │              │                     │        │              │
-╘════╧══════════════════════════════════════════╧═════════╧════════════╧════════════╧══════════════╧═════════════════════╧══════════════╧═════════════════════╧══════════════╧═════════════════════╧════════╧══════════════╛
+╒════╤═════════════════════════════════════════╤═════════╤════════════╤════════════╤═════════════╤════════════════════╤═════════════╤════════════════════╤══════════════╤════════════════════╤════════╤══════════════╕
+│    │ Kernel_Name                             │   Count │ Count      │   Abs Diff │     Sum(ns) │ Sum(ns)            │    Mean(ns) │ Mean(ns)           │   Median(ns) │ Median(ns)         │    Pct │ Pct          │
+╞════╪═════════════════════════════════════════╪═════════╪════════════╪════════════╪═════════════╪════════════════════╪═════════════╪════════════════════╪══════════════╪════════════════════╪════════╪══════════════╡
+│  0 │ __omp_offloading_32_6140__QQmain_l37.kd │    1.00 │ 1.0 (0.0%) │       0.00 │ 90245554.00 │ 849281.0 (-99.06%) │ 90245554.00 │ 849281.0 (-99.06%) │  90245554.00 │ 849281.0 (-99.06%) │ 100.00 │ 100.0 (0.0%) │
+╘════╧═════════════════════════════════════════╧═════════╧════════════╧════════════╧═════════════╧════════════════════╧═════════════╧════════════════════╧══════════════╧════════════════════╧════════╧══════════════╛
 0.2 Dispatch List
-╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
-│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
-╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
-│  0 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
-╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
+╒════╤═══════════════╤═════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                             │   GPU_ID │
+╞════╪═══════════════╪═════════════════════════════════════════╪══════════╡
+│  0 │             3 │ __omp_offloading_32_6140__QQmain_l37.kd │        4 │
+╘════╧═══════════════╧═════════════════════════════════════════╧══════════╛
+
+
+--------------------------------------------------------------------------------
+2. System Speed-of-Light
+2.1 Speed-of-Light
+╒═════════════╤═════════════════════╤═══════╤═════════════════════╤════════════╤════════════╤═════════╤═══════════════╤═══════════════╤═══════════════════╕
+│ Metric_ID   │ Metric              │   Avg │ Avg                 │   Abs Diff │ Unit       │    Peak │ Peak          │   Pct of Peak │ Pct of Peak       │
+╞═════════════╪═════════════════════╪═══════╪═════════════════════╪════════════╪════════════╪═════════╪═══════════════╪═══════════════╪═══════════════════╡
+│ 2.1.7       │ Active CUs          │ 12.00 │ 220.0 (1733.33%)    │      91.23 │ Cus        │  228.00 │ 228.0 (0.0%)  │          5.26 │ 96.49 (1733.37%)  │
+├─────────────┼─────────────────────┼───────┼─────────────────────┼────────────┼────────────┼─────────┼───────────────┼───────────────┼───────────────────┤
+│ 2.1.15      │ Wavefront Occupancy │ 15.82 │ 3444.16 (21677.33%) │      46.99 │ Wavefronts │ 7296.00 │ 7296.0 (0.0%) │          0.22 │ 47.21 (21677.65%) │
+╘═════════════╧═════════════════════╧═══════╧═════════════════════╧════════════╧════════════╧═════════╧═══════════════╧═══════════════╧═══════════════════╛
 
 
 --------------------------------------------------------------------------------
@@ -249,20 +225,20 @@ omniperf analyze -p workloads/problem/MI300A_A1/ -p solution/workloads/solution/
 ╒═════════════╤══════════════════╤════════╤═════════════════════╤════════════╤════════╤═════════════════════╤════════╤═════════════════════╤════════════╕
 │ Metric_ID   │ Metric           │    Avg │ Avg                 │   Abs Diff │    Min │ Min                 │    Max │ Max                 │ Unit       │
 ╞═════════════╪══════════════════╪════════╪═════════════════════╪════════════╪════════╪═════════════════════╪════════╪═════════════════════╪════════════╡
-│ 7.1.0       │ Grid Size        │ 256.00 │ 131072.0 (51100.0%) │  130816.00 │ 256.00 │ 131072.0 (51100.0%) │ 256.00 │ 131072.0 (51100.0%) │ Work items │
+│ 7.1.0       │ Grid Size        │ 512.00 │ 233472.0 (45500.0%) │  232960.00 │ 512.00 │ 233472.0 (45500.0%) │ 512.00 │ 233472.0 (45500.0%) │ Work items │
 ├─────────────┼──────────────────┼────────┼─────────────────────┼────────────┼────────┼─────────────────────┼────────┼─────────────────────┼────────────┤
-│ 7.1.1       │ Workgroup Size   │  64.00 │ 64.0 (0.0%)         │       0.00 │  64.00 │ 64.0 (0.0%)         │  64.00 │ 64.0 (0.0%)         │ Work items │
+│ 7.1.1       │ Workgroup Size   │  32.00 │ 256.0 (700.0%)      │     224.00 │  32.00 │ 256.0 (700.0%)      │  32.00 │ 256.0 (700.0%)      │ Work items │
 ├─────────────┼──────────────────┼────────┼─────────────────────┼────────────┼────────┼─────────────────────┼────────┼─────────────────────┼────────────┤
-│ 7.1.2       │ Total Wavefronts │   4.00 │ 2048.0 (51100.0%)   │    2044.00 │   4.00 │ 2048.0 (51100.0%)   │   4.00 │ 2048.0 (51100.0%)   │ Wavefronts │
+│ 7.1.2       │ Total Wavefronts │  16.00 │ 3648.0 (22700.0%)   │    3632.00 │  16.00 │ 3648.0 (22700.0%)   │  16.00 │ 3648.0 (22700.0%)   │ Wavefronts │
 ╘═════════════╧══════════════════╧════════╧═════════════════════╧════════════╧════════╧═════════════════════╧════════╧═════════════════════╧════════════╛
 
 ```
 
-Note that the new execution time for `solution` is about 1.75% of the original execution time for `problem`.
+Note that the new execution time for `solution` is reduced by 99.06% of the original execution time for `problem`.
 
 ### More Kernel Filtering:
 
-Run the following command to once again see a ranking of the top kernels that take up most of the kernel runtime:
+Run the following command to once again see a ranking of the top kernels that take up most of the runtime:
 
 ```
 cd ..
@@ -270,7 +246,7 @@ omniperf analyze -p workloads/problem/MI300A_A1/ --list-stats
 ```
 
 ```
-  ___                  _                  __
+
  / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
 | | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
 | |_| | | | | | | | | | | |_) |  __/ |  |  _|
@@ -282,74 +258,33 @@ omniperf analyze -p workloads/problem/MI300A_A1/ --list-stats
 
 --------------------------------------------------------------------------------
 Detected Kernels (sorted descending by duration)
-╒════╤═══════════════════════════════════════════════════════════════╕
-│    │ Kernel_Name                                                   │
-╞════╪═══════════════════════════════════════════════════════════════╡
-│  0 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │
-╘════╧═══════════════════════════════════════════════════════════════╛
+╒════╤═════════════════════════════════════════╕
+│    │ Kernel_Name                             │
+╞════╪═════════════════════════════════════════╡
+│  0 │ __omp_offloading_32_6140__QQmain_l54.kd │
+├────┼─────────────────────────────────────────┤
+│  1 │ __omp_offloading_32_6140__QQmain_l37.kd │
+├────┼─────────────────────────────────────────┤
+│  2 │ __omp_offloading_32_6140__QQmain_l17.kd │
+╘════╧═════════════════════════════════════════╛
 
 --------------------------------------------------------------------------------
 Dispatch list
-╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
-│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
-╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
-│  0 │             0 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
-├────┼───────────────┼───────────────────────────────────────────────────────────────┼──────────┤
-│  1 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
-╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
+╒════╤═══════════════╤═════════════════════════════════════════╤══════════╕
+│    │   Dispatch_ID │ Kernel_Name                             │   GPU_ID │
+╞════╪═══════════════╪═════════════════════════════════════════╪══════════╡
+│  0 │             0 │ __omp_offloading_32_6140__QQmain_l17.kd │        4 │
+├────┼───────────────┼─────────────────────────────────────────┼──────────┤
+│  1 │             1 │ __omp_offloading_32_6140__QQmain_l17.kd │        4 │
+├────┼───────────────┼─────────────────────────────────────────┼──────────┤
+│  2 │             2 │ __omp_offloading_32_6140__QQmain_l37.kd │        4 │
+├────┼───────────────┼─────────────────────────────────────────┼──────────┤
+│  3 │             3 │ __omp_offloading_32_6140__QQmain_l37.kd │        4 │
+├────┼───────────────┼─────────────────────────────────────────┼──────────┤
+│  4 │             4 │ __omp_offloading_32_6140__QQmain_l54.kd │        4 │
+├────┼───────────────┼─────────────────────────────────────────┼──────────┤
+│  5 │             5 │ __omp_offloading_32_6140__QQmain_l54.kd │        4 │
+╘════╧═══════════════╧═════════════════════════════════════════╧══════════╛
 
 ```
-
-To see aggregated stats for the `yax` kernel, run
-
-```
-omniperf analyze -p workloads/problem/MI300A_A1/ -k 0 --block 7.1.0 7.1.1 7.1.2
-
-```
-
-Which will show an output similar to this one:
-
-```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
-
-   INFO Analysis mode = cli
-   INFO [analysis] deriving Omniperf metrics...
-
---------------------------------------------------------------------------------
-0. Top Stats
-0.1 Top Kernels
-╒════╤══════════════════════════════════════════╤═════════╤═══════════════╤══════════════╤══════════════╤════════╤═════╕
-│    │ Kernel_Name                              │   Count │       Sum(ns) │     Mean(ns) │   Median(ns) │    Pct │ S   │
-╞════╪══════════════════════════════════════════╪═════════╪═══════════════╪══════════════╪══════════════╪════════╪═════╡
-│  0 │ yax(double*, double*, double*, int, int, │    2.00 │ 1083496775.00 │ 541748387.50 │ 541748387.50 │ 100.00 │ *   │
-│    │  double*) [clone .kd]                    │         │               │              │              │        │     │
-╘════╧══════════════════════════════════════════╧═════════╧═══════════════╧══════════════╧══════════════╧════════╧═════╛
-0.2 Dispatch List
-╒════╤═══════════════╤═══════════════════════════════════════════════════════════════╤══════════╕
-│    │   Dispatch_ID │ Kernel_Name                                                   │   GPU_ID │
-╞════╪═══════════════╪═══════════════════════════════════════════════════════════════╪══════════╡
-│  0 │             0 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
-├────┼───────────────┼───────────────────────────────────────────────────────────────┼──────────┤
-│  1 │             1 │ yax(double*, double*, double*, int, int, double*) [clone .kd] │        4 │
-╘════╧═══════════════╧═══════════════════════════════════════════════════════════════╧══════════╛
-
-
---------------------------------------------------------------------------------
-7. Wavefront
-7.1 Wavefront Launch Stats
-╒═════════════╤══════════════════╤════════╤════════╤════════╤════════════╕
-│ Metric_ID   │ Metric           │    Avg │    Min │    Max │ Unit       │
-╞═════════════╪══════════════════╪════════╪════════╪════════╪════════════╡
-│ 7.1.0       │ Grid Size        │ 256.00 │ 256.00 │ 256.00 │ Work items │
-├─────────────┼──────────────────┼────────┼────────┼────────┼────────────┤
-│ 7.1.1       │ Workgroup Size   │  64.00 │  64.00 │  64.00 │ Work items │
-├─────────────┼──────────────────┼────────┼────────┼────────┼────────────┤
-│ 7.1.2       │ Total Wavefronts │   4.00 │   4.00 │   4.00 │ Wavefronts │
-╘═════════════╧══════════════════╧════════╧════════╧════════╧════════════╛
-
-```
+This helps you to see where optimization will be most helpful for optimizing time to solution in larger apps.
