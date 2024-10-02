@@ -2,6 +2,8 @@
 
 This example is based on example 2 from Chapter 6 of the HIP Book: "Accelerated Computing with HIP", by Yifan Sun, Trinayan Baruah, and David R. Kaeli. The example demonstrates how to overlap data transfer and computation using HIP streams. The included directories step through different versions of the example. Each directory contains a `README.md` file that includes a description of the version and instructions for building and running the example.
 
+This multi-streamed example is traced with [Omnitrace](https://rocm.docs.amd.com/projects/omnitrace/en/latest/doxygen/html/index.html#omnitrace). Omnitrace is now available in ROCm 6.2.0+ version package directly and does not need to be installed separately anymore. The figures included in the `figs` directory are generated using `Omnitrace v.1.11.3`. The command line trace instructions are included in the `README.md` file in each directory.
+
 ## Folder `0-Orig`
 
 This is the original version of the example. It demonstrates the basic structure of the example and provides a starting point for the other versions. The memory copies and kernel execution are done together sequentially in each of the multiple streams.
@@ -14,9 +16,9 @@ This example also exploits the environment variable controlling the GPU maximum 
 
 ## Folder `2-pageable-mem`
 
-This version of the example uses *pageable* memory for data transfers instead of pinned memory. This example is to demonstrate how pageable memory degrades performance of a multi-streamed application. Ideally, pinned memory should be used for data transfers in a multi-streamed application.
+This version of the example uses *pageable* memory for data transfers instead of pinned memory. This example is to demonstrate how pageable memory degrades performance of a multi-streamed application. Ideally, pinned memory should be used for data transfers in a multi-streamed application wherever possible (depending on available memory resources).
 
-## Self-guided exercise
+## Self-guided tour of the Stream Overlap example
 
 The interested reader can follow these steps sequentially to understand the performance implications of use of multiple streams to overlap data transfers and kernel computations. The results shared in folder `figs` are obtained from running the example on an AMD Instinct MI250 single GCD.
 
