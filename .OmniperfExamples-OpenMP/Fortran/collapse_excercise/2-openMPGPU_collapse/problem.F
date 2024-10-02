@@ -5,7 +5,7 @@ PROGRAM problem
 
   !$omp requires unified_shared_memory
 
-  integer, parameter :: NI=512, NJ=512, NK=512, rk=8
+  integer, parameter :: NI=128, NJ=128, NK=128, rk=8
   integer :: i,j,k, i_rb, repeat
   real(kind=rk), allocatable, dimension(:,:,:) :: f
   real(kind=rk) :: starttime
@@ -14,11 +14,11 @@ PROGRAM problem
 
   !initialisation
   do i_rb =1,2
-    !!$omp target teams distribute parallel do collapse(3) private(i,j,k) shared(f,i_rb)
     !$omp target teams distribute parallel do collapse(3) private(i,j,k) shared(f,i_rb)
     do k = 0,NK+1
       do j = 0,NJ+1
-        do i = 0,NI+1
+        do i=0,NI+1
+        !do i = 1+MOD(j + k + i_rb + 1, 2), NI, 2
           if(mod(i+j+k+i_rb,2) == 0) then
             f(i,j,k) = real(i_rb, kind=rk) 
           end if
@@ -27,27 +27,27 @@ PROGRAM problem
     end do
   end do
  
-  write(*,*) "initialization:" 
-  write(*,*) f(1,1,1), f(2,1,1),f(3,1,1),f(4,1,1),"..."
-  write(*,*) f(1,2,1), f(2,2,1),f(3,2,1),f(4,2,1),"..."
-  write(*,*) f(1,3,1), f(2,3,1),f(3,3,1),f(4,3,1),"..."
+!  write(*,*) "initialization:" 
+!  write(*,*) f(1,1,1), f(2,1,1),f(3,1,1),f(4,1,1),"..."
+!  write(*,*) f(1,2,1), f(2,2,1),f(3,2,1),f(4,2,1),"..."
+!  write(*,*) f(1,3,1), f(2,3,1),f(3,3,1),f(4,3,1),"..."
 
   !timer
 
   starttime = omp_get_wtime()
   !warm up loop
   do i_rb =1,2
-    !!$omp target teams distribute parallel do collapse(3) private(i,j,k) shared(f,i_rb)
     !$omp target teams distribute parallel do collapse(3) private(i,j,k) shared(f,i_rb)
     do k = 1,NK
       do j = 1,NJ
-        do i = 1,NI
+         do i = 1,NI,2
+         !do i = 1+MOD(j + k + i_rb, 2), NI, 2
           if(mod(i+j+k+i_rb,2) == 0) then
             !this is a silly prototype for smoothing in a 7 point stencil
             f(i,j,k) = (f(i-1,j,k) + f(i+1,j,k) +      &
-                         f(i,j-1,k) + f(i,j+1,k) +      &
-                         f(i,j,k-1) + f(i,j,k+1) +      &
-                         f(i,j,k)) / 7.0_rk
+                        f(i,j-1,k) + f(i,j+1,k) +      &
+                        f(i,j,k-1) + f(i,j,k+1) +      &
+                        f(i,j,k)) / 7.0_rk
           end if
         end do
       end do
@@ -55,33 +55,33 @@ PROGRAM problem
   end do
   write(*,*) "warmup loop time:",(omp_get_wtime()-starttime)*1000.0_rk,"ms"
   !reset timer:
-  
   starttime=omp_get_wtime()
     do i_rb =1,2
       !$omp target teams distribute parallel do collapse(3) private(i,j,k) shared(f,i_rb)
       do k = 1,NK
         do j = 1,NJ
           do i = 1,NI
-            !ii = 2*i + mod(i+j+k+i_rb,2)
+          !do i = 1+MOD(j + k + i_rb, 2), NI, 2
             if(mod(i+j+k+i_rb,2) == 0) then
               !this is a silly prototype for smoothing in a 7 point stencil
               f(i,j,k) = (f(i-1,j,k) + f(i+1,j,k) +      &
-                           f(i,j-1,k) + f(i,j+1,k) +      &
-                           f(i,j,k-1) + f(i,j,k+1) +      &
-                           f(i,j,k)) / 7.0_rk
-           end if
+                          f(i,j-1,k) + f(i,j+1,k) +      &
+                          f(i,j,k-1) + f(i,j,k+1) +      &
+                          f(i,j,k)) / 7.0_rk
+            end if
           end do
         end do
       end do
     end do
   
-
-  write(*,*) "after red and black smoothing:"
-  write(*,*) f(1,1,1), f(2,1,1),f(3,1,1),f(4,1,1),"..."
-  write(*,*) f(1,2,1), f(2,2,1),f(3,2,1),f(4,2,1),"..."
-  write(*,*) f(1,3,1), f(2,3,1),f(3,3,1),f(4,3,1),"..."
-  
   write(*,*) "time", (omp_get_wtime()-starttime)*1000.0_rk,"ms"
+
+!  write(*,*) "after red and black smoothing step:"
+!  write(*,*) f(1,1,1), f(2,1,1),f(3,1,1),f(4,1,1),"..."
+!  write(*,*) f(1,2,1), f(2,2,1),f(3,2,1),f(4,2,1),"..."
+!  write(*,*) f(1,3,1), f(2,3,1),f(3,3,1),f(4,3,1),"..."
+  
+
   
   deallocate(f)
 

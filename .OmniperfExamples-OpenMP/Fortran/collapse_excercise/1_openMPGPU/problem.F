@@ -5,7 +5,7 @@ PROGRAM problem
 
   !$omp requires unified_shared_memory
 
-  integer, parameter :: NI=48, NJ=48, NK=48, rk=8, maxrepeat=100
+  integer, parameter :: NI=128, NJ=128, NK=128, rk=8
   integer :: i,j,k, i_rb, repeat
   real(kind=rk), allocatable, dimension(:,:,:) :: f
   real(kind=rk) :: starttime
@@ -14,7 +14,7 @@ PROGRAM problem
 
   !initialisation
   do i_rb =1,2
-    !$omp target teams distribute parallel do collapse(3) private(i,j,k) shared(f,i_rb)
+    !$omp target teams distribute parallel do collapse(2) private(i,j,k) shared(f,i_rb)
     do k = 0,NK+1
       do j = 0,NJ+1
         do i = 1+MOD(j + k + i_rb + 1, 2), NI, 2
@@ -24,10 +24,10 @@ PROGRAM problem
     end do
   end do
  
-  write(*,*) "initialization:" 
-  write(*,*) f(1,1,1), f(2,1,1),f(3,1,1),f(4,1,1),"..."
-  write(*,*) f(1,2,1), f(2,2,1),f(3,2,1),f(4,2,1),"..."
-  write(*,*) f(1,3,1), f(2,3,1),f(3,3,1),f(4,3,1),"..."
+!  write(*,*) "initialization:" 
+!  write(*,*) f(1,1,1), f(2,1,1),f(3,1,1),f(4,1,1),"..."
+!  write(*,*) f(1,2,1), f(2,2,1),f(3,2,1),f(4,2,1),"..."
+!  write(*,*) f(1,3,1), f(2,3,1),f(3,3,1),f(4,3,1),"..."
 
   !timer
 
@@ -65,13 +65,14 @@ PROGRAM problem
       end do
     end do
   
-
-  write(*,*) "after red and black smoothing step:"
-  write(*,*) f(1,1,1), f(2,1,1),f(3,1,1),f(4,1,1),"..."
-  write(*,*) f(1,2,1), f(2,2,1),f(3,2,1),f(4,2,1),"..."
-  write(*,*) f(1,3,1), f(2,3,1),f(3,3,1),f(4,3,1),"..."
-  
   write(*,*) "time", (omp_get_wtime()-starttime)*1000.0_rk,"ms"
+
+!  write(*,*) "after red and black smoothing step:"
+!  write(*,*) f(1,1,1), f(2,1,1),f(3,1,1),f(4,1,1),"..."
+!  write(*,*) f(1,2,1), f(2,2,1),f(3,2,1),f(4,2,1),"..."
+!  write(*,*) f(1,3,1), f(2,3,1),f(3,3,1),f(4,3,1),"..."
+  
+
   
   deallocate(f)
 
