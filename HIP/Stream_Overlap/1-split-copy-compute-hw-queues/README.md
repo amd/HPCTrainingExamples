@@ -1,8 +1,10 @@
-This Stream Overlap example uses asynchronous H2D data copy across streams.
+This Stream Overlap example splits the H2D (and D2H) data copies and compute kernel
+launches across streams. This is to enable the data copies to overlap across
+multiple streams.
 
 ## Build and run
 ```
-cd /path/to/Stream_Overlap/1-async-copy-hw-queues
+cd /path/to/Stream_Overlap/1-split-copy-hw-queues
 mkdir build
 cd build
 cmake ../
