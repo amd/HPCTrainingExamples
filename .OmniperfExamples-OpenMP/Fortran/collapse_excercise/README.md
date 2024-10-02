@@ -1,4 +1,4 @@
-# Exercise 1: Increase workload by collapse
+# Exercise 1: 
 Client-side installation instructions are available in the official omniperf documentation, and provide all functionality demonstrated here.
 
 <details>
