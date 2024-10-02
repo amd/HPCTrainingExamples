@@ -80,9 +80,9 @@ We are interested in the kernel in the last kernel, as the other two are initial
 ╘════╧═══════════════╧═════════════════════════════════════════╧══════════╛
 
 ```
-This lists the time the execution of each kernel took in ```0.1 Top Kernels``` we can see that three kernels were launched and each of them was launced two times (```Count```) The last column shows how much of the overall time was spent in each of the kernels. The first kernel is the initialization, the second the warm-up loop. The third kernel is the one we are interested in. This is the kernel in line 54 in our source code and is thus marked as __omp_offloading_32_6140__QQmain_l54.kd. Note the l54 at the end provides the line.
+This lists the runtime of each kernel in ```0.1 Top Kernels```. We can see that three kernels were launched and each of them was launced two times (```Count```) for the red and the black iteration. The last column shows how much of the overall time was spent in each of the kernels. The first kernel is the initialization, the second the warm-up loop. The third kernel is the one we are interested in. This is the kernel in line 54 in our source code and is thus marked as __omp_offloading_32_6140__QQmain_l54.kd. Note the l54 at the end provides the line.
 In ```0.2 Dispatch List``` we see the dispatch ID of each of the kernels. The ones we are interested in are the the ones with ```Dispatch_ID``` 3 and 4.
-For now, lets choose dispatch 3 and choose a few blocks of interest (you can view all available blocks by not filtering for ```--block```):
+For now, lets choose dispatch 3 and choose a few blocks of interest:
 ```
 omniperf analyze -p workloads/problem/MI300A_A1 --dispatch 3 --block 7.1.0 7.1.1 7.1.2 2.1.7 2.1.15
 ```
