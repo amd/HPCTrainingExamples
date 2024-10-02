@@ -30,7 +30,8 @@
          res = 0.0_rk
          temp = 0.0_rk
          !warm up loop
-         !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO DEFAULT(SHARED) PRIVATE(i,j,temp) REDUCTION(+:res)
+         !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO DEFAULT(SHARED) &
+         !$OMP PRIVATE(i,j,temp) REDUCTION(+:res) THREAD_LIMIT(96)
          DO i=1,n
            temp = 0.0_rk
            DO j=1,m
@@ -47,10 +48,10 @@
         
          !reset result
          res = 0.0_rk
-         !$OMP TARGET TEAMS DISTRIBUTE DEFAULT(SHARED) PRIVATE(i,j,temp) REDUCTION(+:res)
+         !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO DEFAULT(SHARED) &
+         !$OMP PRIVATE(i,j,temp) REDUCTION(+:res) THREAD_LIMIT(96)
          DO i=1,n
            temp = 0.0_rk
-           !$OMP PARALLEL DO REDUCTION(+:temp)
            DO j=1,m
              temp = temp + A(j,i) * x(j)
            END DO
