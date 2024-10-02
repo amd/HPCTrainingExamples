@@ -11,10 +11,6 @@ export HSA_XNACK=1
 
 In this section, we show results obtained running this exercise on a system with MI300A, using ROCm `6.2.1` and the associated Omniperf, version `6.2.1`.
 
-### Roofline Analysis:
-
-At present (September 28th 2024), rooflines are disabled on MI300A.
-
 ### Exercise Instructions:
 Inspect the code in ```problem.F```: it is a prototype of a red-black smoother. Note that the innermost loop has strides such that the data is acceced in a checkerboard pattern.
 
