@@ -5,7 +5,7 @@ PROGRAM problem
 
   !$omp requires unified_shared_memory
 
-  integer, parameter :: NI=128, NJ=128, NK=128, rk=8
+  integer, parameter :: NI=512, NJ=512, NK=512, rk=8
   integer :: i,j,k, i_rb, repeat
   real(kind=rk), allocatable, dimension(:,:,:) :: f
   real(kind=rk) :: starttime
@@ -53,7 +53,7 @@ PROGRAM problem
       end do
     end do
   end do
-  write(*,*) "warmup loop time:",(omp_get_wtime()-starttime)*1000.0_rk,"ms"
+ ! write(*,*) "warmup loop time:",(omp_get_wtime()-starttime)*1000.0_rk,"ms"
   !reset timer:
   starttime=omp_get_wtime()
     do i_rb =1,2

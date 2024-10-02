@@ -1,4 +1,4 @@
-EXEC = problem
+EXEC = solution
 default: ${EXEC}
 all: ${EXEC}
 
