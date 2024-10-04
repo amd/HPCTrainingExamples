@@ -356,10 +356,10 @@ int main(int argc, char *argv[])
       free(x_h);
    }
 
-   HIP_CHECK(hipFree(xbuf_left_send));
-   HIP_CHECK(hipFree(xbuf_rght_send));
-   HIP_CHECK(hipFree(xbuf_rght_recv));
-   HIP_CHECK(hipFree(xbuf_left_recv));
+   free(xbuf_left_send);
+   free(xbuf_rght_send);
+   free(xbuf_rght_recv);
+   free(xbuf_left_recv);
 
    MPI_Finalize();
    exit(0);
