@@ -1,4 +1,4 @@
-# Porting excercises
+#Porting excercises
 The Fortran porting excercises can be found here (this is the directory of this README): 
 ```
 cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran
@@ -32,8 +32,8 @@ Choose one of the excercises in the sub-directories and use the README there for
 ```
 cd 1_saxpy
 cd 2_vecadd  
-cd 3_freduce  
-cd 4_reduction_scalar  
+cd 3_reduction 
+cd 4_reduction_scalars  
 cd 5_device_routine 
 cd 6_derived_types
 cd 7_jacobi
