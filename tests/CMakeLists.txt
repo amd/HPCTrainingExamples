@@ -109,7 +109,7 @@ set_property(TEST HIP_OpenMP_Interoperability_saxpy_APU PROPERTY SKIP_REGULAR_EX
 # Programming Model Examples
 
 add_test(NAME Programming_Model_CPU COMMAND ../programming_model_cpu.sh )
-set_property(TEST Programming_Model_CPU PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
+set_property(TEST Programming_Model_CPU PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
 set_property(TEST Programming_Model_CPU PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Programming_Model_GPU COMMAND ../programming_model_gpu.sh )
@@ -125,7 +125,7 @@ set_property(TEST Programming_Model_APU PROPERTY PASS_REGULAR_EXPRESSION "Result
 set_property(TEST Programming_Model_APU PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 add_test(NAME Programming_Model_OpenMP COMMAND ../programming_model_openmp.sh )
-set_property(TEST Programming_Model_OpenMP PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
+set_property(TEST Programming_Model_OpenMP PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
 set_property(TEST Programming_Model_OpenMP PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 add_test(NAME Programming_Model_Raja COMMAND ../programming_model_raja.sh )
