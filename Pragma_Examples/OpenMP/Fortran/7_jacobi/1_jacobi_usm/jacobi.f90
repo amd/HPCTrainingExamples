@@ -32,7 +32,6 @@ contains
     integer(IK) :: i,j
     real(RK) :: rhs_bc
 
-    !mesh=>mesh
     allocate(this%u(mesh%n_x,mesh%n_y))
     allocate(this%au(mesh%n_x,mesh%n_y))
     allocate(this%rhs(mesh%n_x,mesh%n_y))
@@ -83,27 +82,33 @@ contains
     this%t_start = omp_get_wtime()
 
     do while (this%iters < max_iters .and. resid > tolerance)
+      ! Compute Laplacian
       call laplacian(mesh,this%u,this%au)
       if (debug) then
         call print_2D(this%au)
         write(stdout,*)
       end if
+
+      ! Apply boundary conditions
       call boundary_conditions(mesh,this%u,this%au)
       if (debug) then
         call print_2D(this%au)
         write(stdout,*)
       end if
+
+      ! Update the solution
       call update(mesh,this%rhs,this%au,this%u,this%res)
       if (debug) then
         call print_2D(this%u)
         write(stdout,*)
-      end if
-      if (debug) then
         call print_2D(this%res)
         write(stdout,*)
         write(stdout,*)
       end if
+
+      ! Compute residual = ||U||
       resid = norm(mesh,this%res)
+
       this%iters = this%iters + 1
       if (debug) write(stdout,'(A,I4,A,ES11.5)') 'Iteration: ',this%iters,' - Residual: ',resid
       if (mod(this%iters,100) == 0 .and. .not. debug) write(stdout,'(A,I4,A,ES11.5)') 'Iteration: ',this%iters,' - Residual: ',resid
@@ -134,16 +139,16 @@ contains
     type(mesh_t), intent(in) :: mesh
     real(RK) :: lattice_updates, flops, bandwidth
 
-    write(stdout,'(A,F6.3,A)') 'Total Jacobi run time: ',this%elapsed,' sec.'
+    write(stdout,'(A,F0.3,A)') 'Total Jacobi run time: ',this%elapsed,' sec.'
 
     lattice_updates = real(mesh%n_x,RK)*mesh%n_y*this%iters
     flops = 17._RK*lattice_updates
     bandwidth = 12._RK*lattice_updates*RK
 
-    write(stdout,'(A,F6.3,A)') 'Measured lattice updates: ',lattice_updates/this%elapsed/1.e9_RK,' LU/s'
-    write(stdout,'(A,F5.1,A)') 'Effective Flops: ',flops/this%elapsed/1.e9_RK,' GFlops'
-    write(stdout,'(A,F5.3,A)') 'Effective device bandwidth: ',bandwidth/this%elapsed/1.e12_RK,' TB/s'
-    write(stdout,'(A,F5.3)') 'Effective AI=',flops/bandwidth
+    write(stdout,'(A,F0.3,A)') 'Measured lattice updates: ',lattice_updates/this%elapsed/1.e9_RK,' LU/s'
+    write(stdout,'(A,F0.1,A)') 'Effective Flops: ',flops/this%elapsed/1.e9_RK,' GFlops'
+    write(stdout,'(A,F0.3,A)') 'Effective device bandwidth: ',bandwidth/this%elapsed/1.e12_RK,' TB/s'
+    write(stdout,'(A,F0.3)') 'Effective AI=',flops/bandwidth
 
   end subroutine print_results
 

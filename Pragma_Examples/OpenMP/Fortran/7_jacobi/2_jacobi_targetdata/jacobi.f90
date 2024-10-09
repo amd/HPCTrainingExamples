@@ -31,7 +31,6 @@ contains
     integer(IK) :: i,j
     real(RK) :: rhs_bc
 
-    !mesh=>mesh
     allocate(this%u(mesh%n_x,mesh%n_y))
     allocate(this%au(mesh%n_x,mesh%n_y))
     allocate(this%rhs(mesh%n_x,mesh%n_y))
@@ -84,31 +83,37 @@ contains
     this%t_start = omp_get_wtime()
 
     do while (this%iters < max_iters .and. resid > tolerance)
+      ! Compute Laplacian
       call laplacian(mesh,this%u,this%au)
       if (debug) then
         !$omp target update from(this%au)
         call print_2D(this%au)
         write(stdout,*)
       end if
+
+      ! Apply boundary conditions
       call boundary_conditions(mesh,this%u,this%au)
       if (debug) then
         !$omp target update from(this%au)
         call print_2D(this%au)
         write(stdout,*)
       end if
+
+      ! Update the solution
       call update(mesh,this%rhs,this%au,this%u,this%res)
       if (debug) then
         !$omp target update from(this%u)
         call print_2D(this%u)
         write(stdout,*)
-      end if
-      if (debug) then
         !$omp target update from(this%res)
         call print_2D(this%res)
         write(stdout,*)
         write(stdout,*)
       end if
+
+      ! Compute residual = ||U||
       resid = norm(mesh,this%res)
+
       this%iters = this%iters + 1
       if (debug) write(stdout,'(A,I4,A,ES11.5)') 'Iteration: ',this%iters,' - Residual: ',resid
       if (mod(this%iters,100) == 0 .and. .not. debug) write(stdout,'(A,I4,A,ES11.5)') 'Iteration: ',this%iters,' - Residual: ',resid
