@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <omp.h>
+
 void saxpy() {
    int N=1000000;
    float a, x[N], y[N];
@@ -13,7 +14,6 @@ void saxpy() {
 
    tb = omp_get_wtime();
 
-   #pragma omp parallel for firstprivate(a)
    for (int i = 0; i < N; i++) {
       y[i] = a * x[i] + y[i];
    }

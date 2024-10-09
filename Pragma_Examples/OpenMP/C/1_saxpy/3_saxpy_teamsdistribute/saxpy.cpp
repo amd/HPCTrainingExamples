@@ -10,16 +10,16 @@ void saxpy() {
    double tb, te;
 
 
-   #pragma omp target
+   #pragma omp target teams distribute parallel for simd
    for (int i = 0; i < N; i++) {
       x[i] = 1.0f;
       y[i] = 2.0f;
    }
-   a = 2.0;
+   a = 2.0f;
 
    tb = omp_get_wtime();
 
-   #pragma omp target
+   #pragma omp target teams distribute parallel for simd
    for (int i = 0; i < N; i++) {
       y[i] = a * x[i] + y[i];
    }

@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <omp.h>
 
-#pragma omp requires unified_shared_memory
 
 void saxpy() {
    int N=1000000;
@@ -9,17 +8,17 @@ void saxpy() {
    double t = 0.0;
    double tb, te;
 
-
-   #pragma omp target
+   #pragma omp target enter data map(to:x,y)
+   #pragma omp target teams distribute parallel for simd
    for (int i = 0; i < N; i++) {
       x[i] = 1.0f;
       y[i] = 2.0f;
    }
-   a = 2.0;
+   a = 2.0f;
 
    tb = omp_get_wtime();
 
-   #pragma omp target
+   #pragma omp target teams distribute parallel for simd
    for (int i = 0; i < N; i++) {
       y[i] = a * x[i] + y[i];
    }
@@ -29,9 +28,14 @@ void saxpy() {
 
    printf("Time of kernel: %lf\n", t);
 
-   if (y[0] > 1.0e30) {
-      printf("y[0] %lf\n",y[0]);
-   }
+   #pragma omp target update from(y)
+
+   printf("plausibility check output:\n");
+   printf("y[0] %lf\n",y[0]);
+   printf("y[N-1] %lf\n",y[N-1]);
+   
+   #pragma omp target exit data(release:x,y)
+
 }
 int main(int argc, char *argv[]){
    saxpy();

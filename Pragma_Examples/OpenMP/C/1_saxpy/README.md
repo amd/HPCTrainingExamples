@@ -1,10 +1,10 @@
 # First OpenMP offload: Porting saxpy step by step and explore the discrete GPU and APU programming models:
 
 This excercise will show in a step by step solution how to port a your first kernels. 
-This simple example will not use a Makefile to practice how to compile for the GPU or APU. 
-All following excercises will use a Makefile.
 
-prepare the environment:
+# prepare the environment:
+
+on aac6:
 ```
 module load rocm
 ```
@@ -17,6 +17,25 @@ Set
 ```
 export CXX=amdclang++
 ```
+
+
+
+on aac7:
+
+```
+module load craype-accel-amd-gfx942
+module load craype-x86-genoa
+module load PrgEnv-amd
+module load rocm
+export CXX=CC
+```
+Note that CC is a compiler wrapper, depending on the programming enviroment a different compiler may be chosen. In PrgEnv-amd
+```
+CC --version
+```
+should show the clang++ compiler from rocm.
+
+# Excercise instructions:
 For now, set
 ```
 export HSA_XNACK=1
@@ -33,8 +52,14 @@ Try to port this example yourself. If you are stuck, use the step by step soluti
 
 - Compile the serial version. Note that ```-fopenmp``` is required as omp_get_wtime is used to time the loop execution.
 ```
-amdclangi++ -fopenmp saxpy.cpp -o saxpy
+amdclang++ -fopenmp saxpy.cpp -o saxpy
 ```
+or with the cray environment (aac7):
+
+```
+CC -fopenmp saxpy.cpp -o saxpy
+```
+
 - Run the serial version.
 ```
 ./saxpy
@@ -44,11 +69,12 @@ Note: you can also use the Makefile.
 make
 ```
 instead of compiling manually.
+
 You can now try to port the serial CPU version to the GPU 
 ```
 vi saxpy.cpp
 ```
-and don't forget to port the Makefile (Hint: What has to be added to compile for the GPU?)
+and don't forget to port the Makefile (Hint: What has to be added to compile for the GPU? Note: for cray compilers)
 ```
 vi Makefile
 ```
@@ -65,6 +91,12 @@ add ```#pragma omp target``` to move the loop in the saxpy subroutine to the dev
 ```
 amdclang++ -fopenmp --offload-arch=gfx942 saxpy.cpp -o saxpy
 ```
+or with the cray environment (aac7):
+
+```
+CC -fopenmp saxpy.cpp -o saxpy
+```
+
 (or use the Makefile)
 - Run
 ```
@@ -74,35 +106,23 @@ The observed time is much larger than for the CPU version. More parallelism is r
 
 2) Add parallelism
 ```
-cd ../2_saxpy_teamsdistribute
+cd ../2_saxpy_parallelforsimd
 vi saxpy.f90
 ```
-add "teams distribute"
+add "parallelforsimd"
 - Compile again
-```
-amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
-```
 - run again
-```
-./saxpy
-```
 The observed time is a bit better than in case 1 but still not the full parallelism is used.
 
 3) Add multi-level parallelism
 ```
-cd ../3_saxpy_paralleldosimd
+cd ../3_saxpy_teamsdistribute
 vi saxpy.f90
 ``` 
 add "parallel do" for more parellelism
 - Compile again
-```
-amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
-```
 - run again
-```
-./saxpy
-```
-The observed time is much better than all previous versions.
+The observed time is much smaller than all previous versions.
 Note that the initialization kernel is a warm-up kernel here. If we do not have a warm-up kernel, the observed performance would be significantly worse. Hence the benefit of the accelerator is usually seen only after the first kernel. You can try this by commenting the !$omp target... in the initialize subroutine, then the meassured kernel is the first which touches the arrays used in the kernel.
 
 4) Explore impact of unified memory:
@@ -110,37 +130,23 @@ Note that the initialization kernel is a warm-up kernel here. If we do not have 
 cd ../4_saxpy_nousm
 vi saxpy.f90
 ```
-The ```!$omp requires...``` line is removed.
-- Compile again
-```
-amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
-```
-- run again
-```
-./saxpy
- ```
+The ```#pragma omp requires...``` line is removed.
 so far we worked with unfied shared memory and the APU programming model. This allows good performance on MI300A, but not on discrete GPUs. In case you will work on discrete GPUs or want to write portable code for both discrete GPUs and APUs, you have to focus on data management, too.
 ```
 export HSA_XNACK=0
 ```
 to get similar behaviour like on discrete GPUs (with memory copies).
-Compiling and running this version without any map clauses will result in much worse performance than with unified shared memory and ```HSA_XNACK=1``` (no memory copies on MI300A).
+Compiling and running this version without any map clauses will result in much worse performance than with unified shared memory and ```HSA_XNACK=1``` (no memory copies on MI300A) what we used before. On discrete GPUS (or with HSA_XNACK=1 on MI300A) we have to care about data copies from and to the GPU.
 
-5) this version introduces  map clauses for each kernel.
+5) this version introduces map clauses for each kernel.
 ```
 cd ../5_saxpy_map 
 vi saxpy.f90
 ```
 see where the map clasues where added. The x vector only has to be maped "to".
 - Compile again
-```
-amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
-```
 - run again
-```
-./saxpy
-```
-The performance is not much better than version 4.
+The performance is not much better than version 4 where all arrays were mapped automatically we still have data copies after each kernel.
 
 6) with enter and exit data clauses the memory is only moved once at the beginning the time to solution should be roughly in the order of magnitude of the unified shared memory version, but still slightly slower as the memory is copied like on discrete GPUs. Test yourself:
 ```
@@ -150,21 +156,12 @@ cd ../6_saxpy_targetdata
 vi saxpy.f90
 ```
 - Compile again
-```
-amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
-```
 - run again
-```
-./saxpy
-```
-Additional excercise: What happens to the result, if you comment the !$omp target update (in line 29)? 
+Additional excercise: What happens to the result, if you comment the #pragma omp target update? 
 ```
 vi saxpy.f90
 ```
 Don't forget to recompile after commenting it.
-```
-amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
-```
 The results will be wrong! This shows, that proper validation of results is crutial when porting! Before you port a large app, think about your validation strategy before you start. Incremental testing is essential to capture such errors like missing data movement.
 
 7) experiment with num_teams
@@ -181,7 +178,7 @@ amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 ```
 ./saxpy
 ```
-investigating different numbers of teams you will find that the compiler default (without setting this) was already leading to good performance. saxpy is a very simple kernel, this finding may differ for very complex kernels.
+investigating different numbers of teams you will find that the compiler default (without setting this) was already leading to good performance. saxpy is a very simple kernel, adjusting thread_limit or num_teams may be required in certain more complex kernels.
 
 After finishing this introductory excercise, go to the next excercise in the Fortran folder:
 ```
