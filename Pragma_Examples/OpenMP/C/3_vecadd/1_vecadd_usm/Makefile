@@ -26,7 +26,7 @@ else
    LDFLAGS = ${OPENMP_FLAGS} -lm
 endif
 
-${EXEC}: ${EXEC}.o timer.o
+${EXEC}: ${EXEC}.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
 # Cleanup

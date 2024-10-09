@@ -1,4 +1,4 @@
-EXEC = reduction
+EXEC = vecadd
 default: ${EXEC}
 all: ${EXEC}
 
@@ -20,7 +20,11 @@ else
 endif
 
 CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
-LDFLAGS = ${OPENMP_FLAGS} -fno-lto -lm
+ifeq (${CC1},gcc-13)
+   LDFLAGS = ${OPENMP_FLAGS} -fno-lto -lm
+else
+   LDFLAGS = ${OPENMP_FLAGS} -lm
+endif
 
 ${EXEC}: ${EXEC}.o
 	$(CC) $(LDFLAGS) $^ -o $@

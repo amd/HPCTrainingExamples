@@ -12,7 +12,7 @@ else ifeq ($(findstring clang++,$(CXX1)), clang++)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
 else ifeq ($(findstring g++,$(CXX1)), g++)
   OPENMP_FLAGS = -fopenmp -foffload=-march=$(ROCM_GPU)
-else ifeq ($(findstring CC,$(CXX1)), CC)
+else ifeq ($(findstring CC,$(CXX1)), CC) #carful: CC can be a compiler wrapper for many compilers on cray systems!
   OPENMP_FLAGS = -fopenmp
 else
   OPENMP_FLAGS = -fopenmp --foffload=-march=$(ROCM_GPU) -fopt-info-optimized-omp
@@ -26,8 +26,11 @@ else
    LDFLAGS = ${OPENMP_FLAGS} -lm
 endif
 
+saxpy.o: saxpy.cpp
+	$(CXX) $(CFLAGS) -c saxpy.cpp  -o saxpy.o
+
 saxpy: saxpy.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX)  $(LDFLAGS) $^ -o $@
 
 run: saxpy
 	./saxpy

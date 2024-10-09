@@ -29,9 +29,10 @@ void saxpy() {
 
    printf("Time of kernel: %lf\n", t);
 
-   if (y[0] > 1.0e30) {
-      printf("y[0] %lf\n",y[0]);
-   }
+   printf("plausibility check output:\n");
+   printf("y[0] %lf\n",y[0]);
+   printf("y[N-1] %lf\n",y[N-1]);
+
 }
 int main(int argc, char *argv[]){
    saxpy();
