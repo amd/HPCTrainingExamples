@@ -1,21 +1,22 @@
 module input_mod
-  use, intrinsic :: ISO_Fortran_env, only: int32, real64, stdout=>output_unit, stderr=>error_unit
+  use, intrinsic :: ISO_Fortran_env, only: stdout=>output_unit, stderr=>error_unit
+  use kind_mod
   use mesh_mod, only: mesh_t, init_mesh
   implicit none
-
   !$omp requires unified_shared_memory
+
   private
   public :: debug, parse_arguments
 
   logical :: debug
   character(len=4) :: debug_string
-  integer(int32), parameter :: default_domain_size = 4096
+  integer(IK), parameter :: default_domain_size = 4096
 
 contains
 
   subroutine parse_arguments(mesh)
     type(mesh_t), intent(out) :: mesh
-    integer(int32) :: argc, n_x, n_y
+    integer(IK) :: argc, n_x, n_y
     character(len=:), allocatable :: arg
 
     argc = command_argument_count()
@@ -59,9 +60,9 @@ contains
   end subroutine parse_arguments
 
   function get_argument(n) result(arg)
-    integer(int32), intent(in) :: n
+    integer(IK), intent(in) :: n
     character(len=:), allocatable :: arg
-    integer(int32) :: len
+    integer(IK) :: len
 
     call get_command_argument(n, length=len)
     allocate(character(len) :: arg)
@@ -79,7 +80,7 @@ contains
     write(stderr,*) '    Mesh.x and Mesh.y must be positive integers)'
     write(stderr,*) ' -h | --help: print help information'
 
-    error stop 1, quiet=.true.
+    error stop 1
   end subroutine print_help_and_exit
 
 end module input_mod

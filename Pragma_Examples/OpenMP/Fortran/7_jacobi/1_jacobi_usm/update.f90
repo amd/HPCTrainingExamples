@@ -1,8 +1,9 @@
 module update_mod
-  use, intrinsic :: ISO_Fortran_env, only: int32, real64
+  use kind_mod
   use mesh_mod, only: mesh_t
   implicit none
   !$omp requires unified_shared_memory
+
   private
   public :: update
 
@@ -10,19 +11,17 @@ contains
 
   subroutine update(mesh,rhs,au,u,res)
     type(mesh_t), intent(inout) :: mesh
-    real(real64), intent(inout) :: rhs(:,:), au(:,:)
-    real(real64), intent(inout) :: u(:,:)
-    real(real64), intent(inout) :: res(:,:)
-    integer(int32) :: i,j,n_x,n_y
-    real(real64) :: temp,factor
+    real(RK), intent(inout) :: rhs(:,:), au(:,:)
+    real(RK), intent(inout) :: u(:,:)
+    real(RK), intent(inout) :: res(:,:)
+    integer(IK) :: i,j
+    real(RK) :: temp,factor
 
-    n_x = mesh%n_x
-    n_y = mesh%n_y
-    factor = (2._real64/mesh%dx**2+2._real64/mesh%dy**2)**-1
+    factor = (2._RK/mesh%dx**2+2._RK/mesh%dy**2)**-1
 
     !$omp target teams distribute parallel do collapse(2) private(temp)
-    do j = 1,n_y
-      do i = 1,n_x
+    do j = 1,mesh%n_y
+      do i = 1,mesh%n_x
         temp = rhs(i,j) - au(i,j)
         res(i,j) = temp
         u(i,j) = u(i,j) + temp*factor
