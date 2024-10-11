@@ -1,8 +1,9 @@
 module norm_mod
-  use, intrinsic :: ISO_Fortran_env, only: int32, real64
-  use mesh_mod
+  use kind_mod
+  use mesh_mod, only: mesh_t
   implicit none
   !$omp requires unified_shared_memory
+
   private
   public :: norm
 
@@ -10,23 +11,19 @@ contains
 
   function norm(mesh, u) result(norm_val)
     type(mesh_t), intent(inout) :: mesh
-    real(real64), intent(inout) :: u(:,:)
-    real(real64) :: norm_val
-    integer(int32) :: i,j,n_x,n_y
-    real(real64) :: dx,dy
+    real(RK), intent(inout) :: u(:,:)
+    real(RK) :: norm_val
+    integer(IK) :: i,j,n_x,n_y
+    real(RK) :: dxdy
 
-    n_x = mesh%n_x
-    n_y = mesh%n_y
-    dx = mesh%dx
-    dy = mesh%dy
+    dxdy = mesh%dx*mesh%dy
 
-    norm_val = 0._real64
+    norm_val = 0._RK
 
-    !!$omp target update from(u)
     !$omp target teams distribute parallel do collapse(2) reduction(+:norm_val)
-    do j = 1,n_y
-      do i = 1,n_x
-        norm_val = norm_val + u(i,j)**2*dx*dy
+    do j = 1,mesh%n_y
+      do i = 1,mesh%n_x
+        norm_val = norm_val + u(i,j)**2*dxdy
       end do
     end do
 
