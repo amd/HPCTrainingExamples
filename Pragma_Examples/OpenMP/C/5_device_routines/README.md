@@ -1,4 +1,4 @@
-# Porting excercise device routine and unified shared memory
+# Porting excercise device routine
 
 This exercise will show how to port kernels which call a function.
 Note: Make and build analogous to the previous excercises.
