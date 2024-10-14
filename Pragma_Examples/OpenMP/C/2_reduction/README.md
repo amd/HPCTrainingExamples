@@ -33,7 +33,7 @@ run
 ```
 ./reduction
 ```
-Note: you may want to use ```vimdiff <file1> <file2>``` do compare your solution with this version.
+Note: you may want to use ```vimdiff <file1> <file2>``` to compare your solution with this version.
 
 #### 2) solution with map clauses
 Set 
@@ -50,6 +50,6 @@ run
 ```
 ./reduction
 ```
-Note: you may want to use ```vimdiff <file1> <file2>``` do compare your solution with this version.
+Note: you may want to use ```vimdiff <file1> <file2>``` to compare your solution with this version.
 
 
