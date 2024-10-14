@@ -28,6 +28,7 @@ void saxpy() {
 
    printf("Time of kernel: %lf\n", t);
 
+   y[0] = 1.0;
    #pragma omp target update from(y)
 
    printf("plausibility check output:\n");
