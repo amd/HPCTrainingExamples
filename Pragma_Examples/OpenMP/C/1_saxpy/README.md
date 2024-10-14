@@ -2,6 +2,7 @@
 Porting of saxpy step by step and explore the discrete GPU and APU programming models:
 
 - Part 1: Unified shared memory
+after Part 1 you may want to explore the excercises 2-5 first with usm before you come to explore the behavior without USM.
 
 - Part 2: Explore differences of ```HSA_XNACK=0``` and ```1```
 
@@ -104,6 +105,8 @@ amdclang++ -fopenmp --offload-arch=gfx942 saxpy.cpp -o saxpy
 ```
 The observed time is much better than all previous versions.
 Note that the initialization kernel is a warm-up kernel here. If we do not have a warm-up kernel, the observed performance would be significantly worse. Hence the benefit of the accelerator is usually seen only after the first kernel. You can try this by commenting the !$omp target... in the initialize subroutine, then the meassured kernel is the first which touches the arrays used in the kernel.
+
+Reccomendation: After Part 1 you may want to explore the excercises 2-5 first with usm before you come to explore the behavior without USM.
 
 ## Part 2: Impact of USM
 #### 4) Explore impact of unified memory:
