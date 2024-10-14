@@ -2,7 +2,7 @@
 ## AMD training container environment (aac6):
 ```
 module load rocm
-export CC=amdclang++
+export CXX=amdclang++
 ```
 
 ## Cray environment (aac7):
