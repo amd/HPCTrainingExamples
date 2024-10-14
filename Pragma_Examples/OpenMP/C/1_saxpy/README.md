@@ -75,12 +75,12 @@ The observed time is much larger than for the CPU version. More parallelism is r
 #### 2) Add parallelism
 ```
 cd ../2_saxpy_teamsdistribute
-vi saxpy.f90
+vi saxpy.cpp
 ```
 add "teams distribute"
 - Compile again
 ```
-amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
+amdclang++ -fopenmp --offload-arch=gfx942 saxpy.cpp -o saxpy
 ```
 - run again
 ```
@@ -91,12 +91,12 @@ The observed time is a bit better than in case 1 but still not the full parallel
 #### 3) Add multi-level parallelism
 ```
 cd ../3_saxpy_paralleldosimd
-vi saxpy.f90
+vi saxpy.cpp
 ``` 
 add "parallel do" for more parellelism
 - Compile again
 ```
-amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
+amdclang++ -fopenmp --offload-arch=gfx942 saxpy.cpp -o saxpy
 ```
 - run again
 ```
@@ -109,12 +109,12 @@ Note that the initialization kernel is a warm-up kernel here. If we do not have 
 #### 4) Explore impact of unified memory:
 ```
 cd ../4_saxpy_nousm
-vi saxpy.f90
+vi saxpy.cpp
 ```
-The ```!$omp requires...``` line is removed.
+The ```#pragma omp requires...``` line is removed.
 - Compile again
 ```
-amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
+amdclang++ -fopenmp --offload-arch=gfx942 saxpy.cpp -o saxpy
 ```
 - run again
 ```
@@ -132,12 +132,12 @@ Compiling and running this version without any map clauses will result in much w
 this version introduces  map clauses for each kernel.
 ```
 cd ../5_saxpy_map 
-vi saxpy.f90
+vi saxpy.cpp
 ```
 see where the map clasues where added. The x vector only has to be maped "to".
 - Compile again
 ```
-amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
+amdclang++ -fopenmp --offload-arch=gfx942 saxpy.cpp -o saxpy
 ```
 - run again
 ```
@@ -151,23 +151,23 @@ with enter and exit data clauses the memory is only moved once at the beginning 
 cd ../6_saxpy_targetdata
 ```
 ```
-vi saxpy.f90
+vi saxpy.cpp
 ```
 - Compile again
 ```
-amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
+amdclang++ -fopenmp --offload-arch=gfx942 saxpy.cpp -o saxpy
 ```
 - run again
 ```
 ./saxpy
 ```
-Additional excercise: What happens to the result, if you comment the !$omp target update (in line 29)? 
+Additional excercise: What happens to the result, if you comment the ```omp target update```? 
 ```
-vi saxpy.f90
+vi saxpy.cpp
 ```
 Don't forget to recompile after commenting it.
 ```
-amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
+amdclang++ -fopenmp --offload-arch=gfx942 saxpy.cpp -o saxpy
 ```
 The results will be wrong! This shows, that proper validation of results is crutial when porting! Before you port a large app, think about your validation strategy before you start. Incremental testing is essential to capture such errors like missing data movement.
 
@@ -177,12 +177,12 @@ Note that this version uses the ```new``` allocator with an alignment of 128 ins
 experiment with num_teams
 ```
 cd ../7_saxpy_numteams
-vi saxpy.f90
+vi saxpy.cpp
 ```
 specify num_teams(...) choose a number of teams you want to test 
 - Compile again
 ```
-amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
+amdclang++ -fopenmp --offload-arch=gfx942 saxpy.cpp -o saxpy
 ```
 - run again
 ```
