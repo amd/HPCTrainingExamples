@@ -1,4 +1,24 @@
 # Porting a small app: jacobi
+## AMD training container environment (aac6):´
+```
+module load rocm
+export CC=amdclang++
+```
+
+## Cray environment (aac7):
+```
+module load craype-accel-amd-gfx942
+module load craype-x86-genoa
+module load PrgEnv-amd
+module load rocm
+```
+make sure 
+```
+CC --version´
+```
+shows a c++ compiler.
+
+## Excercise:
 ```
 cd 0_jacobi_portyourself
 ```
@@ -11,25 +31,6 @@ or without for a behaviour with copies
 ```
 export HSA_XNACK=0
 ```
-AMD training container environment (aac6):´
-```
-module load rocm
-export CC=amdclang++
-```
-
-Cray environment (aac7):
-```
-module load craype-accel-amd-gfx942
-module load craype-x86-genoa
-module load PrgEnv-amd
-module load rocm
-```
-make sure 
-```
-CC --version´
-```
-shows the clang++ compiler in rocm.
-
 ```
 make
 ```
