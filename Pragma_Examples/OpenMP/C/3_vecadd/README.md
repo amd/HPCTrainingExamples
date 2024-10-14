@@ -3,7 +3,8 @@
 This excercise combines what you learned in the previous two excercises: porting simple kernels without and with reduction.
 Decide, if you want to use the APU or discrete GPU programming model. Set export ```HSA_XNACK=1``` or ```=0``` appropriately.
 
-0) CPU code to port yourself. Don't forget to port the Makefile, too, and validate you application runs on the GPU!
+#### 0) serial CPU version
+version to port yourself. Don't forget to port the Makefile, too, and validate you application runs on the GPU!
 ```
 cd 0_vecadd_portyourself
 ```
