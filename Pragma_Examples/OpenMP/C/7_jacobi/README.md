@@ -1,5 +1,5 @@
 # Porting a small app: jacobi
-## AMD training container environment (aac6):´
+## AMD training container environment (aac6):
 ```
 module load rocm
 export CC=amdclang++
