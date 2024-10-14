@@ -2,39 +2,6 @@
 
 This excercise will show in a step by step solution how to port a your first kernels. 
 
-# prepare the environment:
-
-on aac6:
-```
-module load rocm
-```
-or 
-```
-module load aomp/amdclang
-```
-depending on which compiler you want to test.
-Set
-```
-export CXX=amdclang++
-```
-
-
-
-on aac7:
-
-```
-module load craype-accel-amd-gfx942
-module load craype-x86-genoa
-module load PrgEnv-amd
-module load rocm
-export CXX=CC
-```
-Note that CC is a compiler wrapper, depending on the programming enviroment a different compiler may be chosen. In PrgEnv-amd
-```
-CC --version
-```
-should show the clang++ compiler from rocm.
-
 # Excercise instructions:
 For now, set
 ```
