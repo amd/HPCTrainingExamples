@@ -1,9 +1,11 @@
 # First OpenMP offload: 
 Porting of saxpy step by step and explore the discrete GPU and APU programming models:
 
-Part 1: Unified shared memory
-Part 2: Explore differences of ```HSA_XNACK=0``` and ```1```
-Part 3: Map clauses
+- Part 1: Unified shared memory
+
+- Part 2: Explore differences of ```HSA_XNACK=0``` and ```1```
+
+- Part 3: Map clauses
 
 This excercise will show in a step by step solution how to port a your first kernels. 
 
