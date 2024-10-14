@@ -171,6 +171,8 @@ amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 ```
 The results will be wrong! This shows, that proper validation of results is crutial when porting! Before you port a large app, think about your validation strategy before you start. Incremental testing is essential to capture such errors like missing data movement.
 
+Note that this version uses the ```new``` allocator with an alignment of 128 instead of malloc to control the memory alignment. This is beneficial for improved performance.
+
 #### 7) parameter tuning
 experiment with num_teams
 ```
