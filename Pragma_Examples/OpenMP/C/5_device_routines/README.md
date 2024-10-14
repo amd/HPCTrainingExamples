@@ -13,4 +13,4 @@ cd 2_device_routine_wglobaldata
 ```
 cd 3_device_routine_wdynglobaldata
 ```
-Each version has a sub-folder with a CPU serial version to port yourself and a solution for unified memory and with map clauses.
+Each version has a sub-folder with a CPU serial version to port yourself and a solution for unified memory and with map clauses. Build and run analogous to the previous excercises.
