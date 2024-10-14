@@ -11,7 +11,7 @@ LDFLAG        =
 
 # OpenMP
 COMPILER_OMP  = CC # e.g. $(ROCM_PATH)/llvm/bin/clang++ here: accept from environment
-CFLAGS_OMP    = -fopenmp
+CFLAGS_OMP    = -fopenmp --offload-arch=$(ROCM_GPU) #if offload-arch is needed this depends on the compiler chosen!
 LDFLAGS_OMP   =
 
 # HIP

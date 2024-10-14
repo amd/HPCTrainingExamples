@@ -10,14 +10,9 @@ CFLAG         = -Ofast -g --offload-arch=$(ROCM_GPU)
 LDFLAG        =
 
 # OpenMP
-COMPILER_OMP  = CC # e.g. $(ROCM_PATH)/llvm/bin/clang++ here: accept from environment
-CFLAGS_OMP    = -fopenmp
+COMPILER_OMP  = CCX # e.g. $(ROCM_PATH)/llvm/bin/clang++ here: accept from environment
+CFLAGS_OMP    = -fopenmp 
 LDFLAGS_OMP   =
-
-# HIP
-COMPILER_HIP  = $(ROCM_PATH)/bin/hipcc
-CFLAGS_HIP    = -D_HIP
-LDFLAGS_HIP   =
 
 
 # Source code

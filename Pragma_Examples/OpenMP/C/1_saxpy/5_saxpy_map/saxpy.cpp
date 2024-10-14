@@ -8,8 +8,7 @@ void saxpy() {
    double t = 0.0;
    double tb, te;
 
-   #pragma omp target enter data map(to:x,y)
-   #pragma omp target teams distribute parallel for simd
+   #pragma omp target teams distribute parallel for map(tofrom:x,y)
    for (int i = 0; i < N; i++) {
       x[i] = 1.0f;
       y[i] = 2.0f;
@@ -18,7 +17,7 @@ void saxpy() {
 
    tb = omp_get_wtime();
 
-   #pragma omp target teams distribute parallel for simd
+   #pragma omp target teams distribute parallel for map(to:x) map(tofrom:y) 
    for (int i = 0; i < N; i++) {
       y[i] = a * x[i] + y[i];
    }
@@ -28,14 +27,10 @@ void saxpy() {
 
    printf("Time of kernel: %lf\n", t);
 
-   y[0] = 1.0;
-   #pragma omp target update from(y)
-
    printf("plausibility check output:\n");
    printf("y[0] %lf\n",y[0]);
    printf("y[N-1] %lf\n",y[N-1]);
    
-   #pragma omp target exit data(release:x,y)
 
 }
 int main(int argc, char *argv[]){

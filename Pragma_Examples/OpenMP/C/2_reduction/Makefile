@@ -22,7 +22,7 @@ endif
 CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
 LDFLAGS = ${OPENMP_FLAGS} -fno-lto -lm
 
-${EXEC}: ${EXEC}.o codelet.o
+${EXEC}: ${EXEC}.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
 # Cleanup
