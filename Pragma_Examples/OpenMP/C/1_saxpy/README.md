@@ -2,7 +2,7 @@
 
 This excercise will show in a step by step solution how to port a your first kernels. 
 
-# Excercise instructions:
+## Part 1: Unified memory
 For now, set
 ```
 export HSA_XNACK=1
@@ -98,7 +98,7 @@ amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 The observed time is much better than all previous versions.
 Note that the initialization kernel is a warm-up kernel here. If we do not have a warm-up kernel, the observed performance would be significantly worse. Hence the benefit of the accelerator is usually seen only after the first kernel. You can try this by commenting the !$omp target... in the initialize subroutine, then the meassured kernel is the first which touches the arrays used in the kernel.
 
-# Impact of USM
+## Part 2: Impact of USM
 4) Explore impact of unified memory:
 ```
 cd ../4_saxpy_nousm
@@ -120,7 +120,7 @@ export HSA_XNACK=0
 to get similar behaviour like on discrete GPUs (with memory copies).
 Compiling and running this version without any map clauses will result in much worse performance than with unified shared memory and ```HSA_XNACK=1``` (no memory copies on MI300A).
 
-# Map clauses
+## Part 3: Map clauses
 5) this version introduces  map clauses for each kernel.
 ```
 cd ../5_saxpy_map 
