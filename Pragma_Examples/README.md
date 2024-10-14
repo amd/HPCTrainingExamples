@@ -1,11 +1,22 @@
-# OpenMP Offload Fortran examples
+# MI300A OpenMP Offload Training:
+## OpenMP Offload guided Fortran excercises
+**NOTE**: these exercises have been tested on MI300A accelerators using a container environment. To see details on the container environment (such as operating system and modules available) please see `README.md` on [this](https://github.com/amd/HPCTrainingDock) repo.
+
 The Fortran OpenMP porting examples can be found in the README.md in the Fortran directory
 ```
 cd OpenMP/Fortran
 ```
 The following examples in this Readme focus on C/C++. Change to the above mentioned one for Fortran.
 
-# OpenMP Offload Intro Examples (C/C++)
+## OpenMP Offload guided C excercises
+**NOTE**: these exercises have been tested on MI300A accelerators using a container environment. To see details on the container environment (such as operating system and modules available) please see `README.md` on [this](https://github.com/amd/HPCTrainingDock) repo.
+
+The Fortran OpenMP porting examples can be found in the README.md in the Fortran directory
+```
+cd OpenMP/C
+```
+
+# More general OpenMP Offload Intro Examples (C/C++)
 **NOTE**: these exercises have been tested on MI210 and MI300A accelerators using a container environment.
 To see details on the container environment (such as operating system and modules available) please see `README.md` on [this](https://github.com/amd/HPCTrainingDock) repo.
 
