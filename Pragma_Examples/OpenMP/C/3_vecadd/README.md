@@ -23,9 +23,26 @@ port the example, build and run after every kernel you ported to ensure correctn
 1-3) Solution
 The other three folders contain different flavors of the solution. Build and run instructions are the same as for the serial version. The Makefiles are already ported.
 
-1_vecadd_usm  - unified memory version don't forget to set ```HSA_XNACK=1```. Note: if you set ```HSA_XNACK=0``` you will get an error message. This is the intended behaviour for USM, if XNACK is disabled. This is not yet always the case for the beta release of amdflang-new.
+#### 1) Version with unified shared memory
+```
+cd 1_vecadd_usm
+````
+Build and run like above.
+Unified memory version don't forget to set ```export HSA_XNACK=1```. 
 
-2_vecadd_map  - simple mapping clauses, set ```HSA_XNACK=0``` to observe behaviour similar to discrete GPUs
+Note: if you set ```HSA_XNACK=0``` you will get an error message. This is the intended behaviour for USM, if XNACK is disabled. This is not yet always the case for the beta release of amdflang-new.
 
-3_vecadd_targetdata - move data only were necessary a structured data region is used here, set ```HSA_XNACK=0``` to observe behaviour similar to discrete GPUs
+#### 2) with map clauses
+```
+2_vecadd_map
+```
+Build and run like above.
+Version with simple mapping clauses, set ```export HSA_XNACK=0``` to observe behaviour similar to discrete GPUs
+
+#### 3) with data region
+```
+3_vecadd_targetdata
+```
+Build and run like above.
+Move data only were necessary a structured data region is used here, set ```export HSA_XNACK=0``` to observe behaviour similar to discrete GPUs
 
