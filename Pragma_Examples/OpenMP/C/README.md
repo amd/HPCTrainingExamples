@@ -1,11 +1,11 @@
-#Porting excercises
+# Porting excercises
 The C porting excercises can be found here (this is the directory of this README): 
 ```
 cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/C
 ```
 load the amdclang++  compiler and set up the environment
 
-on aac6: 
+## on aac6: 
 ```
 module load rocm
 ```
@@ -17,7 +17,7 @@ module load aomp/amdclang-19.0
 export CC=amdclang
 export CXX=amdclang++
 ```
-on aac7:
+## on aac7:
 
 ```
 module load PrgEnv-amd
@@ -30,8 +30,11 @@ Check, if
 CC --version
 ```
 shows a C compiler with offload capabilities.
+```
+export CXX=amdclang++
+```
 
-any system:
+## Both systems:
 
 This flag
 ```
@@ -43,6 +46,7 @@ export HSA_XNACK=0
 ```
 will disable this and behave similar to a discrete GPU.
 
+# Excercises
 The exercises in the folders numbered 1 to 6 are small examples of what one may encounter when porting a real world code. 
 Each excercise has it's own README with instructions.
 The excercises 1-6 have a CPU only code to try porting yourself and (intermediate steps) of a solution. Excercise 6 does not have a version to port yourself, but explains a common challenge for porting to discrete GPUs.
