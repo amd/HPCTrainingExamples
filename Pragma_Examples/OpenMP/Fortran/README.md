@@ -2,8 +2,9 @@
 The Fortran porting excercises can be found here (this is the directory of this README): 
 ```
 cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran
-#### on aac6:
 ```
+#### on aac6:
+
 load the amdflang-new compiler and set up the environment 
 ```
 module load amdflang-new-beta-drop
@@ -31,7 +32,7 @@ export FC=ftn
 ```
 ###### aac7 only: interactive job with 1 GPU
 ```
- srun -N 1 --gpus=1 --pty bash -i
+ srun -N 1 --gpus=1  --oversubscribe --pty bash -i
 ```
 #### on all systems independent of the compiler:
 This flag
