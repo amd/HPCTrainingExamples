@@ -1,10 +1,10 @@
-# porting exercise: reduction
+# Porting exercise: reduction
 
 This excercise focusses on two things:
-- how to port a reduction to the GPU
-- be careful with mapping clauses on discrete GPUs / HSA_XNACK=0
-
-in this folder four are three versions:
+- Part 1: how to port a reduction to the GPU
+- Part 2: importance of map clauses on discrete GPUs or HSA_XNACK=0 on MI300A
+  
+First, prepare the environment (loading modules, set environment variables), if you didn't do so before.
 
 0) a version to port yourself. 
 - Only port the Makefile and the reduction itself.
@@ -19,9 +19,10 @@ and run
 ./freduce
 ```
 The other folders 1 and 2 have different flavors of the solution:
-1) a sample solution for discrete GPUs (correct output: each element 1010) run this with setting ```export HSA_XNACK=0``` in advance
-2) a sample solution for unified shared memory / APU programming model (correct output: each element 1010)  run this with setting ```export HSA_XNACK=1``` in advance
-
+## Part 1: Port with unified shared memory
+1) a sample solution for unified shared memory / APU programming model (correct output: each element 1010)  run this with setting ```export HSA_XNACK=1``` in advance
+## Part 2: Port with map clauses
+2) a sample solution for discrete GPUs (correct output: each element 1010) run this with setting ```export HSA_XNACK=0``` in advance
 The folder 3 has an excercise to explore the behavior with and without USM:
 
 3) this example intentionally does the mapping wrong (from instead of to). You can see how the result changes (output 1000 instead of 1010) when you use export ```export XSA_XNACK=0```. No error is shown, but the result is wrong. 
