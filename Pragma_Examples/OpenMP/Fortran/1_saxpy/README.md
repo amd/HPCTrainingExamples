@@ -6,7 +6,7 @@ All following excercises will use a Makefile.
 
 There are 6 different enumerated folders. (Reccomendation: ```vimdiff saxpy.f90 ../<X_saxpy_version>/saxpy.f90``` may help you to see the differences):
 
-First, prepare the environment (loading modules, set environment variables), if you didn't do so before.
+First, prepare the environment (load modules, set environment variables), if you didn't do so before.
 
 ## Part 1: Porting with unified shared memory enabled
 For now, set
