@@ -10,8 +10,30 @@ module load amdflang-new-beta-drop
 export FC=amdflang-new
 ```
 #### on aac7:
-
-#### on all systems:
+You can choose the Cray Fortran compiler (ftn) or the amdflang-new compiler.
+##### amdflang-new compiler on aac7:
+```
+module load rocm/rocm-afar-5891
+```
+```
+export FC=amdflang-new
+```
+##### ftn compiler on aac7:
+```
+module load PrgEnv-cray
+module load craype-x86-genoa
+module load craype-accel-amd-gfx942
+module load cce
+module load rocm
+```
+```
+export FC=ftn
+```
+###### aac7 only: interactive job with 1 GPU
+```
+ srun -N 1 --gpus=1 --pty bash -i
+```
+#### on all systems independent of the compiler:
 This flag
 ```
 export HSA_XNACK=1
