@@ -5,16 +5,16 @@ This excercise focusses on two things:
 - Part 2: importance of map clauses on discrete GPUs or HSA_XNACK=0 on MI300A
   
 First, prepare the environment (loading modules, set environment variables), if you didn't do so before.
-
+## For Part 1 and 2: serial CPU version to port
 0) a version to port yourself. 
 - Only port the Makefile and the reduction itself.
 This excercise focusses on how to implement a reduction, not on porting the full example. Decide if you want to use unified memory (```export HSA_XNACK=1```) or not (```export HSA_XNACK=0```), but for this excercise this is of minor importance.
 
-How to build all four versions
+How to build all versions:
 ```
 make
 ```
-and run
+and run:
 ```
 ./freduce
 ```
