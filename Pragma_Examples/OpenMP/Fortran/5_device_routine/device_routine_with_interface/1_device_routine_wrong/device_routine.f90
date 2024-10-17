@@ -9,7 +9,8 @@
          use omp_lib
 
          implicit none
-
+         
+         !$omp requires unified_shared_memory
          !---variables
          integer,parameter :: N=1000
          !N                   number of values in x array

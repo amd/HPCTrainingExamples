@@ -21,7 +21,7 @@ program main
     do i=1,n
         a(i) = sin(dble(i)*1.0d0)*sin(dble(i)*1.0d0)
         b(i) = cos(dble(i)*1.0d0)*cos(dble(i)*1.0d0) 
-        c(i) = 0.0_8
+        c(i) = 0.0d0
     enddo
 
     !meassure after warmup kernel

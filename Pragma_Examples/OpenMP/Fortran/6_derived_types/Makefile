@@ -1,4 +1,4 @@
-EXEC = dtype_derived_type  dtype_pointer dtype_scalar_members dtype_derived_type_usm dtype_derived_type_automap
+EXEC = dtype_derived_type dtype_pointer dtype_scalar_members dtype_derived_type_usm dtype_derived_type_automap
 default: ${EXEC}
 all: ${EXEC}
 
@@ -32,6 +32,8 @@ endif
 CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
 ifeq (${FC1},gfortran-13)
    LDFLAGS = ${OPENMP_FLAGS} -fno-lto
+else ifeq ($(findstring ftn,$(FC1)), ftn)
+   LDFLAGS = ${OPENMP_FLAGS} -L/opt/rh/gcc-toolset-12/root/usr/lib/gcc/x86_64-redhat-linux/12
 else
    LDFLAGS = ${OPENMP_FLAGS}
 endif

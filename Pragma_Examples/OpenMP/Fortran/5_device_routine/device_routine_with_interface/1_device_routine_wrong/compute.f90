@@ -1,9 +1,11 @@
 ! This example was created by Johanna Potyka
 ! Copyright (c) 2024 AMD HPC Application Performance Team
 ! MIT License
-
+    
       !--- device routine
       subroutine compute(x)
+          implicit none
+          !$omp requires unified_shared_memory
           !--------------------
           !example routine called from kernel
           !--- variables

@@ -1,8 +1,9 @@
 # Excercise: mapping of different datatypes
 
 This excercise explores the possibilities of mapping derived types. This is one of the main challenges one may encounter when porting a Fortran app to discrete GPUs. This excercise also shows that on the APU using HSA_XNACK=1 such problems do not exist.
+Note: This excercise was designed for amdflang-new.
 
-compile the examples:
+Compile the examples:
 ```
 make
 ```
@@ -20,7 +21,7 @@ Run:
 ```
 ./dtype_derived_type_automap
 ```
-this results in a memory access fault. Hence, this implementation is wrong on a discrete GPU (or MPI300A: disabling HSA_XNACK).
+this results in a memory access fault. Hence, this implementation is wrong on a discrete GPU (or MI300A: disabling HSA_XNACK).
 
 3) The second example adds mapping clauses for the allocatable array which is a member of the derived type
 
@@ -60,7 +61,14 @@ Set
 ```
 export LIBOMPTARGET_INFO=-1 
 ```
-and run example 3  with and without unified shared memory (export HSA_XNACK=1 and  HSA__XNACK=0)
+with the amdflang-new compiler or 
+```
+export CRAY_ACC_DEBUG=1
+
+```
+if you work with the ftn compiler.
+
+Run example 3  with and without unified shared memory (export HSA_XNACK=1 and  HSA__XNACK=0)
 You are able to see host to device copies in the shown log in the case of HSA_XNACK=0.
 In the case of HSA_XNACK=1 those copies are gone and this message is shown:
 

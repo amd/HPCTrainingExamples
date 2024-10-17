@@ -116,7 +116,7 @@ cp CMakeLists.txt CMakeLists.txt.portable
 cp ~/Makefile .
 cp ~/CMakeLists.txt .
 
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/C/saxpy/
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/C/1_saxpy/6_saxpy_targetdata
 module load rocm
 module load amdclang
 make
@@ -125,7 +125,7 @@ make clean
 
 cd
 
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/freduce
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/2_reduction/1_reduction_solution
 module load rocm
 module load amdclang
 make

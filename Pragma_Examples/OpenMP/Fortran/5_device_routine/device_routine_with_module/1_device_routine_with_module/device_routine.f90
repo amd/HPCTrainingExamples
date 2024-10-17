@@ -27,8 +27,6 @@
          !sum             used to sum up x
          
 
-         !an allocate on the host is required? flang-new otherwise
-         !results in errors
          allocate(x(1:N), STAT=err_stat)
          if(err_stat /= 0) then
              write(*,*) "error during allocation"

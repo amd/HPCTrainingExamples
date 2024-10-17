@@ -1,7 +1,7 @@
 ! Original Author: Arjen Tamerus at DiRAC Hackathon Feb 2024
 ! Released to AMD as sample code
 module dtype
-
+        implicit none 
         type :: my_dtype
                 integer :: s, e
                 integer,dimension(:),allocatable :: values
@@ -11,14 +11,13 @@ end module
 
 program offload_types
         use dtype
-
+        implicit none
         ! $omp declare mapper (my_dtype :: v) map(v, v%values(s:e))
 
         type(my_dtype),target :: my_instance
         integer,dimension(:),pointer :: values_ptr
         integer :: i
 
-        ! $omp requires unified_shared_memory
         allocate(my_instance%values(1024))
         my_instance%s=1
         my_instance%e=1024
