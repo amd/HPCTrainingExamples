@@ -9,7 +9,7 @@
          use omp_lib
 
          implicit none
-
+         !$omp requires unified_shared_memory
          !---variables
          integer,parameter :: N=1000
          !N                   number of values in x array
@@ -43,22 +43,21 @@
          !---initialisation
          x = -1.0_rk
          !--- call a device subroutine in kernel
-!$omp target teams distribute parallel do simd map(tofrom:x)
+         !$omp target teams distribute parallel do simd
          do k=1,N
             call compute(x(k))
-            !x(k) = 1.0_rk
          end do
-!$omp end target teams distribute parallel do simd         
+         !$omp end target teams distribute parallel do simd         
 
          !--- initialize sum
         sum = 0.0_rk;
 
         !--- sum up x to sum on device with reduction
-!$omp target teams distribute parallel do simd reduction(+:sum) map(to:x)
+        !$omp target teams distribute parallel do simd reduction(+:sum) 
         do k=1,N
            sum = sum + x(k)
         end do
-!$omp end target teams distribute parallel do simd        
+        !$omp end target teams distribute parallel do simd        
 
         !--- print result
         Write(*,'(A,F0.12)') "Result: sum of x is ",sum
