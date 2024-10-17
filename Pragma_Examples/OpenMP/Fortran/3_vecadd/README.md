@@ -49,4 +49,4 @@ and without
 ```
 cd 4_vecadd_async
 ```
-If you remove the ```!$omp taskwait`` the result will be wrong as the CPU does not wait for the GPU to synchronize before the data is accesses on the CPU.
+If you remove the ```!$omp taskwait``` the result will be wrong as the CPU does not wait for the GPU to synchronize before the data is accesses on the CPU.
