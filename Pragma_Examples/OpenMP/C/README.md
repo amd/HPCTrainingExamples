@@ -26,7 +26,12 @@ module load craype-x86-genoa
 module load rocm
 ```
 for cray compiler:
-
+```
+module load PrgEnv-cray
+module load craype-accel-amd-gfx942
+module load craype-x86-genoa
+module load rocm
+```
 Check, if 
 ```
 CC --version
