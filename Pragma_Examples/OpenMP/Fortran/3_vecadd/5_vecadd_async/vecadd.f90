@@ -16,20 +16,29 @@ program main
     ! Allocate memory for each vector
     allocate(a(n), b(n), c(n))
  
-    !$omp target enter data map(to:a,b,c)
+    !$omp target enter data map(alloc:a,b,c)
     ! Initialize input vectors.
-    !$omp target teams distribute parallel do simd nowait depend(inout:a,b)
+    !$omp target teams distribute parallel do simd nowait depend(out:a)
     do i=1,n
         a(i) = sin(dble(i)*1.0d0)*sin(dble(i)*1.0d0)
-        b(i) = cos(dble(i)*1.0d0)*cos(dble(i)*1.0d0) 
     enddo
     !$omp end target teams distribute parallel do simd
 
+    !$omp target teams distribute parallel do simd nowait depend(out:b)
+    do i=1,n
+        b(i) = cos(dble(i)*1.0d0)*cos(dble(i)*1.0d0) 
+    enddo
+    !$omp end target teams distribute parallel do simd
+    !$omp target teams distribute parallel do simd nowait depend(out:c)
+    do i=1,n
+        c(i) = 0.0d0
+    enddo
+    !$omp end target teams distribute parallel do simd
     !meassure after warmup kernel
     startt=omp_get_wtime()
     ! Sum each component of arrays
 
-    !$omp target teams distribute parallel do simd nowait depend(in:a,b) depend(out:c)
+    !$omp target teams distribute parallel do simd nowait depend(in:a,b,c) depend(out:c)
     do i=1,n
         c(i) = a(i) + b(i)
     enddo
