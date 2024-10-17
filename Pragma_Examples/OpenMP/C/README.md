@@ -18,20 +18,22 @@ export CC=amdclang
 export CXX=amdclang++
 ```
 ## on aac7:
-
+for amd compiler:
 ```
 module load PrgEnv-amd
 module load craype-accel-amd-gfx942
 module load craype-x86-genoa
 module load rocm
 ```
+for cray compiler:
+
 Check, if 
 ```
 CC --version
 ```
 shows a C compiler with offload capabilities.
 ```
-export CXX=amdclang++
+export CXX=CC
 ```
 
 ## Both systems:
