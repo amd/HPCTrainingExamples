@@ -9,12 +9,11 @@ cd device_routine_with_interface
 ```
 there are five code versions in enumerated folders:
 0) a serial CPU version. Try to port this yourself. Decide if you want to do a unified_shared_memory version (export HSA_XNACK=1) ore one with manual memory management (relevant for discrete GPUs). If you are stuck, explore solution versions in folders enumerated 1-4 (explanation below). Hint: Don't forget to adapt the Makefile and check, if your kernel really runs on the GPU.
-#### Solution 1.1
 1) a version which is only partially ported. It still results in an error! Do you know why? Hint: How does the compiler know to compile the routine in an other compilation unit (here an other file) for the GPU?
 
 2) a solution version which runs on the GPU with unified shared memory
+Note: the solution shows how to compile the subroutine exclusively for the device. If !$omp declare target is used, the subroutine will be compiled for host and device. Cray ftn does not support the device_type(nohost) link(...) clauses. For portable code between both compilers leave those clauses for now (this note was updated for CCE 17 and amdflang-new beta drop 4.0).
 
-#### Solution 1.2
 3) a solution version with optimized data movement (this is only relevant on discrete GPUs or with ```export HSA_XNACK=0```  on MI300A).
 
 
@@ -35,7 +34,6 @@ export HSA_XNACK=0
 ```
 if you work on a version with memory copies. 
 If you are stuck, explore solution versions in folders enumerated as 1 and 2 (explanation below). Hint: Don't forget to adapt the Makefile and check, if your kernel really runs on the GPU.
-
 1) a solution with memory management (mapping) for discrete GPUS Note: this solution works for amdflang-new, with the cray compiler remove the link clause
 2) a solution for unified shared memory  Note: this solution works for amdflang-new, with the cray compiler remove the link clause
 

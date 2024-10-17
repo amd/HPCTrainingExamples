@@ -1,4 +1,5 @@
 # Porting a small app: jacobi
+Note: This excercise code and solutions were tested with amdflang-new.
 ```
 cd 0_jacobi_portyourself
 ```
@@ -39,6 +40,7 @@ For the unified shared memory version:
 export HSA_XNACK=1
 cd 1_jacobi_usm
 make
+./jacobi
 ```
 compare with your solution (e.g. use vimdiff to compare)
 
@@ -47,6 +49,7 @@ For the discrete GPU / manual memory management version:
 export HSA_XNACK=0
 cd 2_jacobi_targetdata
 make
+./jacobi
 ```
 compare with your solution (e.g. use vimdiff to compare)
 
