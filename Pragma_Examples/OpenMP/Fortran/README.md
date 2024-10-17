@@ -21,6 +21,9 @@ export FC=amdflang-new
 ```
 ##### ftn compiler on aac7:
 ```
+ srun -N 1 --gpus=1  --oversubscribe --pty bash -i
+```
+```
 module load PrgEnv-cray
 module load craype-x86-genoa
 module load craype-accel-amd-gfx942
@@ -29,10 +32,6 @@ module load rocm
 ```
 ```
 export FC=ftn
-```
-###### aac7 only: interactive job with 1 GPU
-```
- srun -N 1 --gpus=1  --oversubscribe --pty bash -i
 ```
 #### on all systems independent of the compiler:
 This flag
