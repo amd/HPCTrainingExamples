@@ -1,7 +1,7 @@
 # Porting excercise: vecadd
 
 This excercise combines what you learned in the previous two excercises: porting simple kernels without and with reduction.
-# Serial CPU code to port (basis for Excercise 1 and 2)
+# Serial CPU code to port
 CPU code to port yourself. Don't forget to port the Makefile, too, and validate you application runs on the GPU!
 ```
 cd 0_vecadd_portyourself
