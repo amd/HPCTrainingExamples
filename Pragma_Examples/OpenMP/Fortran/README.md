@@ -13,6 +13,25 @@ export FC=amdflang-new
 Note that everyone shares a single node, so performance can be severely impacted due to a noisy environment.
 
 #### on aac7:
+Get an interactive session on a node:
+```
+srun -N 1 --mem=32GB --gpus=1 --pty bash -i
+```
+Note: you will get 1 GPU and 32 GB of memory. This will allow others to use the remaining resources of a node.
+Useful commands:
+```
+sinfo
+```
+check for available nodes.
+```
+squeue
+```
+check for you job(s). In case it was not terminated correctly, you may have to use
+```
+scancel <JobID>
+```
+to terminate a job.
+
 You can choose the Cray Fortran compiler (ftn) or the amdflang-new compiler.
 ##### amdflang-new compiler on aac7:
 ```
@@ -22,10 +41,6 @@ module load rocm/rocm-afar-5891
 export FC=amdflang-new
 ```
 ##### ftn compiler on aac7:
-Start an interactive session on a node:
-```
- srun -N 1 --gpus=1  --oversubscribe --pty bash -i
-```
 Prepare the environment:
 ```
 module load PrgEnv-cray
@@ -47,6 +62,11 @@ will enable no memory copies (use of unified_shared_memory) on MI300A
 export HSA_XNACK=0
 ```
 will disable this and behave similar to a discrete GPU with memory copies.
+Check with
+```
+rocminfo
+```
+if xnack+ (unified memory enabled) or xnack- (with memory copies) is set.
 
 Note: In the beta release of the amdflang-new/4.0 compiler ```HSA_XNACK=0``` with a code with !$omp requires unified_shared_memory can be compiled in some cases as if no unified_shared_memory is required. This is a behavior not according to the standard and will lead to an error message in future releases!
 
