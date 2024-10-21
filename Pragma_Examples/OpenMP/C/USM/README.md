@@ -2,7 +2,7 @@ explore unified shared memory:
 
 explore the behaviour of the examples in this folder with and without HSA_XNACK enabled.
 export LIBOMPTARGET_INFO=-1
-to see the memomory is moved when you set
+to see the memory is moved when you set
 export HSA_XNACK=0 
 if you set 
 export HSA_XNACK=1

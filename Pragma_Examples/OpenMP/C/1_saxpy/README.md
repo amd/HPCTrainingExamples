@@ -94,7 +94,7 @@ The observed time is a bit better than in case 1 but still not the full parallel
 cd ../3_saxpy_paralleldosimd
 vi saxpy.cpp
 ``` 
-add "parallel do" for more parellelism
+add "parallel for" for more parellelism
 - Compile again
 ```
 amdclang++ -fopenmp --offload-arch=gfx942 saxpy.cpp -o saxpy
