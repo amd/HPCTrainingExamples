@@ -61,6 +61,11 @@ will enable no memory copies (use of unified_shared_memory) on MI300A
 export HSA_XNACK=0
 ```
 will disable this and behave similar to a discrete GPU with memory copies.
+Check with
+```
+rocminfo
+```
+if xnack+ (unified memory enabled) or xnack- (with memory copies) is set.
 
 Note: In the beta release of the amdflang-new/4.0 compiler ```HSA_XNACK=0``` with a code with !$omp requires unified_shared_memory can be compiled in some cases as if no unified_shared_memory is required. This is a behavior not according to the standard and will lead to an error message in future releases!
 
