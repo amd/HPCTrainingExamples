@@ -14,6 +14,24 @@ Note that everyone shares a single node, so performance can be severely impacted
 
 #### on aac7:
 You can choose the Cray Fortran compiler (ftn) or the amdflang-new compiler.
+Get an interactive session on a node:
+```
+srun -N 1 --mem=20GB --gpus=1 --pty bash -i
+```
+Note: you will get 1 GPU and 20 GB of memory. This will allow others to use the remaining resources of a node.
+Useful commands:
+```
+sinfo
+```
+check for available nodes.
+```
+squeue
+```
+check for you job(s). In case it was not terminated correctly, you may have to use
+```
+scancel <JobID>
+```
+to terminate a job.
 ##### amdflang-new compiler on aac7:
 ```
 module load rocm/rocm-afar-5891
@@ -22,10 +40,6 @@ module load rocm/rocm-afar-5891
 export FC=amdflang-new
 ```
 ##### ftn compiler on aac7:
-Start an interactive session on a node:
-```
- srun -N 1 --gpus=1  --oversubscribe --pty bash -i
-```
 Prepare the environment:
 ```
 module load PrgEnv-cray
