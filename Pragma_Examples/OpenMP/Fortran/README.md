@@ -13,7 +13,6 @@ export FC=amdflang-new
 Note that everyone shares a single node, so performance can be severely impacted due to a noisy environment.
 
 #### on aac7:
-You can choose the Cray Fortran compiler (ftn) or the amdflang-new compiler.
 Get an interactive session on a node:
 ```
 srun -N 1 --mem=20GB --gpus=1 --pty bash -i
@@ -32,6 +31,8 @@ check for you job(s). In case it was not terminated correctly, you may have to u
 scancel <JobID>
 ```
 to terminate a job.
+
+You can choose the Cray Fortran compiler (ftn) or the amdflang-new compiler.
 ##### amdflang-new compiler on aac7:
 ```
 module load rocm/rocm-afar-5891
