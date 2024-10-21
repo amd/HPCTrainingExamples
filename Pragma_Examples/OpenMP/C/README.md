@@ -37,10 +37,14 @@ Check, if
 CC --version
 ```
 shows a C compiler with offload capabilities.
+Some Makefiles use the environment variable CXX, hence:
 ```
 export CXX=CC
 ```
-
+Get an interactive session on a node:
+```
+srun -N 1 --mem=32GB -w x9000c1s2b0n0 --gpus=1 --pty bash -i
+```
 ## Both systems:
 
 This flag
@@ -61,7 +65,7 @@ The instructions assume you work on MI300A and some of the excercises explore th
 The reccomended order to do the exercises is the order in which they are numbered, but any sub-folder with excercises has instructions to do them stand-alone.
 Excercise 7 is a small app with a Jacobi solver. (Note: This code is explained in detail a blogpost https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-jacobi-readme/.) 
 
-Choose one of the excercises in the sub-directories and use the README there for instructions (reccomended: follow them as they are numbered, first do all excercises with unified memory and later without):
+Choose one of the excercises in the sub-directories and use the README there for instructions (reccomended: follow them as they are numbered, first do each excercise with unified memory and later without):
 ```
 cd 1_saxpy
 cd 2_vecadd  
@@ -69,5 +73,8 @@ cd 3_reduction
 cd 4_reduction_scalars  
 cd 5_reduction_array
 cd 6_device_routine
+```
+# Porting of a small app:
+```
 cd 7_jacobi
 ```
