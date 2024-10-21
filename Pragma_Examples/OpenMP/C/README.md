@@ -18,14 +18,33 @@ export CC=amdclang
 export CXX=amdclang++
 ```
 ## on aac7:
-for amd compiler:
+Get an interactive session on a node:
+```
+srun -N 1 --mem=20GB --gpus=1 --pty bash -i
+```
+Note: you will get 1 GPU and 20 GB of memory. This will allow others to use the remaining resources of a node.
+Useful commands:
+```
+sinfo
+```
+check for available nodes.
+```
+squeue
+```
+check for you job(s). In case it was not terminated correctly, you may have to use
+```
+scancel <JobID>
+```
+to terminate a job.
+
+For amd compiler:
 ```
 module load PrgEnv-amd
 module load craype-accel-amd-gfx942
 module load craype-x86-genoa
 module load rocm
 ```
-for cray compiler:
+For cray compiler:
 ```
 module load PrgEnv-cray
 module load craype-accel-amd-gfx942
@@ -40,10 +59,6 @@ shows a C compiler with offload capabilities.
 Some Makefiles use the environment variable CXX, hence:
 ```
 export CXX=CC
-```
-Get an interactive session on a node:
-```
-srun -N 1 --mem=32GB -w x9000c1s2b0n0 --gpus=1 --pty bash -i
 ```
 ## Both systems:
 
