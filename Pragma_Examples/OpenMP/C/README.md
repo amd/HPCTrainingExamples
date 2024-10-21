@@ -20,7 +20,7 @@ export CXX=amdclang++
 ## on aac7:
 Get an interactive session on a node:
 ```
-srun -N 1 --mem=32GB --gpus=1 --pty bash -i
+srun -N 1 --mem=100GB --gpus=1 --pty bash -i
 ```
 Note: you will get 1 GPU and 32 GB of memory. This will allow others to use the remaining resources of a node.
 Useful commands:
