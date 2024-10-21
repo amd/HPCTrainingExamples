@@ -71,7 +71,11 @@ will enable no memory copies (use of unified_shared_memory) on MI300A
 export HSA_XNACK=0
 ```
 will disable this and behave similar to a discrete GPU.
-
+Check with
+```
+rocminfo
+```
+if xnack+ (unified memory enabled) or xnack- (with memory copies) is set.
 # Excercises
 The exercises in the folders numbered 1 to 6 are small examples of what one may encounter when porting a real world code. 
 Each excercise has it's own README with instructions.
