@@ -2,9 +2,9 @@
 ## AMD training container environment (aac6):
 ```
 module load rocm
-export CXX=amdclang++
+export CC=amdclang++
 ```
-
+Note: CC is used in the Makefile as otherwise the compiler wrappers in the HPE environment on aac7 do not work.
 ## Cray environment (aac7):
 ```
 module load craype-accel-amd-gfx942
