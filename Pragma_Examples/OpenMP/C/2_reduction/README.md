@@ -23,7 +23,7 @@ Set
 ```export HSA_XNACK=1```
 to test this version.
 ```
-cd 0_reduction_usm
+cd 1_reduction_usm
 ```
 Build
 ```  
@@ -40,7 +40,7 @@ Set
 ```export HSA_XNACK=0```
 to test this version.
 ```
-cd 0_reduction_map
+cd 2_reduction_map
 ```
 Build
 ```  
