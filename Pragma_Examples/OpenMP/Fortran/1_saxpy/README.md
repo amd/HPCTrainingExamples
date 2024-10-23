@@ -92,7 +92,7 @@ export HSA_XNACK=0
 to get similar behaviour like on discrete GPUs (with memory copies).
 Compiling and running this version without any map clauses will result in much worse performance than with unified shared memory and ```HSA_XNACK=1``` (no memory copies on MI300A).
 
-## Part 3: explore the impact of unified shared memory
+## Part 3: with map clauses
 Set
 ```
 export HSA_XNACK=0
