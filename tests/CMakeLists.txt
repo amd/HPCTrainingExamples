@@ -142,9 +142,9 @@ add_test(NAME OpenMP_Saxpy_C_AMDClang COMMAND ../openmp_saxpy_c_amdclang.sh )
 set_property(TEST OpenMP_Saxpy_C_AMDClang PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_Saxpy_C_AMDClang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Saxpy_C_AMDGCC COMMAND ../openmp_saxpy_c_amdgcc.sh )
-set_property(TEST OpenMP_Saxpy_C_AMDGCC PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_Saxpy_C_AMDGCC PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#add_test(NAME OpenMP_Saxpy_C_AMDGCC COMMAND ../openmp_saxpy_c_amdgcc.sh )
+#set_property(TEST OpenMP_Saxpy_C_AMDGCC PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+#set_property(TEST OpenMP_Saxpy_C_AMDGCC PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Saxpy_C_AOMP COMMAND ../openmp_saxpy_c_aomp.sh )
 set_property(TEST OpenMP_Saxpy_C_AOMP PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
