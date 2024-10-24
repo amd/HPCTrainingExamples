@@ -3,7 +3,7 @@
 ***************************************************************************/
 
 #include <hip/hip_runtime.h>
-#include <hipblas.h>
+#include <hipblas/hipblas.h>
 #include "dgemm.h"
 #include "darray.h"
 #include "timer.h"
