@@ -54,18 +54,18 @@ module purge
 module load rocm
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
-pushd ${REPO_DIR}/HIP/saxpy
+pushd ${REPO_DIR}/MPI-examples/GhostExchange/GhostExchange_ArrayAssign_HIP/Ver1
 rm -rf build_for_test
 mkdir build_for_test
 cd build_for_test
-cmake ..
-make
+cmake -DCMAKE_CXX_COMPILER=/opt/rocm-${ROCM_VERSION}/bin/amdclang++ -DCMAKE_C_COMPILER=/opt/rocm-${ROCM_VERSION}/bin/amdclang ..
+make -j
 
 result=`echo ${ROCM_VERSION} | awk '$1<=6.1.2'` && echo $result
 
 if [[ "${OMNIPERF_VERSION}" != "" ]]; then
    OMNIPERF_VERSION="/${OMNIPERF_VERSION}"
-fi
+fi	
 
 if [[ "${result}" ]]; then
    echo " ------------------------------- "
@@ -95,7 +95,7 @@ else
 fi
 
 export HSA_XNACK=1
-omniperf profile -n v1 --no-roof -- ./saxpy
+omniperf profile -n v1 --no-roof -- ./GhostExchange -x 1 -y 1 -i 200 -j 200 -h 2 -t -c -I 100
 
 cd ..
 rm -rf build_for_test
