@@ -956,3 +956,16 @@ set_property(TEST TAU_Check_MPI_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module
 add_test(NAME Score-P_Check_Version COMMAND ../scorep_check_version.sh)
 set_property(TEST Score-P_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "Score-P 9.0-dev")
 set_property(TEST Score-P_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+# Miniconda3 Tests
+
+add_test(NAME Miniconda3_Check_Version COMMAND ../miniconda3_check_version.sh)
+set_property(TEST Miniconda3_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 24.9.2")
+set_property(TEST Miniconda3_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+# Miniforge3 Tests
+
+add_test(NAME Miniforge3_Check_Version COMMAND ../miniforge3_check_version.sh)
+set_property(TEST Miniforge3_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 24.9.0")
+set_property(TEST Miniforge3_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
