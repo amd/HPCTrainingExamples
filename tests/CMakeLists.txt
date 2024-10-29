@@ -963,6 +963,14 @@ add_test(NAME Miniconda3_Check_Version COMMAND ../miniconda3_check_version.sh)
 set_property(TEST Miniconda3_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 24.9.2")
 set_property(TEST Miniconda3_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME Miniconda3_Env_Create COMMAND ../miniconda3_env_create.sh)
+set_property(TEST Miniconda3_Env_Create PROPERTY PASS_REGULAR_EXPRESSION "env_for_test          *")
+set_property(TEST Miniconda3_Env_Create PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Miniconda3_Env_Install COMMAND ../miniconda3_env_install.sh)
+set_property(TEST Miniconda3_Env_Install PROPERTY PASS_REGULAR_EXPRESSION "jaxlib")
+set_property(TEST Miniconda3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # Miniforge3 Tests
 
 add_test(NAME Miniforge3_Check_Version COMMAND ../miniforge3_check_version.sh)
