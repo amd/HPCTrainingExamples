@@ -973,7 +973,18 @@ set_property(TEST Miniconda3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "modul
 
 # Miniforge3 Tests
 
-add_test(NAME Miniforge3_Check_Version COMMAND ../miniforge3_check_version.sh)
-set_property(TEST Miniforge3_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 24.9.0")
-set_property(TEST Miniforge3_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Miniforge3_Check_Conda_Version COMMAND ../miniforge3_check_version.sh)
+set_property(TEST Miniforge3_Check_Conda_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 24.9.0")
+set_property(TEST Miniforge3_Check_Conda_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME Miniforge3_Check_Mamba_Version COMMAND ../miniforge3_check_version.sh)
+set_property(TEST Miniforge3_Check_Mamba_Version PROPERTY PASS_REGULAR_EXPRESSION "mamba 1.5.9")
+set_property(TEST Miniforge3_Check_Mamba_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Miniforge3_Env_Create COMMAND ../miniforge3_env_create.sh)
+set_property(TEST Miniforge3_Env_Create PROPERTY PASS_REGULAR_EXPRESSION "env_for_test          *")
+set_property(TEST Miniforge3_Env_Create PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Miniforge3_Env_Install COMMAND ../miniforge3_env_install.sh)
+set_property(TEST Miniforge3_Env_Install PROPERTY PASS_REGULAR_EXPRESSION "jaxlib")
+set_property(TEST Miniforge3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
