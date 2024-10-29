@@ -18,6 +18,7 @@ MPI4PY=0
 OPENMP=0
 OPENACC=0
 MVAPICH2=0
+MINICONDA3=0
 GPU_AWARE_MPI=0
 STD_PAR=0
 NODE_MEM_MODEL=0
@@ -48,6 +49,7 @@ usage()
     echo "--mpi4py : runs the mpi4py tests"
     echo "--jax : runs the jax tests"
     echo "--openmp : runs the openmp tests"
+    echo "--miniconda3 : runs miniconda3 tests"
     echo "--openacc : runs the openacc tests"
     echo "--mvapich2 : runs the mvapich2 tests"
     echo "--gpu-aware-mpi : runts the gpu aware mpi tests"
@@ -126,7 +128,11 @@ do
       "--scorep")
           shift
           SCOREP=1
-	  =1
+          reset-last
+          ;;
+      "--miniconda3")
+          shift
+          MINICONDA3=1
           reset-last
           ;;
       "--jax")
@@ -235,6 +241,8 @@ elif [ ${KOKKOS} -eq 1 ]; then
    ctest -R Kokkos
 elif [ ${HPCTOOLKIT} -eq 1 ]; then
    ctest -R HPCToolkit
+elif [ ${MINICONDA3} -eq 1 ]; then
+   ctest -R Miniconda3
 elif [ ${TAU} -eq 1 ]; then
    ctest -R TAU
 elif [ ${SCOREP} -eq 1 ]; then
