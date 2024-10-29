@@ -19,6 +19,7 @@ OPENMP=0
 OPENACC=0
 MVAPICH2=0
 MINICONDA3=0
+MINIFORGE3=0
 GPU_AWARE_MPI=0
 STD_PAR=0
 NODE_MEM_MODEL=0
@@ -135,6 +136,11 @@ do
           MINICONDA3=1
           reset-last
           ;;
+      "--miniforge3")
+          shift
+          MINIFORGE3=1
+          reset-last
+          ;;
       "--jax")
           shift
           JAX=1
@@ -243,6 +249,8 @@ elif [ ${HPCTOOLKIT} -eq 1 ]; then
    ctest -R HPCToolkit
 elif [ ${MINICONDA3} -eq 1 ]; then
    ctest -R Miniconda3
+elif [ ${MINIFORGE3} -eq 1 ]; then
+   ctest -R Miniforge3
 elif [ ${TAU} -eq 1 ]; then
    ctest -R TAU
 elif [ ${SCOREP} -eq 1 ]; then
