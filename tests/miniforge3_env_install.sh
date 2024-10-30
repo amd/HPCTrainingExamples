@@ -8,7 +8,7 @@ mamba create -y -n env_for_test numpy pandas
 
 mamba activate env_for_test
 
-mamba install jax
+mamba install -y jax
 
 mamba list -n env_for_test
 
