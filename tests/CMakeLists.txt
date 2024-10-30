@@ -988,3 +988,13 @@ set_property(TEST Miniforge3_Env_Create PROPERTY SKIP_REGULAR_EXPRESSION "module
 add_test(NAME Miniforge3_Env_Install COMMAND ../miniforge3_env_install.sh)
 set_property(TEST Miniforge3_Env_Install PROPERTY PASS_REGULAR_EXPRESSION "jaxlib")
 set_property(TEST Miniforge3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+#HDF5 Tests
+
+add_test(NAME HDF5_Check_Version COMMAND ../hdf5_check_version.sh)
+set_property(TEST HDF5_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "h5dump: Version 1.14.5")
+set_property(TEST HDF5_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HDF5_Check_H5Dump COMMAND ../hdf5_check_h5dump.sh)
+set_property(TEST HDF5_Check_H5Dump PROPERTY PASS_REGULAR_EXPRESSION "DATASPACE  SIMPLE { ( 10, 40 ) / ( 10, 40 ) }")
+set_property(TEST HDF5_Check_H5Dump PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
