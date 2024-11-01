@@ -835,7 +835,7 @@ add_test(NAME Omnitrace_AMD_Research_Avail_Check COMMAND ../omnitrace-avail_chec
 set_property(TEST Omnitrace_AMD_Research_Avail_Check PROPERTY PASS_REGULAR_EXPRESSION "Outputting text configuration file ")
 set_property(TEST Omnitrace_AMD_Research_Avail_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Omnitrace_ROCm_Avail_Check COMMAND ../omnitrace-avail_check.sh --omnitrace-version 6.2.1)
+add_test(NAME Omnitrace_ROCm_Avail_Check COMMAND ../omnitrace-avail_check.sh --omnitrace-version 6.2.2)
 set_property(TEST Omnitrace_ROCm_Avail_Check PROPERTY PASS_REGULAR_EXPRESSION "Outputting text configuration file ")
 set_property(TEST Omnitrace_ROCm_Avail_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
@@ -843,7 +843,7 @@ add_test(NAME Omnitrace_AMD_Research_Instrument_Check COMMAND ../omnitrace-instr
 set_property(TEST Omnitrace_AMD_Research_Instrument_Check PROPERTY PASS_REGULAR_EXPRESSION "The instrumented executable image is stored in ")
 set_property(TEST Omnitrace_AMD_Research_Instrument_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Omnitrace_ROCm_Instrument_Check COMMAND ../omnitrace-instrument_check.sh --omnitrace-version 6.2.1)
+add_test(NAME Omnitrace_ROCm_Instrument_Check COMMAND ../omnitrace-instrument_check.sh --omnitrace-version 6.2.2)
 set_property(TEST Omnitrace_ROCm_Instrument_Check PROPERTY PASS_REGULAR_EXPRESSION "The instrumented executable image is stored in ")
 set_property(TEST Omnitrace_ROCm_Instrument_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
@@ -851,7 +851,7 @@ add_test(NAME Omnitrace_AMD_Research_Run_Check COMMAND ../omnitrace-run_check.sh
 set_property(TEST Omnitrace_AMD_Research_Run_Check PROPERTY PASS_REGULAR_EXPRESSION "Tracing session 1 ended, total sessions:0")
 set_property(TEST Omnitrace_AMD_Research_Run_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Omnitrace_ROCm_Run_Check COMMAND ../omnitrace-run_check.sh --omnitrace-version 6.2.1)
+add_test(NAME Omnitrace_ROCm_Run_Check COMMAND ../omnitrace-run_check.sh --omnitrace-version 6.2.2)
 set_property(TEST Omnitrace_ROCm_Run_Check PROPERTY PASS_REGULAR_EXPRESSION "Tracing session 1 ended, total sessions:0")
 set_property(TEST Omnitrace_ROCm_Run_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
@@ -859,7 +859,7 @@ add_test(NAME Omnitrace_AMD_Research_Stream_Overlap COMMAND ../omnitrace_stream_
 set_property(TEST Omnitrace_AMD_Research_Stream_Overlap PROPERTY PASS_REGULAR_EXPRESSION "proto")
 set_property(TEST Omnitrace_AMD_Research_Stream_Overlap PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Omnitrace_ROCm_Stream_Overlap COMMAND ../omnitrace_stream_overlap.sh --omnitrace-version 6.2.1)
+add_test(NAME Omnitrace_ROCm_Stream_Overlap COMMAND ../omnitrace_stream_overlap.sh --omnitrace-version 6.2.2)
 set_property(TEST Omnitrace_ROCm_Stream_Overlap PROPERTY PASS_REGULAR_EXPRESSION "proto")
 set_property(TEST Omnitrace_ROCm_Stream_Overlap PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
@@ -869,7 +869,7 @@ set_property(TEST Omnitrace_ROCm_Stream_Overlap PROPERTY SKIP_REGULAR_EXPRESSION
 #set_property(TEST Omniperf_AMD_Research_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "Empirical Roofline PDFs saved!")
 #set_property(TEST Omniperf_AMD_Research_Roofline_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#add_test(NAME Omniperf_ROCm_Roofline_Check COMMAND ../omniperf_roofline_check.sh --omniperf-version 6.2.1)
+#add_test(NAME Omniperf_ROCm_Roofline_Check COMMAND ../omniperf_roofline_check.sh --omniperf-version 6.2.2)
 #set_property(TEST Omniperf_ROCm_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "Empirical Roofline PDFs saved!")
 #set_property(TEST Omniperf_ROCm_Roofline_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
@@ -878,7 +878,7 @@ set_property(TEST Omniperf_AMD_Research_Profile_Check PROPERTY PASS_REGULAR_EXPR
 set_property(TEST Omniperf_AMD_Research_Profile_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_property(TEST Omniperf_AMD_Research_Profile_Check PROPERTY TIMEOUT 400)
 
-add_test(NAME Omniperf_ROCm_Profile_Check COMMAND ../omniperf_profile_check.sh --omniperf-version 6.2.1)
+add_test(NAME Omniperf_ROCm_Profile_Check COMMAND ../omniperf_profile_check.sh --omniperf-version 6.2.2)
 set_property(TEST Omniperf_ROCm_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "Skipping roofline")
 set_property(TEST Omniperf_ROCm_Profile_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
@@ -887,7 +887,7 @@ set_property(TEST Omniperf_AMD_Research_Analyze_Check PROPERTY PASS_REGULAR_EXPR
 set_property(TEST Omniperf_AMD_Research_Analyze_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_property(TEST Omniperf_AMD_Research_Analyze_Check PROPERTY TIMEOUT 400)
 
-add_test(NAME Omniperf_ROCm_Analyze_Check COMMAND ../omniperf_analyze_check.sh --omniperf-version 6.2.1)
+add_test(NAME Omniperf_ROCm_Analyze_Check COMMAND ../omniperf_analyze_check.sh --omniperf-version 6.2.2)
 set_property(TEST Omniperf_ROCm_Analyze_Check PROPERTY PASS_REGULAR_EXPRESSION "7.1 Wavefront Launch Stats")
 set_property(TEST Omniperf_ROCm_Analyze_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
