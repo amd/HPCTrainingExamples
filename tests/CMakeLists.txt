@@ -532,7 +532,7 @@ set_property(TEST Hipify_Nbody PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Kokkos
 
-add_test(NAME Test_Kokkos_Install COMMAND ../test_kokkos_install.sh )
+add_test(NAME Test_Kokkos_Install COMMAND ../kokkos_test_install.sh )
 set_property( TEST Test_Kokkos_Install PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
 set_property(TEST Test_Kokkos_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 

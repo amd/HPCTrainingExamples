@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 module load hipfort
 AMDGPU_GFXMODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`
