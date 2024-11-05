@@ -310,11 +310,11 @@ set_property(TEST OpenMP_Language_Constructs_C_Device_Routine_wDynGlobalData PRO
 
 # HIPFort Examples
 
-add_test(NAME HIPFort_Module_Check_2003 COMMAND ../hipfort_check_2003.sh )
+add_test(NAME HIPFort_Module_Check_2003 COMMAND ../hipfort_module_check_2003.sh )
 set_property(TEST HIPFort_Module_Check_2003 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST HIPFort_Module_Check_2003 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME HIPFort_Module_Check_2008 COMMAND ../hipfort_check_2008.sh )
+add_test(NAME HIPFort_Module_Check_2008 COMMAND ../hipfort_module_check_2008.sh )
 set_property(TEST HIPFort_Module_Check_2003 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST HIPFort_Module_Check_2003 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
