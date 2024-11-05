@@ -310,23 +310,31 @@ set_property(TEST OpenMP_Language_Constructs_C_Device_Routine_wDynGlobalData PRO
 
 # HIPFort Examples
 
+add_test(NAME HIPFort_Module_Check_2003 COMMAND ../hipfort_check_2003.sh )
+set_property(TEST HIPFort_Module_Check_2003 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
+set_property(TEST HIPFort_Module_Check_2003 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPFort_Module_Check_2008 COMMAND ../hipfort_check_2008.sh )
+set_property(TEST HIPFort_Module_Check_2003 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
+set_property(TEST HIPFort_Module_Check_2003 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # known failure
-#add_test(NAME HIPFort_GEMM_Global COMMAND ../hipfort_gemm_global.sh )
-#set_property(TEST HIPFort_GEMM_Global PROPERTY PASS_REGULAR_EXPRESSION "Success")
-#set_property(TEST HIPFort_GEMM_Global PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#add_test(NAME HIPFort_ROCm_Include_GEMM_Global COMMAND ../hipfort_gemm_global.sh )
+#set_property(TEST HIPFort_ROCm_Include_GEMM_Global PROPERTY PASS_REGULAR_EXPRESSION "Success")
+#set_property(TEST HIPFort_ROCm_Include_GEMM_Global PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME HIPFort_GEMM_Local COMMAND ../hipfort_gemm_local.sh )
-set_property(TEST HIPFort_GEMM_Local PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST HIPFort_GEMM_Local PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME HIPFort_ROCm_Include_GEMM_Local COMMAND ../hipfort_gemm_local.sh )
+set_property(TEST HIPFort_ROCm_Include_GEMM_Local PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIPFort_ROCm_Include_GEMM_Local PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # known failure
-#add_test(NAME HIPFort_GEMM_Global_SD COMMAND ../hipfort_gemm_global_sd.sh )
-#set_property(TEST HIPFort_GEMM_Global_SD PROPERTY PASS_REGULAR_EXPRESSION "Success")
-#set_property(TEST HIPFort_GEMM_Global_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#add_test(NAME HIPFort_ROCm_Include_GEMM_Global_SD COMMAND ../hipfort_gemm_global_sd.sh )
+#set_property(TEST HIPFort_ROCm_Include_GEMM_Global_SD PROPERTY PASS_REGULAR_EXPRESSION "Success")
+#set_property(TEST HIPFort_ROCm_Include_GEMM_Global_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME HIPFort_GEMM_Local_SD COMMAND ../hipfort_gemm_local_sd.sh )
-set_property(TEST HIPFort_GEMM_Local_SD PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST HIPFort_GEMM_Local_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME HIPFort_ROCm_Include_GEMM_Local_SD COMMAND ../hipfort_gemm_local_sd.sh )
+set_property(TEST HIPFort_ROCm_Include_GEMM_Local_SD PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIPFort_ROCm_Include_GEMM_Local_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 
 # Advanced OpenMP Examples
