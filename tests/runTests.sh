@@ -21,6 +21,7 @@ MVAPICH2=0
 MINICONDA3=0
 MINIFORGE3=0
 HDF5=0
+HIPFORT=0
 GPU_AWARE_MPI=0
 STD_PAR=0
 NODE_MEM_MODEL=0
@@ -54,6 +55,7 @@ usage()
     echo "--miniconda3 : runs miniconda3 tests"
     echo "--miniforge3 : runs miniforge3 tests"
     echo "--hdf5 : runs hdf5 tests"
+    echo "--hipfort : runs hipfort tests"
     echo "--openacc : runs the openacc tests"
     echo "--mvapich2 : runs the mvapich2 tests"
     echo "--gpu-aware-mpi : runts the gpu aware mpi tests"
@@ -169,6 +171,11 @@ do
           MPI4PY=1
           reset-last
           ;;
+      "--hipfort")
+          shift
+          HIPFORT=1
+          reset-last
+          ;;
       "--openmp")
           shift
           OPENMP=1
@@ -253,6 +260,8 @@ elif [ ${HIP} -eq 1 ]; then
    ctest -R Hipify
 elif [ ${KOKKOS} -eq 1 ]; then
    ctest -R Kokkos
+elif [ ${HIPFORT} -eq 1 ]; then
+   ctest -R HIPFort
 elif [ ${HDF5} -eq 1 ]; then
    ctest -R HDF5
 elif [ ${HPCTOOLKIT} -eq 1 ]; then
