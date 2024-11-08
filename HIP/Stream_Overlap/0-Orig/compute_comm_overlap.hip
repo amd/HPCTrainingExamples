@@ -106,7 +106,11 @@ int main( int argc, char* argv[] )
     }
 
     // Number of thread blocks in grid
+#ifdef MI300A_RUN
+    int gridSizePerStream = 228; //(int)ceil((float)elements_per_stream/blockSize);
+#else
     int gridSizePerStream = 104; //(int)ceil((float)elements_per_stream/blockSize);
+#endif
     printf("gridSizePerStream: %d\n", gridSizePerStream);
 
     hipEventRecord(start);
