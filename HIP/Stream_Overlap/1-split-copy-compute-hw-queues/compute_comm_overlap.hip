@@ -149,7 +149,7 @@ int main( int argc, char* argv[] )
 
     float milliseconds = 0;
     hipEventElapsedTime(&milliseconds, start, stop);
-    printf("Time required total %f\n", milliseconds);
+    printf("Time required total (ms) %f\n", milliseconds);
     printf("Finished copying the output vector from the GPU to the CPU\n");
 
    //Compute for CPU 
