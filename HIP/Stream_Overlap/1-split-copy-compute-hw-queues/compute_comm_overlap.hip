@@ -106,7 +106,11 @@ int main( int argc, char* argv[] )
     }
 
     // Number of thread blocks in grid
+#ifdef MI300A_RUN
+    int gridSizePerStream = 228; //(int)ceil((float)elements_per_stream/blockSize);
+#else
     int gridSizePerStream = 104; //(int)ceil((float)elements_per_stream/blockSize);
+#endif
     printf("gridSizePerStream: %d\n", gridSizePerStream);
 
     hipEventRecord(start);
@@ -145,7 +149,7 @@ int main( int argc, char* argv[] )
 
     float milliseconds = 0;
     hipEventElapsedTime(&milliseconds, start, stop);
-    printf("Time required total %f\n", milliseconds);
+    printf("Time required total (ms) %f\n", milliseconds);
     printf("Finished copying the output vector from the GPU to the CPU\n");
 
    //Compute for CPU 
