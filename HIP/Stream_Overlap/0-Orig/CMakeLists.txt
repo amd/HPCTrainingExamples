@@ -51,13 +51,11 @@ add_test(NAME Compute_comm_overlap COMMAND compute_comm_overlap )
 set_property(TEST Compute_comm_overlap
              PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 
-option(MI300A_RUN "Run on MI300A?" OFF)
-message(STATUS "MI300A_RUN=${MI300A_RUN}")
-
-if (NOT MI300A_RUN)
-   set(ROCMCC_FLAGS "${ROCMCC_FLAGS} -munsafe-fp-atomics")
-else (NOT MI300A_RUN)
-   set(ROCMCC_FLAGS "${ROCMCC_FLAGS} -munsafe-fp-atomics -DMI300A_RUN")
+if (CMAKE_HIP_ARCHITECTURES MATCHES "gfx942")
+    set(ROCMCC_FLAGS "${ROCMCC_FLAGS} -munsafe-fp-atomics -DMI300A_RUN")
+    message(STATUS "Using MI300A RUN option")
+else (CMAKE_${GPU_RUMTIME}_ARCHITECTURES MATCHES "gfx942")
+    set(ROCMCC_FLAGS "${ROCMCC_FLAGS} -munsafe-fp-atomics")
 endif()
 set(CUDACC_FLAGS "${CUDACC_FLAGS} ")
 
