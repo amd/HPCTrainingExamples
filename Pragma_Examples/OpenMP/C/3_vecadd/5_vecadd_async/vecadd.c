@@ -8,7 +8,6 @@ Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
 #include <math.h>
 
 
-
 int main()
 {
   int N = 100000;
@@ -24,15 +23,15 @@ int main()
   #pragma omp target teams distribute parallel for nowait depend(out:a)
   for (int i=0; i<N; i++){
     a[i]=sin((double)(i+1))*sin((double)(i+1));
- }
+  }
   #pragma omp target teams distribute parallel for nowait depend(out:b)
   for (int i=0; i<N; i++){
     b[i]=cos((double)(i+1))*cos((double)(i+1));
- }
+  }
   #pragma omp target teams distribute parallel for nowait depend(out:c)
   for (int i=0; i<N; i++){
     c[i]=0.0;
- }
+  }
   double tstart = omp_get_wtime();
   #pragma omp target teams distribute parallel for nowait depend(in:a,b) depend(inout:c)
   for (int j = 0; j< N; j++){

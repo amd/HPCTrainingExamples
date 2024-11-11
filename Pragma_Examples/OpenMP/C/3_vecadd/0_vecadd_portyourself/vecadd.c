@@ -24,7 +24,7 @@ int main()
     a[i]=sin((double)(i+1))*sin((double)(i+1));
     b[i]=cos((double)(i+1))*cos((double)(i+1));
     c[i]=0.0;
- }
+  }
   double tstart = omp_get_wtime();
   for (int j = 0; j< N; j++){
     c[j] = a[j] + b[j];
