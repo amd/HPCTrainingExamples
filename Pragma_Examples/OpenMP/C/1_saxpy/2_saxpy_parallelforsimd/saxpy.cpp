@@ -15,8 +15,7 @@ void saxpy() {
       x[i] = 1.0f;
       y[i] = 2.0f;
    }
-   a = 2.0;
-
+   a = 2.0f;
    tb = omp_get_wtime();
 
    #pragma omp target parallel for simd
@@ -28,7 +27,7 @@ void saxpy() {
    t = te - tb;
 
    printf("Time of kernel: %lf\n", t);
-   
+
    printf("plausibility check output:\n");
    printf("y[0] %lf\n",y[0]);
    printf("y[N-1] %lf\n",y[N-1]);

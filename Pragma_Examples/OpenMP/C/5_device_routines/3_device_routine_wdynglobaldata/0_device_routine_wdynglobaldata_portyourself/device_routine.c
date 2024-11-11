@@ -14,27 +14,22 @@ int main(int argc, char *argv[]){
    initialize_constants(isize);
 
    double *x = (double *)malloc(N*sizeof(double));
-#pragma omp target enter data map (alloc:x[0:N])
-#pragma omp target teams distribute parallel for simd
    for (int k = 0; k < N; k++){
       x[k] = 0.0;
    }
 
-#pragma omp target teams distribute parallel for simd
    for (int k = 0; k < N; k++){
       int cindex = k%isize;
       compute(cindex, &x[k]);
    }
 
    double sum = 0.0;
-#pragma omp target teams distribute parallel for simd reduction(+:sum)
    for (int k = 0; k < N; k++){
       sum += x[k];
    }
 
    printf("Result: sum of x is %lf\n",sum);
 
-#pragma omp target exit data map (release:x[0:N])
    free(x);
 }
       
