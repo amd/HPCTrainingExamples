@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#pragma omp require unified_shared_memory
+#pragma omp requires unified_shared_memory
 
 void compute(double *x);
 
