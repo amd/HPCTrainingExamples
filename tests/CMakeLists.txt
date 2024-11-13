@@ -1006,3 +1006,13 @@ set_property(TEST HDF5_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module sp
 add_test(NAME HDF5_Check_H5Dump COMMAND ../hdf5_check_h5dump.sh)
 set_property(TEST HDF5_Check_H5Dump PROPERTY PASS_REGULAR_EXPRESSION "391, 392, 393, 394, 395, 396, 397, 398, 399, 400")
 set_property(TEST HDF5_Check_H5Dump PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+
+#NETCDF Tests
+
+add_test(NAME Netcdf_C_Check_Version COMMAND ../netcdf-c_check_version.sh)
+set_property(TEST Netcdf_C_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "netcdf library version 4.9.3-rc1")
+set_property(TEST Netcdf_C_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Netcdf_Fortran_Check_Version COMMAND ../netcdf-fortran_check_version.sh)
+set_property(TEST Netcdf_Fortran_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "4.6.2-rc1")
+set_property(TEST Netcdf_Fortran_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")

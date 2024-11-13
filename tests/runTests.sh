@@ -21,6 +21,7 @@ MVAPICH2=0
 MINICONDA3=0
 MINIFORGE3=0
 HDF5=0
+NETCDF=0
 HIPFORT=0
 GPU_AWARE_MPI=0
 STD_PAR=0
@@ -151,6 +152,11 @@ do
           HDF5=1
           reset-last
           ;;
+      "--netcdf")
+          shift
+          NETCDF=1
+          reset-last
+          ;;
       "--jax")
           shift
           JAX=1
@@ -264,6 +270,8 @@ elif [ ${HIPFORT} -eq 1 ]; then
    ctest -R HIPFort
 elif [ ${HDF5} -eq 1 ]; then
    ctest -R HDF5
+elif [ ${NETCDF} -eq 1 ]; then
+   ctest -R Netcdf
 elif [ ${HPCTOOLKIT} -eq 1 ]; then
    ctest -R HPCToolkit
 elif [ ${MINICONDA3} -eq 1 ]; then
