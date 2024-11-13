@@ -26,6 +26,11 @@ set(SLURM_BATCH_WAIT 1)
 #set_property(TEST Module_Test_AOMP_AMDClang PROPERTY PASS_REGULAR_EXPRESSION "AOMP_STANDALONE_19.0.0 clang version 19.0.0_AOMP_STANDALONE_19.0.0")
 #set_property(TEST Module_Test_AOMP_AMDClang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# HIP basic functionalities
+add_test(NAME HIP_Query_Device COMMAND ../hip_query_device.sh )
+set_property(TEST HIP_Query_Device PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
+set_property(TEST HIP_Query_Device PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # HIPStdPar C++
 add_test(NAME HIPStdPar_Saxpy_Foreach COMMAND ../hipstdpar_saxpy_foreach.sh )
 set_property(TEST HIPStdPar_Saxpy_Foreach PROPERTY PASS_REGULAR_EXPRESSION "Finished Run")
