@@ -7,6 +7,7 @@ Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
 #include <omp.h>
 #include <math.h>
 
+
 int main()
 {
   int N = 100000;
@@ -32,7 +33,7 @@ int main()
   for (int j = 0; j< N; j++){
     c[j] = a[j] + b[j];
   }
-  
+
   sum = 0.0;
   #pragma omp target teams distribute parallel for reduction(+: sum)
   for (int i=0; i<N; i++){

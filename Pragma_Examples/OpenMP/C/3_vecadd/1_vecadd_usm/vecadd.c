@@ -27,7 +27,7 @@ int main()
     a[i]=sin((double)(i+1))*sin((double)(i+1));
     b[i]=cos((double)(i+1))*cos((double)(i+1));
     c[i]=0.0;
- }
+  }
   double tstart = omp_get_wtime();
   #pragma omp target teams distribute parallel for
   for (int j = 0; j< N; j++){
