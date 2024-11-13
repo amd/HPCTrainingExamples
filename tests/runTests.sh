@@ -56,6 +56,7 @@ usage()
     echo "--miniconda3 : runs miniconda3 tests"
     echo "--miniforge3 : runs miniforge3 tests"
     echo "--hdf5 : runs hdf5 tests"
+    echo "--netcdf : runs netcdf tests"
     echo "--hipfort : runs hipfort tests"
     echo "--openacc : runs the openacc tests"
     echo "--mvapich2 : runs the mvapich2 tests"

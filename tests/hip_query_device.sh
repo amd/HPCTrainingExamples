@@ -8,3 +8,5 @@ cd ${REPO_DIR}/HIP/query_device
 make 
 ./query_device
 make clean
+
+module unload rocm
