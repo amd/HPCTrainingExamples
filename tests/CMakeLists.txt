@@ -1018,6 +1018,10 @@ add_test(NAME Netcdf_C_Check_Version COMMAND ../netcdf-c_check_version.sh)
 set_property(TEST Netcdf_C_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "netcdf library version 4.9.3-rc1")
 set_property(TEST Netcdf_C_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME Netcdf_C_Check_Simple_XY_WR COMMAND ../netcdf-c_simple_xy_wr.sh)
+set_property(TEST Netcdf_C_Check_Simple_XY_WR PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS writing example file simple_xy.nc!")
+set_property(TEST Netcdf_C_Check_Simple_XY_WR PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 add_test(NAME Netcdf_Fortran_Check_Version COMMAND ../netcdf-fortran_check_version.sh)
 set_property(TEST Netcdf_Fortran_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "4.6.2-rc1")
 set_property(TEST Netcdf_Fortran_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
