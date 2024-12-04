@@ -5,7 +5,7 @@
 
 # NOTE: this test assumes torchvision has been installed according
 # to the instructions available in the model installation repo:
-# https://github.com/amd/HPCTrainingDock/blob/main/extras/sources/scripts/pytorch_setup.sh
+# https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/pytorch_setup.sh
 
 module purge
 
