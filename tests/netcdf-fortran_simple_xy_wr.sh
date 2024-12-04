@@ -4,7 +4,7 @@ module purge
 module load netcdf-fortran
 
 # use the compiler used to build netcdf-c
-FC=`nc-config --fc`
+FC=`nf-config --fc`
 
 rm -rf netcdf-fortran_test
 mkdir netcdf-fortran_test
