@@ -1046,3 +1046,11 @@ add_test(NAME Netcdf_Fortran_Check_Simple_XY_WR COMMAND ../netcdf-fortran_simple
 set_property(TEST Netcdf_Fortran_Check_Simple_XY_WR PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS writing example file simple_xy.nc!")
 set_property(TEST Netcdf_Fortran_Check_Simple_XY_WR PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME Netcdf_Fortran_Check_Pres_Temp_4D_WR COMMAND ../netcdf-fortran_pres_temp_4D_wr.sh)
+set_property(TEST Netcdf_Fortran_Check_Pres_Temp_4D_WR PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS writing example file pres_temp_4D.nc!")
+set_property(TEST Netcdf_Fortran_Check_Pres_Temp_4D_WR PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Netcdf_Fortran_Check_Pres_Temp_4D_RD COMMAND ../netcdf-fortran_pres_temp_4D_rd.sh)
+set_property(TEST Netcdf_Fortran_Check_Pres_Temp_4D_RD PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS reading example file pres_temp_4D.nc!")
+set_property(TEST Netcdf_Fortran_Check_Pres_Temp_4D_RD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+

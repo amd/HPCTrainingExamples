@@ -12,6 +12,7 @@ cd netcdf-c_test
 wget https://www.unidata.ucar.edu/software/netcdf/examples/programs/pres_temp_4D_wr.c
 $CC pres_temp_4D_wr.c -lnetcdf -L${NETCDF_C_ROOT}/lib -o pres_temp_4D_wr
 ./pres_temp_4D_wr
+cd ..
 rm -rf netcdf-c_test
 
 

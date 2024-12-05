@@ -12,6 +12,7 @@ cd netcdf-c_test
 wget https://www.unidata.ucar.edu/software/netcdf/examples/programs/simple_xy_wr.c
 $CC simple_xy_wr.c -lnetcdf -L${NETCDF_C_ROOT}/lib -o simple_xy_wr
 ./simple_xy_wr
+cd ..
 rm -rf netcdf-c_test
 
 
