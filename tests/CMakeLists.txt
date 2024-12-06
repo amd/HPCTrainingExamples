@@ -1050,3 +1050,7 @@ add_test(NAME Netcdf_Fortran_Check_Pres_Temp_4D_RD COMMAND ../netcdf-fortran_pre
 set_property(TEST Netcdf_Fortran_Check_Pres_Temp_4D_RD PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS reading example file pres_temp_4D.nc!")
 set_property(TEST Netcdf_Fortran_Check_Pres_Temp_4D_RD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME Netcdf_Fortran_Check_Parallel_IO COMMAND ../netcdf-fortran_simple_xy_par.sh)
+set_property(TEST Netcdf_Fortran_Check_Parallel_IO PROPERTY PASS_REGULAR_EXPRESSION "3, 3, 3, 3 ;")
+set_property(TEST Netcdf_Fortran_Check_Parallel_IO PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
