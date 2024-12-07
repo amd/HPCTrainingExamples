@@ -89,8 +89,14 @@ else
    echo "module load omniperf${OMNIPERF_VERSION}"
    echo " "
    echo " ------------------------------- "
-   module show omniperf${OMNIPERF_VERSION}
-   module load omniperf${OMNIPERF_VERSION}
+   result=`echo ${ROCM_VERSION} | awk '$1<=6.3.0'` && echo $result
+   if [[ "${result}" ]]; then
+      module show omniperf${OMNIPERF_VERSION}
+      module load omniperf${OMNIPERF_VERSION}
+   else
+      module show rocprofiler-compute${OMNIPERF_VERSION}
+      module load  rocprofiler-compute${OMNIPERF_VERSION}
+   fi
    echo " "
 fi
 
