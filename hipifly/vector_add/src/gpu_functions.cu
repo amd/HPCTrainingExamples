@@ -26,7 +26,7 @@ THE SOFTWARE.
 #include <cuda_runtime.h>
 #else
 // Translate CUDA functions to the analogous HIP function
-#include "cuda_to_hip.h"
+#include "hipifly.h"
 #endif
 
 #define TPB 256 //Number of threads per block for kernel calls
