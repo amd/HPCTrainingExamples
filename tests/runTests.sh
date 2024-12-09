@@ -10,6 +10,8 @@ TAU=0
 OMNITRACE=0
 OMNIPERF=0
 HIP=0
+HIPIFY=0
+HIPIFLY=0
 KOKKOS=0
 HPCTOOLKIT=0
 OPENMPI=0
@@ -45,6 +47,8 @@ usage()
     echo "--omnitrace: runs omnitrace tests"
     echo "--omniperf: runs omniperf tests"
     echo "--hip: runs the hip tests"
+    echo "--hipify: runs the hipify tests"
+    echo "--hipifly: runs the hipifly tests"
     echo "--kokkos: runs the kokkos tests"
     echo "--hpctoolkit: runs the hpctoolkit tests"
     echo "--tau: runs the tau tests"
@@ -118,6 +122,16 @@ do
       "--hip")
           shift
           HIP=1
+          reset-last
+          ;;
+      "--hipify")
+          shift
+          HIPIFY=1
+          reset-last
+          ;;
+      "--hipifly")
+          shift
+          HIPIFLY=1
           reset-last
           ;;
       "--kokkos")
@@ -272,6 +286,10 @@ elif [ ${OMNIPERF} -eq 1 ]; then
 elif [ ${HIP} -eq 1 ]; then
    ctest -R HIP
    ctest -R Hipify
+   ctest -R Hipifly
+elif [ ${HIPIFY} -eq 1 ]; then
+   ctest -R Hipify
+elif [ ${HIPIFLY} -eq 1 ]; then
    ctest -R Hipifly
 elif [ ${KOKKOS} -eq 1 ]; then
    ctest -R Kokkos
