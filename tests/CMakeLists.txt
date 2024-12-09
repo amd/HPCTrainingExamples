@@ -973,7 +973,7 @@ set_property(TEST Score-P_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module
 # Miniconda3 Tests
 
 add_test(NAME Miniconda3_Check_Version COMMAND ../miniconda3_check_version.sh)
-set_property(TEST Miniconda3_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 24.11.0")
+set_property(TEST Miniconda3_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 24.9.2")
 set_property(TEST Miniconda3_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Miniconda3_Env_Create COMMAND ../miniconda3_env_create.sh)
