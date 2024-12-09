@@ -8,6 +8,7 @@ conda create -y -n env_for_test numpy pandas
 
 conda activate env_for_test
 
+conda install -y pyhton=3.10
 conda install -y jax
 
 conda list -n env_for_test
