@@ -15,6 +15,7 @@ HPCTOOLKIT=0
 OPENMPI=0
 MPI=0
 MPI4PY=0
+FFTW=0
 OPENMP=0
 OPENACC=0
 MVAPICH2=0
@@ -50,6 +51,7 @@ usage()
     echo "--scorep: runs the score-p tests"
     echo "--mpi : runs all the mpi tests (same as including --opempi --mpi4py --mvapich2 --gpu-aware-mpi)"
     echo "--openmpi : runs the openmpi tests"
+    echo "--fftw: runts the fftw tests"
     echo "--mpi4py : runs the mpi4py tests"
     echo "--jax : runs the jax tests"
     echo "--openmp : runs the openmp tests"
@@ -151,6 +153,11 @@ do
       "--hdf5")
           shift
           HDF5=1
+          reset-last
+          ;;
+      "--fftw")
+          shift
+          FFTW=1
           reset-last
           ;;
       "--netcdf")
@@ -281,6 +288,8 @@ elif [ ${MINIFORGE3} -eq 1 ]; then
    ctest -R Miniforge3
 elif [ ${TAU} -eq 1 ]; then
    ctest -R TAU
+elif [ ${FFTW} -eq 1 ]; then
+   ctest -R FFTW
 elif [ ${SCOREP} -eq 1 ]; then
    ctest -R Score-P
 elif [ ${MPI} -eq 1 ]; then

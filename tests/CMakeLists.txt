@@ -1054,3 +1054,16 @@ add_test(NAME Netcdf_Fortran_Check_Parallel_IO COMMAND ../netcdf-fortran_simple_
 set_property(TEST Netcdf_Fortran_Check_Parallel_IO PROPERTY PASS_REGULAR_EXPRESSION "3, 3, 3, 3 ;")
 set_property(TEST Netcdf_Fortran_Check_Parallel_IO PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# FFTW Tests
+
+add_test(NAME FFTW_Check_Version COMMAND ../fftw_check_version.sh)
+set_property(TEST FFTW_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "fftw-wisdom tool for FFTW version 3.3.10.")
+set_property(TEST FFTW_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME FFTWF_Check_Version COMMAND ../fftwf_check_version.sh)
+set_property(TEST FFTWF_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "fftw-wisdom tool for FFTW version 3.3.10.")
+set_property(TEST FFTWF_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME FFTWL_Check_Version COMMAND ../fftwl_check_version.sh)
+set_property(TEST FFTWL_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "fftw-wisdom tool for FFTW version 3.3.10.")
+set_property(TEST FFTWL_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
