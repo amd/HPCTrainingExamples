@@ -272,6 +272,7 @@ elif [ ${OMNIPERF} -eq 1 ]; then
 elif [ ${HIP} -eq 1 ]; then
    ctest -R HIP
    ctest -R Hipify
+   ctest -R Hipifly
 elif [ ${KOKKOS} -eq 1 ]; then
    ctest -R Kokkos
 elif [ ${HIPFORT} -eq 1 ]; then

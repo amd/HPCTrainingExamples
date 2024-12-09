@@ -494,6 +494,16 @@ add_test(NAME Hipify_Nbody COMMAND ../hipify_nbody.sh )
 set_property(TEST Hipify_Nbody PROPERTY PASS_REGULAR_EXPRESSION "3000")
 set_property(TEST Hipify_Nbody PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# HIPIFLY Examples
+
+add_test(NAME Hipifly_Without_Module COMMAND ../hipifly_without_module.sh )
+set_property(TEST Hipify_Without_Module PROPERTY PASS_REGULAR_EXPRESSION "")
+set_property(TEST Hipify_Without_Module PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Hipifly_With_Module COMMAND ../hipifly_with_module.sh )
+set_property(TEST Hipify_With_Module PROPERTY PASS_REGULAR_EXPRESSION "")
+set_property(TEST Hipify_With_Module PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # OpenACC Examples
 
 #add_test(NAME OpenACC_Saxpy_C_AMDClang COMMAND ../openacc_saxpy_c_amdclang.sh )
