@@ -497,12 +497,12 @@ set_property(TEST Hipify_Nbody PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 # HIPIFLY Examples
 
 add_test(NAME Hipifly_Without_Module COMMAND ../hipifly_without_module.sh )
-set_property(TEST Hipify_Without_Module PROPERTY PASS_REGULAR_EXPRESSION "")
-set_property(TEST Hipify_Without_Module PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Hipifly_Without_Module PROPERTY PASS_REGULAR_EXPRESSION "Validation PASSED.")
+set_property(TEST Hipifly_Without_Module PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Hipifly_With_Module COMMAND ../hipifly_with_module.sh )
-set_property(TEST Hipify_With_Module PROPERTY PASS_REGULAR_EXPRESSION "")
-set_property(TEST Hipify_With_Module PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Hipifly_With_Module PROPERTY PASS_REGULAR_EXPRESSION "Validation PASSED.")
+set_property(TEST Hipifly_With_Module PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # OpenACC Examples
 

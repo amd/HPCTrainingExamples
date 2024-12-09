@@ -10,7 +10,7 @@ cp -a ${REPO_DIR}/hipifly/.
 pushd hipifly/vector_add
 rm src/hipifly.h
 
-make DFLAGS="-DENABLE_HIP -${HIPIFLY_PATH}"
+make DFLAGS="-DENABLE_HIP -${HIPIFLY_PATH} -fPIE"
 ./vector_add
 popd
 rm -rf hipifly_test
