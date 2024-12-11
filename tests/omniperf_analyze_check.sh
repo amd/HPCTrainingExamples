@@ -64,7 +64,7 @@ cmake ..
 make
 
 result=`echo ${ROCM_VERSION} | awk '$1<=6.1.2'` && echo $result
-result2=`echo ${ROCM_VERSION} | awk '$1>=6.3.0'` && echo $result2
+result2=`echo ${ROCM_VERSION} | awk '$1>6.2.9'` && echo $result2
 
 if [[ "${VERSION}" != "" ]]; then
    VERSION="/${VERSION}"
