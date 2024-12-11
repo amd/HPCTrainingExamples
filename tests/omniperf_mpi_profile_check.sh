@@ -96,7 +96,7 @@ module show ${TOOL_NAME}${VERSION}
 module load ${TOOL_NAME}${VERSION}
 
 export HSA_XNACK=1
-omniperf profile -n v1 --no-roof -- ./GhostExchange -x 1 -y 1 -i 200 -j 200 -h 2 -t -c -I 100
+${TOOL_COMMAND} profile -n v1 --no-roof -- ./GhostExchange -x 1 -y 1 -i 200 -j 200 -h 2 -t -c -I 100
 
 cd ..
 rm -rf build_for_test
