@@ -93,11 +93,15 @@ else
    echo " "
    echo " ------------------------------- "
    echo " "
-   echo "module load ${TOOLNAME}${OMNIPERF_VERSION}"
+   echo "module load ${TOOL_NAME}${VERSION}"
    echo " "
    echo " ------------------------------- "
-   module show ${TOOL_NAME}${OMNIPERF_VERSION}
-   module load ${TOOL_NAME}${OMNIPERF_VERSION}
+   echo " "
+   echo "tool command is ${TOOL_NAME}"
+   echo " "
+   echo " ------------------------------- "
+   module show ${TOOL_NAME}${VERSION}
+   module load ${TOOL_NAME}${VERSION}
    echo " "
 fi
 
