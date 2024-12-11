@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This test checks that 
-# rocprofiler-compute (formerly omniperf) profile runs
+# rocprofiler-compute (formerly omniperf) analyze runs
 
 VERSION=""
 TOOL_NAME="omniperf"
