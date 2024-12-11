@@ -1,15 +1,17 @@
 #!/bin/bash
 
 # This test checks that 
-# omniperf profile runs
+# rocprofiler-compute (formerly omniperf) profile runs
 
-OMNIPERF_VERSION=""
+VERSION=""
+TOOL_NAME="omniperf"
+TOOL_COMMAND="omniperf"
 
 usage()
 {
     echo ""
     echo "--help : prints this message"
-    echo "--omniperf-version : specifies the omniperf version"
+    echo "--version : specifies the desired version"
     echo ""
     exit
 }
@@ -30,9 +32,9 @@ n=0
 while [[ $# -gt 0 ]]
 do
    case "${1}" in
-      "--omniperf-version")
+      "--version")
           shift
-          OMNIPERF_VERSION=${1}
+          VERSION=${1}
           reset-last
           ;;
      "--help")
@@ -62,47 +64,46 @@ cmake ..
 make
 
 result=`echo ${ROCM_VERSION} | awk '$1<=6.1.2'` && echo $result
+result2=`echo ${ROCM_VERSION} | awk '$1>=6.3.0'` && echo $result2
 
-if [[ "${OMNIPERF_VERSION}" != "" ]]; then
-   OMNIPERF_VERSION="/${OMNIPERF_VERSION}"
+if [[ "${VERSION}" != "" ]]; then
+   VERSION="/${VERSION}"
 fi
 
 if [[ "${result}" ]]; then
    echo " ------------------------------- "
    echo " "
-   echo "loaded omniperf from AMD Research"
+   echo "loaded ${TOOL_NAME} from AMD Research"
    echo " "
    echo " ------------------------------- "
    echo " "
-   echo "module load omniperf${OMNIPERF_VERSION}"
+   echo "module load ${TOOL_NAME}${VERSION}"
    echo " "
    echo " ------------------------------- "
-   module show omniperf${OMNIPERF_VERSION}
-   module load omniperf${OMNIPERF_VERSION}
+   module show ${TOOL_NAME}${VERSION}
+   module load ${TOOL_NAME}${VERSION}
 else
-   echo " ------------------------------- "
-   echo " "
-   echo "loaded omniperf from ROCm"
-   echo " "
-   echo " ------------------------------- "
-   echo " "
-   echo "module load omniperf${OMNIPERF_VERSION}"
-   echo " "
-   echo " ------------------------------- "
-   result=`echo ${ROCM_VERSION} | awk '$1<=6.3.0'` && echo $result
-   if [[ "${result}" ]]; then
-      module show omniperf${OMNIPERF_VERSION}
-      module load omniperf${OMNIPERF_VERSION}
-   else
-      module show rocprofiler-compute${OMNIPERF_VERSION}
-      module load  rocprofiler-compute${OMNIPERF_VERSION}
+   if [[ "${result2}" ]]; then
+      TOOL_NAME="rocprofiler-compute"
+      TOOL_COMMAND="rocprof-compute"
    fi
+   echo " ------------------------------- "
+   echo " "
+   echo "loaded ${TOOL_NAME} from ROCm"
+   echo " "
+   echo " ------------------------------- "
+   echo " "
+   echo "module load ${TOOLNAME}${OMNIPERF_VERSION}"
+   echo " "
+   echo " ------------------------------- "
+   module show ${TOOL_NAME}${OMNIPERF_VERSION}
+   module load ${TOOL_NAME}${OMNIPERF_VERSION}
    echo " "
 fi
 
 export HSA_XNACK=1
-omniperf profile -n v1 --no-roof -- ./saxpy
-omniperf analyze -p workloads/v1/* --block 7.1.0 7.1.1 7.1.2 7.1.0: Grid size 7.1.1: Workgroup size 7.1.2: Total Wavefronts
+${TOOL_COMMAND} profile -n v1 --no-roof -- ./saxpy
+${TOOL_COMMAND} analyze -p workloads/v1/* --block 7.1.0 7.1.1 7.1.2 7.1.0: Grid size 7.1.1: Workgroup size 7.1.2: Total Wavefronts
 
 cd ..
 rm -rf build_for_test
