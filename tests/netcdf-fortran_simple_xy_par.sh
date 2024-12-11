@@ -3,6 +3,7 @@
 module purge
 module load netcdf-c
 module load netcdf-fortran
+module load openmpi
 
 # use the compiler used to build netcdf-fortran
 FC=`nf-config --fc`

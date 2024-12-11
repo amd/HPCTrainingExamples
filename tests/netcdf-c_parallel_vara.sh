@@ -2,6 +2,7 @@
 
 module purge
 module load netcdf-c
+module load openmpi
 
 # use the compiler used to build netcdf-c
 CC=`nc-config --cc`
