@@ -888,29 +888,29 @@ set_property(TEST Omnitrace_ROCm_Stream_Overlap PROPERTY SKIP_REGULAR_EXPRESSION
 
 # Omniperf Tests
 
-#add_test(NAME Omniperf_AMD_Research_Roofline_Check COMMAND ../omniperf_roofline_check.sh --omniperf-version 2.0.0)
+#add_test(NAME Omniperf_AMD_Research_Roofline_Check COMMAND ../omniperf_roofline_check.sh --version 2.0.0)
 #set_property(TEST Omniperf_AMD_Research_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "Empirical Roofline PDFs saved!")
 #set_property(TEST Omniperf_AMD_Research_Roofline_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#add_test(NAME Omniperf_ROCm_Roofline_Check COMMAND ../omniperf_roofline_check.sh --omniperf-version 6.3.0)
+#add_test(NAME Omniperf_ROCm_Roofline_Check COMMAND ../omniperf_roofline_check.sh --version 6.3.0)
 #set_property(TEST Omniperf_ROCm_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "Empirical Roofline PDFs saved!")
 #set_property(TEST Omniperf_ROCm_Roofline_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Omniperf_AMD_Research_Profile_Check COMMAND ../omniperf_profile_check.sh --omniperf-version 2.0.0)
-set_property(TEST Omniperf_AMD_Research_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "Skipping roofline")
+add_test(NAME Omniperf_AMD_Research_Profile_Check COMMAND ../omniperf_profile_check.sh --version 2.0.0)
+set_property(TEST Omniperf_AMD_Research_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "Skipping roofline" "Roofline temporarily disabled in MI300")
 set_property(TEST Omniperf_AMD_Research_Profile_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_property(TEST Omniperf_AMD_Research_Profile_Check PROPERTY TIMEOUT 400)
 
-add_test(NAME Omniperf_ROCm_Profile_Check COMMAND ../omniperf_profile_check.sh --omniperf-version 6.3.0)
+add_test(NAME Omniperf_ROCm_Profile_Check COMMAND ../omniperf_profile_check.sh --version 6.3.0)
 set_property(TEST Omniperf_ROCm_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "Skipping roofline" "Roofline temporarily disabled in MI300")
 set_property(TEST Omniperf_ROCm_Profile_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Omniperf_AMD_Research_Analyze_Check COMMAND ../omniperf_analyze_check.sh --omniperf-version 2.0.0)
+add_test(NAME Omniperf_AMD_Research_Analyze_Check COMMAND ../omniperf_analyze_check.sh --version 2.0.0)
 set_property(TEST Omniperf_AMD_Research_Analyze_Check PROPERTY PASS_REGULAR_EXPRESSION "7.1 Wavefront Launch Stats")
 set_property(TEST Omniperf_AMD_Research_Analyze_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_property(TEST Omniperf_AMD_Research_Analyze_Check PROPERTY TIMEOUT 400)
 
-add_test(NAME Omniperf_ROCm_Analyze_Check COMMAND ../omniperf_analyze_check.sh --omniperf-version 6.3.0)
+add_test(NAME Omniperf_ROCm_Analyze_Check COMMAND ../omniperf_analyze_check.sh --version 6.3.0)
 set_property(TEST Omniperf_ROCm_Analyze_Check PROPERTY PASS_REGULAR_EXPRESSION "7.1 Wavefront Launch Stats")
 set_property(TEST Omniperf_ROCm_Analyze_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 

@@ -6,6 +6,7 @@
 VERSION=""
 TOOL_NAME="omniperf"
 TOOL_COMMAND="omniperf"
+TOOL_ORIGIN="AMD Research"
 
 usage()
 {
@@ -52,8 +53,8 @@ do
 done
 
 module purge
-
 module load rocm
+
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
 pushd ${REPO_DIR}/HIP/saxpy
@@ -63,47 +64,35 @@ cd build_for_test
 cmake ..
 make
 
-result=`echo ${ROCM_VERSION} | awk '$1<=6.1.2'` && echo $result
-result2=`echo ${ROCM_VERSION} | awk '$1>6.2.9'` && echo $result2
+result=`echo ${ROCM_VERSION} | awk '$1>6.1.2'` && echo $result
+if [[ "${result}" ]]; then
+   TOOL_ORIGIN="ROCm"
+fi   
+result=`echo ${ROCM_VERSION} | awk '$1>6.2.9'` && echo $result
+if [[ "${result}" ]]; then
+   TOOL_NAME="rocprofiler-compute"
+   TOOL_COMMAND="rocprof-compute"
+fi
 
 if [[ "${VERSION}" != "" ]]; then
    VERSION="/${VERSION}"
 fi
 
-if [[ "${result}" ]]; then
-   echo " ------------------------------- "
-   echo " "
-   echo "loaded ${TOOL_NAME} from AMD Research"
-   echo " "
-   echo " ------------------------------- "
-   echo " "
-   echo "module load ${TOOL_NAME}${VERSION}"
-   echo " "
-   echo " ------------------------------- "
-   module show ${TOOL_NAME}${VERSION}
-   module load ${TOOL_NAME}${VERSION}
-else
-   if [[ "${result2}" ]]; then
-      TOOL_NAME="rocprofiler-compute"
-      TOOL_COMMAND="rocprof-compute"
-   fi
-   echo " ------------------------------- "
-   echo " "
-   echo "loaded ${TOOL_NAME} from ROCm"
-   echo " "
-   echo " ------------------------------- "
-   echo " "
-   echo "module load ${TOOL_NAME}${VERSION}"
-   echo " "
-   echo " ------------------------------- "
-   echo " "
-   echo "tool command is ${TOOL_NAME}"
-   echo " "
-   echo " ------------------------------- "
-   module show ${TOOL_NAME}${VERSION}
-   module load ${TOOL_NAME}${VERSION}
-   echo " "
-fi
+echo " ------------------------------- "
+echo " "
+echo "loaded ${TOOL_NAME} from ${TOOL_ORIGIN}"
+echo " "
+echo " ------------------------------- "
+echo " "
+echo "module load ${TOOL_NAME}${VERSION}"
+echo " "
+echo " ------------------------------- "
+echo " "
+echo "tool command is ${TOOL_COMMAND}"
+echo " "
+echo " ------------------------------- "   
+module show ${TOOL_NAME}${VERSION}
+module load ${TOOL_NAME}${VERSION}
 
 export HSA_XNACK=1
 ${TOOL_COMMAND} profile -n v1 --no-roof -- ./saxpy
