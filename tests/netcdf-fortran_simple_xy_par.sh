@@ -5,6 +5,11 @@ module load netcdf-c
 module load netcdf-fortran
 module load openmpi
 
+if [[ ${HDF5_ENABLE_PARALLEL} == "OFF" ]]; then
+   # NETCDF has not been built with parallel I/O support
+   echo "Skip"
+fi
+
 # use the compiler used to build netcdf-fortran
 FC=`nf-config --fc`
 
