@@ -1030,7 +1030,7 @@ set_property(TEST Netcdf_C_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "modul
 
 add_test(NAME Netcdf_C_Check_Parallel_On COMMAND ../netcdf-c_print_config.sh)
 set_property(TEST Netcdf_C_Check_Parallel_On PROPERTY PASS_REGULAR_EXPRESSION "--has-parallel     -> yes")
-set_property(TEST Netcdf_C_Check_Parallel_On PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Netcdf_C_Check_Parallel_On PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 add_test(NAME Netcdf_C_Check_HDF5_On COMMAND ../netcdf-c_print_config.sh)
 set_property(TEST Netcdf_C_Check_HDF5_On PROPERTY PASS_REGULAR_EXPRESSION "--has-hdf5         -> yes")
@@ -1046,7 +1046,7 @@ set_property(TEST Netcdf_C_Check_Pres_Temp_4D_RD PROPERTY SKIP_REGULAR_EXPRESSIO
 
 add_test(NAME Netcdf_C_Check_Parallel_IO COMMAND ../netcdf-c_parallel_vara.sh)
 set_property(TEST Netcdf_C_Check_Parallel_IO PROPERTY PASS_REGULAR_EXPRESSION "0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3,")
-set_property(TEST Netcdf_C_Check_Parallel_IO PROPERTY SKIP_REGULAR_EXPRESSION "module spider netcdf-c")
+set_property(TEST Netcdf_C_Check_Parallel_IO PROPERTY SKIP_REGULAR_EXPRESSION "module spider netcdf-c" "Skip")
 
 add_test(NAME Netcdf_Fortran_Check_Version COMMAND ../netcdf-fortran_check_version.sh)
 set_property(TEST Netcdf_Fortran_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "4.6.2-rc1")
@@ -1062,7 +1062,7 @@ set_property(TEST Netcdf_Fortran_Check_Pres_Temp_4D_RD PROPERTY SKIP_REGULAR_EXP
 
 add_test(NAME Netcdf_Fortran_Check_Parallel_IO COMMAND ../netcdf-fortran_simple_xy_par.sh)
 set_property(TEST Netcdf_Fortran_Check_Parallel_IO PROPERTY PASS_REGULAR_EXPRESSION "3, 3, 3, 3 ;")
-set_property(TEST Netcdf_Fortran_Check_Parallel_IO PROPERTY SKIP_REGULAR_EXPRESSION "module spider netcdf-fortran" "module spider netcdf-c")
+set_property(TEST Netcdf_Fortran_Check_Parallel_IO PROPERTY SKIP_REGULAR_EXPRESSION "module spider netcdf-fortran" "module spider netcdf-c" "Skip")
 
 # FFTW Tests
 
