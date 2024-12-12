@@ -76,6 +76,9 @@ fi
 
 if [[ "${VERSION}" != "" ]]; then
    VERSION="/${VERSION}"
+else
+   VERSION=${ROCM_VERSION}
+   VERSION="/${VERSION}"
 fi
 
 echo " ------------------------------- "
