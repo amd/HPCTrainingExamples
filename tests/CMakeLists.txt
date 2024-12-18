@@ -959,19 +959,19 @@ set_property(TEST JAX_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME TAU_Trace_Check COMMAND ../tau_exec_check.sh --tau-trace)
 set_property(TEST TAU_Trace_Check PROPERTY PASS_REGULAR_EXPRESSION "tautrace.0")
-set_property(TEST TAU_Trace_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST TAU_Trace_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider tau")
 
 add_test(NAME TAU_Profile_Check COMMAND ../tau_exec_check.sh --tau-profile)
 set_property(TEST TAU_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "profile.0")
-set_property(TEST TAU_Profile_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST TAU_Profile_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider tau")
 
 add_test(NAME TAU_Check_HIP_Profile COMMAND ../tau_exec_check.sh --tau-profile)
 set_property(TEST TAU_Check_HIP_Profile PROPERTY PASS_REGULAR_EXPRESSION "hipMemcpy")
-set_property(TEST TAU_Check_HIP_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST TAU_Check_HIP_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider tau")
 
 add_test(NAME TAU_Check_MPI_Profile COMMAND ../tau_exec_check.sh --tau-profile)
 set_property(TEST TAU_Check_MPI_Profile PROPERTY PASS_REGULAR_EXPRESSION "MPI_Allreduce()")
-set_property(TEST TAU_Check_MPI_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST TAU_Check_MPI_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider" tau)
 
 
 # Score-P Tests
