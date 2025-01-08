@@ -2,7 +2,7 @@
 
 In this series of examples, we will demonstrate profiling with rocprofv3 on a platform using an AMD Instinct&trade; MI300 GPU. ROCm releases (6.2+) now include rocprofv3.
 
-Note that the focus of this exercise is on Omnitrace profiler, not on how to achieve optimal performance on MI300A.
+Note that the focus of this exercise is on rocprofv3 profiler, not on how to achieve optimal performance on MI300A.
 
 The examples are based on [Fortran+OpenMP Jacobi porting example from HPCTrainingExamples](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/Fortran/7_jacobi). 
 
@@ -90,7 +90,7 @@ rocprofv3 should generate 2 output files (XXXXX numbers are corresponding to the
   1. `XXXXX_agent_info.csv` with information for the used hardware APU/GPU and CPU.
   2. `XXXXX_kernel_traces.csv` with information per each call of the kernel.
 
-Check those output files using:
+Check those output files using (adapt file paths if needed):
 
 ```
 cat *_agent_info.csv
@@ -133,7 +133,7 @@ One can create kernel statistics file using `--stats` option:
 rocprofv3 --stats --kernel-trace -- ./jacobi -m 1024
 ```
 
-This creates two new output files:
+This creates two additional output files:
 
   1. `XXXXX_kernel_stats.csv` with statistics grouped by each kernel.
   2. `XXXXX_domain_stats.csv` with statistics grouped by domain, such as KERNEL_DISPATCH, HIP_API, etc.
