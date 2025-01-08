@@ -27,7 +27,7 @@ else ifeq ($(findstring ftn,$(FC1)), ftn)
 endif
 
 ifeq ($(findstring ftn,$(FC1)), ftn)
-  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
+  FFLAGS = -g -eZ -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else
   FFLAGS = -g -O3 ${FREE_FORM_FLAG} -fstrict-aliasing ${OPENMP_FLAGS}
 endif
