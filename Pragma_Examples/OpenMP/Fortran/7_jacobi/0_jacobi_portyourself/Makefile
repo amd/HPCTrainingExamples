@@ -20,7 +20,7 @@ else ifeq ($(findstring ftn,$(FC1)), ftn)
 endif
 
 ifeq ($(findstring ftn,$(FC1)), ftn)
-  FFLAGS = -G2 -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
+  FFLAGS = -G2 -eZ -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else ifeq ($(findstring amdflang-new,$(FC1)), amdflang-new)
   FFLAGS = -g -O3 -ffast-math ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else
@@ -28,6 +28,8 @@ else
 endif
 ifeq (${FC1},gfortran-13)
    LDFLAGS = ${OPENMP_FLAGS} -fno-lto
+else ifeq ($(findstring ftn,$(FC1)), ftn)
+   LDFLAGS = ${OPENMP_FLAGS} -L/opt/rh/gcc-toolset-12/root/usr/lib/gcc/x86_64-redhat-linux/12
 else
    LDFLAGS = ${OPENMP_FLAGS}
 endif
