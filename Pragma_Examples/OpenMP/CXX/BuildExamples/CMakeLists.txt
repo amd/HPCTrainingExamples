@@ -18,19 +18,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -foffload=-march=${ROCM_GPU}")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Cray")
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+   #the cray compiler decides the offload-arch by loading appropriate modules
+   #module load craype-accel-amd-gfx942 for example
 endif()
 
-add_executable(mem1 mem1.cc)
-add_executable(mem2 mem2.cc)
-add_executable(mem3 mem3.cc)
-add_executable(mem4 mem4.cc)
-add_executable(mem5 mem5.cc)
-add_executable(mem6 mem6.cc)
-add_executable(mem7 mem7.cc)
-add_executable(mem8 mem8.cc)
-add_executable(mem9 mem9.cc)
-add_executable(mem10 mem10.cc)
-add_executable(mem11 mem11.cc)
-add_executable(mem12 mem12.cc)
-
-install(TARGETS mem1 mem2 mem3 mem4 mem5 mem6 mem7 mem8 mem9 mem10 mem11 mem12)
+add_executable(openmp_code openmp_code.cc)

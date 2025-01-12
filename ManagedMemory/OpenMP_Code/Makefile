@@ -13,7 +13,7 @@ else ifeq ($(findstring gcc,$(CC1)), gcc)
 else ifeq ($(findstring cc,$(CC1)), cc)
   OPENMP_FLAGS = -fopenmp
 else
-  OPENMP_FLAGS = -fopenmp --foffload=-march=${AMDGPU_GFXMODEL} -fopt-info-optimized-omp
+  OPENMP_FLAGS = -fopenmp --foffload=-march=${AMDGPU_GFXMODEL}
 endif
 
 CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
