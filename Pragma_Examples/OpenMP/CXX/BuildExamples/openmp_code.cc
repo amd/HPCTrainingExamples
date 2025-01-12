@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+using namespace std;
+
 int main(int argc, char *argv[]) {
    int M=100000;
    double sum=0.0;
