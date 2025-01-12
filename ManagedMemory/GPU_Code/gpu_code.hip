@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
    dim3 block(THREADS_PER_BLOCK_X,1,1);
    gpu_func<<<grid,block,0,0>>>(in_d, out_d, M);
 
-   hipDeviceSynchronize();
+   hipError_t hipDeviceSynchronize(void);
    HIP_CHECK(hipMemcpy(out_h, out_d, Msize, hipMemcpyDeviceToHost));
 
    for (int i=0; i<M; i++) // CPU-process

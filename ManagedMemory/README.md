@@ -14,6 +14,10 @@ git clone https://github.com/amd/HPCTrainingExamples.git
 cd HPCTrainingExamples/ManagedMemory
 ```
 First run the standard CPU code. This is a working version of the original CPU code from the programming model presentation.
+The example will work with any C compiler and run on any CPU. To set up the environment, we need to set the CC environment 
+variable to the C compiler executable. We do this by loading the amdclang module which sets `CC=/opt/rocm-<version>/llvm/bin/amdclang`.
+The makefile uses the CC environment which we have set. In our modules, we set the "family" to compiler so that only one compiler
+can be loaded at a time.
 
 ```
 cd HPCTrainingExamples/ManagedMemory/CPU_Code
@@ -21,7 +25,7 @@ module load amdclang
 make
 ```
 
-will compile with `amdclang -g -O3 cpu_code.c -o cpu_code`
+will compile with `/opt/rocm-<version>/llvm/bin/amdclang -g -O3 cpu_code.c -o cpu_code`
 Then run code with
 
 ```
@@ -30,14 +34,22 @@ Then run code with
 
 ## Standard GPU Code example
 
-This example adds the GPU memory corresponding to the CPU arrays and explicitly manages the memory transfers. 
+This example shows the standard GPU explict memory management example. For this case, we must
+move the memory ourselves. This example will run on any AMD Instinct GPU (data center GPUs) and
+most workstation or desktop discrete GPUs and APUs. The AMD GPU driver and ROCm software needs
+to be installed.
+
+For the environment setup, we need the ROCm bin directory added to the path. We do this by loading the ROCm module with
+`module load rocm`. This will set the path to the rocm bin directory. We could also do this with export `PATH=/opt/rocm-<version>/bin`
+or by supplying the full path `/opt/rocm-<version>/bin/hipcc` to the compile line. Note that even this may not be
+necessary as the ROCm install may have placed a link to `hipcc` in `/usr/bin/hipcc` during the ROCm install.
 
 ```
 cd ../GPU_Code
 make
 ```
 
-This will compile with `hipcc -g -O3 -fopenmp --offload-arch=$AMDGPU_GFXMODEL gpu_code.hip -o gpu_code`, where `AMDGPU_GFXMODEL=rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`. The `AMDGPU_GFXMODEL` is `gfx90a` for MI200 series and `gfx942` for MI300A.
+This will compile with `hipcc -g -O3 gpu_code.hip -o gpu_code`.
 
 Then run the code with
 
@@ -48,6 +60,7 @@ Then run the code with
 ## Managed Memory Code
 
 In this example, we will set the `HSA_XNACK` environment variable to 1 and let the Operating System move the memory for us.
+This will run on AMD Instinct GPUs for the data center including MI300X, MI300A, and MI200 series.
 
 ```
 export HSA_XNACK=1
