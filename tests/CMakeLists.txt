@@ -141,6 +141,33 @@ add_test(NAME Programming_Model_Kokkos COMMAND ../programming_model_kokkos.sh )
 set_property(TEST Programming_Model_Kokkos PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
 set_property(TEST Programming_Model_Kokkos PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
+
+# OpenMP Build System Examples
+
+add_test(NAME OpenMP_C_Build_Make COMMAND ../openmp_C_build_make.sh )
+set_property(TEST OpenMP_C_Build_Make PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
+set_property(TEST OpenMP_C_Build_Make PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+
+add_test(NAME OpenMP_CXX_Build_Make COMMAND ../openmp_CXX_build_make.sh )
+set_property(TEST OpenMP_CXX_Build_Make PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
+set_property(TEST OpenMP_CXX_Build_Make PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+
+add_test(NAME OpenMP_Fortran_Build_Make COMMAND ../openmp_Fortran_build_make.sh )
+set_property(TEST OpenMP_Fortran_Build_Make PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
+set_property(TEST OpenMP_Fortran_Build_Make PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+
+add_test(NAME OpenMP_C_Build_CMake COMMAND ../openmp_C_build_cmake.sh )
+set_property(TEST OpenMP_C_Build_CMake PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
+set_property(TEST OpenMP_C_Build_CMake PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+
+add_test(NAME OpenMP_CXX_Build_CMake COMMAND ../openmp_CXX_build_cmake.sh )
+set_property(TEST OpenMP_CXX_Build_CMake PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
+set_property(TEST OpenMP_CXX_Build_CMake PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+
+add_test(NAME OpenMP_Fortran_Build_CMake COMMAND ../openmp_Fortran_build_cmake.sh )
+set_property(TEST OpenMP_Fortran_Build_CMake PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
+set_property(TEST OpenMP_Fortran_Build_CMake PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+
 # OpenMP Examples
 
 add_test(NAME OpenMP_Saxpy_C_AMDClang COMMAND ../openmp_saxpy_c_amdclang.sh )
