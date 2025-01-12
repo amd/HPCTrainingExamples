@@ -18,7 +18,7 @@ CXXFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
 LDFLAGS = ${OPENMP_FLAGS} -fno-lto -lm
 
 openmp_code: openmp_code.o
-	$(CC) $(LDFLAGS) $^ -o $@
+	$(CXX) $(LDFLAGS) $^ -o $@
 
 # Cleanup
 clean:
