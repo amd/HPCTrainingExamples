@@ -1,6 +1,7 @@
 #pragma omp requires unified_shared_memory
 
 #include <iostream>
+#include <iomanip>
 
 using namespace std;
 
