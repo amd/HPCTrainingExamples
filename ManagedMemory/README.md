@@ -21,7 +21,7 @@ module load amdclang
 make
 ```
 
-will compile with `amdclang -g -O3 -fopenmp cpu_code.c -o cpu_code`
+will compile with `amdclang -g -O3 cpu_code.c -o cpu_code`
 Then run code with
 
 ```
