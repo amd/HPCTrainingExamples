@@ -40,10 +40,13 @@ int main(int argc, char *argv[]) {
    dim3 block(THREADS_PER_BLOCK_X,1,1);
    gpu_func<<<grid,block,0,0>>>(in_h, out_h, M);
 
-   hipDeviceSynchronize();
+   HIP_CHECK(hipDeviceSynchronize());
 
    for (int i=0; i<M; i++) // CPU-process
      sum += out_h[i];
 
    printf("Result is %lf\n",sum);
+
+   free(in_h);
+   free(out_h);
 }
