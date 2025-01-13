@@ -24,7 +24,7 @@ subroutine saxpy(a, x, y, n)
    write (*, '("Time of kernel: ",f8.6)') finish-start
    write(*,*) "plausibility check:"
    write(*,'("y(1) ",f8.6)') y(1)
-   write(*,'("y(n-1) ",f8.6)') y(n-1)
+   write(*,'("y(n) ",f8.6)') y(n)
 end subroutine saxpy
 
 end module saxpymod

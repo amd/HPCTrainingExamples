@@ -7,7 +7,7 @@ contains
 subroutine saxpy(a, x, y, m, n)
    use iso_fortran_env
    implicit none
-   integer,intent(in) :: n
+   integer,intent(in) :: m, n
    real(kind=real32),intent(in) :: a
    real(kind=real32), dimension(:,:),allocatable,intent(in) :: x
    real(kind=real32), dimension(:,:),allocatable,intent(inout) :: y
@@ -15,7 +15,7 @@ subroutine saxpy(a, x, y, m, n)
    real(kind=real64) :: start, finish
 
    start = OMP_GET_WTIME()
-   !$omp target teams loop collapse(2)
+   !$omp target teams distribute parallel do collapse(2)
    do j=1,n
      do i=1,m
        y(i,j) = a * x(i,j) + y(i,j)
@@ -25,8 +25,8 @@ subroutine saxpy(a, x, y, m, n)
 
    write (*, '("Time of kernel: ",f8.6)') finish-start
    write(*,*) "plausibility check:"
-   write(*,'("y(1) ",f8.6)') y(1)
-   write(*,'("y(n-1) ",f8.6)') y(n-1)
+   write(*,'("y(1,1) ",f8.6)') y(1,1)
+   write(*,'("y(m,n) ",f8.6)') y(m,n)
 end subroutine saxpy
 
 end module saxpymod
