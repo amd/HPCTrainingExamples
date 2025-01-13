@@ -7,7 +7,7 @@ OPENMP_OFFLOAD_FLAGS=-fopenmp --offload-arch=${ROCM_GPU}
 
 CFLAGS = -g -O3 -fstrict-aliasing
 
-LDFLAGS = ${OPENMP_FLAGS} -lm
+LDFLAGS = -lm
 
 saxpy_cpu.o: saxpy_cpu.c
 	$(CC) $(CFLAGS) ${OPENMP_FLAGS} -c $<  -o $@

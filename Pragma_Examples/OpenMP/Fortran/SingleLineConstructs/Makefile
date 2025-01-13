@@ -1,33 +1,24 @@
-all:saxpy_cpu
+all:saxpy_cpu saxpy_gpu_collapse
 
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 
-FC1=$(notdir $(FC))
+OPENMP_FLAGS = -fopenmp
+OPENMP_OFFLOAD_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
 
-ifeq ($(findstring amdflang-new, $(FC1)), amdflang-new)
-  OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
-  FREE_FORM_FLAG = -ffree-form
-else ifeq ($(findstring flang, $(FC1)), flang)
-  OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
-  FREE_FORM_FLAG = -Mfreeform
-else ifeq ($(findstring amdflang, $(FC1)), amdflang)
-  OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
-  FREE_FORM_FLAG = -Mfreeform
-else
-  OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU}
-  FREE_FORM_FLAG = -ffree-form
-endif
-
-FFLAGS = -g -O3 ${FREE_FORM_FLAG} -fopenmp
-LDFLAGS = -fopenmp
+FFLAGS = -g -O3 ${FREE_FORM_FLAG}
 
 saxpy_cpu.o: saxpy_cpu.F90
-	$(FC) -c $(FFLAGS) $^
+	$(FC) -c $(FFLAGS) ${OPENMP_FLAGS} $^
 
 saxpy_cpu: saxpy_cpu.o
-	$(FC) $(LDFLAGS) $^ -o $@
+	$(FC) $(LDFLAGS) ${OPENMP_FLAGS} $^ -o $@
+
+saxpy_gpu_collapse.o: saxpy_gpu_collapse.F90
+	$(FC) -c $(FFLAGS) ${OPENMP_OFFLOAD_FLAGS} $^
+
+saxpy_gpu_collapse: saxpy_gpu_collapse.o
+	$(FC) $(LDFLAGS) ${OPENMP_OFFLOAD_FLAGS} $^ -o $@
 
 # Cleanup
 clean:
-	rm -f *.o saxpy_cpu *.mod
-	rm -rf build
+	rm -f *.o saxpy_cpu saxpy_gpu_collapse *.mod
