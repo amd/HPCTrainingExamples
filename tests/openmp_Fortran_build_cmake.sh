@@ -11,7 +11,6 @@ else
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/BuildExamples
-   rm -rf build
    mkdir build && cd build && cmake ..
    make openmp_code
    ./openmp_code
