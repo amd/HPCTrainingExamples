@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
    for (int i=0; i<M; i++)
      sum += out_h[i];
 
-   cout << "Result is " << setprecision(6) << sum << endl;
+   cout << "Result is " << fixed << setprecision(6) << sum << endl;
 
    delete [] in_h;
    delete [] out_h;

@@ -25,7 +25,7 @@ program main
      sum = sum + out_h(i);
    enddo
 
-   write (*,"('Result is ',f15.6)") sum
+   write (*,"('Result is ',f13.6)") sum
 
    deallocate(in_h)
    deallocate(out_h)
