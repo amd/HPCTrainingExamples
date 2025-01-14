@@ -51,21 +51,21 @@ You can use these CPU examples and port them to the GPU on your own to get more 
 through the process in these exercises to show you how it is done.
 
 First we will go back the C example directory and work with a very simple case. It has all the code in a single subroutine with 
-statically allocated arrays on the stack. This permits the compiler to have as much information as possible. Note that we could 
+arrays allocated on the stack. This permits the compiler to have as much information as possible. Note that we could 
 also reload the regular amdclang module instead of the new amdflang beta. But the amdflang also has a perfectly good amdclang
 compiler. Also, we have made the array size smaller so that it won't run out of stack space.
 
 ```
 cd ../../C/SingleLineConstructs
-make saxpy_gpu_singleunit_static
-./saxpy_gpu_singleunit_static
+make saxpy_gpu_singleunit_autoalloc
+./saxpy_gpu_singleunit_autoalloc
 ```
 
 You will get a warning about vectorization that is telling you that you do not need the simd clause for the amdclang compiler. But
 it compiles fine and creates an executable. We run the executable.
 
 ```
-./saxpy_gpu_singleunit_static
+./saxpy_gpu_singleunit_autoalloc
 ```
 
 The output
