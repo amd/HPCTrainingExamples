@@ -1,4 +1,4 @@
-all:saxpy_cpu saxpy_gpu_collapse
+all:saxpy_cpu saxpy_gpu_singleunit_autoalloc saxpy_singleunit_dynamic saxpy_gpu_paralleldo saxpy_gpu_loop saxpy_gpu_collapse
 
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 
@@ -13,6 +13,31 @@ saxpy_cpu.o: saxpy_cpu.F90
 saxpy_cpu: saxpy_cpu.o
 	$(FC) $(LDFLAGS) ${OPENMP_FLAGS} $^ -o $@
 
+saxpy_gpu_singleunit_autoalloc.o: saxpy_gpu_singleunit_autoalloc.F90
+	$(FC) -c $(FFLAGS) ${OPENMP_OFFLOAD_FLAGS} $^
+
+saxpy_gpu_singleunit_autoalloc: saxpy_gpu_singleunit_autoalloc.o
+	$(FC) $(LDFLAGS) ${OPENMP_OFFLOAD_FLAGS} $^ -o $@
+
+saxpy_gpu_singleunit_dynamic.o: saxpy_gpu_singleunit_dynamic.F90
+	$(FC) -c $(FFLAGS) ${OPENMP_OFFLOAD_FLAGS} $^
+
+saxpy_gpu_singleunit_dynamic: saxpy_gpu_singleunit_dynamic.o
+	$(FC) $(LDFLAGS) ${OPENMP_OFFLOAD_FLAGS} $^ -o $@
+
+saxpy_gpu_paralleldo.o: saxpy_gpu_paralleldo.F90
+	$(FC) -c $(FFLAGS) ${OPENMP_OFFLOAD_FLAGS} $^
+
+saxpy_gpu_paralleldo: saxpy_gpu_paralleldo.o
+	$(FC) $(LDFLAGS) ${OPENMP_OFFLOAD_FLAGS} $^ -o $@
+
+saxpy_gpu_loop.o: saxpy_gpu_loop.F90
+	echo "not implemented yet in amdflang next gen compiler"
+	$(FC) -c $(FFLAGS) ${OPENMP_OFFLOAD_FLAGS} $^
+
+saxpy_gpu_loop: saxpy_gpu_loop.o
+	$(FC) $(LDFLAGS) ${OPENMP_OFFLOAD_FLAGS} $^ -o $@
+
 saxpy_gpu_collapse.o: saxpy_gpu_collapse.F90
 	$(FC) -c $(FFLAGS) ${OPENMP_OFFLOAD_FLAGS} $^
 
@@ -21,4 +46,4 @@ saxpy_gpu_collapse: saxpy_gpu_collapse.o
 
 # Cleanup
 clean:
-	rm -f *.o saxpy_cpu saxpy_gpu_collapse *.mod
+	rm -f *.o saxpy_cpu saxpy_gpu_singleunit_autoalloc saxpy_singleunit_dynamic saxpy_gpu_paralleldo saxpy_gpu_loop saxpy_gpu_collapse *.mod
