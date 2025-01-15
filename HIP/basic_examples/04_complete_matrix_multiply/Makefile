@@ -1,15 +1,16 @@
 # ------------------------------
 
 HIPCC    = hipcc
-HIPFLAGS = --offload-arch=gfx908,gfx90a
+ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
+HIPFLAGS = --offload-arch=${ROCM_GPU}
 
 # ------------------------------
 
 matrix_multiply: matrix_multiply.o
-	${HIPCC} matrix_multiply.o -o matrix_multiply
+	${HIPCC} ${HIPFLAGS} matrix_multiply.o -o matrix_multiply
 
 matrix_multiply.o: matrix_multiply.cpp
-	${HIPCC} -c matrix_multiply.cpp
+	${HIPCC} ${HIPFLAGS} -c matrix_multiply.cpp
 
 .PHONY: clean
 

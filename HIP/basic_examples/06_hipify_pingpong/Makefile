@@ -1,15 +1,16 @@
 # ------------------------------
 
 HIPCC    = hipcc
-HIPFLAGS = --offload-arch=gfx908,gfx90a
+ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
+HIPFLAGS = --offload-arch=${ROCM_GPU}
 
 # ------------------------------
 
 pingpong: pingpong.o
-	${HIPCC} pingpong.o -o pingpong
+	${HIPCC} ${HIPFLAGS} pingpong.o -o pingpong
 
 pingpong.o: pingpong.cpp
-	${HIPCC} -c pingpong.cpp
+	${HIPCC} ${HIPFLAGS} -c pingpong.cpp
 
 .PHONY: clean
 
