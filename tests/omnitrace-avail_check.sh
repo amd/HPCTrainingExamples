@@ -92,6 +92,6 @@ echo " ------------------------------- "
 module show ${TOOL_NAME}${VERSION}
 module load ${TOOL_NAME}${VERSION}
 
-${TOOL_NAME}-avail -G $PWD/.configure.cfg
+${TOOL_COMMAND}-avail -G $PWD/.configure.cfg
 
 rm .configure.cfg
