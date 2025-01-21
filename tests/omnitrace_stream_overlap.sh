@@ -75,6 +75,8 @@ result=`echo ${ROCM_VERSION} | awk '$1>6.2.9'` && echo $result
 if [[ "${result}" ]]; then
    TOOL_NAME="rocprofiler-systems"
    TOOL_COMMAND="rocprof-sys"
+   TOOL_CONFIG="ROCPROFSYS"
+   TOOL_OUTPUT="rocprofsys"
 fi
 
 if [[ "${VERSION}" != "" ]]; then
@@ -104,10 +106,10 @@ module show ${TOOL_NAME}${VERSION}
 module load ${TOOL_NAME}${VERSION}
 
 ${TOOL_COMMAND}-avail -G $PWD/.configure.cfg
-export ${TOOL_CONFIG}=$PWD/.configure.cfg
+export ${TOOL_CONFIG}_CONFIG_FILE=$PWD/.configure.cfg
 ${TOOL_COMMAND}-instrument -o compute_comm_overlap.inst -- compute_comm_overlap
 ${TOOL_COMMAND}-run -- ./compute_comm_overlap.inst 2
-cd omnitrace-compute_comm_overlap.inst-output/
+cd ${TOOL_OUTPUT}-compute_comm_overlap.inst-output/
 ls *
 
 cd ..
