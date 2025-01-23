@@ -1,24 +1,18 @@
 #!/bin/bash
 
-XNACK_COUNT=`rocminfo | grep xnack | wc -l`
-if [ ${XNACK_COUNT} -gt 1 ]; then
-   echo "Skip"
-else
+module load amdclang
+module load rocm
+module load kokkos
 
-   module load amdclang
-   module load rocm
-   module load kokkos
+git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 Chapter13
+pushd Chapter13/Kokkos/StreamTriad/Ver2
+sed -i -e 's/80000000/100000/' StreamTriad.cc
 
-   git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 Chapter13
-   pushd Chapter13/Kokkos/StreamTriad/Ver2
-   sed -i -e 's/80000000/100000/' StreamTriad.cc
+rm -rf build
+mkdir build && cd build
+CXX=hipcc cmake ..
+make
+./StreamTriad
 
-   rm -rf build
-   mkdir build && cd build
-   CXX=hipcc cmake ..
-   make
-   ./StreamTriad
-
-   popd
-   rm -rf Chapter13
-fi
+popd
+rm -rf Chapter13
