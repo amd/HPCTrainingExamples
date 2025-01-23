@@ -1,7 +1,7 @@
 #!/bin/bash
 
 XNACK_COUNT=`rocminfo | grep xnack | wc -l`
-if [ ${XNACK_COUNT} -lt 1 ]; then
+if [ ${XNACK_COUNT} -gt 1 ]; then
    echo "Skip"
 else
 
