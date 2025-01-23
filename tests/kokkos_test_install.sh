@@ -3,7 +3,7 @@
 module load kokkos
 
 git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 Chapter13
-cd Chapter13/Kokkos/StreamTriad/Ver1
+cd Chapter13/Kokkos/StreamTriad/Ver3
 sed -i -e 's/80000000/100000/' StreamTriad.cc
 
 rm -rf build

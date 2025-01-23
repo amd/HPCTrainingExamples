@@ -13,8 +13,8 @@ cd Kokkos_build
 
 rm -rf build_openmp
 mkdir build_openmp && cd build_openmp
-cmake -DCMAKE_INSTALL_PREFIX=${PWDir}/Kokkos_OpenMP -DKokkos_ENABLE_SERIAL=On \
-      -DKokkos_ENABLE_OPENMP=On ..
+cmake -DCMAKE_INSTALL_PREFIX=${PWDir}/Kokkos_OpenMP -DKokkos_ENABLE_SERIAL=ON \
+      -DKokkos_ENABLE_OPENMP=ON -DKokkos_ENABLE_OPENMPTARGET=ON ..
 
 make -j 8
 make install
