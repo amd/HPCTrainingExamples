@@ -56,13 +56,16 @@ TOOL_COMMAND="omniperf"
 
 PROFILER_TOP_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
+# Call the software set up script:
+source ${PROFILER_TOP_DIR}/setup.sh
+
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
-result=`echo ${ROCM_VERSION} | awk '$1>6.1.2'` && echo $result
+result=`echo ${ROCM_VERSION} | awk '$1>6.1.2'`
 
 if [[ "${result}" ]]; then
    TOOL_ORIGIN="ROCm"
 fi
-result=`echo ${ROCM_VERSION} | awk '$1>6.2.9'` && echo $result
+result=`echo ${ROCM_VERSION} | awk '$1>6.2.9'`
 if [[ "${result}" ]]; then
    TOOL_NAME="rocprofiler-compute"
    TOOL_COMMAND="rocprof-compute"

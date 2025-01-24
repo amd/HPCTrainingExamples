@@ -4,8 +4,6 @@
 #SBATCH --ntasks=4 # N GPUs per node * number of nodes
 #SBATCH --partition=LocalQ
 
-PROFILER_TOP_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-
 if [[ -z "${MASTER_ADDR}" ]]; then
     export MASTER_ADDR=`hostname`
 fi
@@ -15,6 +13,7 @@ then
     export MASTER_PORT=1234
 fi
 
+PROFILER_TOP_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
 # Call the software set up script:
 source ${PROFILER_TOP_DIR}/setup.sh
