@@ -38,7 +38,7 @@ This repository is a simple pytorch training script that will train a classifier
 Each profiling tool in a sub directory has a dedicated README to elaborate on the scripts, profiling behavior, and analysis tools.  It is meant to be a spring board for developers to quickly start profiling their workloads, while providing links to further documentation for detailed investigations.
 
 
-## Workload description
+## Workload Description
 
 The workload in the `train_cifar_100.py` script is simple: this workload will train some number of iterations of a vision model to classifiy against the cifar100 dataset.  Data is provided from `torchvision`, while models are enabled through the `transformers` package.  In the future, we hope to add additional datasets and models to encompass a broader range of results.  The current configuration options available are:
 
@@ -66,11 +66,11 @@ options:
 
 In the current workload, users may configure the datatype used (float32, bfloat16, or automatic fp16 with grad scaling) as well as the batch size and maximum number of iterations.  By default, the maximum number of iterations is limited to 20 iterations to keep profiling runs short but representative.
 
-### Dataset access
+### Dataset Access
 
 The datasets are available from `torchvision`, and the script can be run once in offline mode to download the data with `python train_cifar_100.py --download-only`.  The data path can be configured with `--data-path [path]`.
 
-## Organization of scripts
+## Organization of the Scripts
 
 The scripts in this repository are meant to be used in the `slurm` job scheduler environment, without containers (baremetal).  Each script has available a "single process" configuration (same algorithm, but not using more than one GPU) to show the basic profiling tool usage.
 

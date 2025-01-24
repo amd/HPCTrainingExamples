@@ -1,4 +1,4 @@
-# RocProfv3
+# rocprofv3
 
 One of the easiest tools to identify kernel hotspots in an application is rocprofv3, available in ROCm 6.2.0 and onward.  As a straightforward tracing tool, rocprofv3 can perform sample based profiling of applications and is compatible with applications at scale, producing one output per process.  An example of using rocprofv3 via slurm  is available with this document.  The relevant command for launching a rocprofv3 command is:
 
@@ -61,6 +61,6 @@ Example traces look like the image below, where users can zoom in and out and le
 
 In the image above, the highlighted kernel (small black box with a line coming from it) is a a rocclr_copyBuffer, and the orange boxes to the right are more collective kernels.  The green kernels to left are all compute kernels from the model's forward and backward pass.
 
-> Rocprofv3 will serialize kernel dispatches to ensure that only one dispatch is ever in flight.  So, for some kernels that are expected to be overlapped (communication/computation, for example), rocprofv3 will not provide valuable profiling information for measuring stream concurrency.  For determining which kernels are most expensive, however, rocprofv3 can be very useful.
+> rocprofv3 will serialize kernel dispatches to ensure that only one dispatch is ever in flight.  So, for some kernels that are expected to be overlapped (communication/computation, for example), rocprofv3 will not provide valuable profiling information for measuring stream concurrency.  For determining which kernels are most expensive, however, rocprofv3 can be very useful.
 
 

@@ -1,4 +1,4 @@
-ROCm Systems Profiler (Formerly Omnitrace)
+# ROCm Systems Profiler (Formerly Omnitrace)
 
 ROCm Systems Profiler is an application tracing utility, as the name suggests, and can be used with application instrumentation or via application sampling.  In most AI use cases, instrumentation is impractical due to the many-component python ecosystem.  This guide will focus on the utility of application sampling with omnitrace in python applications.
 
