@@ -88,17 +88,20 @@ fi
 # Call the software set up script:
 source ${PROFILER_TOP_DIR}/setup.sh
 
-# Set the configuration for the system profiler:
-export RSP_CFG=${PROFILER_TOP_DIR}/rocm-system-profiler/${TOOL_NAME}.cfg
-
 pushd ${PROFILER_TOP_DIR}
 if [ ! -f data/cifar-100-python ]; then
    ./download-data.sh
 fi
 popd
 
+# Create the configuration for the system profiler:
+export RSP_CFG=${PROFILER_TOP_DIR}/rocm-system-profiler/${TOOL_NAME}.cfg
+${TOOL_COMMAND}-avail -G $RSP_CFG
+
 # Execute the python script:
 srun --ntasks 4 \
 ${TOOL_COMMAND}-sample -c ${RSP_CFG} -- \
 python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 20 \
 --data-path ${PROFILER_TOP_DIR}/data
+
+rm $RSP_CFG
