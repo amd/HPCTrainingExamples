@@ -1,6 +1,6 @@
 # AMD Profiling Tools for Python Machine Learning Applications
 
-This repository provides an overview of the tools available for profiling applications on AMD’s 300X platform, with a specific focus on applications using pytorch in a multinode, slurm-based environment.  The scripts used to reproduce some examples are available with this repository.
+This repository provides an overview of the tools available for profiling applications on AMD GPUs, with a specific focus on applications using pytorch in a multinode, slurm-based environment.  The scripts used to reproduce some examples are available with this repository.
 
 Some tools described below are specifically AMD products, while others are community-based, open source products supported by AMD on Instinct graphics cards.
 
@@ -19,7 +19,7 @@ Profiling of AI applications typically proceeds as a top-down workflow in multip
 
 The following tools are available for profiling applications.  Examples of all tools are provided in this repository for the included workload.  The example tools and configurations are designed to be easily transferred to other, more interesting workloads for profiling.
 
-- Pytorch profiler is an open source pytorch-level profiler available directly from pytorch (and built in to pytorch itself).  This document does not cover the pytorch profiler, however, it is supported on AMD MI300X systems natively.
+- Pytorch profiler is an open source pytorch-level profiler available directly from pytorch (and built in to pytorch itself).  This document does not cover the pytorch profiler, however it is supported natively on, for instance, AMD MI300X.
 
 - RocProfiler is the default profiling tool that ships with ROCm and is available by default.  RocProfiler provides ability to collect kernel execution statistics as well as application trace information.  RocProfiler has undergone significant development and enhancement and the current best known configuration is to use rocprofv3.
 

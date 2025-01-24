@@ -27,3 +27,5 @@ popd
 # Collect and application trace via rocprof:
 rocprofv3 --stats --kernel-trace -- \
 python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 20 --data-path ${PROFILER_TOP_DIR}/data
+
+ls *

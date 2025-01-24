@@ -87,5 +87,7 @@ fi
 popd
 
 # Execute the python script:
-${TOOL_COMMAND} profile --name cifar_100_single_proc -- \
+${TOOL_COMMAND} profile --no-roof --name cifar_100_single_proc -- \
 ${PROFILER_TOP_DIR}/no-profiling/single_process.sh
+
+${TOOL_COMMAND} analyze -p workloads/cifar_100_single_proc/MI* -b 2.1.2 2.1.3 2.1.4 2.1.5

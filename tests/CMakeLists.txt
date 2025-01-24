@@ -843,6 +843,22 @@ add_test(NAME Pytorch_Mnist COMMAND ../pytorch_mnist.sh )
 set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "99%")
 set_property(TEST Pytorch_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME Pytorch_Profile_Omniperf COMMAND ../../MLExamples/PyTorch_Profiling/rocm-compute-profiler/single_process.sh )
+set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "2.1 Speed-of-Light")
+set_property(TEST Pytorch_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Pytorch_Profile_Omnitrace COMMAND ../../MLExamples/PyTorch_Profiling/rocm-systems-profiler/rocm-systems-profiler.sh )
+set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "perfetto-trace-")
+set_property(TEST Pytorch_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Pytorch_Profile_Rocprof COMMAND ../../MLExamples/PyTorch_Profiling/rocprofv3/kernels.sh )
+set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "kernel_stats.csv")
+set_property(TEST Pytorch_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Pytorch_Profile_TorchProfiler COMMAND ../../MLExamples/PyTorch_Profiling/torch-profiler/single-process.sh )
+set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "trace_")
+set_property(TEST Pytorch_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # Python MPI tests
 
 #add_test(NAME MPI4PY_OpenMPI_Check_Import COMMAND ../mpi4py_check_import.sh --module-name openmpi)

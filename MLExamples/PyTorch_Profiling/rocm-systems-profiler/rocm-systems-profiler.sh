@@ -22,6 +22,7 @@ source ${PROFILER_TOP_DIR}/setup.sh
 TOOL_ORIGIN="AMD Research"
 TOOL_NAME="omnitrace"
 TOOL_COMMAND="omnitrace"
+TOOL_OUTPUT="omnitrace"
 
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
 result=`echo ${ROCM_VERSION} | awk '$1>6.1.2'`
@@ -33,6 +34,7 @@ result=`echo ${ROCM_VERSION} | awk '$1>6.2.9'`
 if [[ "${result}" ]]; then
    TOOL_NAME="rocprofiler-systems"
    TOOL_COMMAND="rocprof-sys"
+   TOOL_OUTPUT="rocprofsys"
 fi
 
 if [[ "${VERSION}" != "" ]]; then
@@ -61,3 +63,7 @@ python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 20 \
 --data-path ${PROFILER_TOP_DIR}/data
 
 rm $RSP_CFG
+
+cd ${TOOL_OUTPUT}-python3-output/*
+
+ls
