@@ -113,6 +113,76 @@ __global__ void ghost_left_recv (double *xbuf_left_recv, double **x, int jlow, i
     }
 }
 
+// ---------------------------------------------------------------------------------
+// hipErrorCheck() and print_affinity_info() code borrowed from ORNL's hello_jobstep 
+// application: https://code.ornl.gov/olcf/hello_jobstep
+// ---------------------------------------------------------------------------------
+// Macro for checking errors in HIP API calls
+#define hipErrorCheck(call)                                                                 \
+do{                                                                                         \
+    hipError_t hipErr = call;                                                               \
+    if(hipSuccess != hipErr){                                                               \
+        printf("HIP Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(hipErr)); \
+        exit(0);                                                                            \
+    }                                                                                       \
+}while(0)
+
+void print_affinity_info (int rank)
+{
+    // If ROCR_VISIBLE_DEVICES is set, capture visible GPUs
+    const char* gpu_id_list;
+    const char* rocr_visible_devices = getenv("ROCR_VISIBLE_DEVICES");
+    if(rocr_visible_devices == NULL){
+        gpu_id_list = "N/A";
+    }
+    else{
+        gpu_id_list = rocr_visible_devices;
+    }
+
+    // Find how many GPUs HIP runtime says are available
+    int num_devices = 0;
+    hipErrorCheck( hipGetDeviceCount(&num_devices) );
+
+    int hwthread;
+    int thread_id = 0;
+    if(num_devices == 0){
+        hwthread = sched_getcpu();
+        printf("MPI %03d - HWT %03d\n",
+                    rank, hwthread);
+    }
+    else{
+
+        char busid[64];
+
+        std::string busid_list = "";
+        std::string rt_gpu_id_list = "";
+
+        // Loop over the GPUs available to each MPI rank
+        for(int i=0; i<num_devices; i++){
+
+            hipErrorCheck( hipSetDevice(i) );
+
+            // Get the PCIBusId for each GPU and use it to query for UUID
+            hipErrorCheck( hipDeviceGetPCIBusId(busid, 64, i) );
+
+            // Concatenate per-MPIrank GPU info into strings for print
+            if(i > 0) rt_gpu_id_list.append(",");
+            rt_gpu_id_list.append(std::to_string(i));
+
+            std::string temp_busid(busid);
+
+            if(i > 0) busid_list.append(",");
+            busid_list.append(temp_busid.substr(5,2));
+
+        }
+        hwthread = sched_getcpu();
+
+        printf("MPI %03d - HWT %03d - RT_GPU_ID %s - GPU_ID %s - Bus_ID %s\n",
+                    rank, hwthread, rt_gpu_id_list.c_str(), gpu_id_list, busid_list.c_str());
+    }
+
+}
+
 #define SWAP_PTR(xnew,xold,xtmp) (xtmp=xnew, xnew=xold, xold=xtmp)
 void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing, int &do_print);
 void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx);
@@ -133,6 +203,8 @@ int main(int argc, char *argv[])
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
    if (rank == 0) printf("Parallel run with no threads\n");
    hipSetDevice(0);
+
+   print_affinity_info (rank);
 
    int imax = 2000, jmax = 2000;
    int nprocx = 0, nprocy = 0;
