@@ -113,6 +113,63 @@ __global__ void ghost_left_recv (double *xbuf_left_recv, double **x, int jlow, i
     }
 }
 
+// ---------------------------------------------------------------------------------
+// hipErrorCheck() and print_affinity_info() code adapted from ORNL's hello_jobstep 
+// application: https://code.ornl.gov/olcf/hello_jobstep
+// ---------------------------------------------------------------------------------
+// Macro for checking errors in HIP API calls
+#define hipErrorCheck(call)                                                                 \
+do{                                                                                         \
+    hipError_t hipErr = call;                                                               \
+    if(hipSuccess != hipErr){                                                               \
+        printf("HIP Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(hipErr)); \
+        exit(0);                                                                            \
+    }                                                                                       \
+}while(0)
+
+void print_affinity_info (int rank)
+{
+    // If ROCR_VISIBLE_DEVICES is set, capture visible GPUs
+    const char* gpu_id_list;
+    const char* rocr_visible_devices = getenv("ROCR_VISIBLE_DEVICES");
+    if(rocr_visible_devices == NULL){
+        gpu_id_list = "N/A";
+    }
+    else{
+        gpu_id_list = rocr_visible_devices;
+    }
+
+    // Find how many GPUs HIP runtime says are available
+    int num_devices = 0;
+    hipErrorCheck( hipGetDeviceCount(&num_devices) );
+
+    int hwthread;
+    int thread_id = 0;
+    if(num_devices == 0){
+        hwthread = sched_getcpu();
+        printf("MPI %03d - HWT %03d\n",
+                    rank, hwthread);
+    }
+    else{
+
+        std::string rt_gpu_id_list = "";
+
+        // Loop over the GPUs available to each MPI rank
+        for(int i=0; i<num_devices; i++){
+
+            hipErrorCheck( hipSetDevice(i) );
+
+            // Concatenate per-MPIrank GPU info into strings for print
+            if(i > 0) rt_gpu_id_list.append(",");
+            rt_gpu_id_list.append(std::to_string(i));
+        }
+        hwthread = sched_getcpu();
+
+        printf("MPI %03d - HWT %03d - RT_GPU_ID %s - GPU_ID %s\n",
+                    rank, hwthread, rt_gpu_id_list.c_str(), gpu_id_list);
+    }
+}
+
 #define SWAP_PTR(xnew,xold,xtmp) (xtmp=xnew, xnew=xold, xold=xtmp)
 void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing, int &do_print);
 void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx);
@@ -131,8 +188,9 @@ int main(int argc, char *argv[])
    int rank, nprocs;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-   if (rank == 0) printf("Parallel run with no threads\n");
    hipSetDevice(0);
+
+   print_affinity_info (rank);
 
    int imax = 2000, jmax = 2000;
    int nprocx = 0, nprocy = 0;
@@ -142,6 +200,10 @@ int main(int argc, char *argv[])
    int maxIter = 1000;
 
    parse_input_args(argc, argv, jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, do_timing, do_print);
+
+   if (do_print) {
+       if (rank == 0) printf("Parallel run with no threads\n");
+   }
  
    struct timespec tstart_stencil, tstart_total;
    double stencil_time=0.0, total_time;
@@ -218,15 +280,15 @@ int main(int argc, char *argv[])
       boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
       ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
-      if (iter%10 == 0 && rank == 0) printf("Iter %d\n",iter);
       if (do_print == 1) {
+         if (iter%10 == 0 && rank == 0) printf("Iter %d\n",iter);
          Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
       }
    }
    total_time = cpu_timer_stop(tstart_total);
 
    if (rank == 0){
-      printf("GhostExchange_ArrayAssign_HIP Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
+      printf("\nGhostExchange_ArrayAssign_HIP Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
              stencil_time,boundarycondition_time,ghostcell_time,total_time);
    }
 
