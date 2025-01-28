@@ -114,7 +114,7 @@ __global__ void ghost_left_recv (double *xbuf_left_recv, double **x, int jlow, i
 }
 
 // ---------------------------------------------------------------------------------
-// hipErrorCheck() and print_affinity_info() code borrowed from ORNL's hello_jobstep 
+// hipErrorCheck() and print_affinity_info() code adapted from ORNL's hello_jobstep 
 // application: https://code.ornl.gov/olcf/hello_jobstep
 // ---------------------------------------------------------------------------------
 // Macro for checking errors in HIP API calls
@@ -152,9 +152,6 @@ void print_affinity_info (int rank)
     }
     else{
 
-        char busid[64];
-
-        std::string busid_list = "";
         std::string rt_gpu_id_list = "";
 
         // Loop over the GPUs available to each MPI rank
@@ -162,25 +159,15 @@ void print_affinity_info (int rank)
 
             hipErrorCheck( hipSetDevice(i) );
 
-            // Get the PCIBusId for each GPU and use it to query for UUID
-            hipErrorCheck( hipDeviceGetPCIBusId(busid, 64, i) );
-
             // Concatenate per-MPIrank GPU info into strings for print
             if(i > 0) rt_gpu_id_list.append(",");
             rt_gpu_id_list.append(std::to_string(i));
-
-            std::string temp_busid(busid);
-
-            if(i > 0) busid_list.append(",");
-            busid_list.append(temp_busid.substr(5,2));
-
         }
         hwthread = sched_getcpu();
 
-        printf("MPI %03d - HWT %03d - RT_GPU_ID %s - GPU_ID %s - Bus_ID %s\n",
-                    rank, hwthread, rt_gpu_id_list.c_str(), gpu_id_list, busid_list.c_str());
+        printf("MPI %03d - HWT %03d - RT_GPU_ID %s - GPU_ID %s\n",
+                    rank, hwthread, rt_gpu_id_list.c_str(), gpu_id_list);
     }
-
 }
 
 #define SWAP_PTR(xnew,xold,xtmp) (xtmp=xnew, xnew=xold, xold=xtmp)
@@ -201,7 +188,6 @@ int main(int argc, char *argv[])
    int rank, nprocs;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-   if (rank == 0) printf("Parallel run with no threads\n");
    hipSetDevice(0);
 
    print_affinity_info (rank);
@@ -214,6 +200,10 @@ int main(int argc, char *argv[])
    int maxIter = 1000;
 
    parse_input_args(argc, argv, jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, do_timing, do_print);
+
+   if (do_print) {
+       if (rank == 0) printf("Parallel run with no threads\n");
+   }
  
    struct timespec tstart_stencil, tstart_total;
    double stencil_time=0.0, total_time;
@@ -290,15 +280,15 @@ int main(int argc, char *argv[])
       boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
       ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
-      if (iter%10 == 0 && rank == 0) printf("Iter %d\n",iter);
       if (do_print == 1) {
+         if (iter%10 == 0 && rank == 0) printf("Iter %d\n",iter);
          Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
       }
    }
    total_time = cpu_timer_stop(tstart_total);
 
    if (rank == 0){
-      printf("GhostExchange_ArrayAssign_HIP Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
+      printf("\nGhostExchange_ArrayAssign_HIP Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
              stencil_time,boundarycondition_time,ghostcell_time,total_time);
    }
 
