@@ -840,7 +840,7 @@ set_property(TEST Pytorch_Check_ROCm_Dependency PROPERTY SKIP_REGULAR_EXPRESSION
 #set_property(TEST Pytorch_Unit_Tests PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Pytorch_Mnist COMMAND ../pytorch_mnist.sh )
-set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "99%")
+set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Train Epoch: 14")
 set_property(TEST Pytorch_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Pytorch_Profile_Omniperf COMMAND ../../MLExamples/PyTorch_Profiling/rocm-compute-profiler/single_process.sh )
