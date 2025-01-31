@@ -27,7 +27,7 @@ Please refer to this table of contents to locate the exercises you are intereste
       1. [`HIPIFY`](https://github.com/amd/HPCTrainingExamples/tree/main/HIPIFY): example to show how to port CUDA code to HIP with HIPIFY tools. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/HIPIFY/README.md).
       2. [`hipifly`](https://github.com/amd/HPCTrainingExamples/tree/main/hipifly): example to show how to port CUDA code to HIP with hipifly tools. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/hipifly/vector_add/README.md).
    4. [`HIP-Optimizations`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP-Optimizations): a daxpy HIP kernel is used to show how an initial version can be optimized to improve performance. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP-Optimizations/daxpy/README.md).
-   5. [`HIPFort`](https://github.com/amd/HPCTrainingExamples/tree/main/HIPFort): a gemm example in Fortran using hipfort.
+   5. [`HIPFort`](https://github.com/amd/HPCTrainingExamples/tree/main/HIPFort): two examples that show how to use the hipfort interface to call hipblas functions from Fortran.
    6. [`HIPStdPar`](https://github.com/amd/HPCTrainingExamples/tree/main/HIPStdPar): several examples showing C++ Std Parallelism on AMD GPUs. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/HIPStdPar/CXX/README.md).
    7. [`HIP-OpenMP`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP-OpenMP): example on HIP/OpenMP interoperability. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP-OpenMP/README.md)
 2. [**MPI-examples**](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples)
