@@ -2,7 +2,7 @@
 
 This example is based on example 2 from Chapter 6 of the HIP Book: "Accelerated Computing with HIP", by Yifan Sun, Trinayan Baruah, and David R. Kaeli. The example demonstrates how to overlap data transfer and computation using HIP streams. The included directories step through different versions of the example. Each directory contains a `README.md` file that includes a description of the version and instructions for building and running the example.
 
-This multi-streamed example is traced with [Omnitrace](https://rocm.docs.amd.com/projects/omnitrace/en/latest/doxygen/html/index.html#omnitrace). Omnitrace is now available in ROCm 6.2.0+ version package directly and does not need to be installed separately anymore. The figures included in the `figs` directory are generated using `Omnitrace v.1.11.3`. The command line trace instructions are included in the `README.md` file in each directory.
+This multi-streamed example is traced with [ROCm Systems Profiler](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/index.html#rocm-systems-profiler-documentation), formerly known as Omnitrace. ROCm Systems Profiler is now available in ROCm 6.2.0+ version package directly and does not need to be installed separately anymore. The figures included in the `figs` directory, however, are generated using `Omnitrace v.1.11.3`. The command line trace instructions are included in the `README.md` file in each directory.
 
 ## Folder `0-Orig`
 

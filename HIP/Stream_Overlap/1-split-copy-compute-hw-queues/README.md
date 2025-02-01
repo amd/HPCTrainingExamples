@@ -6,6 +6,8 @@ multiple streams.
 
 ## Build and run
 
+Ensure rocm/6.2 or later is loaded.
+
 ```bash
 cd /path/to/Stream_Overlap/1-split-copy-hw-queues
 mkdir build
@@ -28,9 +30,9 @@ make -j
    export AMD_SERIALIZE_KERNEL=3
 ```
 
-## Profile using Omnitrace (1.11.3)
+## Profile using ROCm Systems Profiler
 
 ```bash
-omnitrace-instrument -o compute_comm_overlap.inst -- compute_comm_overlap
-omnitrace-run -- ./compute_comm_overlap.inst <num-of-streams>
+rocprof-sys-instrument -o compute_comm_overlap.inst -- compute_comm_overlap
+rocprof-sys-run -- ./compute_comm_overlap.inst <num-of-streams>
 ```
