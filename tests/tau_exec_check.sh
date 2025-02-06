@@ -54,7 +54,6 @@ do
    shift
 done
 
-
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIP/jacobi
 
@@ -70,7 +69,14 @@ rm -rf tautrace.0*
 make clean
 make
 
-mpirun -n 2 tau_exec -rocm -T rocm,rocprofsdk ./Jacobi_hip -g 2 1
+ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
+result=`echo ${ROCM_VERSION} | awk '$1>6.1.9'` && echo $result
+if [[ "${result}" ]]; then
+   mpirun -n 2 tau_exec -rocm -T rocm,rocprofsdk ./Jacobi_hip -g 2 1
+else
+   mpirun -n 2 tau_exec -T rocm,roctracer,rocprofiler ./Jacobi_hip -g 2 1
+fi
+
 ls
 pprof
 
