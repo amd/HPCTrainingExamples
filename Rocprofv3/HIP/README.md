@@ -98,7 +98,7 @@ In order to have information for each Kernel call, remove the `--stats`
  
  Now we have only pftrace files, one per MPI process.
  
- * Merge the pftraces, if you want: `cat XXX*_results.ptrace > jacobi.pftrace`
+ * Merge the pftraces, if you want: `cat *_results.pftrace > jacobi.pftrace`
  * Download the trace on your laptop and load the file on Perfetto.
  `scp -P 7002 aac6.amd.com:<path_to_file>/jacobi.pftrace jacobi.pftrace`
 
