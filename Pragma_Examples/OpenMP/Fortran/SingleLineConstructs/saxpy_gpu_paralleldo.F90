@@ -11,7 +11,7 @@ subroutine saxpy(a, x, y, n)
    real(kind=real32),intent(in) :: a
    real(kind=real32), dimension(:),intent(in) :: x
    real(kind=real32), dimension(:),intent(inout) :: y
-   integer :: i, j
+   integer :: i
    real(kind=real64) :: start, finish
 
    start = OMP_GET_WTIME()
