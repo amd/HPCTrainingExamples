@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <omp.h>
 
 void saxpy(float a, float **x, float **y, int M, int N) {

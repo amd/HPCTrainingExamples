@@ -29,34 +29,15 @@ y[0] 4.000000
 y[N-1] 4.000000
 ```
 
-For the Fortran version, we just go to the corresponding directory and follow the same steps.
-
-```
-cd ../../Fortran/SingleLineConstructs
-module load amdflang-new-beta-drop
-make saxpy_cpu
-./saxpy_cpu
-```
-
-The output
-
-```
-Time of kernel: 0.151135
- plausibility check:
-y(1) 4.000000
-y(n-1) 4.000000
-```
-
-You can use these CPU examples and port them to the GPU on your own to get more experience at a later point in time. We will step 
+You can use the CPU example and port it to the GPU on your own to get more experience at a later point in time. We will step
 through the process in these exercises to show you how it is done.
 
-First we will go back the C example directory and work with a very simple case. It has all the code in a single subroutine with 
-arrays allocated on the stack. This permits the compiler to have as much information as possible. Note that we could 
-also reload the regular amdclang module instead of the new amdflang beta. But the amdflang also has a perfectly good amdclang
+First we will work with a very simple case. It has all the code in a single subroutine with
+arrays allocated on the stack. This permits the compiler to have as much information as possible. Note that we could
+also load the new amdflang beta which has a perfectly good amdclang
 compiler. Also, we have made the array size smaller so that it won't run out of stack space.
 
 ```
-cd ../../C/SingleLineConstructs
 make saxpy_gpu_singleunit_autoalloc
 ./saxpy_gpu_singleunit_autoalloc
 ```
@@ -88,7 +69,7 @@ make saxpy_gpu_singleunit_dynamic
 ./saxpy_gpu_singleunit_dynamic
 ```
 
-This time we get the follow output on a MI200 series GPU. 
+This time we get the following output on a MI200 series GPU.
 
 ```
 Queue error - HSA_STATUS_ERROR_MEMORY_FAULT
@@ -100,8 +81,8 @@ Aborted (core dumped)
 ```
 
 The error message makes it very clear that we are missing the data for the array. We could follow the advice to get a
-more detailed report if we do not know what array it is. But we'll take a simpler approach. We'll set the 
-`HSA_XNACK` environment variable to tell the system to manage the memory for us. This will work on the data center 
+more detailed report if we do not know what array it is. But we'll take a simpler approach. We'll set the
+`HSA_XNACK` environment variable to tell the system to manage the memory for us. This will work on the data center
 AMD Instinct GPUs. For workstation GPUs, you may need to add an explicit map clause.
 
 ```
@@ -120,7 +101,7 @@ y[N-1] 4.000000
 
 So the compiler can sometimes help with moving the memory in very simple cases. But it doesn't take much complexity before
 it doesn't have enough information. We return to our original `saxpy_cpu.c` example and change the pragma to direct the
-compiler to offload the calculation to the GPU as already done in `saxpy_gpu_parallelfor.c. We keep the `HSA_XNACK=1`
+compiler to offload the calculation to the GPU as already done in `saxpy_gpu_parallelfor.c`. We keep the `HSA_XNACK=1`
 setting from before.
 
 ```
@@ -160,7 +141,7 @@ make saxpy_gpu_loop
 
 Even the example is a bit easier to run with less typing.
 
-The output 
+The output
 
 ```
 Time of kernel: 0.061429
@@ -171,41 +152,8 @@ y[N-1] 4.000000
 
 So now we have demonstrated how easy it is to add a pragma to a loop to cause it to run on the GPU. And we have seen a
 little on how the managed memory capability makes the process a little easier. We can focus on parallelizing each
-loop rather than worrying about where our array data is located. 
+loop rather than worrying about where our array data is located.
 
 You can experiment with these examples on both a MI300A APU and a discrete GPU such as MI300X or MI200 series GPU. You
 should see a performance difference since the MI300A only has to map the pointer and not move the whole array.
 
-We have one less example to look at. Many scientific codes have multi-dimensional data that need to be operated on.
-We can use the collapse clause to spread out the work from both loops rather than just the outer one. This can 
-be helpful if the outer loop is small. But since we are always trying to generate more work and parallelism, it
-can also have some benefit for larger outer loops.
-
-We'll go back to our Fortran example directory since 2-dimensional arrays are much easier to work with in Fortran.
-The directive will now become
-
-```
-!$omp target teams distribute parallel do collapse(2)
-```
-
-Building and running the example
-
-```
-cd ../../Fortran/SingleLineConstructs
-make saxpy_gpu_collapse
-./saxpy_gpu_collapse
-```
-
-And the output
-
-```
-Time of kernel: 0.029263
- plausibility check:
-y(1,1) 4.000000
-y(m,n) 4.000000
-```
-
-There are now Fortran equivalents for most of the same cases. You can try them as well. All of them will work without
-HSA_XNACK being set. The reason is that Fortran passes the array size information along with the array. So the compiler
-has more information to work with. In Fortran, the additional information is called the "dope" vector. It is last
-century slang for "give me the dope on it". We would say "beta" in today's slang. 
