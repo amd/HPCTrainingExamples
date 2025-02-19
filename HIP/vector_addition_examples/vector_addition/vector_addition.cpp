@@ -23,9 +23,6 @@ THE SOFTWARE.
 #include <stdio.h>
 #include <math.h>
 #include "hip/hip_runtime.h"
-#include <sys/time.h>
-
-#define ELAPSED(t1,t2) (t2.tv_sec-t1.tv_sec + (t2.tv_usec-t1.tv_usec)*1E-6)
 
 /* --------------------------------------------------
 vector addition kernel
@@ -55,8 +52,6 @@ int main(int argc, char *argv[]){
     double *h_B = (double*)malloc(bytes);
     double *h_C = (double*)malloc(bytes);
 
-    struct timeval t1, t2;
-
     /* Initialize host arrays */
     for(int i=0; i<N; i++){
         h_A[i] = sin(i) * sin(i); 
@@ -81,12 +76,8 @@ int main(int argc, char *argv[]){
     int thr_per_blk = 256;
     int blk_in_grid = ceil( float(N) / thr_per_blk );
 
-    gettimeofday (&t1, NULL);
     /* Launch vector addition kernel */
     vector_addition<<<blk_in_grid, thr_per_blk>>>(d_A, d_B, d_C, N);
-        // Now measure bandwidth achieved
-    hipDeviceSynchronize ();
-    gettimeofday (&t2, NULL);
 
     /* Copy data from device array to host array (only need result, d_C) */
     hipMemcpy(h_C, d_C, bytes, hipMemcpyDeviceToHost);
@@ -120,7 +111,6 @@ int main(int argc, char *argv[]){
     printf("N                : %d\n", N);
     printf("Blocks in Grid   : %d\n", blk_in_grid);
     printf("Threads per Block: %d\n", thr_per_blk);
-    printf("Elapsed Time     : %f\n", ELAPSED(t1,t2));
     printf("==============================\n\n"); 
 
     return 0;
