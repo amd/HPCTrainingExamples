@@ -1,3 +1,6 @@
+// Original code by Yifan Sun: https://gitlab.com/syifan/hipbookexample
+// Modified by Giacomo Capodaglio: Giacomo.Capodaglio@amd.com
+
 #include <hip/hip_runtime.h>
 #include <iostream>
 #include <iomanip>
