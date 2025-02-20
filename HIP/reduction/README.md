@@ -137,4 +137,24 @@ Due to the fact that the input array is all initialized with the same value, a w
 ```
 output[blockIdx.x] = local_sum * BLOCKSIZE;
 ```
-In this way, we are taking into account all the local sums that are not considered.
+In this way, we are taking into account all the local sums that are not considered. Note that some unnecessary work is still done and then thrown out.
+
+## Reduction with Atomics
+
+Another way to fix the above example and actually produce correct code is with the use of atomics to perform the reduction, see `reduction_atomics.cpp`:
+
+```
+__global__ void atomic_reduction(const double* input, double* output, int size) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  int global_size = gridDim.x * blockDim.x;
+
+  double local_sum = 0;
+  for (int i = idx; i < global_size; i += global_size) {
+    local_sum += input[i];
+  }
+
+  atomicAdd(output,local_sum);
+}
+```
+
+In the above code, the local sums are accumulated to `output` with an atomic operation: `atomicAdd`. Note that this operation will not do any unsafe atomic operations unless the option `-munsafe-fp-atomics` is provided to the compiler at compile time. Try to replace `atomicAdd` with `unsafeAtomicAdd` which will always implement unsafe atomic operations regardless of what option is supplied to the compiler. How does the exectuion time change? 

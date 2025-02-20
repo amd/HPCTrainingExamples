@@ -52,7 +52,7 @@ __global__ void get_partial_sums(const double* input, double* output, int size) 
 int main() {
 
   // Size of array to reduce
-  const static int N = 1280000000;
+  const static int N = 128e07;
 
   // Define the grid size (number of blocks in grid)
   const static int GRIDSIZE = (N+(BLOCKSIZE-1))/BLOCKSIZE;
@@ -113,7 +113,11 @@ int main() {
   }
   else{
      std::cout<<"PASS"<<std::endl;
-     std::cout<<"Kernel time: " << kernel_time << std::endl;
+     std::cout<<"Kernel time: " << kernel_time << " ms" << std::endl;
   }
+
+  hipCheck( hipFree(d_in) );
+  hipCheck( hipFree(d_partial_sums) );
+
 }
 
