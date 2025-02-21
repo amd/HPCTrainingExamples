@@ -66,11 +66,11 @@ int main(int argc, char* argv[])
    printf("main Compiled with HOST_CODE \n");
 
    // allocate the device memory
-   #pragma omp target data map(to:x[0:count]) map(tofrom:y[0:count])
+   #pragma omp target data map(to:x[0:n]) map(tofrom:y[0:n])
    {
       compute_1(n, x);
       compute_2(n, y);
-      #pragma omp target update to(x[0:count]) to(y[0:count]) // update x and y on the target
+      #pragma omp target update to(x[0:n]) to(y[0:n]) // update x and y on the target
       #pragma omp target data use_device_ptr(x,y)
       {
          daxpy_hip(n, a, x, y);  // compute a * x[i] + y[i] in parallel
