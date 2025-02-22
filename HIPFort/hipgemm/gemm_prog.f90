@@ -14,7 +14,17 @@ program gemm
         allocate(B(1024,1024))
         allocate(C(1024,1024))
 
+   #ifndef SINGLE_DIRECTIVE
+        !$omp target data map(to:a,b) map(from:c)
+        !$omp target data use_device_ptr(a,b,c)
+   #endif
         call do_gemm(A, B, C)
+   #ifndef SINGLE_DIRECTIVE
+        !$omp end target data
+        !$omp end target data
+   #endif
+
+        deallocate(A,B,C)
 #endif
 
         print *,"Success"

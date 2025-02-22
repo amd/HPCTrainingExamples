@@ -46,36 +46,44 @@ module gemm_mod
                 alpha = 1.0
                 beta = 1.0
 
-                a = cmplx(1.0,0.0,c_double_complex)
-                b = cmplx(2.0,0.0,c_double_complex)
-                c = cmplx(0.0,0.0,c_double_complex)
+                A = cmplx(1.0,0.0,c_double_complex)
+                B = cmplx(2.0,0.0,c_double_complex)
+                C = cmplx(0.0,0.0,c_double_complex)
 
                 status = hipblasCreate(handle)
                 write(0,*) "CREATE", status, status .eq. HIPBLAS_STATUS_SUCCESS
 
 #ifdef SINGLE_DIRECTIVE
-                !$omp target data map(to:a,b) map(from:c) use_device_ptr(a,b,c)
+                !$omp target data map(to:a,b) map(from:c) use_device_ptr(A,B,C)
 #else
-                !$omp target data map(to:a,b) map(from:c)
-                !$omp target data use_device_ptr(a,b,c)
+#ifdef LOCAL_ALLOC
+                !$omp target data map(to:A,B) map(tofrom:C)
+                !$omp target data use_device_ptr(A,B,C)
+#endif
 #endif
                 status = hipblasZgemm(handle, ta, tb, &
                         m, n, k, alpha, &
                         A, lda, B, ldb , beta, C, ldC)
+
 #ifdef SINGLE_DIRECTIVE
                 !$omp end target data
+#else
+#ifdef LOCAL_ALLOC
+                !$omp end target data
+                !$omp end target data
+#endif
 #endif
 
                 status = hipdevicesynchronize()
                 status = hipblasDestroy(handle)
-#ifndef SINGLE_DIRECTIVE
-                !$omp end target data
-                !$omp end target data
-#endif
 
                 write(0,*) "ZGEMM", status, status .eq. HIPBLAS_STATUS_SUCCESS
 
                 write(0,*) "C(1,1):", C(1,1)
+
+#ifdef LOCAL_ALLOC
+                deallocate(A,B,C)
+#endif
 
         end subroutine
 
