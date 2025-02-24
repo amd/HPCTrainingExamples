@@ -1,0 +1,29 @@
+# Compiler and flags
+HIPCC        := hipcc
+CXXFLAGS     := -std=c++20 -O3
+STDPAR_FLAGS := --hipstdpar
+ARCH_FLAGS   := --offload-arch=gfx942
+
+# If STDPAR_PATH is not specified on the command line, use this default.
+STDPAR_PATH ?= /opt/rocm/include/thrust/system/hip/hipstdpar
+
+# Targets
+TARGET       := final
+OBJS         := stdpar_cpu_executor.o stdpar_gpu_executor.o
+
+all: $(TARGET)
+
+# Compile stdpar_cpu_executor.cpp 
+stdpar_cpu_executor.o: stdpar_cpu_executor.cpp 
+	$(HIPCC) $(CXXFLAGS) -c $< -o $@
+
+# Compile stdpar_gpu_executor.cpp 
+stdpar_gpu_executor.o: stdpar_gpu_executor.cpp
+	$(HIPCC) $(CXXFLAGS) $(STDPAR_FLAGS) --hipstdpar-path=$(STDPAR_PATH) $(ARCH_FLAGS) -c $< -o $@
+
+# Link all object files and main.cpp into final
+$(TARGET): $(OBJS) main.cpp
+	$(HIPCC) $(CXXFLAGS) $(OPENMP_FLAGS) $(OBJS) main.cpp -o $@ -ltbb
+
+clean:
+	rm -f $(OBJS) $(TARGET)
