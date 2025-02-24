@@ -46,4 +46,6 @@ program matmult
            print*, "Failure"      
         endif
 
+        deallocate(A,B,C1,C2)
+
 end program matmult
