@@ -63,18 +63,19 @@ module gemm_mod
 #endif
                 status = hipblasZgemm(handle, ta, tb, &
                         m, n, k, alpha, &
-                        A, lda, B, ldb , beta, C, ldC)
+                        A, lda, B, ldb , beta, C, ldc)
 
 #ifdef SINGLE_DIRECTIVE
                 !$omp end target data
+                status = hipdevicesynchronize()
 #else
 #ifdef LOCAL_ALLOC
+                status = hipdevicesynchronize()
                 !$omp end target data
                 !$omp end target data
 #endif
 #endif
 
-                status = hipdevicesynchronize()
                 status = hipblasDestroy(handle)
 
                 write(0,*) "ZGEMM", status, status .eq. HIPBLAS_STATUS_SUCCESS
