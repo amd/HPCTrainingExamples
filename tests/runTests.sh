@@ -70,7 +70,7 @@ usage()
     echo "--std-par : runs the hip std par tests"
     echo "--node-mem-model : runs the node mem model tests"
     echo "--prog-model : runs the programming  model tests"
-    echo "--rocprof : runs the rocprof tests"
+    echo "--rocprofv3 : runs the rocprofv3 tests"
     echo "--usm : runs the usm tests"
     echo ""
     exit 1
@@ -239,9 +239,9 @@ do
           PROG_MODEL=1
           reset-last
           ;;
-      "--rocprof")
+      "--rocprofv3")
           shift
-          ROCPROF=1
+          ROCPROFV3=1
           reset-last
           ;;
       "--usm")
@@ -334,8 +334,8 @@ elif [ ${NODE_MEM_MODEL} -eq 1 ]; then
    ctest -R NodeMemModel
 elif [ ${PROG_MODEL} -eq 1 ]; then
    ctest -R Programming_Model
-elif [ ${ROCPROF} -eq 1 ]; then
-   ctest -R Rocprof
+elif [ ${ROCPROFV3} -eq 1 ]; then
+   ctest -R RocprofV3
 elif [ ${USM} -eq 1 ]; then
    ctest -R USM
 else

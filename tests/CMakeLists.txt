@@ -787,27 +787,27 @@ set_property(TEST Affinity_MPI2_OpenMP2_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION
 #set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "MCW rank 3 bound to socket 0")
 #set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-# Rocprof tests
+# RocprofV3 tests
 
-add_test(NAME Rocprof_Mini_Nbody_Results COMMAND ../rocprof_mini_nbody_results.sh )
-set_property(TEST Rocprof_Mini_Nbody_Results PROPERTY PASS_REGULAR_EXPRESSION "10")
-set_property(TEST Rocprof_Mini_Nbody_Results PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME RocprofV3_Mini_Nbody_Results COMMAND ../rocprof_mini_nbody_results.sh )
+set_property(TEST RocprofV3_Mini_Nbody_Results PROPERTY PASS_REGULAR_EXPRESSION "10")
+set_property(TEST RocprofV3_Mini_Nbody_Results PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Rocprof_Mini_Nbody_Stats COMMAND ../rocprof_mini_nbody_stats.sh )
-set_property(TEST Rocprof_Mini_Nbody_Stats PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
-set_property(TEST Rocprof_Mini_Nbody_Stats PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME RocprofV3_Mini_Nbody_Stats COMMAND ../rocprof_mini_nbody_stats.sh )
+set_property(TEST RocprofV3_Mini_Nbody_Stats PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
+set_property(TEST RocprofV3_Mini_Nbody_Stats PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Rocprof_Mini_Nbody_Basenames COMMAND ../rocprof_mini_nbody_basenames.sh )
-set_property(TEST Rocprof_Mini_Nbody_Basenames PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
-set_property(TEST Rocprof_Mini_Nbody_Basenames PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME RocprofV3_Mini_Nbody_Basenames COMMAND ../rocprof_mini_nbody_basenames.sh )
+set_property(TEST RocprofV3_Mini_Nbody_Basenames PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
+set_property(TEST RocprofV3_Mini_Nbody_Basenames PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Rocprof_Mini_Nbody_HIP_Trace COMMAND ../rocprof_mini_nbody_hip_trace.sh )
-set_property(TEST Rocprof_Mini_Nbody_HIP_Trace PROPERTY PASS_REGULAR_EXPRESSION "hipLaunchKernel")
-set_property(TEST Rocprof_Mini_Nbody_HIP_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME RocprofV3_Mini_Nbody_HIP_Trace COMMAND ../rocprof_mini_nbody_hip_trace.sh )
+set_property(TEST RocprofV3_Mini_Nbody_HIP_Trace PROPERTY PASS_REGULAR_EXPRESSION "hipLaunchKernel")
+set_property(TEST RocprofV3_Mini_Nbody_HIP_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Rocprof_Mini_Nbody_HSA_Trace COMMAND ../rocprof_mini_nbody_hsa_trace.sh )
-set_property(TEST Rocprof_Mini_Nbody_HSA_Trace PROPERTY PASS_REGULAR_EXPRESSION "hsa_system_get_info")
-set_property(TEST Rocprof_Mini_Nbody_HSA_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME RocprofV3_Mini_Nbody_HSA_Trace COMMAND ../rocprof_mini_nbody_hsa_trace.sh )
+set_property(TEST RocprofV3_Mini_Nbody_HSA_Trace PROPERTY PASS_REGULAR_EXPRESSION "hsa_system_get_info")
+set_property(TEST RocprofV3_Mini_Nbody_HSA_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # PyTorch tests
 
