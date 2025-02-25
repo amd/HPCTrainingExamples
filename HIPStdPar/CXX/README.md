@@ -136,3 +136,22 @@ make
 
 make clean
 ```
+
+## Mix and Match
+
+The examples contained in the MixandMatch directory demonstrate how to correctly combine
+StdPar with other commonly used programming models, such as OpenMP and HIP.
+
+All examples require the user to specify the path to the StdPar header in the Makefile.
+
+* omp_stdpar: demonstrates how to integrate StdPar and OpenMP within the same application.
+It utilizes object-oriented programming techniques to implement the same interface in specialized ways.
+
+* std_cpu_gpu: shows how to combine StdPar sections using `par` and `par_unseq`
+to run on both the CPU and GPU within the same application.
+
+* hip_stdpar: illustrates how to use HIP routines to allocate and transfer data to GPU buffers
+for use in StdPar sections.
+
+* atomic_stdpar_omp: explains how atomic operations can be safely performed within a StdPar
+section using the `par_unseq` policy. The example also includes an equivalent OpenMP implementation.
