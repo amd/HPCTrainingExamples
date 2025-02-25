@@ -5,6 +5,7 @@
       !--- device routine
       subroutine compute(x)
           implicit none
+          !$omp declare target device_type(nohost) link(compute)
           !--------------------
           !example routine called from kernel
           !--- variables

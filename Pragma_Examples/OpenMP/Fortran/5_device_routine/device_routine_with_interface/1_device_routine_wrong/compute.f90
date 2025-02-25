@@ -1,7 +1,7 @@
 ! This example was created by Johanna Potyka
 ! Copyright (c) 2024 AMD HPC Application Performance Team
 ! MIT License
-    
+
       !--- device routine
       subroutine compute(x)
           implicit none
@@ -13,7 +13,7 @@
           real(kind=rk),intent(inout) :: x
           !x               a value (from array)
 
-          !--- 
+          !---
           x = 1.0_rk
-          
+
       end subroutine compute

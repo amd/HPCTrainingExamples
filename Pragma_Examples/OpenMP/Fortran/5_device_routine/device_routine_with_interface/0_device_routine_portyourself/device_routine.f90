@@ -4,7 +4,7 @@
 
       program device_routine
       !----------------------------
-      ! description: this program is meant to demonstrate 
+      ! description: this program demonstrates
       !              how to call a device subroutine
          use omp_lib
 
@@ -29,15 +29,13 @@
                  end subroutine compute
          end interface
 
-
-
          !---allocation
          allocate(x(1:N),STAT=err_stat)
          if(err_stat /= 0) then
              write(*,*) "error while allocating"
              STOP
          end if
-         
+
          !---initialisation
          x = -1.0_rk
          !--- call a device subroutine in kernel
@@ -57,7 +55,5 @@
         !--- print result
         Write(*,'(A,F0.12)') "Result: sum of x is ",sum
 
-       deallocate(x) 
-
+        deallocate(x)
       end program device_routine
-      
