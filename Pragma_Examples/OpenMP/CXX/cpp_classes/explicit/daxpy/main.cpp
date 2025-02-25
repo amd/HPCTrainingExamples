@@ -22,12 +22,14 @@ int main(int argc, char* argv[]) {
    // initialize the daxpy class
    daxpy data(a,N,x,y);
 
+   // update arrays on host
 #pragma omp target update from(x[:N],y[:N])
    data.printArrays();
 
    // perform daxpy
    data.apply();
 
+   // update arrays on host
 #pragma omp target update from(x[:N],y[:N])
    data.printArrays();
 

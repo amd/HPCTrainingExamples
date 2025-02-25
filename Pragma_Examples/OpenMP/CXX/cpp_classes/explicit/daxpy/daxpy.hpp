@@ -21,7 +21,6 @@ public:
     ~daxpy() {
     }
 
-#pragma omp begin declare target
     void setX(int index, double val) {
         x_[index]=val;
     }
@@ -45,7 +44,6 @@ public:
     void setConst(double a) {
         a_ = a;
     }
-#pragma omp end declare target
 
     int getSize() const {
         return N_;
