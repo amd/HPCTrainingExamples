@@ -39,7 +39,7 @@
          !---initialisation
          x = -1.0_rk
          !--- call a device subroutine in kernel
-         !$omp target teams distribute parallel do map(tofrom:x)
+         !$omp target teams distribute parallel do
          do k=1,N
             call compute(x(k))
             !x(k) = 1.0_rk
@@ -50,7 +50,7 @@
         sum = 0.0_rk;
 
         !--- sum up x to sum on device with reduction
-        !$omp target teams distribute parallel do reduction(+:sum) map(to:x)
+        !$omp target teams distribute parallel do reduction(+:sum)
         do k=1,N
            sum = sum + x(k)
         end do

@@ -5,6 +5,7 @@
       !--- device routine
       subroutine compute(x)
           implicit none
+          !$omp requires unified_shared_memory
           !$omp declare target
           !--------------------
           !example routine called from kernel
