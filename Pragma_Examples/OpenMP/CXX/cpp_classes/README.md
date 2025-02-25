@@ -50,7 +50,7 @@ The code in the `operations` directory adds one layer of complexity and performs
 
 ## The `explicit` Sub-directory
 
-This sub-directory contains example code that is meant to work even withouth enabling unified shared memory, meaning that it will compile and run regardles of whether `HSA_XNACK=1`. To compile:
+This sub-directory contains example code that is meant to work even without enabling unified shared memory, meaning that it will compile and run regardless of whether `HSA_XNACK=1`. To compile:
 
 ```
 module load rocm
