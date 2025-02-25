@@ -6,7 +6,7 @@ CXXFLAGS = -g -O3  -Wall -std=c++17 ${OPENMP_FLAGS}
 LDFLAGS= ${OPENMP_FLAGS} 
 
 OBJECTS = daxpy.o main.o
-EXEC = mapper
+EXEC = example
 
 all: $(EXEC)
 
