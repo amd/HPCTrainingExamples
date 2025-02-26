@@ -358,13 +358,13 @@ set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function_External_PortYo
 
 # HIPFort Examples
 
-add_test(NAME HIPFort_Module_Check_2003 COMMAND ../hipfort_module_check_2003.sh )
-set_property(TEST HIPFort_Module_Check_2003 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
-set_property(TEST HIPFort_Module_Check_2003 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME HIPFort_Module_Check_hipfc_2003 COMMAND ../hipfort_module_check_hipfc_2003.sh )
+set_property(TEST HIPFort_Module_Check_hipfc_2003 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
+set_property(TEST HIPFort_Module_Check_hipfc_2003 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME HIPFort_Module_Check_2008 COMMAND ../hipfort_module_check_2008.sh )
-set_property(TEST HIPFort_Module_Check_2003 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
-set_property(TEST HIPFort_Module_Check_2003 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME HIPFort_Module_Check_hipfc_2008 COMMAND ../hipfort_module_check_hipfc_2008.sh )
+set_property(TEST HIPFort_Module_Check_hipfc_2008 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
+set_property(TEST HIPFort_Module_Check_hipfc_2008 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME HIPFort_ROCm_Include_GEMM_Global COMMAND ../hipfort_gemm_global.sh )
 set_property(TEST HIPFort_ROCm_Include_GEMM_Global PROPERTY PASS_REGULAR_EXPRESSION "2048")
@@ -382,9 +382,9 @@ add_test(NAME HIPFort_ROCm_Include_GEMM_Local_SD COMMAND ../hipfort_gemm_local_s
 set_property(TEST HIPFort_ROCm_Include_GEMM_Local_SD PROPERTY PASS_REGULAR_EXPRESSION "2048")
 set_property(TEST HIPFort_ROCm_Include_GEMM_Local_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME HIPFort_Matmult COMMAND ../hipfort_matmult.sh )
-set_property(TEST HIPFort_Matmult PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST HIPFort_Matmult PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME HIPFort_Module_Check_Matmult COMMAND ../hipfort_module_check_matmult.sh )
+set_property(TEST HIPFort_Module_Check_Matmult PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIPFort_Module_Check_Matmult PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Advanced OpenMP Examples
 
