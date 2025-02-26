@@ -19,8 +19,8 @@ int main(int argc, char *argv[]){
       myscienceclass.compute(&x[k], N);
    }
 
-   delete[] x;
-
    cout << "Array value is " << x[0] << endl;
    cout << "Finished calculation" << endl;
+
+   delete[] x;
 }
