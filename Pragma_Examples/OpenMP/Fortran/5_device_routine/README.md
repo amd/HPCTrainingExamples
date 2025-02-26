@@ -1,4 +1,4 @@
-### Fortran with interface blocks
+## Part 1: Fortran with interface blocks
 
 Let's start with the device routine in a separate file with an interface.
 
@@ -138,7 +138,7 @@ make
 ./device_routine
 ```
 
-### Fortran with modules
+## Part 2: Fortran with modules
 
 
 There are three versions
@@ -207,4 +207,3 @@ Now build and run
 make
 ./device_routine
 ```
-
