@@ -5,8 +5,7 @@ ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name
 OPENMP_FLAGS = -fopenmp
 OPENMP_OFFLOAD_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
 
-FREE_FORM_FLAG = -ffree-form
-FFLAGS = -g -O3 ${FREE_FORM_FLAG}
+FFLAGS = -g -O3
 
 impl.o: impl.f90
 	$(FC) -c $(FFLAGS) ${OPENMP_FLAGS} $<
