@@ -16,7 +16,7 @@ program gemm
 
    #ifndef SINGLE_DIRECTIVE
         !$omp target data map(to:a,b) map(from:c)
-        !$omp target data use_device_ptr(a,b,c)
+        !$omp target data use_device_addr(a,b,c)
    #endif
         call do_gemm(A, B, C)
    #ifndef SINGLE_DIRECTIVE

@@ -5,7 +5,7 @@ program matmult
         implicit none
 
         integer(c_int)     :: n
-        real(kind=c_double), dimension(:,:), allocatable :: A, B, C1, C2
+        real(kind=c_double), dimension(:,:), pointer :: A, B, C1, C2
 
         ! with this example, we are computing C=A*B
         ! using hipblas and also doing it with a simple hip kernel
@@ -28,7 +28,7 @@ program matmult
         ! the arrays have to be on device to be fed to hipblas
         ! hence we use openmp to move them on the device
         !$OMP target enter data map(to:a,b,c1)
-        !$OMP target data use_device_ptr(a,b,c1)
+        !$OMP target data use_device_addr(a,b,c1)
         call do_matmult(c_loc(A), c_loc(B), c_loc(C1), n)
         !$OMP end target data
         !$OMP target update from(c1)
