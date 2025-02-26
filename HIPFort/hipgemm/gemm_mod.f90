@@ -54,11 +54,11 @@ module gemm_mod
                 write(0,*) "CREATE", status, status .eq. HIPBLAS_STATUS_SUCCESS
 
 #ifdef SINGLE_DIRECTIVE
-                !$omp target data map(to:a,b) map(from:c) use_device_ptr(A,B,C)
+                !$omp target data map(to:a,b) map(from:c) use_device_addr(A,B,C)
 #else
 #ifdef LOCAL_ALLOC
                 !$omp target data map(to:A,B) map(tofrom:C)
-                !$omp target data use_device_ptr(A,B,C)
+                !$omp target data use_device_addr(A,B,C)
 #endif
 #endif
                 status = hipblasZgemm(handle, ta, tb, &
