@@ -24,7 +24,6 @@
          !sum             used to sum up x
          interface
                  subroutine compute(x)
-                   !$omp declare target device_type(nohost) link(compute)
                    integer,parameter :: rk=8
                    real(kind=rk), intent(inout) :: x
                  end subroutine compute
@@ -49,7 +48,6 @@
             call compute(x(k))
             !x(k) = 1.0_rk
          end do
-         !$omp end target teams distribute parallel do
 
          !--- initialize sum
         sum = 0.0_rk;
@@ -59,7 +57,6 @@
         do k=1,N
            sum = sum + x(k)
         end do
-        !$omp end target teams distribute parallel do
         !--- print result
         Write(*,'(A,F0.12)') "Result: sum of x is ",sum
 

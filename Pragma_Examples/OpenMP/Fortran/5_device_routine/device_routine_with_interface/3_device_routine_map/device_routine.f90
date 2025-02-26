@@ -24,7 +24,6 @@
          !sum             used to sum up x
          interface
                  subroutine compute(x)
-                   !$omp declare target
                    integer,parameter :: rk=8
                    real(kind=rk), intent(inout) :: x
                  end subroutine compute
