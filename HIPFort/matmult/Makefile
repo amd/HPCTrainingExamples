@@ -4,18 +4,18 @@ all: $(EXECUTABLE)
 .PHONY: test
 
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
+HIPFORT_PATH ?= ${ROCM_PATH}
 
 OBJECTS = matmult_prog.o matmult_interface.o matmult_hip.o matmult_mod.o
 
-FC_FLAGS = -g -O2 -fopenmp --offload-arch=${ROCM_GPU} -I${ROCM_PATH}/include/hipfort/amdgcn 
-#FC_FLAGS = -g -O2 -I${ROCM_PATH}/include/hipfort/amdgcn 
+FC_FLAGS = -g -O2 -fopenmp --offload-arch=${ROCM_GPU} -I${HIPFORT_PATH}/include/hipfort/amdgcn
 HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include
 
 HIPCC ?= hipcc
 
 ifeq ($(HIPCC), hipcc)
    HIPCC_FLAGS += -munsafe-fp-atomics
-   LDFLAGS = -L${ROCM_PATH}/lib -lhipfort-amdgcn -lhipblas -lamdhip64 -lstdc++ 
+   LDFLAGS = -L${HIPFORT_PATH}/lib -lhipfort-amdgcn -L${ROCM_PATH}/lib -lhipblas -lamdhip64 -lstdc++
 endif
 
 matmult_prog.o: matmult_prog.f90 matmult_interface.o matmult_mod.o
