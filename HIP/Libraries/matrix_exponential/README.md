@@ -66,16 +66,16 @@ $$
 \exp^{At} \approx \sum_{k=0}^N\dfrac{A^k t^k}{k!}.
 $$
 
-Note that as $k$ goes to infinity, the above becomes an actual equality. In this example, we will approximate numerically the matrix exponential using the above, and verify that the error becomes smaller as more terms are included. The error is defined as the norm of the exact solution minus the approximate solution obtained with the approximation of the matrix exponential, namely:
+Note that as $N$ goes to infinity, the above becomes an actual equality. In this example, we will approximate numerically the matrix exponential using the above, and verify that the error becomes smaller as more terms are included. The error is defined as the norm of the exact solution minus the approximate solution obtained with the approximation of the matrix exponential, namely:
 
 $$
-\Delta_k=\|\mathbf{x}(t)-\mathbf{y}_k(t)\|,
+\Delta_N=\|\mathbf{x}(t)-\mathbf{y}_N(t)\|,
 $$
 
 where
 
 $$
-\mathbf{y}_k(t) = ( \sum_{k=0}^N\dfrac{A^k  t^k}{k!} ) \mathbf{x}_0.
+\mathbf{y}_N(t)=(\sum_{k=0}^N\dfrac{A^k t^k}{k!})\mathbf{x}_0.
 $$
 
 Remember, what is inside the parenthesis above is a matrix.
