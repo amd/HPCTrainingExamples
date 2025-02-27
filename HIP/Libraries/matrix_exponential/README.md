@@ -69,16 +69,16 @@ $$
 Note that as $N$ goes to infinity, the above becomes an actual equality. In this example, we will approximate numerically the matrix exponential using the above, and verify that the error becomes smaller as more terms are included. The error is defined as the norm of the exact solution minus the approximate solution obtained with the approximation of the matrix exponential, namely:
 
 $$
-\Delta_N=\|\mathbf{x}(t)-\mathbf{y}_N(t)\|,
+\Delta_N(t)=\|\mathbf{x}(t)-\mathbf{y}_N(t)\|_2,
 $$
 
 where
 
 $$
-\mathbf{y}_N(t)=(\sum_{k=0}^N\dfrac{A^k t^k}{k!})\mathbf{x}_0.
+\mathbf{y}_N(t)=\sum_{k=0}^N\dfrac{A^k t^k}{k!}\mathbf{x}_0.
 $$
 
-Remember, what is inside the parenthesis above is a matrix.
+Remember, what multiplies \mathbf{x}_0 above is a matrix.
 
 ## Implementation
 

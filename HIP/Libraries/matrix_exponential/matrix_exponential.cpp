@@ -3,34 +3,70 @@
 #include <rocsparse/rocsparse.h>
 #include <rocrand/rocrand.h>
 #include <rocblas/rocblas.h>
+#include <cmath>
 
 int main(int argc, char* argv[]) {
 
-   // initialize data
-   int N = 10;
-   double a = 0.5;
+   // number of temrs in truncated series
+   int N = 1e4;
 
-   // daxpy constructor
-   daxpy data(a,N);
+   // matrix A
+   std::vector<double> h_A(4);
+   double* d_A;
+   hipMalloc(&d_A, 4*sizeof(double));
+   // row-major
+   h_A[0]=-2.0;
+   h_A[1]=-1.0;
+   h_A[2]=1.0;
+   h_A[3]=-2.0;
+   hipMemcpy(d_A, h_A, 4* sizeof(double), hipMemcpyHostToDevice);
 
-   // initialize daxpy data with "set" functions
-   #pragma omp target teams loop
-   for(int i=0; i<N; i++){
-      data.setX(i,1.0);
-      data.setY(i,0.5);
-   }
+   // rocblas dgemm parameters
+   // dgemm performs C = alpha * A * B + beta * C
+   double alpha = 1.0;
+   double beta = 0.0;
+   int lda,ldb,ldc;
+   rocblas_handle *handle = (rocblas_handle *) ptr;
+   rocblas_create_handle(handle);
 
-   data.printArrays();
+   // use rocrand to set random time h_t
+   // at which the error will be evaluated
+   rocrand_generator gen;
+   double* h_t, d_t;
+   h_t = (double *)malloc(sizeof(double));
+   hipMalloc(&d_t,sizeof(double));
+   rocrand_create_generator(&gen, ROCRAND_RNG_PSEUDO_DEFAULT);
+   rocrand_set_seed(gen, time(NULL));
+   rocrand_generate_uniform(gen, d_t, 1);
+   hipMemcpy(h_t, d_t, sizeof(double), hipMemcpyDeviceToHost);
 
-   // compute daxpy operation using 
-   // member "get" and "set" functions
-   #pragma omp target teams distribute parallel for 
-   for(int i=0; i<N; i++){
-      double val = data.getConst() * data.getX(i) + data.getY(i);
-      data.setY(i,val);
-   }   
+   // exact solution vector evalated at h_t: x(h_t)
+   std::vector<double> x_exact(2);
+   x_exact[0]=exp(-2.0*h_t[0])*cos(h_t[0]);
+   x_exact[1]=exp(-2.0*h_t[0])*sin(h_t[0]);
 
-   data.printArrays();
+   // approximate matrix exponential
+   std::vector<double> h_EXP(4);
+   double* d_EXP;
+   hipMalloc(&d_EXP, 4*sizeof(double));
+   // initialize to first summand (the identity)
+   // row-major
+   h_EXP[0]=1.0;
+   h_EXP[1]=0.0;
+   h_EXP[2]=0.0;
+   h_EXP[3]=1.0;
+
+
+// TODO: add loop to compute truncated series
+//        rocblas_dgemm(*handle,(rocblas_operation)modeA,(rocblas_operation)modeB,2,2,2,
+//            &alpha,d_EXP,lda,d_EXP,ldb,&beta,d_EXP,ldc);
+
+
+   hipFree(d_A);
+   free(h_t);
+   hipFree(d_t);
+   hipFree(d_EXP);
+   rocrand_destroy_generator(gen);
 
    return 0;
 
