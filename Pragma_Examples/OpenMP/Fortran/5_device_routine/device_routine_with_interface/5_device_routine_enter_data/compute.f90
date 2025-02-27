@@ -1,11 +1,11 @@
 ! This example was created by Johanna Potyka
-! Copyright (c) 2024 AMD HPC Application Performance Team
+! Copyright (c) 2025 AMD HPC Application Performance Team
 ! MIT License
 
       !--- device routine
       subroutine compute(x)
           implicit none
-          !$omp declare target device_type(nohost) link(compute)
+          !$omp declare target
           !--------------------
           !example routine called from kernel
           !--- variables

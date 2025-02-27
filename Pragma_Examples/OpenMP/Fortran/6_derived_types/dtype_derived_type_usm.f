@@ -1,4 +1,4 @@
-!Johanna Potyka 26th Sept 2024 added usm exercise for MI300A 
+!Johanna Potyka 26th Sept 2025 added usm exercise for MI300A 
 
 module dtype
         implicit none
