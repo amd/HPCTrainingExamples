@@ -1,4 +1,4 @@
-# OpenMP Offloading for C++ codes that use classes
+# OpenMP Offloading for C++ Codes that use Classes
 
 These examples show how to use OpenMP for GPU offloading in the context of a C++ code that makes uses of classes, and a programming paradigm where the most relevant members of the class are private, with their associated values accessed and modified by appropriate `get` and `set` functions.
 
