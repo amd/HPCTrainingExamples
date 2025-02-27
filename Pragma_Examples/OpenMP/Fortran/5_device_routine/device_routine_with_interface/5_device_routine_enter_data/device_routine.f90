@@ -57,6 +57,7 @@
         do k=1,N
            sum = sum + x(k)
         end do
+
         !--- print result
         Write(*,'(A,F0.12)') "Result: sum of x is ",sum
 
