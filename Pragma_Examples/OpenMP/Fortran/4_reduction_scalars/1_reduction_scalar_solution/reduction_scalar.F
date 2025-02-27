@@ -1,5 +1,5 @@
 ! This program is based on a reproducer created by Mahdieh Ghazimirsaeed
-! Copyright (c) 2024 AMD HPC Application Performance Team
+! Copyright (c) 2025 AMD HPC Application Performance Team
 ! MIT License
       program reduction
       implicit none

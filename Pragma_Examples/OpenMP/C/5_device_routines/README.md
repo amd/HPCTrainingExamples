@@ -32,7 +32,7 @@ You should see the result:
 Result: sum of x is 1000.000000
 ```
 
-Now try and convert the example to run on the GPU. Start with adding `#pragma omp target teams distribute parallel for simd` before the for loops in the main program in `device_routine.c`. Note that one of the loops also needs a `reduction(+:sum)` clause added to the target directive. How do you show the compiler to compile the function in the other file, compute.c, for the GPU? Try adding the `#pragma omp declare target` directive to the subroutine declaration in compute.c.
+Now try and convert the example to run on the GPU. Start with adding `#pragma omp target teams distribute parallel for` before the for loops in the main program in `device_routine.c`. Note that one of the loops also needs a `reduction(+:sum)` clause added to the target directive. How do you show the compiler to compile the function in the other file, compute.c, for the GPU? Try adding the `#pragma omp declare target` directive to the subroutine declaration in compute.c.
 
 There are two solutions for this exercise. One with the APU programming model using unified shared memory. The other has explicit map clauses for when unified shared memory is not available or not being used. We'll look at the unified shared memory version first.
 

@@ -1,6 +1,6 @@
 // C version of reduction scalar reproducer created by Mahdieh Ghazimirsaeed
 // Converted by Bob Robey
-// Copyright (c) 2024 AMD HPC Application Performance Team
+// Copyright (c) 2025 AMD HPC Application Performance Team
 // MIT License
 
 #include <stdio.h>
