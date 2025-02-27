@@ -117,7 +117,7 @@ See the directives used to move the constants array to the GPU. Note that we als
 In this example, we initialize the data on the GPU with:
 
 ```
-#pragma omp target teams distribute parallel for simd
+#pragma omp target teams distribute parallel for
    for (int i = 0; i< isize; i++) {
       constants[i] = (double)i;
    }
