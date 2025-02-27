@@ -63,19 +63,19 @@ $$
 can actually be approximated using a truncated series, which is an infinite summation truncated to a finite number of terms, namely:
 
 $$
-\exp^{At} \approx \sum_{k=0}^N\dfrac{A^k \, t^k}{k!}
-$$.
+\exp^{At} \approx \sum_{k=0}^N\dfrac{A^k \, t^k}{k!}.
+$$
 
-Note that as $N$ goes to infinity, the above becomes an actual equality. In this example, we will approximate numerically the matrix exponential using the above, and verify that the error becomes smaller as more terms are included. The error is defined as the norm of the exact solution minus the approximate solution obtained with the approximation of the matrix exponential, namely:
+Note that as $k$ goes to infinity, the above becomes an actual equality. In this example, we will approximate numerically the matrix exponential using the above, and verify that the error becomes smaller as more terms are included. The error is defined as the norm of the exact solution minus the approximate solution obtained with the approximation of the matrix exponential, namely:
 
 $$
-\Delta_N=\|\mathbf{x}(t)-\mathbf{y}_k(t)\|,
+\Delta_k=\|\mathbf{x}(t)-\mathbf{y}_k(t)\|,
 $$
 
 where
 
 $$
-\mathbf{y}(t) = \Big( \sum_{k=0}^N\dfrac{A^k \, t^k}{k!} \Big) \mathbf{x}_0.
+\mathbf{y}_k(t) = \Big( \sum_{k=0}^N\dfrac{A^k  t^k}{k!} \Big) \mathbf{x}_0.
 $$
 
 ## Implementation
