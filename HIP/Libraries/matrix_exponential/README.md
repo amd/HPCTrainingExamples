@@ -8,8 +8,8 @@ These systems are solved to describe, for instance, the evolution of dynamical s
 Consider the initial value problem:
 
 $$
-\dot{\bm{x}} = A \bm{x}
-\bm{x}(0) = 
+\dot{\mathbf{x}} = A \mathbf{x}\\
+\mathbf{x}(0) = 
 \begin{pmatrix}
 1 \\
 0
@@ -24,6 +24,6 @@ A=
 \end{pmatrix}.
 $$
 
-By the fundamental theorem of linear systems, the solution $\bm{x}(t)$ at any time $t$ is given by:
+By the fundamental theorem of linear systems, the solution $\mathbf{x}(t)$ at any time $t$ is given by:
 
 
