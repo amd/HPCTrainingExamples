@@ -13,7 +13,7 @@ there are six code versions in enumerated folders:
 1_device_routine_wrong
 2_device_routine_usm
 3_device_routine_map
-4_device_routine_link
+4_device_routine_device_type
 5_device_routine_enter_data
 ```
 
@@ -113,11 +113,11 @@ make
 ./device_routine
 ```
 
-Some of the other clauses that can be uses are the `device_type(nohost)` that only generates device code and `link(compute)` that
-specifies the link for the declare target clauses. Check out the example at
+Some of the other clauses that can be uses are the `device_type(nohost)` that only generates device code 
+for the declare target clauses. Check out the example at
 
 ```
-cd ../4_device_routine_link
+cd ../4_device_routine_device_type
 make
 ./device_routine
 ```
