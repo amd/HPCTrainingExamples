@@ -21,12 +21,15 @@ do{                                                                             
 // It is a multiple of 64 (wavefront size)
 const static int BLOCKSIZE = 256;
 
+// Define the grid size (number of blocks in grid)
+const static int GRIDSIZE = 1024;
+
 __global__ void get_partial_sums_to_fix(const double* input, double* output, int size) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int global_size = gridDim.x * blockDim.x;
 
   double local_sum = 0;
-  for (int i = idx; i < global_size; i += global_size) {
+  for (int i = idx; i < size; i += global_size) {
     local_sum += input[i];
   }
 
@@ -37,9 +40,6 @@ int main() {
 
   // Size of array to reduce
   const static int N = 128e07;
-
-  // Define the grid size (number of blocks in grid)
-  const static int GRIDSIZE = (N+(BLOCKSIZE-1))/BLOCKSIZE;
 
   // Create start and stop event objects for timing
   hipEvent_t start, stop;
