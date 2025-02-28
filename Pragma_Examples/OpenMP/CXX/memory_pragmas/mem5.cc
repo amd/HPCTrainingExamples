@@ -77,9 +77,10 @@ int main(int argc, char* argv[])
    main_timer = omp_get_wtime()-main_start;
    cout << "-Overall time is " << main_timer << endl;
 
+#pragma omp target exit data map(from: z[0:n]) map(delete: x[0:n], y[0:n])
+
    cout << "Last Value: z[" << n-1 << "]=" << z[n-1] << endl;
 
-#pragma omp target exit data map(from: z[0:n]) map(delete: x[0:n], y[0:n])
    delete [] x;
    delete [] y;
    delete [] z;
