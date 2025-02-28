@@ -1,5 +1,5 @@
 ! This example was created by Johanna Potyka
-! Copyright (c) 2024 AMD HPC Application Performance Team
+! Copyright (c) 2025 AMD HPC Application Performance Team
 ! MIT License
 
       program device_routine
@@ -57,6 +57,7 @@
         do k=1,N
            sum = sum + x(k)
         end do
+
         !--- print result
         Write(*,'(A,F0.12)') "Result: sum of x is ",sum
 

@@ -1,4 +1,4 @@
-!Johanna Potyka 26th Sept 2024 added naive implementation for exercise for MI300A 
+!Johanna Potyka 26th Sept 2025 added naive implementation for exercise for MI300A 
 
 module dtype
         implicit none

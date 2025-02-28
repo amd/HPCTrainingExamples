@@ -1,4 +1,4 @@
-// Copyright (c) 2024 AMD HPC Application Performance Team
+// Copyright (c) 2025 AMD HPC Application Performance Team
 // Author: Bob Robey, Bob.Robey@amd.com
 // MIT License
 
@@ -11,18 +11,18 @@ int main(int argc, char *argv[]){
    int N=1000;
    double *x = (double *)malloc(N*sizeof(double));
 #pragma omp target enter data map (alloc:x[0:N])
-#pragma omp target teams distribute parallel for simd
+#pragma omp target teams distribute parallel for
    for (int k = 0; k < N; k++){
       x[k] = 0.0;
    }
 
-#pragma omp target teams distribute parallel for simd
+#pragma omp target teams distribute parallel for
    for (int k = 0; k < N; k++){
       compute(&x[k]);
    }
 
    double sum = 0.0;
-#pragma omp target teams distribute parallel for simd reduction(+:sum)
+#pragma omp target teams distribute parallel for reduction(+:sum)
    for (int k = 0; k < N; k++){
       sum += x[k];
    }
@@ -32,4 +32,3 @@ int main(int argc, char *argv[]){
 #pragma omp target exit data map (release:x[0:N])
    free(x);
 }
-      

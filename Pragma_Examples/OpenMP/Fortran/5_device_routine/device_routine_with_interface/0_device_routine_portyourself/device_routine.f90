@@ -1,5 +1,5 @@
 ! This example was created by Johanna Potyka
-! Copyright (c) 2024 AMD HPC Application Performance Team
+! Copyright (c) 2025 AMD HPC Application Performance Team
 ! MIT License
 
       program device_routine
@@ -41,7 +41,6 @@
          !--- call a device subroutine in kernel
          do k=1,N
             call compute(x(k))
-            !x(k) = 1.0_rk
          end do
 
          !--- initialize sum
