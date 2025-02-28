@@ -31,6 +31,5 @@ add_executable(mem8 mem8.cc)
 add_executable(mem9 mem9.cc)
 add_executable(mem10 mem10.cc)
 add_executable(mem11 mem11.cc)
-add_executable(mem12 mem12.cc)
 
-install(TARGETS mem1 mem2 mem3 mem4 mem5 mem6 mem7 mem8 mem9 mem10 mem11 mem12)
+install(TARGETS mem1 mem2 mem3 mem4 mem5 mem6 mem7 mem8 mem9 mem10 mem11)
