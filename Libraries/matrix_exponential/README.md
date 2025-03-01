@@ -24,17 +24,17 @@ A=
 -2 & -1 \\
 1 & -2
 \end{pmatrix}, \qquad
-\mathbf{x}_0=
+x_0=
 \begin{pmatrix}
 1 \\
 0
 \end{pmatrix}.
 $$
 
-By the fundamental theorem of linear systems, the solution $\mathbf{x}(t)$ at any time $t$ is can be found analytically, and is given by:
+By the fundamental theorem of linear systems, the solution $\x(t)$ at any time $t$ is can be found analytically, and is given by:
 
 $$
-\mathbf{x}(t)=\exp^{At}\mathbf{x}=\exp^{-2t}
+x(t)=\exp^{At}x=\exp^{-2t}
 \begin{pmatrix}
 \cos(t) & - \sin(t) \\
 \sin(t) & \cos(t)
@@ -69,16 +69,16 @@ $$
 Note that as $N$ goes to infinity, the above becomes an actual equality. In this example, we will approximate numerically the matrix exponential using the above, and verify that the error becomes smaller as more terms are included. The error is defined as the norm of the exact solution minus the approximate solution obtained with the approximation of the matrix exponential, namely:
 
 $$
-\Delta_N(t)=\|\mathbf{x}(t)-\mathbf{y}_N(t)\|_2,
+\Delta_N(t)=\|x(t)-y_N(t)\|_2,
 $$
 
 where
 
 $$
-\mathbf{y}_N(t)=\sum_{k=0}^N\dfrac{A^k t^k}{k!}\mathbf{x}_0.
+y_N(t)=\sum_{k=0}^N\dfrac{A^k t^k}{k!}x_0.
 $$
 
-Remember, what multiplies \mathbf{x}_0 above is a matrix.
+Remember, what multiplies x_0 above is a matrix.
 
 ## Implementation
 

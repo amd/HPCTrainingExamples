@@ -4,6 +4,7 @@
 #include <rocblas/rocblas.h>
 #include <cmath>
 #include <iomanip>
+#include <omp.h>
 
 // Macro for checking GPU API return values
 #define hipCheck(call)                                                                          \
@@ -27,8 +28,8 @@ int main(int argc, char* argv[]) {
 
    // number of terms in truncated series
    int N = 100;
-   // evaluating the solutions at t=10
-   double t=10.0;
+   // evaluating the solutions at t=0.5
+   double t=0.5;
 
    // allocate matrices on host
    std::vector<double> h_A(4);
@@ -42,11 +43,6 @@ int main(int argc, char* argv[]) {
    // temporary matrix where the powers of A will be stored
    // while computing them inside the kernel
    hipCheck( hipMalloc(&d_powA, 4*sizeof(double)) );
-
-   // auxiliary
-   double* d_partial_sums;
-   std::vector<double> h_partial_sums(4);
-   hipCheck( hipMalloc(&d_partial_sums, 4*sizeof(double)) );
 
    // initialize matrices on host, in row-major
    // i=0 in the series
@@ -73,22 +69,28 @@ int main(int argc, char* argv[]) {
    x_exact[0]=exp(-2.0*t)*cos(t);
    x_exact[1]=exp(-2.0*t)*sin(t);
 
-#pragma omp parallel for reduction(+:EXP[:4])
+#pragma omp parallel for reduction(+:h_EXP[:4]) 
    for(int i=2; i<N; i++){
       // init d_powA on device
       hipCheck( hipMemcpy(d_powA, d_A, 4*sizeof(double), hipMemcpyDeviceToDevice) );
-      int denom = i;
-      float num = t;
+      double denom = i;
+      double num = t;
       for(int k=1; k<i; k++){
-        rocblas_dgemm(handle,op,op,2,2,2,&alpha_dgemm,d_powA,2,d_powA,2,&beta_dgemm,d_powA,2);
+        rocblas_dgemm(handle,op,op,2,2,2,&alpha_dgemm,d_powA,2,d_A,2,&beta_dgemm,d_powA,2);
         // compute factorial;
         denom *= k;
         num *= t;
       }
       hipCheck( hipMemcpy(h_powA.data(), d_powA, 4*sizeof(double), hipMemcpyDeviceToHost) );
       // reduction to array step
-      for(int i=1; i<4; i++){
-         h_EXP[i]+=h_powA[i] * num / denom;
+      for(int k=0; k<4; k++){
+         double factor = num / denom;
+         h_EXP[k]+=h_powA[k] * factor;
+      }
+      if(i==2){
+         int thread_id = omp_get_thread_num();
+         int num_threads = omp_get_num_threads();
+         std::cout << "thread ID is: " << thread_id << " total num of threads is: " << num_threads << std::endl;
       }
     }
 
@@ -107,11 +109,17 @@ int main(int argc, char* argv[]) {
    norm += (x_exact[1] - x_approx[1])*(x_exact[1] - x_approx[1]);
    norm = std::sqrt(norm);
 
-   std::cout<<std::setprecision(16)<<"L2 norm of error is: " << norm << std::endl;
+   if(norm < 1.0e12){
+      std::cout<<"PASSED!"<<std::endl;
+      std::cout<<std::setprecision(16)<<"L2 norm of error is: " << norm << std::endl;
+   }
+   else{
+      std::cout<<"FAILED!"<<std::endl;
+      std::cout<<std::setprecision(16)<<"L2 norm of error is larger than prescribed tolerance..." << norm << std::endl;
+   }
 
    hipCheck( hipFree(d_A) );
    hipCheck( hipFree(d_powA) );
-   hipCheck( hipFree(d_partial_sums) );
    rocblas_destroy_handle(handle);
    return 0;
 
