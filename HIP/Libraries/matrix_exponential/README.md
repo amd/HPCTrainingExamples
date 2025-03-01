@@ -8,14 +8,14 @@ These systems are solved to describe, for instance, the evolution of dynamical s
 Consider the initial value problem:
 
 $$
-\dot{\mathbf{x}} = A \mathbf{x} \qquad 
-\mathbf{x}(0) = 
+\dot{\mathbf{x}} = A \mathbf{x} \qquad
+\mathbf{x}(0) =
 \begin{pmatrix}
 1 \\
 0
 \end{pmatrix},
 $$
- 
+
 where
 
 $$
