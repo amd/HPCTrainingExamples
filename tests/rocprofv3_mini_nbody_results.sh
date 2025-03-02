@@ -11,7 +11,7 @@ cd rocprofv3_tests
 
 rocprofv3 --kernel-trace --stats -- ./nbody-orig 65536
 
-cd *
+cd $(find . -maxdepth 1 -type d | tail -n 1)
 
 cat *stats.csv
 
