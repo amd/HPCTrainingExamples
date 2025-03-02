@@ -807,7 +807,7 @@ set_property(TEST Affinity_MPI2_OpenMP2_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION
 # RocprofV3 tests
 
 add_test(NAME RocprofV3_Mini_Nbody_Results COMMAND ../rocprofv3_mini_nbody_results.sh )
-set_property(TEST RocprofV3_Mini_Nbody_Results PROPERTY PASS_REGULAR_EXPRESSION "10")
+set_property(TEST RocprofV3_Mini_Nbody_Results PROPERTY PASS_REGULAR_EXPRESSION "bodyForce(Body*, float, int)")
 set_property(TEST RocprofV3_Mini_Nbody_Results PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME RocprofV3_Mini_Nbody_Stats COMMAND ../rocprofv3_mini_nbody_stats.sh )
