@@ -7,7 +7,7 @@ cd ${REPO_DIR}/HIPIFY/mini-nbody/hip/
 make nbody-orig
 
 mkdir rocprofv3_tests
-cd rocporfv3_tests
+cd rocprofv3_tests
 
 rocprofv3 --kernel-trace --stats -- ./nbody-orig 65536
 
