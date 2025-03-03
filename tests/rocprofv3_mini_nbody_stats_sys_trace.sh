@@ -9,7 +9,7 @@ make nbody-orig
 mkdir rocprofv3_tests
 cd rocprofv3_tests
 
-rocprofv3 --stats --sys-trace -- ./nbody-orig 65536
+rocprofv3 --stats --sys-trace -- ../nbody-orig 65536
 
 cd * 
 
