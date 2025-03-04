@@ -860,17 +860,17 @@ add_test(NAME Pytorch_Mnist COMMAND ../pytorch_mnist.sh )
 set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Train Epoch: 14")
 set_property(TEST Pytorch_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Pytorch_Profile_Rocprof-compute COMMAND ../../MLExamples/PyTorch_Profiling/rocm-compute-profiler/single_process.sh )
-set_property(TEST Pytorch_Profile_Rocprof-compute PROPERTY PASS_REGULAR_EXPRESSION "2.1 Speed-of-Light")
-set_property(TEST Pytorch_Profile_Rocprof-compute PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Pytorch_Profile_Rocprof-compute_ROCm COMMAND ../../MLExamples/PyTorch_Profiling/rocm-compute-profiler/single_process.sh )
+set_property(TEST Pytorch_Profile_Rocprof-compute_ROCm PROPERTY PASS_REGULAR_EXPRESSION "2.1 Speed-of-Light")
+set_property(TEST Pytorch_Profile_Rocprof-compute_ROCm PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Pytorch_Profile_Rocprof-sys COMMAND ../../MLExamples/PyTorch_Profiling/rocm-systems-profiler/rocm-systems-profiler.sh )
-set_property(TEST Pytorch_Profile_Rocprof-sys PROPERTY PASS_REGULAR_EXPRESSION "perfetto-trace-")
-set_property(TEST Pytorch_Profile_Rocprof-sys PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Pytorch_Profile_Rocprof-sys_ROCm COMMAND ../../MLExamples/PyTorch_Profiling/rocm-systems-profiler/rocm-systems-profiler.sh )
+set_property(TEST Pytorch_Profile_Rocprof-sys_ROCm PROPERTY PASS_REGULAR_EXPRESSION "perfetto-trace-")
+set_property(TEST Pytorch_Profile_Rocprof-sys_ROCm PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Pytorch_Profile_Rocprof COMMAND ../../MLExamples/PyTorch_Profiling/rocprofv3/kernels.sh )
-set_property(TEST Pytorch_Profile_Rocprof PROPERTY PASS_REGULAR_EXPRESSION "kernel_stats.csv")
-set_property(TEST Pytorch_Profile_Rocprof PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Pytorch_Profile_Rocprofv3 COMMAND ../../MLExamples/PyTorch_Profiling/rocprofv3/kernels.sh )
+set_property(TEST Pytorch_Profile_Rocprofv3 PROPERTY PASS_REGULAR_EXPRESSION "kernel_stats.csv")
+set_property(TEST Pytorch_Profile_Rocprofv3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Pytorch_Profile_TorchProfiler COMMAND ../../MLExamples/PyTorch_Profiling/torch-profiler/single_process.sh )
 set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY PASS_REGULAR_EXPRESSION "trace_")
@@ -914,33 +914,33 @@ set_property(TEST Cupy_Install_Tests PROPERTY SKIP_REGULAR_EXPRESSION "module sp
 
 # Rocprof-sys tests
 
-#add_test(NAME Rocprof-sys_Source_Avail_Check COMMAND ../rocprof-sys-avail_check.sh --version 1.11.3)
-#set_property(TEST Rocprof-sys_Source_Avail_Check PROPERTY PASS_REGULAR_EXPRESSION "Outputting text configuration file ")
-#set_property(TEST Rocprof-sys_Source_Avail_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Rocprof-sys_Source_Avail_Check COMMAND ../rocprof-sys-avail_check.sh --version amd-staging)
+set_property(TEST Rocprof-sys_Source_Avail_Check PROPERTY PASS_REGULAR_EXPRESSION "Outputting text configuration file ")
+set_property(TEST Rocprof-sys_Source_Avail_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Rocprof-sys_ROCm_Avail_Check COMMAND ../rocprof-sys-avail_check.sh )
 set_property(TEST Rocprof-sys_ROCm_Avail_Check PROPERTY PASS_REGULAR_EXPRESSION "Outputting text configuration file ")
 set_property(TEST Rocprof-sys_ROCm_Avail_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#add_test(NAME Rocprof-sys_Source_Instrument_Check COMMAND ../rocprof-sys-instrument_check.sh --version 1.11.3)
-#set_property(TEST Rocprof-sys_Source_Instrument_Check PROPERTY PASS_REGULAR_EXPRESSION "The instrumented executable image is stored in ")
-#set_property(TEST Rocprof-sys_Source_Instrument_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Rocprof-sys_Source_Instrument_Check COMMAND ../rocprof-sys-instrument_check.sh --version amd-staging)
+set_property(TEST Rocprof-sys_Source_Instrument_Check PROPERTY PASS_REGULAR_EXPRESSION "The instrumented executable image is stored in ")
+set_property(TEST Rocprof-sys_Source_Instrument_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Rocprof-sys_ROCm_Instrument_Check COMMAND ../rocprof-sys-instrument_check.sh )
 set_property(TEST Rocprof-sys_ROCm_Instrument_Check PROPERTY PASS_REGULAR_EXPRESSION "The instrumented executable image is stored in ")
 set_property(TEST Rocprof-sys_ROCm_Instrument_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#add_test(NAME Rocprof-sys_Source_Run_Check COMMAND ../rocprof-sys-run_check.sh --version 1.11.3)
-#set_property(TEST Rocprof-sys_Source_Run_Check PROPERTY PASS_REGULAR_EXPRESSION "Tracing session 1 ended, total sessions:0")
-#set_property(TEST Rocprof-sys_Source_Run_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Rocprof-sys_Source_Run_Check COMMAND ../rocprof-sys-run_check.sh --version amd-staging)
+set_property(TEST Rocprof-sys_Source_Run_Check PROPERTY PASS_REGULAR_EXPRESSION "Tracing session 1 ended, total sessions:0")
+set_property(TEST Rocprof-sys_Source_Run_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Rocprof-sys_ROCm_Run_Check COMMAND ../rocprof-sys-run_check.sh )
 set_property(TEST Rocprof-sys_ROCm_Run_Check PROPERTY PASS_REGULAR_EXPRESSION "Tracing session 1 ended, total sessions:0")
 set_property(TEST Rocprof-sys_ROCm_Run_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#add_test(NAME Rocprof-sys_Source_Stream_Overlap COMMAND ../rocprof-sys_stream_overlap.sh --version 1.11.3)
-#set_property(TEST Rocprof-sys_Source_Stream_Overlap PROPERTY PASS_REGULAR_EXPRESSION "proto")
-#set_property(TEST Rocprof-sys_Source_Stream_Overlap PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Rocprof-sys_Source_Stream_Overlap COMMAND ../rocprof-sys_stream_overlap.sh --version amd-staging)
+set_property(TEST Rocprof-sys_Source_Stream_Overlap PROPERTY PASS_REGULAR_EXPRESSION "proto")
+set_property(TEST Rocprof-sys_Source_Stream_Overlap PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Rocprof-sys_ROCm_Stream_Overlap COMMAND ../rocprof-sys_stream_overlap.sh )
 set_property(TEST Rocprof-sys_ROCm_Stream_Overlap PROPERTY PASS_REGULAR_EXPRESSION "proto")
@@ -948,28 +948,28 @@ set_property(TEST Rocprof-sys_ROCm_Stream_Overlap PROPERTY SKIP_REGULAR_EXPRESSI
 
 # Rocprof-compute Tests
 
-#add_test(NAME Rocprof-compute_Source_Roofline_Check COMMAND ../rocprof-compute_roofline_check.sh --version 2.0.0)
-#set_property(TEST Rocprof-compute_Source_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "Empirical Roofline PDFs saved!")
-#set_property(TEST Rocprof-compute_Source_Roofline_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Rocprof-compute_Source_Roofline_Check COMMAND ../rocprof-compute_roofline_check.sh --version amd-staging)
+set_property(TEST Rocprof-compute_Source_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "Empirical Roofline PDFs saved!")
+set_property(TEST Rocprof-compute_Source_Roofline_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Rocprof-compute_ROCm_Roofline_Check COMMAND ../rocprof-compute_roofline_check.sh)
 set_property(TEST Rocprof-compute_ROCm_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "Empirical Roofline PDFs saved!")
 set_property(TEST Rocprof-compute_ROCm_Roofline_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "disabled on MI300")
 
-#add_test(NAME Rocprof-compute_Source_Profile_Check COMMAND ../rocprof-compute_profile_check.sh --version 2.0.0)
-#set_property(TEST Rocprof-compute_Source_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "Skipping roofline" "Roofline temporarily disabled in MI300")
-#set_property(TEST Rocprof-compute_Source_Profile_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-#set_property(TEST Rocprof-compute_Source_Profile_Check PROPERTY TIMEOUT 400)
+add_test(NAME Rocprof-compute_Source_Profile_Check COMMAND ../rocprof-compute_profile_check.sh --version amd-staging)
+set_property(TEST Rocprof-compute_Source_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "Skipping roofline" "Roofline temporarily disabled in MI300")
+set_property(TEST Rocprof-compute_Source_Profile_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Rocprof-compute_Source_Profile_Check PROPERTY TIMEOUT 400)
 
 add_test(NAME Rocprof-compute_ROCm_Profile_Check COMMAND ../rocprof-compute_profile_check.sh)
 set_property(TEST Rocprof-compute_ROCm_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "Skipping roofline" "Roofline temporarily disabled in MI300")
 set_property(TEST Rocprof-compute_ROCm_Profile_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 
-#add_test(NAME Rocprof-compute_Source_Analyze_Check COMMAND ../rocprof-compute_analyze_check.sh --version 2.0.0)
-#set_property(TEST Rocprof-compute_Source_Analyze_Check PROPERTY PASS_REGULAR_EXPRESSION "7.1 Wavefront Launch Stats")
-#set_property(TEST Rocprof-compute_Source_Analyze_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-#set_property(TEST Rocprof-compute_Source_Analyze_Check PROPERTY TIMEOUT 400)
+add_test(NAME Rocprof-compute_Source_Analyze_Check COMMAND ../rocprof-compute_analyze_check.sh --version amd-staging)
+set_property(TEST Rocprof-compute_Source_Analyze_Check PROPERTY PASS_REGULAR_EXPRESSION "7.1 Wavefront Launch Stats")
+set_property(TEST Rocprof-compute_Source_Analyze_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Rocprof-compute_Source_Analyze_Check PROPERTY TIMEOUT 400)
 
 add_test(NAME Rocprof-compute_ROCm_Analyze_Check COMMAND ../rocprof-compute_analyze_check.sh)
 set_property(TEST Rocprof-compute_ROCm_Analyze_Check PROPERTY PASS_REGULAR_EXPRESSION "7.1 Wavefront Launch Stats")

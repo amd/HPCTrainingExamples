@@ -10,5 +10,9 @@ To compile and run:
 ```
 $ make
 
-$ sbatch submit.sh
+$ sbatch -A <account-name> submit.sh
+```
+where `account-name` is your assigned Frontier username. A job file titled `<name-of-exercise>-%J.out` will be produced, where `%J` is the job id number of your run. To check your program output, simply run:
+```
+cat <name-of-exercise>-%J.out
 ```
