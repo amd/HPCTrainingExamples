@@ -44,8 +44,8 @@ usage()
     echo "--ai : runs the ai/ml tests"
     echo "--cupy : runs the cupy tests"
     echo "--pytorch : runs the pytorch tests"
-    echo "--rocprof-sys: runs rocprof-sys or omnitrace tests, depending on the installed ROCm version"
-    echo "--rocprof-compute: runs rocprof-compute or omniperf tests, depending on the installed ROCm version"
+    echo "--rocprof-sys: runs ROCm rocprof-sys tests depending on the ROCm version"
+    echo "--rocprof-compute: runs ROCm rocprof-compute tests depending on the ROCm version"
     echo "--hip: runs the hip tests"
     echo "--hipify: runs the hipify tests"
     echo "--hipifly: runs the hipifly tests"
@@ -280,9 +280,9 @@ elif [ ${JAX} -eq 1 ]; then
 elif [ ${PYTORCH} -eq 1 ]; then
    ctest -R Pytorch
 elif [ ${ROCPROF_SYS} -eq 1 ]; then
-   ctest -R Rocprof-sys
+   ctest -R Rocprof-sys_ROCm
 elif [ ${ROCPROF_COMPUTE} -eq 1 ]; then
-   ctest -R Rocprof-compute
+   ctest -R Rocprof-compute_ROCm
 elif [ ${HIP} -eq 1 ]; then
    ctest -R HIP
    ctest -R Hipify
