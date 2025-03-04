@@ -11,11 +11,11 @@ ifeq ($(HIPCC), nvcc)
    LDFLAGS=-lcudadevrt -lcudart_static -lrt -lpthread -ldl
 endif
 ifeq ($(HIPCC), hipcc)
-   HIPCC_FLAGS+=$(HIPCC_OPTS) -munsafe-fp-atomics
+   HIPCC_FLAGS+=$(HIPCC_OPTS) -munsafe-fp-atomics -I${ROCM_PATH}/include/roctracer
    ifeq (, $(findstring CXX, clang++))
-      LDFLAGS=--hip-link
+      LDFLAGS=--hip-link -L${ROCM_PATH}/hip/lib -lroctx64
    else
-      LDFLAGS=-L${ROCM_PATH}/hip/lib -lamdhip64
+      LDFLAGS=-L${ROCM_PATH}/hip/lib -lamdhip64 -lroctx64
    endif
 endif
 
