@@ -19,17 +19,17 @@ int main(int argc, char *argv[]){
    int alignment_length = 16;
    high_resolution_clock::time_point t1, t2;
 
-   printf("argc is %d %d\n",argc,argv[1]);
+   printf("argc is %d %s\n",argc,argv[1]);
    if (argc > 1) {
-      alignment_length = argv[1];
+      alignment_length = atoi(argv[1]);
    }
    if (argc > 2) {
-      N = argv[2];
+      N = atoi(argv[2]);
    }
 
    if (alignment_length < 16) {
-      hipMalloc((void **)&X, N*sizeof(double));
-      hipMalloc((void **)&Y, N*sizeof(double));
+      X = (double *)malloc(N*sizeof(double));
+      Y = (double *)malloc(N*sizeof(double));
    } else {
       X = new (std::align_val_t(alignment_length)) double[N];
       Y = new (std::align_val_t(alignment_length)) double[N];
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]){
    double GB=3*N*8/9.31323e-10;
    // timing in microseconds converted to secs
    double secs=tm_duration/1e-6;
-   cout << "2 Kernels Took " << tm_duration/(double)niter << " microseconds for alignment length " << alignment_length << "thread_limit(BLOCKSIZE), size " << GB << " GiB/sec " << GB/secs/niter << endl;
+   cout << "2 Kernels Took " << tm_duration/(double)niter << " microseconds for alignment length " << alignment_length << ", thread_limit(BLOCKSIZE) " << BLOCKSIZE << ", arraysize " << GB << " GiB/sec " << GB/secs/niter << endl;
 
    t1 = high_resolution_clock::now();
 
@@ -76,13 +76,13 @@ int main(int argc, char *argv[]){
    }
 
    t2 = high_resolution_clock::now();
-   auto tm_duration = duration_cast<microseconds>(t2 - t1).count();
+   tm_duration = duration_cast<microseconds>(t2 - t1).count();
 
    // one copy kernel with 2 data loads
-   double GB=2*N*8/9.31323e-10;
+   GB=2*N*8/9.31323e-10;
    // timing in microseconds converted to secs
-   double secs=tm_duration/1e-6;
-   cout << "Copy Took " << tm_duration/(double)niter << " microseconds for alignment length " << alignment_length << "thread_limit(BLOCKSIZE), size " << GB << " GiB/sec " << GB/secs/niter << endl;
+   secs=tm_duration/1e-6;
+   cout << "Copy Took " << tm_duration/(double)niter << " microseconds for alignment length " << alignment_length << ", thread_limit(BLOCKSIZE) " << BLOCKSIZE << ", arraysize " << GB << ", GiB/sec " << GB/secs/niter << endl;
 
    delete[] X;
    delete[] Y;
