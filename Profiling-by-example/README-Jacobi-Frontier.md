@@ -186,8 +186,9 @@ srun -N1 -n1 -c7 -A ${PROJ} -t 02:00 rocprof-compute profile -n roofline --roof-
 ```
 
 The above command results in a few PDF files being created in the 
-`workloads/roofline/MI200` directory. One contains the roofline
-plot itself, and another contains the legend for the plot. When you view the roofline
+`workloads/roofline/MI200` directory. The file `empirRoof_gpu-0_fp32_fp64.pdf`
+contains the roofline plot itself, and the file `kernelName_legend.pdf` contains
+the legend for the plot. When you view the roofline
 plot, you will observe that all kernels are either memory bound or latency bound.
 
 Next collect kernel performance metrics. You will notice that this command runs your
