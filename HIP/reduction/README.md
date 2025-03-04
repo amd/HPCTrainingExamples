@@ -120,7 +120,7 @@ __global__ void get_partial_sums_to_fix(const double* input, double* output, int
   int global_size = gridDim.x * blockDim.x;
 
   double local_sum = 0;
-  for (int i = idx; i < global_size; i += global_size) {
+  for (int i = idx; i < size; i += global_size) {
     local_sum += input[i];
   }
 
@@ -149,7 +149,7 @@ __global__ void atomic_reduction(const double* input, double* output, int size) 
   int global_size = gridDim.x * blockDim.x;
 
   double local_sum = 0;
-  for (int i = idx; i < global_size; i += global_size) {
+  for (int i = idx; i < size; i += global_size) {
     local_sum += input[i];
   }
 

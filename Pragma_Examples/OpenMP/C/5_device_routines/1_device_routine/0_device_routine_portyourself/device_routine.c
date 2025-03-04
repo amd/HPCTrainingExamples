@@ -1,4 +1,4 @@
-// Copyright (c) 2024 AMD HPC Application Performance Team
+// Copyright (c) 2025 AMD HPC Application Performance Team
 // Author: Bob Robey, Bob.Robey@amd.com
 // MIT License
 
@@ -27,4 +27,3 @@ int main(int argc, char *argv[]){
 
    free(x);
 }
-      

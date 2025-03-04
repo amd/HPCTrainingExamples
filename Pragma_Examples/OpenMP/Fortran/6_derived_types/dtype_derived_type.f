@@ -1,4 +1,4 @@
-! Original Author: Arjen Tamerus at DiRAC Hackathon Feb 2024
+! Original Author: Arjen Tamerus at DiRAC Hackathon Feb 2025
 ! Released to AMD as sample code
 module dtype
         implicit none 

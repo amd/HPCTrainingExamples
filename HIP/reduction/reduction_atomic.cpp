@@ -18,12 +18,15 @@ do{                                                                             
 // It is a multiple of 64 (wavefront size)
 const static int BLOCKSIZE = 256;
 
+// Define the grid size (number of blocks in grid)
+const static int GRIDSIZE = 1024;
+
 __global__ void atomic_reduction(const double* input, double* output, int size) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int global_size = gridDim.x * blockDim.x;
 
   double local_sum = 0;
-  for (int i = idx; i < global_size; i += global_size) {
+  for (int i = idx; i < size; i += global_size) {
     local_sum += input[i];
   }
 
@@ -39,9 +42,6 @@ int main() {
   // Defined the workgroup size (number of threads in workgroup)
   // It is a multiple of 64 (wavefront size)
   const static int BLOCKSIZE = 256;
-
-  // Define the grid size (number of blocks in grid)
-  const static int GRIDSIZE = (N+(BLOCKSIZE-1))/BLOCKSIZE;
 
   // Create start and stop event objects for timing
   hipEvent_t start, stop;
@@ -90,7 +90,7 @@ int main() {
 
   std::cout << std::setprecision(14);
   if (abs(sum - expected_sum) > 1e-7 * expected_sum) {
-     std::cout << "FAIL: sum = " << sum <<" ,expected_sum = " << expected_sum << std::endl;
+     std::cout << "FAIL: sum = " << sum <<", expected_sum = " << expected_sum << std::endl;
   }
   else{
      std::cout<<"PASS"<<std::endl;

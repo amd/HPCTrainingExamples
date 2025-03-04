@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 #include "timer.h"
+#include <roctx.h>
 
 #define BLOCK_SIZE 256
 #define SOFTENING 1e-9f
@@ -80,7 +81,9 @@ int main(const int argc, const char** argv) {
   float *buf = (float*)malloc(bytes);
   Body *p = (Body*)buf;
 
+  roctxRangePush("randomizeBodies_marker");
   randomizeBodies(buf, 6*nBodies); // Init pos / vel data
+  roctxRangePop();
 
   float *d_buf;
   HIP_CHECK(hipMalloc(&d_buf, bytes));

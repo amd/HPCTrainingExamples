@@ -7,8 +7,8 @@ CUPY=0
 PYTORCH=0
 JAX=0
 TAU=0
-OMNITRACE=0
-OMNIPERF=0
+ROCPROF_SYS=0
+ROCPROF_COMPUTE=0
 HIP=0
 HIPIFY=0
 HIPIFLY=0
@@ -44,8 +44,8 @@ usage()
     echo "--ai : runs the ai/ml tests"
     echo "--cupy : runs the cupy tests"
     echo "--pytorch : runs the pytorch tests"
-    echo "--omnitrace: runs omnitrace tests"
-    echo "--omniperf: runs omniperf tests"
+    echo "--rocprof-sys: runs ROCm rocprof-sys tests depending on the ROCm version"
+    echo "--rocprof-compute: runs ROCm rocprof-compute tests depending on the ROCm version"
     echo "--hip: runs the hip tests"
     echo "--hipify: runs the hipify tests"
     echo "--hipifly: runs the hipifly tests"
@@ -109,14 +109,14 @@ do
           PYTORCH=1
           reset-last
           ;;
-      "--omnitrace")
+      "--rocprof-sys")
           shift	   
-          OMNITRACE=1
+          ROCPROF_SYS=1
           reset-last
           ;;	  
-      "--omniperf")
+      "--rocprof-compute")
           shift	   
-          OMNIPERF=1
+          ROCPROF_COMPUTE=1
           reset-last
           ;;	  
       "--hip")
@@ -279,10 +279,10 @@ elif [ ${JAX} -eq 1 ]; then
    ctest -R JAX
 elif [ ${PYTORCH} -eq 1 ]; then
    ctest -R Pytorch
-elif [ ${OMNITRACE} -eq 1 ]; then
-   ctest -R Omnitrace
-elif [ ${OMNIPERF} -eq 1 ]; then
-   ctest -R Omniperf
+elif [ ${ROCPROF_SYS} -eq 1 ]; then
+   ctest -R Rocprof-sys_ROCm
+elif [ ${ROCPROF_COMPUTE} -eq 1 ]; then
+   ctest -R Rocprof-compute_ROCm
 elif [ ${HIP} -eq 1 ]; then
    ctest -R HIP
    ctest -R Hipify

@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
 
 void daxpy(int n, double a, double *__restrict__ x, double *__restrict__ y, double *__restrict__ z)
 {
-#pragma omp target teams distribute parallel for simd map(to: x[0:n], y[0:n]) map(from: z[0:n])
+#pragma omp target teams distribute parallel for simd map(always to: x[0:n], y[0:n]) map(always from: z[0:n])
         for (int i = 0; i < n; i++)
                 z[i] = a*x[i] + y[i];
 }

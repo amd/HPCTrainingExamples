@@ -16,3 +16,5 @@ module load amdclang
 make
 ./matmult_hipfort
 ```
+
+Note: to build these examples with a version of hipfort installed by the user, make sure to set the `HIPFORT_PATH` variable in your environment to the local installation of hipfort.

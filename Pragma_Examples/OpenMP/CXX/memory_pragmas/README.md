@@ -18,7 +18,7 @@ Mem2 pattern : Add enter/exit data alloc/delete when memory is created/freed
    Loop around computational loop and keep map on computational loop. The map to/from should check if the
    data exists. If not, it will allocate/delete it. Then it will do the copies to and from. This will
    increment the Reference Counter and decrement it at end of loop.
-   `mem2.cc:#pragma omp target teams distribute parallel for simd map(to: x[0:n], y[0:n]) map(from: z[0:n])`
+   `mem2.cc:#pragma omp target teams distribute parallel for simd map(always to: x[0:n], y[0:n]) map(always from: z[0:n])`
 
    Before delete
    `mem2.cc:#pragma omp target exit data map(delete: x[0:n], y[0:n], z[0:n])`
@@ -43,7 +43,7 @@ Mem4 pattern: Replacing delete with release to use Reference Counting
 ```
    mem4.cc:#pragma omp target enter data map(alloc: x[0:n], y[0:n], z[0:n])
    mem4.cc:#pragma omp target exit data map(release: x[0:n], y[0:n], z[0:n])
-   mem4.cc:#pragma omp target teams distribute parallel for simd map(to: x[0:n], y[0:n]) map(from: z[0:n])
+   mem4.cc:#pragma omp target teams distribute parallel for simd map(always to: x[0:n], y[0:n]) map(always from: z[0:n])
 ```
 
 Mem5 pattern: Using enter data map to/from alloc/delete to reduce memory copies
