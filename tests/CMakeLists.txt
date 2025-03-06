@@ -948,7 +948,7 @@ set_property(TEST Rocprof-sys_ROCm_Stream_Overlap PROPERTY SKIP_REGULAR_EXPRESSI
 
 # Rocprof-compute Tests
 
-add_test(NAME Rocprof-compute_Source_Roofline_Check COMMAND ../rocprof-compute_roofline_check.sh --version amd-staging)
+add_test(NAME Rocprof-compute_Source_Roofline_Check COMMAND ../rocprof-compute_roofline_check.sh --version develop)
 set_property(TEST Rocprof-compute_Source_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "Empirical Roofline PDFs saved!")
 set_property(TEST Rocprof-compute_Source_Roofline_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
@@ -956,7 +956,7 @@ add_test(NAME Rocprof-compute_ROCm_Roofline_Check COMMAND ../rocprof-compute_roo
 set_property(TEST Rocprof-compute_ROCm_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "Empirical Roofline PDFs saved!")
 set_property(TEST Rocprof-compute_ROCm_Roofline_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "disabled on MI300")
 
-add_test(NAME Rocprof-compute_Source_Profile_Check COMMAND ../rocprof-compute_profile_check.sh --version amd-staging)
+add_test(NAME Rocprof-compute_Source_Profile_Check COMMAND ../rocprof-compute_profile_check.sh --version develop)
 set_property(TEST Rocprof-compute_Source_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "Skipping roofline" "Roofline temporarily disabled in MI300")
 set_property(TEST Rocprof-compute_Source_Profile_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_property(TEST Rocprof-compute_Source_Profile_Check PROPERTY TIMEOUT 400)
@@ -966,7 +966,7 @@ set_property(TEST Rocprof-compute_ROCm_Profile_Check PROPERTY PASS_REGULAR_EXPRE
 set_property(TEST Rocprof-compute_ROCm_Profile_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 
-add_test(NAME Rocprof-compute_Source_Analyze_Check COMMAND ../rocprof-compute_analyze_check.sh --version amd-staging)
+add_test(NAME Rocprof-compute_Source_Analyze_Check COMMAND ../rocprof-compute_analyze_check.sh --version develop)
 set_property(TEST Rocprof-compute_Source_Analyze_Check PROPERTY PASS_REGULAR_EXPRESSION "7.1 Wavefront Launch Stats")
 set_property(TEST Rocprof-compute_Source_Analyze_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_property(TEST Rocprof-compute_Source_Analyze_Check PROPERTY TIMEOUT 400)
