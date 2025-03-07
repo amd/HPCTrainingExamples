@@ -30,6 +30,8 @@ int main(int argc, char* argv[]) {
    int N = 100;
    // evaluating the solutions at t=0.5
    double t=0.5;
+   // temporary scalar for reduction
+   double red=0.0;
 
    // allocate matrices on host
    std::vector<double> h_A(4);
@@ -69,7 +71,7 @@ int main(int argc, char* argv[]) {
    x_exact[0]=exp(-2.0*t)*cos(t);
    x_exact[1]=exp(-2.0*t)*sin(t);
 
-#pragma omp parallel for reduction(+:h_EXP[:4]) 
+#pragma omp parallel for reduction(+:red) 
    for(int i=2; i<N; i++){
       // init d_powA on device
       hipCheck( hipMemcpy(d_powA, d_A, 4*sizeof(double), hipMemcpyDeviceToDevice) );
@@ -85,7 +87,7 @@ int main(int argc, char* argv[]) {
       // reduction to array step
       for(int k=0; k<4; k++){
          double factor = num / denom;
-         h_EXP[k]+=h_powA[k] * factor;
+         red+=h_powA[k] * factor;
       }
       if(i==2){
          int thread_id = omp_get_thread_num();
@@ -93,6 +95,7 @@ int main(int argc, char* argv[]) {
          std::cout << "thread ID is: " << thread_id << " total num of threads is: " << num_threads << std::endl;
       }
     }
+    h_EXP[4]=red;
 
    // initial solution
    std::vector<double> x_0(2);
