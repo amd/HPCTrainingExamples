@@ -2,8 +2,8 @@
 
 HIPCC    = $(CXX)
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
-HIPFLAGS = -I${ROCM_PATH}/include
 OPENMP_FLAGS = -fopenmp
+HIPFLAGS = -I${ROCM_PATH}/include ${OPENMP_FLAGS}
 LDFLAGS = -L${ROCM_PATH}/lib -lamdhip64 -lrocblas ${OPENMP_FLAGS}
 
 # ------------------------------
