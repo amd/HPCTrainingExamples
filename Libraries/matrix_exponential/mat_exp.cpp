@@ -97,7 +97,7 @@ int thread_id = omp_get_thread_num();
    norm += (x_exact[1] - x_approx[1])*(x_exact[1] - x_approx[1]);
    norm = std::sqrt(norm);
 
-   if(norm < 1.0e12){
+   if(norm < 1.0e-12){
       std::cout<<"PASSED!"<<std::endl;
       std::cout<<std::setprecision(16)<<"L2 norm of error is: " << norm << std::endl;
    }
