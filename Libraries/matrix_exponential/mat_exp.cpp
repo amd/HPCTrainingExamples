@@ -56,7 +56,6 @@ int main(int argc, char* argv[]) {
 
 #pragma omp parallel for reduction(+:h_EXP[:4]) firstprivate(h_powA)
    for(int i=2; i<N; i++){
-int thread_id = omp_get_thread_num();
       h_powA[0]=h_A[0];
       h_powA[1]=h_A[1];
       h_powA[2]=h_A[2];
@@ -76,9 +75,8 @@ int thread_id = omp_get_thread_num();
          h_EXP[m]+=h_powA[m] * factor;
       }
       if(i==2){
-         int thread_id = omp_get_thread_num();
          int num_threads = omp_get_num_threads();
-         std::cout << "thread ID is: " << thread_id << " total num of threads is: " << num_threads << std::endl;
+         std::cout << "Total num of threads is: " << num_threads << std::endl;
       }
     }
 

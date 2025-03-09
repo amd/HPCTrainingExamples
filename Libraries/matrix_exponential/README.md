@@ -1,6 +1,6 @@
 # Solve a Linear System of ODEs with ROCm Libraries
 
-This simple example will show how to use some of the available ROCm libraries to solve a system of linear ordinary differential equations (ODEs).
+This example shows how to use the `rocBLAS` library to solve a system of linear ordinary differential equations (ODEs).
 These systems are used to describe, for instance, the evolution of dynamical systems, where the velocity of the system at a given time depends linearly on the position. The term linear here is intended in the mathematical sense.
 
 ## Problem Definition
@@ -31,7 +31,7 @@ $$
 \exp^{At} \approx \sum_{k=0}^N\dfrac{A^k t^k}{k!}.
 $$
 
-In this directory, there is code that will use the `rocblas` library to compute the above approximation of $\exp^{At}$. The code can be easily modified to be extended for any matrix, but since we want to validate our results, we will be considering a case for which an analytic solution is available, so we can measure the error of the approximate solution, which will be given by:
+In this directory, there is code that will use the `rocBLAS` library to compute the above approximation of $\exp^{At}$. The code can be easily modified to be extended for matrices of arbitrary size, but since we want to validate our results, we will be considering a 2x2 case for which an analytic solution is available, so we can measure the error of the approximate solution, which will be given by:
 
 $$
 \Delta_N(t)=\|x(t)-y_N(t)\|_2,
@@ -78,4 +78,19 @@ x(t)=\exp^{At}x=\exp^{-2t}
 \sin(t)
 \end{pmatrix}
 $$
+
+## Compile and Run
+
+To compile and run do:
+
+```
+module load rocm
+module load amdclang
+export HSA_XNACK=1
+make
+./mat_exp
+```
+
+If the `amdclang` module is not available in your system, after loading the ROCm module, do `export CXX=$(which amdclang++)`.
+Setting the environment variable `HSA_XNACK=1` enables managed memory and is necessary to not incur in memory access faults, as we are passing host pointers to the `rocblas_dgemm` call.
 
