@@ -28,7 +28,7 @@ Then run code with
 
 ## Standard GPU Code example
 
-This example shows the standard GPU explict memory management. For this case, we must
+This example shows the standard GPU explicit memory management. For this case, we must
 move the memory ourselves. This example will run on any AMD Instinct GPU (data center GPUs) and
 most workstation or desktop discrete GPUs and APUs. The AMD GPU driver and ROCm software needs
 to be installed.
@@ -142,7 +142,7 @@ hip runtime header and the error checking macro.
 ## APU Code -- Single Address Space in HIP
 
 We'll run the same code as we used in the managed memory example. Because 
-the memory pointers are addressable on both the CPU and the GPU, no memory managment is necessary. First, 
+the memory pointers are addressable on both the CPU and the GPU, no memory management is necessary. First, 
 log onto an MI300A node. Then compile and run the code as follows.
 
 ```
@@ -161,7 +161,8 @@ GPU page map though the memory itself does not need to be copied.
 For this example, we have a simple code with the loop offloading in the main code, `openmp_code`, 
 and a second version, `openmp_code1`, with the offloaded loop in a subroutine where the compiler 
 cannot tell the size of the array. Running this on the MI200 series, it passes, despite that it 
-does not have a single address space. We add `export LIBOMPTARGET_INFO=-1` to verify that it is running on the GPU. 
+does not have a single address space. We add `export LIBOMPTARGET_INFO=-1` or for less output
+`export LIBOMPTARGET_INFO=$((0x1 | 0x10))` to verify that it is running on the GPU.
 
 ```
 export HSA_XNACK=1
@@ -171,13 +172,13 @@ make
 ```
 
 You should see some warnings that are basically telling you the AMD clang compiler is ignoring the `simd` clause
-is being ignored. You can remove the simd from the OpenMP pragmas, but at the expense of portability to some
+is being ignored. You can remove the `simd` from the OpenMP pragmas, but at the expense of portability to some
 other OpenMP compilers. Now run the code.
 
 ```
 ./openmp_code
 ./openmp_code1
-export LIBOMPTARGET_INFO=-1
+export LIBOMPTARGET_INFO=$((0x1 | 0x10)) # or export LIBOMPTARGET_INFO=-1
 ./openmp_code
 ./openmp_code1
 ```
@@ -315,3 +316,10 @@ cd ..
 rm -rf ${PROB_NAME}
 ```
 
+With recent versions of Kokkos, there is support for a single memory copy for the MI300A GPU.
+
+```
+-Dkokkos_ENABLE_IMPL_HIP_UNIFIED_MEMORY=ON in Kokkos 4.4+
+```
+
+Makes it easy to switch between host/device duplicate arrays to single memory copy on the MI300A.
