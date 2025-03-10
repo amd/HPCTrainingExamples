@@ -78,10 +78,10 @@ In case none of these options work, send us the output of the ssh command follow
 
 ### Directories and Files
 
-Persistent storage is at `/datasets/teams/hackathon-testing/<username>`. Your home directory will be set to this directory: 
+Persistent storage is at `/home/aac/shared/teams/hackathon-testing/<group>/<username>`. Your home directory will be set to this directory: 
 
 ```bash
-$HOME=/datasets/teams/hackathon-testing/<username>
+$HOME=/home/aac/shared/teams/hackathon-testing/<group>/<username>`
 ```
 Files in the above directory will persist across container starts and stops and even be available from another container with the same `<username>` on systems at the same hosting location. Remember that it will not be possible to retrieve your data once the container has been brought down.
 
@@ -107,7 +107,7 @@ rsync -avz -e "ssh -i <path/to/ssh/key> -p <port_number>" <file> <username>@aac6
 
 Please consult the container's [README](https://github.com/amd/HPCTrainingDock/blob/main/README.md) to learn about the latest specs of the training container.
 
-The container is based on the Ubuntu 22.04 Operating System with the ROCm 6.2.1 software stack. It contains multiple versions of AMD, GCC, and LLVM compilers, hip libraries, GPU-Aware MPI, AMD profiling tools and HPC community tools. The container also has modules set up with the lua modules package and a slurm package and configuration. It includes the following additional packages:
+The container is based on the Ubuntu 22.04 Operating System with the latest version of the ROCm software stack. It contains multiple versions of AMD, GCC, and LLVM compilers, hip libraries, GPU-Aware MPI, AMD profiling tools and HPC community tools. The container also has modules set up with the lua modules package and a slurm package and configuration. It includes the following additional packages:
 
 - emacs
 - vim
@@ -143,32 +143,31 @@ module avail
 The output list of `module avail` should show:
 
 ```
------------------------------------------------------------------------ /etc/lmod/modules/Linux ------------------------------------------------------------------------
-   clang/base    clang/14 (D)    clang/15    gcc/base    gcc/11 (D)    gcc/12    gcc/13    miniconda3/23.11.0
+------------------------------------------------------------------ /etc/lmod/modules/Linux -------------------------------------------------------------------
+   clang/base    clang/14 (D)    clang/15    gcc/base    gcc/11 (D)    gcc/12    gcc/13    miniconda3/24.9.2    miniforge3/24.9.0
 
------------------------------------------------------------------------- /etc/lmod/modules/ROCm ------------------------------------------------------------------------
-   amdclang/17.0-6.2.1    hipfort/6.2.1    omniperf/6.2.1 (D)    omnitrace/6.2.1 (D)    opencl/6.2.1    rocm/6.2.1
+------------------------------------------------------------------- /etc/lmod/modules/ROCm -------------------------------------------------------------------
+   amdclang/18.0.0-6.3.3    hipfort/6.3.3 (D)    opencl/6.3.3    rocm/6.3.3    rocprofiler-compute/6.3.3    rocprofiler-systems/6.3.3
 
--------------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-MPI --------------------------------------------------------------------
-   mpi4py/dev    mvapich/3.0    openmpi/5.0.5-ucc1.3.0-ucx1.17.0-xpmem2.7.3
+--------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-MPI ---------------------------------------------------------------
+   mpi4py/4.0.1    openmpi/5.0.7-ucc1.3.0-ucx1.18.0
 
-------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-AMDResearchTools --------------------------------------------------------------
-   omniperf/2.0.0    omniperf/2.0.1    omnitrace/1.11.3
+--------------------------------------------------------- /etc/lmod/modules/ROCmPlus-LatestCompilers ---------------------------------------------------------
+   amdflang-new-beta-drop/rocm-afar-7110-drop-5.3.0    aomp/amdclang-19.0    hipfort/6.3.3
 
--------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-LatestCompilers --------------------------------------------------------------
-   amd-gcc/13.2.0    aomp/amdclang-19.0
+--------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-AI ----------------------------------------------------------------
+   cupy/14.0.0a1    jax/0.4.35    pytorch/2.6.0
 
--------------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-AI ---------------------------------------------------------------------
-   cupy/13.0.0b1    jax/0.4.32.dev    pytorch/2.4
+------------------------------------------------------------------- /etc/lmod/modules/misc -------------------------------------------------------------------
+   fftw/3.3.10    hipifly/dev                 kokkos/4.5.01         netcdf-fortran/4.6.2-rc1    tau/dev
+   hdf5/1.14.5    hpctoolkit/2024.11.27dev    netcdf-c/4.9.3-rc1    scorep/9.0-dev
 
------------------------------------------------------------------------- /etc/lmod/modules/misc ------------------------------------------------------------------------
-   hpctoolkit/dev    kokkos/4.4.0    tau/dev
-
-Where:   D:  Default Module
+  Where:
+   D:  Default Module
 ```
-There are three modules associated with each ROCm version. One is the ROCm module which is needed by many of the other modules. The second is the amdclang module when using the amdclang compiler that comes bundled with ROCm. The third is the hipfort module for the Fortran interfaces to HIP.
+There are several modules associated with each ROCm version. One is the rocm module which is needed by many of the other modules. The second is the amdclang module when using the amdclang compiler that comes bundled with ROCm. The third is the hipfort module for the Fortran interfaces to HIP. Also, there is an OpenCL module and one for each of the AMD profilers.
 
-Compiler modules set the C, CXX, FC flags. Note, only one compiler module can be loaded at a time. hipcc is in the path when the rocm module is loaded. 
+Compiler modules set the C, CXX, FC flags. Only one compiler module can be loaded at a time. hipcc is in the path when the rocm module is loaded. Note that there are several modules that set the compiler flags and that they set the full path to the compilers to avoid path problems.
 
 ## Slurm Information
 
