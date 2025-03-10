@@ -183,11 +183,21 @@ sinfo
 
 The Slurm `salloc` command may be used to acquire a long term session that exclusively grants access to one or more GPUs. Alternatively, the `srun` or `sbatch` commands may be used to acquire a session with one or more GPUs and only exclusively use the session for the life of the run of an application. `squeue` will show information on who is currently running jobs.
 
-### Training Examples Repo
+## Exercise Examples
 
-The examples can also be obtained from our repo, which contains all the code that we will use for the exercises discussed during the training. To clone the repo, do:
+The exercise examples are preloaded into the `/Shared` directory. Copy the files into your home directory with:
+
+```bash
+mkdir -p $HOME/HPCTrainingExamples
+scp -pr /Shared/HPCTrainingExamples/* $HOME/HPCTrainingExamples/
+```
+
+## Trainig Examples Repo
+
+
+Alternatively, you can get the examples from our repo.
+This repo contains all the code that we normally use during our training events: 
 ```bash
 cd $HOME
 git clone https://github.com/amd/HPCTrainingExamples.git
 ```
-
