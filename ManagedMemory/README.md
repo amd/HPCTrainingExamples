@@ -1,7 +1,13 @@
 # Programming Model Exercises -- Managed Memory and Single Address Space (APU)
 
+From HPCTrainingExamples/ManagedMemory/README.md in the training exercises repository
+
 **NOTE**: these exercises have been tested on MI210 and MI300A accelerators using a container environment.
 To see details on the container environment (such as operating system and modules available) please see `README.md` on [this](https://github.com/amd/HPCTrainingDock) repo.
+
+The source code for these exercises is based on those in the presentation, but with details
+filled in so that there is a working code. You may want to examine the code in these exercises
+and compare it to the code in the presentation and to the code in the other exercises.
 
 ## CPU Code baseline
 
@@ -9,7 +15,9 @@ To see details on the container environment (such as operating system and module
 git clone https://github.com/amd/HPCTrainingExamples.git
 cd HPCTrainingExamples/ManagedMemory
 ```
-First, run the standard CPU version: the example will work with any C compiler and run on any CPU. To set up the environment, we need to set the CC environment variable to the C compiler executable. We do this by loading the amdclang module which sets `CC=/opt/rocm-<version>/llvm/bin/amdclang`.
+First, run the standard CPU version. This is a working version of the original CPU code from the programming model presentation.
+The example will work with any C compiler and run on any CPU. To set up the environment, we need to set the CC environment 
+variable to the C compiler executable. We do this by loading the amdclang module which sets `CC=/opt/rocm-<version>/llvm/bin/amdclang`.
 The makefile uses the CC environment which we have set. In our modules, we set the "family" to compiler so that only one compiler
 can be loaded at a time.
 
