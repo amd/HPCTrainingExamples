@@ -1,6 +1,6 @@
 # Programming Model Exercises -- Managed Memory and Single Address Space (APU)
 
-From HPCTrainingExamples/ManagedMemory/README.md in the training exercises repository
+From `HPCTrainingExamples/ManagedMemory/README.md` in the training exercises repository
 
 **NOTE**: these exercises have been tested on MI210 and MI300A accelerators using a container environment.
 To see details on the container environment (such as operating system and modules available) please see `README.md` on [this](https://github.com/amd/HPCTrainingDock) repo.
