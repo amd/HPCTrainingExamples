@@ -1,4 +1,7 @@
 # First OpenMP offload: 
+
+This README.md is at HPCTrainingExamples/Pragma_Examples/OpenMP/C/1_saxpy/README.md
+
 Porting of saxpy step by step and explore the discrete GPU and APU programming models:
 
 - Part 1: Unified shared memory
