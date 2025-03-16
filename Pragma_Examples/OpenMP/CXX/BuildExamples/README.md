@@ -1,4 +1,4 @@
-# Build systems: make and cmake
+# OpenMP CXX Build systems: make and cmake
 
 README.md in `HPCTrainingExamples/Pragma_Examples/OpenMP/CXX/BuildExamples` of the Training Examples repository
 

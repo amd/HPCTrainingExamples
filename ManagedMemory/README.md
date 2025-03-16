@@ -331,3 +331,4 @@ With recent versions of Kokkos, there is support for a single memory copy for th
 ```
 
 Makes it easy to switch between host/device duplicate arrays to single memory copy on the MI300A.
+

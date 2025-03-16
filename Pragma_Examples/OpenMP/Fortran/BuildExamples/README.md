@@ -1,4 +1,4 @@
-# Build systems: make and cmake
+# OpenMP Fortran Build systems: make and cmake
 
 README.md in `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/BuildExamples` of the Training Examples repository
 

@@ -1,4 +1,4 @@
-# Build systems: make and cmake
+# OpenMP C Build systems: make and cmake
 
 README.md in `HPCTrainingExamples/Pragma_Examples/OpenMP/C/BuildExamples` of the Training Examples repository
 
@@ -109,3 +109,4 @@ Now run the executable
 ```
 ./openmp_code
 ```
+
