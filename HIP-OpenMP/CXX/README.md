@@ -1,5 +1,7 @@
 # HIP and OpenMP Interoperability
 
+README.md in `HPCTrainingExamples/HIP-OpenMP/CXX` from the Training Examples in repository
+
 The first example is just a staightforward openmp offload version
 of saxpy. Any C++ compiler that supports OpenMP offload to hip should
 work.
