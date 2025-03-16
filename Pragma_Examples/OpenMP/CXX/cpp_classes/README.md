@@ -1,5 +1,7 @@
 # OpenMP Offloading for C++ Codes that use Classes
 
+README.md in `HPCTrainingExamples/Pragma_Examples/OpenMP/CXX/cpp_classes` from the Training Examples repository
+
 These examples show how to use OpenMP for GPU offloading in the context of a C++ code that makes uses of classes, and a programming paradigm where the most relevant members of the class are private, with their associated values accessed and modified by appropriate `get` and `set` functions.
 
 In the present directory, you will find two subdirectories, one called `usm` and one called `explicit`. 
