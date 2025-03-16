@@ -6,9 +6,7 @@ Build systems for make and cmake are an important starting step to working with 
 We'll start with samples for C builds. We'll test them with
 some of our sample code to make sure your system is setup properly.
 
-## C
-
-### Make
+## Make
 
 ```
 cd HPCTrainingExamples/Pragma_Examples/OpenMP/C/BuildExamples
@@ -62,7 +60,7 @@ Now run the executable
 ./openmp_code
 ```
 
-### cmake
+## CMake
 
 Looking at the CMakeLists.txt
 

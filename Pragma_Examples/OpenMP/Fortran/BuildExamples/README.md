@@ -6,9 +6,7 @@ Build systems for make and cmake are an important starting step to working with 
 We'll show samples for Fortran builds. We'll test them with
 some of our sample code to make sure your system is setup properly.
 
-## Fortran
-
-### Make
+## Make
 
 ```
 cd ../../Fortran/BuildExamples
@@ -73,7 +71,7 @@ Now run the executable
 ./openmp_code
 ```
 
-### cmake
+## CMake
 
 Looking at the CMakeLists.txt
 
