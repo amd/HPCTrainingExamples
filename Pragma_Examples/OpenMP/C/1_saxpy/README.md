@@ -1,4 +1,4 @@
-# First OpenMP offload: 
+# First OpenMP C offload: 
 
 This README.md is at HPCTrainingExamples/Pragma_Examples/OpenMP/C/1_saxpy/README.md
 
