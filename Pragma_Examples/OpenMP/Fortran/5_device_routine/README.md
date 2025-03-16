@@ -1,5 +1,7 @@
 ## Part 1: Fortran with interface blocks
 
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/5_device_routines` in Training Examples repository
+
 Let's start with the device routine in a separate file with an interface.
 
 ```

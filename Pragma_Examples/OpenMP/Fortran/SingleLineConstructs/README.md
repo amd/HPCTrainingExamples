@@ -1,9 +1,11 @@
 # OpenMP Single Line Compute Constructs:
 
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/SingleLineConstructs` in the Training Examples repository
+
 We start with adding a single line directive to move the computation of a loop to the GPU. The exercises for this will utilize
 the saxpy example.
 
-`NOTE`: the examples in Fortran also work without setting `HSA_XNAKC=1`. The reason is that Fortran passes the array size information along with the array. So the compiler has more information to work with. In Fortran, the additional information is called the "dope" vector. It is last
+`NOTE`: the examples in Fortran also work without setting `HSA_XNACK=1`. The reason is that Fortran passes the array size information along with the array. So the compiler has more information to work with. In Fortran, the additional information is called the "dope" vector. It is last
 century slang for "give me the dope on it". We would say "beta" in today's slang.
 
 ## CPU version

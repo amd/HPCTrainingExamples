@@ -1,5 +1,7 @@
 # Porting exercise: reduction
 
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/2_reduction` from the Training Examples repository.
+
 This excercise focusses on two things:
 - Part 1: how to port a reduction to the GPU
 - Part 2: importance of map clauses on discrete GPUs or HSA_XNACK=0 on MI300A

@@ -1,5 +1,7 @@
 # OpenMP complex compute constructs
 
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/ComplexComputeConstructs` in the Training Examples repository
+
 These exercises explore more complex compute constructs. We begin with breaking apart the meanings of each of the
 clauses in the single combined compute directive.
 

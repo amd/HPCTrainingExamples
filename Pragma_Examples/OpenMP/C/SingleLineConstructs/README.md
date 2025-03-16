@@ -1,5 +1,7 @@
 # OpenMP Single Line Compute Constructs:
 
+README.md in `HPCTrainingExamples/Pragma_Examples/OpenMP/C/SingleLineConstructs` of the Training Exercises repository.
+
 We start with adding a single line directive to move the computation of a loop to the GPU. The exercises for this will utilize
 the saxpy example.
 

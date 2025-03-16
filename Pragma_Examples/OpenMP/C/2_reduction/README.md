@@ -1,4 +1,7 @@
 # Reduction excercise:
+
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/2_reduction` from the Training Examples repository.
+
 This excercise will show how to port a reduction.
 
 #### 0) serial CPU version 
