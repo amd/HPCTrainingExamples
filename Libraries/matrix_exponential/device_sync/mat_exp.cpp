@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iomanip>
 #include <omp.h>
+#include <roctx.h>
 
 // Macro for checking GPU API return values
 #define hipCheck(call)                                                                          \
@@ -54,7 +55,7 @@ int main(int argc, char* argv[]) {
    x_exact[0]=exp(-2.0*t)*cos(t);
    x_exact[1]=exp(-2.0*t)*sin(t);
 
-#pragma omp parallel for reduction(+:h_EXP[:4]) firstprivate(h_powA)
+#pragma omp parallel for reduction(+:h_EXP[:4]) firstprivate(h_powA) schedule(dynamic)
    for(int i=2; i<N; i++){
       h_powA[0]=h_A[0];
       h_powA[1]=h_A[1];
@@ -63,7 +64,9 @@ int main(int argc, char* argv[]) {
       double denom = i;
       double num = t;
       for(int k=1; k<i; k++){
+        roctxRangePush("rocblas_dgemm");
         rocblas_dgemm(handle,op,op,2,2,2,&alpha_dgemm,h_powA.data(),2,h_A.data(),2,&beta_dgemm,h_powA.data(),2);
+	roctxRangePop();
         hipCheck( hipDeviceSynchronize() );
         // compute factorial;
         denom *= k;

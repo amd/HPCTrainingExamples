@@ -81,7 +81,9 @@ $$
 
 ## Compile and Run
 
-To compile and run do:
+There are currently two directories: `device_sync` and `streams_sync`, the only difference is that in `device_sync` we are calling `hipDeviceSynchronize()` after each `rocblas_dgemm` call whereas in `streams_sync` we are using the OpenMP `interop` directive to create a foreign (to OpenMP) synchronization object (a HIP stream) and then set the execution of rocblas on this specific stream. Then the call to `hipDeviceSynchronize()` is replaced with `hipStreamSynchronize(stream)`.
+
+To compile and run do (this applies to both directories):
 
 ```
 module load rocm
