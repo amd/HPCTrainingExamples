@@ -1,5 +1,7 @@
 # Solve a Linear System of ODEs with ROCm Libraries
 
+This is HPCTrainingExamples/Libraries/matrix_exponential/README.md in the training examples repository.
+
 This example shows how to use the `rocBLAS` library to solve a system of linear ordinary differential equations (ODEs).
 These systems are used to describe, for instance, the evolution of dynamical systems, where the velocity of the system at a given time depends linearly on the position. The term linear here is intended in the mathematical sense.
 

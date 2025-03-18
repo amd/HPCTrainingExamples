@@ -5,7 +5,7 @@
 #include <cmath>
 #include <iomanip>
 #include <omp.h>
-#include <roctx.h>
+#include <rocprofiler-sdk-roctx/roctx.h>
 
 // Macro for checking GPU API return values
 #define hipCheck(call)                                                                          \
