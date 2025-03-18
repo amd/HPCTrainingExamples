@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iomanip>
 #include <omp.h>
+#include <roctx.h>
 
 // Macro for checking GPU API return values
 #define hipCheck(call)                                                                          \
@@ -68,7 +69,9 @@ int main(int argc, char* argv[]) {
       double denom = i;
       double num = t;
       for(int k=1; k<i; k++){
+        roctxRangePush("rocblas_dgemm");
         rocblas_status status= rocblas_dgemm(handle,op,op,2,2,2,&alpha_dgemm,h_powA.data(),2,h_A.data(),2,&beta_dgemm,h_powA.data(),2);
+        roctxRangePop();
 	hipCheck( hipStreamSynchronize(stream) );
         // Check for errors
         if (status != rocblas_status_success) {
