@@ -96,3 +96,6 @@ make
 If the `amdclang` module is not available in your system, after loading the ROCm module, do `export CXX=$(which amdclang++)`.
 Setting the environment variable `HSA_XNACK=1` enables managed memory and is necessary to not incur in memory access faults, as we are passing host pointers to the `rocblas_dgemm` call.
 
+## Comment on Performance
+
+Note that the code as presented in the `device_sync` and `streams_sync` directories is intended to show a simple application of rocBLAS and its performance is not fully optimized. A size of 2x2 for the matrices is normally too small to justify offloading to the GPU but, as clarified above, the choice of a 2x2 size is to allow validation of the code. A generalization to arbitrary size and tuned performance is outside the scope of these examples and is left to the interested users.
