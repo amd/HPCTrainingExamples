@@ -153,13 +153,13 @@ make saxpy_gpu_split_level
 Compare the output from LIBOMPTARGET_KERNEL_TRACE=1.
 
 ```
-DEVID:  0 SGN:5 ConstWGSize:256  args: 6 teamsXthrds:(3907X 256) reqd:(   0X   0) lds_usage:0B sgpr_count:29 vgpr_count:17 sgpr_spill_count:0 vgpr_spill_count:0 tripcount:1000000 rpc:0 md:0 md_LB:-1 md_UB:-1 Max Occupancy: 8 Achieved Occupancy: 100% n:__omp_offloading_34_5c4ed40e_saxpy_l9​
+DEVID:  0 SGN:5 ConstWGSize:256  args: 6 teamsXthrds:(3907X 256) reqd:(   0X   0) lds_usage:0B sgpr_count:29 vgpr_count:17 sgpr_spill_count:0 vgpr_spill_count:0 tripcount:1000000 rpc:0 md:0 md_LB:-1 md_UB:-1 Max Occupancy: 8 Achieved Occupancy: 100% n:__omp_offloading_34_5c4ed40e_saxpy_l9
 
 Time of kernel: 0.027777
 ```
 
 ```
-DEVID:  0 SGN:3 ConstWGSize:257  args: 6 teamsXthrds:( 416X 256) reqd:(   0X   0) lds_usage:36B sgpr_count:27 vgpr_count:24 sgpr_spill_count:0 vgpr_spill_count:0 tripcount:1000 rpc:0 md:0 md_LB:-1 md_UB:-1 Max Occupancy: 8 Achieved Occupancy: 50% n:__omp_offloading_34_5c4ed411_saxpy_l9​
+DEVID:  0 SGN:3 ConstWGSize:257  args: 6 teamsXthrds:( 416X 256) reqd:(   0X   0) lds_usage:36B sgpr_count:27 vgpr_count:24 sgpr_spill_count:0 vgpr_spill_count:0 tripcount:1000 rpc:0 md:0 md_LB:-1 md_UB:-1 Max Occupancy: 8 Achieved Occupancy: 50% n:__omp_offloading_34_5c4ed411_saxpy_l9
 
 Time of kernel: 0.027449
 ```
