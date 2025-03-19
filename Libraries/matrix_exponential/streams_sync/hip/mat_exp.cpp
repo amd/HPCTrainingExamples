@@ -32,6 +32,15 @@ int main(int argc, char* argv[]) {
    // evaluating the solutions at t=0.5
    double t=0.5;
 
+   // create as many hip streams as openmp threads
+    int num_threads = 4;
+    omp_set_num_threads(num_threads);
+    hipStream_t streams[num_threads];
+    for (int i = 0; i < num_threads; ++i)
+    {
+       hipCheck( hipStreamCreate(&streams[i]) );
+    }
+
    // allocate matrices on host
    std::vector<double> h_A(4);
    std::vector<double> h_powA(4);
@@ -46,22 +55,23 @@ int main(int argc, char* argv[]) {
    // i=1 in the series
    double h_EXP[4] = {1.0 + h_A[0] * t, h_A[1] * t, h_A[2] * t, 1.0 + h_A[3] * t};
 
-   // init rocblas handle
-   rocblas_handle handle;
-   rocblas_create_handle(&handle);
-
    // exact solution vector evalated at t
    std::vector<double> x_exact(2);
    x_exact[0]=exp(-2.0*t)*cos(t);
    x_exact[1]=exp(-2.0*t)*sin(t);
 
-#pragma omp parallel for reduction(+:h_EXP[:4]) firstprivate(h_powA) schedule(dynamic)
+#pragma omp parallel for reduction(+:h_EXP[:4]) firstprivate(h_powA) schedule(dynamic) num_threads(num_threads)
    for(int i=2; i<N; i++){
-      omp_interop_t iobj = omp_interop_none;
-      #pragma omp interop init(targetsync: iobj)
-      hipStream_t stream = (hipStream_t) omp_get_interop_ptr(iobj, omp_ipr_targetsync, NULL);
       int tid = omp_get_thread_num();
-      rocblas_set_stream(handle,stream);
+      // init rocblas handle
+      rocblas_handle handle;
+      rocblas_create_handle(&handle);
+      // set stream for rocblas
+      rocblas_set_stream(handle,streams[tid]);
+
+      // print 
+      //std::cout<<"Thread id: " << tid << " i : " << i << " Stream: " << streams[tid] << std::endl;
+
       h_powA[0]=h_A[0];
       h_powA[1]=h_A[1];
       h_powA[2]=h_A[2];
@@ -72,7 +82,7 @@ int main(int argc, char* argv[]) {
         roctxRangePush("rocblas_dgemm");
         rocblas_status status= rocblas_dgemm(handle,op,op,2,2,2,&alpha_dgemm,h_powA.data(),2,h_A.data(),2,&beta_dgemm,h_powA.data(),2);
         roctxRangePop();
-	hipCheck( hipStreamSynchronize(stream) );
+	hipCheck( hipStreamSynchronize(streams[tid]) );
         // Check for errors
         if (status != rocblas_status_success) {
             fprintf(stderr, "rocblas_dgemm failed with status %d\n", status);
@@ -81,7 +91,6 @@ int main(int argc, char* argv[]) {
         denom *= k;
         num *= t;
       }
-      #pragma omp interop destroy(iobj)
       // reduction to array step
       for(int m=0; m<4; m++){
          double factor = num / denom;
@@ -91,6 +100,7 @@ int main(int argc, char* argv[]) {
          int num_threads = omp_get_num_threads();
          std::cout << "Total num of threads is: " << num_threads << std::endl;
       }
+      rocblas_destroy_handle(handle);
     }
 
    // initial solution
@@ -117,7 +127,6 @@ int main(int argc, char* argv[]) {
       std::cout<<std::setprecision(16)<<"L2 norm of error is larger than prescribed tolerance..." << norm << std::endl;
    }
 
-   rocblas_destroy_handle(handle);
    return 0;
 
 }

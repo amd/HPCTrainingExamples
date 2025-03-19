@@ -53,20 +53,35 @@ int main(int argc, char* argv[]) {
 
 #pragma omp parallel for reduction(+:h_EXP[:4]) firstprivate(h_powA) schedule(dynamic)
    for(int i=2; i<N; i++){
+      int tid = omp_get_thread_num();
+      omp_interop_t iobj = omp_interop_none;
+      #pragma omp interop init(targetsync: iobj)
+      hipStream_t stream = (hipStream_t) omp_get_interop_ptr(iobj, omp_ipr_targetsync, NULL);
+      hipCheck( hipStreamCreate(&stream) );
+      // init rocblas handle
+      rocblas_handle handle;
+      rocblas_create_handle(&handle);
+      // set stream for rocblas
+      rocblas_set_stream(handle,stream);
+
+      // print
+      //std::cout<<"Thread id: " << tid << " i : " << i << " Stream: " << stream << std::endl;
+
       h_powA[0]=h_A[0];
       h_powA[1]=h_A[1];
       h_powA[2]=h_A[2];
       h_powA[3]=h_A[3];
-      // init rocblas handle
-      rocblas_handle handle;
-      rocblas_create_handle(&handle);
       double denom = i;
       double num = t;
       for(int k=1; k<i; k++){
         roctxRangePush("rocblas_dgemm");
-        rocblas_dgemm(handle,op,op,2,2,2,&alpha_dgemm,h_powA.data(),2,h_A.data(),2,&beta_dgemm,h_powA.data(),2);
-	roctxRangePop();
-        hipCheck( hipDeviceSynchronize() );
+        rocblas_status status= rocblas_dgemm(handle,op,op,2,2,2,&alpha_dgemm,h_powA.data(),2,h_A.data(),2,&beta_dgemm,h_powA.data(),2);
+        roctxRangePop();
+	hipCheck( hipStreamSynchronize(stream) );
+        // Check for errors
+        if (status != rocblas_status_success) {
+            fprintf(stderr, "rocblas_dgemm failed with status %d\n", status);
+        }
         // compute factorial;
         denom *= k;
         num *= t;
@@ -80,6 +95,7 @@ int main(int argc, char* argv[]) {
          int num_threads = omp_get_num_threads();
          std::cout << "Total num of threads is: " << num_threads << std::endl;
       }
+      #pragma omp interop destroy(iobj)
       rocblas_destroy_handle(handle);
     }
 
