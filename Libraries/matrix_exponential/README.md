@@ -83,7 +83,7 @@ $$
 
 ## Compile and Run
 
-There are currently two directories: `device_sync` and `streams_sync`, the only difference is that in `device_sync` we are calling `hipDeviceSynchronize()` after each `rocblas_dgemm` call whereas in `streams_sync` we are using the OpenMP `interop` directive to create a foreign (to OpenMP) synchronization object (a HIP stream) and then set the execution of rocblas on this specific stream. Then the call to `hipDeviceSynchronize()` is replaced with `hipStreamSynchronize(stream)`.
+There are currently two directories: `device_sync` and `streams_sync`: the main difference between the code in these two directories is that in `device_sync` we are calling `hipDeviceSynchronize()` after each `rocblas_dgemm` call whereas in `streams_sync` we are creating streams for each OpenMP CPU thread and then synchronizing with `hipStreamSynchronize(stream)`. In `stream_sync` there are two sub-directories, one called `hip` and one called `interop`. In the one called `hip` we are manually setting the number of OpenMP CPU threads to 4, and then creating 4 streams for each OpenMP CPU thread. This is done before the `#pragma omp parallel for ...` that creates the threads. In the `interop` sub-directory, we are using the OpenMP `interop` directive to create a foreign (to OpenMP) synchronization object (a HIP stream) from within the parallel OpenMP loop and then set the execution of rocblas on this specific stream. Note that in this way the OpenMP threads are using more than one stream since a new stream is created during each iteration of the parallel for loop. 
 
 To compile and run do (this applies to both directories):
 
