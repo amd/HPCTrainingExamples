@@ -59,9 +59,7 @@ sed -i -e '/\\author{}/i\
 \\usepackage{fancyvrb} \
 ' "$filename.tex"
 
-sed -i 's/\\begin{verbatim}/\\begin{Verbatim}[fontsize=\\tiny]/' "$filename.tex"
+sed -i 's/\\begin{verbatim}/\\begin{Verbatim}[fontsize=\\small]/' "$filename.tex"
 
 sed -i 's/\\end{verbatim}/\\end{Verbatim}/' "$filename.tex"
-
-
 
