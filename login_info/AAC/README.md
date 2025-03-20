@@ -143,22 +143,24 @@ module avail
 The output list of `module avail` should show:
 
 ```
------------------------------------------------------------------- /etc/lmod/modules/Linux -------------------------------------------------------------------
-   clang/base    clang/14 (D)    clang/15    gcc/base    gcc/11 (D)    gcc/12    gcc/13    miniconda3/24.9.2    miniforge3/24.9.0
+------------------------------------------------- /etc/lmod/modules/Linux --------------------------------------------------
+   clang/base        clang/15    gcc/11 (D)    gcc/13               miniforge3/24.9.0
+   clang/14   (D)    gcc/base    gcc/12        miniconda3/24.9.2
 
-------------------------------------------------------------------- /etc/lmod/modules/ROCm -------------------------------------------------------------------
-   amdclang/18.0.0-6.3.3    hipfort/6.3.3 (D)    opencl/6.3.3    rocm/6.3.3    rocprofiler-compute/6.3.3    rocprofiler-systems/6.3.3
+-------------------------------------------------- /etc/lmod/modules/ROCm --------------------------------------------------
+   amdclang/18.0.0-6.3.3    opencl/6.3.3    rocprofiler-compute/6.3.3
+   hipfort/6.3.3            rocm/6.3.3      rocprofiler-systems/6.3.3
 
---------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-MPI ---------------------------------------------------------------
+---------------------------------------------- /etc/lmod/modules/ROCmPlus-MPI ----------------------------------------------
    mpi4py/4.0.1    openmpi/5.0.7-ucc1.3.0-ucx1.18.0
 
---------------------------------------------------------- /etc/lmod/modules/ROCmPlus-LatestCompilers ---------------------------------------------------------
-   amdflang-new-beta-drop/rocm-afar-7110-drop-5.3.0    aomp/amdclang-19.0    hipfort/6.3.3
+---------------------------------------- /etc/lmod/modules/ROCmPlus-LatestCompilers ----------------------------------------
+   amdflang-new-beta-drop/rocm-afar-7110-drop-5.3.0    aomp/amdclang-19.0    hipfort_from_source/6.3.3
 
---------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-AI ----------------------------------------------------------------
+---------------------------------------------- /etc/lmod/modules/ROCmPlus-AI -----------------------------------------------
    cupy/14.0.0a1    jax/0.4.35    pytorch/2.6.0
 
-------------------------------------------------------------------- /etc/lmod/modules/misc -------------------------------------------------------------------
+-------------------------------------------------- /etc/lmod/modules/misc --------------------------------------------------
    fftw/3.3.10    hipifly/dev                 kokkos/4.5.01         netcdf-fortran/4.6.2-rc1    tau/dev
    hdf5/1.14.5    hpctoolkit/2024.11.27dev    netcdf-c/4.9.3-rc1    scorep/9.0-dev
 
