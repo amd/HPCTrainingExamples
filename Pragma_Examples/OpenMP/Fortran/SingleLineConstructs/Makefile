@@ -38,14 +38,13 @@ saxpy_gpu_loop: saxpy_gpu_loop.o
 	$(FC) $(LDFLAGS) ${OPENMP_OFFLOAD_FLAGS} $^ -o $@
 
 saxpy_gpu_do_concurrent_host.o: saxpy_gpu_do_concurrent_host.F90
-	#@echo "not implemented yet in amdflang next gen compiler"
-	$(FC) -c $(FFLAGS) -fdo-concurrent-parallel=host ${OPENMP_OFFLOAD_FLAGS} $^
+	$(FC) -c $(FFLAGS) -fdo-concurrent-parallel=host ${OPENMP_FLAGS} $^
 
 saxpy_gpu_do_concurrent_host: saxpy_gpu_do_concurrent_host.o
 	$(FC) $(LDFLAGS) ${OPENMP_OFFLOAD_FLAGS} $^ -o $@
 
+#@echo "not implemented yet in amdflang next gen compiler"
 saxpy_gpu_do_concurrent_device.o: saxpy_gpu_do_concurrent_device.F90
-	#@echo "not implemented yet in amdflang next gen compiler"
 	$(FC) -c $(FFLAGS) -fdo-concurrent-parallel=device ${OPENMP_OFFLOAD_FLAGS} $^
 
 saxpy_gpu_do_concurrent_device: saxpy_gpu_do_concurrent_device.o
