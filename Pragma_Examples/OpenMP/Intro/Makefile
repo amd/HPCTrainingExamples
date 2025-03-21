@@ -18,7 +18,7 @@ else
   OPENMP_FLAGS = -fopenmp --foffload=-march=$(ROCM_GPU) -fopt-info-optimized-omp
 endif
 
-CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
+CXXFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
 
 ifeq ($(findstring amdflang,$(FC1)), amdflang)
   FREE_FORM_FLAG = -Mfreeform
