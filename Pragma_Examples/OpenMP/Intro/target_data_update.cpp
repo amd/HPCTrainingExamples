@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 #pragma omp target data device(0) map(alloc:tmp[:N]) map(to:input[:N]) map(from:res)
   {
 #pragma omp target device(0)
-#pragma omp teams distribute parallel for simd
+#pragma omp teams distribute parallel for
     for (int i=0; i<N; i++)
       tmp[i] = some_computation(input[i], i);
 
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 #pragma omp target update device(0) to(input[:N])
 
 #pragma omp target device(0)
-#pragma omp teams distribute parallel for simd reduction(+:res)
+#pragma omp teams distribute parallel for reduction(+:res)
     for (int i=0; i<N; i++)
       res += final_computation(input[i], tmp[i], i);
   }
