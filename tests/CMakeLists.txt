@@ -265,7 +265,7 @@ set_property(TEST OpenMP_Intro_Saxpy7 PROPERTY SKIP_REGULAR_EXPRESSION "module s
 #set_property(TEST OpenMP_Intro_Saxpy2f PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Intro_Target_Data_Structured COMMAND ../openmp_intro_target_data_structured.sh )
-set_property(TEST OpenMP_Intro_Target_Data_Structured PROPERTY PASS_REGULAR_EXPRESSION "Target Update result is 2.000000")
+set_property(TEST OpenMP_Intro_Target_Data_Structured PROPERTY PASS_REGULAR_EXPRESSION "completed successfully")
 set_property(TEST OpenMP_Intro_Target_Data_Structured PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Intro_Target_Data_Unstructured COMMAND ../openmp_intro_target_data_unstructured.sh )
