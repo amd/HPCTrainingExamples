@@ -62,9 +62,9 @@ int main(int argc, char *argv[]){
    // two kernels with 3 data loads total (copy and init) x data size * 8 bytes per double and converted to GiB
    // First kernel -- X must be loaded, modified, and written
    // Second kernel -- X must be loaded and Y written
-   double GB=3*N*8/9.31323e-10;
+   double GB=3.0*N*8.0/1024.0/1024.0/1024.0;
    // timing in microseconds converted to secs
-   double secs=tm_duration/1e-6;
+   double secs=tm_duration/1000.0/1000.0;
    cout << "2 Kernels Took " << tm_duration/(double)niter << " microseconds for alignment length " << alignment_length << ", thread_limit(BLOCKSIZE) " << BLOCKSIZE << ", arraysize " << GB << " GiB/sec " << GB/secs/niter << endl;
 
    t1 = high_resolution_clock::now();
@@ -79,12 +79,13 @@ int main(int argc, char *argv[]){
    tm_duration = duration_cast<microseconds>(t2 - t1).count();
 
    // one copy kernel with 2 data loads
-   GB=2*N*8/9.31323e-10;
+   GB=2.0*(double)N*8.0/1024.0/1024.0/1024.0;
    // timing in microseconds converted to secs
-   secs=tm_duration/1e-6;
+   secs=tm_duration/1000.0/1000.0;
    cout << "Copy Took " << tm_duration/(double)niter << " microseconds for alignment length " << alignment_length << ", thread_limit(BLOCKSIZE) " << BLOCKSIZE << ", arraysize " << GB << ", GiB/sec " << GB/secs/niter << endl;
 
    delete[] X;
    delete[] Y;
    return 0;
 }
+
