@@ -12,8 +12,8 @@ using namespace chrono;
 
 #pragma omp requires unified_shared_memory
 int main(int argc, char *argv[]){
-   double *X, *Y, *Z;
-   size_t N = (size_t) BLOCKSIZE*BLOCKSIZE*BLOCKSIZE/sizeof(double);
+   double *X, *Y;
+   size_t N = (size_t) 1024.0*1024.0*1024.0/sizeof(double);
    int niter = 100;
 
    int alignment_length = 16;
