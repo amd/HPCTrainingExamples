@@ -65,7 +65,10 @@ int main(int argc, char *argv[]){
    double GB=3.0*N*8.0/1024.0/1024.0/1024.0;
    // timing in microseconds converted to secs
    double secs=tm_duration/1000.0/1000.0;
-   cout << "2 Kernels Took " << tm_duration/(double)niter << " microseconds for alignment length " << alignment_length << ", thread_limit(BLOCKSIZE) " << BLOCKSIZE << ", arraysize " << GB << " GiB/sec " << GB/secs/niter << endl;
+   double SecsPerIter = secs/(double)niter;
+   cout << "2 Kernels Took " << tm_duration/(double)niter << " microseconds for alignment length " << alignment_length << ", thread_limit(BLOCKSIZE) " << BLOCKSIZE << ", arraysize " << GB << " GiB" << endl;
+   cout << "Application bandwidth using one operation per memory write   " << GB/SecsPerIter << " GiB/sec or " << GB/1024.0/SecsPerIter << " TiB/sec" << endl;
+   cout << "Hardware bandwidth accounting for write needing a load+store " << 5.0*GB/3.0/SecsPerIter << " GiB/sec or " << 5.0*GB/3.0/1024.0/SecsPerIter << " TiB/sec" << endl << endl;
 
    t1 = high_resolution_clock::now();
 
@@ -82,10 +85,12 @@ int main(int argc, char *argv[]){
    GB=2.0*(double)N*8.0/1024.0/1024.0/1024.0;
    // timing in microseconds converted to secs
    secs=tm_duration/1000.0/1000.0;
-   cout << "Copy Took " << tm_duration/(double)niter << " microseconds for alignment length " << alignment_length << ", thread_limit(BLOCKSIZE) " << BLOCKSIZE << ", arraysize " << GB << ", GiB/sec " << GB/secs/niter << endl;
+   SecsPerIter = secs/(double)niter;
+   cout << "Simple Copy Took " << tm_duration/(double)niter << " microseconds for alignment length " << alignment_length << ", thread_limit(BLOCKSIZE) " << BLOCKSIZE << ", arraysize " << GB << " GiB " << endl;
+   cout << "Application bandwidth using one operation per memory write   " << GB/SecsPerIter << " GiB/sec or " << GB/1024.0/SecsPerIter << " TiB/sec" << endl;
+   cout << "Hardware bandwidth accounting for write needing a load+store " << 3.0*GB/2.0/SecsPerIter << " GiB/sec or " << 3.0*GB/2.0/1024.0/SecsPerIter << " TiB/sec" << endl << endl;
 
    delete[] X;
    delete[] Y;
    return 0;
 }
-
