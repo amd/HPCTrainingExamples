@@ -87,6 +87,8 @@ int main( int argc, char* argv[] )
     }
     hipCheck( hipMemcpyAsync(h_input, d_input, bytes , hipMemcpyDeviceToHost, stream) );
 
+    #pragma omp interop destroy(iobj)
+
     hipCheck( hipEventRecord(stop) );
     hipCheck( hipEventSynchronize(stop) );
 
