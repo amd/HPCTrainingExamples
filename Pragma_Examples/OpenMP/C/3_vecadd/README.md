@@ -46,3 +46,16 @@ Version with simple mapping clauses, set ```export HSA_XNACK=0``` to observe beh
 Build and run like above.
 Move data only were necessary a structured data region is used here, set ```export HSA_XNACK=0``` to observe behaviour similar to discrete GPUs
 
+#### 4) with unified shared memory and asynchronous execution
+```
+4_vecadd_async_usm
+```
+Build and run like above.
+Unified memory version with asynchronous OpenMP kernel calls. Don't forget to set ```export HSA_XNACK=1```.
+
+#### 5) with map clauses and asynchronous execution
+```
+5_vecadd_async
+```
+Build and run like above.
+Version with a `target enter data` map clause directive and asynchronous OpenMP kernel calls. Set ```export HSA_XNACK=0``` to observe behaviour similar to discrete GPUs.
