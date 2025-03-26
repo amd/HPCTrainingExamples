@@ -4,14 +4,13 @@
 
 # Compilers and related
 ROCM_PATH     ?= /opt/rocm
-ROCM_GPU      ?= $(INSTALLED_GPU)
-INSTALLED_GPU = $(shell $(ROCM_PATH)/bin/rocm_agent_enumerator | grep -m 1 -E gfx[^0]{1})
+ROCM_GPU      ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//')) 
 CFLAG         = -Ofast -g --offload-arch=$(ROCM_GPU)
 LDFLAG        =
 
 # OpenMP
-COMPILER_OMP  = CC # e.g. $(ROCM_PATH)/llvm/bin/clang++ here: accept from environment
-CFLAGS_OMP    = -fopenmp --offload-arch=$(ROCM_GPU) #if offload-arch is needed this depends on the compiler chosen!
+COMPILER_OMP  = $(CC) # e.g. $(ROCM_PATH)/llvm/bin/clang++ here: accept from environment
+CFLAGS_OMP    = '-fopenmp --offload-arch=${ROCM_GPU}'  #if offload-arch is needed this depends on the compiler chosen!
 LDFLAGS_OMP   =
 
 # HIP

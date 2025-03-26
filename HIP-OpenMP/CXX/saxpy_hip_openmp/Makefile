@@ -3,7 +3,7 @@ all: $(EXECUTABLE) test
 
 .PHONY: test
 
-OBJECTS = saxpy_openmp.o saxpy_hip.o
+OBJECTS = saxpy_hip.o saxpy_openmp.o
 
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
@@ -18,15 +18,18 @@ ifeq ($(HIPCC), nvcc)
    LDFLAGS = -lcudadevrt -lcudart_static -lrt -lpthread -ldl
 endif
 ifeq ($(HIPCC), hipcc)
-   HIPCC_FLAGS += -munsafe-fp-atomics 
-   LDFLAGS = ${OPENMP_FLAGS} -L${ROCM_PATH}/lib -lamdhip64
+   HIPCC_FLAGS += -munsafe-fp-atomics
+   LDFLAGS = -L${ROCM_PATH}/lib -lamdhip64 ${OPENMP_FLAGS} 
 endif
 
 saxpy_hip.o: saxpy_hip.hip
 	$(HIPCC) $(HIPCC_FLAGS) -c $^ -o $@
 
+saxpy_openmp.o: saxpy_openmp.cc
+	$(CXX) $(CXXFLAGS) ${OPENMP_FLAGS} -c $^ -o $@
+
 $(EXECUTABLE): $(OBJECTS)
-	$(CXX) $(OBJECTS) $(LDFLAGS) -o $@
+	$(HIPCC) $(HIPCC_FLAGS) $(OBJECTS) $(LDFLAGS) -o $@
 
 test: $(EXECUTABLE)
 	$(EXECUTABLE)

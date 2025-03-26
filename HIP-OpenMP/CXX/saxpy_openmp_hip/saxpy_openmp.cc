@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
       compute_1(n, x);
       compute_2(n, y);
       #pragma omp target update to(x[0:n]) to(y[0:n]) // update x and y on the target
-      #pragma omp target data use_device_ptr(x,y)
+      #pragma omp target data use_device_addr(x,y)
       {
          saxpy_hip(n, a, x, y);  // compute a * x[i] + y[i] in parallel
       }

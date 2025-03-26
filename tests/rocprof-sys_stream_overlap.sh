@@ -11,6 +11,7 @@ TOOL_NAME="omnitrace"
 TOOL_COMMAND="omnitrace"
 TOOL_ORIGIN="AMD Research"
 TOOL_CONFIG="OMNITRACE"
+TOOL_OUTPUT="omnitrace"
 
 usage()
 {
