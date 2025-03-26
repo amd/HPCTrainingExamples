@@ -25,9 +25,6 @@ endif
 saxpy_hip.o: saxpy_hip.hip
 	$(HIPCC) $(HIPCC_FLAGS) -c $^ -o $@
 
-saxpy_openmp.o: saxpy_openmp.cc
-	$(CXX) $(CXXFLAGS) -c $^ -o $@
-
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) $(LDFLAGS) -o $@
 
