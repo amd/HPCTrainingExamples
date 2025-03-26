@@ -26,10 +26,10 @@ saxpy_hip.o: saxpy_hip.hip
 	$(HIPCC) $(HIPCC_FLAGS) -c $^ -o $@
 
 saxpy_openmp.o: saxpy_openmp.cc
-	$(CXX) $(CXXFLAGS) ${OPENMP_FLAGS} -c $^ -o $@
+	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
 $(EXECUTABLE): $(OBJECTS)
-	$(HIPCC) $(HIPCC_FLAGS) $(OBJECTS) $(LDFLAGS) -o $@
+	$(CXX) $(CXXFLAGS) $(OBJECTS) $(LDFLAGS) -o $@
 
 test: $(EXECUTABLE)
 	$(EXECUTABLE)
