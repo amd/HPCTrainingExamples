@@ -15,7 +15,6 @@ To run, pick two or three linear systems from a series and add them to the comma
 
 
 
-RocSolverRf allows to use refactorization.
 
 # Compiling and installing
 
