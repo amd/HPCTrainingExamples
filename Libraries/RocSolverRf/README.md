@@ -1,8 +1,10 @@
 # Purpose of this code
 If you are dealing with a sequence of sparse linear systems (that share THE SAME NON-ZERO PATTERN)
+
 $$
 A^{(i)}x^{(i)} = b^{(i)} \quad i = 0, 1, 2, \ldots, 
 $$ 
+
 where $A^{(i)}$ is an $N \times N$ matrix, $b^{(i)}$ is an $N\times 1$ right-hand side and $x^{(i)}$ are the vectors, these systems can be solved faster using refactorization. 
 
 Idea: the first system in the sequence is solved on the CPU using a direct solver of your choice (there are two examples in the code, one using KLU and the other one using UMFPACK) and the refactorization is set on the GPU using RocSolverRf library. The following systems are solved using refactorization on the GPU, which is often much faster.
