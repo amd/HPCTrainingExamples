@@ -321,7 +321,7 @@ elif [ ${OPENMPI} -eq 1 ]; then
 elif [ ${MPI4PY} -eq 1 ]; then
    ctest -R MPI4PY
 elif [ ${OPENMP} -eq 1 ]; then
-   ctest -R OpenMP
+   ctest -R OpenMP_
 elif [ ${OPENACC} -eq 1 ]; then
    ctest -R OpenACC
 elif [ ${MVAPICH2} -eq 1 ]; then
