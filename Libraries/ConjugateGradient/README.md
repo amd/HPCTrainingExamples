@@ -1,11 +1,13 @@
 # Purpose of this code
 Assume you need to solve a linear system
+
 $$
 A x = b
 $$ 
+
 where $A$ is an $N \times N$ sparse, symmetric positive definite (SPD) matrix, $b$ is an $N\times 1$ right-hand side and $x$ is a vector of unknows. Such a system can be usually solved with a linear solver called [Conjugate Gradient (CG)] (https://en.wikipedia.org/wiki/Conjugate_gradient_method).  
 
-CG is an iterative method that find an approximate solution. Its implementation consists of sparse matrix-vector products, dot products, vector scaling and vector updates (AXPYs). It can be implemented using rocBLAS and rocSPARSE.
+CG is an iterative method that finds an approximate solution to the linear system above. CG implementation consists of sparse matrix-vector products, vector dot products, vector scaling and vector updates (AXPYs). It can be implemented using rocBLAS and rocSPARSE.
 
 This example demonstrates how to:
 - use rocBLAS,
