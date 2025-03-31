@@ -48,13 +48,13 @@ int main(int argc, char *argv[])
 
   read_mtx_file_into_coo(matrixFileName, &nn, &nm, &nnz_or, &nnnz, &h_A_coo_rows, &h_A_coo_cols, &h_A_coo_vals);
 
-  // allocate data for CSR
+  /* allocate data for CSR */
 
   double* h_A_csr_vals = (double*) calloc(nnnz, sizeof(double));
   int* h_A_csr_row_ptr = (int*) calloc(nn + 1, sizeof(int));
   int* h_A_csr_col_idx = (int*) calloc(nnnz, sizeof(int));
 
-  // matrix was read as COO, needs to be converted to CSR
+  /* matrix was read as COO, needs to be converted to CSR */
 
   coo_to_csr(nn,
 	     nnnz, 
@@ -65,7 +65,8 @@ int main(int argc, char *argv[])
 	     h_A_csr_col_idx, 
 	     h_A_csr_vals);
 
-  // allocate data for RHS and solution
+  /* allocate data for RHS and solution */
+
   double* h_x = (double*) calloc(nn, sizeof(double));
   double* h_b = (double*) calloc(nn, sizeof(double));
 
@@ -94,28 +95,29 @@ int main(int argc, char *argv[])
   printf("\t Maxit:                                %d\n", maxit);
   printf("\t Tolerance:                            %2.2e\n\n", tol);
 
-  // copy CSR matrix to the GPU    
+  /* copy CSR matrix to the GPU */    
 
   double* d_A_csr_vals;  
   int* d_A_csr_row_ptr;
   int* d_A_csr_col_idx;
 
-  // First, allocate the GPU data
+  /* First, allocate the GPU data */
 
   HIP_CHECK(hipMalloc(&d_A_csr_row_ptr, sizeof(int) * (nn + 1)));
   HIP_CHECK(hipMalloc(&d_A_csr_col_idx, sizeof(int) * nnnz));
   HIP_CHECK(hipMalloc(&d_A_csr_vals, sizeof(double) * nnnz));
 
-  // Second, actually copy H2D
+  /* Second, actually copy H2D */
+
   HIP_CHECK(hipMemcpy(d_A_csr_row_ptr, h_A_csr_row_ptr, sizeof(int) * (nn + 1), hipMemcpyHostToDevice));
   HIP_CHECK(hipMemcpy(d_A_csr_col_idx, h_A_csr_col_idx, sizeof(int) * nnnz, hipMemcpyHostToDevice));
   HIP_CHECK(hipMemcpy(d_A_csr_vals, h_A_csr_vals, sizeof(double) * nnnz, hipMemcpyHostToDevice));
 
-  // before we call CG, we need to set up
-  // a) matvec (there is no buffer, but analysis has to be completed)
-  // b) incomplete Cholesky preconditioner
+  /* before we call CG, we need to set up:
+      a) matvec (there is no buffer, but analysis has to be completed),
+      b) incomplete Cholesky preconditioner. */
 
-  // First, create library handles
+  /* First, create library handles */
 
   rocblas_handle handle_rocblas;
   rocsparse_handle  handle_rocsparse;
@@ -123,7 +125,7 @@ int main(int argc, char *argv[])
   ROCBLAS_CHECK(rocblas_create_handle(&handle_rocblas));
   ROCSPARSE_CHECK(rocsparse_create_handle(&handle_rocsparse));
 
-  // Second, setup matvec
+  /* Second, setup matvec */
 
   rocsparse_mat_descr descrA = NULL;
   rocsparse_mat_info  infoA;
@@ -144,11 +146,11 @@ int main(int argc, char *argv[])
 					    d_A_csr_col_idx,
 					    infoA));
 
-  // Third, setup the preconditioner
-  //
-  // Preconditioner (Incomple Cholesky)
-  // descrM is needed for performing incomplete Cholesky.
-  // descrLic is needed for triangular solves 
+  /* Third, setup the preconditioner */
+  
+  /* Preconditioner (Incomple Cholesky)
+     descrM is needed for performing incomplete Cholesky.
+     descrLic is needed for triangular solves */
 
   printf("Initializing incomplete Cholesky preconditioner ...\n\n");
 
@@ -166,7 +168,8 @@ int main(int argc, char *argv[])
   ROCSPARSE_CHECK(rocsparse_create_mat_descr(&descrM));
   ROCSPARSE_CHECK(rocsparse_set_mat_type(descrM, rocsparse_matrix_type_general));
 
-  // for triangular solve with L
+  /* for triangular solve with L */
+  
   ROCSPARSE_CHECK(rocsparse_create_mat_descr(&descrLic));
   ROCSPARSE_CHECK(rocsparse_set_mat_fill_mode(descrLic, rocsparse_fill_mode_lower));
   ROCSPARSE_CHECK(rocsparse_set_mat_diag_type(descrLic, rocsparse_diag_type_non_unit));
@@ -176,6 +179,7 @@ int main(int argc, char *argv[])
 
   /* Obtain required buffer size */
   /* Since buffer is reusable, we just create one buffer - but we need to make sure that the size is large enough, so we take max */
+
   size_t buffer_size_M;
   size_t buffer_size_L;
   size_t buffer_size_Lt;
@@ -211,15 +215,18 @@ int main(int argc, char *argv[])
 					       d_A_csr_col_idx,
 					       infoM,
 					       &buffer_size_Lt));
+
   size_t buffer_size = max(buffer_size_M, max(buffer_size_L, buffer_size_Lt));
 
   // printf("Final buffer size: %d \n\n",buffer_size);
 
   /* Allocate the buffer */
+
   HIP_CHECK(hipMalloc(&ichol_buffer, buffer_size));
 
   /* Perform analysis steps, using rocsparse_analysis_policy_reuse to improve 
    * computation performance */
+
   /* analysis for incomplete Cholesky */
 
   ROCSPARSE_CHECK(rocsparse_dcsric0_analysis(handle_rocsparse,

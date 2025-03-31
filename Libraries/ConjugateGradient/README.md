@@ -5,7 +5,7 @@ $$
 A x = b
 $$ 
 
-where $A$ is an $N \times N$ sparse, symmetric positive definite (SPD) matrix, $b$ is an $N\times 1$ right-hand side and $x$ is a vector of unknows. Such a system can be usually solved with a linear solver called [Conjugate Gradient (CG)] (https://en.wikipedia.org/wiki/Conjugate_gradient_method).  
+where $A$ is an $N \times N$ sparse, symmetric positive definite (SPD) matrix, $b$ is an $N\times 1$ right-hand side and $x$ is a vector of unknows. Such a system can be usually solved with a linear solver called Conjugate Gradient (CG) (https://en.wikipedia.org/wiki/Conjugate_gradient_method).  
 
 CG is an iterative method that finds an approximate solution to the linear system above. CG implementation consists of sparse matrix-vector products, vector dot products, vector scaling and vector updates (AXPYs). It can be implemented using rocBLAS and rocSPARSE.
 
@@ -27,4 +27,11 @@ After cloning, just type `make`.
 ```
 
 The parameters `tol`, `maxit` and `rhs` are optional.
-Matrix MUST BE SPD in order for the code to work.
+
+Things to remember:
+
+- Matrix must be in a proper matrix market (MTX) format,
+- The matrix MUST BE SPD in order for the code to work, 
+- Incomplete Cholesky does not work for all the problems (!).
+
+
