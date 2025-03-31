@@ -30,7 +30,7 @@ program example
     call init_rocblas(rocblas_handle)     ! Initialize rocBLAS
 
     !$OMP target enter data map(to:A,B,C)
-    !$OMP target data use_device_addr(C,B,C)
+    !$OMP target data use_device_addr(A,B,C)
     call omp_dgemm(rocblas_handle,modea,modeb,N,N,N,alpha,&
         c_loc(A),lda,c_loc(B),ldb,beta,c_loc(C),ldc)
     !$OMP end target data
