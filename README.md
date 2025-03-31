@@ -1,13 +1,13 @@
 # AMD HPC Training Examples Repo
 
-Welcome to AMD's HPC Training Examples Repo! 
+Welcome to AMD's HPC Training Examples Repo!
 
 Here you will find a variety of examples to showcase the capabilities of AMD's GPU software stack.
 Please be aware that the repo is continuously updated to keep up with the most recent releases of the AMD software.
 
 ## Repository Structure
 
-Please refer to this table of contents to locate the exercises you are interested in sorted by topic. 
+Please refer to this table of contents to locate the exercises you are interested in sorted by topic.
 
 1. [**HIP**](https://github.com/amd/HPCTrainingExamples/tree/main/HIP)
    1. ***HIP Functionality Checks***
@@ -18,7 +18,7 @@ Please refer to this table of contents to locate the exercises you are intereste
       3. [`basic_examples`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/basic_examples): a collection of introductory exercises such as device to host data transfer and basic GPU kernel implementation. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/basic_examples/README.md).
       4. [`hip_stream`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/hip-stream): modification of the STREAM benchmark for HIP. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/HIP/hip-stream/README.md).
       5. [`jacobi`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/jacobi): distributed Jacobi solver, using GPUs to perform the computation and MPI for halo exchanges. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/HIP/jacobi/README.md).
-      6. [`matrix_addition`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/matrix_addition): example of a HIP kernel performing a matrix addition. 
+      6. [`matrix_addition`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/matrix_addition): example of a HIP kernel performing a matrix addition.
       7. [`saxpy`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/saxpy): example of a HIP kernel performing a saxpy operation. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/saxpy/README.md).
       8. [`stencil_examples`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/stencil_examples): examples stencils operation with a HIP kernel, including the use of timers and asyncronous copies.
       9. [`vectorAdd`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/vectorAdd): example of a HIP kernel to perform a vector add. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/vectorAdd/README.md).
@@ -39,7 +39,7 @@ Please refer to this table of contents to locate the exercises you are intereste
 6. [**OmniperfExamples**](https://github.com/amd/HPCTrainingExamples/tree/main/OmniperfExamples): several examples showing how to leverage Omniperf to perform kernel level optimization using HIP. **NOTE**: detailed READMEs are provided on each subdirectory. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/OmniperfExamples/README.md).[`Video of Presentation`](https://www.youtube.com/watch?v=8gg3aNUsR44&list=PLB4tvLCynFjQq2rOIjEy39IDaugXcFPNa&index=2&t=5080s).
 7. [**Omniperf-OpenMP**](https://github.com/amd/HPCTrainingExamples/tree/main/Omniperf-OpenMP): example showing how to leverage Omniperf to perform kernel level optimization using Fortran and OpenMP. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/Omniperf-OpenMP/README.md).
 8. [**Omnitrace**](https://github.com/amd/HPCTrainingExamples/tree/main/Omnitrace)
-   1. ***Omnitrace on Jacobi***: Omnitrace used on the Jacobi solver example. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/Omnitrace/README.md). 
+   1. ***Omnitrace on Jacobi***: Omnitrace used on the Jacobi solver example. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/Omnitrace/README.md).
    2. ***Omnitrace by Example***: Omnitrace used on several versions of the Ghost Exchange example:
       1. ***OpenMP Version***: [`READMEs`](https://github.com/amd/HPCTrainingExamples/blob/main/MPI-examples/GhostExchange/GhostExchange_ArrayAssign) available for each of the different versions of the example code. [`Video of Presentation`](https://vimeo.com/951998260).
       2. ***HIP Version***:  [`READMEs`](https://github.com/amd/HPCTrainingExamples/blob/main/MPI-examples/GhostExchange/GhostExchange_ArrayAssign_HIP) available for each of the different versions of the example code.
