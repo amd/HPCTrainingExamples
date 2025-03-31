@@ -10,9 +10,9 @@ int main(int argc, char *argv[])
   int maxit = 10;
   double tol = 1e-10;
 
-  int *h_A_coo_rows; 
-  int *h_A_coo_cols;
-  double *h_A_coo_vals;
+  int* h_A_coo_rows; 
+  int* h_A_coo_cols;
+  double* h_A_coo_vals;
 
   int nn, nnnz, nm, nnz_or; 
 
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
   } 
 
   if (maxit > IT_MAX) {
-    printf("Warning: setting maxit to IT_MAX = %d \n\n", IT_MAX);
+    printf("\nWarning: setting maxit to IT_MAX = %d \n\n", IT_MAX);
     maxit = IT_MAX;
   }
   if (matrixFileName == NULL) {
@@ -54,6 +54,8 @@ int main(int argc, char *argv[])
   int* h_A_csr_row_ptr = (int*) calloc(nn + 1, sizeof(int));
   int* h_A_csr_col_idx = (int*) calloc(nnnz, sizeof(int));
 
+  // matrix was read as COO, needs to be converted to CSR
+
   coo_to_csr(nn,
 	     nnnz, 
 	     h_A_coo_rows, 
@@ -63,6 +65,7 @@ int main(int argc, char *argv[])
 	     h_A_csr_col_idx, 
 	     h_A_csr_vals);
 
+  // allocate data for RHS and solution
   double* h_x = (double*) calloc(nn, sizeof(double));
   double* h_b = (double*) calloc(nn, sizeof(double));
 
@@ -91,24 +94,28 @@ int main(int argc, char *argv[])
   printf("\t Maxit:                                %d\n", maxit);
   printf("\t Tolerance:                            %2.2e\n\n", tol);
 
-
   // copy CSR matrix to the GPU    
 
   double* d_A_csr_vals;  
   int* d_A_csr_row_ptr;
   int* d_A_csr_col_idx;
 
+  // First, allocate the GPU data
+
   HIP_CHECK(hipMalloc(&d_A_csr_row_ptr, sizeof(int) * (nn + 1)));
   HIP_CHECK(hipMalloc(&d_A_csr_col_idx, sizeof(int) * nnnz));
   HIP_CHECK(hipMalloc(&d_A_csr_vals, sizeof(double) * nnnz));
+
+  // Second, actually copy H2D
   HIP_CHECK(hipMemcpy(d_A_csr_row_ptr, h_A_csr_row_ptr, sizeof(int) * (nn + 1), hipMemcpyHostToDevice));
   HIP_CHECK(hipMemcpy(d_A_csr_col_idx, h_A_csr_col_idx, sizeof(int) * nnnz, hipMemcpyHostToDevice));
   HIP_CHECK(hipMemcpy(d_A_csr_vals, h_A_csr_vals, sizeof(double) * nnnz, hipMemcpyHostToDevice));
+
   // before we call CG, we need to set up
-  // a) matvec (buffer needs to be allocated)
+  // a) matvec (there is no buffer, but analysis has to be completed)
   // b) incomplete Cholesky preconditioner
 
-  // Library handles
+  // First, create library handles
 
   rocblas_handle handle_rocblas;
   rocsparse_handle  handle_rocsparse;
@@ -116,8 +123,7 @@ int main(int argc, char *argv[])
   ROCBLAS_CHECK(rocblas_create_handle(&handle_rocblas));
   ROCSPARSE_CHECK(rocsparse_create_handle(&handle_rocsparse));
 
-  // Matvec setup
-
+  // Second, setup matvec
 
   rocsparse_mat_descr descrA = NULL;
   rocsparse_mat_info  infoA;
@@ -138,16 +144,21 @@ int main(int argc, char *argv[])
 					    d_A_csr_col_idx,
 					    infoA));
 
+  // Third, setup the preconditioner
+  //
   // Preconditioner (Incomple Cholesky)
   // descrM is needed for performing incomplete Cholesky.
-  // descrLic, descrLtic are needed for triangular solves 
+  // descrLic is needed for triangular solves 
+
   printf("Initializing incomplete Cholesky preconditioner ...\n\n");
+
   /* since ic0 will over-write matrix values, we create a special array and copy them */
+
   double* d_M_csr_vals;
   HIP_CHECK(hipMalloc(&d_M_csr_vals, sizeof(double) * nnnz));
   HIP_CHECK(hipMemcpy(d_M_csr_vals, d_A_csr_vals, sizeof(double) * nnnz, hipMemcpyDeviceToDevice));
 
-  rocsparse_mat_descr  descrM, descrLic, descrLtic; 
+  rocsparse_mat_descr  descrM, descrLic; 
   void* ichol_buffer;
 
   rocsparse_mat_info infoM;
@@ -161,15 +172,10 @@ int main(int argc, char *argv[])
   ROCSPARSE_CHECK(rocsparse_set_mat_diag_type(descrLic, rocsparse_diag_type_non_unit));
   ROCSPARSE_CHECK(rocsparse_set_mat_index_base(descrLic, rocsparse_index_base_zero));
 
-  /* for triangular solve with L^T */
-  ROCSPARSE_CHECK(rocsparse_create_mat_descr(&descrLtic));
-  ROCSPARSE_CHECK(rocsparse_set_mat_fill_mode(descrLtic, rocsparse_fill_mode_upper));
-  ROCSPARSE_CHECK(rocsparse_set_mat_diag_type(descrLtic, rocsparse_diag_type_non_unit));
-  ROCSPARSE_CHECK( rocsparse_set_mat_index_base(descrLtic, rocsparse_index_base_zero));
-
   ROCSPARSE_CHECK(rocsparse_create_mat_info(&infoM));
 
   /* Obtain required buffer size */
+  /* Since buffer is reusable, we just create one buffer - but we need to make sure that the size is large enough, so we take max */
   size_t buffer_size_M;
   size_t buffer_size_L;
   size_t buffer_size_Lt;
@@ -206,12 +212,16 @@ int main(int argc, char *argv[])
 					       infoM,
 					       &buffer_size_Lt));
   size_t buffer_size = max(buffer_size_M, max(buffer_size_L, buffer_size_Lt));
-  // printf("finalsize %d \n",buffer_size);
-  // Allocate temporary buffer
+
+  // printf("Final buffer size: %d \n\n",buffer_size);
+
+  /* Allocate the buffer */
   HIP_CHECK(hipMalloc(&ichol_buffer, buffer_size));
 
   /* Perform analysis steps, using rocsparse_analysis_policy_reuse to improve 
    * computation performance */
+  /* analysis for incomplete Cholesky */
+
   ROCSPARSE_CHECK(rocsparse_dcsric0_analysis(handle_rocsparse,
 					     nn,
 					     nnnz,
@@ -223,6 +233,9 @@ int main(int argc, char *argv[])
 					     rocsparse_analysis_policy_reuse,
 					     rocsparse_solve_policy_auto,
 					     ichol_buffer));
+
+  /* Analysis for triangular solve with L*/
+
   ROCSPARSE_CHECK(rocsparse_dcsrsv_analysis(handle_rocsparse,
 					    rocsparse_operation_none,
 					    nn,
@@ -235,6 +248,9 @@ int main(int argc, char *argv[])
 					    rocsparse_analysis_policy_reuse,
 					    rocsparse_solve_policy_auto,
 					    ichol_buffer));
+
+  /* Analysis for triangular solve with L^T*/
+
   ROCSPARSE_CHECK(rocsparse_dcsrsv_analysis(handle_rocsparse,
 					    rocsparse_operation_transpose,
 					    nn,
@@ -248,8 +264,11 @@ int main(int argc, char *argv[])
 					    rocsparse_solve_policy_auto,
 					    ichol_buffer));
 
+
   /* Check for zero pivot */
+
   rocsparse_int position;
+
   if (rocsparse_status_zero_pivot == rocsparse_csric0_zero_pivot(handle_rocsparse,
 								 infoM,
 								 &position)) {
@@ -258,6 +277,7 @@ int main(int argc, char *argv[])
   }
 
   /* Compute incomplete Cholesky factorization M = LL' */
+
   ROCSPARSE_CHECK(rocsparse_dcsric0(handle_rocsparse,
 				    nn,
 				    nnnz,
@@ -268,9 +288,9 @@ int main(int argc, char *argv[])
 				    infoM,
 				    rocsparse_solve_policy_auto,
 				    ichol_buffer));
-  // printf("status 3: %d \n", status_rocsparse);
 
   /* Check for zero pivot */
+
   if (rocsparse_status_zero_pivot == rocsparse_csric0_zero_pivot(handle_rocsparse,
 								 infoM,
 								 &position)) {
@@ -282,7 +302,9 @@ int main(int argc, char *argv[])
   HIP_CHECK(hipDeviceSynchronize());
 
   printf("Preconditioner ready, starting CG ...\n\n");
+
   /* Actual CG */
+
   /* allocate and zero out  auxiliary arrays first */
 
   double* d_r;
@@ -302,33 +324,40 @@ int main(int argc, char *argv[])
   HIP_CHECK(hipMemset(d_p, 0, nn * sizeof(double)));
   HIP_CHECK(hipMemset(d_q, 0, nn * sizeof(double)));
   HIP_CHECK(hipMemset(d_aux, 0, nn * sizeof(double)));
+
   /* residual norm history */
 
   double* h_res_norm_history = (double*) calloc(maxit + 2 , sizeof(double));
 
   /* solution d_x and rhs d_b */
+
   double* d_x;
   double* d_b;
 
   HIP_CHECK(hipMalloc(&d_x, sizeof(double) * nn));
   HIP_CHECK(hipMalloc(&d_b, sizeof(double) * nn));
+
   /* x = 0 */
+
   HIP_CHECK(hipMemset(d_x, 0, nn * sizeof(double)));
-  /* d_b = h_b */
+
+  /* copy h_b to d_b */
+
   HIP_CHECK(hipMemcpy(d_b, h_b, sizeof(double) * nn, hipMemcpyHostToDevice));
 
   double alpha, beta, tolrel, rho_current, rho_previous, pTq;
+
   /* for matvecs and tri solves */
   const double one = 1.0;
   const double zero = 0.0;
   const double minusone = -1.0;
   int notconv = 1, iter = 0;
 
-  //compute initial norm of r
-
+  /* compute initial norm of r */
   /* r = b - A*x */
 
   HIP_CHECK(hipMemcpy(d_r, d_b, sizeof(double) * nn, hipMemcpyDeviceToDevice));
+
   ROCSPARSE_CHECK(rocsparse_dcsrmv(handle_rocsparse,
 				   rocsparse_operation_none,
 				   nn,
@@ -354,16 +383,27 @@ int main(int argc, char *argv[])
 			      1, 
 			      &h_res_norm_history[0]));
 
+  /* save the first norm */
+
   h_res_norm_history[0] = sqrt(h_res_norm_history[0]);
+
+  /* relative tolerance */
+
   tolrel = tol * h_res_norm_history[0];
 
   printf("CG: it %d, res norm %5.5e \n", 0, h_res_norm_history[0]);
+
   int flag;
   int final_it;
+
   /* MAIN LOOP */
+
   while (notconv) {
+
+    /* w = 0 */
+
     HIP_CHECK(hipMemset(d_w, 0, nn * sizeof(double)));
-    
+
     /* w = ichol(r) */
 
     /* phase 1: d_aux = L\r */
@@ -381,7 +421,6 @@ int main(int argc, char *argv[])
 					   d_aux, //output 
 					   rocsparse_solve_policy_auto,
 					   ichol_buffer));
-
     /* phase 2: d_w = L^T\aux */
 
     ROCSPARSE_CHECK(rocsparse_dcsrsv_solve(handle_rocsparse,
@@ -399,7 +438,10 @@ int main(int argc, char *argv[])
 					   rocsparse_solve_policy_auto,
 					   ichol_buffer));
     HIP_CHECK(hipDeviceSynchronize());
-      HIP_CHECK(hipMemcpy(d_w, d_r, sizeof(double) * nn, hipMemcpyDeviceToDevice));
+
+    /* If you don't want to use preconditioner, comment the triangular solves and uncomment the line below */
+    // HIP_CHECK(hipMemcpy(d_w, d_r, sizeof(double) * nn, hipMemcpyDeviceToDevice));
+
     /* rho_current = r'*w; */
     ROCBLAS_CHECK(rocblas_ddot (handle_rocblas, 
 				nn, 
@@ -408,14 +450,17 @@ int main(int argc, char *argv[])
 				d_w, 
 				1, 
 				&rho_current));
-    //    rho_current = dot(n, r, w);
+
     if (iter == 0) {
+
       /* p = w */
-      //    vec_copy(n, w, p);
       HIP_CHECK(hipMemcpy(d_p, d_w, sizeof(double) * nn, hipMemcpyDeviceToDevice));
+
     } else {
+
       beta = rho_current/rho_previous;
-      /* p = w+bet*p; */
+
+      /* p = w + beta * p; */
 
       ROCBLAS_CHECK(rocblas_dscal(handle_rocblas, 
 				  nn,
@@ -430,8 +475,10 @@ int main(int argc, char *argv[])
 				  1,
 				  d_p, 
 				  1));
+
       HIP_CHECK(hipDeviceSynchronize());
     }
+
     /* q = A*p; */
 
     ROCSPARSE_CHECK(rocsparse_dcsrmv(handle_rocsparse,
@@ -460,7 +507,7 @@ int main(int argc, char *argv[])
 				&pTq));
     alpha = rho_current / pTq; 
 
-    /* x = x + alph*p; */
+    /* x = x + alpha * p; */
 
     ROCBLAS_CHECK(rocblas_daxpy(handle_rocblas, 
 				nn,
@@ -469,9 +516,9 @@ int main(int argc, char *argv[])
 				1,
 				d_x, 
 				1));
-    /* r = r - alph*q; */
+    /* r = r - alpha * q; */
     alpha *= (-1.0);
-   ROCBLAS_CHECK(rocblas_daxpy(handle_rocblas, 
+    ROCBLAS_CHECK(rocblas_daxpy(handle_rocblas, 
 				nn,
 				&alpha,
 				d_q, 
@@ -490,11 +537,15 @@ int main(int argc, char *argv[])
 				1, 
 				&h_res_norm_history[iter]));
 
+    /* save the current norm of r */
     h_res_norm_history[iter] = sqrt(h_res_norm_history[iter]);
+
     printf("CG: it %d, res norm %5.16e \n",iter, h_res_norm_history[iter]);
 
     /* check convergence */
+
     if ((h_res_norm_history[iter]) < tolrel) {
+
       flag = 0;
       notconv = 0;
       final_it = iter; 
@@ -517,6 +568,7 @@ int main(int argc, char *argv[])
 				       &one,
 				       d_r));
       double r2_final;
+
       ROCBLAS_CHECK(rocblas_ddot (handle_rocblas, 
 				  nn, 
 				  d_r, 
@@ -524,18 +576,21 @@ int main(int argc, char *argv[])
 				  d_r, 
 				  1, 
 				  &r2_final));
-      printf("TRUE Norm of r %5.16e\n", sqrt(r2_final));  
+      printf("\nTRUE Norm of r %5.16e\n", sqrt(r2_final));  
+
     } else {
+
       if (iter > maxit){
 	flag = 1;
 	notconv = 0;
 	final_it = iter; 
       }
+
     }
     rho_previous = rho_current;
   }//while
 
-  printf("CG summary results \n");
+  printf("\nCG summary results \n");
   printf("\t Iters              : %d  \n", final_it);
   printf("\t Res. norm          : %2.16g  \n", h_res_norm_history[final_it]);
   if (flag == 0){
@@ -547,9 +602,11 @@ int main(int argc, char *argv[])
       printf("\t Reason for exiting : CG failed\n");
     }
   }
-  // cleanup
+  printf("\n");
+  /* cleanup */
 
-  // CPU
+  /* CPU */
+
   free(h_A_coo_rows); 
   free(h_A_coo_cols); 
   free(h_A_coo_vals);
@@ -559,13 +616,14 @@ int main(int argc, char *argv[])
   free(h_b);
   free(h_x);
   free(h_res_norm_history);  
-  // GPU
+
+  /* GPU */
+
   ROCSPARSE_CHECK(rocsparse_destroy_mat_descr(descrA));
   ROCSPARSE_CHECK(rocsparse_destroy_mat_info(infoA));
 
   ROCSPARSE_CHECK(rocsparse_destroy_mat_descr(descrM));
   ROCSPARSE_CHECK(rocsparse_destroy_mat_descr(descrLic));
-  ROCSPARSE_CHECK(rocsparse_destroy_mat_descr(descrLtic));
   ROCSPARSE_CHECK(rocsparse_destroy_mat_info(infoM));
   HIP_CHECK(hipFree(ichol_buffer));  
 
@@ -582,5 +640,5 @@ int main(int argc, char *argv[])
 
   HIP_CHECK(hipFree(d_x));
   HIP_CHECK(hipFree(d_b));
- return 0;
+  return 0;
 }
