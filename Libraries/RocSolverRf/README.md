@@ -13,110 +13,40 @@ The examples show you how to use rocThrust for data allocation, how to use rocSp
 
 To run, pick two or three linear systems from a series and add them to the command line (see below). The executable reads matrices in MatrixMarket format. Right hand sides are optional.   
 
+# Compile and Run
 
-
-
-# Compiling and installing
-
-## Installation
-
-
-If SuiteSparse is not available as a module, install it first (see below) and modify Makefile accordingly to provide location of the `lib` folder and `include` folder.
+To compile and run an example of this code do:
 
 ```
-module load rocm openblas suite-sparse
-make
+../../tests/run_RocSolverRf.sh
+``` 
+
+The above script will install Lapack and SuiteSparse in a directory called `dependencies`. It will also download a matrix for a trial run. 
+
+This directory contains both KLU and UMFPACK examples. To run, pick two (or three) matrices from a sequence, with THE SAME sizes and THE SAME sparsity patterns. You can supply right-hand sides too, but this is optional.
 ```
-
-If the compilation fails because `umfpack.h` or `klu.h` is not found, or corresponding libraries are missing, than SuiteSparse might not be installed or linked correctly.
-
-## Running
-
-The repository contains both KLU and UMFPACK examples.
-
-
-To run, pick two (or three) matrices from a sequence, with THE SAME sizes and THE SAME sparsity patterns. You can suppy right-hand sides too, but this is optional.
-```
- ./umfpack_example --matrix1 /path/to/matrix1.mtx --matrix2 /path/to/matrix2.mtx 
+ ./umfpack_example --matrix1 /path/to/matrix1.mtx --matrix2 /path/to/matrix2.mtx
  ./umfpack_example --matrix1 /path/to/matrix1.mtx --matrix2 /path/to/matrix2.mtx --matrix3 /path/to/matrix3.mtx
- ./klu_example --matrix1 /path/to/matrix1.mtx --matrix2 /path/to/matrix2.mtx 
+ ./klu_example --matrix1 /path/to/matrix1.mtx --matrix2 /path/to/matrix2.mtx
  ./klu_example --matrix1 /path/to/matrix1.mtx --matrix2 /path/to/matrix2.mtx --matrix3 /path/to/matrix3.mtx
 ```
-or 
+or
 ```
  ./umfpack_example --matrix1 /path/to/matrix1.mtx --rhs1 /path/to/rhs1.mtx --matrix2 /path/to/matrix2.mtx -rhs2 /path/to/rhs2.mtx
  ./klu_example --matrix1 /path/to/matrix1.mtx --rhs1 /path/to/rhs1.mtx --matrix2 /path/to/matrix2.mtx -rhs2 /path/to/rhs2.mtx
-```
 
-Note: if run fails because of missing BLAS, either load a BLAS module (openblas, blas, mkl, lapack, etc) or make sure you have the BLAS you had installed on your path (i.e., that you see the correct path with `echo LD_LIBRARY_PATH`). If not, export to add it.
 
-## Installing SuiteSparse
 
-Skip this step if a) SuiteSparse is already available as a module or b) it was installed by package manager (or from sources).
+## Notes About Running on Frontier
 
-SuiteSparse requires
-- BLAS library (i.e., openBLAS, MKL, LAPACK); often can be pre-loaded as a module.
-- GMP (this is a standard library, on many systems and clusters it would already be available).
-- MPFR (same as for GMP).
-
-### Installing LAPACK
-
-Make sure cmake and GCC are available. On Frontier:
+It may be necessary to do:
 
 ```
 module unload craype
-module load gcc cmake
+module load cmake gcc
 ```
 
-Next
-
-```
-git clone https://github.com/Reference-LAPACK/lapack
-cd lapack
-mkdir install
-mkdir build 
-cd build
-cmake -DCMAKE_INSTALL_PREFIX=/path/to/lapack/install -DBUILD_SHARED_LIBS=ON ..
-make -j 123
-make install
-```
-
-In `lapack/install`, you should see `lib64` folder. Add it to the `LD_LIBRARY_PATH`.
-```
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/lapack/install/lib64
-```
-
-### Installing SuiteSparse
-
-```
-clone https://github.com/DrTimothyAldenDavis/SuiteSparse.git --branch v7.10.1
-cd SuiteSparse
-mkdir build
-mkdir install
-```
-
-Open `CMakeList.txt` using vim or other editor and modify lines 38-39 to remove `paru`. I.e., in the original file you have
-```
-set ( SUITESPARSE_ALL_PROJECTS
-    "suitesparse_config;mongoose;amd;btf;camd;ccolamd;colamd;cholmod;cxsparse;ldl;klu;umfpack;paru;rbio;spqr;spex;graphblas;lagraph" )
-``` 
-and you need to change it to
-```
-set ( SUITESPARSE_ALL_PROJECTS
-    "suitesparse_config;mongoose;amd;btf;camd;ccolamd;colamd;cholmod;cxsparse;ldl;klu;umfpack;rbio;spqr;spex;graphblas;lagraph" )
-```
-because neither UMFPACK nor KLU need `paru` and it causes compilation errors.
-
-Next
-
-```
-cd build
-CMAKE_OPTIONS="-DBLA_VENDOR=LAPACK"
-cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/SuiteSparse/install
-```
-
-If this stage fails (which WILL happen on Frontier), compaining that GMP is  not available, install GMP and MPFR first. Do not worry about the SPEX error.
-
+If the build of SuiteSparse fails, (which WILL happen on Frontier), complaining that GMP is  not available, install GMP and MPFR. Do not worry about the SPEX error.
 
 ##### Installing GMP
 ``` 
