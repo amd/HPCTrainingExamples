@@ -16,9 +16,11 @@ This example demonstrates how to:
 
 # Compiling
 
-The example is self-contained. You only need rocm and gcc.
+The example is self-contained. Just do:
 
-After cloning, just type `make`.
+```
+module load rocm
+```
 
 # Running
 

@@ -75,12 +75,12 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LAPACK_PATH/lib
 git clone https://github.com/DrTimothyAldenDavis/SuiteSparse.git --branch v7.10.1
 cd SuiteSparse
 sed -i 's/umfpack\;paru\;rbio/umfpack\;rbio/g' CMakeLists.txt
-mkdir build && cd build
+mkdir build_test && cd build_test
 CMAKE_OPTIONS="-DBLA_VENDOR=LAPACK"
 cmake -DCMAKE_INSTALL_PREFIX=$SUITESPARSE_PATH ..
 make -j
 make install
-cd ../../
+cd ../../../
 
 export SS_LIB_DIR=$SUITESPARSE_PATH/lib
 export SS_INCLUDE_DIR=$SUITESPARSE_PATH/include/suitesparse
