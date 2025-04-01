@@ -1,10 +1,12 @@
-#modify as needed
-SS_MAIN=/sw/frontier/spack-envs/cpe24.11-cpu/opt/cce-18.0.1/suite-sparse-7.7.0-ycovwp3quevzlv45jj4glnjgafqskhon
-SS_INCLUDE_DIR = $(SS_MAIN)/include
+ifndef SS_LIB_DIR
+$(error The Suitesparse lib dir is not set, please set SS_LIB_DIR)
+endif
+ifndef SS_INCLUDE_DIR
+$(error The Suitesparse include dir is not set, please set SS_INCLUDE_DIR)
+endif
+
 HIPCC=hipcc
 CFLAGS=-I$(SS_INCLUDE_DIR)
-
-SS_LIB_DIR =  $(SS_MAIN)/lib64
 
 LIBS=-lrocsparse -lrocblas -lrocsolver -L$(SS_LIB_DIR) -lumfpack -lklu
 

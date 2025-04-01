@@ -26,7 +26,18 @@ After cloning, just type `make`.
 ./run_cg --matrix /path/to/matrix/in/matrix/market/format.mtx --maxit 10000 --tol 1e-8 --rhs /path/to/rhs/in/matrix/market/format.mtx
 ```
 
-The parameters `tol`, `maxit` and `rhs` are optional.
+The parameters `tol`, `maxit` and `rhs` are optional. An example matrix can be obtained as follows:
+
+```
+wget https://suitesparse-collection-website.herokuapp.com/MM/HB/1138_bus.tar.gz
+tar -xvf af_0_k101.tar.gz
+```
+
+Then run with:
+
+```
+./run_cg --matrix 1138_bus/1138_bus.mtx --maxit 10000
+```
 
 Things to remember:
 

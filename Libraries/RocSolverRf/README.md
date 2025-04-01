@@ -24,18 +24,11 @@ To run, pick two or three linear systems from a series and add them to the comma
 If SuiteSparse is not available as a module, install it first (see below) and modify Makefile accordingly to provide location of the `lib` folder and `include` folder.
 
 ```
-git clone https://github.com/kswirydo/rocsolverrf_example.git
 module load rocm openblas suite-sparse
 make
 ```
 
 If the compilation fails because `umfpack.h` or `klu.h` is not found, or corresponding libraries are missing, than SuiteSparse might not be installed or linked correctly.
-
-Troubleshooting:
-
-1. If using suitesparse module, type `echo $LD_LIBRARY_PATH`. If you see SuiteSparse on the path, copy the path to the library (without the `lib` or `lib64`) and paste in Makefile to define `SS_MAIN` (SuiteSparse main) and recompile.
-
-2. If installed from sources, modify the Makefile and provide the correct `SS_MAIN` path.
 
 ## Running
 
