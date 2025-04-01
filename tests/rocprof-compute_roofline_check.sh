@@ -76,6 +76,11 @@ fi
 
 if [[ "${VERSION}" != "" ]]; then
    VERSION="/${VERSION}"
+   if [[ "${VERSION}" == "/develop" ]]; then
+      TOOL_ORIGIN="source"
+      TOOL_NAME="rocprofiler-compute"
+      TOOL_COMMAND="rocprof-compute"
+   fi
 else
    VERSION=${ROCM_VERSION}
    VERSION="/${VERSION}"

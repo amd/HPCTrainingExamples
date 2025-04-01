@@ -13,29 +13,29 @@ program example
     real(real64) :: alpha=1.0, beta=0.0
     integer :: lda=100, ldb=100, ldc=100
 
-    real(real64),allocatable,target,dimension(:,:) :: a, b, c
+    real(real64),allocatable,target,dimension(:,:) :: A, B, C
     type(c_ptr)                               :: rocblas_handle    !...
 
-    allocate(a(N,N),b(N,N),c(N,N))
-    call RANDOM_NUMBER(a)    ! Initialize matrices
-    call RANDOM_NUMBER(c)    ! Initialize matrices
-    b = 0
+    allocate(A(N,N),B(N,N),C(N,N))
+    call RANDOM_NUMBER(A)    ! Initialize matrices
+    call RANDOM_NUMBER(C)    ! Initialize matrices
+    B = 0
    
     ! init b to the identity matrix
     !$OMP target teams distribute parallel do 
     do i=1,N
-       b(i,i) = 1
+       B(i,i) = 1
     end do   
 
     call init_rocblas(rocblas_handle)     ! Initialize rocBLAS
 
-    !$OMP target enter data map(to:a,b,c)
-    !$OMP target data use_device_addr(a,b,c)
+    !$OMP target enter data map(to:A,B,C)
+    !$OMP target data use_device_addr(A,B,C)
     call omp_dgemm(rocblas_handle,modea,modeb,N,N,N,alpha,&
-        c_loc(a),lda,c_loc(b),ldb,beta,c_loc(c),ldc)
+        c_loc(A),lda,c_loc(B),ldb,beta,c_loc(C),ldc)
     !$OMP end target data
-    !$OMP target update from(c)
-    !$OMP target exit data map(delete:a,b,c)
+    !$OMP target update from(C)
+    !$OMP target exit data map(delete:A,B,C)
 
     
     sum_check = 0.0
@@ -43,7 +43,7 @@ program example
     !$OMP target teams distribute parallel do reduction(+:sum_check) collapse(2)
     do i=1,N
        do j=1,N
-          sum_check = sum_check + abs(a(i,j) - c(i,j))
+          sum_check = sum_check + abs(A(i,j) - C(i,j))
        end do
     end do   
 

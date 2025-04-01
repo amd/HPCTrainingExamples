@@ -403,7 +403,7 @@ set_property(TEST GPUAwareOpenMPI_pt2pt PROPERTY PASS_REGULAR_EXPRESSION "Run su
 set_property(TEST GPUAwareOpenMPI_pt2pt PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 add_test(NAME OpenMPI_Hello_World_Run COMMAND ../openmpi_hello_world_run.sh )
-set_property(TEST OpenMPI_Hello_World_Run PROPERTY PASS_REGULAR_EXPRESSION "processor")
+set_property(TEST OpenMPI_Hello_World_Run PROPERTY PASS_REGULAR_EXPRESSION "Hello world from processor")
 set_property(TEST OpenMPI_Hello_World_Run PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMPI_Check_ROCm_Support COMMAND ../openmpi_check_rocm_support.sh )
