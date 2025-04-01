@@ -90,6 +90,7 @@ Please refer to this table of contents to locate the exercises and examples you 
 21. [**login_info**](https://github.com/amd/HPCTrainingExamples/tree/main/login_info)
     1. [***AAC***](https://github.com/amd/HPCTrainingExamples/tree/main/login_info/AAC): instructions on how to log in to the AMD Accelerator Cloud (AAC) resource. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/login_info/AAC/README.md).
 22. [**Doc**](https://github.com/amd/HPCTrainingExamples/tree/main/Doc): directory with LaTeX and PDF documents that contain some of the most relevant README files properly formatted for ease of reading. The PDF document is obtained building the LaTeX document. Note: the document may be out of date compared to the READMEs in the repo which are most current source of information for these exercises.
+23. [`tests`](https://github.com/amd/HPCTrainingExamples/tree/main/tests): this directory contains a huge number of test scripts aimed at testing the installation of the software provided by the scripts in the companing repo [`HPCTrainingDock`](https://github.com/amd/HPCTrainingDock).
 
 
 ## Run the Tests
