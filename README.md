@@ -86,9 +86,10 @@ Please refer to this table of contents to locate the exercises and examples you 
    3. [`RocSolverRf`](https://github.com/amd/HPCTrainingExamples/tree/main/Libraries/RocSolverRf): this example shows how to solve a sequence of sparse linear systems with refactorizaion using RocSolverRf. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/Libraries/RocSolverRf/README.md).
 18. [`rocprofiler-systems`](https://github.com/amd/HPCTrainingExamples/tree/main/rocprofiler-systems): an example of how to use the `rocprof-sys` timeline trace profile on the Jacobi solver example in [`HPCTrainingExamples/HIP/jacobi`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/jacobi).
 19. [`Profile-by-example`](https://github.com/amd/HPCTrainingExamples/tree/main/Profiling-by-example): a walk-through of how to profile the Jacobi solver example in  [`HPCTrainingExamples/HIP/jacobi`](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/jacobi)) on Oak Ridge National Lab's machine Frontier, using `rocprofv3`, `rocprof-sys`, and `rocprof-compute`, effectively providing an example of an all around profiling effort using AMD tools. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/Profiling-by-example/README-Jacobi-Frontier.md).
-20. [**login_info**](https://github.com/amd/HPCTrainingExamples/tree/main/login_info)
+20. [`Affinity`](https://github.com/amd/HPCTrainingExamples/tree/main/Affinity): an example to show how to set proper affinity to CPU cores and GPUs. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/Affinity/README.md).
+21. [**login_info**](https://github.com/amd/HPCTrainingExamples/tree/main/login_info)
     1. [***AAC***](https://github.com/amd/HPCTrainingExamples/tree/main/login_info/AAC): instructions on how to log in to the AMD Accelerator Cloud (AAC) resource. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/login_info/AAC/README.md).
-21. [**Doc**](https://github.com/amd/HPCTrainingExamples/tree/main/Doc): directory with LaTeX and PDF documents that contain some of the most relevant README files properly formatted for ease of reading. The PDF document is obtained building the LaTeX document. Note: the document may be out of date compared to the READMEs in the repo which are most current source of information for these exercises.
+22. [**Doc**](https://github.com/amd/HPCTrainingExamples/tree/main/Doc): directory with LaTeX and PDF documents that contain some of the most relevant README files properly formatted for ease of reading. The PDF document is obtained building the LaTeX document. Note: the document may be out of date compared to the READMEs in the repo which are most current source of information for these exercises.
 
 
 ## Run the Tests
@@ -104,6 +105,10 @@ cd tests && \
 You can also run a subset of the whole test suite by specifying the subset you are interested in as an input to the `runTests.sh` script. For instance: `./runTests.sh --pytorch`. To see a full list of the possible subsets that can be run: `./runTests.sh --help`.
 
 **NOTE**: tests can also be run manually from their respective directories, provided the necessary modules have been loaded and they have been compiled appropriately.
+
+## Additional Resources
+
+We recommend users also check out the [`rocm-examples`](https://github.com/rocm/rocm-examples) Github repo, that has a lot of content on HIP and ROCm libraries.
 
 ## Feedback
 We welcome your feedback and contributions, feel free to use this repo to bring up any issues or submit pull requests.
