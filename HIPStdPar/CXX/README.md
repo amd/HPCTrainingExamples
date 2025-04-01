@@ -1,6 +1,7 @@
 # C++ Standard Parallelism on AMD GPUs
 
-Here are some instructions on how to compile and run some tests that exploit C++ standard parallelism.
+Here are some instructions on how to compile and run some tests that exploit C++ standard parallelism, which is available with ROCm, starting from version 6.1.1. Hence, please double check the version of ROCm you are using to make sure it has HIPSTDPAR enabled. HIPSTDPAR relies on the LLVM compiler, the hipstdpar header only library, and rocThrust.
+
 **NOTE**: these exercises have been tested on MI210 and MI300A accelerators using a container environment.
 To see details on the container environment (such as operating system and modules available) please see `README.md` on [this](https://github.com/amd/HPCTrainingDock) repo. 
 
@@ -142,7 +143,16 @@ make clean
 The examples contained in the MixandMatch directory demonstrate how to correctly combine
 StdPar with other commonly used programming models, such as OpenMP and HIP.
 
-All examples require the user to specify the path to the StdPar header in the Makefile.
+All examples require the user to specify the path to the StdPar header in the Makefile:
+
+```
+module load rocm
+export STDPAR_PATH=${ROCM_PATH}/include/thrust/system/hip/hipstdpar
+export HSA_XNACK=1
+```
+
+Note HIPSTDPAR assumes the device is HMM enabled and setting `HSA_XNACK` to one is also required. In devices where HMM is not enabled, the additional compilation flag `--hipstdpar-interpose-alloc` needs to be included. This will instruct the compiler to replace all dynamic memory allocations with compatible with `hipManagedMemory` allocations.
+
 
 * omp_stdpar: demonstrates how to integrate StdPar and OpenMP within the same application.
 It utilizes object-oriented programming techniques to implement the same interface in specialized ways.
