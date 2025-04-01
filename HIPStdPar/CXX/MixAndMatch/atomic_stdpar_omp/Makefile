@@ -3,9 +3,10 @@ HIPCC        := hipcc
 CXXFLAGS     := -std=c++20
 OPENMP_FLAGS := -fopenmp
 STDPAR_FLAGS := --hipstdpar
-ARCH_FLAGS   := --offload-arch=gfx942
+ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
+ARCH_FLAGS   := --offload-arch=${ROCM_GPU}
 
-# If STDPAR_PATH is not specified on the command line, use this default.
+# If STDPAR_PATH is not specified in the environment, use this default.
 STDPAR_PATH ?= /opt/rocm/include/thrust/system/hip/hipstdpar
 
 # Targets
