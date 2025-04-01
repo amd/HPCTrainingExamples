@@ -72,7 +72,7 @@ cd ../../
 LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LAPACK_PATH/lib
 
-clone https://github.com/DrTimothyAldenDavis/SuiteSparse.git --branch v7.10.1
+git clone https://github.com/DrTimothyAldenDavis/SuiteSparse.git --branch v7.10.1
 cd SuiteSparse
 sed -i 's/umfpack\;paru\;rbio/umfpack\;rbio/g' CMakeLists.txt
 mkdir build && cd build
