@@ -32,7 +32,7 @@ The parameters `tol`, `maxit` and `rhs` are optional. An example matrix can be o
 
 ```
 wget https://suitesparse-collection-website.herokuapp.com/MM/HB/1138_bus.tar.gz
-tar -xvf af_0_k101.tar.gz
+tar -xvf 1138_bus.tar.gz
 ```
 
 Then run with:
