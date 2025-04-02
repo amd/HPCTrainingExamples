@@ -1,4 +1,4 @@
-# OpenMP complex compute constructs
+# OpenMP complex compute constructs in C
 
 README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/ComplexComputeConstructs` in the Training Examples repository
 
