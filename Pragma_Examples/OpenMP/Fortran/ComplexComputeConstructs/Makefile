@@ -1,5 +1,5 @@
 all: saxpy_gpu_target saxpy_gpu_target_teams saxpy_gpu_target_teams_distribute \
-     saxpy_gpu_target_parallel_for saxpy_gpu_collapse saxpy_gpu_split \
+     saxpy_gpu_target_parallel_do saxpy_gpu_collapse saxpy_gpu_split \
      saxpy_gpu_split_level
 
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
@@ -34,50 +34,50 @@ else
    LDFLAGS = ${OPENMP_FLAGS}
 endif
 
-saxpy_gpu_target.o: saxpy_gpu_target.c
-        $(FC) $(FFLAGS) ${OPENMP_FLAGS} -c $<  -o $@
+saxpy_gpu_target.o: saxpy_gpu_target.F90
+	$(FC) $(FFLAGS) ${OPENMP_FLAGS} -c $<  -o $@
 
 saxpy_gpu_target: saxpy_gpu_target.o
-        $(FC)  $(LDFLAGS)  ${OPENMP_FLAGS} $^ -o $@
+	$(FC)  $(LDFLAGS)  ${OPENMP_FLAGS} $^ -o $@
 
-saxpy_gpu_target_teams.o: saxpy_gpu_target_teams.c
-        $(FC) $(FFLAGS) ${OPENMP_FLAGS} -c $<  -o $@
+saxpy_gpu_target_teams.o: saxpy_gpu_target_teams.F90
+	$(FC) $(FFLAGS) ${OPENMP_FLAGS} -c $<  -o $@
 
 saxpy_gpu_target_teams: saxpy_gpu_target_teams.o
-        $(FC)  $(LDFLAGS)  ${OPENMP_FLAGS} $^ -o $@
+	$(FC)  $(LDFLAGS)  ${OPENMP_FLAGS} $^ -o $@
 
-saxpy_gpu_target_teams_distribute.o: saxpy_gpu_target_teams_distribute.c
-        $(FC) $(FFLAGS) ${OPENMP_FLAGS} -c $<  -o $@
+saxpy_gpu_target_teams_distribute.o: saxpy_gpu_target_teams_distribute.F90
+	$(FC) $(FFLAGS) ${OPENMP_FLAGS} -c $<  -o $@
 
 saxpy_gpu_target_teams_distribute: saxpy_gpu_target_teams_distribute.o
-        $(FC)  $(LDFLAGS)  ${OPENMP_FLAGS} $^ -o $@
+	$(FC)  $(LDFLAGS)  ${OPENMP_FLAGS} $^ -o $@
 
-saxpy_gpu_target_parallel_for.o: saxpy_gpu_target_parallel_for.c
-        $(FC) $(FFLAGS) ${OPENMP_FLAGS} -c $<  -o $@
+saxpy_gpu_target_parallel_do.o: saxpy_gpu_target_parallel_do.F90
+	$(FC) $(FFLAGS) ${OPENMP_FLAGS} -c $<  -o $@
 
-saxpy_gpu_target_parallel_for: saxpy_gpu_target_parallel_for.o
-        $(FC)  $(LDFLAGS)  ${OPENMP_FLAGS} $^ -o $@
+saxpy_gpu_target_parallel_do: saxpy_gpu_target_parallel_do.o
+	$(FC)  $(LDFLAGS)  ${OPENMP_FLAGS} $^ -o $@
 
-saxpy_gpu_collapse.o: saxpy_gpu_collapse.c
-        $(FC) $(FFLAGS) ${OPENMP_FLAGS} -c $<  -o $@
+saxpy_gpu_collapse.o: saxpy_gpu_collapse.F90
+	$(FC) $(FFLAGS) ${OPENMP_FLAGS} -c $<  -o $@
 
 saxpy_gpu_collapse: saxpy_gpu_collapse.o
-        $(FC)  $(LDFLAGS)  ${OPENMP_OFFLOAD_FLAGS} $^ -o $@
+	$(FC)  $(LDFLAGS)  ${OPENMP_OFFLOAD_FLAGS} $^ -o $@
 
 saxpy_gpu_split.o: saxpy_gpu_split.c
-        $(FC) $(FFLAGS) ${OPENMP_OFFLOAD_FLAGS} -c $<  -o $@
+	$(FC) $(FFLAGS) ${OPENMP_OFFLOAD_FLAGS} -c $<  -o $@
 
 saxpy_gpu_split: saxpy_gpu_split.o
-        $(FC)  $(LDFLAGS)  ${OPENMP_OFFLOAD_FLAGS} $^ -o $@
+	$(FC)  $(LDFLAGS)  ${OPENMP_OFFLOAD_FLAGS} $^ -o $@
 
-saxpy_gpu_split_level.o: saxpy_gpu_split_level.c
-        $(FC) $(FFLAGS) ${OPENMP_OFFLOAD_FLAGS} -c $<  -o $@
+saxpy_gpu_split_level.o: saxpy_gpu_split_level.F90
+	$(FC) $(FFLAGS) ${OPENMP_OFFLOAD_FLAGS} -c $<  -o $@
 
 saxpy_gpu_split_level: saxpy_gpu_split_level.o
-        $(FC)  $(LDFLAGS)  ${OPENMP_OFFLOAD_FLAGS} $^ -o $@
+	$(FC)  $(LDFLAGS)  ${OPENMP_OFFLOAD_FLAGS} $^ -o $@
 
 clean:
-        rm -f saxpy_gpu_target saxpy_gpu_target_teams
-        rm -f saxpy_gpu_target_teams_distribute saxpy_gpu_parallelfor
-        rm -f saxpy_gpu_collapse saxpy_gpu_split saxpy_gpu_split_level
-
+	rm -f saxpy_gpu_target saxpy_gpu_target_teams saxpy_gpu_target_parallel_do
+	rm -f saxpy_gpu_target_teams_distribute saxpy_gpu_parallel_do
+	rm -f saxpy_gpu_collapse saxpy_gpu_split saxpy_gpu_split_level
+`

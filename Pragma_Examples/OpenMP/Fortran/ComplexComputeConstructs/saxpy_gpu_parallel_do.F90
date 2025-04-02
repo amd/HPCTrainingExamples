@@ -1,3 +1,6 @@
+! Original Author: Mashy Green from University College London
+! Released to AMD as sample code
+
 module saxpymod
    use iso_fortran_env
    use omp_lib
