@@ -99,7 +99,7 @@ if [[ "${REMOVE_AFTER}" == "1" ]]; then
    rm -rf af_5_*
    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
    popd
-if 
+fi
 
 
 
