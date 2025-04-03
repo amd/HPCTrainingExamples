@@ -1,6 +1,5 @@
-# Excercise application of rocprofv3 with roctx-markers: Dynamic memory allocations and memory pool on MI300A
-This excercise highlights the importance of the reduction of dynamic memory allocations on MI300A with unified memory and shows a way to discover such an issue with rocprofv3. 
-
+# Excercise rocprofv3 with roctx-markers: Dynamic memory allocations and memory pool on MI300A
+This excercise highlights the importance of the reduction of dynamic memory allocations on MI300A with unified memory and shows a way to discover such an issue with rocprofv3 and how to use roctx markers in Fortran. sr
 ```
 module load rocm-afar-drop-<version>
 ```
