@@ -4,11 +4,11 @@ This excercise highlights the importance of the reduction of dynamic memory allo
 ```
 module load rocm-afar-drop-<version>
 ```
-set
+to get the latest Next Generation Fortran Compiler beta release.
+Set
 ```
 export HSA_XNACK=1
 ```
-to get the latest Next Generation Fortran Compiler beta release.
 
 ## version 1
 The first version is an OpenMP offload example with three kernels in an iterative loop as an example of a "dwarf" of an application with an iterative solution or multiple time steps.
