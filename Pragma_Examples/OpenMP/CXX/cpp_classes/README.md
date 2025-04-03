@@ -69,7 +69,18 @@ The directory is named `explicit` because we are explicitly taking care of all t
 
 ### The `daxpy` Sub-directory
 
-The explicit memory movement scenario gets tricky really quickly, as you have seen with the numerous warning messages produced by the compiler when building the `usm` examples. Things get particularly complicated when using anything that is not just a pointer for our data members, such as for instance standard vectors. It is also non-trivial to handle calls of members functions within a target region, and in fact in this case you can see that the daxpy operation is actually performed by a member function called `apply` that is called from `main.cpp`. In this way, the mapping from host to device is done explicitly in the `daxpy.cpp` file, where the `apply` function is defined, and where the members of the daxpy class are visible (remember: they are declared as private). Something else to notice is that the allocation of the member arrays is done outside of the class, i.e. in `main.cpp` to avoid complicating the job of mapping to the device that the compiler has to do. This additional work that is required somewhat works against the original programming paradigm that we assumed, where all relevant variables are private, and get accessed by `get` and `set` public member functions.
+The explicit memory movement scenario gets tricky really quickly, as you have seen with the numerous warning messages produced by the compiler when building the `usm` examples. Things get particularly complicated when using anything that is not just a pointer for our data members, such as for instance standard vectors. It is non-trivial to handle calls of members functions within a target region, and in fact in this case you can see that the daxpy operation is actually performed by a member function called `apply` that is called from `main.cpp`. In the `daxpy.hpp` file where the `daxpy` class is declared, we have now included in the constructor the following pragma:
+
+```bash
+#pragma omp target enter data map(to: x_[0:N_],y_[0:N_], N_, a_)
+```
+
+The above pragma creates a data environment for an unstructured data region and maps x_, y_, N_ and a_ to the device. Note that we also had to explicitly map the scalars to make sure that they are available on the device when we call the `apply` function, which is defined in `daxpy.cpp`. The following pragma is included in the destructor for the class:
+
+```bash
+#pragma omp target exit data map(delete: x_[0:N_],y_[0:N_], N_, a_)
+```
+Something else to notice is that the allocation of the member arrays is done outside of the class, i.e. in `main.cpp` to avoid complicating the job of mapping to the device that the compiler has to do. This additional work that is required somewhat works against the original programming paradigm that we assumed, where all relevant variables are private, and get accessed by `get` and `set` public member functions.
 
 As you can see, the unified shared memory programming model allowed us to maintain the original programming traits of a C++ approach to coding. Note that the `explicit daxpy` example is the result of modifying the `usm daxpy` example to work around memory access issues during the offload to GPU.
 

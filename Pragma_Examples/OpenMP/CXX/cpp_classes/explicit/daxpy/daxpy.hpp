@@ -15,10 +15,12 @@ public:
         N_ = N;
         x_ = x; 
         y_ = y;
+        #pragma omp target enter data map(to: x_[0:N_],y_[0:N_], N_, a_)
     }
 
     // destructor 
     ~daxpy() {
+        #pragma omp target exit data map(delete: x_[0:N_],y_[0:N_], N_, a_)
     }
 
     void setX(int index, double val) {
@@ -56,6 +58,7 @@ public:
     void apply();
 
     void printArrays() const {
+#pragma omp target update from(x_[0:N_],y_[0:N_])
         std::cout << "Array x: ";
         for (int i = 0; i < N_; ++i) {
             std::cout << x_[i] << " ";
@@ -68,6 +71,5 @@ public:
         }
         std::cout << std::endl;
     }
-
 };
 
