@@ -1,6 +1,10 @@
 # Excercise rocprofv3 with roctx-markers: Dynamic memory allocations and memory pool on MI300A
 This excercise highlights the importance of the reduction of dynamic memory allocations on MI300A with unified memory and shows a way to discover such an issue with rocprofv3 and how to use roctx markers in Fortran. 
-## on aac7
+#### Environment on aac7:
+Allocate a (shared) node, 1 APU:
+```
+srun -N 1 --mem=100GB --gpus=1 --pty bash -i
+```
 ```
 module load rocm/rocm-afar-6711
 ```
@@ -74,6 +78,8 @@ amdflang -fopenmp --offload-arch=gfx942 -L${ROCM_PATH}/lib -lrocprofiler-sdk-roc
 ```
 rocprofv3 --sys-trace --marker-trace --output-format pftrace -- ./test_mempool
 ```
+Explore the trace again in perfetto after download. 
+
 <p><img src="images/3_FullTrace-allocAnddeallocmovedoutsideIter.png"/></p>
 The first iteration's first kernel is still costly:
 <p><img src="images/4_allocAnddeallocmovedoutsideIter-zoom1.png"/></p>
