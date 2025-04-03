@@ -10,7 +10,8 @@ export HSA_XNACK=1
 ```
 to get the latest Next Generation Fortran Compiler beta release.
 
-1) The first version is an OpenMP offload example with three kernels in an iterative loop as an example of a "dwarf" of an application with an iterative solution or multiple time steps.
+## version 1
+The first version is an OpenMP offload example with three kernels in an iterative loop as an example of a "dwarf" of an application with an iterative solution or multiple time steps.
 Compile the code with:
 ```
 amdflang -fopenmp --offload-arch=gfx942 -o test_mempool test_mempool.f90
@@ -34,7 +35,8 @@ If there is an error opening one trace file, try using an older Perfetto version
 With zooming in and out (asdw keys or press ctrl+scroll with mouse) one can see that the first kernel in each iteration is extremely long compared to all other kernels.
 Additionally, there are large gaps in between despite all computations are offloaded to the GPU. Why are there gaps? One possiblility to explore this is manual instrumentation with roctx markers. Using rocprof-sys (formerly omnitrace) is also an option, but we will use rocprofv3 here to demonstrate the usage of roctx markers for manual instrumentation. 
 
-2) This version is instrumented with roctx markers to better understand what is going on in the observed "gaps".
+## version 2
+This version is instrumented with roctx markers to better understand what is going on in the observed "gaps".
 Either use version 1 and try to instrument the code yourself with roctx markers or have a look at version2 to see how you can implement roctx markers in Fortran.
 
 compile with roctx markers:
@@ -54,7 +56,8 @@ Now you can see the annotated regions in the trace.
 
 With zooming in and out (asdw keys or press ctrl+scroll with mouse) one can see that the first kernel in each iteration is extremely long compared to all other kernels and deallocations take a significant amount of time. The following kernels are almost insignificant compared to the first one, but is this really unavoidable that this first kernel takes so much time? Comparing the amount of arrays which need to be loaded, the first and second kernel should not be too different, at least in the same order of magnitude, but why isn't this the case?
 
-3) In this version the allocations are moved outside the iteration loop. If you compile and run again with rocprofv3 you get a trace which shows only a long time for the "first_touch" region in the first iteration. 
+## version 3
+In this version the allocations are moved outside the iteration loop. If you compile and run again with rocprofv3 you get a trace which shows only a long time for the "first_touch" region in the first iteration. 
 <p><img src="images/3_FullTrace-allocAnddeallocmovedoutsideIter.png"/></p>
 The first iteration's first kernel is still costly:
 <p><img src="images/4_allocAnddeallocmovedoutsideIter-zoom1.png"/></p>
@@ -65,7 +68,8 @@ The total execution time is roughly: 399ms 160mus, so we have a speedup of almos
 We can learn from this that dynamic allocations and deallocations on MI300A should be avoided. 
 But what if that is very hard to do in a true app which uses different temporary arrays in each subroutine?
 
-4) A possible solution is to use a memory pool. An example pool you can use in C/C++ and Fortran is the library Umpire (developed by LLNL).
+## version 4
+A possible solution is to use a memory pool. An example pool you can use in C/C++ and Fortran is the library Umpire (developed by LLNL).
 
 For the trainings we usually provide a module for umpire, but if you need it on another system here are the steps to install it.
 
