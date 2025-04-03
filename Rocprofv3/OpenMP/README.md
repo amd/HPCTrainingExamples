@@ -219,6 +219,6 @@ Try to add `export HSA_XNACK=1`, and check the performance. Is it better or wors
 
 **Explore the example with roctx markers which discusses a common performance optimization for applications on MI300A in 
 ```
-cd Fortran/1_Allocations_and_MemoryPool_MI300A
+cd Example_Allocations_and_MemoryPool_MI300A/Fortran/README.md
 ```
 **Finally, try to profile your own application!**
