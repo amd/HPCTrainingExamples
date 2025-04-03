@@ -1,4 +1,4 @@
-# Excercise application of rocprofv3 for detection of performance bugs: Dynamic memory allocations and memory pool on MI300A
+# Excercise application of rocprofv3 with roctx-markers: Dynamic memory allocations and memory pool on MI300A
 This excercise highlights the importance of the reduction of dynamic memory allocations on MI300A with unified memory and shows a way to discover such an issue with rocprofv3. 
 
 ```
