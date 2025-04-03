@@ -11,16 +11,20 @@ int main(int argc, char* argv[]) {
    double* x = new double[N];
    double* y = new double[N];
 
-   // initialize arrays on device
+   daxpy data(a,N);
+
+   // initialize arrays on host but running on GPU
+   #pragma omp target teams distribute parallel for
    for(int i=0; i<N; i++){
-      x[i]=1.0;
-      y[i]=0.5;
+      data.setX(i,1.0);
+      data.setY(i,0.5);
    }
 
    // initialize the daxpy class
-   daxpy data(a,N,x,y);
-
    data.printArrays();
+
+   //update data on device since the host copy is modified
+   data.updateDevice();
 
    // perform daxpy
    data.apply();
