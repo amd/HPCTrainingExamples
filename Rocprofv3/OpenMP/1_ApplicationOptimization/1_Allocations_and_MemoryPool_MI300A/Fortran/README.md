@@ -38,7 +38,8 @@ Copy the generated `<some-auto-generated-name>.pftrace` file to your local machi
 scp -i <path/to/ssh/key> <username>@aac7.amd.com:~/<path/to/pftrace/file> .
 ```
 Click `Open trace file` and select the `<some-auto-generated-name>.pftrace` file. Below, you can see an example of how the trace file would be visualized on `Perfetto`: [https://ui.perfetto.dev/](https://ui.perfetto.dev/).
-If there is an error opening one trace file, try using an older Perfetto version, e.g., by opening the web page [https://ui.perfetto.dev/v46.0-35b3d9845/#!/](https://ui.perfetto.dev/v46.0-35b3d9845/#!/).
+
+If there is an error opening one trace file such as the trace is not shown at all, try using an older Perfetto version, e.g., by opening the web page [https://ui.perfetto.dev/v46.0-35b3d9845/#!/](https://ui.perfetto.dev/v46.0-35b3d9845/#!/).
 
 <p><img src="images/1_FullTraceWithoutMarkers-WhyGaps.png"/></p>
 With zooming in and out (asdw keys or press ctrl+scroll with mouse) one can see that the first kernel in each iteration is extremely long compared to all other kernels.
