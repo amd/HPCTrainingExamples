@@ -30,9 +30,9 @@ and run the example with rocprofv3
 rocprofv3 --sys-trace --output-format pftrace -- ./test_mempool
 ```
 The total execution time is roughly: 1s 180ms 740mus
-Download the trace file from the subdirectory which is automatically created.
 
-Copy generated `<some-auto-generated-name>.pftrace` file to your local machine, and using the Chrome browser open the web page [https://ui.perfetto.dev/](https://ui.perfetto.dev/):
+Download the trace file from the subdirectory which is automatically created.
+Copy the generated `<some-auto-generated-name>.pftrace` file to your local machine, and using the Chrome browser open the web page [https://ui.perfetto.dev/](https://ui.perfetto.dev/):
 
 ```
 scp -i <path/to/ssh/key> <username>@aac7.amd.com:~/<path/to/pftrace/file> .
@@ -166,6 +166,6 @@ amdflang -cpp -fopenmp --offload-arch=gfx942 -DUSE_ROCTX -I${UMPIRE_PATH}/includ
 ```
 compiling with -cpp you can use preprocessor ifdefs. This way you can run without roctx markers in production, but can easily reactivate as needed for tracing.
 
-Further best practices / reccomendations: if you use unified memory on MI300A (export HSA_XNACK=1), which is highly reccomended to avoid unneccessary memory copies, make sure you know how to set the affinity of CPU cores and GPU correctly ("close to each other") such that the memory is allocated and initialized where it is used and not on another APU on the same node! On MI300A an MPI processes pinned to CPU cores 0 to 23 should offload to GPU 0, an MPI process on cores 24 to 47 to GPU 1 etc. In SPX mode (see rocm-smi and default on most systems) it is usually best to use 1 MPI process per APU to offload and use e.g. OpenMP on the the CPU cores to parallelize across CPU cores. In TPX or CPX mode one APU shows 3 or 6 (smaller) GPUs and one MPI process to drive the offload to each of those may be optimal. This is especially a good option for codes where part of the code (still) run on the CPU. How to set this up properly may strongly depend on your HPC center's configuration, so please consult the respective documentation how to run in your environment. 
-In this example you will e.g. already see better performance with e.g. ´export ROCR_VISIBLE_DEVICES=0´ as all arrays are only touched by the GPU.
+Further best practices / reccomendations: if you use unified memory on MI300A (with `export HSA_XNACK=1`), which is highly reccomended to avoid unneccessary memory copies, make sure you know how to set the affinity of CPU cores and GPU correctly such that the memory is allocated and initialized where it is used and not on another APU on the same node! On MI300A an MPI processes pinned to CPU cores 0 to 23 should offload to GPU 0, an MPI process on cores 24 to 47 to GPU 1 etc. In SPX mode (see rocm-smi and default on most systems) it is usually best to use 1 MPI process per APU to offload and use e.g. OpenMP on the the CPU cores to parallelize across CPU cores. In TPX or CPX mode one APU shows 3 or 6 (smaller) GPUs and one MPI process to drive the offload to each of those may be optimal. This is especially a good option for codes where part of the code (still) run on the CPU. How to set this up properly may strongly depend on your HPC center's configuration, so please consult the respective documentation how to run in your environment. 
+In this example you will e.g. already see better performance with e.g. `export ROCR_VISIBLE_DEVICES=0` as all arrays are only touched by the GPU.
 If you use GPU aware MPI with cray MPICH you need GPU allocated buffers i.e. omp_target_alloc or hipmalloc allocated memory. You can also achive this through using the Device instead of Host allocator pool in umpire.
