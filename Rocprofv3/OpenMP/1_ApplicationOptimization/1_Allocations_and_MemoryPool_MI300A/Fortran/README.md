@@ -4,6 +4,7 @@ This excercise highlights the importance of the reduction of dynamic memory allo
 module load rocm-afar-drop-<version>
 ```
 to get the latest Next Generation Fortran Compiler beta release.
+
 Set
 ```
 export HSA_XNACK=1
