@@ -216,4 +216,9 @@ head pmc_2/*_counter_collection.csv
 
 Try to add `export HSA_XNACK=1`, and check the performance. Is it better or worse? Repeat the profiling commands and compare the outputs. What is the overhead of profiling?
 
+
+**Explore the example with roctx markers which discusses a common performance optimization for applications on MI300A in 
+```
+cd Fortran/1_Allocations_and_MemoryPool_MI300A
+```
 **Finally, try to profile your own application!**
