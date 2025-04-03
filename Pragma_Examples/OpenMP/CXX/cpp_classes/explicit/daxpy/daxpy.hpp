@@ -57,14 +57,6 @@ public:
 
     void apply();
  
-    void updateDevice(){
-#pragma omp target update to(x_[0:N_],y_[0:N_], N_, a_)
-    }
-
-    void updateHost(){
-#pragma omp target update from(x_[0:N_],y_[0:N_], N_, a_)
-    }
-
     void printArrays() const {
 #pragma omp target update from(x_[0:N_],y_[0:N_])
         std::cout << "Array x: ";
