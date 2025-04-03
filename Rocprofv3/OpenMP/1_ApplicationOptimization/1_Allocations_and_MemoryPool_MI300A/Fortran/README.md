@@ -8,7 +8,7 @@ srun -N 1 --mem=100GB --gpus=1 --pty bash -i
 ```
 module load rocm/rocm-afar-6711
 ```
-to get the latest Next Generation Fortran Compiler beta release.
+to get the latest Next Generation Fortran Compiler beta release and rocprofv3.
 
 Set
 ```
