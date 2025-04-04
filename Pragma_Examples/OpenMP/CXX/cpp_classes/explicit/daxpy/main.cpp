@@ -32,10 +32,6 @@ int main(int argc, char* argv[]) {
    data.updateHost();
    data.printArrays();
 
-   // free arrays on host
-   free(x);
-   free(y);
-
    return 0;
 
 }

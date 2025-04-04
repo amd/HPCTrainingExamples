@@ -20,6 +20,8 @@ public:
 
     // destructor 
     ~daxpy() {
+        free(x);
+        free(y);
         #pragma omp target exit data map(delete: x_[0:N_],y_[0:N_], N_, a_)
     }
 
