@@ -48,7 +48,7 @@ Here we are defining a class object to perform a daxpy operation. Notice that th
 
 ### The `operations` Sub-Directory
 
-The code in the `operations` directory adds one layer of complexity and performs a daxpy from the `main.cpp` file but using a class called `operations` that has two more classes as members: the `daxpy` class already mentioned before, and the `norm` class, which will compute a user-defined norm of the output of the daxpy operation. Note that everything works seamlessly even when calling member functions from the `ops` object: these member functions are wrappers to the member functions of the `daxpy` and `norm` class memmbers.
+The code in the `operations` directory adds one layer of complexity and performs a daxpy from the `main.cpp` file but using a class called `operations` that has two more classes as members: the `daxpy` class already mentioned before, and the `norm` class, which will compute a user-defined norm of the output of the daxpy operation. Note that everything works seamlessly even when calling member functions from the `ops` object: these member functions are wrappers to the member functions of the `daxpy` and `norm` class members.
 
 ## The `explicit` Sub-directory
 
@@ -80,7 +80,4 @@ The above pragma creates a data environment for an unstructured data region and 
 ```bash
 #pragma omp target exit data map(delete: x_[0:N_],y_[0:N_], N_, a_)
 ```
-Something else to notice is that the allocation of the member arrays is done outside of the class, i.e. in `main.cpp` to avoid complicating the job of mapping to the device that the compiler has to do. This additional work that is required somewhat works against the original programming paradigm that we assumed, where all relevant variables are private, and get accessed by `get` and `set` public member functions.
-
-As you can see, the unified shared memory programming model allowed us to maintain the original programming traits of a C++ approach to coding. Note that the `explicit daxpy` example is the result of modifying the `usm daxpy` example to work around memory access issues during the offload to GPU.
 

@@ -62,11 +62,10 @@ public:
     }
 
     void updateHost(){
-#pragma omp target update from(x_[0:N_],y_[0:N_], N_, a_)
+#pragma omp target update from(x_[0:N_],y_[0:N_])
     }
 
     void printArrays() const {
-#pragma omp target update from(x_[0:N_],y_[0:N_])
         std::cout << "Array x: ";
         for (int i = 0; i < N_; ++i) {
             std::cout << x_[i] << " ";
