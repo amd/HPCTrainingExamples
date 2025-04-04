@@ -8,13 +8,10 @@ int main(int argc, char* argv[]) {
    int N = 10;
 
    // allocate on host and device
-   double* x = new double[N];
-   double* y = new double[N];
-
    daxpy data(a,N);
 
    // initialize arrays on GPU
-   #pragma omp target teams distribute parallel for
+   #pragma omp target teams loop
    for(int i=0; i<N; i++){
       data.setX(i,1.0);
       data.setY(i,0.5);
@@ -23,8 +20,14 @@ int main(int argc, char* argv[]) {
    data.updateHost();
    data.updateDevice();
 
-   // perform daxpy
-   data.apply();
+   // perform daxpy with member function call
+   //data.apply();
+
+   #pragma omp target teams loop
+   for(int i=0; i<N; i++){
+      double val = data.getConst() * data.getX(i) + data.getY(i);
+      data.setY(i,val);
+   }
 
    data.updateHost();
    data.printArrays();

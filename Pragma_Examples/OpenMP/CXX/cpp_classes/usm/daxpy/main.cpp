@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
 
    // compute daxpy operation using 
    // member "get" and "set" functions
-   #pragma omp target teams distribute parallel for 
+   #pragma omp target teams loop
    for(int i=0; i<N; i++){
       double val = data.getConst() * data.getX(i) + data.getY(i);
       data.setY(i,val);
