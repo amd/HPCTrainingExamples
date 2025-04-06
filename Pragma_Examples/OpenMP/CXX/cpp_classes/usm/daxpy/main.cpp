@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
    }
 
    // the line below is for debugging
-   data.printArrays();
+   // data.printArrays();
 
    double check = 0.0;
    #pragma omp target teams loop reduction(+:check)
