@@ -1,5 +1,6 @@
 #include <iostream>
 #include "daxpy.hpp"
+#include <cmath>
 
 // require unified shard memory
 #pragma omp requires unified_shared_memory
