@@ -47,7 +47,8 @@ public:
     }
 
     double getNorm() const {
-       n_.getNorm();
+       double norm = n_.getNorm();
+       return norm;
     }
 
     double getConst() const {
