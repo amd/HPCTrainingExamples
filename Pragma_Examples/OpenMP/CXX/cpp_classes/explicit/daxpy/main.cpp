@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
       data.setY(i,0.5);
    }
 
-//   data.updateHost();
+   data.updateHost();
    data.updateDevice();
 
    // perform daxpy with member function call
