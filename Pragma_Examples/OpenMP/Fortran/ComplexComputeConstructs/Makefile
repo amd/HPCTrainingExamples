@@ -22,7 +22,7 @@ endif
 ifeq ($(findstring ftn,$(FC1)), ftn)
   FFLAGS = -G2 -eZ -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else ifeq ($(findstring amdflang-new,$(FC1)), amdflang-new)
-  FFLAGS = -g -O3 -ffast-math ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
+  FFLAGS = -O3 -ffast-math ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else
   FFLAGS = -g -O3 ${FREE_FORM_FLAG} -fstrict-aliasing ${OPENMP_FLAGS}
 endif
