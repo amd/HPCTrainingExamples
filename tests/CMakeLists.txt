@@ -1038,7 +1038,7 @@ set_property(TEST TAU_Check_MPI_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module
 # Score-P Tests
 
 add_test(NAME Score-P_Check_Version COMMAND ../scorep_check_version.sh)
-set_property(TEST Score-P_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "Score-P 9.0-beta")
+set_property(TEST Score-P_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "Score-P 9.0")
 set_property(TEST Score-P_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Miniconda3 Tests
