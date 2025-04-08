@@ -16,6 +16,17 @@ Set
 export HSA_XNACK=1
 ```
 
+Note: In case you want to use cray ftn instead of amdflang:
+```
+module load craype-x86-genoa
+module load cce
+```
+Then compile with ftn instead of amdflang and instead of --offload-arch use this module:
+```
+module load craype-accel-amd-gfx942
+```
+for readablity instructions are only for amdflang in the following.
+
 ## version 1: Problem
 The first version is an OpenMP offload example with three kernels in an iterative loop as an example of a "dwarf" of an application with an iterative solution or multiple time steps.
 ```
@@ -134,7 +145,7 @@ cmake -DCMAKE_INSTALL_PREFIX=${UMPIRE_PATH} -DROCM_ROOT_DIR=${ROCM_PATH} -DHIP_R
 ```
 Note: for older versions of the Next Generation Fortran compiler -DCMAKE_Fortran_COMPILER_ID=GNU may be needed as the Next Generation Fortran Compiler was not yet detected correctly and the GNU flags are the same. Flags for the Next Generation Fortran Compiler are mostly compatible with gfortran.
 
-or ftn best also use the cray wrappers for the C/C++ compilers:
+For cray ftn best also use the cray wrappers for the C/C++ compilers:
 ```
 cmake -DCMAKE_INSTALL_PREFIX=${UMPIRE_PATH} -DROCM_ROOT_DIR=${ROCM_PATH} -DHIP_ROOT_DIR=${ROCM_PATH}/hip -DHIP_PATH=${ROCM_PATH}/llvm/bin -DENABLE_HIP=On -DENABLE_OPENMP=Off -DENABLE_CUDA=Off -DENABLE_MPI=Off -DCMAKE_CXX_COMPILER=CC -DCMAKE_C_COMPILER=cc -DCMAKE_HIP_ARCHITECTURES=gfx942 -DAMDGPU_TARGETS=gfx942 -DCMAKE_HIP_ARCHITECTURES=gfx942 -DGPU_TARGETS=gfx942 -DBLT_CXX_STD=c++14 -DUMPIRE_ENABLE_IPC_SHARED_MEMORY=On -DENABLE_FORTRAN=On ../
 ```
