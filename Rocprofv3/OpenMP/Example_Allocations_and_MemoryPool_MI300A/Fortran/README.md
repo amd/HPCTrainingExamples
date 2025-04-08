@@ -126,10 +126,19 @@ Installation directory:
 mkdir $UMPIRE_PATH
 ```
 Configure cmake, make sure the target is gfx942 (for MI300A), Fortran is enabled and the ROCM_PATH is set to the rocm-afar-drop-<version>. The Fortran compiler needs to be set through the `FC` variable. Our module for the compiler takes care of that but if you install on another system you have to set it right, too:
+For the AMD Next Generation Fortran compiler set `FC=amdflang`, for the cray compiler set `FC=ftn`, If the cmake fails, check that cmake version 3.30 or higher is used and make sure a rocm version is loaded.
+
+For amdflang:
 ```
 cmake -DCMAKE_INSTALL_PREFIX=${UMPIRE_PATH} -DROCM_ROOT_DIR=${ROCM_PATH} -DHIP_ROOT_DIR=${ROCM_PATH}/hip -DHIP_PATH=${ROCM_PATH}/llvm/bin -DENABLE_HIP=On -DENABLE_OPENMP=Off -DENABLE_CUDA=Off -DENABLE_MPI=Off -DCMAKE_CXX_COMPILER=${ROCM_PATH}/llvm/bin/amdclang++ -DCMAKE_C_COMPILER=${ROCM_PATH}/llvm/bin/amdclang -DCMAKE_HIP_ARCHITECTURES=gfx942 -DAMDGPU_TARGETS=gfx942 -DCMAKE_HIP_ARCHITECTURES=gfx942 -DGPU_TARGETS=gfx942 -DBLT_CXX_STD=c++14 -DUMPIRE_ENABLE_IPC_SHARED_MEMORY=On -DENABLE_FORTRAN=On ../
 ```
 Note: for older versions of the Next Generation Fortran compiler -DCMAKE_Fortran_COMPILER_ID=GNU may be needed as the Next Generation Fortran Compiler was not yet detected correctly and the GNU flags are the same. Flags for the Next Generation Fortran Compiler are mostly compatible with gfortran.
+
+or ftn best also use the cray wrappers for the C/C++ compilers:
+```
+cmake -DCMAKE_INSTALL_PREFIX=${UMPIRE_PATH} -DROCM_ROOT_DIR=${ROCM_PATH} -DHIP_ROOT_DIR=${ROCM_PATH}/hip -DHIP_PATH=${ROCM_PATH}/llvm/bin -DENABLE_HIP=On -DENABLE_OPENMP=Off -DENABLE_CUDA=Off -DENABLE_MPI=Off -DCMAKE_CXX_COMPILER=CC -DCMAKE_C_COMPILER=cc -DCMAKE_HIP_ARCHITECTURES=gfx942 -DAMDGPU_TARGETS=gfx942 -DCMAKE_HIP_ARCHITECTURES=gfx942 -DGPU_TARGETS=gfx942 -DBLT_CXX_STD=c++14 -DUMPIRE_ENABLE_IPC_SHARED_MEMORY=On -DENABLE_FORTRAN=On ../
+```
+
 Build:
 ```
 make -j 32
