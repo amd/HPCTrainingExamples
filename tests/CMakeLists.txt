@@ -909,7 +909,7 @@ set_property(TEST Cupy_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST Cupy_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Cupy_Check_Array_Sum COMMAND ../cupy_check_array_sum.sh )
-set_property(TEST Cupy_Check_Array_Sum PROPERTY PASS_REGULAR_EXPRESSION "Result on CPU: [ 6  8 10 12 14]")
+set_property(TEST Cupy_Check_Array_Sum PROPERTY PASS_REGULAR_EXPRESSION "6  8 10 12 14")
 set_property(TEST Cupy_Check_Array_Sum PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Cupy_Install_Tests COMMAND ../cupy_install_tests.sh )
