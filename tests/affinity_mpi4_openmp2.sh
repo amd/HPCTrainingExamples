@@ -1,6 +1,6 @@
 #!/bin/bash
 
-module load gcc/11 rocm openmpi
+module load gcc rocm openmpi
 
 git clone https://code.ornl.gov/olcf/hello_mpi_omp.git
 cd hello_mpi_omp
