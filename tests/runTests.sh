@@ -24,6 +24,7 @@ MVAPICH2=0
 MINICONDA3=0
 MINIFORGE3=0
 HDF5=0
+HIPSTDPAR=0
 NETCDF=0
 HIPFORT=0
 GPU_AWARE_MPI=0
@@ -48,6 +49,7 @@ usage()
     echo "--rocprof-compute: runs ROCm rocprof-compute tests depending on the ROCm version"
     echo "--hip: runs the hip tests"
     echo "--hipify: runs the hipify tests"
+    echo "--hipstdpar: runs the hipstdpar tests"
     echo "--hipifly: runs the hipifly tests"
     echo "--kokkos: runs the kokkos tests"
     echo "--hpctoolkit: runs the hpctoolkit tests"
@@ -127,6 +129,11 @@ do
       "--hipify")
           shift
           HIPIFY=1
+          reset-last
+          ;;
+      "--hipstdpar")
+          shift
+          HIPSTDPAR=1
           reset-last
           ;;
       "--hipifly")
@@ -289,6 +296,8 @@ elif [ ${HIP} -eq 1 ]; then
    ctest -R Hipifly
 elif [ ${HIPIFY} -eq 1 ]; then
    ctest -R Hipify
+elif [ ${HIPSTDPAR} -eq 1 ]; then
+   ctest -R StdPar
 elif [ ${HIPIFLY} -eq 1 ]; then
    ctest -R Hipifly
 elif [ ${KOKKOS} -eq 1 ]; then
