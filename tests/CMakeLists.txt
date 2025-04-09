@@ -64,6 +64,22 @@ set_property(TEST HIPStdPar_ShallowWater_Ver2 PROPERTY SKIP_REGULAR_EXPRESSION "
 #set_property(TEST HIPStdPar_ShallowWater_StdPar PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 #set_property(TEST HIPStdPar_ShallowWater_StdPar PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME HIPStdPar_MixAndMatch_Atomic COMMAND ../hipstdpar_mixandmatch_atomic_stdpar_omp.sh )
+set_property(TEST HIPStdPar_MixAndMatch_Atomic PROPERTY PASS_REGULAR_EXPRESSION "StdPar computation took")
+set_property(TEST HIPStdPar_MixAndMatch_Atomic PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPStdPar_MixAndMatch_Hip COMMAND ../hipstdpar_mixandmatch_hip_stdpar.sh )
+set_property(TEST HIPStdPar_MixAndMatch_Hip PROPERTY PASS_REGULAR_EXPRESSION "First 5 results (no explicit copy)")
+set_property(TEST HIPStdPar_MixAndMatch_Hip PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPStdPar_MixAndMatch_Omp COMMAND ../hipstdpar_mixandmatch_omp_stdpar.sh )
+set_property(TEST HIPStdPar_MixAndMatch_Omp PROPERTY PASS_REGULAR_EXPRESSION "StdPar Executor took")
+set_property(TEST HIPStdPar_MixAndMatch_Omp PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPStdPar_MixAndMatch_CpuGpu COMMAND ../hipstdpar_mixandmatch_std_cpu_gpu.sh )
+set_property(TEST HIPStdPar_MixAndMatch_CpuGpu PROPERTY PASS_REGULAR_EXPRESSION "StdPar Executor took")
+set_property(TEST HIPStdPar_MixAndMatch_CpuGPu PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # Unified Shared Memory Examples (MI300A programming)
 add_test(NAME USM_Vector_Add COMMAND ../usm_vector_add.sh )
 set_property(TEST USM_Vector_Add PROPERTY PASS_REGULAR_EXPRESSION "Success")
