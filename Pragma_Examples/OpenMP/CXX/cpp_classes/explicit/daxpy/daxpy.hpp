@@ -15,14 +15,14 @@ public:
         N_ = N;
         x_ = new double[N];
         y_ = new double[N];
-        #pragma omp target enter data map(alloc: x_[0:N_],y_[0:N_], N_, a_)
+        #pragma omp target enter data map(alloc: x_[0:N_],y_[0:N_]) map(to: a_)
     }
 
     // destructor 
     ~daxpy() {
         free(x_);
         free(y_);
-        #pragma omp target exit data map(delete: x_[0:N_],y_[0:N_], N_, a_)
+        #pragma omp target exit data map(delete: x_[0:N_],y_[0:N_], a_)
     }
 
     void setX(int index, double val) {
@@ -60,7 +60,7 @@ public:
     void apply();
  
     void updateDevice(){
-#pragma omp target update to(x_[0:N_],y_[0:N_], N_, a_)
+#pragma omp target update to(x_[0:N_],y_[0:N_])
     }
 
     void updateHost(){
