@@ -237,6 +237,20 @@ add_test(NAME OpenMP_Vecadd_F_GFortran COMMAND ../openmp_vecadd_f_gfortran.sh )
 set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
 set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# OpenMP C++ Classes Examples
+
+add_test(NAME OpenMP_Cpp_Classes_Explicit_Daxpy COMMAND ../openmp_cpp_classes_explicit_daxpy.sh )
+set_property(TEST OpenMP_Cpp_Classes_Explicit_Daxpy PROPERTY PASS_REGULAR_EXPRESSION "PASS")
+set_property(TEST OpenMP_Cpp_Classes_Explicit_Daxpy PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Cpp_Classes_USM_Daxpy COMMAND ../openmp_cpp_classes_usm_daxpy.sh )
+set_property(TEST OpenMP_Cpp_Classes_USM_Daxpy PROPERTY PASS_REGULAR_EXPRESSION "PASS")
+set_property(TEST OpenMP_Cpp_Classes_USM_Daxpy PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Cpp_Classes_USM_Operations COMMAND ../openmp_cpp_classes_usm_operations.sh )
+set_property(TEST OpenMP_Cpp_Classes_USM_Operations PROPERTY PASS_REGULAR_EXPRESSION "PASS")
+set_property(TEST OpenMP_Cpp_Classes_USM_Operations PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # OpenMP Intro Examples
 
 add_test(NAME OpenMP_Intro_Saxpy_CPU COMMAND ../openmp_intro_saxpy_cpu.sh )
