@@ -69,7 +69,7 @@ set_property(TEST HIPStdPar_MixAndMatch_Atomic PROPERTY PASS_REGULAR_EXPRESSION 
 set_property(TEST HIPStdPar_MixAndMatch_Atomic PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME HIPStdPar_MixAndMatch_Hip COMMAND ../hipstdpar_mixandmatch_hip_stdpar.sh )
-set_property(TEST HIPStdPar_MixAndMatch_Hip PROPERTY PASS_REGULAR_EXPRESSION "First 5 results (no explicit copy)")
+set_property(TEST HIPStdPar_MixAndMatch_Hip PROPERTY PASS_REGULAR_EXPRESSION "First 5 results")
 set_property(TEST HIPStdPar_MixAndMatch_Hip PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME HIPStdPar_MixAndMatch_Omp COMMAND ../hipstdpar_mixandmatch_omp_stdpar.sh )
@@ -77,7 +77,7 @@ set_property(TEST HIPStdPar_MixAndMatch_Omp PROPERTY PASS_REGULAR_EXPRESSION "St
 set_property(TEST HIPStdPar_MixAndMatch_Omp PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME HIPStdPar_MixAndMatch_CpuGpu COMMAND ../hipstdpar_mixandmatch_std_cpu_gpu.sh )
-set_property(TEST HIPStdPar_MixAndMatch_CpuGpu PROPERTY PASS_REGULAR_EXPRESSION "StdPar Executor took")
+set_property(TEST HIPStdPar_MixAndMatch_CpuGpu PROPERTY PASS_REGULAR_EXPRESSION "StdParGpu Executor took")
 set_property(TEST HIPStdPar_MixAndMatch_CpuGpu PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Unified Shared Memory Examples (MI300A programming)
