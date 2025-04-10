@@ -30,7 +30,7 @@ To compile and run the other example:
 
 ```
 cd vector_add_usm
-can only run with
+// can only run with
 export HSA_XNACK=1
 make
 ./vector_add_usm

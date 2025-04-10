@@ -72,12 +72,12 @@ The directory is named `explicit` because we are explicitly taking care of all t
 The explicit memory movement scenario gets tricky really quickly, as you have seen with the numerous warning messages produced by the compiler when building the `usm` examples. Things get particularly complicated when using anything that is not just a pointer for our data members, such as for instance standard vectors, like we were doing in the `usm` directory. In the `daxpy.hpp` file where the `daxpy` class is declared, we have now included in the constructor the following pragma:
 
 ```bash
-#pragma omp target enter data map(to: x_[0:N_],y_[0:N_], N_, a_)
+#pragma omp target enter data map(alloc: x_[0:N_],y_[0:N_]) map(to: a_)
 ```
 
 The above pragma creates a data environment for an unstructured data region and maps x_, y_, N_ and a_ to the device. Note that we also had to explicitly map the scalars to make sure that they are available on the device when we call the `apply` function, which is defined in `daxpy.cpp`. The following pragma is included in the destructor for the class:
 
 ```bash
-#pragma omp target exit data map(delete: x_[0:N_],y_[0:N_], N_, a_)
+#pragma omp target exit data map(delete: x_[0:N_],y_[0:N_], a_)
 ```
 
