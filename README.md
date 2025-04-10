@@ -48,7 +48,7 @@ Please refer to this table of contents to locate the exercises and examples you 
       3. [`GhostExchange3D_ArrayAssign`](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange/GhostExchange3D_ArrayAssign): a single version of the Ghost Exchange example in 3D, without offloading to GPU.
 3. [**ManagedMemory**](https://github.com/amd/HPCTrainingExamples/tree/main/ManagedMemory): programming model exercises, topics covered are APU programming model, OpenMP, performance protability frameworks (Kokkos and RAJA) and discrete GPU programming model. Some HIP examples are also available. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/ManagedMemory/README.md).
 4. [**MLExamples**](https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples): this is a rapidly growing directory including a variety of machine learning (ML) and artificial intellingence (AI) related examples.
-   1. [**Miscelaneous Examples**](https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples): a variation of PyTorch's MNIST example code, an array sum test for CuPy, and a communication test for MPI4Py using CuPy. Examples with Tensorflow, Horovod and Huggingface are also included [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples/README.md).
+   1. [**Miscelaneous Examples**](https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples): PyTorch MNIST examples, Tensorflow with Horovod, and Huggingface transformers [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples/README.md).
    2. [`AI_Surrogates`](https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples/AI_Surrogates): this directory contains a variety of Jupyter notebooks that have been developed to show some applications of AI for science using surrogate models. There are no READMEs for these examples at the moment and we suggest users work directly with the Jupyter notebooks for details.
    3. [`PyTorch_Profiling`](https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples/PyTorch_Profiling): a colleciton of examples to show how to profile PyTorch using AMD tools. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/MLExamples/PyTorch_Profiling/README.md).
    4. [`RAG_LangChainDemo`](https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples/RAG_LangChainDemo): a RAG Chatobot Demo application. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/MLExamples/RAG_LangChainDemo/README.md).
@@ -91,8 +91,11 @@ Please refer to this table of contents to locate the exercises and examples you 
 20. [`Affinity`](https://github.com/amd/HPCTrainingExamples/tree/main/Affinity): an example to show how to set proper affinity to CPU cores and GPUs. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/Affinity/README.md).
 21. [**login_info**](https://github.com/amd/HPCTrainingExamples/tree/main/login_info)
     1. [***AAC***](https://github.com/amd/HPCTrainingExamples/tree/main/login_info/AAC): instructions on how to log in to the AMD Accelerator Cloud (AAC) resource. [`README`](https://github.com/amd/HPCTrainingExamples/tree/main/login_info/AAC/README.md).
-22. [**Doc**](https://github.com/amd/HPCTrainingExamples/tree/main/Doc): directory with LaTeX and PDF documents that contain some of the most relevant README files properly formatted for ease of reading. The PDF document is obtained building the LaTeX document. Note: the document may be out of date compared to the READMEs in the repo which are most current source of information for these exercises.
-23. [`tests`](https://github.com/amd/HPCTrainingExamples/tree/main/tests): this directory contains a huge number of test scripts aimed at testing the installation of the software provided by the scripts in the companing repo [`HPCTrainingDock`](https://github.com/amd/HPCTrainingDock).
+22. [`Python`](https://github.com/amd/HPCTrainingExamples/tree/main/Python): growing directory of material on Python examples.
+    1. [`cupy`](https://github.com/amd/HPCTrainingExamples/tree/main/Python/cupy): an example showing how to perform array sums on GPU and CPU using CuPy and NumPy. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/Python/cupy/README.md).
+    2. [`mpi4py`](https://github.com/amd/HPCTrainingExamples/blob/main/Python/mpi4py): an example showing MPI communication in Python, leveraging MPI4Py. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/Python/mpi4py/README.md).
+23. [**Doc**](https://github.com/amd/HPCTrainingExamples/tree/main/Doc): directory with LaTeX and PDF documents that contain some of the most relevant README files properly formatted for ease of reading. The PDF document is obtained building the LaTeX document. Note: the document may be out of date compared to the READMEs in the repo which are most current source of information for these exercises.
+24. [`tests`](https://github.com/amd/HPCTrainingExamples/tree/main/tests): this directory contains a huge number of test scripts aimed at testing the installation of the software provided by the scripts in the companing repo [`HPCTrainingDock`](https://github.com/amd/HPCTrainingDock).
 
 
 ## Run the Tests
@@ -111,7 +114,7 @@ You can also run a subset of the whole test suite by specifying the subset you a
 
 ## Additional Resources
 
-We recommend users also check out the [`rocm-examples`](https://github.com/rocm/rocm-examples) Github repo, that has a lot of content on HIP and ROCm libraries.
+We recommend users also check out the [`rocm-examples`](https://github.com/rocm/rocm-examples) Github repo, that has a lot of content specific to HIP and ROCm libraries.
 
 ## Feedback
 We welcome your feedback and contributions, feel free to use this repo to bring up any issues or submit pull requests.

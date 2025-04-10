@@ -1,12 +1,15 @@
-## CuPY Examples
+## CuPy Examples
 
-### Simple introduction example to CuPY for AMD GPUs
+**NOTE**: these exercises have been tested on MI210 and MI300A accelerators using a container environment.
+To see details on the container environment (such as operating system and modules available) please see `README.md` on [this](https://github.com/amd/HPCTrainingDock) repo.
+
+### Simple introduction example to CuPy for AMD GPUs
 
 To run this example, 
 
 ```
 module load cupy
-python intro.py
+python cupy_array_sum.py
 ```
 
 The output should look like the following:
@@ -25,7 +28,7 @@ Let's try and see more.
 
 ```
 export AMD_LOG_LEVEL=1
-python intro.py
+python cupy_array_sum.py
 ```
 
 Now our output is:
@@ -45,7 +48,7 @@ The warning is from the AMD logging functions and doesn't impact the run. Now le
 
 ```
 export AMD_LOG_LEVEL=3
-python intro.py
+python cupy_array_sum.py
 ```
 
 Now we see lots of output that shows the hip calls and the operations on the GPU.
