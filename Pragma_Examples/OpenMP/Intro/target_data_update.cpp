@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
       res += final_computation(input[i], tmp[i], i);
   }
 
-  if(fabs(res-300000)<1.e-10){
+  if(fabs(res-300000.0)<1.e-14){
      printf("PASS \n");
   }
   else{
