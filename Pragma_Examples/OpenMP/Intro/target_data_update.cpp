@@ -40,10 +40,10 @@ int main(int argc, char *argv[]) {
   }
 
   if(fabs(res-300000)<1.e-10){
-     printf("PASS");
+     printf("PASS \n");
   }
   else{
-     printf("FAIL");
+     printf("FAIL \n");
   }
   printf("Target Update result is %lf\n",res);
 
