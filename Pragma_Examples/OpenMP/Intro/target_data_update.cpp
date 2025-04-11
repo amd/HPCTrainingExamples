@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 
 double some_computation(double x, int i){
   return(2.0*x);
@@ -38,5 +39,12 @@ int main(int argc, char *argv[]) {
       res += final_computation(input[i], tmp[i], i);
   }
 
+  if(fabs(res-300000)<1.e-10){
+     printf("PASS");
+  }
+  else{
+     printf("FAIL");
+  }
   printf("Target Update result is %lf\n",res);
+
 }
