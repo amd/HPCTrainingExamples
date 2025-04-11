@@ -30,11 +30,11 @@ To compile and run the other example:
 
 ```
 cd vector_add_usm
-can only run with
+// can only run with
 export HSA_XNACK=1
 make
 ./vector_add_usm
 ```
-Note, this can only run with `HSA_XNACK=1`. Bbserve the differences in the codes (Hint: `vimdiff file1 file2` may help).
+Note, this can only run with `HSA_XNACK=1`. Observe the differences in the codes (Hint: `vimdiff file1 file2` may help).
 
 The first example shows code that is portable between the APU and discrete GPUS. The second example shows the ease of porting (no map clauses or any other data management required) if you start from the CPU and have an APU available to do the porting.

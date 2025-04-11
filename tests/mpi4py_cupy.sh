@@ -62,5 +62,5 @@ module purge
 module load ${MODULE_NAME}
 module load cupy
 
-python3 ${REPO_DIR}/MLExamples/mpi4py_cupy.py
+python3 ${REPO_DIR}/Python/mpi4py/mpi4py_cupy.py
 

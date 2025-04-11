@@ -13,7 +13,7 @@ module load cupy
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
-pushd $REPO_DIR/MLExamples/ 
+pushd $REPO_DIR/Python/cupy
 
 python3 cupy_array_sum.py 
 
