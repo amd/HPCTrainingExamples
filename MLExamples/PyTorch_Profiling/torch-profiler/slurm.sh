@@ -30,6 +30,6 @@ fi
 popd
 
 # Execute the python script:
-srun --nodes 1--ntasks 4 python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 \
+srun --nodes 1 --ntasks 4 python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 \
      --max-steps 15 --data-path ${PROFILER_TOP_DIR}/data/ --torch-profile
 
