@@ -54,7 +54,7 @@ module gemm_mod
                 write(0,*) "CREATE", status, status .eq. HIPBLAS_STATUS_SUCCESS
 
 #ifdef SINGLE_DIRECTIVE
-                !$omp target data map(to:a,b) map(from:c) use_device_addr(A,B,C)
+                !$omp target data map(to:a,b) map(tofrom:c) use_device_addr(A,B,C)
 #else
 #ifdef LOCAL_ALLOC
                 !$omp target data map(to:A,B) map(tofrom:C)
