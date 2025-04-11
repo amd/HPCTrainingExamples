@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
   for (int i=0; i<N; i++)
     input[i]=1.0;
 
-#pragma omp target data map(alloc:tmp[:N]) map(to:input[:N]) map(from:res)
+#pragma omp target data map(alloc:tmp[:N]) map(to:input[:N])
   {
 #pragma omp target
 #pragma omp teams distribute parallel for
