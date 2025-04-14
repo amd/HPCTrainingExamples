@@ -1,33 +1,44 @@
 # AI and ML exercises
 
+Last revision of this README: April 14th 2025.
+
 **NOTE**: these exercises have been tested on MI210 and MI300A accelerators using a container environment.
 To see details on the container environment (such as operating system and modules available) please see `README.md` on [this](https://github.com/amd/HPCTrainingDock) repo.
 
-Throughout these exercises we'll be leveraging the existing ROCm instalation. We can use the existing module to set the environment for it:
+Throughout these exercises we'll be leveraging the existing ROCm installation. We can use the existing module to set the environment for it:
 
 ```
 module purge
-module load rocm/6.1.0
-``` 
-
-Also, note that these exercises are preapared for MI200 GPU series.
+module load rocm
+```
 
 ## Setting the virtual environments
 These exercises include use cases for PyTorch and TensorFlow using Horovod. Let's prepare the environments to install these frameworks.
 
-We'll be leveraging the system Python instalation, so we'll be creating virtual environments to add the Python packages we need:
+We'll be leveraging the system Python installation, so we'll be creating virtual environments to add the Python packages we need:
 
+Let's create a virtual environment for PyTorch:
 ```
 python3 -m venv --system-site-packages $HOME/venv-pt
+```
+
+And one for Tensorflow:
+```
 python3 -m venv --system-site-packages $HOME/venv-tf
 ```
 
 ## Installing the frameworks
-Let's install a PytTorch and Tensrflow suitable to the ROCm version we have available: ROCm 6.1. Two minor versions before or after the current ROCm level should work.
+Let's install a PytTorch and Tensorflow suitable for the ROCm version we have available. To check the ROCm version run:
+
+```
+cat $ROCM_PATH/.info/version
+```
+
+Two minor versions before or after the current ROCm level should work.
 
 Let's activate our environment for PyTorch.
 ```
-source $HOME/venv-pt/bin/activate 
+source $HOME/venv-pt/bin/activate
 ```
 and check the available versions:
 ```
@@ -37,51 +48,57 @@ pip install --index-url https://download.pytorch.org/whl/ torchaudio== |& grep -
 ```
 It should yield something like:
 ```
+// torch
 ...
-2.2.2+rocm5.6
-2.2.2+rocm5.7
+2.6.0+rocm6.1,
+2.6.0+rocm6.2.4,
+// torchvision
 ...
-0.17.2+rocm5.6
-0.17.2+rocm5.7
+0.21.0+rocm6.1,
+0.21.0+rocm6.2.4,
+// torchaudio
 ...
-2.2.2+rocm5.6
-2.2.2+rocm5.7
+2.6.0+rocm6.1,
+2.6.0+rocm6.2.4,
 ```
-Great, we can install the latest versions of each package:
+If you do not see the ROCm version you have in your system, you can find additional wheels [`here`](https://repo.radeon.com/rocm/manylinux/). As of April 13th 2025, there is no wheel for ROCm 6.3.3 on the PyTorch website. Hence we'll do:
 ```
-pip install --index-url https://download.pytorch.org/whl/ \
-  torch==2.2.2+rocm5.7 \
-  torchvision==0.17.2+rocm5.7 \
-  torchaudio==2.2.2+rocm5.7
+pip3 install torch==2.6.0 torchaudio==2.6.0 torchvision==0.21.0 -f https://repo.radeon.com/rocm/manylinux/rocm-rel-6.3.3/ --no-cache-dir
 ```
-Quick smoke tests to see if PyTorch can detect all GPUs:
+Let's do a quick smoke test to check that PyTorch can detect all GPUs:
 ```
 python3 -c 'import torch; print("I have this many devices:", torch.cuda.device_count())'
 ```
-I should see `I have this many devices: 8`
+On an MI250, you should see `I have this many devices: 8`
 
-Let's install TensorFlow in its respective environment.
+Next, let's install TensorFlow in its respective environment. First, we deactivate the current environment that we used for PyTorch, then we activate the one for TensorFlow:
 
 ```
 deactivate
-source $HOME/venv-tf/bin/activate 
+source $HOME/venv-tf/bin/activate
+```
+The latest wheel for TensorFlow with ROCm can be found [`here`](https://pypi.org/project/tensorflow-rocm/). As of April 13th 2025, the latest available wheel is `tensorflow-rocm 2.14.0.600`, as it is also confirmed by doing:
+```
 pip install tensorflow-rocm==
 ```
-We have available TensorFlow 2.14.0 for ROCm 6.0. Let's use that version and do a quick smoke tests to see if TensorFlow detects our GPUs:
+Therefore, we install with:
 ```
-pip install tensorflow-rocm==2.14.0.600
+pip3 install tensorflow-rocm==2.15.1  -f https://repo.radeon.com/rocm/manylinux/rocm-rel-6.3.3/ --no-cache-dir
+```
+Once again, let's do a quick smoke tests to see if TensorFlow detects the AMD GPUs:
+```
 python3 -c 'from tensorflow.python.client import device_lib ; device_lib.list_local_devices()'
 ```
-It should yield:
+On MI250, it should show something like this:
 ```
-2024-04-18 11:40:20.107002: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1886] Created device /device:GPU:0 with 63922 MB memory:  -> device: 0, name: AMD Instinct MI210, pci bus id: 0000:63:00.0
-2024-04-18 11:40:20.333720: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1886] Created device /device:GPU:1 with 63922 MB memory:  -> device: 1, name: AMD Instinct MI210, pci bus id: 0000:43:00.0
-2024-04-18 11:40:20.552465: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1886] Created device /device:GPU:2 with 63922 MB memory:  -> device: 2, name: AMD Instinct MI210, pci bus id: 0000:03:00.0
-2024-04-18 11:40:20.778092: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1886] Created device /device:GPU:3 with 63922 MB memory:  -> device: 3, name: AMD Instinct MI210, pci bus id: 0000:26:00.0
-2024-04-18 11:40:21.014425: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1886] Created device /device:GPU:4 with 63922 MB memory:  -> device: 4, name: AMD Instinct MI210, pci bus id: 0000:e3:00.0
-2024-04-18 11:40:21.235818: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1886] Created device /device:GPU:5 with 63922 MB memory:  -> device: 5, name: AMD Instinct MI210, pci bus id: 0000:c3:00.0
-2024-04-18 11:40:21.460124: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1886] Created device /device:GPU:6 with 63922 MB memory:  -> device: 6, name: AMD Instinct MI210, pci bus id: 0000:83:00.0
-2024-04-18 11:40:21.683632: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1886] Created device /device:GPU:7 with 63922 MB memory:  -> device: 7, name: AMD Instinct MI210, pci bus id: 0000:a3:00.0
+2025-04-14 13:48:21.243911: I tensorflow/core/common_runtime/gpu/gpu_device.cc:2021] Created device /device:GPU:0 with 63828 MB memory:  -> device: 0, name: AMD Instinct MI250X/MI250, pci bus id: 0000:29:00.0
+2025-04-14 13:48:21.500504: I tensorflow/core/common_runtime/gpu/gpu_device.cc:2021] Created device /device:GPU:1 with 63828 MB memory:  -> device: 1, name: AMD Instinct MI250X/MI250, pci bus id: 0000:2c:00.0
+2025-04-14 13:48:21.748008: I tensorflow/core/common_runtime/gpu/gpu_device.cc:2021] Created device /device:GPU:2 with 63828 MB memory:  -> device: 2, name: AMD Instinct MI250X/MI250, pci bus id: 0000:2f:00.0
+2025-04-14 13:48:21.994639: I tensorflow/core/common_runtime/gpu/gpu_device.cc:2021] Created device /device:GPU:3 with 63828 MB memory:  -> device: 3, name: AMD Instinct MI250X/MI250, pci bus id: 0000:32:00.0
+2025-04-14 13:48:22.242978: I tensorflow/core/common_runtime/gpu/gpu_device.cc:2021] Created device /device:GPU:4 with 63828 MB memory:  -> device: 4, name: AMD Instinct MI250X/MI250, pci bus id: 0000:ad:00.0
+2025-04-14 13:48:22.489896: I tensorflow/core/common_runtime/gpu/gpu_device.cc:2021] Created device /device:GPU:5 with 63828 MB memory:  -> device: 5, name: AMD Instinct MI250X/MI250, pci bus id: 0000:b0:00.0
+2025-04-14 13:48:22.736439: I tensorflow/core/common_runtime/gpu/gpu_device.cc:2021] Created device /device:GPU:6 with 63828 MB memory:  -> device: 6, name: AMD Instinct MI250X/MI250, pci bus id: 0000:b3:00.0
+2025-04-14 13:48:22.982904: I tensorflow/core/common_runtime/gpu/gpu_device.cc:2021] Created device /device:GPU:7 with 63828 MB memory:  -> device: 7, name: AMD Instinct MI250X/MI250, pci bus id: 0000:b6:00.0
 ```
 We are interested in using Horovod with TensorFlow, so let's install it. Horovod build system was not made ready to ROCm 6.0+, so we need to provide some help to identify the new location for the Cmake files:
 ```
@@ -90,9 +107,9 @@ cat > $HOME/cmake/cmake << EOF
 #!/bin/bash -e
 
 if [[ "\$@" == *"--build"* ]] ; then
-  $(which cmake) \$@ 
+  $(which cmake) \$@
 else
-  $(which cmake) -DCMAKE_MODULE_PATH=$ROCM_PATH/lib/cmake/hip \$@ 
+  $(which cmake) -DCMAKE_MODULE_PATH=$ROCM_PATH/lib/cmake/hip \$@
 fi
 EOF
 chmod +x $HOME/cmake/cmake
@@ -100,6 +117,9 @@ chmod +x $HOME/cmake/cmake
 
 We can now build using our tuned cmake script:
 ```
+module load rocm
+module load openmpi
+
 PATH=$HOME/cmake:$PATH \
 CPATH=$ROCM_PATH/include/rccl \
 HOROVOD_WITHOUT_MXNET=1 \
@@ -116,7 +136,7 @@ HOROVOD_WITHOUT_MXNET=1 \
   HOROVOD_WITH_TENSORFLOW=1 \
   HOROVOD_WITHOUT_PYTORCH=1 \
   pip install --no-cache-dir --force-reinstall --verbose horovod==0.28.1
-  ```
+```
 Let's define a work directory for us to try some examples.
 ```
 mkdir -p $HOME/ai-with-rocm
@@ -125,31 +145,45 @@ mkdir -p $HOME/ai-with-rocm
 
 MNIST is a quite popular data set for computer vision training. We are fortunate that are many examples on the internet on how to train MNIST dataset and they can usually be run without any changes.
 
-Let's take one of the PyTorch official examples for this - we are training we just two epochs:
+Let's take one of the PyTorch official examples for this - we are training just two epochs:
 ```
 cd $HOME/ai-with-rocm
 
 deactivate
-source $HOME/venv-pt/bin/activate 
+source $HOME/venv-pt/bin/activate
 
 curl -LO https://raw.githubusercontent.com/pytorch/examples/main/mnist/main.py
+module load rocm
 python -u main.py --epochs 2 --batch-size 256
-
+```
+You may get an MIOpen error saying:
 
 ```
-We can control which GPU to use with the environmental variable ROCR_VISIBLE_DEVICES and can use the `rocprof` to get more of an idea about the GPU activity:
+MIOpen(HIP): Error [FlushUnsafe] File is unwritable: "/tmp/gfx90a68.HIP.3_3_0_d22d5a13f-dirty.ufdb.txt"
+```
+
+In that case, the following commands should fix it:
+
+```
+mkdir -p $HOME/tmpdir
+export TMPDIR=$HOME/tmpdir
+rm -rf $HOME/tmpdir/*
+echo "TMPDIR set to " $TMPDIR
+```
+
+We can control which GPU to use with the environmental variable ROCR_VISIBLE_DEVICES and can use the `rocprofv3` to get more of an idea about the GPU activity:
 
 ```
 ROCR_VISIBLE_DEVICES=2 \
-  rocprof python -u main.py --epochs 1 --batch-size 256
+rocprofv3 --stats --kernel-trace -- python -u main.py --epochs 1 --batch-size 256
 ```
-The resulting file `results.csv` show the different GPU kernels invoked for this application.
+The resulting `*.csv` files show the different GPU kernels invoked for this application.
 
 ## PyTorch MNIST example - distributed.
 
-We might now be interested in distributing our training accross devices. A way to accomplish this is by taking a distributed data-parallel (DDP) approach where each GPU will train different batch independently and combine the results afterwards. 
+We might now be interested in distributing our training across devices. A way to accomplish this is by taking a distributed data-parallel (DDP) approach where each GPU will train different batch independently and combine the results afterwards.
 
-There are also several examples on how to do this. We will use as starting example https://raw.githubusercontent.com/kubeflow/examples/master/pytorch_mnist/training/ddp/mnist/mnist_DDP.py.
+There are also several examples on how to do this. We will use the following code as starting example:
 
 ```
 cd $HOME/ai-with-rocm
@@ -160,13 +194,13 @@ Download a modified version of this script and compare the differences:
 
 ```
 curl -LO https://raw.githubusercontent.com/amd/HPCTrainingExamples/main/MLExamples/mnist_DDP_modified.py
-diff mnist_DDP.py mnist_DDP_modified.py
+vimdiff mnist_DDP.py mnist_DDP_modified.py
 ```
 
-There are a couple of differences one controls the batch size another one controls how the distributed run is initialized.
+There are a couple of differences: one controls the batch size another one controls how the distributed run is initialized.
 ```
-dist.init_process_group(backend='nccl', 
-                        init_method='env://', 
+dist.init_process_group(backend='nccl',
+                        init_method='env://',
                         world_size=int(os.environ['WORLD_SIZE']),                             rank=int(os.environ['RANK']))
 ```
 
@@ -199,19 +233,20 @@ cat > run-me.sh << EOF
   export WORLD_SIZE=\$OMPI_COMM_WORLD_SIZE
   export RANK=\$OMPI_COMM_WORLD_RANK
   export ROCR_VISIBLE_DEVICES=\$OMPI_COMM_WORLD_LOCAL_RANK
-  
+
   python -u mnist_DDP_modified.py \
     --gpu --modelpath $HOME/ai-with-rocm/model
 
 EOF
 chmod +x run-me.sh
-
+module load rocm
+module load openmpi
 mpirun -np 2 ./run-me.sh
 ```
 
 Master address and port are defined for the different ranks to communicate between themselves. We then leverage the `OMPI_*` variables to decide ranks and GPUs to be used by each of these ranks.
 
-Another popular way to spin a distributed run is to leverage the `torchrun` utility. However, this requires the application to include logic to decide which GPU to use, instead of relying on `ROCR_VISIBLE_DEVICES`. We can add the following line to our application after `dist.init_process_group()` to accomplish that:
+Another popular way to spin a distributed run is to leverage the `torchrun` utility. However, this requires the application to include logic to decide which GPU to use, instead of relying on `ROCR_VISIBLE_DEVICES`. We can add the following line to our application after `dist.init_process_group()` (line 255 of `mnist_DDP_modified.py`) to accomplish that:
 
 ```
 torch.cuda.set_device(int(os.environ['RANK']))
@@ -229,21 +264,56 @@ ROCR_VISIBLE_DEVICES=0,1 \
 
 Similarly to PyTorch, TensorFlow examples should not need changes due to the GPU architecture.
 
-Let's pick up TensorFlow example from the Horovod project - a syntectic training example already rigged to use Horovod:
+Let's pick a TensorFlow example from the Horovod project - a synthectic training example already rigged to use Horovod:
 ```
 deactivate
-source $HOME/venv-tf/bin/activate 
+source $HOME/venv-tf/bin/activate
 cd $HOME/ai-with-rocm
 
 curl -LO https://raw.githubusercontent.com/horovod/horovod/master/examples/tensorflow2/tensorflow2_synthetic_benchmark.py
 
+module load rocm
+module load openmpi
 mpirun -np 2 \
   python -u tensorflow2_synthetic_benchmark.py --batch-size 256
 ```
+You should see an output similar to this one:
+```
+Running benchmark...
+Iter #0: 559.4 img/sec per GPU
+Iter #1: 557.7 img/sec per GPU
+Iter #2: 559.2 img/sec per GPU
+Iter #3: 552.1 img/sec per GPU
+Iter #4: 553.6 img/sec per GPU
+Iter #5: 551.0 img/sec per GPU
+Iter #6: 550.9 img/sec per GPU
+Iter #7: 553.8 img/sec per GPU
+Iter #8: 553.4 img/sec per GPU
+Iter #9: 546.8 img/sec per GPU
+Img/sec per GPU: 553.8 +-7.4
+Total img/sec on 2 GPU(s): 1107.6 +-14.9
 
-Horovod makes it rather straingforward to start a distributed learning model as it leverages the already existing MPI environment.
+```
 
-We can inspect the test case and see the relevant bits where Horovod `hvd` is being leveraged, namely the selection of the GPU based on the local rank and wrapping of the local Gradient Tape operator.
+If you encounter this runtime error:
+```
+To enable the following instructions: SSE3 SSE4.1 SSE4.2 AVX AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+[1744644100.553280] [024ac696037d:188662:0]        ib_iface.c:1230 UCX  ERROR mlx5_0: ibv_create_cq(cqe=4096) failed: Cannot allocate memory : Please set max locked memory (ulimit -l) to 'unlimited' (current: 64 kbytes)
+```
+
+Then export the following variable to fix it:
+
+```
+export UCX_TLS=self,shm
+```
+
+Horovod makes it rather straightforward to start a distributed learning model as it leverages the already existing MPI environment.
+
+We can inspect the test case and see the relevant bits where Horovod `hvd` is being leveraged, namely the selection of the GPU based on the local rank and wrapping of the local Gradient Tape operator: run
+```
+vi tensorflow2_synthetic_benchmark.py
+```
+And inspect the file, paying particular attention to the following lines of code:
 ```
 import tensorflow as tf
 import horovod.tensorflow as hvd
@@ -255,33 +325,42 @@ tf.config.experimental.set_visible_devices(gpus[hvd.local_rank()], 'GPU')
     tape = hvd.DistributedGradientTape(tape, compression=compression)
 ```
 
-We can further inspect the GPU activity by leveraging `rocprof` to obtain a trace for one of the ranks. We'll do just 2 iterations so that the result files are not too large. 
+We can further inspect the GPU activity by leveraging `rocprofv3` to obtain a trace for one of the ranks. We'll do just 2 iterations so that the result files are not too large.
 ```
 mpirun -np 2 \
   bash -c 'if [ $OMPI_COMM_WORLD_RANK -eq 1 ] ; then \
-             profiler="rocprof --hip-trace" ; \
+             profiler="rocprofv3 --hip-trace --output-format pftrace --" ; \
            fi ; \
            $profiler python -u tensorflow2_synthetic_benchmark.py \
              --batch-size 256 \
              --num-warmup-batches 2 \
              --num-iters 2'
-            
+
 ```
-We will get a `results.json` file with the trace information to load in the Perfetto tool. It is often a good idea to compress the file to make it easier to copy to one's workstation.
+A directory named with a hash will be created, inside of which the two trace files for each of the MPI processes will be available (for example):
 ```
-xz -T8 -9 results.json
+193546_results.pftrace  193556_results.pftrace
+
 ```
-We can then copy it and visualize in Perfetto. We can detect the kernesl from the different libraries, like MIOpen, rocBLAS, Eigen as well as MLIR JIT kernels.
+We can also concatenate these trace files to be visualized in a single one:
+```
+ cat *.pftrace > perfetto_trace.pftrace
+```
+Then, we can visualize the trace file using the [`Perfetto`](https://www.ui.perfetto.dev/) tool. It is often a good idea to compress the file to make it easier to copy to one's workstation.
+```
+xz -T8 -9 perfetto_trace.pftrace
+```
+We can then copy it and visualize in Perfetto. We can detect the kernels from the different libraries, like MIOpen, rocBLAS, Eigen as well as MLIR JIT kernels.
 ![image](https://hackmd.io/_uploads/B1SpcGyW0.png)
 
 ## Examples with Huggingface transformers
 
 There are several repositories of examples. A popular one is the Huggingface transformers. These examples should just work without any modification specific to AMD GPUs.
 
-We can install the transformaer package from source as:
+We can install the transformer package from source as:
 ```
 deactivate
-source $HOME/venv-tf/bin/activate 
+source $HOME/venv-tf/bin/activate
 
 git clone \
 https://github.com/huggingface/transformers.git \
@@ -290,21 +369,21 @@ cd $HOME/ai-with-rocm/transformers
 pip3 install -e .
 ```
 
-It is useful to point the implementation to a suitable plce to store and cache information and datasets. That can be done by setting the environment variables: 
+It is useful to point the implementation to a suitable place to store and cache information and datasets. That can be done by setting the environment variables:
 ```
 export HF_HOME=$HOME/ai-with-rocm/hf-home
 export HUGGINGFACE_HUB_CACHE=$HOME/ai-with-rocm/hf-cache
-mkdir -p $HF_HOME $HUGGINGFACE_HUB_CACHE 
+mkdir -p $HF_HOME $HUGGINGFACE_HUB_CACHE
 ```
-We can now try the examples. 
+We can now try the examples.
 
-### Image calssification
-Let's look at the image classification one. We need first to install the example dependences:
-``` 
+### Image classification
+Let's look at the image classification one. We need first to install the example dependencies:
+```
 cd $HOME/ai-with-rocm/transformers/examples/pytorch/image-classification
 pip3 install -r requirements.txt
 pip3 install scikit-learn
-pip3 install -U pillow 
+pip3 install -U pillow
 ```
 We are now ready to run the example. We'll be experimenting with using mixed precision (with BF16 datatypes) or not (the default):
 ```
@@ -325,12 +404,12 @@ for precision in '' '--bf16' ; do
       $precision
 done
 ```
-Depending on what is bounding the performance it could be good idea to use mixed precision or not - so this is a fair experiment to do. This should yield results like:
+Depending on what is bounding the performance it could be good idea to use mixed precision or not - so this is a fair experiment to do. This should yield results like (if b16/gpu is supported):
 
 ```
 ...
 # No mixed precision
-***** train metrics *****                                                               
+***** train metrics *****
   epoch                    =         2.0
   total_flos               = 149248978GF
   train_loss               =      0.4118
@@ -349,7 +428,7 @@ Depending on what is bounding the performance it could be good idea to use mixed
 ```
 
 ### Language modeling
-A growing set of applications for distributed learning is language modelling. A typical approach is to leverage an established model and fine tune it for one needs. That's what the `question-answering` example does. We'll start our fine-tuning from the BERT base dataset. The steps are similar to what we did before: first install the requirements:
+A growing set of applications for distributed learning is language modeling. A typical approach is to leverage an established model and fine tune it for one's needs. That's what the `question-answering` example does. We'll start our fine-tuning from the BERT base dataset. The steps are similar to what we did before, first install the requirements:
 
 ```
 cd $HOME/ai-with-rocm/transformers/examples/pytorch/question-answering
@@ -387,7 +466,7 @@ done
   train_samples            =      88524
   train_samples_per_second =    145.192
   train_steps_per_second   =      6.051
- 
+
  # BF16
 ***** train metrics *****
   epoch                    =        1.0
@@ -397,7 +476,7 @@ done
   train_samples            =      88524
   train_samples_per_second =    194.636
   train_steps_per_second   =      8.111
- 
+
  # FP16
  ***** train metrics *****
   epoch                    =        1.0
@@ -408,24 +487,3 @@ done
   train_samples_per_second =    223.686
   train_steps_per_second   =      9.322
  ```
- 
-## Note about MI300
-
-For MI300 series, the publically available wheels files might not contain the support for it yet. Though this is gahnging eminently, you might have to, e.g. leverage the files in https://repo.radeon.com/rocm/manylinux/. E.g. to install PyTorch and run the MNIST example above we could do:
-
-```
-deactivate
-
-python3 -m venv --system-site-packages $HOME/venv-pt-mi300
-source $HOME/venv-pt-mi300/bin/activate 
-
-pip install https://repo.radeon.com/rocm/manylinux/rocm-rel-6.0.2/torch-2.1.2%2Brocm6.0-cp310-cp310-linux_x86_64.whl
-pip install https://repo.radeon.com/rocm/manylinux/rocm-rel-6.0.2/torchvision-0.16.1%2Brocm6.0-cp310-cp310-linux_x86_64.whl
-pip install transformers
-
-cd $HOME/ai-with-rocm
-curl -LO https://raw.githubusercontent.com/pytorch/examples/main/mnist/main.py
-python -u main.py --epochs 2 --batch-size 256
-```
-
-
