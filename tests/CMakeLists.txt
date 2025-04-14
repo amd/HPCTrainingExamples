@@ -942,6 +942,10 @@ add_test(NAME Cupy_Check_Array_Sum COMMAND ../cupy_check_array_sum.sh )
 set_property(TEST Cupy_Check_Array_Sum PROPERTY PASS_REGULAR_EXPRESSION "6  8 10 12 14")
 set_property(TEST Cupy_Check_Array_Sum PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME Cupy_Xarray_Check COMMAND ../cupy_xarray_check.sh )
+set_property(TEST Cupy_Xarray_Check PROPERTY PASS_REGULAR_EXPRESSION "CUDA Device 2")
+set_property(TEST Cupy_Xarray_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 add_test(NAME Cupy_Install_Tests COMMAND ../cupy_install_tests.sh )
 set_property(TEST Cupy_Install_Tests PROPERTY PASS_REGULAR_EXPRESSION "11 passed")
 set_property(TEST Cupy_Install_Tests PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
