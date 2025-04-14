@@ -1,6 +1,6 @@
 # AI and ML exercises
 
-Last revision of this README: April 14th 2025.
+Last revision of this README: **April 14th 2025**.
 
 **NOTE**: these exercises have been tested on MI210 and MI300A accelerators using a container environment.
 To see details on the container environment (such as operating system and modules available) please see `README.md` on [this](https://github.com/amd/HPCTrainingDock) repo.
@@ -141,7 +141,7 @@ Let's define a work directory for us to try some examples.
 ```
 mkdir -p $HOME/ai-with-rocm
 ```
-## PyTorch MNIST example.
+## PyTorch MNIST example
 
 MNIST is a quite popular data set for computer vision training. We are fortunate that are many examples on the internet on how to train MNIST dataset and they can usually be run without any changes.
 
@@ -179,7 +179,7 @@ rocprofv3 --stats --kernel-trace -- python -u main.py --epochs 1 --batch-size 25
 ```
 The resulting `*.csv` files show the different GPU kernels invoked for this application.
 
-## PyTorch MNIST example - distributed.
+## PyTorch MNIST example - distributed
 
 We might now be interested in distributing our training across devices. A way to accomplish this is by taking a distributed data-parallel (DDP) approach where each GPU will train different batch independently and combine the results afterwards.
 
