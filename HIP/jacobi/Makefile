@@ -9,8 +9,9 @@ MPICC=$(PREP) mpic++
 MPILD=$(PREP) $(ROCM_PATH)/bin/hipcc
 HIPCC=$(PREP) $(ROCM_PATH)/bin/hipcc
 
-IS_OMPI=$(shell mpirun --version | grep "Open MPI")
-IS_MPICH=$(shell mpirun --version | grep mpich)
+IS_OMPI=$(shell mpic++ --version | grep "Open MPI")
+IS_MPICH=$(shell mpic++ --version | grep mpich)
+IS_MPICH=$(shell mpic++ --version | grep Cray)
 
 ifneq ($(IS_OMPI),)
   MPICFLAGS=$(shell mpic++ --showme:compile)
