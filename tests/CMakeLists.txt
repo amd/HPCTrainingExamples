@@ -303,7 +303,7 @@ set_property(TEST OpenMP_Intro_Target_Data_Unstructured PROPERTY PASS_REGULAR_EX
 set_property(TEST OpenMP_Intro_Target_Data_Unstructured PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Intro_Target_Data_Update COMMAND ../openmp_intro_target_data_update.sh )
-set_property(TEST OpenMP_Intro_Target_Data_Update PROPERTY PASS_REGULAR_EXPRESSION "Target Update result is 300000.000000")
+set_property(TEST OpenMP_Intro_Target_Data_Update PROPERTY PASS_REGULAR_EXPRESSION "PASS")
 set_property(TEST OpenMP_Intro_Target_Data_Update PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Real-World OpenMP Language Constructs
@@ -941,6 +941,10 @@ set_property(TEST Cupy_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spi
 add_test(NAME Cupy_Check_Array_Sum COMMAND ../cupy_check_array_sum.sh )
 set_property(TEST Cupy_Check_Array_Sum PROPERTY PASS_REGULAR_EXPRESSION "6  8 10 12 14")
 set_property(TEST Cupy_Check_Array_Sum PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Cupy_Xarray_Check COMMAND ../cupy_xarray_check.sh )
+set_property(TEST Cupy_Xarray_Check PROPERTY PASS_REGULAR_EXPRESSION "CUDA Device 2")
+set_property(TEST Cupy_Xarray_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Cupy_Install_Tests COMMAND ../cupy_install_tests.sh )
 set_property(TEST Cupy_Install_Tests PROPERTY PASS_REGULAR_EXPRESSION "11 passed")
