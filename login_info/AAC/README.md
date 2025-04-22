@@ -156,7 +156,7 @@ The output list of `module avail` should show:
    rocprofiler-compute/develop    rocprofiler-systems/amd-staging
 
 --------------------------------------------------------- /etc/lmod/modules/ROCmPlus-LatestCompilers ---------------------------------------------------------
-   amdflang-new-beta-drop/rocm-afar-7450-drop-6.0.0    hipfort_from_source/6.3.3
+   amdflang-new/rocm-afar-7450-drop-6.0.0    hipfort_from_source/6.3.3
 
 --------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-AI ----------------------------------------------------------------
    cupy/14.0.0a1    jax/0.4.35    pytorch/2.6.0

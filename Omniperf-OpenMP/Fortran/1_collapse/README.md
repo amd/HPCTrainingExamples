@@ -3,7 +3,7 @@ Note: Client-side installation instructions are available in the official omnipe
 
 This example was tested on MI300A.
 ```
-module load  amdflang-new-beta-drop/4.0
+module load  amdflang-new
 module load rocm/6.2.1
 module load omniperf/6.2.1
 export HSA_XNACK=1
