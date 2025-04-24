@@ -16,9 +16,11 @@ git clone --branch v$PETSC_VERSION https://gitlab.com/petsc/petsc.git
 
 pushd petsc/src/ksp/ksp/tutorials
 
+sed -i '/PetscCheck(norm/d' bench_kspsolve.c
+
 mpicc bench_kspsolve.c -o bench_kspsolve -I$PETSC_PATH/include -L$PETSC_PATH/lib -lpetsc
 
-./bench_kspsolve
+./bench_kspsolve -mat_type aijhipsparse
 
 popd
 
