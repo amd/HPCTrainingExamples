@@ -3,7 +3,7 @@
 # This test checks that the copy of arrays 
 # from the CPU to the GPU and their sum on the GPU
 
-# NOTE: this test assumes Cupy has been installed according
+# NOTE: this test assumes CuPy has been installed according
 # to the instructions available in the model installation repo:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/cupy_setup.sh
 
