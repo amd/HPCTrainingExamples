@@ -938,7 +938,6 @@ add_test(NAME PETSc_Bench_KSPSolve COMMAND ../petsc_bench_kspsolve.sh )
 set_property(TEST PETSc_Bench_KSPSolve PROPERTY PASS_REGULAR_EXPRESSION "KSP iters:     41")
 set_property(TEST PETSc_Bench_KSPSolve PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-
 # Cupy tests
 
 add_test(NAME Cupy_Check_Import COMMAND ../cupy_check_import.sh )
