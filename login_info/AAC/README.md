@@ -156,30 +156,33 @@ module avail
 The output list of `module avail` should show:
 
 ```
------------------------------------------- /etc/lmod/modules/Linux --------------------------------------------
-   clang/base      gcc/base      miniconda3/24.9.2    miniforge3/24.9.0
+---------------------------------- /etc/lmod/modules/Linux -----------------------------------
+  clang/base      gcc/base      miniconda3/24.9.2    miniforge3/24.9.0
 
-------------------------------------------- /etc/lmod/modules/ROCm --------------------------------------------
-   amdclang/18.0.0-6.4.0         hipfort/6.4.0    rocm/6.4.0                     rocprofiler-systems/6.4.0 (D)
-   amdflang-new/rocm-afar-6.0.0  opencl/6.4.0     rocprofiler-compute/6.4.0 (D)
---------------------------------------- /etc/lmod/modules/ROCmPlus-MPI ----------------------------------------
-   mpi4py/4.0.3    openmpi/5.0.7-ucc1.3.0-ucx1.18.0
+----------------------------------- /etc/lmod/modules/ROCm -----------------------------------
+  amdclang/18.0.0-6.4.0         opencl/6.4.0                   rocprofiler-systems/6.4.0 (D)
+  amdflang-new/rocm-afar-6.0.0  rocm/6.4.0                                    
+  hipfort/6.4.0                 rocprofiler-compute/6.4.0 (D)
 
--------------------------------- /etc/lmod/modules/ROCmPlus-AMDResearchTools ----------------------------------
-   rocprofiler-compute/develop    rocprofiler-systems/amd-staging
+------------------------------- /etc/lmod/modules/ROCmPlus-MPI -------------------------------
+  mpi4py/4.0.3    openmpi/5.0.7-ucc1.3.0-ucx1.18.0
 
---------------------------------- /etc/lmod/modules/ROCmPlus-LatestCompilers ----------------------------------
-   hipfort_from_source/6.4.0
+------------------------ /etc/lmod/modules/ROCmPlus-AMDResearchTools -------------------------
+  rocprofiler-compute/develop    rocprofiler-systems/amd-staging
 
---------------------------------------- /etc/lmod/modules/ROCmPlus-AI -----------------------------------------
-   cupy/14.0.0a1    jax/0.4.35    pytorch/2.7.0
+------------------------- /etc/lmod/modules/ROCmPlus-LatestCompilers -------------------------
+  hipfort_from_source/6.4.0
 
-------------------------------------------- /etc/lmod/modules/misc --------------------------------------------
-   fftw/3.3.10    hipifly/dev                 hypre/2.33.0    netcdf-c/4.9.3-rc1        petsc/3.23.0    tau/dev
-   hdf5/1.14.5    hpctoolkit/2024.11.27dev    kokkos/4.6.00   netcdf-fortran/4.6.2-rc1  scorep/9.0-dev
+------------------------------- /etc/lmod/modules/ROCmPlus-AI --------------------------------
+  cupy/14.0.0a1    jax/0.4.35    pytorch/2.7.0
 
-  Where:
-   D:  Default Module
+----------------------------------- /etc/lmod/modules/misc -----------------------------------
+  fftw/3.3.10  hpctoolkit/2024.11.27dev  netcdf-c/4.9.3-rc1        scorep/9.0-dev
+  hdf5/1.14.5  hypre/2.33.0              netcdf-fortran/4.6.2-rc1  tau/dev
+  hipifly/dev  kokkos/4.6.00             petsc/3.23.0
+
+ Where:
+  D:  Default Module
 ```
 
 There are several modules associated with each ROCm version. One is the rocm module which is needed by many of the other modules. The second is the amdclang module when using the amdclang compiler that comes bundled with ROCm. The third is the hipfort module for the Fortran interfaces to HIP. Also, there is an OpenCL module and one for each of the AMD profilers.
