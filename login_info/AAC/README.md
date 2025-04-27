@@ -3,7 +3,7 @@
 
 # AMD Accelerator Cloud (AAC)
 
-[login_info/AAC/README.md](`https://raw.githubusercontent.com/amd/HPCTrainingExamples/refs/heads/main/login_info/AAC/README.md`)
+File: [login_info/AAC/README.md](`https://raw.githubusercontent.com/amd/HPCTrainingExamples/refs/heads/main/login_info/AAC/README.md`) at https://github.com/amd/HPCTrainingDock
 
 To support trainings, we can upload training containers to the AMD Accelerator Cloud (AAC), and have attendees login using the instructions below. This set of instructions assumes that users have already received their `<username>` and `<port_number>` for the container, and that they have either provided an ssh key to the training team, or they have received a password from the training team.
 
