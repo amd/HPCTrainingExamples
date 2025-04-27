@@ -155,7 +155,7 @@ module avail
 
 The output list of `module avail` should show:
 
-<code>
+```
 ---------------------------------------------- /etc/lmod/modules/Linux -----------------------------------------------
    clang/base      gcc/base      miniconda3/24.9.2    miniforge3/24.9.0
 
@@ -180,7 +180,7 @@ The output list of `module avail` should show:
 
   Where:
    D:  Default Module
-</code>
+```
 
 There are several modules associated with each ROCm version. One is the rocm module which is needed by many of the other modules. The second is the amdclang module when using the amdclang compiler that comes bundled with ROCm. The third is the hipfort module for the Fortran interfaces to HIP. Also, there is an OpenCL module and one for each of the AMD profilers.
 
