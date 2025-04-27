@@ -61,7 +61,7 @@ clean:
 ```
 
 ```
-module load amdflang-new-beta-drop
+module load amdflang-new
 make
 ```
 
@@ -108,7 +108,7 @@ add_executable(openmp_code openmp_code.F90)
 ```
 
 ```
-module load amdflang-new-beta-drop
+module load amdflang-new
 mkdir build && cd build && cmake ..
 make
 ```

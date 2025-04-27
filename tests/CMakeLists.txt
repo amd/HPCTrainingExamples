@@ -932,6 +932,18 @@ add_test(NAME MPI4PY_Standalone_Cupy COMMAND ../mpi4py_cupy.sh --module-name mpi
 set_property(TEST MPI4PY_Standalone_Cupy PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST MPI4PY_Standalone_Cupy PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# PETSc tests
+
+add_test(NAME PETSc_Bench_KSPSolve COMMAND ../petsc_bench_kspsolve.sh )
+set_property(TEST PETSc_Bench_KSPSolve PROPERTY PASS_REGULAR_EXPRESSION "KSP iters:     41")
+set_property(TEST PETSc_Bench_KSPSolve PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+# HYPRE tests
+
+add_test(NAME HYPRE_IJ COMMAND ../hypre_ij.sh )
+set_property(TEST HYPRE_IJ PROPERTY PASS_REGULAR_EXPRESSION "Iterations = 22")
+set_property(TEST HYPRE_IJ PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # Cupy tests
 
 add_test(NAME Cupy_Check_Import COMMAND ../cupy_check_import.sh )
