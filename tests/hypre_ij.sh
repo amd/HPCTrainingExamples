@@ -10,9 +10,9 @@ module purge
 
 module load rocm openmpi hypre
 
-HYPRE_VERSION=`cat $HYPRE_PATH/lib/cmake/HYPREConfigVersion.cmake | grep "set(PACKAGE_VERSION \"2"`
-HYPRE_VERSION=`echo $VER | sed 's/set(PACKAGE_VERSION \"//g'`
-HYPRE_VERSION=`echo $VER | sed 's/\")//g'`
+HYPRE_VERSION=`cat $HYPRE_PATH/lib/cmake/HYPRE/HYPREConfigVersion.cmake | grep "set(PACKAGE_VERSION \"2"`
+HYPRE_VERSION=`echo $HYPRE_VERSION | sed 's/set(PACKAGE_VERSION \"//g'`
+HYPRE_VERSION=`echo $HYPRE_VERSION | sed 's/\")//g'`
 
 git clone --branch v$HYPRE_VERSION https://github.com/hypre-space/hypre.git 
 
