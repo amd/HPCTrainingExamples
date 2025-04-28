@@ -7,6 +7,7 @@ CUPY=0
 PYTORCH=0
 JAX=0
 PETSC=0
+HYPRE=0
 TAU=0
 ROCPROF_SYS=0
 ROCPROF_COMPUTE=0
@@ -47,6 +48,7 @@ usage()
     echo "--cupy : runs the cupy tests"
     echo "--pytorch : runs the pytorch tests"
     echo "--petsc : runs the petsc tests"
+    echo "--hypre : runs the hypre tests"
     echo "--rocprof-sys: runs ROCm rocprof-sys tests depending on the ROCm version"
     echo "--rocprof-compute: runs ROCm rocprof-compute tests depending on the ROCm version"
     echo "--hip: runs the hip tests"
@@ -116,6 +118,11 @@ do
       "--petsc")
           shift
           PETSC=1
+          reset-last
+          ;;
+      "--hypre")
+          shift
+          HYPRE=1
           reset-last
           ;;
       "--rocprof-sys")
@@ -325,6 +332,8 @@ elif [ ${TAU} -eq 1 ]; then
    ctest -R TAU
 elif [ ${PETSC} -eq 1 ]; then
    ctest -R PETSc
+elif [ ${HYPRE} -eq 1 ]; then
+   ctest -R HYPRE
 elif [ ${FFTW} -eq 1 ]; then
    ctest -R FFTW
 elif [ ${SCOREP} -eq 1 ]; then
