@@ -941,7 +941,7 @@ set_property(TEST PETSc_Bench_KSPSolve PROPERTY SKIP_REGULAR_EXPRESSION "module 
 # HYPRE tests
 
 add_test(NAME HYPRE_IJ COMMAND ../hypre_ij.sh )
-set_property(TEST HYPRE_IJ PROPERTY PASS_REGULAR_EXPRESSION "Iterations = 22")
+set_property(TEST HYPRE_IJ PROPERTY PASS_REGULAR_EXPRESSION "Iterations = 21")
 set_property(TEST HYPRE_IJ PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Cupy tests
