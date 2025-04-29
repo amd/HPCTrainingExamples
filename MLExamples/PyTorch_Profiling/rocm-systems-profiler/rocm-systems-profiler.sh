@@ -57,10 +57,18 @@ export RSP_CFG=${PROFILER_TOP_DIR}/rocm-system-profiler/${TOOL_NAME}.cfg
 ${TOOL_COMMAND}-avail -G $RSP_CFG
 
 # Execute the python script:
-${TOOL_COMMAND}-sample -c $RSP_CFG \
--I  kokkosp mpip ompt rocm-smi rocprofiler roctracer roctx rw-locks spin-locks -- \
-python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 20 \
---data-path ${PROFILER_TOP_DIR}/data
+result=`echo ${ROCM_VERSION} | awk '$1>6.3.9'`
+if [[ "${result}" ]]; then
+   ${TOOL_COMMAND}-sample -c $RSP_CFG \
+   -I  kokkosp mpip ompt rocm-smi rocprofiler-sdk rw-locks spin-locks -- \
+   python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 20 \
+   --data-path ${PROFILER_TOP_DIR}/data
+else
+   ${TOOL_COMMAND}-sample -c $RSP_CFG \
+   -I  kokkosp mpip ompt rocm-smi rocprofiler roctracer roctx rw-locks spin-locks -- \
+   python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 20 \
+   --data-path ${PROFILER_TOP_DIR}/data
+fi
 
 rm $RSP_CFG
 
