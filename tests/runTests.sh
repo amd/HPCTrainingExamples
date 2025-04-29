@@ -4,6 +4,7 @@ pushd $(dirname $0)
 
 AI=0
 CUPY=0
+ROCPROFV3=0
 PYTORCH=0
 JAX=0
 PETSC=0
