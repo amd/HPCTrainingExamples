@@ -19,10 +19,10 @@ git clone https://github.com/pytorch/examples.git pytorch_mnist 2>/dev/null
 
 pushd pytorch_mnist
 
-cd data
-mkdir MNIST
-mkdir MNIST/raw
-cd MNIST/raw
+mkdir data
+mkdir data/MNIST
+mkdir data/MNIST/raw
+cd data/MNIST/raw
 
 wget https://raw.githubusercontent.com/fgnt/mnist/master/train-images-idx3-ubyte.gz
 wget https://raw.githubusercontent.com/fgnt/mnist/master/train-labels-idx1-ubyte.gz
