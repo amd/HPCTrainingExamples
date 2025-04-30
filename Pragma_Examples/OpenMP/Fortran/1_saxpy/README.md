@@ -20,11 +20,11 @@ to make use of the APU programming model (unified memory).
 ```
 cd 0_saxpy_serial_portyourself
 ```
-Try to port this example yourself. If you are stuck, use the step by step solution in folders 1-6 and read the instructions for those excersices below. Recommendation for your first port: use ```!$omp requires unified_shared memory``` (in the code after ```implicit none``` in each module) and ```export HSA_XNACK=1``` (before running) that you do not have to worry about map clauses. Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behaviour of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps.
+Try to port this example yourself. If you are stuck, use the step by step solution in folders 1-6 and read the instructions for those excersices below. Recommendation for your first port: use ```!$omp requires unified_shared memory``` (in the code after ```implicit none``` in each module, can also be forced through a compiler flag ```-fopenmp-force-usm```) and ```export HSA_XNACK=1``` (before running) that you do not have to worry about map clauses. Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behaviour of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps.
 
 - Compile the serial version. Note that ```-fopenmp``` is required as omp_get_wtime is used to time the loop execution.
 ```
-amdflang-new -fopenmp saxpy.F90 -o saxpy
+amdflang -fopenmp saxpy.F90 -o saxpy
 ```
 - Run the serial version.
 ```
@@ -41,16 +41,17 @@ vi saxpy.f90
 ```
 add ```!$omp target``` to move the loop in the saxpy subroutine to the device.
 - Compile this first GPU version. Make sure you add ```--offload-arch=gfx942``` (on MI300A, find out what your system's gfx... is with ```rocminfo```)
-on aac6 or aac7 with amdflang-new:
+on aac6 or aac7 with amdflang:
 ```
-amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
+amdflang -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 ```
-or on on aac7 only with ftn:
+[Alternative: on systems with the Cray environment e.g. aac7 with cray ftn:
 
 First, make sure you loaded the right module that offload is enabled before you compile with
 ```
 ftn -fopenmp saxpy.F90 -o saxpy
 ```
+]
 - Run
 ```
 ./saxpy
