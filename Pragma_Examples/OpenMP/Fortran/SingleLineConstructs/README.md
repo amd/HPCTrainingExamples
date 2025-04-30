@@ -20,7 +20,7 @@ We go to the directory with the example and load the amdclang module. We can the
 
 ```
 cd HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/SingleLineConstructs
-module load amdflang-new-beta-drop
+module load amdflang-new
 make saxpy_cpu
 ./saxpy_cpu
 ```
@@ -39,7 +39,7 @@ through the process in these exercises to show you how it is done.
 
 First we will work with a very simple case. It has all the code in a single subroutine with
 statically allocated arrays on the stack. This permits the compiler to have as much information as possible. Note that we could
-also load the regular amdclang module instead of the new amdflang beta.
+also load the regular amdclang module instead of the new amdflang.
 Also, we have made the array size smaller so that it won't run out of stack space.
 
 ```

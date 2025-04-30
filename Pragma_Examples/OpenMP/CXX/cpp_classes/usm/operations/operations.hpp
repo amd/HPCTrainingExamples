@@ -46,6 +46,11 @@ public:
         return n_.getX(index);
     }
 
+    double getNorm() const {
+       double norm = n_.getNorm();
+       return norm;
+    }
+
     double getConst() const {
         return d_.getConst();
     }

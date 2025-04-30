@@ -1,42 +1,48 @@
 #include <iostream>
 #include "daxpy.hpp"
 #include <vector>
+#include <cmath>
 
 int main(int argc, char* argv[]) {
 
    double a = 0.5;
-   int N = 10;
+   int N = 10000000;
 
    // allocate on host and device
-   double* x = new double[N];
-   double* y = new double[N];
-#pragma omp target enter data map(alloc:x[:N],y[:N])
+   daxpy data(a,N);
 
-   // initialize arrays on device
-#pragma omp target teams loop
+   // initialize arrays on GPU
+   #pragma omp target teams loop
    for(int i=0; i<N; i++){
-      x[i]=1.0;
-      y[i]=0.5;
+      data.setX(i,1.0);
+      data.setY(i,0.5);
    }
 
-   // initialize the daxpy class
-   daxpy data(a,N,x,y);
+   // perform daxpy with member function call
+   //data.apply();
 
-   // update arrays on host
-#pragma omp target update from(x[:N],y[:N])
-   data.printArrays();
+   #pragma omp target teams loop
+   for(int i=0; i<N; i++){
+      double val = data.getConst() * data.getX(i) + data.getY(i);
+      data.setY(i,val);
+   }
 
-   // perform daxpy
-   data.apply();
+   // these two lines below are for debugging
+   // data.updateHost();
+   // data.printArrays();
 
-   // update arrays on host
-#pragma omp target update from(x[:N],y[:N])
-   data.printArrays();
+   double check = 0.0;
+   #pragma omp target teams loop reduction(+:check)
+   for(int i=0; i<N; i++){
+      check += data.getY(i);
+   }
 
-   // free arrays on device and host
-#pragma omp target exit data map(delete:x,y)
-   free(x);
-   free(y);
+   if (fabs(check - N) < 1.e-10) {
+      std::cout<<"PASS!"<<std::endl;
+   }
+   else {
+      std::cout<<"FAIL!"<<std::endl;
+   }
 
    return 0;
 

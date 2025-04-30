@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 
 double some_computation(double x, int i){
   return(2.0*x);
@@ -22,7 +23,7 @@ int main(int argc, char *argv[]) {
   for (int i=0; i<N; i++)
     input[i]=1.0;
 
-#pragma omp target data map(alloc:tmp[:N]) map(to:input[:N]) map(from:res)
+#pragma omp target data map(alloc:tmp[:N]) map(to:input[:N])
   {
 #pragma omp target
 #pragma omp teams distribute parallel for
@@ -38,5 +39,12 @@ int main(int argc, char *argv[]) {
       res += final_computation(input[i], tmp[i], i);
   }
 
+  if(fabs(res-300000.0)<1.e-14){
+     printf("PASS \n");
+  }
+  else{
+     printf("FAIL \n");
+  }
   printf("Target Update result is %lf\n",res);
+
 }

@@ -64,6 +64,22 @@ set_property(TEST HIPStdPar_ShallowWater_Ver2 PROPERTY SKIP_REGULAR_EXPRESSION "
 #set_property(TEST HIPStdPar_ShallowWater_StdPar PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 #set_property(TEST HIPStdPar_ShallowWater_StdPar PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME HIPStdPar_MixAndMatch_Atomic COMMAND ../hipstdpar_mixandmatch_atomic_stdpar_omp.sh )
+set_property(TEST HIPStdPar_MixAndMatch_Atomic PROPERTY PASS_REGULAR_EXPRESSION "StdPar computation took")
+set_property(TEST HIPStdPar_MixAndMatch_Atomic PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPStdPar_MixAndMatch_Hip COMMAND ../hipstdpar_mixandmatch_hip_stdpar.sh )
+set_property(TEST HIPStdPar_MixAndMatch_Hip PROPERTY PASS_REGULAR_EXPRESSION "First 5 results")
+set_property(TEST HIPStdPar_MixAndMatch_Hip PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPStdPar_MixAndMatch_Omp COMMAND ../hipstdpar_mixandmatch_omp_stdpar.sh )
+set_property(TEST HIPStdPar_MixAndMatch_Omp PROPERTY PASS_REGULAR_EXPRESSION "StdPar Executor took")
+set_property(TEST HIPStdPar_MixAndMatch_Omp PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPStdPar_MixAndMatch_CpuGpu COMMAND ../hipstdpar_mixandmatch_std_cpu_gpu.sh )
+set_property(TEST HIPStdPar_MixAndMatch_CpuGpu PROPERTY PASS_REGULAR_EXPRESSION "StdParGpu Executor took")
+set_property(TEST HIPStdPar_MixAndMatch_CpuGpu PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # Unified Shared Memory Examples (MI300A programming)
 add_test(NAME USM_Vector_Add COMMAND ../usm_vector_add.sh )
 set_property(TEST USM_Vector_Add PROPERTY PASS_REGULAR_EXPRESSION "Success")
@@ -221,6 +237,20 @@ add_test(NAME OpenMP_Vecadd_F_GFortran COMMAND ../openmp_vecadd_f_gfortran.sh )
 set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
 set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# OpenMP C++ Classes Examples
+
+add_test(NAME OpenMP_Cpp_Classes_Explicit_Daxpy COMMAND ../openmp_cpp_classes_explicit_daxpy.sh )
+set_property(TEST OpenMP_Cpp_Classes_Explicit_Daxpy PROPERTY PASS_REGULAR_EXPRESSION "PASS")
+set_property(TEST OpenMP_Cpp_Classes_Explicit_Daxpy PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Cpp_Classes_USM_Daxpy COMMAND ../openmp_cpp_classes_usm_daxpy.sh )
+set_property(TEST OpenMP_Cpp_Classes_USM_Daxpy PROPERTY PASS_REGULAR_EXPRESSION "PASS")
+set_property(TEST OpenMP_Cpp_Classes_USM_Daxpy PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Cpp_Classes_USM_Operations COMMAND ../openmp_cpp_classes_usm_operations.sh )
+set_property(TEST OpenMP_Cpp_Classes_USM_Operations PROPERTY PASS_REGULAR_EXPRESSION "PASS")
+set_property(TEST OpenMP_Cpp_Classes_USM_Operations PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # OpenMP Intro Examples
 
 add_test(NAME OpenMP_Intro_Saxpy_CPU COMMAND ../openmp_intro_saxpy_cpu.sh )
@@ -273,7 +303,7 @@ set_property(TEST OpenMP_Intro_Target_Data_Unstructured PROPERTY PASS_REGULAR_EX
 set_property(TEST OpenMP_Intro_Target_Data_Unstructured PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Intro_Target_Data_Update COMMAND ../openmp_intro_target_data_update.sh )
-set_property(TEST OpenMP_Intro_Target_Data_Update PROPERTY PASS_REGULAR_EXPRESSION "Target Update result is 300000.000000")
+set_property(TEST OpenMP_Intro_Target_Data_Update PROPERTY PASS_REGULAR_EXPRESSION "PASS")
 set_property(TEST OpenMP_Intro_Target_Data_Update PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Real-World OpenMP Language Constructs
@@ -902,11 +932,31 @@ add_test(NAME MPI4PY_Standalone_Cupy COMMAND ../mpi4py_cupy.sh --module-name mpi
 set_property(TEST MPI4PY_Standalone_Cupy PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST MPI4PY_Standalone_Cupy PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# PETSc tests
+
+add_test(NAME PETSc_Bench_KSPSolve COMMAND ../petsc_bench_kspsolve.sh )
+set_property(TEST PETSc_Bench_KSPSolve PROPERTY PASS_REGULAR_EXPRESSION "KSP iters:     41")
+set_property(TEST PETSc_Bench_KSPSolve PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+# HYPRE tests
+
+add_test(NAME HYPRE_IJ COMMAND ../hypre_ij.sh )
+set_property(TEST HYPRE_IJ PROPERTY PASS_REGULAR_EXPRESSION "Iterations = 21")
+set_property(TEST HYPRE_IJ PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # Cupy tests
 
 add_test(NAME Cupy_Check_Import COMMAND ../cupy_check_import.sh )
 set_property(TEST Cupy_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST Cupy_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Cupy_Check_Array_Sum COMMAND ../cupy_check_array_sum.sh )
+set_property(TEST Cupy_Check_Array_Sum PROPERTY PASS_REGULAR_EXPRESSION "6  8 10 12 14")
+set_property(TEST Cupy_Check_Array_Sum PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Cupy_Xarray_Check COMMAND ../cupy_xarray_check.sh )
+set_property(TEST Cupy_Xarray_Check PROPERTY PASS_REGULAR_EXPRESSION "CUDA Device 2")
+set_property(TEST Cupy_Xarray_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Cupy_Install_Tests COMMAND ../cupy_install_tests.sh )
 set_property(TEST Cupy_Install_Tests PROPERTY PASS_REGULAR_EXPRESSION "11 passed")
@@ -1038,7 +1088,7 @@ set_property(TEST TAU_Check_MPI_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module
 # Score-P Tests
 
 add_test(NAME Score-P_Check_Version COMMAND ../scorep_check_version.sh)
-set_property(TEST Score-P_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "Score-P 9.0-beta")
+set_property(TEST Score-P_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "Score-P 9.0")
 set_property(TEST Score-P_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Miniconda3 Tests

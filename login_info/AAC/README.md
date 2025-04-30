@@ -1,4 +1,10 @@
+
+\newpage
+
 # AMD Accelerator Cloud (AAC)
+
+File: [login_info/AAC/README.md](`https://raw.githubusercontent.com/amd/HPCTrainingExamples/refs/heads/main/login_info/AAC/README.md`) at https://github.com/amd/HPCTrainingExamples
+
 To support trainings, we can upload training containers to the AMD Accelerator Cloud (AAC), and have attendees login using the instructions below. This set of instructions assumes that users have already received their `<username>` and `<port_number>` for the container, and that they have either provided an ssh key to the training team, or they have received a password from the training team.
 
 ## Login Instructions
@@ -23,9 +29,14 @@ cat $HOME/.ssh/id_ed25519.pub
 **IMPORTANT**: if you are supposed to login with an ssh key and you are prompted a password, do not type any password!
 Instead, type `Ctrl+C` and contact us to let us know about the incident.
 
-To login to AAC using the ssh key use the `<username>` and `<port_number>` that the training team has provided you, for instance:
+To login to an AAC MI300A system using the ssh key use the `<username>` and `<port_number>` that the training team has provided you, for instance:
 ```bash
 ssh <username>@aac6.amd.com -i <path/to/ssh/key> -p <port_number> (1)
+```
+
+For an MI210 or MI250 system, use aac1.amd.com
+```bash
+ssh <username>@aac1.amd.com -i <path/to/ssh/key> -p <port_number> (1)
 ```
 
 ### Login with password
@@ -35,8 +46,16 @@ ssh <username>@aac6.amd.com -p <port_number>
 ```
 **IMPORTANT**: It is fundamental to not type the wrong password more than two times otherwise your I.P. address will be blacklisted and you will not be allowed access to AAC until we modify our firewall to get you back in. This is especially important if you are at an event where all the attendees are connecting to the same wireless network.
 
-In the commands above, `-p` refers to the port number and `-i` points to the path of your ssh key. Note that different port numbers
+If you are using a password login, you can upload an ssh key with the following command to avoid using a password
+
+```bash
+ssh-copy-id -i <path/to/ssh/key.pub> -p <port_number> -o UpdateHostKeys=yes <username>@aac6.amd.com
+```
+
+In the commands above, `-p` refers to the port number and `-i` points to the path of your ssh key. The `-i` option is not needed if your
+default key is used. Note that different port numbers
 will be associated with different containers on the AAC, and anytime a container is brought up, the port number will change in general.
+
  
 To simplify the login even further, you can add the following to your `.ssh/config` file:
 
@@ -45,12 +64,12 @@ To simplify the login even further, you can add the following to your `.ssh/conf
 Host aac
    User <username>
    Hostname aac6.amd.com // this may be different depending on the container
-   IdentityFile <path/to/ssh/key>
+   IdentityFile <path/to/ssh/key> // this points to the private key file
    Port <port_number>
    ServerAliveInterval 600
    ServerAliveCountMax 30
 ```
-The `ServerAlive*` lines in the config file may be added to avoid timeouts when idle. you can then login using:
+The `ServerAlive*` lines in the config file may be added to avoid timeouts when idle. You can then login using:
 ```bash
 ssh aac -p <port_number>
 ```
@@ -143,33 +162,35 @@ module avail
 The output list of `module avail` should show:
 
 ```
------------------------------ /etc/lmod/modules/Linux -------------------------------
-   clang/base        clang/15    gcc/11 (D)    gcc/13               miniforge3/24.9.0
-   clang/14   (D)    gcc/base    gcc/12        miniconda3/24.9.2
+---------------------------------- /etc/lmod/modules/Linux -----------------------------------
+  clang/base      gcc/base      miniconda3/24.9.2    miniforge3/24.9.0
 
------------------------------ /etc/lmod/modules/ROCm --------------------------------
-   amdclang/18.0.0-6.3.3    opencl/6.3.3    rocprofiler-compute/6.3.3
-   hipfort/6.3.3            rocm/6.3.3      rocprofiler-systems/6.3.3
+----------------------------------- /etc/lmod/modules/ROCm -----------------------------------
+  amdclang/18.0.0-6.4.0         opencl/6.4.0                   rocprofiler-systems/6.4.0 (D)
+  amdflang-new/rocm-afar-6.0.0  rocm/6.4.0                                    
+  hipfort/6.4.0                 rocprofiler-compute/6.4.0 (D)
 
-------------------------- /etc/lmod/modules/ROCmPlus-MPI ----------------------------
-   mpi4py/4.0.1    openmpi/5.0.7-ucc1.3.0-ucx1.18.0
+------------------------------- /etc/lmod/modules/ROCmPlus-MPI -------------------------------
+  mpi4py/4.0.3    openmpi/5.0.7-ucc1.3.0-ucx1.18.0
 
-------------------- /etc/lmod/modules/ROCmPlus-LatestCompilers ----------------------
-   amdflang-new-beta-drop/rocm-afar-7110-drop-5.3.0    hipfort_from_source/6.3.3
-   aomp/amdclang-19.0
+------------------------ /etc/lmod/modules/ROCmPlus-AMDResearchTools -------------------------
+  rocprofiler-compute/develop    rocprofiler-systems/amd-staging
 
--------------------------- /etc/lmod/modules/ROCmPlus-AI ----------------------------
-   cupy/14.0.0a1    jax/0.4.35    pytorch/2.6.0
+------------------------- /etc/lmod/modules/ROCmPlus-LatestCompilers -------------------------
+  hipfort_from_source/6.4.0
 
------------------------------ /etc/lmod/modules/misc --------------------------------
-   fftw/3.3.10    hpctoolkit/2024.11.27dev    netcdf-fortran/4.6.2-rc1
-   hdf5/1.14.5    kokkos/4.5.01               scorep/9.0-dev
-   hipifly/dev    netcdf-c/4.9.3-rc1          tau/dev
+------------------------------- /etc/lmod/modules/ROCmPlus-AI --------------------------------
+  cupy/14.0.0a1    jax/0.4.35    pytorch/2.7.0
 
-  Where:
-   D:  Default Module
+----------------------------------- /etc/lmod/modules/misc -----------------------------------
+  fftw/3.3.10  hpctoolkit/2024.11.27dev  netcdf-c/4.9.3-rc1        scorep/9.0-dev
+  hdf5/1.14.5  hypre/2.33.0              netcdf-fortran/4.6.2-rc1  tau/dev
+  hipifly/dev  kokkos/4.6.00             petsc/3.23.0
 
+ Where:
+  D:  Default Module
 ```
+
 There are several modules associated with each ROCm version. One is the rocm module which is needed by many of the other modules. The second is the amdclang module when using the amdclang compiler that comes bundled with ROCm. The third is the hipfort module for the Fortran interfaces to HIP. Also, there is an OpenCL module and one for each of the AMD profilers.
 
 Compiler modules set the C, CXX, FC flags. Only one compiler module can be loaded at a time. hipcc is in the path when the rocm module is loaded. Note that there are several modules that set the compiler flags and that they set the full path to the compilers to avoid path problems.
@@ -197,7 +218,7 @@ mkdir -p $HOME/HPCTrainingExamples
 scp -pr /Shared/HPCTrainingExamples/* $HOME/HPCTrainingExamples/
 ```
 
-## Trainig Examples Repo
+## Training Examples Repo
 
 
 Alternatively, you can get the examples from our repo.

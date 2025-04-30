@@ -20,7 +20,7 @@ Load the necessary modules, including flang-new compiler:
 
 ```
 module load rocm/6.2.1
-module load amdflang-new-beta-drop/4.0
+module load amdflang-new
 module load openmpi
 ```
 
