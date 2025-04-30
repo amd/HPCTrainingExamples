@@ -5,6 +5,8 @@ README.md `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/8_interop` from th
 This is a simple example to demonstrate fortran to HIP interoperability
 
 ```
+module load rocm
+module load amdflang-new
 make
 ```
 
