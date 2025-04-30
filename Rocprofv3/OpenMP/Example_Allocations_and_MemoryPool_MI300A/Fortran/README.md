@@ -1,6 +1,5 @@
 # Excercise rocprofv3 with roctx-markers: Dynamic memory allocations and memory pool on MI300A
 This excercise highlights the importance of the reduction of dynamic memory allocations on MI300A with unified memory and shows a way to discover such an issue with rocprofv3 and how to use roctx markers in Fortran. So this excercise teaches you about a common performance problem on MI300A as well as how to use rocprofv3 with roctx markers.
-
 #### Environment on aac7:
 Allocate a (shared) node, 1 APU:
 ```
@@ -25,7 +24,17 @@ Then compile with ftn instead of amdflang and instead of --offload-arch use this
 ```
 module load craype-accel-amd-gfx942
 ```
-for readablity instructions are only for amdflang in the following.
+for readablity instructions are only for amdflang in the following, but you can use cray ftn instead, remove the offload-arch and load the cray modules.
+
+#### Environment on aac6:
+```
+module load amdflang-new
+```
+Set
+```
+export HSA_XNACK=1
+```
+to avoid memory copies and enable USM code.
 
 ## version 1: Problem
 The first version is an OpenMP offload example with three kernels in an iterative loop as an example of a "dwarf" of an application with an iterative solution or multiple time steps.
