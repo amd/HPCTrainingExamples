@@ -24,7 +24,7 @@ Set ```export HSA_XNACK=1```.
 ```
 cd 1_vecadd_usm  
 ```
-contains the unified memory solution. Note: if you set ```HSA_XNACK=0``` you will get an error message. This is the intended behaviour for USM, if XNACK is disabled. This is not yet always the case for the beta release of amdflang-new.
+contains the unified memory solution. Note: if you set ```HSA_XNACK=0``` you will get an error message. This is the intended behaviour for USM, if XNACK is disabled. This is not yet always the case for the beta release of amdflang.
 
 # Part 2: with map clauses
 Port first with map clauses and later optimize the data movement:
