@@ -1,5 +1,7 @@
 # Excercise rocprofv3 with roctx-markers: Dynamic memory allocations and memory pool on MI300A
 This excercise highlights the importance of the reduction of dynamic memory allocations on MI300A with unified memory and shows a way to discover such an issue with rocprofv3 and how to use roctx markers in Fortran. So this excercise teaches you about a common performance problem on MI300A as well as how to use rocprofv3 with roctx markers.
+
+Depending on which system you are using setup your environment:
 #### Environment on aac7:
 Allocate a (shared) node, 1 APU:
 ```
