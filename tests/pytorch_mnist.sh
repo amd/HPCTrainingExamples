@@ -17,7 +17,7 @@ rm -rf pytorch_mnist
 
 git clone https://github.com/pytorch/examples.git pytorch_mnist 2>/dev/null
 
-pushd pytorch_mnist/mnist
+pushd pytorch_mnist
 
 cd data
 mkdir MNIST
@@ -34,9 +34,9 @@ gunzip -k *.gz
 popd
 
 # use downloaded data instead of letting it download from broken mirror
-sed -i 's/train=True, download=True/train=True, download=False/' main.py
+sed -i 's/train=True, download=True/train=True, download=False/' mnist/main.py
 
-python3 main.py
+python3 mnist/main.py
 
 module purge
 
