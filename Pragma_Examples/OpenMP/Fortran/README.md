@@ -5,10 +5,10 @@ cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran
 ```
 #### on aac6:
 
-Load the amdflang-new compiler and set up the environment 
+Load the AMD Next Generation Fortran Compiler and set up the environment 
 ```
 module load amdflang-new
-export FC=amdflang-new
+export FC=amdflang
 ```
 Note that everyone shares a single node, so performance can be severely impacted due to a noisy environment.
 
@@ -33,7 +33,7 @@ scancel <JobID>
 to terminate a job.
 
 You can choose the Cray Fortran compiler (ftn) or the amdflang-new compiler.
-##### amdflang-new compiler on aac7:
+##### amdflang AMD Next Generation Fortran compiler on aac7:
 ```
 module load rocm/rocm-afar-5891
 ```
@@ -57,18 +57,16 @@ This flag
 ```
 export HSA_XNACK=1
 ```
-will enable no memory copies (use of unified_shared_memory) on MI300A
+will enable no memory copies (use of unified_shared_memory) on MI300A (USM excercises)
 ```
 export HSA_XNACK=0
 ```
-will disable this and behave similar to a discrete GPU with memory copies.
+will disable this and behave similar to a discrete GPU with memory copies (map clause excercises for portability to discrete GPUs).
 Check with
 ```
 rocminfo
 ```
 if xnack+ (unified memory enabled) or xnack- (with memory copies) is set.
-
-Note: In the beta release of the amdflang-new/4.0 compiler ```HSA_XNACK=0``` with a code with !$omp requires unified_shared_memory can be compiled in some cases as if no unified_shared_memory is required. This is a behavior not according to the standard and will lead to an error message in future releases!
 
 The exercises in the folders numbered 1 to 6 are small examples of what one may encounter when porting a real world code. 
 Each excercise has it's own README with instructions.
@@ -77,7 +75,7 @@ The instructions assume you work on MI300A and some of the excercises explore th
 The reccomended order to do the exercises is the order in which they are numbered and first all with unified memory and then again with map clauses or data region.
 Excercise 7 is a small app with a Jacobi solver. (Note: A C/C++ version of this Fortran code is explained in detail a Blogpost https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-jacobi-readme/.) 
 
-Choose one of the excercises in the sub-directories and use the README there for instructions (reccomended: follow them as they are numbered, do all excercises first with unified memory and then with map clauses):
+Choose one of the excercises in the sub-directories and use the README there for instructions (reccomended: follow them as they are numbered, do all excercises first with unified memory and later with map clauses):
 ```
 cd 1_saxpy
 cd 2_vecadd  
