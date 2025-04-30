@@ -12,7 +12,7 @@ FC1=$(notdir $(FC))
 #ifeq ($(findstring amdflang,$(FC1)), amdflang)
 #  OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
 #  FREE_FORM_FLAG = -Mfreeform
-ifeq ($(findstring amdflang-new,$(FC1)), amdflang-new)
+ifeq ($(findstring amdflang,$(FC1)), amdflang)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -ffree-form
 else ifeq ($(findstring flang,$(FC1)), flang)

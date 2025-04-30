@@ -9,7 +9,7 @@ FC1=$(notdir $(FC))
 #ifeq ($(findstring amdflang,$(FC1)), amdflang)
 #  OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
 #  FREE_FORM_FLAG = -Mfreeform
-ifeq ($(findstring amdflang-new,$(FC1)), amdflang-new)
+ifeq ($(findstring amdflang,$(FC1)), amdflang)
   OPENMP_FLAGS = -fopenmp
   FREE_FORM_FLAG = -ffree-form
 else ifeq ($(findstring flang,$(FC1)), flang)
@@ -24,7 +24,7 @@ endif
 
 ifeq ($(findstring ftn,$(FC1)), ftn)
   FFLAGS = -g -eZ -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
-else ifeq ($(findstring amdflang-new,$(FC1)), amdflang-new)
+else ifeq ($(findstring amdflang,$(FC1)), amdflang)
   FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else
   FFLAGS = -g -O3 ${FREE_FORM_FLAG} -fstrict-aliasing ${OPENMP_FLAGS}

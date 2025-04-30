@@ -1,5 +1,5 @@
 # Porting a small app: jacobi
-Note: This excercise code and solutions were tested with amdflang-new.
+Note: This excercise code and solutions were tested with amdflang.
 ```
 cd 0_jacobi_portyourself
 ```

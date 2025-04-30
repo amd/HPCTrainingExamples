@@ -1,7 +1,7 @@
 # Excercise: mapping of different datatypes
 
 This excercise explores the possibilities of mapping derived types. This is one of the main challenges one may encounter when porting a Fortran app to discrete GPUs. This excercise also shows that on the APU using HSA_XNACK=1 such problems do not exist.
-Note: This excercise was designed for amdflang-new.
+Note: This excercise was designed for amdflang.
 
 Compile the examples:
 ```
@@ -61,7 +61,7 @@ Set
 ```
 export LIBOMPTARGET_INFO=-1 
 ```
-with the amdflang-new compiler or 
+with the amdflang compiler or 
 ```
 export CRAY_ACC_DEBUG=1
 
