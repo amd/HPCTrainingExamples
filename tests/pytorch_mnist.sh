@@ -32,16 +32,16 @@ wget https://raw.githubusercontent.com/fgnt/mnist/master/t10k-labels-idx1-ubyte.
 gunzip -k *.gz
 
 popd
-cd pytorch_mnist
+cd pytorch_mnist/mnist
 
 # use downloaded data instead of letting it download from broken mirror
 sed -i 's/train=True, download=True/train=True, download=False/' ./mnist/main.py
 
-python3 ./mnist/main.py
+python3 main.py
 
 module purge
 
-cd ..
+cd ../..
 
 rm -rf pytorch_mnist
 
