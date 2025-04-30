@@ -34,7 +34,7 @@ gunzip -k *.gz
 popd
 
 # use downloaded data instead of letting it download from broken mirror
-sed -i 's/train=True, download=True/train=True, download=False/' mnist/main.py
+sed -i 's/train=True, download=True/train=True, download=False/' ./mnist/main.py
 
 python3 ./mnist/main.py
 
