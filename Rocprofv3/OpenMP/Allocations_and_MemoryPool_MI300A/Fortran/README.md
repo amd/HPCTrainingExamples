@@ -1,6 +1,7 @@
 # Excercise rocprofv3 with roctx-markers: Dynamic memory allocations and memory pool on MI300A
 This excercise highlights the importance of the reduction of dynamic memory allocations on MI300A with unified memory and shows a way to discover such an issue with rocprofv3 and how to use roctx markers in Fortran. So this excercise teaches you about a common performance problem on MI300A as well as how to use rocprofv3 with roctx markers.
 
+Depending on which system you are using setup your environment:
 #### Environment on aac7:
 Allocate a (shared) node, 1 APU:
 ```
@@ -15,6 +16,27 @@ Set
 ```
 export HSA_XNACK=1
 ```
+
+Note: In case you want to use cray ftn instead of amdflang:
+```
+module load craype-x86-genoa
+module load cce
+```
+Then compile with ftn instead of amdflang and instead of --offload-arch use this module:
+```
+module load craype-accel-amd-gfx942
+```
+for readablity instructions are only for amdflang in the following, but you can use cray ftn instead, remove the offload-arch and load the cray modules.
+
+#### Environment on aac6:
+```
+module load amdflang-new
+```
+Set
+```
+export HSA_XNACK=1
+```
+to avoid memory copies and enable USM code.
 
 ## version 1: Problem
 The first version is an OpenMP offload example with three kernels in an iterative loop as an example of a "dwarf" of an application with an iterative solution or multiple time steps.
@@ -126,10 +148,19 @@ Installation directory:
 mkdir $UMPIRE_PATH
 ```
 Configure cmake, make sure the target is gfx942 (for MI300A), Fortran is enabled and the ROCM_PATH is set to the rocm-afar-drop-<version>. The Fortran compiler needs to be set through the `FC` variable. Our module for the compiler takes care of that but if you install on another system you have to set it right, too:
+For the AMD Next Generation Fortran compiler set `FC=amdflang`, for the cray compiler set `FC=ftn`, If the cmake fails, check that cmake version 3.30 or higher is used and make sure a rocm version is loaded.
+
+For amdflang:
 ```
 cmake -DCMAKE_INSTALL_PREFIX=${UMPIRE_PATH} -DROCM_ROOT_DIR=${ROCM_PATH} -DHIP_ROOT_DIR=${ROCM_PATH}/hip -DHIP_PATH=${ROCM_PATH}/llvm/bin -DENABLE_HIP=On -DENABLE_OPENMP=Off -DENABLE_CUDA=Off -DENABLE_MPI=Off -DCMAKE_CXX_COMPILER=${ROCM_PATH}/llvm/bin/amdclang++ -DCMAKE_C_COMPILER=${ROCM_PATH}/llvm/bin/amdclang -DCMAKE_HIP_ARCHITECTURES=gfx942 -DAMDGPU_TARGETS=gfx942 -DCMAKE_HIP_ARCHITECTURES=gfx942 -DGPU_TARGETS=gfx942 -DBLT_CXX_STD=c++14 -DUMPIRE_ENABLE_IPC_SHARED_MEMORY=On -DENABLE_FORTRAN=On ../
 ```
 Note: for older versions of the Next Generation Fortran compiler -DCMAKE_Fortran_COMPILER_ID=GNU may be needed as the Next Generation Fortran Compiler was not yet detected correctly and the GNU flags are the same. Flags for the Next Generation Fortran Compiler are mostly compatible with gfortran.
+
+For cray ftn best also use the cray wrappers for the C/C++ compilers:
+```
+cmake -DCMAKE_INSTALL_PREFIX=${UMPIRE_PATH} -DROCM_ROOT_DIR=${ROCM_PATH} -DHIP_ROOT_DIR=${ROCM_PATH}/hip -DHIP_PATH=${ROCM_PATH}/llvm/bin -DENABLE_HIP=On -DENABLE_OPENMP=Off -DENABLE_CUDA=Off -DENABLE_MPI=Off -DCMAKE_CXX_COMPILER=CC -DCMAKE_C_COMPILER=cc -DCMAKE_HIP_ARCHITECTURES=gfx942 -DAMDGPU_TARGETS=gfx942 -DCMAKE_HIP_ARCHITECTURES=gfx942 -DGPU_TARGETS=gfx942 -DBLT_CXX_STD=c++14 -DUMPIRE_ENABLE_IPC_SHARED_MEMORY=On -DENABLE_FORTRAN=On ../
+```
+
 Build:
 ```
 make -j 32
