@@ -55,5 +55,5 @@ saxpy_gpu_split_level: saxpy_gpu_split_level.o
 
 clean:
 	rm -f saxpy_gpu_target saxpy_gpu_target_teams
-	rm -f saxpy_gpu_target_teams_distribute saxpy_gpu_parallelfor
+	rm -f saxpy_gpu_target_teams_distribute saxpy_gpu_parallel_for
 	rm -f saxpy_gpu_collapse saxpy_gpu_split saxpy_gpu_split_level

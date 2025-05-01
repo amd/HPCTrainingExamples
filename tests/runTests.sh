@@ -4,8 +4,11 @@ pushd $(dirname $0)
 
 AI=0
 CUPY=0
+ROCPROFV3=0
 PYTORCH=0
 JAX=0
+PETSC=0
+HYPRE=0
 TAU=0
 ROCPROF_SYS=0
 ROCPROF_COMPUTE=0
@@ -24,6 +27,7 @@ MVAPICH2=0
 MINICONDA3=0
 MINIFORGE3=0
 HDF5=0
+HIPSTDPAR=0
 NETCDF=0
 HIPFORT=0
 GPU_AWARE_MPI=0
@@ -44,10 +48,13 @@ usage()
     echo "--ai : runs the ai/ml tests"
     echo "--cupy : runs the cupy tests"
     echo "--pytorch : runs the pytorch tests"
+    echo "--petsc : runs the petsc tests"
+    echo "--hypre : runs the hypre tests"
     echo "--rocprof-sys: runs ROCm rocprof-sys tests depending on the ROCm version"
     echo "--rocprof-compute: runs ROCm rocprof-compute tests depending on the ROCm version"
     echo "--hip: runs the hip tests"
     echo "--hipify: runs the hipify tests"
+    echo "--hipstdpar: runs the hipstdpar tests"
     echo "--hipifly: runs the hipifly tests"
     echo "--kokkos: runs the kokkos tests"
     echo "--hpctoolkit: runs the hpctoolkit tests"
@@ -109,6 +116,16 @@ do
           PYTORCH=1
           reset-last
           ;;
+      "--petsc")
+          shift
+          PETSC=1
+          reset-last
+          ;;
+      "--hypre")
+          shift
+          HYPRE=1
+          reset-last
+          ;;
       "--rocprof-sys")
           shift	   
           ROCPROF_SYS=1
@@ -127,6 +144,11 @@ do
       "--hipify")
           shift
           HIPIFY=1
+          reset-last
+          ;;
+      "--hipstdpar")
+          shift
+          HIPSTDPAR=1
           reset-last
           ;;
       "--hipifly")
@@ -289,6 +311,8 @@ elif [ ${HIP} -eq 1 ]; then
    ctest -R Hipifly
 elif [ ${HIPIFY} -eq 1 ]; then
    ctest -R Hipify
+elif [ ${HIPSTDPAR} -eq 1 ]; then
+   ctest -R StdPar
 elif [ ${HIPIFLY} -eq 1 ]; then
    ctest -R Hipifly
 elif [ ${KOKKOS} -eq 1 ]; then
@@ -307,6 +331,10 @@ elif [ ${MINIFORGE3} -eq 1 ]; then
    ctest -R Miniforge3
 elif [ ${TAU} -eq 1 ]; then
    ctest -R TAU
+elif [ ${PETSC} -eq 1 ]; then
+   ctest -R PETSc
+elif [ ${HYPRE} -eq 1 ]; then
+   ctest -R HYPRE
 elif [ ${FFTW} -eq 1 ]; then
    ctest -R FFTW
 elif [ ${SCOREP} -eq 1 ]; then
@@ -321,7 +349,7 @@ elif [ ${OPENMPI} -eq 1 ]; then
 elif [ ${MPI4PY} -eq 1 ]; then
    ctest -R MPI4PY
 elif [ ${OPENMP} -eq 1 ]; then
-   ctest -R OpenMP
+   ctest -R OpenMP_
 elif [ ${OPENACC} -eq 1 ]; then
    ctest -R OpenACC
 elif [ ${MVAPICH2} -eq 1 ]; then

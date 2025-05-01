@@ -4,7 +4,7 @@
 # suite from the Cupy repo: 
 # https://github.com/ROCm/cupy/tree/master/tests/install_tests
 
-# NOTE: this test assumes Cupy has been installed according
+# NOTE: this test assumes CuPy has been installed according
 # to the instructions available in the model installation repo:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/cupy_setup.sh
 

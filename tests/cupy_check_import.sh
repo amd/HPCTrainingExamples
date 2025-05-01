@@ -3,7 +3,7 @@
 # This test imports the cupy package in Python to test 
 # if Cupy is installed and accessible
 
-# NOTE: this test assumes Cupy has been installed according
+# NOTE: this test assumes CuPy has been installed according
 # to the instructions available in the model installation repo:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/cupy_setup.sh
 

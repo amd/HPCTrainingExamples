@@ -13,7 +13,7 @@ __global__ void yax(double* y,
 	  i += gridDim.x * blockDim.x){
     double temp = 0.0;
     for(int j = 0; j < m; j++){
-      temp += A[i*n+j] * x[j];
+      temp += A[i*m+j] * x[j];
     }
     res += y[i] * temp;
   }

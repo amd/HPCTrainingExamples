@@ -12,24 +12,24 @@ using namespace chrono;
 
 #pragma omp requires unified_shared_memory
 int main(int argc, char *argv[]){
-   double *X, *Y, *Z;
-   size_t N = (size_t) BLOCKSIZE*BLOCKSIZE*BLOCKSIZE/sizeof(double);
+   double *X, *Y;
+   size_t N = (size_t) 1024.0*1024.0*1024.0/sizeof(double);
    int niter = 100;
 
    int alignment_length = 16;
    high_resolution_clock::time_point t1, t2;
 
-   printf("argc is %d %d\n",argc,argv[1]);
+   printf("argc is %d %s\n",argc,argv[1]);
    if (argc > 1) {
-      alignment_length = argv[1];
+      alignment_length = atoi(argv[1]);
    }
    if (argc > 2) {
-      N = argv[2];
+      N = atoi(argv[2]);
    }
 
    if (alignment_length < 16) {
-      hipMalloc((void **)&X, N*sizeof(double));
-      hipMalloc((void **)&Y, N*sizeof(double));
+      X = (double *)malloc(N*sizeof(double));
+      Y = (double *)malloc(N*sizeof(double));
    } else {
       X = new (std::align_val_t(alignment_length)) double[N];
       Y = new (std::align_val_t(alignment_length)) double[N];
@@ -62,10 +62,13 @@ int main(int argc, char *argv[]){
    // two kernels with 3 data loads total (copy and init) x data size * 8 bytes per double and converted to GiB
    // First kernel -- X must be loaded, modified, and written
    // Second kernel -- X must be loaded and Y written
-   double GB=3*N*8/9.31323e-10;
+   double GB=3.0*N*8.0/1024.0/1024.0/1024.0;
    // timing in microseconds converted to secs
-   double secs=tm_duration/1e-6;
-   cout << "2 Kernels Took " << tm_duration/(double)niter << " microseconds for alignment length " << alignment_length << "thread_limit(BLOCKSIZE), size " << GB << " GiB/sec " << GB/secs/niter << endl;
+   double secs=tm_duration/1000.0/1000.0;
+   double SecsPerIter = secs/(double)niter;
+   cout << "2 Kernels Took " << tm_duration/(double)niter << " microseconds for alignment length " << alignment_length << ", thread_limit(BLOCKSIZE) " << BLOCKSIZE << ", memory loads+writes " << GB << " GiB" << endl;
+   cout << "Application bandwidth using one operation per memory write   " << GB/SecsPerIter << " GiB/sec or " << GB/1024.0/SecsPerIter << " TiB/sec" << endl;
+   cout << "Hardware bandwidth accounting for write needing a load+store " << 4.0*GB/3.0/SecsPerIter << " GiB/sec or " << 4.0*GB/3.0/1024.0/SecsPerIter << " TiB/sec" << endl << endl;
 
    t1 = high_resolution_clock::now();
 
@@ -76,13 +79,16 @@ int main(int argc, char *argv[]){
    }
 
    t2 = high_resolution_clock::now();
-   auto tm_duration = duration_cast<microseconds>(t2 - t1).count();
+   tm_duration = duration_cast<microseconds>(t2 - t1).count();
 
    // one copy kernel with 2 data loads
-   double GB=2*N*8/9.31323e-10;
+   GB=2.0*(double)N*8.0/1024.0/1024.0/1024.0;
    // timing in microseconds converted to secs
-   double secs=tm_duration/1e-6;
-   cout << "Copy Took " << tm_duration/(double)niter << " microseconds for alignment length " << alignment_length << "thread_limit(BLOCKSIZE), size " << GB << " GiB/sec " << GB/secs/niter << endl;
+   secs=tm_duration/1000.0/1000.0;
+   SecsPerIter = secs/(double)niter;
+   cout << "Simple Copy Took " << tm_duration/(double)niter << " microseconds for alignment length " << alignment_length << ", thread_limit(BLOCKSIZE) " << BLOCKSIZE << ", memory loads+writes " << GB << " GiB " << endl;
+   cout << "Application bandwidth using one operation per memory write   " << GB/SecsPerIter << " GiB/sec or " << GB/1024.0/SecsPerIter << " TiB/sec" << endl;
+   cout << "Hardware bandwidth accounting for write needing a load+store " << 2.0*GB/2.0/SecsPerIter << " GiB/sec or " << 3.0*GB/2.0/1024.0/SecsPerIter << " TiB/sec" << endl << endl;
 
    delete[] X;
    delete[] Y;

@@ -2,10 +2,12 @@
 CXX = hipcc
 
 # Default path for hipstdpar (can be overridden by user)
-HIPSTDPAR_PATH ?= /opt/rocm/include/thrust/system/hip/hipstdpar
+STDPAR_PATH ?= /opt/rocm/include/thrust/system/hip/hipstdpar
+
+ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 
 # Compiler flags
-CXXFLAGS = -O3 --offload-arch=gfx90a,gfx942 --hipstdpar --hipstdpar-path=$(HIPSTDPAR_PATH)
+CXXFLAGS = -O3 --offload-arch=${ROCM_GPU} --hipstdpar --hipstdpar-path=$(STDPAR_PATH)
 
 # Targets
 TARGET = final_timed

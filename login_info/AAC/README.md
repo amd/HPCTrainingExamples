@@ -1,4 +1,10 @@
+
+\newpage
+
 # AMD Accelerator Cloud (AAC)
+
+File: [login_info/AAC/README.md](`https://raw.githubusercontent.com/amd/HPCTrainingExamples/refs/heads/main/login_info/AAC/README.md`) at https://github.com/amd/HPCTrainingExamples
+
 To support trainings, we can upload training containers to the AMD Accelerator Cloud (AAC), and have attendees login using the instructions below. This set of instructions assumes that users have already received their `<username>` and `<port_number>` for the container, and that they have either provided an ssh key to the training team, or they have received a password from the training team.
 
 ## Login Instructions
@@ -23,9 +29,14 @@ cat $HOME/.ssh/id_ed25519.pub
 **IMPORTANT**: if you are supposed to login with an ssh key and you are prompted a password, do not type any password!
 Instead, type `Ctrl+C` and contact us to let us know about the incident.
 
-To login to AAC using the ssh key use the `<username>` and `<port_number>` that the training team has provided you, for instance:
+To login to an AAC MI300A system using the ssh key use the `<username>` and `<port_number>` that the training team has provided you, for instance:
 ```bash
 ssh <username>@aac6.amd.com -i <path/to/ssh/key> -p <port_number> (1)
+```
+
+For an MI210 or MI250 system, use aac1.amd.com
+```bash
+ssh <username>@aac1.amd.com -i <path/to/ssh/key> -p <port_number> (1)
 ```
 
 ### Login with password
@@ -35,8 +46,16 @@ ssh <username>@aac6.amd.com -p <port_number>
 ```
 **IMPORTANT**: It is fundamental to not type the wrong password more than two times otherwise your I.P. address will be blacklisted and you will not be allowed access to AAC until we modify our firewall to get you back in. This is especially important if you are at an event where all the attendees are connecting to the same wireless network.
 
-In the commands above, `-p` refers to the port number and `-i` points to the path of your ssh key. Note that different port numbers
+If you are using a password login, you can upload an ssh key with the following command to avoid using a password
+
+```bash
+ssh-copy-id -i <path/to/ssh/key.pub> -p <port_number> -o UpdateHostKeys=yes <username>@aac6.amd.com
+```
+
+In the commands above, `-p` refers to the port number and `-i` points to the path of your ssh key. The `-i` option is not needed if your
+default key is used. Note that different port numbers
 will be associated with different containers on the AAC, and anytime a container is brought up, the port number will change in general.
+
  
 To simplify the login even further, you can add the following to your `.ssh/config` file:
 
@@ -45,12 +64,12 @@ To simplify the login even further, you can add the following to your `.ssh/conf
 Host aac
    User <username>
    Hostname aac6.amd.com // this may be different depending on the container
-   IdentityFile <path/to/ssh/key>
+   IdentityFile <path/to/ssh/key> // this points to the private key file
    Port <port_number>
    ServerAliveInterval 600
    ServerAliveCountMax 30
 ```
-The `ServerAlive*` lines in the config file may be added to avoid timeouts when idle. you can then login using:
+The `ServerAlive*` lines in the config file may be added to avoid timeouts when idle. You can then login using:
 ```bash
 ssh aac -p <port_number>
 ```
@@ -78,10 +97,10 @@ In case none of these options work, send us the output of the ssh command follow
 
 ### Directories and Files
 
-Persistent storage is at `/datasets/teams/hackathon-testing/<username>`. Your home directory will be set to this directory: 
+Persistent storage is at `/home/aac/shared/teams/hackathon-testing/<group>/<username>`. Your home directory will be set to this directory: 
 
 ```bash
-$HOME=/datasets/teams/hackathon-testing/<username>
+$HOME=/home/aac/shared/teams/hackathon-testing/<group>/<username>`
 ```
 Files in the above directory will persist across container starts and stops and even be available from another container with the same `<username>` on systems at the same hosting location. Remember that it will not be possible to retrieve your data once the container has been brought down.
 
@@ -107,7 +126,7 @@ rsync -avz -e "ssh -i <path/to/ssh/key> -p <port_number>" <file> <username>@aac6
 
 Please consult the container's [README](https://github.com/amd/HPCTrainingDock/blob/main/README.md) to learn about the latest specs of the training container.
 
-The container is based on the Ubuntu 22.04 Operating System with the ROCm 6.2.1 software stack. It contains multiple versions of AMD, GCC, and LLVM compilers, hip libraries, GPU-Aware MPI, AMD profiling tools and HPC community tools. The container also has modules set up with the lua modules package and a slurm package and configuration. It includes the following additional packages:
+The container is based on the Ubuntu 22.04 Operating System with the latest version of the ROCm software stack. It contains multiple versions of AMD, GCC, and LLVM compilers, hip libraries, GPU-Aware MPI, AMD profiling tools and HPC community tools. The container also has modules set up with the lua modules package and a slurm package and configuration. It includes the following additional packages:
 
 - emacs
 - vim
@@ -143,32 +162,38 @@ module avail
 The output list of `module avail` should show:
 
 ```
------------------------------------------------------------------------ /etc/lmod/modules/Linux ------------------------------------------------------------------------
-   clang/base    clang/14 (D)    clang/15    gcc/base    gcc/11 (D)    gcc/12    gcc/13    miniconda3/23.11.0
+---------------------------------- /etc/lmod/modules/Linux -----------------------------------
+  clang/base      gcc/base      miniconda3/24.9.2    miniforge3/24.9.0
 
------------------------------------------------------------------------- /etc/lmod/modules/ROCm ------------------------------------------------------------------------
-   amdclang/17.0-6.2.1    hipfort/6.2.1    omniperf/6.2.1 (D)    omnitrace/6.2.1 (D)    opencl/6.2.1    rocm/6.2.1
+----------------------------------- /etc/lmod/modules/ROCm -----------------------------------
+  amdclang/18.0.0-6.4.0         opencl/6.4.0                   rocprofiler-systems/6.4.0 (D)
+  amdflang-new/rocm-afar-6.0.0  rocm/6.4.0                                    
+  hipfort/6.4.0                 rocprofiler-compute/6.4.0 (D)
 
--------------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-MPI --------------------------------------------------------------------
-   mpi4py/dev    mvapich/3.0    openmpi/5.0.5-ucc1.3.0-ucx1.17.0-xpmem2.7.3
+------------------------------- /etc/lmod/modules/ROCmPlus-MPI -------------------------------
+  mpi4py/4.0.3    openmpi/5.0.7-ucc1.3.0-ucx1.18.0
 
-------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-AMDResearchTools --------------------------------------------------------------
-   omniperf/2.0.0    omniperf/2.0.1    omnitrace/1.11.3
+------------------------ /etc/lmod/modules/ROCmPlus-AMDResearchTools -------------------------
+  rocprofiler-compute/develop    rocprofiler-systems/amd-staging
 
--------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-LatestCompilers --------------------------------------------------------------
-   amd-gcc/13.2.0    aomp/amdclang-19.0
+------------------------- /etc/lmod/modules/ROCmPlus-LatestCompilers -------------------------
+  hipfort_from_source/6.4.0
 
--------------------------------------------------------------------- /etc/lmod/modules/ROCmPlus-AI ---------------------------------------------------------------------
-   cupy/13.0.0b1    jax/0.4.32.dev    pytorch/2.4
+------------------------------- /etc/lmod/modules/ROCmPlus-AI --------------------------------
+  cupy/14.0.0a1    jax/0.4.35    pytorch/2.7.0
 
------------------------------------------------------------------------- /etc/lmod/modules/misc ------------------------------------------------------------------------
-   hpctoolkit/dev    kokkos/4.4.0    tau/dev
+----------------------------------- /etc/lmod/modules/misc -----------------------------------
+  fftw/3.3.10  hpctoolkit/2024.11.27dev  netcdf-c/4.9.3-rc1        scorep/9.0-dev
+  hdf5/1.14.5  hypre/2.33.0              netcdf-fortran/4.6.2-rc1  tau/dev
+  hipifly/dev  kokkos/4.6.00             petsc/3.23.0
 
-Where:   D:  Default Module
+ Where:
+  D:  Default Module
 ```
-There are three modules associated with each ROCm version. One is the ROCm module which is needed by many of the other modules. The second is the amdclang module when using the amdclang compiler that comes bundled with ROCm. The third is the hipfort module for the Fortran interfaces to HIP.
 
-Compiler modules set the C, CXX, FC flags. Note, only one compiler module can be loaded at a time. hipcc is in the path when the rocm module is loaded. 
+There are several modules associated with each ROCm version. One is the rocm module which is needed by many of the other modules. The second is the amdclang module when using the amdclang compiler that comes bundled with ROCm. The third is the hipfort module for the Fortran interfaces to HIP. Also, there is an OpenCL module and one for each of the AMD profilers.
+
+Compiler modules set the C, CXX, FC flags. Only one compiler module can be loaded at a time. hipcc is in the path when the rocm module is loaded. Note that there are several modules that set the compiler flags and that they set the full path to the compilers to avoid path problems.
 
 ## Slurm Information
 
@@ -184,11 +209,21 @@ sinfo
 
 The Slurm `salloc` command may be used to acquire a long term session that exclusively grants access to one or more GPUs. Alternatively, the `srun` or `sbatch` commands may be used to acquire a session with one or more GPUs and only exclusively use the session for the life of the run of an application. `squeue` will show information on who is currently running jobs.
 
-### Training Examples Repo
+## Exercise Examples
 
-The examples can also be obtained from our repo, which contains all the code that we will use for the exercises discussed during the training. To clone the repo, do:
+The exercise examples are preloaded into the `/Shared` directory. Copy the files into your home directory with:
+
+```bash
+mkdir -p $HOME/HPCTrainingExamples
+scp -pr /Shared/HPCTrainingExamples/* $HOME/HPCTrainingExamples/
+```
+
+## Training Examples Repo
+
+
+Alternatively, you can get the examples from our repo.
+This repo contains all the code that we normally use during our training events: 
 ```bash
 cd $HOME
 git clone https://github.com/amd/HPCTrainingExamples.git
 ```
-

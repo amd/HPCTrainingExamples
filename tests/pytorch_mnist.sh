@@ -17,11 +17,31 @@ rm -rf pytorch_mnist
 
 git clone https://github.com/pytorch/examples.git pytorch_mnist 2>/dev/null
 
+pushd pytorch_mnist
+
+mkdir data
+mkdir data/MNIST
+mkdir data/MNIST/raw
+cd data/MNIST/raw
+
+wget https://raw.githubusercontent.com/fgnt/mnist/master/train-images-idx3-ubyte.gz
+wget https://raw.githubusercontent.com/fgnt/mnist/master/train-labels-idx1-ubyte.gz
+wget https://raw.githubusercontent.com/fgnt/mnist/master/t10k-images-idx3-ubyte.gz
+wget https://raw.githubusercontent.com/fgnt/mnist/master/t10k-labels-idx1-ubyte.gz
+
+gunzip -k *.gz
+
+popd
 cd pytorch_mnist/mnist
+
+# use downloaded data instead of letting it download from broken mirror
+sed -i 's/train=True, download=True/train=True, download=False/' ./mnist/main.py
 
 python3 main.py
 
 module purge
+
+cd ../..
 
 rm -rf pytorch_mnist
 

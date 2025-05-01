@@ -1,4 +1,6 @@
-# First OpenMP offload: Porting saxpy step by step and explore the discrete GPU and APU programming models:
+# First Fortran OpenMP offload: Porting saxpy step by step and explore the discrete GPU and APU programming models:
+
+This is HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/1_saxpy/README.md in the training examples repository.
 
 This excercise will show in a step by step solution how to port a your first kernels. 
 This simple example will not use a Makefile to practice how to compile for the GPU or APU. 
@@ -140,3 +142,4 @@ After finishing this introductory excercise, go to the next excercise in the For
 ```
 cd ../..
 ```
+

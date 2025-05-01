@@ -1,4 +1,4 @@
-! Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+! Copyright (c) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 ! 
 ! Permission is hereby granted, free of charge, to any person obtaining a copy
 ! of this software and associated documentation files (the "Software"), to deal
@@ -20,15 +20,17 @@
 program main
     use timers_mod, only : timeval, fcpu_timer_start, fcpu_timer_stop
     use, intrinsic :: iso_c_binding, only : C_DOUBLE
+    use, intrinsic :: iso_fortran_env, only : real64
+    implicit none
  
     ! Size of vectors
     integer :: n = 100000
  
     ! Input vectors and Output vector
-    real(8),dimension(:),allocatable :: a, b, c
+    real(real64),dimension(:),allocatable :: a, b, c
  
     integer :: i
-    real(8) :: sum
+    real(real64) :: sum
     real(C_DOUBLE) :: run_timer
     type(timeval) :: timer_start
 

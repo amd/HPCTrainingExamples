@@ -5,8 +5,8 @@ all: ${EXEC}
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 
 # Compiler
-HIPCC				= clang -x hip
-FC					= amdflang-new
+HIPCC				= amdclang -x hip
+FC				= amdflang-new
 
 # Compiler flags
 HIP_FLAGS		= -O3 --offload-arch=${ROCM_GPU}

@@ -10,15 +10,19 @@ private:
  
 public:
     // constructor	
-    daxpy(double a, int N, double* x, double* y) {
+    daxpy(double a, int N) {
         a_ = a;
         N_ = N;
-        x_ = x; 
-        y_ = y;
+        x_ = new double[N];
+        y_ = new double[N];
+        #pragma omp target enter data map(alloc: x_[0:N_],y_[0:N_]) map(to: a_)
     }
 
     // destructor 
     ~daxpy() {
+        free(x_);
+        free(y_);
+        #pragma omp target exit data map(delete: x_[0:N_],y_[0:N_], a_)
     }
 
     void setX(int index, double val) {
@@ -54,6 +58,14 @@ public:
     }
 
     void apply();
+ 
+    void updateDevice(){
+#pragma omp target update to(x_[0:N_],y_[0:N_])
+    }
+
+    void updateHost(){
+#pragma omp target update from(x_[0:N_],y_[0:N_])
+    }
 
     void printArrays() const {
         std::cout << "Array x: ";
@@ -68,6 +80,5 @@ public:
         }
         std::cout << std::endl;
     }
-
 };
 

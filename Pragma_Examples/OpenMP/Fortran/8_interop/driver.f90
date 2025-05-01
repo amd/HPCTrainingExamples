@@ -33,6 +33,8 @@ program example
   if (b(1) /= 3.0) then
     print *, "Answer should be 3.0"
     stop 1
+  else
+    print*, "PASS!"
   end if
   
   !$omp target exit data map (delete:a,b)

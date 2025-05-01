@@ -1,5 +1,7 @@
 ## C++ member function
 
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/CXX/5_device_routines` in Training Examples repository
+
 The first example is where there is a compute method in the Science class that is called from a parallel target region.
 
 ```

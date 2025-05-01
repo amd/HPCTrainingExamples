@@ -7,7 +7,7 @@ if [ ${XNACK_COUNT} -lt 1 ]; then
 else
    export HSA_XNACK=1
 
-   module load amdflang-new-beta-drop
+   module load amdflang-new
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/BuildExamples

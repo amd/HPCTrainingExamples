@@ -8,7 +8,7 @@
 int main(int argc, char* argv[]) {
 
    // initialize the data
-   int N = 10;
+   int N = 10000000;
    double a = 0.5;
    std::string type = "L2";
 
@@ -22,21 +22,28 @@ int main(int argc, char* argv[]) {
       ops.daxpySetX(i,1.0);
    }
 
-   ops.printAll();
-
    // compute daxpy operation using
    // member "get" and "set" functions   
-   #pragma omp target teams distribute parallel for 
+   #pragma omp target teams loop
    for(int i=0; i<N; i++){
       double val = (ops.getConst() * ops.daxpyGetX(i) + ops.daxpyGetY(i)) / std::sqrt(N);
       ops.setBoth(i,val);
-   }   
+   }
 
    // compute the norm of the vector
    // obtained with the above daxpy operation
    ops.updateNorm();
-   
-   ops.printAll();
+
+   double norm = ops.getNorm();
+   if (fabs(norm - 1.0) < 1.e-10) {
+      std::cout<<"PASS!"<<std::endl;
+   }
+   else{
+      std::cout<<"FAIL!"<<std::endl;
+   }
+
+   // the line below is for debugging
+   //ops.printAll();
 
    return 0;
 

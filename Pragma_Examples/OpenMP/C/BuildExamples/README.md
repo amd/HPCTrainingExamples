@@ -1,12 +1,12 @@
-# Build systems: make and cmake
+# OpenMP C Build systems: make and cmake
+
+README.md in `HPCTrainingExamples/Pragma_Examples/OpenMP/C/BuildExamples` of the Training Examples repository
 
 Build systems for make and cmake are an important starting step to working with OpenMP.
 We'll start with samples for C builds. We'll test them with
 some of our sample code to make sure your system is setup properly.
 
-## C
-
-### Make
+## Make
 
 ```
 cd HPCTrainingExamples/Pragma_Examples/OpenMP/C/BuildExamples
@@ -60,7 +60,7 @@ Now run the executable
 ./openmp_code
 ```
 
-### cmake
+## CMake
 
 Looking at the CMakeLists.txt
 
@@ -107,3 +107,4 @@ Now run the executable
 ```
 ./openmp_code
 ```
+

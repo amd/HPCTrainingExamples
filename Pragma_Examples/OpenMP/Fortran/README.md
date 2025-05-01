@@ -7,7 +7,7 @@ cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran
 
 Load the amdflang-new compiler and set up the environment 
 ```
-module load amdflang-new-beta-drop
+module load amdflang-new
 export FC=amdflang-new
 ```
 Note that everyone shares a single node, so performance can be severely impacted due to a noisy environment.

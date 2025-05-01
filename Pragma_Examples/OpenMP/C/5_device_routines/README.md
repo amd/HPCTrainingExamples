@@ -1,5 +1,7 @@
 # C Code -- Porting device routine exercises
 
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/5_device_routines` in Training Examples repository
+
 This exercise will show how to port kernels which call a subroutine or function.
 Each version has a sub-folder with a 
 - serial CPU version to port yourself and a
