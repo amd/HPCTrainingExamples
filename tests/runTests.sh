@@ -4,6 +4,7 @@ pushd $(dirname $0)
 
 AI=0
 CUPY=0
+TENSORFLOW=0
 ROCPROFV3=0
 PYTORCH=0
 JAX=0
@@ -109,6 +110,11 @@ do
       "--cupy")
           shift
           CUPY=1
+          reset-last
+          ;;
+      "--tensorflow")
+          shift
+          TENSORFLOW=1
           reset-last
           ;;
       "--pytorch")
@@ -315,6 +321,8 @@ elif [ ${HIPSTDPAR} -eq 1 ]; then
    ctest -R StdPar
 elif [ ${HIPIFLY} -eq 1 ]; then
    ctest -R Hipifly
+elif [ ${TENSORFLOW} -eq 1 ]; then
+   ctest -R TensorFlow
 elif [ ${KOKKOS} -eq 1 ]; then
    ctest -R Kokkos
 elif [ ${HIPFORT} -eq 1 ]; then
