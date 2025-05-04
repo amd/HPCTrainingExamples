@@ -4,13 +4,13 @@ AMDGPU_GFXMODEL ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's
 
 CC1=$(notdir $(CC))
 
-ifeq ($(findstring amdclang,$(CC1)), amdclang)
+ifneq ($(findstring amdclang,$(CC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=${AMDGPU_GFXMODEL}
-else ifeq ($(findstring clang,$(CC1)), clang)
+else ifneq ($(findstring clang,$(CC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=${AMDGPU_GFXMODEL}
-else ifeq ($(findstring gcc,$(CC1)), gcc)
+else ifneq ($(findstring gcc,$(CC1)),)
   OPENMP_FLAGS = -fopenmp -foffload=-march=${AMDGPU_GFXMODEL}
-else ifeq ($(findstring cc,$(CC1)), cc)
+else ifneq ($(findstring cc,$(CC1)),)
   OPENMP_FLAGS = -fopenmp
 else
   OPENMP_FLAGS = -fopenmp --foffload=-march=${AMDGPU_GFXMODEL}

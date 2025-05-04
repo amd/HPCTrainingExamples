@@ -7,15 +7,15 @@ ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name
 CXX1=$(notdir $(CXX))
 
 # hipstdpar-path is not needed for ROCm 6.1 and later --hipstdpar-path=${STDPAR_PATH}
-ifeq ($(findstring amdclang++,$(CXX1)), amdclang++)
+ifneq ($(findstring amdclang++,$(CXX1)),)
   STDPAR_FLAGS = --hipstdpar --offload-arch=$(ROCM_GPU) --hipstdpar-path=${STDPAR_PATH}
   #STDPAR_FLAGS = --hipstdpar --hipstdpar-path=${STDPAR_PATH}
-else ifeq ($(findstring clang++,$(CXX1)), clang++)
+else ifneq ($(findstring clang++,$(CXX1)),)
   STDPAR_FLAGS = --hipstdpar --offload-arch=$(ROCM_GPU) --hipstdpar-path=${STDPAR_PATH}
   #STDPAR_FLAGS = --hipstdpar --hipstdpar-path=${STDPAR_PATH}
 endif
 # Add --hipstdpar-interpose-alloc if HSA_XNACK is not set
-ifeq ($(findstring gfx1030,$(ROCM_GPU)),gfx1030)
+ifneq ($(findstring gfx1030,$(ROCM_GPU)),)
   STDPAR_FLAGS += --hipstdpar-interpose-alloc
 endif
 

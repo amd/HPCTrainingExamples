@@ -6,13 +6,13 @@ ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name
 
 CC1=$(notdir $(CC))
 
-ifeq ($(findstring amdclang,$(CC1)), amdclang)
+ifneq ($(findstring amdclang,$(CC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
-else ifeq ($(findstring clang,$(CC1)), clang)
+else ifneq ($(findstring clang,$(CC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
-else ifeq ($(findstring gcc,$(CC1)), gcc)
+else ifneq ($(findstring gcc,$(CC1)),)
   OPENMP_FLAGS = -fopenmp -foffload=-march=$(ROCM_GPU)
-else ifeq ($(findstring cc,$(CC1)), cc)
+else ifneq ($(findstring cc,$(CC1)),)
   OPENMP_FLAGS = -fopenmp
 else
   #OPENMP_FLAGS = -fopenmp --foffload=-march=$(ROCM_GPU) -fopt-info-optimized-omp -fopt-info-missed

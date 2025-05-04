@@ -39,7 +39,7 @@ GPUFLAGS += $(DFLAGS) -Isrc
 
  
 # Use appropiate flags whether using CUDA or HIP
-ifeq ($(findstring -DENABLE_HIP,$(DFLAGS)),-DENABLE_HIP)
+ifneq ($(findstring -DENABLE_HIP,$(DFLAGS)),)
 # Set hipcc as the compiler for device code
 	GPUCXX    = hipcc
 	CXXFLAGS  += -I$(ROCM_PATH)/include

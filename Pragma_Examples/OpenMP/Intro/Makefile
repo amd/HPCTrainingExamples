@@ -6,13 +6,13 @@ ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name
 
 CXX1=$(notdir $(CXX))
 
-ifeq ($(findstring amdclang++,$(CXX1)), amdclang++)
+ifneq ($(findstring amdclang++,$(CXX1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
-else ifeq ($(findstring clang++,$(CXX1)), clang++)
+else ifneq ($(findstring clang++,$(CXX1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
-else ifeq ($(findstring g++,$(CXX1)), g++)
+else ifneq ($(findstring g++,$(CXX1)),)
   OPENMP_FLAGS = -fopenmp -foffload=-march=$(ROCM_GPU)
-else ifeq ($(findstring CC,$(CXX1)), CC)
+else ifneq ($(findstring CC,$(CXX1)),)
   OPENMP_FLAGS = -fopenmp
 else
   OPENMP_FLAGS = -fopenmp --foffload=-march=$(ROCM_GPU) -fopt-info-optimized-omp
@@ -20,17 +20,15 @@ endif
 
 CXXFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
 
-ifeq ($(findstring amdflang,$(FC1)), amdflang)
+ifneq ($(findstring amdflang,$(FC1)),)
   FREE_FORM_FLAG = -Mfreeform
-else ifeq ($(findstring flang-new,$(FC1)), flang-new)
-  FREE_FORM_FLAG = -ffree-form
-else ifeq ($(findstring flang,$(FC1)), flang)
+else ifneq ($(findstring flang,$(FC1)),)
   FREE_FORM_FLAG = -Mfreeform
-else ifeq ($(findstring gfortran,$(FC1)), gfortran)
+else ifneq ($(findstring gfortran,$(FC1)),)
   FREE_FORM_FLAG = -ffree-form
 endif
 
-ifeq ($(findstring ftn,$(FC1)), ftn)
+ifneq ($(findstring ftn,$(FC1)),)
   FFLAGS = -g -O3 ${OPENMP_FLAGS}
 else
   FFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}

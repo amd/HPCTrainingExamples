@@ -4,9 +4,9 @@ all: ${EXEC}
 
 CC1=$(notdir $(CC))
 
-ifeq ($(findstring clang, $(CC1)), clang)
+ifneq ($(findstring clang, $(CC1)),)
   OPENACC_FLAGS = -fopenacc --offload-arch=native
-else ifeq ($(findstring amdclang, $(CC1)), amdclang)
+else ifneq ($(findstring amdclang, $(CC1)),)
   OPENACC_FLAGS = -fopenacc --offload-arch=native
 else
   OPENACC_FLAGS = -fopenacc -foffload=-march=native -fopt-info-optimized-omp
