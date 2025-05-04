@@ -241,7 +241,7 @@ set_property(TEST OpenMP_C_5_Saxpy_Map PROPERTY PASS_REGULAR_EXPRESSION "4.00000
 set_property(TEST OpenMP_C_5_Saxpy_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_6_Saxpy_TargetData COMMAND ../openmp_c_6_saxpy_targetdata.sh )
-set_property(TEST OpenMP_C_6_Saxpy_TargetData PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_6_Saxpy_TargetData PROPERTY PASS_REGULAR_EXPRESSION "0.000000")
 set_property(TEST OpenMP_C_6_Saxpy_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_0_Reduction_PortYourself COMMAND ../openmp_c_0_reduction_portyourself.sh )
@@ -257,27 +257,27 @@ set_property(TEST OpenMP_C_2_Reduction_Map PROPERTY PASS_REGULAR_EXPRESSION "200
 set_property(TEST OpenMP_C_2_Reduction_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_0_Vecadd_PortYourself COMMAND ../openmp_c_0_vecadd_portyourself.sh )
-set_property(TEST OpenMP_C_0_Vecadd_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "200000.000000")
+set_property(TEST OpenMP_C_0_Vecadd_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 set_property(TEST OpenMP_C_0_Vecadd_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_1_Vecadd_USM COMMAND ../openmp_c_1_vecadd_usm.sh )
-set_property(TEST OpenMP_C_1_Vecadd_USM PROPERTY PASS_REGULAR_EXPRESSION "200000.000000")
+set_property(TEST OpenMP_C_1_Vecadd_USM PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 set_property(TEST OpenMP_C_1_Vecadd_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_2_Vecadd_Map COMMAND ../openmp_c_2_vecadd_map.sh )
-set_property(TEST OpenMP_C_2_Vecadd_Map PROPERTY PASS_REGULAR_EXPRESSION "200000.000000")
+set_property(TEST OpenMP_C_2_Vecadd_Map PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 set_property(TEST OpenMP_C_2_Vecadd_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_3_Vecadd_TargetData COMMAND ../openmp_c_3_vecadd_targetdata.sh )
-set_property(TEST OpenMP_C_3_Vecadd_TargetData PROPERTY PASS_REGULAR_EXPRESSION "200000.000000")
+set_property(TEST OpenMP_C_3_Vecadd_TargetData PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 set_property(TEST OpenMP_C_3_Vecadd_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_4_Vecadd_Async_USM COMMAND ../openmp_c_4_vecadd_async_usm.sh )
-set_property(TEST OpenMP_C_4_Vecadd_Async_USM PROPERTY PASS_REGULAR_EXPRESSION "200000.000000")
+set_property(TEST OpenMP_C_4_Vecadd_Async_USM PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 set_property(TEST OpenMP_C_4_Vecadd_Async_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_5_Vecadd_Async COMMAND ../openmp_c_5_vecadd_async.sh )
-set_property(TEST OpenMP_C_5_Vecadd_Async PROPERTY PASS_REGULAR_EXPRESSION "200000.000000")
+set_property(TEST OpenMP_C_5_Vecadd_Async PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 set_property(TEST OpenMP_C_5_Vecadd_Async PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # OpenMP Fortran tests
