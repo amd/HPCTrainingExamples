@@ -280,6 +280,14 @@ add_test(NAME OpenMP_C_5_Vecadd_Async COMMAND ../openmp_c_5_vecadd_async.sh )
 set_property(TEST OpenMP_C_5_Vecadd_Async PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 set_property(TEST OpenMP_C_5_Vecadd_Async PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME OpenMP_C_0_Reduction_Scalars_PortYourself COMMAND ../openmp_c_0_reduction_scalars_portyourself.sh )
+set_property(TEST OpenMP_C_0_Reduction_Scalars_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_C_0_Reduction_Scalars_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_C_1_Reduction_Scalars COMMAND ../openmp_c_1_reduction_scalars.sh )
+set_property(TEST OpenMP_C_1_Reduction_Scalars PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_C_1_Reduction_Scalars PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # OpenMP Fortran tests
 
 add_test(NAME OpenMP_Freduce_F_AMDFlang COMMAND ../openmp_freduce_f_amdflang.sh )
