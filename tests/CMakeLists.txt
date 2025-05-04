@@ -281,12 +281,24 @@ set_property(TEST OpenMP_C_5_Vecadd_Async PROPERTY PASS_REGULAR_EXPRESSION "1.00
 set_property(TEST OpenMP_C_5_Vecadd_Async PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_0_Reduction_Scalars_PortYourself COMMAND ../openmp_c_0_reduction_scalars_portyourself.sh )
-set_property(TEST OpenMP_C_0_Reduction_Scalars_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_C_0_Reduction_Scalars_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "ce1 = 1000.000000 ce2 1000.000000")
 set_property(TEST OpenMP_C_0_Reduction_Scalars_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_1_Reduction_Scalars COMMAND ../openmp_c_1_reduction_scalars.sh )
-set_property(TEST OpenMP_C_1_Reduction_Scalars PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_C_1_Reduction_Scalars PROPERTY PASS_REGULAR_EXPRESSION "ce1 = 1000.000000 ce2 1000.000000")
 set_property(TEST OpenMP_C_1_Reduction_Scalars PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_C_1_Device_Routine COMMAND ../openmp_c_1_device_routine.sh )
+set_property(TEST OpenMP_C_1_Device_Routine PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_C_1_Device_Routine PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_C_2_Device_Routine_WGlobalData COMMAND ../openmp_c_2_device_routine_wglobaldata.sh )
+set_property(TEST OpenMP_C_2_Device_Routine_WGlobalData PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_C_2_Device_Routine_WGlobalData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_C_3_Device_Routine_WDynGlobalData COMMAND ../openmp_c_3_device_routine_wdynglobaldata.sh )
+set_property(TEST OpenMP_C_3_Device_Routine_WDynGlobalData PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_C_3_Device_Routine_WDynGlobalData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # OpenMP Fortran tests
 
