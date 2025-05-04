@@ -186,9 +186,10 @@ set_property(TEST OpenMP_Fortran_Build_CMake PROPERTY SKIP_REGULAR_EXPRESSION "m
 
 # OpenMP Examples
 
-add_test(NAME OpenMP_Saxpy_C_AMDClang COMMAND ../openmp_saxpy_c_amdclang.sh )
-set_property(TEST OpenMP_Saxpy_C_AMDClang PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_Saxpy_C_AMDClang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+# Duplicate of OpenMP_C_5_Saxpy_Map
+#add_test(NAME OpenMP_Saxpy_C_AMDClang COMMAND ../openmp_saxpy_c_amdclang.sh )
+#set_property(TEST OpenMP_Saxpy_C_AMDClang PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+#set_property(TEST OpenMP_Saxpy_C_AMDClang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 #add_test(NAME OpenMP_Saxpy_C_AMDGCC COMMAND ../openmp_saxpy_c_amdgcc.sh )
 #set_property(TEST OpenMP_Saxpy_C_AMDGCC PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
@@ -222,6 +223,26 @@ set_property(TEST OpenMP_C_0_Saxpy_portyourself PROPERTY SKIP_REGULAR_EXPRESSION
 add_test(NAME OpenMP_C_1_Saxpy_OMPTarget COMMAND ../openmp_c_1_saxpy_omptarget.sh )
 set_property(TEST OpenMP_C_1_Saxpy_OMPTarget PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_C_1_Saxpy_OMPTarget PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_C_2_Saxpy_ParallelForSimd COMMAND ../openmp_c_2_saxpy_parallelforsimd.sh )
+set_property(TEST OpenMP_C_2_Saxpy_ParallelForSimd PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_2_Saxpy_ParallelForSimd PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_C_3_Saxpy_TeamsDistribute COMMAND ../openmp_c_3_saxpy_teamsdistribute.sh )
+set_property(TEST OpenMP_C_3_Saxpy_TeamsDistribute PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_3_Saxpy_TeamsDistribute PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_C_4_Saxpy_NoUSM COMMAND ../openmp_c_4_saxpy_nousm.sh )
+set_property(TEST OpenMP_C_4_Saxpy_NoUSM PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_4_Saxpy_NoUSM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_C_5_Saxpy_Map COMMAND ../openmp_c_5_saxpy_map.sh )
+set_property(TEST OpenMP_C_5_Saxpy_Map PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_5_Saxpy_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_C_6_Saxpy_TargetData COMMAND ../openmp_c_6_saxpy_targetdata.sh )
+set_property(TEST OpenMP_C_6_Saxpy_TargetData PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_6_Saxpy_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Freduce_F_AMDFlang COMMAND ../openmp_freduce_f_amdflang.sh )
 set_property(TEST OpenMP_Freduce_F_AMDFlang PROPERTY PASS_REGULAR_EXPRESSION "1010")
