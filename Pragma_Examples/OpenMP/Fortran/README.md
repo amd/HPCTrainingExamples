@@ -8,7 +8,7 @@ cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran
 Load the amdflang-new compiler and set up the environment 
 ```
 module load amdflang-new
-export FC=amdflang-new
+export FC=amdflang
 ```
 Note that everyone shares a single node, so performance can be severely impacted due to a noisy environment.
 
@@ -38,7 +38,7 @@ You can choose the Cray Fortran compiler (ftn) or the amdflang-new compiler.
 module load rocm/rocm-afar-5891
 ```
 ```
-export FC=amdflang-new
+export FC=amdflang
 ```
 ##### ftn compiler on aac7:
 Prepare the environment:

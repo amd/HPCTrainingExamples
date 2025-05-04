@@ -15,6 +15,10 @@ For now, set
 ```
 export HSA_XNACK=1
 ```
+and load the amdflang-new compiler module
+```
+module load amdflang-new
+```
 to make use of the APU programming model (unified memory).
 0) the serial CPU code.
 ```
@@ -24,7 +28,7 @@ Try to port this example yourself. If you are stuck, use the step by step soluti
 
 - Compile the serial version. Note that ```-fopenmp``` is required as omp_get_wtime is used to time the loop execution.
 ```
-amdflang-new -fopenmp saxpy.F90 -o saxpy
+amdflang -fopenmp saxpy.F90 -o saxpy
 ```
 - Run the serial version.
 ```
@@ -43,7 +47,7 @@ add ```!$omp target``` to move the loop in the saxpy subroutine to the device.
 - Compile this first GPU version. Make sure you add ```--offload-arch=gfx942``` (on MI300A, find out what your system's gfx... is with ```rocminfo```)
 on aac6 or aac7 with amdflang-new:
 ```
-amdflang-new -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
+amdflang -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 ```
 or on on aac7 only with ftn:
 
