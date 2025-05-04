@@ -252,9 +252,13 @@ add_test(NAME OpenMP_C_1_Reduction_USM COMMAND ../openmp_c_1_reduction_usm.sh )
 set_property(TEST OpenMP_C_1_Reduction_USM PROPERTY PASS_REGULAR_EXPRESSION "200000.000000")
 set_property(TEST OpenMP_C_1_Reduction_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_2_Reduction_MAP COMMAND ../openmp_c_1_reduction_map.sh )
+add_test(NAME OpenMP_C_2_Reduction_MAP COMMAND ../openmp_c_2_reduction_map.sh )
 set_property(TEST OpenMP_C_2_Reduction_MAP PROPERTY PASS_REGULAR_EXPRESSION "200000.000000")
 set_property(TEST OpenMP_C_2_Reduction_MAP PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_C_0_Vecadd_PortYourself COMMAND ../openmp_c_0_vecadd_portyourself.sh )
+set_property(TEST OpenMP_C_0_Vecadd_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "200000.000000")
+set_property(TEST OpenMP_C_0_Vecadd_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # OpenMP Fortran tests
 
