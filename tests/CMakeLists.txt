@@ -244,6 +244,20 @@ add_test(NAME OpenMP_C_6_Saxpy_TargetData COMMAND ../openmp_c_6_saxpy_targetdata
 set_property(TEST OpenMP_C_6_Saxpy_TargetData PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_C_6_Saxpy_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME OpenMP_C_0_Reduction_PortYourself COMMAND ../openmp_c_0_reduction_portyourself.sh )
+set_property(TEST OpenMP_C_0_Reduction_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_0_Reduction_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_C_1_Reduction_USM COMMAND ../openmp_c_1_reduction_usm.sh )
+set_property(TEST OpenMP_C_1_Reduction_USM PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_1_Reduction_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_C_2_Reduction_MAP COMMAND ../openmp_c_1_reduction_map.sh )
+set_property(TEST OpenMP_C_2_Reduction_MAP PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_2_Reduction_MAP PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+# OpenMP Fortran tests
+
 add_test(NAME OpenMP_Freduce_F_AMDFlang COMMAND ../openmp_freduce_f_amdflang.sh )
 set_property(TEST OpenMP_Freduce_F_AMDFlang PROPERTY PASS_REGULAR_EXPRESSION "1010")
 set_property(TEST OpenMP_Freduce_F_AMDFlang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")

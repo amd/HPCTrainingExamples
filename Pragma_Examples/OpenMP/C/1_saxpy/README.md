@@ -94,7 +94,7 @@ The observed time is a bit better than in case 1 but still not the full parallel
 
 #### 3) Add multi-level parallelism
 ```
-cd ../3_saxpy_paralleldosimd
+cd ../3_saxpy_parallelforsimd
 vi saxpy.cpp
 ``` 
 add "parallel for" for more parellelism
