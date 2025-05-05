@@ -31,7 +31,7 @@ IS_OMPI=$(shell which ompi_info)
 IS_MPICH=$(shell ${MPICC} --version | grep mpich)
 IS_MPICH=$(shell ${MPICC} --version | grep Cray)
 
-ifneq ($(IS_OMPI),)
+ifeq ($(IS_OMPI),)
   MPICFLAGS=$(shell ${MPICC} --showme:compile)
   MPILDFLAGS=$(shell ${MPICC} --showme:link)
 else ifneq ($(IS_MPICH),)
@@ -43,7 +43,7 @@ else ifneq ($(IS_MPICH),)
        MPILDFLAGS=$(shell ${MPICC} -link_info | cut -d" " -f 2-)
     endif
 else
-    $(error Unknown MPI version! Currently can detect mpich or open-mpi)
+    $(error Unknown MPI version! Currently can detect mpich or openmpi)
 endif
 
 # Flags
