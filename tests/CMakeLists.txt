@@ -288,30 +288,6 @@ add_test(NAME OpenMP_C_1_Reduction_Scalars COMMAND ../openmp_c_1_reduction_scala
 set_property(TEST OpenMP_C_1_Reduction_Scalars PROPERTY PASS_REGULAR_EXPRESSION "ce1 = 1000.000000 ce2 1000.000000")
 set_property(TEST OpenMP_C_1_Reduction_Scalars PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_0_Device_Routine_PortYourself COMMAND ../openmp_c_0_device_routine_portyourself.sh )
-set_property(TEST OpenMP_C_0_Device_Routine_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1000.000000")
-set_property(TEST OpenMP_C_0_Device_Routine_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME OpenMP_C_1_Device_Routine_USM COMMAND ../openmp_c_1_device_routine_usm.sh )
-set_property(TEST OpenMP_C_1_Device_Routine_USM PROPERTY PASS_REGULAR_EXPRESSION "1000.000000")
-set_property(TEST OpenMP_C_1_Device_Routine_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME OpenMP_C_2_Device_Routine_Map COMMAND ../openmp_c_2_device_routine_map.sh )
-set_property(TEST OpenMP_C_2_Device_Routine_Map PROPERTY PASS_REGULAR_EXPRESSION "1000.000000")
-set_property(TEST OpenMP_C_2_Device_Routine_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME OpenMP_C_0_Device_Routine_WGlobalData_PortYourself COMMAND ../openmp_c_0_device_routine_wglobaldata_portyourself.sh )
-set_property(TEST OpenMP_C_0_Device_Routine_WGlobalData_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
-set_property(TEST OpenMP_C_0_Device_Routine_WGlobalData_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME OpenMP_C_1_Device_Routine_WGlobalData COMMAND ../openmp_c_1_device_routine_wglobaldata.sh )
-set_property(TEST OpenMP_C_1_Device_Routine_WGlobalData PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
-set_property(TEST OpenMP_C_1_Device_Routine_WGlobalData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME OpenMP_C_3_Device_Routine_WDynGlobalData COMMAND ../openmp_c_3_device_routine_wdynglobaldata.sh )
-set_property(TEST OpenMP_C_3_Device_Routine_WDynGlobalData PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
-set_property(TEST OpenMP_C_3_Device_Routine_WDynGlobalData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
 # OpenMP Fortran tests
 
 add_test(NAME OpenMP_Freduce_F_AMDFlang COMMAND ../openmp_freduce_f_amdflang.sh )
@@ -457,17 +433,41 @@ add_test(NAME OpenMP_Language_Constructs_C_Reduction_Array COMMAND ../openmp_lan
 set_property(TEST OpenMP_Language_Constructs_C_Reduction_Array PROPERTY PASS_REGULAR_EXPRESSION 'ce[0] = 1000.000000 ce[1] = 1000.000000')
 set_property(TEST OpenMP_Language_Constructs_C_Reduction_Array PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Language_Constructs_C_Device_Routine COMMAND ../openmp_language_constructs_c_device_routine.sh )
-set_property(TEST OpenMP_Language_Constructs_C_Device_Routine PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 1000.000000")
-set_property(TEST OpenMP_Language_Constructs_C_Device_Routine PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#add_test(NAME OpenMP_Language_Constructs_C_Device_Routine COMMAND ../openmp_language_constructs_c_device_routine.sh )
+#set_property(TEST OpenMP_Language_Constructs_C_Device_Routine PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 1000.000000")
+#set_property(TEST OpenMP_Language_Constructs_C_Device_Routine PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Language_Constructs_C_Device_Routine_wGlobalData COMMAND ../openmp_language_constructs_c_device_routine_wglobaldata.sh )
-set_property(TEST OpenMP_Language_Constructs_C_Device_Routine_wGlobalData PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 5500.000000")
-set_property(TEST OpenMP_Language_Constructs_C_Device_Routine_wGlobalData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#add_test(NAME OpenMP_Language_Constructs_C_Device_Routine_wGlobalData COMMAND ../openmp_language_constructs_c_device_routine_wglobaldata.sh )
+#set_property(TEST OpenMP_Language_Constructs_C_Device_Routine_wGlobalData PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 5500.000000")
+#set_property(TEST OpenMP_Language_Constructs_C_Device_Routine_wGlobalData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Language_Constructs_C_Device_Routine_wDynGlobalData COMMAND ../openmp_language_constructs_c_device_routine_wdynglobaldata.sh )
-set_property(TEST OpenMP_Language_Constructs_C_Device_Routine_wDynGlobalData PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 5500.000000")
-set_property(TEST OpenMP_Language_Constructs_C_Device_Routine_wDynGlobalData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#add_test(NAME OpenMP_Language_Constructs_C_Device_Routine_wDynGlobalData COMMAND ../openmp_language_constructs_c_device_routine_wdynglobaldata.sh )
+#set_property(TEST OpenMP_Language_Constructs_C_Device_Routine_wDynGlobalData PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 5500.000000")
+#set_property(TEST OpenMP_Language_Constructs_C_Device_Routine_wDynGlobalData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Language_Constructs_C_0_Device_Routine_PortYourself COMMAND ../openmp_language_constructs_c_0_device_routine_portyourself.sh )
+set_property(TEST OpenMP_Language_Constructs_C_0_Device_Routine_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1000.000000")
+set_property(TEST OpenMP_Language_Constructs_C_0_Device_Routine_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Language_Constructs_C_1_Device_Routine_USM COMMAND ../openmp_language_constructs_c_1_device_routine_usm.sh )
+set_property(TEST OpenMP_Language_Constructs_C_1_Device_Routine_USM PROPERTY PASS_REGULAR_EXPRESSION "1000.000000")
+set_property(TEST OpenMP_Language_Constructs_C_1_Device_Routine_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Language_Constructs_C_2_Device_Routine_Map COMMAND ../openmp_language_constructs_c_2_device_routine_map.sh )
+set_property(TEST OpenMP_Language_Constructs_C_2_Device_Routine_Map PROPERTY PASS_REGULAR_EXPRESSION "1000.000000")
+set_property(TEST OpenMP_Language_Constructs_C_2_Device_Routine_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Language_Constructs_C_0_Device_Routine_WGlobalData_PortYourself COMMAND ../openmp_language_constructs_c_0_device_routine_wglobaldata_portyourself.sh )
+set_property(TEST OpenMP_Language_Constructs_C_0_Device_Routine_WGlobalData_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "5500.000000")
+set_property(TEST OpenMP_Language_Constructs_C_0_Device_Routine_WGlobalData_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Language_Constructs_C_1_Device_Routine_WGlobalData COMMAND ../openmp_language_constructs_c_1_device_routine_wglobaldata.sh )
+set_property(TEST OpenMP_Language_Constructs_C_1_Device_Routine_WGlobalData PROPERTY PASS_REGULAR_EXPRESSION "5500.000000")
+set_property(TEST OpenMP_Language_Constructs_C_1_Device_Routine_WGlobalData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Language_Constructs_C_3_Device_Routine_WDynGlobalData COMMAND ../openmp_language_constructs_c_3_device_routine_wdynglobaldata.sh )
+set_property(TEST OpenMP_Language_Constructs_C_3_Device_Routine_WDynGlobalData PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_Language_Constructs_C_3_Device_Routine_WDynGlobalData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Language_Constructs_CXX_Member_Function COMMAND ../openmp_language_constructs_cxx_member_function.sh )
 set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function PROPERTY PASS_REGULAR_EXPRESSION "Finished calculation")
