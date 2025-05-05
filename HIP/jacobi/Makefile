@@ -31,7 +31,7 @@ IS_OMPI=$(shell which ompi_info)
 IS_MPICH=$(shell ${MPICC} --version | grep mpich)
 IS_MPICH=$(shell ${MPICC} --version | grep Cray)
 
-ifeq ($(IS_OMPI),)
+ifneq ($(IS_OMPI),)
   MPICFLAGS=$(shell ${MPICC} --showme:compile)
   MPILDFLAGS=$(shell ${MPICC} --showme:link)
 else ifneq ($(IS_MPICH),)
