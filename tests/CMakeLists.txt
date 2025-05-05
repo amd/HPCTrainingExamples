@@ -421,13 +421,13 @@ set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Pointer PROPERTY SKIP
 #set_property(TEST OpenMP_Language_Constructs_C_Reduction_Scalar PROPERTY PASS_REGULAR_EXPRESSION "ce1 = 1000.000000 ce2 1000.000000")
 #set_property(TEST OpenMP_Language_Constructs_C_Reduction_Scalar PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_0_Reduction_Scalars_PortYourself COMMAND ../openmp_c_0_reduction_scalars_portyourself.sh )
-set_property(TEST OpenMP_C_0_Reduction_Scalars_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "ce1 = 1000.000000 ce2 1000.000000")
-set_property(TEST OpenMP_C_0_Reduction_Scalars_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Language_Constructs_C_0_Reduction_Scalars_PortYourself COMMAND ../openmp_language_constructs_c_0_reduction_scalars_portyourself.sh )
+set_property(TEST OpenMP_Language_Constructs_C_0_Reduction_Scalars_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "ce1 = 1000.000000 ce2 1000.000000")
+set_property(TEST OpenMP_Language_Constructs_C_0_Reduction_Scalars_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_1_Reduction_Scalars COMMAND ../openmp_c_1_reduction_scalars.sh )
-set_property(TEST OpenMP_C_1_Reduction_Scalars PROPERTY PASS_REGULAR_EXPRESSION "ce1 = 1000.000000 ce2 1000.000000")
-set_property(TEST OpenMP_C_1_Reduction_Scalars PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Language_Constructs_C_1_Reduction_Scalars COMMAND ../openmp_language_constructs_c_1_reduction_scalars.sh )
+set_property(TEST OpenMP_Language_Constructs_C_1_Reduction_Scalars PROPERTY PASS_REGULAR_EXPRESSION "ce1 = 1000.000000 ce2 1000.000000")
+set_property(TEST OpenMP_Language_Constructs_C_1_Reduction_Scalars PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Language_Constructs_C_Reduction_Array COMMAND ../openmp_language_constructs_c_reduction_array.sh )
 set_property(TEST OpenMP_Language_Constructs_C_Reduction_Array PROPERTY PASS_REGULAR_EXPRESSION 'ce[0] = 1000.000000 ce[1] = 1000.000000')
