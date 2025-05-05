@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This test runs a KSP performance test on a Poisson problem
+# This test checks that we can run a PETSc Fortran example correctly 
 
 # NOTE: this test assumes PETSc has been installed according
 # to the instructions available in the model installation repo:
@@ -8,19 +8,17 @@
 
 module purge
 
-module load rocm openmpi petsc
+module load rocm openmpi amdflang-new petsc 
 
 PETSC_VERSION=`$PETSC_DIR/lib/petsc/bin/petscversion`
 
 git clone --branch v$PETSC_VERSION https://gitlab.com/petsc/petsc.git petsc_for_test
 
-pushd petsc_for_test/src/ksp/ksp/tutorials
+pushd petsc_for_test/src/snes/tests
 
-sed -i '/PetscCheck(norm/d' bench_kspsolve.c
+mpifort ex21f.F90 -o ex21f -I$PETSC_PATH/include -L$PETSC_PATH/lib -lpetsc
 
-mpicc bench_kspsolve.c -o bench_kspsolve -I$PETSC_PATH/include -L$PETSC_PATH/lib -lpetsc
-
-./bench_kspsolve -mat_type aijhipsparse
+./ex21f ksp_gmres_cgs_refinement_type refine_always   -snes_monitor -snes_converged_reason -snes_view -pc_type lu
 
 popd
 
