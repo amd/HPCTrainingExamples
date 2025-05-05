@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This test checks that we can run a PETSc Fortran example correctly 
+# This test checks that we can run a PETSc Fortran example correctly
 
 # NOTE: this test assumes PETSc has been installed according
 # to the instructions available in the model installation repo:
@@ -8,7 +8,7 @@
 
 module purge
 
-module load rocm openmpi amdflang-new petsc 
+module load rocm openmpi amdflang-new petsc_amdflang
 
 PETSC_VERSION=`$PETSC_DIR/lib/petsc/bin/petscversion`
 

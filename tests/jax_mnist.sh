@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This test checks that JAX
-# can be used to run an example 
+# can be used to run an example
 
 # NOTE: this test assumes JAX has been installed according
 # to the instructions available in the model installation repo:

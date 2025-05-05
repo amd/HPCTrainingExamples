@@ -13,4 +13,4 @@ else
    make
 
    make clean
-fi   
+fi

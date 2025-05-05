@@ -3,7 +3,7 @@
 # Credits: Samuel Antao AMD
 
 # This test checks basic functionalities
-# of mpi4py using cupy 
+# of mpi4py using cupy
 
 # NOTE: this test assumes openmpi has been installed according
 # to the instructions available in the model installation repo:

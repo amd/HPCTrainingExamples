@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This test checks that the GPU 
+# This test checks that the GPU
 # seen by PyTorch is an AMD GPU
 
 # NOTE: this test assumes PyTorch has been installed according

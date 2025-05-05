@@ -15,4 +15,4 @@ else
    ./openmp_code
 
    make clean
-fi   
+fi

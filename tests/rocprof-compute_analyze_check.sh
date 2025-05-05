@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This test checks that 
+# This test checks that
 # rocprofiler-compute (formerly omniperf) analyze runs
 
 VERSION=""
@@ -67,7 +67,7 @@ make
 result=`echo ${ROCM_VERSION} | awk '$1>6.1.2'` && echo $result
 if [[ "${result}" ]]; then
    TOOL_ORIGIN="ROCm"
-fi   
+fi
 result=`echo ${ROCM_VERSION} | awk '$1>6.2.9'` && echo $result
 if [[ "${result}" ]]; then
    TOOL_NAME="rocprofiler-compute"
@@ -98,7 +98,7 @@ echo " ------------------------------- "
 echo " "
 echo "tool command is ${TOOL_COMMAND}"
 echo " "
-echo " ------------------------------- "   
+echo " ------------------------------- "
 module show ${TOOL_NAME}${VERSION}
 module load ${TOOL_NAME}${VERSION}
 

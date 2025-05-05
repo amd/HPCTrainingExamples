@@ -5,7 +5,7 @@ module load hdf5
 module load openmpi
 
 if [[ `which mpicc | wc -l` -eq 0 ]]; then
-   # this means MPI is not found, but this is a test for parallel HDF5, so we skip 	
+   # this means MPI is not found, but this is a test for parallel HDF5, so we skip
    echo "Skip"
 fi
 

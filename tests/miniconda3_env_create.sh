@@ -10,7 +10,7 @@ conda activate env_for_test
 
 conda info --envs
 
-conda deactivate 
+conda deactivate
 
 conda remove -y -n env_for_test --all
 

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# this script runs a PyTorch test using the  MNIST 
+# this script runs a PyTorch test using the  MNIST
 # (Modified National Institute of Standards and Technology) database:
-# a database of handwritten digits that can be used to train a 
+# a database of handwritten digits that can be used to train a
 # Convolutional Neural Network for handwriting recognition.
 
 # NOTE: this test assumes PyTorch has been installed according

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 module purge
-module load fftw 
+module load fftw
 
 fftw-wisdom -V
 

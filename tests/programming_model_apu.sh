@@ -15,4 +15,4 @@ else
    ./gpu_code
 
    make clean
-fi   
+fi

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This test runs the install tests
-# suite from the Cupy repo: 
+# suite from the Cupy repo:
 # https://github.com/ROCm/cupy/tree/master/tests/install_tests
 
 # NOTE: this test assumes CuPy has been installed according

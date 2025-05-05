@@ -5,7 +5,7 @@ GPU_COUNT=`rocminfo | grep "Device Type:             GPU"  | wc -l`
 if [ ${GPU_COUNT} -lt 2 ]; then
    echo "Skip"
 else
-   module load openmpi	
+   module load openmpi
    export OMPI_CXX=hipcc
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"

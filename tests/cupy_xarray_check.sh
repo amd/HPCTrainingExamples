@@ -15,7 +15,7 @@ REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
 pushd $REPO_DIR/Python/cupy
 
-python3 cupy_xarray_test.py 
+python3 cupy_xarray_test.py
 
 module unload cupy
 

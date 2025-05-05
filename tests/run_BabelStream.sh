@@ -10,7 +10,7 @@ cd ${BABELSTREAM_ROOT}
 # -DPAGEFAULT -- good performance
 # CMAKE_CXX_COMPILER=hipcc
 #TBSIZE = 1024 default -- not seeing much difference
-# -DDOT_READ_DWORDS_PER_LANE=4 
+# -DDOT_READ_DWORDS_PER_LANE=4
 
 ROCM_GPU=`rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//' | tr -d '[:blank:]'`
 
@@ -24,7 +24,7 @@ cmake -Bbuild -H. -DMODEL=hip \
 cmake --build build
 
 ./build/hip-stream --numtimes ${NUMTIMES} --arraysize $((NX*NY*NZ))
- 
+
 # Sample output
 #BabelStream
 #Version: 5.0

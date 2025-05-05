@@ -12,7 +12,7 @@ mamba install -y jax
 
 mamba list -n env_for_test
 
-mamba deactivate 
+mamba deactivate
 
 mamba remove -y -n env_for_test --all
 

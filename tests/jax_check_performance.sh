@@ -3,7 +3,7 @@
 # Test contributed by Corey Adams (corey.adams@amd.com)
 
 # This test checks that JAX
-# shows the expected performance 
+# shows the expected performance
 # for different data types
 
 # NOTE: this test assumes JAX has been installed according

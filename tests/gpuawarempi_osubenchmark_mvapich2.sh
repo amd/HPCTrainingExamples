@@ -2,7 +2,7 @@
 
 module purge
 
-module load rocm mvapich2/2.3.7 
+module load rocm mvapich2/2.3.7
 
 export HIP_VISIBLE_DEVICES=0,1
 

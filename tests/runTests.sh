@@ -133,15 +133,15 @@ do
           reset-last
           ;;
       "--rocprof-sys")
-          shift	   
+          shift
           ROCPROF_SYS=1
           reset-last
-          ;;	  
+          ;;
       "--rocprof-compute")
-          shift	   
+          shift
           ROCPROF_COMPUTE=1
           reset-last
-          ;;	  
+          ;;
       "--hip")
           shift
           HIP=1
@@ -293,7 +293,7 @@ done
 
 
 rm -rf build
-mkdir build 
+mkdir build
 cd build
 cmake ..
 

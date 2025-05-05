@@ -10,7 +10,7 @@ mamba activate env_for_test
 
 mamba info --envs
 
-mamba deactivate 
+mamba deactivate
 
 mama remove -y -n env_for_test --all
 

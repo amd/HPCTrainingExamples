@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This test imports the torch package in Python to test 
+# This test imports the torch package in Python to test
 # if PyTorch is installed and accessible
 
 # NOTE: this test assumes PyTorch has been installed according

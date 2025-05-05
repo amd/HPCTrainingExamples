@@ -10,7 +10,7 @@ cd osu-micro-benchmarks-7.3
 
 module purge
 
-module load rocm openmpi 
+module load rocm openmpi
 
 rm -rf build
 
@@ -23,7 +23,7 @@ mkdir build
 	--enable-rocm \
 	--with-rocm=${ROCM_PATH}
 
-make -j 
+make -j
 
 make install
 

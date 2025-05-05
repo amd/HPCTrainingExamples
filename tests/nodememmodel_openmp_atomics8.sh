@@ -16,5 +16,5 @@ else
    ./arraysum8
 
    make clean
-fi   
+fi
 

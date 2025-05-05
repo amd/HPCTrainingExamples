@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This test imports the cupy package in Python to test 
+# This test imports the cupy package in Python to test
 # if Cupy is installed and accessible
 
 # NOTE: this test assumes CuPy has been installed according

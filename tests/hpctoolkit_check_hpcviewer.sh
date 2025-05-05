@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This test checks that hpcviewer 
+# This test checks that hpcviewer
 # returns the version
 
 module purge

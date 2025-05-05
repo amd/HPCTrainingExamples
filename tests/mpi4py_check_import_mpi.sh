@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This test imports the mpi4py package in Python to test 
+# This test imports the mpi4py package in Python to test
 # if Python MPI  is installed and accessible
 
 # NOTE: this test assumes openmpi has been installed according

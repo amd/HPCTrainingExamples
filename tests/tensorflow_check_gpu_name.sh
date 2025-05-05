@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This test checks that the GPU 
+# This test checks that the GPU
 # seen by TensorFlow is an AMD GPU
 
 # NOTE: this test assumes TensorFlow has been installed according

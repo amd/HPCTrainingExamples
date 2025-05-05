@@ -14,4 +14,4 @@ else
    ./daxpy
 
    make clean
-fi   
+fi

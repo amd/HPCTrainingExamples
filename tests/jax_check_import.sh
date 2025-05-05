@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This test imports the jax package in Python to test 
+# This test imports the jax package in Python to test
 # if JAX is installed and accessible
 
 # NOTE: this test assumes JAX has been installed according

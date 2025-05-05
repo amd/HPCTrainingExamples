@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This test checks that the copy of arrays 
+# This test checks that the copy of arrays
 # from the CPU to the GPU and their sum on the GPU
 
 # NOTE: this test assumes CuPy has been installed according
@@ -15,7 +15,7 @@ REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
 pushd $REPO_DIR/Python/cupy
 
-python3 cupy_array_sum.py 
+python3 cupy_array_sum.py
 
 module unload cupy
 

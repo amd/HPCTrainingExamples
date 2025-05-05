@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This test runs the ij test from HYPRE 
+# This test runs the ij test from HYPRE
 
 # NOTE: this test assumes HYPRE has been installed according
 # to the instructions available in the model installation repo:
@@ -14,7 +14,7 @@ HYPRE_VERSION=`cat $HYPRE_PATH/lib/cmake/HYPRE/HYPREConfigVersion.cmake | grep "
 HYPRE_VERSION=`echo $HYPRE_VERSION | sed 's/set(PACKAGE_VERSION \"//g'`
 HYPRE_VERSION=`echo $HYPRE_VERSION | sed 's/\")//g'`
 
-git clone --branch v$HYPRE_VERSION https://github.com/hypre-space/hypre.git 
+git clone --branch v$HYPRE_VERSION https://github.com/hypre-space/hypre.git
 
 pushd hypre/src/test
 

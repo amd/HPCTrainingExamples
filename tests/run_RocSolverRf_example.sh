@@ -43,7 +43,7 @@ do
    n=$((${n} + 1))
    shift
 done
-            
+
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 pushd $REPO_DIR
@@ -64,7 +64,7 @@ git clone https://github.com/Reference-LAPACK/lapack
 cd lapack
 mkdir build && cd build
 cmake -DCMAKE_INSTALL_PREFIX=$LAPACK_PATH -DBUILD_SHARED_LIBS=ON ..
-make -j 
+make -j
 make install
 
 cd ../../
@@ -92,7 +92,7 @@ make
 wget https://suitesparse-collection-website.herokuapp.com/MM/Schenk_AFE/af_5_k101.tar.gz
 tar -xvf  af_5_k101.tar.gz
 ./klu_example --matrix1 af_5_k101/af_5_k101.mtx --matrix2 af_5_k101/af_5_k101.mtx --matrix3 af_5_k101/af_5_k101.mtx
- 
+
 if [[ "${REMOVE_AFTER}" == "1" ]]; then
    make clean
    rm -rf dependencies
