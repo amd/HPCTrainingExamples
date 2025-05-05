@@ -56,7 +56,7 @@ AMDGPU_GFXMODEL ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's
 ```
 
 The `AMDGPU_GFXMODEL` architecture string is `gfx90a` for MI200 series and `gfx942` for MI300A and MI300X. We can
-also compile for more than one architecture with `export AMDGPU_GFXMODEL="gfx90a;gfx942"`.
+also compile for more than one architecture with `export AMDGPU_GFXMODEL="gfx90a,gfx942"`.
 
 ```
 cd ../GPU_Code
