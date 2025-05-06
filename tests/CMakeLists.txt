@@ -431,7 +431,7 @@ set_property(TEST OpenMP_Language_Constructs_C_1_Reduction_Scalars PROPERTY PASS
 set_property(TEST OpenMP_Language_Constructs_C_1_Reduction_Scalars PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 ### C reduction array
-add_test(NAME OpenMP_Language_Constructs_C_0_Reduction_Array_Yourself COMMAND ../openmp_language_constructs_c_6_reduction_array_yourself.sh )
+add_test(NAME OpenMP_Language_Constructs_C_0_Reduction_Array_Yourself COMMAND ../openmp_language_constructs_c_0_reduction_array_yourself.sh )
 set_property(TEST OpenMP_Language_Constructs_C_0_Reduction_Array_Yourself PROPERTY PASS_REGULAR_EXPRESSION 'ce[0] = 1000.000000 ce[1] = 1000.000000')
 set_property(TEST OpenMP_Language_Constructs_C_0_Reduction_Array_Yourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
