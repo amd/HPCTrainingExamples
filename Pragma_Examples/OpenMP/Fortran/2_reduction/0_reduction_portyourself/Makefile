@@ -11,7 +11,7 @@ ifneq ($(findstring amdflang,$(FC1)),)
   FREE_FORM_FLAG = -ffree-form
 else ifneq ($(findstring flang,$(FC1)),)
   OPENMP_FLAGS = 
-  FREE_FORM_FLAG = -Mfreeform
+  FREE_FORM_FLAG = -ffreeform
 else ifneq ($(findstring gfortran,$(FC1)),)
   OPENMP_FLAGS = 
   FREE_FORM_FLAG = -ffree-form
