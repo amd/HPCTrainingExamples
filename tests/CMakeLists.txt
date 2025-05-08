@@ -280,6 +280,18 @@ add_test(NAME OpenMP_C_5_Vecadd_Async COMMAND ../openmp_c_5_vecadd_async.sh )
 set_property(TEST OpenMP_C_5_Vecadd_Async PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 set_property(TEST OpenMP_C_5_Vecadd_Async PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME OpenMP_C_0_Jacobi_PortYourself COMMAND ../openmp_c_0_jacobi_portyourself.sh )
+set_property(TEST OpenMP_C_0_Jacobi_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_C_0_Jacobi_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_C_1_Jacobi_USM COMMAND ../openmp_c_1_jacobi_usm.sh )
+set_property(TEST OpenMP_C_1_Jacobi_USM PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_C_1_Jacobi_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_C_2_Jacobi_TargetData COMMAND ../openmp_c_2_jacobi_target_data.sh )
+set_property(TEST OpenMP_C_2_Jacobi_TargetData PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_C_2_Jacobi_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # OpenMP Fortran tests
 
 add_test(NAME OpenMP_Freduce_F_AMDFlang COMMAND ../openmp_freduce_f_amdflang.sh )
