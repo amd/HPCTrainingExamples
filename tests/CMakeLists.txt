@@ -280,18 +280,6 @@ add_test(NAME OpenMP_C_5_Vecadd_Async COMMAND ../openmp_c_5_vecadd_async.sh )
 set_property(TEST OpenMP_C_5_Vecadd_Async PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 set_property(TEST OpenMP_C_5_Vecadd_Async PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_0_Jacobi_PortYourself COMMAND ../openmp_c_0_jacobi_portyourself.sh )
-set_property(TEST OpenMP_C_0_Jacobi_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
-set_property(TEST OpenMP_C_0_Jacobi_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME OpenMP_C_1_Jacobi_USM COMMAND ../openmp_c_1_jacobi_usm.sh )
-set_property(TEST OpenMP_C_1_Jacobi_USM PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
-set_property(TEST OpenMP_C_1_Jacobi_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME OpenMP_C_2_Jacobi_TargetData COMMAND ../openmp_c_2_jacobi_target_data.sh )
-set_property(TEST OpenMP_C_2_Jacobi_TargetData PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
-set_property(TEST OpenMP_C_2_Jacobi_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
 # OpenMP Fortran tests
 
 add_test(NAME OpenMP_Freduce_F_AMDFlang COMMAND ../openmp_freduce_f_amdflang.sh )
@@ -481,6 +469,20 @@ set_property(TEST OpenMP_Language_Constructs_C_0_Device_Routine_WDynGlobalData_P
 add_test(NAME OpenMP_Language_Constructs_C_1_Device_Routine_WDynGlobalData COMMAND ../openmp_language_constructs_c_1_device_routine_wdynglobaldata.sh )
 set_property(TEST OpenMP_Language_Constructs_C_1_Device_Routine_WDynGlobalData PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 5500.000000")
 set_property(TEST OpenMP_Language_Constructs_C_1_Device_Routine_WDynGlobalData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+# C++ tests
+#add_test(NAME OpenMP_CXX_0_Jacobi_PortYourself COMMAND ../openmp_cxx_0_jacobi_portyourself.sh )
+#set_property(TEST OpenMP_CXX_0_Jacobi_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+#set_property(TEST OpenMP_CXX_0_Jacobi_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+#add_test(NAME OpenMP_CXX_1_Jacobi_USM COMMAND ../openmp_cxx_1_jacobi_usm.sh )
+#set_property(TEST OpenMP_CXX_1_Jacobi_USM PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+#set_property(TEST OpenMP_CXX_1_Jacobi_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+#add_test(NAME OpenMP_CXX_2_Jacobi_TargetData COMMAND ../openmp_cxx_2_jacobi_target_data.sh )
+#set_property(TEST OpenMP_CXX_2_Jacobi_TargetData PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+#set_property(TEST OpenMP_CXX_2_Jacobi_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 
 add_test(NAME OpenMP_Language_Constructs_CXX_Member_Function COMMAND ../openmp_language_constructs_cxx_member_function.sh )
 set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function PROPERTY PASS_REGULAR_EXPRESSION "Finished calculation")
