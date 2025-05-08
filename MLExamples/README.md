@@ -1,3 +1,4 @@
+
 # AI and ML exercises
 
 Last revision of this README: **April 14th 2025**.
@@ -457,7 +458,7 @@ done
 
 
 ```
-# FP32
+## FP32
 ***** train metrics *****
   epoch                    =        1.0
   total_flos               = 16159030GF
@@ -487,3 +488,4 @@ done
   train_samples_per_second =    223.686
   train_steps_per_second   =      9.322
  ```
+

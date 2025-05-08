@@ -1,3 +1,4 @@
+
 # rocprofv3
 
 In this series of examples, we will demonstrate profiling with rocprofv3 on a platform using an AMD Instinct&trade; MI300 GPU. ROCm releases (6.2+) now include rocprofv3.
@@ -222,3 +223,4 @@ Try to add `export HSA_XNACK=1`, and check the performance. Is it better or wors
 cd Example_Allocations_and_MemoryPool_MI300A/Fortran/README.md
 ```
 **Finally, try to profile your own application!**
+

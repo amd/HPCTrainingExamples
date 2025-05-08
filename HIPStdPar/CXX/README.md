@@ -1,3 +1,4 @@
+
 # C++ Standard Parallelism on AMD GPUs
 
 Here are some instructions on how to compile and run some tests that exploit C++ standard parallelism, which is available with ROCm, starting from version 6.1.1. Hence, please double check the version of ROCm you are using to make sure it has HIPSTDPAR enabled. HIPSTDPAR relies on the LLVM compiler, the hipstdpar header only library, and rocThrust.
@@ -165,3 +166,4 @@ for use in StdPar sections.
 
 * atomic_stdpar_omp: explains how atomic operations can be safely performed within a StdPar
 section using the `par_unseq` policy. The example also includes an equivalent OpenMP implementation.
+

@@ -1,3 +1,4 @@
+
 # Optimizing DAXPY HIP
 
 In this exercise, we will progressively make changes to optimize the DAXPY kernel on GPU. Any AMD GPU can be used to test this.

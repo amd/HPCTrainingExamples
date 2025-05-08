@@ -1,4 +1,6 @@
+
 # ROCm&trade; Systems Profiler aka `rocprof-sys`
+
 NOTE: extensive documentation on how to use `rocprof-sys` for the [GhostExchange examples](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange) is also available as `README.md` in this exercises repo. Here, we show how to use `rocprof-sys` tools considering the example in HPCTrainingExamples/HIP/jacobi.
 
 In this series of examples, we will demonstrate profiling with `rocprof-sys` on a platform using an AMD Instinct&trade; MI250X GPU. ROCm 6.3.2 release includes the `rocprofiler-systems` packge that you can install.
@@ -229,3 +231,4 @@ cat perfetto-trace-*.proto > merged.proto
 Try to use `rocprof-sys` to profile [GhostExchange examples](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange).
 
 **Finally, try to profile your own application!**
+

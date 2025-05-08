@@ -1,3 +1,4 @@
+
 # Exercise 4: Strided Data Access Patterns (and how to find them)
 
 This exercise uses a simple implementation of a yAx kernel to show how difficult strided data access patterns can be to spot in code,
@@ -537,3 +538,4 @@ yAx time: 25.878859 milliseconds
 ```
 
 It appears that at a smaller problem size, this kernel is more bounded by atomic contention than efficient cache memory usage. It is important to test different problem sizes to ensure that a run of a code being profiled is representative, otherwise the limiters shown in profiling may point optimizations in the wrong direction for a full scale run. As proof of this, you can try manually setting the problem.cpp and solution.cpp problem size to 15, and see that they run in a similar amount of time to mi300a_problem and mi300a_solution. At scale, the memory bandwidth dominates this specific kernel.
+

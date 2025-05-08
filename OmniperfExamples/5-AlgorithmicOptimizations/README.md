@@ -1,3 +1,4 @@
+
 # Exercise 5: Algorithmic Optimizations
 
 A simple yAx kernel, and more efficient, but more complex yAx kernel to demonstrate algorithmic improvements.
@@ -268,4 +269,5 @@ about alternative algorithms.
 ## Results on MI300A
 
 Under construction...
+
 

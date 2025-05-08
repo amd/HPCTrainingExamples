@@ -1,3 +1,4 @@
+
 # Exercise 3: Register Occupancy Limiter
 
 More complex yAx implementation to demonstrate a register limited kernel using an innocuous looking
@@ -563,3 +564,4 @@ With output:
 ╘═════════════╧════════════════════════════════════════╧═══════╧═══════╧═══════╧════════╛
 
 ```
+

@@ -1,3 +1,4 @@
+
 # Exercise 2: LDS Occupancy Limiter
 
 Simple kernel implementing a version of yAx, to demonstrate the downside of allocating a large 
@@ -557,3 +558,4 @@ With output:
 ```
 
 We see that the example is still not occupancy limited by LDS allocations (Insufficient CU LDS is zero). The Wavefront Occupancy has remained approximately the same. As seen above, the runtime has improved by approximately `20%` (going from `7.27` ms of `problem.exe`, to the current time of `5.8` ms).
+

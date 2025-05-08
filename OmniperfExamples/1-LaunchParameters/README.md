@@ -1,3 +1,4 @@
+
 # Exercise 1: Launch Parameter Tuning
 
 Simple kernel implementing a version of yAx, to demonstrate effects of Launch Parameters on kernel 
@@ -675,3 +676,4 @@ Which will show an output similar to this one:
 ╘═════════════╧══════════════════╧════════╧════════╧════════╧════════════╛
 
 ```
+
