@@ -8,10 +8,10 @@ FC1=$(notdir $(FC))
 
 ifneq ($(findstring amdflang,$(FC1)),)
   OPENMP_FLAGS = 
-  FREE_FORM_FLAG = -ffreeform
+  FREE_FORM_FLAG = -ffree-form
 else ifneq ($(findstring flang,$(FC1)),)
   OPENMP_FLAGS = 
-  FREE_FORM_FLAG = -ffreeform
+  FREE_FORM_FLAG = -ffree-form
 else ifneq ($(findstring gfortran,$(FC1)),)
   OPENMP_FLAGS = 
   FREE_FORM_FLAG = -ffree-form
