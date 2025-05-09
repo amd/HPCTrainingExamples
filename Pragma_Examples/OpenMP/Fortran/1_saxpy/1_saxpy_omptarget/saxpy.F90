@@ -1,5 +1,6 @@
 
 module saxpymod
+!$omp requires unified_shared_memory
    use iso_fortran_env
    use omp_lib
   
@@ -8,7 +9,6 @@ module saxpymod
 
    public :: saxpy,initialize
  
-   !$omp requires unified_shared_memory
 contains
         
 subroutine saxpy(a, x, y, n)

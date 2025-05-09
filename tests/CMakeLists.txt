@@ -294,6 +294,30 @@ add_test(NAME OpenMP_Fortran_1_Saxpy_OMPTarget COMMAND ../openmp_fortran_1_saxpy
 set_property(TEST OpenMP_Fortran_1_Saxpy_OMPTarget PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_Fortran_1_Saxpy_OMPTarget PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME OpenMP_Fortran_2_Saxpy_TeamsDistribute COMMAND ../openmp_fortran_2_saxpy_teamsdistribute.sh )
+set_property(TEST OpenMP_Fortran_2_Saxpy_TeamsDistribute PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_2_Saxpy_TeamsDistribute PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Fortran_3_Saxpy_ParallelDoSIMD COMMAND ../openmp_fortran_3_saxpy_paralleldosimd.sh )
+set_property(TEST OpenMP_Fortran_3_Saxpy_ParallelDoSIMD PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_3_Saxpy_ParallelDoSIMD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Fortran_4_Saxpy_NoUSM COMMAND ../openmp_fortran_4_saxpy_nousm.sh )
+set_property(TEST OpenMP_Fortran_4_Saxpy_NoUSM PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_4_Saxpy_NoUSM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Fortran_5_Saxpy_Map COMMAND ../openmp_fortran_5_saxpy_map.sh )
+set_property(TEST OpenMP_Fortran_5_Saxpy_Map PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_5_Saxpy_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Fortran_6_Saxpy_TargetData COMMAND ../openmp_fortran_6_saxpy_targetdata.sh )
+set_property(TEST OpenMP_Fortran_6_Saxpy_TargetData PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_6_Saxpy_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Fortran_7_Saxpy_NumTeams COMMAND ../openmp_fortran_7_saxpy_numteams.sh )
+set_property(TEST OpenMP_Fortran_7_Saxpy_NumTeams PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_7_Saxpy_NumTeams PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 add_test(NAME OpenMP_Fortran_0_Vecadd_PortYourself COMMAND ../openmp_fortran_0_vecadd_portyourself.sh )
 set_property(TEST OpenMP_Fortran_0_Vecadd_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
 set_property(TEST OpenMP_Fortran_0_Vecadd_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
