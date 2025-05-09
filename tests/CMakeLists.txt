@@ -298,7 +298,7 @@ add_test(NAME OpenMP_Fortran_2_Vecadd_Map COMMAND ../openmp_fortran_2_vecadd_map
 set_property(TEST OpenMP_Fortran_2_Vecadd_Map PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
 set_property(TEST OpenMP_Fortran_2_Vecadd_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_3_Vecadd_TargetData COMMAND ../openmp_fortran_3_vecadd_target_data.sh )
+add_test(NAME OpenMP_Fortran_3_Vecadd_TargetData COMMAND ../openmp_fortran_3_vecadd_targetdata.sh )
 set_property(TEST OpenMP_Fortran_3_Vecadd_TargetData PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
 set_property(TEST OpenMP_Fortran_3_Vecadd_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 

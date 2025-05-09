@@ -5,7 +5,6 @@ program main
     use omp_lib 
     use, intrinsic :: iso_fortran_env, only: real64
     implicit none
-    !$omp requires unified_shared_memory
     ! Size of vectors
     integer :: n = 10000000
  
@@ -14,6 +13,8 @@ program main
     integer :: i
     real(real64) :: sum
     real(real64) :: startt, endt
+
+    !$omp requires unified_shared_memory
 
     ! Allocate memory for each vector
     allocate(a(n), b(n), c(n))
