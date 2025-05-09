@@ -287,11 +287,11 @@ set_property(TEST OpenMP_Freduce_F_AMDFlang PROPERTY PASS_REGULAR_EXPRESSION "10
 set_property(TEST OpenMP_Freduce_F_AMDFlang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Fortran_0_Saxpy_PortYourself COMMAND ../openmp_fortran_0_saxpy_portyourself.sh )
-set_property(TEST OpenMP_Fortran_0_Saxpy_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
+set_property(TEST OpenMP_Fortran_0_Saxpy_PortYourself PROPERTY PASS_REGULAR_EXPRESSION " y(n-1)    4.000000")
 set_property(TEST OpenMP_Fortran_0_Saxpy_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Fortran_1_Saxpy_OMPTarget COMMAND ../openmp_fortran_1_saxpy_omptarget.sh )
-set_property(TEST OpenMP_Fortran_1_Saxpy_OMPTarget PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
+set_property(TEST OpenMP_Fortran_1_Saxpy_OMPTarget PROPERTY PASS_REGULAR_EXPRESSION " y(n-1)    4.000000")
 set_property(TEST OpenMP_Fortran_1_Saxpy_OMPTarget PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Fortran_0_Vecadd_PortYourself COMMAND ../openmp_fortran_0_vecadd_portyourself.sh )
