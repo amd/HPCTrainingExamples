@@ -55,4 +55,7 @@ int main(int argc, char *argv[]) {
 
    free(in_h);
    free(out_h);
+   HIP_CHECK(hipFree(in_d));
+   HIP_CHECK(hipFree(out_d));
+
 }
