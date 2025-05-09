@@ -71,7 +71,7 @@ int main() {
   float* deviceC;
 
   hipDeviceProp_t devProp;
-  hipGetDeviceProperties(&devProp, 0);
+  HIP_ASSERT(hipGetDeviceProperties(&devProp, 0));
   cout << " System minor " << devProp.minor << endl;
   cout << " System major " << devProp.major << endl;
   cout << " agent prop name " << devProp.name << endl;
