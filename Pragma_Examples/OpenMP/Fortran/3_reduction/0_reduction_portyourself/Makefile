@@ -8,7 +8,7 @@ FC1=$(notdir $(FC))
 
 ifneq ($(findstring amdflang,$(FC1)),)
   OPENMP_FLAGS = 
-  FREE_FORM_FLAG = -ffree-form
+  FREE_FORM_FLAG = -ffreeform
 else ifneq ($(findstring flang,$(FC1)),)
   OPENMP_FLAGS = 
   FREE_FORM_FLAG = -ffreeform
