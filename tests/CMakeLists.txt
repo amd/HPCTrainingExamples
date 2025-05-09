@@ -286,6 +286,30 @@ add_test(NAME OpenMP_Freduce_F_AMDFlang COMMAND ../openmp_freduce_f_amdflang.sh 
 set_property(TEST OpenMP_Freduce_F_AMDFlang PROPERTY PASS_REGULAR_EXPRESSION "1010")
 set_property(TEST OpenMP_Freduce_F_AMDFlang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME OpenMP_Fortran_0_Vecadd_PortYourself COMMAND ../openmp_fortran_0_vecadd_portyourself.sh )
+set_property(TEST OpenMP_Fortran_0_Vecadd_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
+set_property(TEST OpenMP_Fortran_0_Vecadd_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Fortran_1_Vecadd_USM COMMAND ../openmp_fortran_1_vecadd_usm.sh )
+set_property(TEST OpenMP_Fortran_1_Vecadd_USM PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
+set_property(TEST OpenMP_Fortran_1_Vecadd_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Fortran_2_Vecadd_Map COMMAND ../openmp_fortran_2_vecadd_map.sh )
+set_property(TEST OpenMP_Fortran_2_Vecadd_Map PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
+set_property(TEST OpenMP_Fortran_2_Vecadd_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Fortran_3_Vecadd_TargetData COMMAND ../openmp_fortran_3_vecadd_target_data.sh )
+set_property(TEST OpenMP_Fortran_3_Vecadd_TargetData PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
+set_property(TEST OpenMP_Fortran_3_Vecadd_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Fortran_4_Vecadd_USM_Async COMMAND ../openmp_fortran_4_vecadd_usm_async.sh )
+set_property(TEST OpenMP_Fortran_4_Vecadd_USM_Async PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
+set_property(TEST OpenMP_Fortran_4_Vecadd_USM_Async PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Fortran_5_Vecadd_Async COMMAND ../openmp_fortran_5_vecadd_async.sh )
+set_property(TEST OpenMP_Fortran_5_Vecadd_Async PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
+set_property(TEST OpenMP_Fortran_5_Vecadd_Async PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 ## No flang-15 installed in /usr/bin
 ## Linux system flang not built with AMD offloading
 #add_test(NAME OpenMP_Freduce_F_Flang COMMAND ../openmp_freduce_f_flang.sh )
@@ -295,10 +319,6 @@ set_property(TEST OpenMP_Freduce_F_AMDFlang PROPERTY SKIP_REGULAR_EXPRESSION "mo
 add_test(NAME OpenMP_Freduce_F_GFortran COMMAND ../openmp_freduce_f_gfortran.sh )
 set_property(TEST OpenMP_Freduce_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "1010")
 set_property(TEST OpenMP_Freduce_F_GFortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME OpenMP_Vecadd_F_AMDFlang COMMAND ../openmp_vecadd_f_amdflang.sh )
-set_property(TEST OpenMP_Vecadd_F_AMDFlang PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
-set_property(TEST OpenMP_Vecadd_F_AMDFlang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Vecadd_F_GFortran COMMAND ../openmp_vecadd_f_gfortran.sh )
 set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
