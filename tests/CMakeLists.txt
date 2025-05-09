@@ -282,10 +282,6 @@ set_property(TEST OpenMP_C_5_Vecadd_Async PROPERTY SKIP_REGULAR_EXPRESSION "modu
 
 # OpenMP Fortran tests
 
-add_test(NAME OpenMP_Freduce_F_AMDFlang COMMAND ../openmp_freduce_f_amdflang.sh )
-set_property(TEST OpenMP_Freduce_F_AMDFlang PROPERTY PASS_REGULAR_EXPRESSION "1010")
-set_property(TEST OpenMP_Freduce_F_AMDFlang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
 add_test(NAME OpenMP_Fortran_0_Saxpy_PortYourself COMMAND ../openmp_fortran_0_saxpy_portyourself.sh )
 set_property(TEST OpenMP_Fortran_0_Saxpy_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_Fortran_0_Saxpy_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -341,6 +337,22 @@ set_property(TEST OpenMP_Fortran_4_Vecadd_USM_Async PROPERTY SKIP_REGULAR_EXPRES
 add_test(NAME OpenMP_Fortran_5_Vecadd_Async COMMAND ../openmp_fortran_5_vecadd_async.sh )
 set_property(TEST OpenMP_Fortran_5_Vecadd_Async PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
 set_property(TEST OpenMP_Fortran_5_Vecadd_Async PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Fortran_0_Reduction_PortYourself COMMAND ../openmp_fortran_0_reduction_portyourself.sh )
+set_property(TEST OpenMP_Fortran_0_Reduction_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1010")
+set_property(TEST OpenMP_Fortran_0_Reduction_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Fortran_1_Reduction_Solution COMMAND ../openmp_fortran_1_reduction_solution.sh )
+set_property(TEST OpenMP_Fortran_1_Reduction_Solution PROPERTY PASS_REGULAR_EXPRESSION "1010")
+set_property(TEST OpenMP_Fortran_1_Reduction_Solution PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Fortran_2_Reduction_Solution_USM COMMAND ../openmp_fortran_2_reduction_solution_usm.sh )
+set_property(TEST OpenMP_Fortran_2_Reduction_Solution_USM PROPERTY PASS_REGULAR_EXPRESSION "1010")
+set_property(TEST OpenMP_Fortran_2_Reduction_Solution_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Fortran_2_Reduction_Solution_WrongMapping COMMAND ../openmp_fortran_2_reduction_solution_wrongmapping.sh )
+set_property(TEST OpenMP_Fortran_2_Reduction_Solution_WrongMapping PROPERTY PASS_REGULAR_EXPRESSION "1010")
+set_property(TEST OpenMP_Fortran_2_Reduction_Solution_WrongMapping PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 ## No flang-15 installed in /usr/bin
 ## Linux system flang not built with AMD offloading
