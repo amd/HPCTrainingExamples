@@ -3,8 +3,8 @@
 module load amdflang-new
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/2_vecadd/5_vecadd_async
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/3_reduction/0_reduction_portyourself
 
 make
-./vecadd
+./freduction
 make clean
