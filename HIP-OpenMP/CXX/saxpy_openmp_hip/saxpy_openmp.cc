@@ -54,4 +54,6 @@ int main(int argc, char* argv[])
       }
    }
    compute_3(n, y);
+   delete []x;
+   delete []y;
 }
