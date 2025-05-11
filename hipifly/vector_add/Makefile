@@ -8,7 +8,7 @@ CXX               = g++
 GPUCXX            ?= nvcc
 
 # Uncomment this to use HIP
-# DFLAGS += -DENABLE_HIP  
+# DFLAGS += -DENABLE_HIP -fPIE 
 
 CFLAGS   = -g -O2
 CXXFLAGS = -Ofast -std=c++11
