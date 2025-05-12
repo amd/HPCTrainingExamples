@@ -1,4 +1,4 @@
-# Ghost Exchange Original Version 2
+# Ghost Exchange Original Version 8
 
 This version of the Ghost Exchange example modifies the original one (called [Orig](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig)) by carrying out the computation of the blur kernel in an asycronous way. In more detail, the cells that do not need information from the cells in the ghost halos are advanced first. Then, the MPI communication is performed, which updates the value of the cells at the ghost cells, and then the solution is advanced on those cells that need information from cells on the ghost halos. 
 
