@@ -8,7 +8,7 @@
 
 module purge
 
-module load rocm openmpi amdflang-new petsc_amdflang
+module load rocm openmpi petsc_amdflang
 
 PETSC_VERSION=`$PETSC_DIR/lib/petsc/bin/petscversion`
 
