@@ -55,9 +55,9 @@ int main(int argc, char *argv[])
 
       sum /= (double)n;
  
-      umpire_allocator_deallocate(&allocator, a)
-      umpire_allocator_deallocate(&allocator, b)
-      umpire_allocator_deallocate(&allocator, c)
+      umpire_allocator_deallocate(&allocator, a);
+      umpire_allocator_deallocate(&allocator, b);
+      umpire_allocator_deallocate(&allocator, c);
    }
     
    printf("Final result: %lf\n", sum);
