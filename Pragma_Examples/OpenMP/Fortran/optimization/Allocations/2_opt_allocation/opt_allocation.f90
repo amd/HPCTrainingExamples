@@ -15,10 +15,10 @@ program main
     integer,parameter :: n = 10000000
     integer,parameter :: Niter = 10
     ! Input vectors and Output vector
-    real64,dimension(:),allocatable :: a, b, c
+    real(kind=real64),dimension(:),allocatable :: a, b, c
     integer :: i,iter
-    real64 :: sum
-    real64 :: startt, endt
+    real(kind=real64) :: sum
+    real(kind=real64) :: startt, endt
 
     startt=omp_get_wtime()
 
@@ -30,8 +30,8 @@ program main
       ! Initialize input vectors.
       !$omp target teams distribute parallel do simd
       do i=1,n
-          a(i) = sin(dble(i,kind=8)*1.0d0)*sin(dble(i,kind=8)*1.0d0)
-          b(i) = cos(dble(i,kind=8)*1.0d0)*cos(dble(i,kind=8)*1.0d0) 
+          a(i) = sin(dble(i,kind=real64)*1.0d0)*sin(dble(i,kind=real64)*1.0d0)
+          b(i) = cos(dble(i,kind=real64)*1.0d0)*cos(dble(i,kind=real64)*1.0d0) 
           c(i) = 0.0d0
       enddo
 
