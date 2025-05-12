@@ -62,7 +62,7 @@ program main
           sum = sum +  c(i)
       enddo
   
-      sum = sum/dble(n,kind=real64)
+      sum = sum/dble(n)
 
       call mem_pool%deallocate(a)
       call mem_pool%deallocate(b)

@@ -47,7 +47,7 @@ program main
           sum = sum +  c(i)
       enddo
   
-      sum = sum/dble(n,kind=8)
+      sum = sum/dble(n)
 
     END DO
     
