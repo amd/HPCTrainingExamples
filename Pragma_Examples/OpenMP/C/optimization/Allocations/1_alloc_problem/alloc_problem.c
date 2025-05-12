@@ -18,9 +18,9 @@ int main(int argc, char *argv[])
 
    for (int iter = 0; iter < Niter; iter++){
       // Allocate memory for each vector
-      a = (double *) malloc(n*sizeof(double));
-      b = (double *) malloc(n*sizeof(double));
-      c = (double *) malloc(n*sizeof(double));
+      double *a = (double *) malloc(n*sizeof(double));
+      double *b = (double *) malloc(n*sizeof(double));
+      double *c = (double *) malloc(n*sizeof(double));
 
       // Initialize input vectors
       #pragma omp target teams loop
