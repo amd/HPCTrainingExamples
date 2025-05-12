@@ -34,7 +34,6 @@ int main(int argc, char *argv[])
       for (int i = 0; i < n; i++){
          c[i] = a[i] + b[i];
       }
-      printf("C is %lf\n",c[0]);
 
       // Sum up vector c. Print result divided by n. It should equal 1
       sum = 0.0;

@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 
    double start_time = omp_get_wtime();
 
-   for (int iter = 0; int < Niter; int++){
+   for (int iter = 0; iter < Niter; iter++){
       // Allocate memory for each vector
       double *a = new double[n];
       double *b = new double[n];
