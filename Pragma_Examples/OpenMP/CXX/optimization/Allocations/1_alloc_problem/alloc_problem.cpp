@@ -56,6 +56,6 @@ int main(int argc, char *argv[])
    std::cout << "Final result: " << sum << std::endl;
 
    end_time = omp_get_wtime();
-   std::cout << "Runtime is: " << end_time - start_time << " secs" << std::endl;
+   std::cout << "Runtime is: " << (end_time - start_time) * 1000.0 << " msecs" << std::endl;
  
 }

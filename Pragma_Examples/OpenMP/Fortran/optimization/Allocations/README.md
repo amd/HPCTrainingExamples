@@ -50,6 +50,7 @@ cd  3_memorypool
 
 First install umpire
 ```
+export hip_DIR=${ROCM_PATH}
 ./umpire_setup.sh
 ```
 
