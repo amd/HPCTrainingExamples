@@ -1,0 +1,61 @@
+// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+
+#include <omp.h>
+#include <cmath>
+#include <iostream>
+
+int main(int argc, char *argv[])
+{
+
+#pragma requires unified_shared memory
+
+   // Size of vectors
+   int n = 10000000;
+   int Niter = 10;
+   // Input vectors and Output vector
+   double *a, *b, *c;
+   int i;
+   double sum;
+   double start_time, end_time;
+
+   start_time = omp_get_wtime();
+
+   for (int iter = 0; i < Niter; i++){
+      // Allocate memory for each vector
+      a = new double[n];
+      b = new double[n];
+      c = new double[n];
+
+      // Initialize input vectors
+      #pragma omp target teams loop
+      for (int i = 0; i < n; i++){
+         a[i] = sin((double)i)*sin((double)i);
+         b[i] = cos((double)i)*cos((double)i);
+         c[i] = 0.0;
+      }
+
+      #pragma omp target teams loop
+      for (int i = 0; i < n; i++){
+         c[i] = a[i] + b[i];
+      }
+
+      // Sum up vector c. Print result divided by n. It should equal 1
+      sum = 0.0;
+      #pragma omp target teams loop reduction(+:sum)
+      for (int i = 0; i < n; i++){
+          sum += c[i];
+      }
+
+      sum /= (double)n;
+          
+      delete[] a;
+      delete[] b;
+      delete[] c;
+   }
+    
+   std::cout << "Final result: " << sum << std::endl;
+
+   end_time = omp_get_wtime();
+   std::cout << "Runtime is: " << end_time - start_time << " secs" << std::endl;
+ 
+}
