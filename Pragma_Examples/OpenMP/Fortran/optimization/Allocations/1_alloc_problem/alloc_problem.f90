@@ -3,6 +3,7 @@
 program main
 
     use omp_lib 
+
     use iso_fortran_env, only: real64
 
     implicit none
@@ -45,7 +46,7 @@ program main
       enddo
   
       sum = sum/dble(n)
-          
+
       deallocate(a,b,c)
     END DO
     

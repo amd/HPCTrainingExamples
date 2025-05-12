@@ -4,9 +4,8 @@ program main
 
     use omp_lib 
 
-    use iso_c_binding,   only: c_null_char  
     use iso_fortran_env, only: real64
-    
+
     implicit none
 
     !$omp requires unified_shared_memory
