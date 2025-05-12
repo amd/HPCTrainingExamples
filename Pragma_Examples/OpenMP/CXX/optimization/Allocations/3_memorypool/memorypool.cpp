@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 
    auto& rm = umpire::ResourceManager::getInstance();
 
-   auto allocator = rm.getAllocator(resource);
+   auto allocator = rm.getAllocator("HOST");
 
    auto pooled_allocator = rm.makeAllocator<umpire::strategy::DynamicPoolList>("HOST_pool", allocator);
 
