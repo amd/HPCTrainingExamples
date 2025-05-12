@@ -7,6 +7,7 @@
 #include "umpire/Allocator.hpp"
 #include "umpire/ResourceManager.hpp"
 #include "umpire/Umpire.hpp"
+#include "umpire/strategy/DynamicPoolList.hpp"
 
 int main(int argc, char *argv[])
 {
