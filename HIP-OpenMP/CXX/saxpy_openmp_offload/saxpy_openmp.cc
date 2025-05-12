@@ -51,6 +51,8 @@ int main(int argc, char* argv[])
       saxpy(n, a, x, y);  // compute a * x[i] + y[i] in parallel
    }
    compute_3(n, y);
+   delete []x;
+   delete []y;
 }
 
 void saxpy(int n, float a, float * x, float * y) {

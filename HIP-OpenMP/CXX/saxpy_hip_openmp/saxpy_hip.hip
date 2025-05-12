@@ -79,4 +79,9 @@ int main(int argc, char* argv[])
    hipCheck( hipMemcpy(h_y, d_y, bytes, hipMemcpyDeviceToHost) );
 
    compute_3(n, h_y);
+   delete []h_x;
+   delete []h_y;
+   hipCheck(hipFree(d_x));
+   hipCheck(hipFree(d_y));
+
 }
