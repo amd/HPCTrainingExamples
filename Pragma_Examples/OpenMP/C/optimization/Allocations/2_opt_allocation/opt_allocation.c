@@ -20,12 +20,12 @@ int main(int argc, char *argv[])
 
    start_time = omp_get_wtime();
 
-   for (int iter = 0; i < Niter; i++){
-      // Allocate memory for each vector
-      a = (double *) malloc(n*sizeof(double));
-      b = (double *) malloc(n*sizeof(double));
-      c = (double *) malloc(n*sizeof(double));
+   // Allocate memory for each vector
+   a = (double *) malloc(n*sizeof(double));
+   b = (double *) malloc(n*sizeof(double));
+   c = (double *) malloc(n*sizeof(double));
 
+   for (int iter = 0; i < Niter; i++){
       // Initialize input vectors
       #pragma omp target teams loop
       for (int i = 0; i < n; i++){
@@ -47,11 +47,11 @@ int main(int argc, char *argv[])
       }
 
       sum /= (double)n;
-          
-      free(a);
-      free(b);
-      free(c);
    }
+ 
+   free(a);
+   free(b);
+   free(c);
     
    printf("Final result: %lf\n", sum);
 
