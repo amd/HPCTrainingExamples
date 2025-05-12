@@ -12,15 +12,11 @@ int main(int argc, char *argv[])
    // Size of vectors
    int n = 10000000;
    int Niter = 10;
-   // Input vectors and Output vector
-   double *a, *b, *c;
-   int i;
    double sum;
-   double start_time, end_time;
 
-   start_time = omp_get_wtime();
+   double start_time = omp_get_wtime();
 
-   for (int iter = 0; i < Niter; i++){
+   for (int iter = 0; iter < Niter; iter++){
       // Allocate memory for each vector
       a = (double *) malloc(n*sizeof(double));
       b = (double *) malloc(n*sizeof(double));
@@ -55,6 +51,6 @@ int main(int argc, char *argv[])
     
    printf("Final result: %lf\n", sum);
 
-   end_time = omp_get_wtime();
+   double end_time = omp_get_wtime();
    printf("Runtime is: %lf msecs\n",(end_time - start_time) * 1000.0);
 }

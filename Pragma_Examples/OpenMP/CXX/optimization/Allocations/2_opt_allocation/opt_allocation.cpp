@@ -12,20 +12,16 @@ int main(int argc, char *argv[])
    // Size of vectors
    int n = 10000000;
    int Niter = 10;
-   // Input vectors and Output vector
-   double *a, *b, *c;
-   int i;
    double sum;
-   double start_time, end_time;
 
-   start_time = omp_get_wtime();
+   double start_time = omp_get_wtime();
 
    // Allocate memory for each vector
    a = new double[n];
    b = new double[n];
    c = new double[n];
 
-   for (int iter = 0; i < Niter; i++){
+   for (int iter = 0; iter < Niter; iter++){
       // Initialize input vectors
       #pragma omp target teams loop
       for (int i = 0; i < n; i++){
@@ -55,7 +51,7 @@ int main(int argc, char *argv[])
 
    std::cout << "Final result: " << sum << std::endl;
 
-   end_time = omp_get_wtime();
+   double end_time = omp_get_wtime();
    std::cout << "Runtime is: " << (end_time - start_time) * 1000.0 << " msecs" << std::endl;
 
 }
