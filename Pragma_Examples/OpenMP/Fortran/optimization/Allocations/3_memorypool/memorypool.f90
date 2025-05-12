@@ -32,7 +32,7 @@ program main
     !Umpire pool definition
     res_manager = res_manager%get_instance()
     base_allocator = res_manager%get_allocator_by_name("HOST")
-    !depending on the size of allocations it it is reccomended to either use a quick(small allocations) or a list (large allocations) pool.
+    !depending on the size of allocations it it is recomended to either use a quick(small allocations) or a list (large allocations) pool.
     !mem_pool = res_manager%make_allocator_quick_pool("HOST_POOL", base_allocator, 512_8*1024_8, 1024_8)
     mem_pool = res_manager%make_allocator_list_pool("HOST_POOL", base_allocator, dble(3)*dble(10000000), dble(1024)*dble(1024))
 

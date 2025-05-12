@@ -21,16 +21,19 @@ int main(int argc, char *argv[])
    double start_time = omp_get_wtime();
 
    auto& rm = umpire::ResourceManager::getInstance();
-   umpire::Allocator allocator = rm.getAllocator("HOST");
+
+   auto allocator = rm.getAllocator(resource);
+
+   auto pooled_allocator = rm.makeAllocator<umpire::strategy::DynamicPoolList>("HOST_pool", allocator);
 
    float* my_data = static_cast<float*>(allocator.allocate(100*sizeof(float)));
 
-   // Allocate memory for each vector
-   double *a = new double[n];
-   double *b = new double[n];
-   double *c = new double[n];
-
    for (int iter = 0; iter < Niter; iter++){
+      // Allocate memory for each vector
+      double *a = static_cast<double *>(pooled_allocator.allocate(n*sizeof(double)));
+      double *b = static_cast<double *>(pooled_allocator.allocate(n*sizeof(double)));
+      double *c = static_cast<double *>(pooled_allocator.allocate(n*sizeof(double)));
+
       // Initialize input vectors
       #pragma omp target teams loop
       for (int i = 0; i < n; i++){
@@ -52,11 +55,11 @@ int main(int argc, char *argv[])
       }
 
       sum /= (double)n;
-   }
 
-   delete[] a;
-   delete[] b;
-   delete[] c;
+      pooled_allocator.deallocate(a);
+      pooled_allocator.deallocate(b);
+      pooled_allocator.deallocate(c);
+   }
 
    std::cout << "Final result: " << sum << std::endl;
 
