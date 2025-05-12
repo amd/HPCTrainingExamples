@@ -68,7 +68,7 @@ int main(int argc, char *argv[]){
    double SecsPerIter = secs/(double)niter;
    cout << "2 Kernels Took " << tm_duration/(double)niter << " microseconds for alignment length " << alignment_length << ", thread_limit(BLOCKSIZE) " << BLOCKSIZE << ", memory loads+writes " << GB << " GiB" << endl;
    cout << "Application bandwidth using one operation per memory write   " << GB/SecsPerIter << " GiB/sec or " << GB/1024.0/SecsPerIter << " TiB/sec" << endl;
-   cout << "Hardware bandwidth accounting for write needing a load+store " << 4.0*GB/3.0/SecsPerIter << " GiB/sec or " << 5.0*GB/3.0/1024.0/SecsPerIter << " TiB/sec" << endl << endl;
+   cout << "Hardware bandwidth accounting for write needing a load+store " << 4.0*GB/3.0/SecsPerIter << " GiB/sec or " << 4.0*GB/3.0/1024.0/SecsPerIter << " TiB/sec" << endl << endl;
 
    delete[] X;
    delete[] Y;
