@@ -30,8 +30,8 @@ program main
       ! Initialize input vectors.
       !$omp target teams distribute parallel do simd
       do i=1,n
-          a(i) = sin(dble(i,kind=real64)*1.0d0)*sin(dble(i,kind=real64)*1.0d0)
-          b(i) = cos(dble(i,kind=real64)*1.0d0)*cos(dble(i,kind=real64)*1.0d0) 
+          a(i) = sin(dble(i))*sin(dble(i))
+          b(i) = cos(dble(i))*cos(dble(i)) 
           c(i) = 0.0d0
       enddo
 
