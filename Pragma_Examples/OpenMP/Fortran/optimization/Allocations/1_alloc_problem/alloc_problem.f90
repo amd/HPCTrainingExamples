@@ -13,10 +13,10 @@ program main
     integer,parameter :: n = 10000000
     integer,parameter :: Niter = 10
     ! Input vectors and Output vector
-    real64,dimension(:),allocatable :: a, b, c
+    real(kind=real64),dimension(:),allocatable :: a, b, c
     integer :: i,iter
-    real64 :: sum
-    real64 :: startt, endt
+    real(kind=real64) :: sum
+    real(kind=real64) :: startt, endt
 
     startt=omp_get_wtime()
 
