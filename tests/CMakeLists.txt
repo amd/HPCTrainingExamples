@@ -544,8 +544,6 @@ add_test(NAME OpenMP_Optimizations_C_1_Alloc_Problem COMMAND ../openmp_optimizat
 set_property(TEST OpenMP_Optimizations_C_1_Alloc_Problem PROPERTY PASS_REGULAR_EXPRESSION "Final result: 1.000000")
 set_property(TEST OpenMP_Optimizations_C_1_Alloc_Problem PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-openmp_c_optimizations_1_alloc_problem.sh
-
 # C++ tests
 #add_test(NAME OpenMP_CXX_0_Jacobi_PortYourself COMMAND ../openmp_cxx_0_jacobi_portyourself.sh )
 #set_property(TEST OpenMP_CXX_0_Jacobi_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
