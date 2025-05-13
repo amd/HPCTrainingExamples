@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
       }
 
       sum /= (double)n;
-          
+
       delete[] a;
       delete[] b;
       delete[] c;

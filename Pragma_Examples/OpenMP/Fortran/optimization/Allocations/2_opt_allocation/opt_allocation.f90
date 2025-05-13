@@ -2,7 +2,7 @@
 
 program main
 
-    use omp_lib 
+    use omp_lib
 
     use iso_fortran_env, only: real64
 
@@ -30,7 +30,7 @@ program main
       !$omp target teams distribute parallel do simd
       do i=1,n
           a(i) = sin(dble(i))*sin(dble(i))
-          b(i) = cos(dble(i))*cos(dble(i)) 
+          b(i) = cos(dble(i))*cos(dble(i))
           c(i) = 0.0_real64
       enddo
 
@@ -38,18 +38,18 @@ program main
       do i=1,n
           c(i) = a(i) + b(i)
       enddo
-      
+
       ! Sum up vector c. Print result divided by n. It should equal 1
       sum = 0.0_real64
       !$omp target teams distribute parallel do simd reduction(+:sum)
       do i=1,n
           sum = sum +  c(i)
       enddo
-  
+
       sum = sum/dble(n)
 
     end do
-    
+
     deallocate(a,b,c)
     write(*,'("Final result: ",f10.6)') sum
 

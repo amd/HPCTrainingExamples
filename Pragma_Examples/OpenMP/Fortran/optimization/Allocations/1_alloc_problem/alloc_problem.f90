@@ -1,8 +1,8 @@
-! Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+! Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
 
 program main
 
-    use omp_lib 
+    use omp_lib
 
     use iso_fortran_env, only: real64
 
@@ -24,12 +24,12 @@ program main
     do iter = 1,Niter
       ! Allocate memory for each vector
       allocate(a(n), b(n), c(n))
-         
+
       ! Initialize input vectors.
       !$omp target teams distribute parallel do simd
       do i=1,n
           a(i) = sin(dble(i))*sin(dble(i))
-          b(i) = cos(dble(i))*cos(dble(i)) 
+          b(i) = cos(dble(i))*cos(dble(i))
           c(i) = 0.0_real64
       enddo
 
@@ -37,22 +37,21 @@ program main
       do i=1,n
           c(i) = a(i) + b(i)
       enddo
-      
+
       ! Sum up vector c. Print result divided by n. It should equal 1
       sum = 0.0_real64
       !$omp target teams distribute parallel do simd reduction(+:sum)
       do i=1,n
           sum = sum +  c(i)
       enddo
-  
+
       sum = sum/dble(n)
 
       deallocate(a,b,c)
     end do
-    
+
     write(*,'("Final result: ",f10.6)') sum
 
     endt=omp_get_wtime()
     write(*,'("Runtime is: ",f10.4," msecs")') (endt-startt)*1000.0_real64
- 
 end program

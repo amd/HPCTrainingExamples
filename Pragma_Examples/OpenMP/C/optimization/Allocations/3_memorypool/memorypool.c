@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
 
 #include <omp.h>
 #include <math.h>
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
       }
 
       sum /= (double)n;
- 
+
       umpire_allocator_deallocate(&pool, a);
       umpire_allocator_deallocate(&pool, b);
       umpire_allocator_deallocate(&pool, c);
