@@ -591,6 +591,10 @@ add_test(NAME OpenMP_Optimizations_CXX_2_Opt_Allocation COMMAND ../openmp_optimi
 set_property(TEST OpenMP_Optimizations_CXX_2_Opt_Allocation PROPERTY PASS_REGULAR_EXPRESSION "Final result: 1.000000")
 set_property(TEST OpenMP_Optimizations_CXX_2_Opt_Allocation PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME OpenMP_Optimizations_CXX_3_MemoryPool COMMAND ../openmp_optimizations_cxx_3_memorypool.sh )
+set_property(TEST OpenMP_Optimizations_CXX_3_MemoryPool PROPERTY PASS_REGULAR_EXPRESSION "Final result: 1.000000")
+set_property(TEST OpenMP_Optimizations_CXX_3_MemoryPool PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # HIPFort Examples
 
 add_test(NAME HIPFort_Module_Check_hipfc_2003 COMMAND ../hipfort_module_check_hipfc_2003.sh )
