@@ -24,7 +24,7 @@ and run the example
 ```
 ./alloc_problem
 ```
-The total execution time is roughly: 1s 180ms 740mus
+The total execution time is roughly: 1180 ms
 
 ## version 2: Solution no dynamic allocation and deallocation
 In this version the allocations are moved outside the iteration loop.
@@ -38,7 +38,7 @@ make
 ./opt_allocation
 ```
 Allocations (especially with system allocators, i.e. 'allocate') with unified memory are costly on MI300A. The first kernel will take longer since the memory is allocated at first touch. Subsequent iteration work on already allocated memory will be much faster. The deallocation is also only done once at the very end and we do not pay the high price of it in each iteration. 
-The total execution time is roughly: 399ms 160mus, so we have a speedup of almost a factor 3 in this example. The gain improves the more iterations we do not have to do dynamic allocations.
+The total execution time is roughly: 183 ms, so we have a speedup of more than 6x in this example. The gain improves the more iterations we do not have to do dynamic allocations.
 We can learn from this that dynamic allocations and deallocations on MI300A should be avoided. 
 But what if that is very hard to do in a true app which uses different temporary arrays in each subroutine?
 
@@ -70,6 +70,6 @@ make
 
 The first two iterations when the memory pool still 'warms up' will have a longer first touch kernel. But later iterations will be fast.
 
-The total execution time is roughly: 485ms 524mus, so the speed up is a little less than moving the allocation outside, but also for the memory pool we only pay the price in the first 2 iterations until the library figured out the size of the pool. This is usually negligible if hundreds to thousands of iterations / time steps are run in production applications which do more iterations than this training example.
+The total execution time is roughly: 257 ms, so the speed up is a little less than moving the allocation outside, but also for the memory pool we only pay the price in the first 2 iterations until the library figured out the size of the pool. This is usually negligible if hundreds to thousands of iterations / time steps are run in production applications which do more iterations than this training example.
 
 Conclusion: The usage of memory pools is recommended if you have frequent allocations and deallocations in your application and cannot move the allocations outside the loop!
