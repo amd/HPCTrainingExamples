@@ -3,6 +3,7 @@
 #include <omp.h>
 #include <cmath>
 #include <iostream>
+#include <iomanip>
 
 #include "umpire/Allocator.hpp"
 #include "umpire/ResourceManager.hpp"

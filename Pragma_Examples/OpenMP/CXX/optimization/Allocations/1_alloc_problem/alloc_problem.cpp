@@ -49,10 +49,9 @@ int main(int argc, char *argv[])
       delete[] b;
       delete[] c;
    }
-    
+
    std::cout << "Final result: " << std::fixed << std::setprecision(6) << sum << std::endl;
 
    double end_time = omp_get_wtime();
    std::cout << "Runtime is: " << (end_time - start_time) * 1000.0 << " msecs" << std::endl;
- 
 }
