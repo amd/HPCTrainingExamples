@@ -9,5 +9,7 @@ cd ${REPO_DIR}/Pragma_Examples/OpenMP/C/optimization/Allocations/3_memorypool
 ./umpire_setup.sh
 export UMPIRE_PATH=${PWD}/Umpire_install
 make
-./memory_pool
+./memorypool
 make clean
+
+rm -rf Umpire_source Umpire_install
