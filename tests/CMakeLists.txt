@@ -539,6 +539,13 @@ add_test(NAME OpenMP_Language_Constructs_C_1_Device_Routine_WDynGlobalData COMMA
 set_property(TEST OpenMP_Language_Constructs_C_1_Device_Routine_WDynGlobalData PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 5500.000000")
 set_property(TEST OpenMP_Language_Constructs_C_1_Device_Routine_WDynGlobalData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# C OpenMP Optimization tests
+add_test(NAME OpenMP_Optimizations_C_1_Alloc_Problem COMMAND ../openmp_optimizations_c_1_alloc_problem.sh )
+set_property(TEST OpenMP_Optimizations_C_1_Alloc_Problem PROPERTY PASS_REGULAR_EXPRESSION "Final result: 1.000000")
+set_property(TEST OpenMP_Optimizations_C_1_Alloc_Problem PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+openmp_c_optimizations_1_alloc_problem.sh
+
 # C++ tests
 #add_test(NAME OpenMP_CXX_0_Jacobi_PortYourself COMMAND ../openmp_cxx_0_jacobi_portyourself.sh )
 #set_property(TEST OpenMP_CXX_0_Jacobi_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
