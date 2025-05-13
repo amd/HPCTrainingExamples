@@ -1,15 +1,14 @@
 #!/bin/bash
 
-git clone --recursive https://github.com/LLNL/Umpire.git
-cd Umpire
-sed -i 's/memoryType/type/g' src/umpire/tpl/camp/include/camp/resource/hip.hpp
+UMPIRE_PATH=${PWD}/Umpire_install
+git clone --recursive https://github.com/LLNL/Umpire.git Umpire_source
+cd Umpire_source
 sed -i 's/memoryType/type/g' src/umpire/tpl/camp/include/camp/resource/hip.hpp
 sed -i 's/Mfree/ffree-form/g' examples/cookbook/CMakeLists.txt
 sed -i 's/Mfree/ffree-form/g' examples/tutorial/fortran/CMakeLists.txt
 sed -i 's/Mfree/ffree-form/g' src/umpire/interface/c_fortran/CMakeLists.txt
 sed -i 's/Mfree/ffree-form/g' tests/integration/interface/fortran/CMakeLists.txt
 mkdir -p build && cd build
-UMPIRE_PATH=$HOME/umpire
 mkdir $UMPIRE_PATH
 
 module load rocm
@@ -30,7 +29,6 @@ cmake -DCMAKE_INSTALL_PREFIX=${UMPIRE_PATH} \
       -DCMAKE_Fortran_COMPILER=$FC \
       -DCMAKE_HIP_ARCHITECTURES=$AMDGPU_GFXMODEL \
       -DAMDGPU_TARGETS=$AMDGPU_GFXMODEL \
-      -DCMAKE_HIP_ARCHITECTURES=$AMDGPU_GFXMODEL \
       -DGPU_TARGETS=$AMDGPU_GFXMODEL \
       -DBLT_CXX_STD=c++14 \
       -DUMPIRE_ENABLE_IPC_SHARED_MEMORY=On \

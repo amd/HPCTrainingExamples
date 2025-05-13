@@ -499,6 +499,10 @@ add_test(NAME OpenMP_Optimizations_Fortran_2_Opt_Allocation COMMAND ../openmp_op
 set_property(TEST OpenMP_Optimizations_Fortran_2_Opt_Allocation PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
 set_property(TEST OpenMP_Optimizations_Fortran_2_Opt_Allocation PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME OpenMP_Optimizations_Fortran_3_MemoryPool COMMAND ../openmp_optimizations_fortran_3_memorypool.sh )
+set_property(TEST OpenMP_Optimizations_Fortran_3_MemoryPool PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
+set_property(TEST OpenMP_Optimizations_Fortran_3_MemoryPool PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 ### C reduction scalars
 add_test(NAME OpenMP_Language_Constructs_C_0_Reduction_Scalars_PortYourself COMMAND ../openmp_language_constructs_c_0_reduction_scalars_portyourself.sh )
 set_property(TEST OpenMP_Language_Constructs_C_0_Reduction_Scalars_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "ce1 = 1000.000000 ce2 1000.000000")
