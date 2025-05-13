@@ -1,6 +1,6 @@
 #!/bin/bash
 
-module load amdclang
+module load amdflang-new
 export HSA_XNACK=1
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
