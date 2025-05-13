@@ -490,6 +490,11 @@ set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Pointer PROPERTY SKIP
 #set_property(TEST OpenMP_Language_Constructs_C_Reduction_Scalar PROPERTY PASS_REGULAR_EXPRESSION "ce1 = 1000.000000 ce2 1000.000000")
 #set_property(TEST OpenMP_Language_Constructs_C_Reduction_Scalar PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# Fortran OpenMP Optimization tests
+add_test(NAME OpenMP_Optimizations_Fortran_1_Alloc_Problem COMMAND ../openmp_optimizations_fortran_1_alloc_problem.sh )
+set_property(TEST OpenMP_Optimizations_Fortran_1_Alloc_Problem PROPERTY PASS_REGULAR_EXPRESSION "Final result: 1.000000")
+set_property(TEST OpenMP_Optimizations_Fortran_1_Alloc_Problem PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 ### C reduction scalars
 add_test(NAME OpenMP_Language_Constructs_C_0_Reduction_Scalars_PortYourself COMMAND ../openmp_language_constructs_c_0_reduction_scalars_portyourself.sh )
 set_property(TEST OpenMP_Language_Constructs_C_0_Reduction_Scalars_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "ce1 = 1000.000000 ce2 1000.000000")
