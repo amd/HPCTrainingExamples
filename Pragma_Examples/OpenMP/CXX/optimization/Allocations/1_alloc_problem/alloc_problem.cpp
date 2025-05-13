@@ -1,8 +1,9 @@
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
 
 #include <omp.h>
 #include <cmath>
 #include <iostream>
+#include <iomanip>
 
 int main(int argc, char *argv[])
 {
@@ -49,8 +50,7 @@ int main(int argc, char *argv[])
       delete[] c;
    }
     
-   std::cout << std::fixed << std::setprecision(6);
-   std::cout << "Final result: " << sum << std::endl;
+   std::cout << "Final result: " << std::fixed << std::setprecision(6) << sum << std::endl;
 
    double end_time = omp_get_wtime();
    std::cout << "Runtime is: " << (end_time - start_time) * 1000.0 << " msecs" << std::endl;
