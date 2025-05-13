@@ -72,5 +72,5 @@ program main
     write(*,'("Final result: ",f10.6)') sum
 
     endt=omp_get_wtime()
-    write(*,'("Runtime is: ",f8.6," msecs")') (endt-startt)*1000.0_real64
+    write(*,'("Runtime is: ",f10.4," msecs")') (endt-startt)*1000.0_real64
 end program
