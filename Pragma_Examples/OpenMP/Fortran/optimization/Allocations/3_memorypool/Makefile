@@ -21,7 +21,7 @@ FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS} -I${UMPIRE_PATH}/include/umpir
 ifeq (${FC1},gfortran-13)
   LDFLAGS = ${OPENMP_FLAGS} -fno-lto
 else
-  LDFLAGS = ${OPENMP_FLAGS} -L${UMPIRE_PATH}/lib64 -L${UMPIRE_PATH}/lib -lumpire -lcamp -lfmt
+  LDFLAGS = ${OPENMP_FLAGS} -L${UMPIRE_PATH}/lib64 -L${UMPIRE_PATH}/lib -lumpire -lcamp -lfmt -L${ROCM_PATH}/lib -lamdhip64 -lstdc++
 endif
 
 memorypool.o: memorypool.f90

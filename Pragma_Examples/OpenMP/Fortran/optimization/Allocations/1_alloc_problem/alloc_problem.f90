@@ -21,7 +21,7 @@ program main
 
     startt=omp_get_wtime()
 
-    DO iter = 1,Niter
+    do iter = 1,Niter
       ! Allocate memory for each vector
       allocate(a(n), b(n), c(n))
          
@@ -30,7 +30,7 @@ program main
       do i=1,n
           a(i) = sin(dble(i))*sin(dble(i))
           b(i) = cos(dble(i))*cos(dble(i)) 
-          c(i) = 0.0d0
+          c(i) = 0.0_real64
       enddo
 
       !$omp target teams distribute parallel do simd
@@ -39,7 +39,7 @@ program main
       enddo
       
       ! Sum up vector c. Print result divided by n. It should equal 1
-      sum = 0.0d0
+      sum = 0.0_real64
       !$omp target teams distribute parallel do simd reduction(+:sum)
       do i=1,n
           sum = sum +  c(i)
@@ -48,11 +48,11 @@ program main
       sum = sum/dble(n)
 
       deallocate(a,b,c)
-    END DO
+    end do
     
     write(*,'("Final result: ",f10.6)') sum
 
     endt=omp_get_wtime()
-    write(*,'("Runtime is: ",f8.6," secs")') endt-startt
+    write(*,'("Runtime is: ",f8.6," msecs")') (endt-startt)*1000.0_real64
  
 end program
