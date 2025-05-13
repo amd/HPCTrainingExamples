@@ -21,7 +21,7 @@ pushd hypre/src/test
 mpicc ij.c -o ij -I$HYPRE_PATH/include -L$HYPRE_PATH/lib -lHYPRE -lm
 
 
-./ij -n 100 100 100 -pmis -keepT 1 -rlx 18 -exec_device -rap 1 -mod_rap2 1 -interptype 6 -solver 1 -agg_nl 1 -27pt -mxrs 0.9 -ns 2 -Pmx 8
+./ij -n 25 25 25 -pmis -keepT 1 -rlx 18 -exec_device -rap 1 -mod_rap2 1 -interptype 6 -solver 1 -agg_nl 1 -27pt -mxrs 0.9 -ns 2 -Pmx 8
 
 popd
 
