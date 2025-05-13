@@ -8,8 +8,6 @@
 
 #include "timer.h"
 
-#pragma omp requires unified_shared_memory
-
 #define SWAP_PTR(xnew,xold,xtmp) (xtmp=xnew, xnew=xold, xold=xtmp)
 
 // Note that x is accessed as x[k] where k=0,...,totcells
@@ -118,9 +116,6 @@ int main(int argc, char *argv[])
    }
    int jnum = jhgh-jlow;
    int bufcount = jnum*nhalo;
-
-   #pragma omp target
-   {}
 
    roctxRangePush("BufAlloc");
    xbuf_left_send = (double *)malloc(bufcount*sizeof(double));
@@ -327,6 +322,8 @@ void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize, i
    roctxRangePop(); //LoadLeftRight
 
    roctxRangePush("MPILeftRightExchange");
+   #pragma omp target data use_device_addr(xbuf_rght_recv,xbuf_left_send,xbuf_left_recv,xbuf_rght_send)
+   {
    MPI_Irecv(xbuf_rght_recv, bufcount, MPI_DOUBLE, nrght, 1001,
              MPI_COMM_WORLD, &request[0]);
    MPI_Isend(xbuf_left_send, bufcount, MPI_DOUBLE, nleft, 1001,
@@ -337,6 +334,7 @@ void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize, i
    MPI_Isend(xbuf_rght_send, bufcount, MPI_DOUBLE, nrght, 1002,
              MPI_COMM_WORLD, &request[3]);
    MPI_Waitall(4, request, status);
+   }
    roctxRangePop(); //MPILeftRightExchange
 
    roctxRangePush("UnpackLeftRight");
@@ -361,6 +359,8 @@ void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize, i
    roctxRangePop(); //UnpackLeftRight
 
    roctxRangePush("MPIUpDownExchange");
+   #pragma omp target data use_device_addr(xbuf_rght_recv,xbuf_left_send,xbuf_left_recv,xbuf_rght_send)
+   {
    if (corners) {
       bufcount = nhalo*(isize+2*nhalo);
       MPI_Irecv(&xv(jsize,-nhalo),   bufcount, MPI_DOUBLE, ntop, 1001, MPI_COMM_WORLD, &request[0]);
@@ -378,6 +378,7 @@ void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize, i
          MPI_Isend(&xv(jsize-nhalo+j,0), isize, MPI_DOUBLE, ntop, 1002+j*2, MPI_COMM_WORLD, &request[3+j*4]);
          }
       MPI_Waitall(4*nhalo, request, status);
+   }
    }
    roctxRangePop(); //MPIUpDownExchange
 
