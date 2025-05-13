@@ -544,6 +544,10 @@ add_test(NAME OpenMP_Optimizations_C_1_Alloc_Problem COMMAND ../openmp_optimizat
 set_property(TEST OpenMP_Optimizations_C_1_Alloc_Problem PROPERTY PASS_REGULAR_EXPRESSION "Final result: 1.000000")
 set_property(TEST OpenMP_Optimizations_C_1_Alloc_Problem PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME OpenMP_Optimizations_C_2_Opt_Allocation COMMAND ../openmp_optimizations_c_2_opt_allocation.sh )
+set_property(TEST OpenMP_Optimizations_C_2_Opt_Allocation PROPERTY PASS_REGULAR_EXPRESSION "Final result: 1.000000")
+set_property(TEST OpenMP_Optimizations_C_2_Opt_Allocation PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # C++ tests
 #add_test(NAME OpenMP_CXX_0_Jacobi_PortYourself COMMAND ../openmp_cxx_0_jacobi_portyourself.sh )
 #set_property(TEST OpenMP_CXX_0_Jacobi_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
@@ -573,6 +577,15 @@ set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function_External PROPER
 add_test(NAME OpenMP_Language_Constructs_CXX_Member_Function_External_PortYourself COMMAND ../openmp_language_constructs_cxx_member_function_external_portyourself.sh )
 set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function_External_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "Finished calculation")
 set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function_External_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+# CXX OpenMP Optimization tests
+add_test(NAME OpenMP_Optimizations_CXX_1_Alloc_Problem COMMAND ../openmp_optimizations_cxx_1_alloc_problem.sh )
+set_property(TEST OpenMP_Optimizations_CXX_1_Alloc_Problem PROPERTY PASS_REGULAR_EXPRESSION "Final result: 1.000000")
+set_property(TEST OpenMP_Optimizations_CXX_1_Alloc_Problem PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Optimizations_CXX_2_Opt_Allocation COMMAND ../openmp_optimizations_cxx_2_opt_allocation.sh )
+set_property(TEST OpenMP_Optimizations_CXX_2_Opt_Allocation PROPERTY PASS_REGULAR_EXPRESSION "Final result: 1.000000")
+set_property(TEST OpenMP_Optimizations_CXX_2_Opt_Allocation PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # HIPFort Examples
 
