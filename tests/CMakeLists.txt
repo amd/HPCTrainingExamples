@@ -1366,7 +1366,7 @@ set_property(TEST Miniforge3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "modul
 #HDF5 Tests
 
 add_test(NAME HDF5_Check_Version COMMAND ../hdf5_check_version.sh)
-set_property(TEST HDF5_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "h5dump: Version 1.14.5")
+set_property(TEST HDF5_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "h5dump: Version 1.14.6")
 set_property(TEST HDF5_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME HDF5_Check_H5Dump COMMAND ../hdf5_check_h5dump.sh)
