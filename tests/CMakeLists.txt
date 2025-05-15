@@ -468,6 +468,18 @@ add_test(NAME OpenMP_Language_Constructs_Fortran_5_Device_Routine_Enter_Data COM
 set_property(TEST OpenMP_Language_Constructs_Fortran_5_Device_Routine_Enter_Data PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 1000.000000000000")
 set_property(TEST OpenMP_Language_Constructs_Fortran_5_Device_Routine_Enter_Data PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME OpenMP_Language_Constructs_Fortran_0_Device_Routine_With_Module_PortYourSelf COMMAND ../openmp_language_constructs_fortran_0_device_routine_with_module_portyourself.sh )
+set_property(TEST OpenMP_Language_Constructs_Fortran_0_Device_Routine_With_Module_PortYourSelf PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 1000.000000000000")
+set_property(TEST OpenMP_Language_Constructs_Fortran_0_Device_Routine_With_Module_PortYourSelf PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Language_Constructs_Fortran_1_Device_Routine_With_Module COMMAND ../openmp_language_constructs_fortran_1_device_routine_with_module.sh )
+set_property(TEST OpenMP_Language_Constructs_Fortran_1_Device_Routine_With_Module PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 1000.000000000000")
+set_property(TEST OpenMP_Language_Constructs_Fortran_1_Device_Routine_With_Module PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Language_Constructs_Fortran_2_Device_Routine_With_Module_USM COMMAND ../openmp_language_constructs_fortran_2_device_routine_with_module_usm.sh )
+set_property(TEST OpenMP_Language_Constructs_Fortran_2_Device_Routine_With_Module_USM PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 1000.000000000000")
+set_property(TEST OpenMP_Language_Constructs_Fortran_2_Device_Routine_With_Module_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 #add_test(NAME OpenMP_Language_Constructs_Fortran_Reduction_Array COMMAND ../openmp_language_constructs_fortran_reduction_array.sh )
 #set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array PROPERTY PASS_REGULAR_EXPRESSION "ce1=     1000.000000000000      ce2=     1000.000000000000")
 #set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
