@@ -1,6 +1,7 @@
 // Original code by Yifan Sun: https://gitlab.com/syifan/hipbookexample
 // Modified by Giacomo Capodaglio: Giacomo.Capodaglio@amd.com
 // and Bob Robey: Bob.Robey@amd.com
+// see also "Programming in Parallel with CUDA, a Practical Guide by Richard Ansorge"
 
 #include <hip/hip_runtime.h>
 #include <iostream>
@@ -40,7 +41,6 @@ __global__ void reduction_to_array(const double* input, double* output, int size
      local_sum[threadIdx.x] += input[i];
   }
 
-  // Store local sum in shared memory
   __syncthreads();
 
   // note that in this for loop we are using blockDim.x
