@@ -267,7 +267,7 @@ to launch the kernel become
  get_partial_sums<<<nblocks, BLOCKSIZE, BLOCKSIZE*sizeof(double)>>>(d_in, d_partial_sums, N);
 ```
 
-Note that all that changes is calculation of nblocks.
+Note that all that changes is the calculation of `nblocks`.
 
 ```
 __global__ void get_partial_sums(const double* input, double* output, int size) {
