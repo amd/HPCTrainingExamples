@@ -215,7 +215,7 @@ The second invocation above is accumulating the partial sums in the first entry 
 ## Reduction with Two Different Kernels and Unrolling
 
 In the previous example, there is an implicit unrolling in each kernel. By unrolling, we mean that each thread adds more than one value from the input array. In this
-example, we start off with a simpler technique where in the first kernel we just sum one value per thread. When looking at the source code for this version, first 
+example, we start off with a simpler technique where in the first kernel we just sum one value per thread. When looking at the source code `reduction_two_kernel_calls_unroll.cpp`, first 
 consider it with the `unroll_factor` variable set to one.
 
 ```
