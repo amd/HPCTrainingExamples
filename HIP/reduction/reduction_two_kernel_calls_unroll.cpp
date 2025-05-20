@@ -138,8 +138,6 @@ int main() {
   }
 
   std::cout << std::setprecision(14);
-  //if (abs(sum - expected_sum) > 1e-7 * expected_sum) {
-  //   std::cout << "FAIL: sum = " << sum <<", expected_sum = " << expected_sum << std::endl;
   if (abs(h_in[0] - expected_sum) > 1e-7 * expected_sum) {
      std::cout << "FAIL: sum = " << h_in[0] <<", expected_sum = " << expected_sum << std::endl;
   }
