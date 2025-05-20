@@ -23,7 +23,7 @@ do{                                                                             
 const static int BLOCKSIZE = 1024;
 const static int unroll_factor = 2;
 
-__global__ void get_partial_sums(const double* input, double* output, int size, int unroll_factor) {
+__global__ void get_partial_sums(const double* input, double* output, int size) {
   extern __shared__ double local_sum[];
 
   // Global ID of thread in thread grid
@@ -111,7 +111,7 @@ int main() {
   hipCheck( hipEventRecord(start, NULL) );
 
   // Compute the partial sums
-  get_partial_sums<<<nblocks, BLOCKSIZE, BLOCKSIZE*sizeof(double)>>>(d_in, d_partial_sums, N, unroll_factor);
+  get_partial_sums<<<nblocks, BLOCKSIZE, BLOCKSIZE*sizeof(double)>>>(d_in, d_partial_sums, N);
   if (nblocks > 1) {
      remaining_sum<<<1, BLOCKSIZE, BLOCKSIZE*sizeof(double)>>>(d_partial_sums, d_in, nblocks);
   }

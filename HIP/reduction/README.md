@@ -211,3 +211,95 @@ reduction_to_array<<<1, GRIDSIZE, GRIDSIZE*sizeof(double)>>>(d_partial_sums, d_i
 ```
 
 The second invocation above is accumulating the partial sums in the first entry of `d_in` that now is supplied as output to the kernel. Notice that the grid that is used for the second kernel invocation is one that has only one block, with size equal to the initial block size. This means that `GRIDSIZE` cannot be larger than 1024, which is the maximum block size. Also notice that because of `blockDim.x/2` in the second for loop in the kernel, we also need `GRIDSIZE` to be a power of 2, in addition to `BLOCKSIZE`, as we have mentioned at the beginning of this README. The requirements of `GRIDSIZE` and `BLOCKSIZE` being powers of two can be relaxed, but such cases are not shown in these examples.
+
+## Reduction with Two Different Kernels and Unrolling
+
+In the previous example, there is an implicit unrolling in each kernel. By unrolling, we mean that each thread adds more than one value from the input array. In this
+example, we start off with a simpler technique where in the first kernel we just sum one value per thread. When looking at the source code for this version, first 
+consider it with the `unroll_factor` variable set to one.
+
+```
+__global__ void get_partial_sums(const double* input, double* output, int size) {
+  extern __shared__ double local_sum[];
+
+  // Global ID of thread in thread grid
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+  // Stride size is equal to total number of threads in grid
+  int grid_size = blockDim.x * gridDim.x;
+
+  local_sum[threadIdx.x] = 0.0;
+  if (idx < size) {
+    local_sum[threadIdx.x] += input[idx];
+  }
+
+  // Store local sum in shared memory
+  __syncthreads();
+
+  for (int s = blockDim.x / 2; s > 0; s /= 2) {
+    if (threadIdx.x < s) {
+      local_sum[threadIdx.x] += local_sum[threadIdx.x + s];
+    }
+    __syncthreads();
+  }
+
+  if (threadIdx.x == 0) {
+    output[blockIdx.x] = local_sum[0];
+  }
+}
+```
+
+We call this kernel with the more usual ceiling function to calculate the number of workgroups. This will than
+take the input data array and sum each workgroup. It writes out a `partial_sum` array that is the original input
+data size divided by the number of workgroups. 
+
+```
+ int nblocks = ceil(N/BLOCKSIZE);
+ get_partial_sums<<<nblocks, BLOCKSIZE, BLOCKSIZE*sizeof(double)>>>(d_in, d_partial_sums, N);
+```
+
+This will in general be a little slower than the `two_kernel_calls` version because there is not enough 
+work for each thread and more data needs to be written out. So we add an unrolling factor. First, the calls
+to launch the kernel become
+
+```
+ int nblocks = ceil(N/BLOCKSIZE/unroll_factor);
+ get_partial_sums<<<nblocks, BLOCKSIZE, BLOCKSIZE*sizeof(double)>>>(d_in, d_partial_sums, N);
+```
+
+Note that all that changes is calculation of nblocks.
+
+```
+__global__ void get_partial_sums(const double* input, double* output, int size) {
+  extern __shared__ double local_sum[];
+
+  // Global ID of thread in thread grid
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+  // Stride size is equal to total number of threads in grid
+  int grid_size = blockDim.x * gridDim.x;
+
+  local_sum[threadIdx.x] = 0.0;
+  for (int i = idx; i < size; i += grid_size) {
+    local_sum[threadIdx.x] += input[i];
+  }
+
+  // Store local sum in shared memory
+  __syncthreads();
+
+  for (int s = blockDim.x / 2; s > 0; s /= 2) {
+    if (threadIdx.x < s) {
+      local_sum[threadIdx.x] += local_sum[threadIdx.x + s];
+    }
+    __syncthreads();
+  }
+
+  if (threadIdx.x == 0) {
+    output[blockIdx.x] = local_sum[0];
+  }
+}
+```
+
+Note that there is now an extra loop that will effectively cause each thread to sum up to the `unroll_factor` number of values. The unroll factor is
+not explicitly sent into the kernel -- it comes in through the new value for the `grid_size`. And we can now see the similarities to the `two_kernels_call`
+version which sends in a fixed number of workgroups. Try varying the unroll factor and see how the performance changes. 
