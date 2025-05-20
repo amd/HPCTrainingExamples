@@ -101,15 +101,8 @@ int main() {
     expected_sum += h_in[i];
   }
 
-  // Copy d_in back to h_in
-  hipCheck(hipMemcpy(h_partial_sums.data(), d_partial_sums, GRIDSIZE * sizeof(double), hipMemcpyDeviceToHost));
-  hipCheck(hipMemcpy(h_in.data(), d_in, BLOCKSIZE * sizeof(double), hipMemcpyDeviceToHost));
-
-  // Compute the actual reduction from the partial sums
-  double sum = 0;
-  for (int i = 0; i < GRIDSIZE; ++i) {
-     sum += h_partial_sums[i];
-  }
+  // Copy d_in[0] back to h_in, don't need the partial sums or the rest of the input array
+  hipCheck(hipMemcpy(h_in.data(), d_in, 1 * sizeof(double), hipMemcpyDeviceToHost));
 
   std::cout << std::setprecision(14);
   //if (abs(sum - expected_sum) > 1e-7 * expected_sum) {
