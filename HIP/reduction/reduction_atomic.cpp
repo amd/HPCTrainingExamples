@@ -83,7 +83,7 @@ int main() {
   hipCheck( hipMemcpy(&sum, d_out, sizeof(double), hipMemcpyDeviceToHost) );
 
   // Verify the result.
-  double expected_sum = 0;
+  double expected_sum = 0.0;
   for (int i = 0; i < N; ++i) {
     expected_sum += h_in[i];
   }

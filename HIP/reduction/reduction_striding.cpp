@@ -34,7 +34,7 @@ __global__ void get_partial_sums(const double* input, double* output, int size) 
   // Stride size is equal to total number of threads in grid
   int grid_size = blockDim.x * gridDim.x;
 
-  double sum = 0;
+  double sum = 0.0;
   for (int i = idx; i < size; i += grid_size) {
     sum += input[i];
   }
@@ -99,13 +99,13 @@ int main() {
   hipCheck(hipMemcpy(h_partial_sums.data(), d_partial_sums, GRIDSIZE * sizeof(double), hipMemcpyDeviceToHost));
 
   // Compute the actual reduction from the partial sums
-  double sum = 0;
+  double sum = 0.0;
   for (int i = 0; i < GRIDSIZE; ++i) {
      sum += h_partial_sums[i];
   }
 
   // Verify the result
-  double expected_sum = 0;
+  double expected_sum = 0.0;
   for (int i = 0; i < N; ++i) {
     expected_sum += h_in[i];
   }

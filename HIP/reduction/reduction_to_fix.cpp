@@ -28,7 +28,7 @@ __global__ void get_partial_sums_to_fix(const double* input, double* output, int
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int global_size = gridDim.x * blockDim.x;
 
-  double local_sum = 0;
+  double local_sum = 0.0;
   for (int i = idx; i < size; i += global_size) {
     local_sum += input[i];
   }
@@ -80,13 +80,13 @@ int main() {
   hipCheck( hipMemcpy(h_partial_sums.data(), d_partial_sums, GRIDSIZE * sizeof(double), hipMemcpyDeviceToHost) );
 
   // Compute the actual reduction from the partial sum
-  double sum = 0;
+  double sum = 0.0;
   for (int i = 0; i < GRIDSIZE; ++i) {
      sum += h_partial_sums[i];
   }
 
   // Verify the result.
-  double expected_sum = 0;
+  double expected_sum = 0.0;
   for (int i = 0; i < N; ++i) {
     expected_sum += h_in[i];
   }
