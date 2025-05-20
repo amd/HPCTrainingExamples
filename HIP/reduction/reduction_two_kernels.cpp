@@ -66,7 +66,6 @@ int main() {
 
   // Allocate host memory
   std::vector<double> h_in(N);
-  std::vector<double> h_partial_sums(GRIDSIZE);
 
   // Init host array
   h_in.assign(h_in.size(), 0.1f);
@@ -116,7 +115,6 @@ int main() {
   }
 
   hipCheck( hipFree(d_in) );
-  hipCheck( hipFree(d_partial_sums) );
 
 }
 
