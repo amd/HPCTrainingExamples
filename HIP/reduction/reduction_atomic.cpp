@@ -25,7 +25,7 @@ __global__ void atomic_reduction(const double* input, double* output, int size) 
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int global_size = gridDim.x * blockDim.x;
 
-  double local_sum = 0;
+  double local_sum = 0.0;
   for (int i = idx; i < size; i += global_size) {
     local_sum += input[i];
   }
