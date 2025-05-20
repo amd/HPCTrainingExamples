@@ -19,7 +19,7 @@ do{                                                                             
 
 // Defined the workgroup size (number of threads in workgroup)
 // It is a multiple of 64 (wavefront size)
-const static int BLOCKSIZE = 256;
+const static int BLOCKSIZE = 1024;
 
 __global__ void get_partial_sums(const double* input, double* output, int size) {
   __shared__ double shared_mem[BLOCKSIZE];
@@ -56,6 +56,11 @@ int main() {
 
   // Size of array to reduce
   const static int N = 128e07;
+
+  if( (BLOCKSIZE & (BLOCKSIZE - 1)) != 0){
+     std::cout<<"ERROR: BLOCKSIZE needs to be a power of 2 in this example" << std::endl;
+     abort();
+  }
 
   // Define the grid size (number of blocks in grid)
   const static int GRIDSIZE = (N+(BLOCKSIZE-1))/BLOCKSIZE;

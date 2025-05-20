@@ -20,7 +20,7 @@ do{                                                                             
 
 // Define the workgroup size (number of threads in workgroup)
 // It is a multiple of 64 (wavefront size)
-const static int BLOCKSIZE = 256;
+const static int BLOCKSIZE = 1024;
 
 // Define the grid size (number of blocks in grid)
 const static int GRIDSIZE = 1024;
@@ -34,13 +34,11 @@ __global__ void get_partial_sums(const double* input, double* output, int size) 
   // Stride size is equal to total number of threads in grid
   int grid_size = blockDim.x * gridDim.x;
 
-  double sum = 0.0;
+  local_sum[threadIdx.x]  = 0.0;
   for (int i = idx; i < size; i += grid_size) {
-    sum += input[i];
+    local_sum[threadIdx.x]  += input[i];
   }
 
-  // Store local sum in shared memory
-  local_sum[threadIdx.x] = sum;
   __syncthreads();
 
   for (int s = BLOCKSIZE / 2; s > 0; s /= 2) {
@@ -59,6 +57,11 @@ int main() {
 
   // Size of array to reduce
   const static int N = 128e07;
+
+  if( (BLOCKSIZE & (BLOCKSIZE - 1)) != 0){
+     std::cout<<"ERROR: BLOCKSIZE needs to be a power of 2 in this example" << std::endl;
+     abort();
+  }
 
   // Create start and stop event objects for timing
   hipEvent_t start, stop;

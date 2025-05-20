@@ -16,7 +16,7 @@ do{                                                                             
 
 // Defined the workgroup size (number of threads in workgroup)
 // It is a multiple of 64 (wavefront size)
-const static int BLOCKSIZE = 256;
+const static int BLOCKSIZE = 1024;
 
 // Define the grid size (number of blocks in grid)
 const static int GRIDSIZE = 1024;
