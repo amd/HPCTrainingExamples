@@ -6,7 +6,7 @@ HIPFLAGS = --offload-arch=${ROCM_GPU}
 
 # ------------------------------
 
-all: reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_two_kernel_calls_unroll
+all: reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_two_kernels_unroll
 
 reduction_striding: reduction_striding.cpp
 	${HIPCC} ${HIPFLAGS} reduction_striding.cpp -o reduction_striding
@@ -23,10 +23,10 @@ reduction_atomic: reduction_atomic.cpp
 reduction_two_kernel_calls: reduction_two_kernel_calls.cpp
 	${HIPCC} ${HIPFLAGS} reduction_two_kernel_calls.cpp -o reduction_two_kernel_calls
 
-reduction_two_kernel_calls_unroll: reduction_two_kernel_calls_unroll.cpp
-	${HIPCC} ${HIPFLAGS} reduction_two_kernel_calls_unroll.cpp -o reduction_two_kernel_calls_unroll
+reduction_two_kernels_unroll: reduction_two_kernels_unroll.cpp
+	${HIPCC} ${HIPFLAGS} reduction_two_kernels_unroll.cpp -o reduction_two_kernels_unroll
 
 .PHONY: clean
 
 clean:
-	rm -f reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_two_kernel_calls_unroll
+	rm -f reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_two_kernels_unroll

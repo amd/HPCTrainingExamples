@@ -212,10 +212,10 @@ reduction_to_array<<<1, GRIDSIZE, GRIDSIZE*sizeof(double)>>>(d_partial_sums, d_i
 
 The second invocation above is accumulating the partial sums in the first entry of `d_in` that now is supplied as output to the kernel. Notice that the grid that is used for the second kernel invocation is one that has only one block, with size equal to the initial block size. This means that `GRIDSIZE` cannot be larger than 1024, which is the maximum block size. Also notice that because of `blockDim.x/2` in the second for loop in the kernel, we also need `GRIDSIZE` to be a power of 2, in addition to `BLOCKSIZE`, as we have mentioned at the beginning of this README. The requirements of `GRIDSIZE` and `BLOCKSIZE` being powers of two can be relaxed, but such cases are not shown in these examples.
 
-## Reduction with Two Kernel Calls and Unrolling
+## Reduction with Two Different Kernels and Unrolling
 
 In the previous example, there is an implicit unrolling in each kernel. By unrolling, we mean that each thread adds more than one value from the input array. In this
-example, we start off with a simpler technique where in the first kernel we just sum one value per thread. When looking at the source code `reduction_two_kernel_calls_unroll.cpp`, first 
+example, we start off with a simpler technique where in the first kernel we just sum one value per thread. When looking at the source code `reduction_two_kernels_unroll.cpp`, first 
 consider it with the `unroll_factor` variable set to one.
 
 ```
