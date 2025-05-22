@@ -1,6 +1,6 @@
 #!/bin/bash
 
-module purge
+
 module load hdf5
 module load openmpi
 
@@ -23,7 +23,7 @@ mpirun -n 4 ./hdf5block2d
 
 h5dump -y example.hdf5
 
-module purge
+
 
 popd
 

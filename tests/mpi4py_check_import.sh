@@ -53,7 +53,7 @@ do
    shift
 done
 
-module purge
+
 
 module load ${MODULE_NAME}
 

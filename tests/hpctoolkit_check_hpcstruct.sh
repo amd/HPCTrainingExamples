@@ -3,7 +3,7 @@
 # This test checks that hpcstruct
 # runs without errors
 
-module purge
+
 
 module load hpctoolkit
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"

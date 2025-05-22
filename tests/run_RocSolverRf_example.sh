@@ -52,7 +52,7 @@ cd Libraries/RocSolverRf
 
 mkdir dependencies && cd dependencies
 
-module purge
+
 module load rocm
 
 mkdir lapack_install

@@ -8,7 +8,7 @@ tar -xvf osu-micro-benchmarks-7.3.tar.gz
 
 cd osu-micro-benchmarks-7.3
 
-module purge
+
 
 module load rocm openmpi
 

@@ -9,7 +9,7 @@
 # to the instructions available in the model installation repo:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/pytorch_setup.sh
 
-module purge
+
 
 module load pytorch
 
@@ -39,7 +39,7 @@ sed -i 's/train=True, download=True/train=True, download=False/' ./mnist/main.py
 
 python3 main.py
 
-module purge
+
 
 cd ../..
 

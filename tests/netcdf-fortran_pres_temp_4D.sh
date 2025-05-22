@@ -1,6 +1,6 @@
 #!/bin/bash
 
-module purge
+
 module load netcdf-fortran
 
 # use the compiler used to build netcdf-fortran

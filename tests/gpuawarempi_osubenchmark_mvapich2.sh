@@ -1,6 +1,6 @@
 #!/bin/bash
 
-module purge
+
 
 module load rocm mvapich2/2.3.7
 

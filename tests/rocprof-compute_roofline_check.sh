@@ -52,7 +52,7 @@ do
    shift
 done
 
-module purge
+
 module load rocm
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"

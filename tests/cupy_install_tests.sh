@@ -8,7 +8,7 @@
 # to the instructions available in the model installation repo:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/cupy_setup.sh
 
-module purge
+
 
 module load cupy
 

@@ -15,4 +15,4 @@ make
 cd ../..
 rm -rf Chapter13
 
-module purge
+

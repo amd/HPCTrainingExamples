@@ -53,7 +53,7 @@ do
 done
 
 
-module purge
+
 
 module load rocm openmpi $PETSC_MODULE
 
