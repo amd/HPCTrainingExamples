@@ -95,8 +95,8 @@ int main(int argc, char *argv[])
    ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
    if (do_print == 1) {
-     if (rank == 0) printf("Initial State \n");
-     Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+      if (rank == 0) printf("Initial State \n");
+      Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
    }
 
    for (int iter = 0; iter < maxIter; iter++){

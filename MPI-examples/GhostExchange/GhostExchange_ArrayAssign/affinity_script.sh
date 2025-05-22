@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [[ -v SLURM_GPUS ]]; then
+   NUM_GPUS=${SLURM_GPUS}
+else
+   NUM_GPUS=`rocminfo |grep GPU |grep "Device Type" |wc -l`
+fi
+
 export GPU_NUMBER_STRIDE=`expr ${OMPI_COMM_WORLD_SIZE} + ${SLURM_GPUS}`
 export GPU_NUMBER_STRIDE=`expr ${GPU_NUMBER_STRIDE} - 1`
 export GPU_NUMBER_STRIDE=`expr ${GPU_NUMBER_STRIDE} / ${SLURM_GPUS}`

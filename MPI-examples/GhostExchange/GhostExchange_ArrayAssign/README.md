@@ -54,3 +54,90 @@ The communication pattern used is best shown in a diagram that appears in [Paral
 <img src="ghost_exchange2.png" \>
 </p>
 In this diagram, a ghost on a process is represented with a dashed outline, while owned data on a process is represented with a solid line. Communication is represented with arrows and colors representing the original data, and the location that data is being communicated and copied to. We see that each process communicates based on the part of the problem it owns: the process that owns the central portion of data must communicate in all four directions, while processes on the corner only have to communicate in two directions.
+
+
+## Original version of Ghost Exchange
+
+```
+module load openmpi amdclang
+```
+
+Setting HSA_XNACK now for all of the following runs
+
+```
+export HSA_XNACK=1
+MAX_ITER=1000
+```
+Build the code
+
+```
+cd Orig
+mkdir build && cd build
+cmake ..
+make
+```
+
+Run the example
+
+```
+echo "Orig Ver: Timing for CPU version with 4 ranks"
+mpirun -n 4  ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+```
+
+Note the time that it took to run and the time for each part of the application.
+
+Now we will try and run it with some simple affinity settings. These map the 4 process to separate NUMA regions and binds the process to the core
+
+```
+echo "Orig Ver: Timing for CPU version with 4 ranks with affinity"
+mpirun  -n 4  --bind-to core     -map-by ppr:1:numa  --report-bindings ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+```
+
+Other affinity settings that you can try. These are for larger number of ranks and GPUs. Note that the number of processes per resource (ppr)
+increases 
+
+```
+echo "Orig Ver: Timing for CPU version with 16 ranks"
+mpirun -n 16  ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+echo "Orig Ver: Timing for CPU version with 16 ranks with affinity"
+mpirun -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+mpirun -n 64  --bind-to core     -map-by ppr:8:numa  --report-bindings ./GhostExchange -x 8  -y 8  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+mpirun -n 256 ./GhostExchange -x 16 -y 16 -i 20000 -j 20000 -h 2 -t -c
+mpirun -n 16  --bind-to core     -map-by ppr:2:numa  ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c
+mpirun -n 64  --bind-to core     -map-by ppr:8:numa  ./GhostExchange -x 8  -y 8  -i 20000 -j 20000 -h 2 -t -c
+mpirun -n 256 --bind-to hwthread -map-by ppr:32:numa ./GhostExchange -x 16 -y 16 -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+```
+
+## Version 1 -- Adding OpenMP target offload to original CPU code
+
+cd ../../Ver1
+
+Build the example
+
+```
+mkdir build && cd build
+cmake ..
+make
+```
+
+Now run the example
+
+```
+echo "Ver 1: Timing for GPU version with 4 ranks with compute pragmas"
+mpirun -n 4  --bind-to core     -map-by ppr:1:numa  --report-bindings ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+```
+
+Adding affinity script
+
+```
+echo "Ver 1: Timing for GPU version with 4 ranks with compute pragmas"
+mpirun -n 4  --bind-to core     -map-by ppr:1:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+```
+
+Uncomment these to confirm it is running on the GPU
+
+```
+export LIBOMPTARGET_INFO=-1
+export LIBOMPTARGET_KERNEL_TRACE=1
+```
+
