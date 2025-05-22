@@ -57,7 +57,7 @@ done
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
-module purge
+
 
 module load ${MODULE_NAME}
 module load cupy

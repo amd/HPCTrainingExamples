@@ -52,7 +52,7 @@ do
    shift
 done
 
-module purge
+
 module load rocm
 module load openmpi
 

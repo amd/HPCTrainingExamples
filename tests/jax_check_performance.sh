@@ -10,7 +10,7 @@
 # to the instructions available in the model installation repo:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/jax_setup.sh
 
-module purge
+
 
 module load jax
 

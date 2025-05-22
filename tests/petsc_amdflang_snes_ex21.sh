@@ -6,7 +6,7 @@
 # to the instructions available in the model installation repo:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/petsc_setup.sh
 
-module purge
+
 
 module load rocm openmpi petsc_amdflang
 

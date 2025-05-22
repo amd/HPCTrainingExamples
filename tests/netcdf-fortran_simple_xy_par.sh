@@ -1,6 +1,6 @@
 #!/bin/bash
 
-module purge
+
 module load netcdf-c
 module load netcdf-fortran
 module load openmpi

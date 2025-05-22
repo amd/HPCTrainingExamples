@@ -54,7 +54,7 @@ do
    shift
 done
 
-module purge
+
 module load rocm
 
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `

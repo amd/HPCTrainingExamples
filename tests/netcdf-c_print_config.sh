@@ -1,6 +1,6 @@
 #!/bin/bash
 
-module purge
+
 module load netcdf-c
 
 if [[ ${HDF5_ENABLE_PARALLEL} == "OFF" ]]; then
