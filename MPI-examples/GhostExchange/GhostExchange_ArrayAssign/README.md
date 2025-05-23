@@ -141,3 +141,66 @@ export LIBOMPTARGET_INFO=-1
 export LIBOMPTARGET_KERNEL_TRACE=1
 ```
 
+## Version 4
+
+We'll skip a version that is under construction and another that is for adding markers for the profiler. So on to version 4 where we allocate the 
+MPI communication buffer in the heap just once instead of every iteration.
+
+```
+cd ../../Ver4
+```
+
+Building the code like the previous versions.
+
+```
+mkdir build && cd build
+cmake ..
+make
+```
+
+And running this version
+
+```
+echo "Ver 4: Timing for GPU version with 4 ranks with memory allocation once in main"
+mpirun -n 4  --bind-to core     -map-by ppr:1:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+```
+
+## Version 5 Converting 2D indexing to 1D
+
+```
+cd ../../Ver5
+```
+
+Build the code
+```
+rm -rf build
+mkdir build && cd build
+cmake ..
+make
+```
+
+```
+echo "Ver 5: Timing for GPU version with 4 ranks with indexing converted from 2d to 1D"
+mpirun -n 4  --bind-to core     -map-by ppr:1:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+```
+
+## Version 6 with explicit memory management
+
+cd ../../Ver6
+
+Setting the environment and building the code
+
+```
+unset HSA_XNACK
+rm -rf build
+mkdir build && cd build
+cmake ..
+make
+```
+
+Running the code
+
+```
+echo "Ver 6: Timing for GPU version with 4 ranks with explicit memory management"
+mpirun -n 4  --bind-to core     -map-by ppr:1:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+```
