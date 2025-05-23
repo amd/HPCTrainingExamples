@@ -188,7 +188,7 @@ Running with more MPI ranks
 
 ```
 echo "Ver 5: Timing for GPU version with 16 ranks with indexing converted from 2d to 1D"
-mpirun -n 16  --bind-to core     -map-by ppr:4:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+mpirun -n 16  --bind-to core     -map-by ppr:4:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
 ```
 
 ## Version 6 with explicit memory management
@@ -216,5 +216,5 @@ Running with more MPI ranks
 
 ```
 echo "Ver 6: Timing for GPU version with 16 ranks with explicit memory management"
-mpirun -n 16  --bind-to core     -map-by ppr:4:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
+mpirun -n 16  --bind-to core     -map-by ppr:4:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I ${MAX_ITER}
 ```
