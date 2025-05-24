@@ -738,10 +738,10 @@ add_test(NAME MPI_Ghost_Exchange_Orig_Affinity_OpenMPI COMMAND ../mpi_ghost_exch
 set_property(TEST MPI_Ghost_Exchange_Orig_Affinity_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
 set_property(TEST MPI_Ghost_Exchange_Orig_Affinity_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#   add_test(NAME MPI_Ghost_Exchange_Ver1 COMMAND ../mpi_ghost_exchange_ver1.sh )
-#   set_property(TEST MPI_Ghost_Exchange_Ver1 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
-#   set_property(TEST MPI_Ghost_Exchange_Ver1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-#
+add_test(NAME MPI_Ghost_Exchange_Ver1 COMMAND ../mpi_ghost_exchange_ver1.sh )
+set_property(TEST MPI_Ghost_Exchange_Ver1 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+set_property(TEST MPI_Ghost_Exchange_Ver1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 #   add_test(NAME MPI_Ghost_Exchange_Ver2 COMMAND ../mpi_ghost_exchange_ver2.sh )
 #   set_property(TEST MPI_Ghost_Exchange_Ver2 PROPERTY PASS_REGULAR_EXPRESSION "perfetto")
 #   set_property(TEST MPI_Ghost_Exchange_Ver2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
@@ -749,15 +749,15 @@ set_property(TEST MPI_Ghost_Exchange_Orig_Affinity_OpenMPI PROPERTY SKIP_REGULAR
 #   add_test(NAME MPI_Ghost_Exchange_Ver3 COMMAND ../mpi_ghost_exchange_ver3.sh )
 #   set_property(TEST MPI_Ghost_Exchange_Ver3 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
 #   set_property(TEST MPI_Ghost_Exchange_Ver3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
-#
-#   add_test(NAME MPI_Ghost_Exchange_Ver4 COMMAND ../mpi_ghost_exchange_ver4.sh )
-#   set_property(TEST MPI_Ghost_Exchange_Ver4 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
-#   set_property(TEST MPI_Ghost_Exchange_Ver4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
-#
-#   add_test(NAME MPI_Ghost_Exchange_Ver5 COMMAND ../mpi_ghost_exchange_ver5.sh )
-#   set_property(TEST MPI_Ghost_Exchange_Ver5 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
-#   set_property(TEST MPI_Ghost_Exchange_Ver5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
-#
+
+add_test(NAME MPI_Ghost_Exchange_Ver4 COMMAND ../mpi_ghost_exchange_ver4.sh )
+set_property(TEST MPI_Ghost_Exchange_Ver4 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+set_property(TEST MPI_Ghost_Exchange_Ver4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+
+add_test(NAME MPI_Ghost_Exchange_Ver5 COMMAND ../mpi_ghost_exchange_ver5.sh )
+set_property(TEST MPI_Ghost_Exchange_Ver5 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+set_property(TEST MPI_Ghost_Exchange_Ver5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+
 #   add_test(NAME MPI_Ghost_Exchange_Ver6 COMMAND ../mpi_ghost_exchange_ver6.sh )
 #   set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
 #   set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
