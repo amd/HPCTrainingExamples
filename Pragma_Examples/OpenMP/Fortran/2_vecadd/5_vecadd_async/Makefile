@@ -37,7 +37,7 @@ endif
 
 
 ${EXEC}: ${EXEC}.f90
-	$(FC) $(LDFLAGS) $^ -o $@
+	$(FC) $(FFLAGS) $(LDFLAGS) $^ -o $@
 
 # Cleanup
 clean:

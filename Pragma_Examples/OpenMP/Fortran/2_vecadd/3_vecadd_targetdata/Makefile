@@ -24,9 +24,8 @@ ifneq ($(findstring ftn,$(FC1)),)
 else ifneq ($(findstring amdflang,$(FC1)), amdflang)
   FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else
-  FFLAGS = -g -O3 ${FREE_FORM_FLAG} -fstrict-aliasing ${OPENMP_FLAGS}
+  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 endif
-CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
 ifeq (${FC1},gfortran-13)
    LDFLAGS = ${OPENMP_FLAGS} -fno-lto
 else
@@ -35,7 +34,7 @@ endif
 
 
 ${EXEC}: ${EXEC}.f90
-	$(FC) $(LDFLAGS) $^ -o $@
+	$(FC) $(FFLAGS) $(LDFLAGS) $^ -o $@
 
 # Cleanup
 clean:

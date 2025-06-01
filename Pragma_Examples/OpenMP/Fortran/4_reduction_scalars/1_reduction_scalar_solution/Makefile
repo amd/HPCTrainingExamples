@@ -35,7 +35,7 @@ else
 endif
 
 ${EXEC}: ${EXEC}.o
-	$(FC) $(LDFLAGS) $^ -o $@
+	$(FC) $(FFLAGS) $(LDFLAGS) $^ -o $@
 
 # Cleanup
 clean:

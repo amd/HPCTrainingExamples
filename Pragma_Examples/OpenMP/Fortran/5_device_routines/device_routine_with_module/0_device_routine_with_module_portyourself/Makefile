@@ -28,7 +28,6 @@ ifneq ($(findstring ftn,$(FC1)),)
 else
   FFLAGS = -g -O3 ${FREE_FORM_FLAG} -fstrict-aliasing ${OPENMP_FLAGS}
 endif
-CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
 ifeq (${FC1},gfortran-13)
    LDFLAGS = ${OPENMP_FLAGS} -fno-lto
 else ifneq ($(findstring ftn,$(FC1)),)
