@@ -23,7 +23,7 @@ CFLAGS = -g -fstrict-aliasing ${OPENMP_FLAGS}
 LDFLAGS = ${OPENMP_FLAGS} -fno-lto -lm
 
 ${EXEC}: ${EXEC}.o compute.o
-	$(CC) $(LDFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 # Cleanup
 clean:

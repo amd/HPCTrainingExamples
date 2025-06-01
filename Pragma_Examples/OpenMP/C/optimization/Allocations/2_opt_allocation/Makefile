@@ -18,7 +18,7 @@ CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
 LDFLAGS = ${OPENMP_FLAGS} -fno-lto -lm
 
 opt_allocation: opt_allocation.o
-	$(CC) $(LDFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 # Cleanup
 clean:

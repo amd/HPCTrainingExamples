@@ -30,7 +30,7 @@ saxpy.o: saxpy.cpp
 	$(CXX) $(CFLAGS) -c saxpy.cpp  -o saxpy.o
 
 saxpy: saxpy.o
-	$(CXX)  $(LDFLAGS) $^ -o $@
+	$(CXX) $(LDFLAGS) $^ -o $@
 
 run: saxpy
 	./saxpy

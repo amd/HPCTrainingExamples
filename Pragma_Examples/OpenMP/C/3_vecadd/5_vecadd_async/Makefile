@@ -27,7 +27,7 @@ else
 endif
 
 ${EXEC}: ${EXEC}.o
-	$(CC) $(LDFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 # Cleanup
 clean:

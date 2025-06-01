@@ -18,7 +18,7 @@ CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS} -D__HIP_PLATFORM_AMD__ -I${UMP
 LDFLAGS = ${OPENMP_FLAGS} -fno-lto -lm -L${UMPIRE_PATH}/lib64 -L${UMPIRE_PATH}/lib -lumpire -lcamp -lfmt -L${ROCM_PATH}/lib -lamdhip64 -lstdc++
 
 memorypool: memorypool.o
-	$(CC) $(LDFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 # Cleanup
 clean:
