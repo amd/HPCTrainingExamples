@@ -9,8 +9,8 @@
 __global__ void LocalLaplacianKernel(const int localNx,
                                 const int localNy,
                                 const int stride,
-                                const dfloat dx,
-                                const dfloat dy,
+                                const dfloat inv_dx_factor,
+                                const dfloat inv_dy_factor,
                                 const dfloat *__restrict__ U,
                                       dfloat *__restrict__ AU) {
 
@@ -26,8 +26,8 @@ __global__ void LocalLaplacianKernel(const int localNx,
     const int id_d = id - stride;
     const int id_u = id + stride;
 
-    AU[id] = (-U[id_l] + 2*U[id] - U[id_r])/(dx*dx) +
-             (-U[id_d] + 2*U[id] - U[id_u])/(dy*dy);
+    AU[id] = (-U[id_l] + 2*U[id] - U[id_r])*inv_dx_factor +
+             (-U[id_d] + 2*U[id] - U[id_u])*inv_dy_factor;
   }
 }
 
@@ -52,7 +52,7 @@ void LocalLaplacian(grid_t& grid, mesh_t& mesh,
                      threads,
                      0, stream,
                      localNx, localNy, mesh.Nx,
-                     mesh.dx, mesh.dy,
+                     mesh.inv_dx_factor, mesh.inv_dy_factor,
                      d_U, d_AU);
 }
 
@@ -62,8 +62,8 @@ void LocalLaplacian(grid_t& grid, mesh_t& mesh,
 __global__ void HaloLaplacianKernel(const int Nx,
                                const int Ny,
                                const int stride,
-                               const dfloat dx,
-                               const dfloat dy,
+                               const dfloat inv_dx_factor,
+                               const dfloat inv_dy_factor,
                                const dfloat *__restrict__ U,
                                const dfloat *__restrict__ haloBuffer,
                                      dfloat *__restrict__ AU) {
@@ -97,8 +97,8 @@ __global__ void HaloLaplacianKernel(const int Nx,
     const dfloat U_r = (i==Nx-1) ?  haloBuffer[j+2*Nx+Ny] : U[iid + 1];
 
     //compute Laplacian
-    AU[iid] = (-U_l + 2*U[iid] - U_r)/(dx*dx) +
-              (-U_d + 2*U[iid] - U_u)/(dy*dy);
+    AU[iid] = (-U_l + 2*U[iid] - U_r)*inv_dx_factor +
+              (-U_d + 2*U[iid] - U_u)*inv_dy_factor;
   }
 }
 
@@ -121,6 +121,6 @@ void HaloLaplacian(grid_t& grid, mesh_t& mesh,
                      threads,
                      0, stream,
                      mesh.Nx, mesh.Ny, mesh.Nx,
-                     mesh.dx, mesh.dy,
+                     mesh.inv_dx_factor, mesh.inv_dy_factor,
                      d_U, mesh.d_haloBuffer, d_AU);
 }
