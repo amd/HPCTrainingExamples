@@ -49,7 +49,12 @@ int main( int argc, char* argv[] )
 
     // Size of vectors
     int n = 100000000;
-    int elements_per_stream = n/num_streams;
+    int elements_per_stream = (n % num_streams == 0) ? n/num_streams : -1;
+    if (elements_per_stream == -1) {
+       printf("ERROR: input value of num_streams does not evenly devide the array size \n");
+       printf("Please provide an input value for num_streams that evenly divides %d\n", n);
+       exit(1);
+    }
     int bytes_per_stream = elements_per_stream*sizeof(double);
     printf("bytes/stream: %f (MB)\n", bytes_per_stream*1.e-6);
 
