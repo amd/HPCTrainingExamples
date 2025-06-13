@@ -35,7 +35,7 @@ popd
 cd pytorch_mnist/mnist
 
 # use downloaded data instead of letting it download from broken mirror
-sed -i 's/train=True, download=True/train=True, download=False/' ./mnist/main.py
+sed -i 's/train=True, download=True/train=True, download=False/' ./main.py
 
 python3 main.py
 
