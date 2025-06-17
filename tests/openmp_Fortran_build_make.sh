@@ -11,7 +11,7 @@ else
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/BuildExamples
-   make openmp_code
+   FC=`which amdflang` make openmp_code
    ./openmp_code
 
    make clean
