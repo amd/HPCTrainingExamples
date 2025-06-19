@@ -7,6 +7,7 @@ CUPY=0
 TENSORFLOW=0
 ROCPROFV3=0
 PYTORCH=0
+FTORCH=0
 JAX=0
 PETSC=0
 HYPRE=0
@@ -70,6 +71,7 @@ usage()
     echo "--miniconda3 : runs miniconda3 tests"
     echo "--miniforge3 : runs miniforge3 tests"
     echo "--hdf5 : runs hdf5 tests"
+    echo "--ftorch: runs ftorch tests"
     echo "--netcdf : runs netcdf tests"
     echo "--hipfort : runs hipfort tests"
     echo "--openacc : runs the openacc tests"
@@ -150,6 +152,11 @@ do
       "--hipify")
           shift
           HIPIFY=1
+          reset-last
+          ;;
+      "--ftorch")
+          shift
+          FTORCH=1
           reset-last
           ;;
       "--hipstdpar")
@@ -339,6 +346,8 @@ elif [ ${MINIFORGE3} -eq 1 ]; then
    ctest -R Miniforge3
 elif [ ${TAU} -eq 1 ]; then
    ctest -R TAU
+elif [ ${FTORCH} -eq 1 ]; then
+   ctest -R FTorch
 elif [ ${PETSC} -eq 1 ]; then
    ctest -R PETSc
 elif [ ${HYPRE} -eq 1 ]; then

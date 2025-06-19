@@ -1216,6 +1216,12 @@ add_test(NAME TensorFlow_Check_Gpu_Name COMMAND ../tensorflow_check_gpu_name.sh 
 set_property(TEST TensorFlow_Check_Gpu_Name PROPERTY PASS_REGULAR_EXPRESSION "AMD Instinct MI")
 set_property(TEST TensorFlow_Check_Gpu_Name PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# FTorch tests
+
+add_test(NAME FTorch_MultiGPU_Test COMMAND ../ftorch_multigpu_test.sh )
+set_property(TEST FTorch_MultiGPU_Test PROPERTY PASS_REGULAR_EXPRESSION "MultiGPU example ran successfully")
+set_property(TEST FTorch_MultiGPU_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # CuPy tests
 
 add_test(NAME Cupy_Check_Import COMMAND ../cupy_check_import.sh )
