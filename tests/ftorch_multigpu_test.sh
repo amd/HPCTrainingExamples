@@ -11,7 +11,7 @@
 module load ftorch
 
 git clone https://github.com/Cambridge-ICCS/FTorch.git ftorch_test
-cd ftorch_test/examples/6_MultiGPU/build
+cd ftorch_test/examples/6_MultiGPU
 python3 pt2ts.py --device_type hip
 python3 multigpu_infer_python.py --device_type hip
 mkdir build && cd build
