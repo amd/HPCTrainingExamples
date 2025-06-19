@@ -1,16 +1,27 @@
 #!/bin/bash
 
-# This test imports the cupy package in Python to test
-# if Cupy is installed and accessible
+# This test runs the multi gpu test from FTorch 
 
-# NOTE: this test assumes CuPy has been installed according
+# NOTE: this test assumes FTorch has been installed according
 # to the instructions available in the model installation repo:
-# https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/cupy_setup.sh
+# https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/ftorch_setup.sh
 
 
 
-module load cupy
+module load ftorch
 
-python3 -c 'import cupy' 2> /dev/null && echo 'Success' || echo 'Failure'
+git clone https://github.com/Cambridge-ICCS/FTorch.git ftorch_test
+cd ftorch_test/examples/6_MultiGPU/build
+python3 pt2ts.py --device_type hip
+python3 multigpu_infer_python.py --device_type hip
+mkdir build && cd build
+cmake ..
+make -j
+./multigpu_infer_fortran hip ../saved_multigpu_model_hip.pt
+
+cd ../..
+rm -rf ftorch_test
+
+
 
 
