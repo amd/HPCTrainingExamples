@@ -1230,7 +1230,7 @@ set_property(TEST Julia_Check_GPU_Access PROPERTY SKIP_REGULAR_EXPRESSION "modul
 
 add_test(NAME Julia_GPU_Vec_Add COMMAND ../julia_gpu_vec_add.sh )
 set_property(TEST Julia_GPU_Vec_Add PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
-set_property(TEST Julia_GPU_Vec_add PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Julia_GPU_Vec_Add PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # CuPy tests
 
