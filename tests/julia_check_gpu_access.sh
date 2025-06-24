@@ -8,5 +8,5 @@
 
 module load julia
 
-julia -e 'AMDGPU.devices()'
+julia -e 'using AMDGPU;display(AMDGPU.devices())'
 

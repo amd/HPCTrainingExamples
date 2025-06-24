@@ -9,6 +9,6 @@
 module load julia
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-pushd $REPO_DIR/Julia
+pushd $REPO_DIR/Julia/vec_add
 julia vec_add.jl
 popd
