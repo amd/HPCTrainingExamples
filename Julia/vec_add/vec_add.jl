@@ -40,4 +40,5 @@ end
 if  error_check == 2
     println("PASS!")
 else
-
+    println("FAIL")
+end
