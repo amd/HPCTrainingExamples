@@ -1222,6 +1222,16 @@ add_test(NAME FTorch_MultiGPU_Test COMMAND ../ftorch_multigpu_test.sh )
 set_property(TEST FTorch_MultiGPU_Test PROPERTY PASS_REGULAR_EXPRESSION "MultiGPU example ran successfully")
 set_property(TEST FTorch_MultiGPU_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# Julia tests
+
+add_test(NAME Julia_Check_GPU_Access COMMAND ../julia_check_gpu_access.sh )
+set_property(TEST Julia_Check_GPU_Access PROPERTY PASS_REGULAR_EXPRESSION "gfx")
+set_property(TEST Julia_Check_GPU_Access PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Julia_GPU_Vec_Add COMMAND ../julia_gpu_vec_add.sh )
+set_property(TEST Julia_GPU_Vec_Add PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
+set_property(TEST Julia_GPU_Vec_add PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # CuPy tests
 
 add_test(NAME Cupy_Check_Import COMMAND ../cupy_check_import.sh )

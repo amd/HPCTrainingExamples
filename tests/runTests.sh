@@ -8,6 +8,7 @@ TENSORFLOW=0
 ROCPROFV3=0
 PYTORCH=0
 FTORCH=0
+JULIA=0
 JAX=0
 PETSC=0
 HYPRE=0
@@ -157,6 +158,11 @@ do
       "--ftorch")
           shift
           FTORCH=1
+          reset-last
+          ;;
+      "--julia")
+          shift
+          JULIA=1
           reset-last
           ;;
       "--hipstdpar")
@@ -348,6 +354,8 @@ elif [ ${TAU} -eq 1 ]; then
    ctest -R TAU
 elif [ ${FTORCH} -eq 1 ]; then
    ctest -R FTorch
+elif [ ${JULIA} -eq 1 ]; then
+   ctest -R Julia
 elif [ ${PETSC} -eq 1 ]; then
    ctest -R PETSc
 elif [ ${HYPRE} -eq 1 ]; then
