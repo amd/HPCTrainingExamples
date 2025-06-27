@@ -3,6 +3,7 @@
 ## Changes Between Example Versions
 This code contains several implementations of the same ghost exchange algorithm at varying stages 
 of optimization:
+
 - **Orig**: Shows a CPU-only implementation that uses MPI, and serves as the starting point for further optimizations. It is recommended to start here!
 - **Ver1**: Shows an OpenMP target offload implementation that uses the Managed memory model to port the code to GPUs using host allocated memory for MPI communication.
 - **Ver2**: Shows the usage and advantages of using `roctx` ranges to get more easily readable profiling output from Omnitrace.
@@ -62,12 +63,13 @@ In this diagram, a ghost on a process is represented with a dashed outline, whil
 module load openmpi amdclang
 ```
 
-Setting HSA_XNACK now for all of the following runs
+Setting `HSA_XNACK` now for all of the following runs
 
 ```
 export HSA_XNACK=1
 MAX_ITER=1000
 ```
+
 Build the code
 
 ```
