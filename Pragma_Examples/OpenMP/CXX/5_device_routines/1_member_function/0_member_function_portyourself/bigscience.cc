@@ -19,6 +19,7 @@ int main(int argc, char *argv[]){
       myscienceclass.compute(&x[k], N);
    }
 
+   cout << "Last x value: " << x[N-1] << endl;
    delete[] x;
 
    cout << "Finished calculation" << endl;
