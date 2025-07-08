@@ -15,7 +15,7 @@ julia -e 'using Pkg; Pkg.add("FFTW")'
 julia -e 'using Pkg; Pkg.add("KernelAbstractions")'
 julia -e 'using Pkg; Pkg.add("SeawaterPolynomials")'
 julia -e 'using Pkg; Pkg.add("OffsetArrays")'
-julia -e 'using Pkg; Pkg.add("JDL2")'
+julia -e 'using Pkg; Pkg.add("JLD2")'
 
 git clone https://github.com/CliMA/Oceananigans.jl.git
 pushd Oceananigans.jl/test
