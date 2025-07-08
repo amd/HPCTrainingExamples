@@ -17,5 +17,7 @@ julia -e 'using Pkg; Pkg.add("OffsetArrays")'
 julia -e 'using Pkg; Pkg.add("JDL2")'
 
 git clone https://github.com/CliMA/Oceananigans.jl.git
-cd Oceananigans.jl/tests
+pushd Oceananigans.jl/test
 julia test_amdgpu.jl
+popd
+rm -rf Oceananigans.jl
