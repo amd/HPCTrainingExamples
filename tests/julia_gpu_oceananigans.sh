@@ -9,6 +9,7 @@
 module load julia
 
 julia -e 'using Pkg; Pkg.add("MPI")'
+julia -e 'using Pkg; Pkg.add("Oceananigans")'
 julia -e 'using Pkg; Pkg.add("CUDA")'
 julia -e 'using Pkg; Pkg.add("FFTW")'
 julia -e 'using Pkg; Pkg.add("KernelAbstractions")'
