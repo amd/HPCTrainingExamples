@@ -2,6 +2,7 @@
 #include<chrono>
 #include"hipCheck.h"
 #include<cmath>
+#include <cassert>
 
 constexpr size_t register_array_size = 96;
 
