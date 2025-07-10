@@ -1,4 +1,4 @@
-all: saxpy_cpu saxpy_gpu_singleunit_autoalloc saxpy_gpu_singleunit_dynamic saxpy_gpu_parallelfor saxpy_gpu_loop
+all: saxpy_cpu saxpy_gpu_singleunit_autoalloc saxpy_gpu_singleunit_dynamic saxpy_gpu_parallelfor saxpy_gpu_loop saxpy_gpu_collapse
 
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 
@@ -39,6 +39,12 @@ saxpy_gpu_loop.o: saxpy_gpu_loop.c
 saxpy_gpu_loop: saxpy_gpu_loop.o
 	$(CC)  $(LDFLAGS)  ${OPENMP_OFFLOAD_FLAGS} $^ -o $@
 
+saxpy_gpu_collapse.o: saxpy_gpu_collapse.c
+	$(CC) $(CFLAGS) ${OPENMP_OFFLOAD_FLAGS} -c $<  -o $@
+
+saxpy_gpu_collapse: saxpy_gpu_collapse.o
+	$(CC)  $(LDFLAGS)  ${OPENMP_OFFLOAD_FLAGS} $^ -o $@
+
 clean:
 	rm -f saxpy_gpu_singleunit_autoalloc saxpy_gpu_singleunit_dynamic
-	rm -f saxpy_cpu saxpy_gpu_parallelfor saxpy_gpu_loop *.o
+	rm -f saxpy_cpu saxpy_gpu_parallelfor saxpy_gpu_loop saxpy_gpu_collapse *.o

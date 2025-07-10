@@ -4,26 +4,24 @@
 
 #include <iostream>
 
-#include "HotScience.hh"
+#include "Science.hh"
 
 using namespace std;
 
-#pragma omp requires unified_shared_memory
-
 int main(int argc, char *argv[]){
 
-   HotScience myscienceclass;
+   Science myscienceclass;
 
    int N=10000;
    double *x = new double[N];
 
-#pragma omp target teams loop
+#pragma omp target teams loop map(from:x[0:N])
    for (int k = 0; k < N; k++){
       myscienceclass.compute(&x[k], N);
    }
-
-   cout << "Array value is " << x[0] << endl;
-   cout << "Finished calculation" << endl;
-
+    
+   cout << "Last x value: " << x[N-1] << endl;
    delete[] x;
+
+   cout << "Finished calculation" << endl;
 }

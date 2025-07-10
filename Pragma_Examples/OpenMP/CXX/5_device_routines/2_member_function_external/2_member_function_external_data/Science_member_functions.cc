@@ -2,6 +2,6 @@
 
 #pragma omp declare target
 void Science::compute(double *x, int N){
-   *x = Science::init_value;
+   *x = 1.0;
 }
 #pragma omp end declare target
