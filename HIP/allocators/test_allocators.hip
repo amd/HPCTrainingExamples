@@ -28,7 +28,7 @@ void vector_add_cpu(double* a, double* b, double* c, int N) {
 }
 
 
-float test_allocators_gpu(double* a, double* b, double* c, int N) {
+float launch_kernel_gpu(double* a, double* b, double* c, int N) {
     hipEvent_t start, stop;
     HIP_ASSERT(hipEventCreate(&start));
     HIP_ASSERT(hipEventCreate(&stop));
@@ -44,7 +44,7 @@ float test_allocators_gpu(double* a, double* b, double* c, int N) {
 }
 
 
-float test_allocators_cpu(double* a, double* b, double* c, int N) {
+float launch_kernel_cpu(double* a, double* b, double* c, int N) {
     hipEvent_t start, stop;
     HIP_ASSERT(hipEventCreate(&start));
     HIP_ASSERT(hipEventCreate(&stop));
@@ -83,6 +83,43 @@ void check_for_errors(double & norm, int N){
     }
 
 }
+
+
+void test_allocators_cpu(double* a, double * b, double* c, int N, std::string allocator){
+  float time=0.0;
+  double norm=0.0;
+  time = launch_kernel_cpu(a,b,c,N);
+  norm=compute_norm(c,N);
+  check_for_errors(norm,N);
+  std::cout<<"Warm-up call - Time of vector add on CPU with "<< allocator << ": " << time << " milliseconds." <<std::endl;
+  zero_vec(c,N);
+  time=0.0;
+  norm=0.0;
+  time = launch_kernel_cpu(a,b,c,N);
+  norm=compute_norm(c,N);
+  check_for_errors(norm,N);
+  std::cout<<"Actual call - Time of vector add on CPU with "<< allocator << ": " << time << " milliseconds." <<std::endl;
+  zero_vec(c,N);
+}
+
+
+void test_allocators_gpu(double* a, double * b, double* c, int N, std::string allocator){
+  float time=0.0;
+  double norm=0.0;
+  time = launch_kernel_gpu(a,b,c,N);
+  norm=compute_norm(c,N);
+  check_for_errors(norm,N);
+  std::cout<<"Warm-up call - Time of vector add on GPU with "<< allocator << ": " << time << " milliseconds." <<std::endl;
+  zero_vec(c,N);
+  time=0.0;
+  norm=0.0;
+  time = launch_kernel_gpu(a,b,c,N);
+  norm=compute_norm(c,N);
+  check_for_errors(norm,N);
+  std::cout<<"Actual call - Time of vector add on GPU with "<< allocator << ": " << time << " milliseconds." <<std::endl;
+  zero_vec(c,N);
+}
+
 
 int main(){
 
@@ -138,76 +175,36 @@ int main(){
   HIP_ASSERT(hipMemcpy(dC_hipMallocManaged, hC_malloc, SIZE*sizeof(double), hipMemcpyHostToDevice)); 
 
   // compute on CPU - allocate with malloc
-  float time=0.0;
-  double norm=0.0;
-  time = test_allocators_cpu(hA_malloc,hB_malloc,hC_malloc,SIZE);
-  norm=compute_norm(hC_malloc,SIZE);
-  check_for_errors(norm,SIZE);
-  std::cout<<" Time of vector add on CPU with malloc: " << time << " milliseconds." <<std::endl;
-  zero_vec(hC_malloc,SIZE);
+  std::string allocator = "malloc";
+  test_allocators_cpu(hA_malloc,hB_malloc,hC_malloc,SIZE,allocator);
 
   // compute on CPU - allocate with hipMalloc
-  time=0.0;
-  norm=0.0;
-  time = test_allocators_cpu(dA_hipMalloc,dB_hipMalloc,dC_hipMalloc,SIZE);
-  norm=compute_norm(dC_hipMalloc,SIZE);
-  check_for_errors(norm,SIZE);
-  std::cout<<" Time of vector add on CPU with hipMalloc: " << time << " milliseconds." <<std::endl;
-  zero_vec(dC_hipMalloc,SIZE);
+  allocator = "hipMalloc";
+  test_allocators_cpu(dA_hipMalloc,dB_hipMalloc,dC_hipMalloc,SIZE,allocator);
 
   // compute on CPU - allocate with hipHostMalloc
-  time=0.0;
-  norm=0.0;
-  time = test_allocators_cpu(hA_hipHostMalloc,hB_hipHostMalloc,hC_hipHostMalloc,SIZE);
-  norm=compute_norm(hC_hipHostMalloc,SIZE);
-  check_for_errors(norm,SIZE);
-  std::cout<<" Time of vector add on CPU with hipHostMalloc: " << time << " milliseconds." <<std::endl;
-  zero_vec(hC_hipHostMalloc,SIZE);
+  allocator = "hipHostMalloc";
+  test_allocators_cpu(hA_hipHostMalloc,hB_hipHostMalloc,hC_hipHostMalloc,SIZE,allocator);
 
   // compute on CPU - allocate with hipMallocManaged
-  time=0.0;
-  norm=0.0;
-  time = test_allocators_cpu(dA_hipMallocManaged,dB_hipMallocManaged,dC_hipMallocManaged,SIZE);
-  norm=compute_norm(dC_hipMallocManaged,SIZE);
-  check_for_errors(norm,SIZE);
-  std::cout<<" Time of vector add on CPU with hipMallocManaged: " << time << " milliseconds." <<std::endl;
-  zero_vec(dC_hipMallocManaged,SIZE);
+  allocator = "hipMallocManaged";
+  test_allocators_cpu(dA_hipMallocManaged,dB_hipMallocManaged,dC_hipMallocManaged,SIZE,allocator);
 
   // compute on GPU - allocate with malloc
-  time=0.0;
-  norm=0.0;
-  time = test_allocators_gpu(hA_malloc,hB_malloc,hC_malloc,SIZE);
-  norm=compute_norm(hC_malloc,SIZE);
-  check_for_errors(norm,SIZE);
-  std::cout<<" Time of vector add on GPU with malloc: " << time << " milliseconds." <<std::endl;
-  zero_vec(hC_malloc,SIZE);
+  allocator = "malloc";
+  test_allocators_gpu(hA_malloc,hB_malloc,hC_malloc,SIZE,allocator);
 
   // compute on GPU - allocate with hipMalloc
-  time=0.0;
-  norm=0.0;
-  time = test_allocators_gpu(dA_hipMalloc,dB_hipMalloc,dC_hipMalloc,SIZE);
-  norm=compute_norm(dC_hipMalloc,SIZE);
-  check_for_errors(norm,SIZE);
-  std::cout<<" Time of vector add on GPU with hipMalloc: " << time << " milliseconds." <<std::endl;
-  zero_vec(dC_hipMalloc,SIZE);
+  allocator = "hipMalloc";
+  test_allocators_gpu(dA_hipMalloc,dB_hipMalloc,dC_hipMalloc,SIZE,allocator);
 
   // compute on GPU - allocate with hipHostMalloc
-  time=0.0;
-  norm=0.0;
-  time = test_allocators_gpu(hA_hipHostMalloc,hB_hipHostMalloc,hC_hipHostMalloc,SIZE);
-  norm=compute_norm(hC_hipHostMalloc,SIZE);
-  check_for_errors(norm,SIZE);
-  std::cout<<" Time of vector add on GPU with hipHostMalloc: " << time << " milliseconds." <<std::endl;
-  zero_vec(hC_hipHostMalloc,SIZE);
+  allocator = "hipHostMalloc";
+  test_allocators_gpu(hA_hipHostMalloc,hB_hipHostMalloc,hC_hipHostMalloc,SIZE,allocator);
 
   // compute on GPU - allocate with dC_hipMallocManaged
-  time=0.0;
-  norm=0.0;
-  time = test_allocators_gpu(dA_hipMallocManaged,dB_hipMallocManaged,dC_hipMallocManaged,SIZE);
-  norm=compute_norm(dC_hipMallocManaged,SIZE);
-  check_for_errors(norm,SIZE);
-  std::cout<<" Time of vector add on GPU with hipMallocManaged: " << time << " milliseconds." <<std::endl;
-  zero_vec(dC_hipMallocManaged,SIZE);
+  allocator = "hipMallocaManaged";
+  test_allocators_gpu(dA_hipMallocManaged,dB_hipMallocManaged,dC_hipMallocManaged,SIZE,allocator);
 
 return 0;
 }
