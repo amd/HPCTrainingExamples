@@ -8,8 +8,6 @@
 
 using namespace std;
 
-#pragma omp requires unified_shared_memory
-
 int main(int argc, char *argv[]){
 
    HotScience myscienceclass;
@@ -17,7 +15,7 @@ int main(int argc, char *argv[]){
    int N=10000;
    double *x = new double[N];
 
-#pragma omp target teams loop
+#pragma omp target teams loop map(from:x[0:N])
    for (int k = 0; k < N; k++){
       myscienceclass.compute(&x[k], N);
    }

@@ -159,3 +159,30 @@ loop rather than worrying about where our array data is located.
 You can experiment with these examples on both a MI300A APU and a discrete GPU such as MI300X or MI200 series GPU. You
 should see a performance difference since the MI300A only has to map the pointer and not move the whole array.
 
+We have one less example to look at. Many scientific codes have multi-dimensional data that need to be operated on.
+We can use the collapse clause to spread out the work from both loops rather than just the outer one. This can
+be helpful if the outer loop is small. But since we are always trying to generate more work and parallelism, it
+can also have some benefit for larger outer loops.
+
+We'll consider the case of Fortran since 2-dimensional arrays are much easier to work with.
+The directive will now become
+
+```
+!$omp target teams distribute parallel do collapse(2)
+```
+
+Building and running the example
+
+```
+make saxpy_gpu_collapse
+./saxpy_gpu_collapse
+```
+
+And the output
+
+```
+Time of kernel: 0.007212
+check output:
+y[0][0] 4.000000
+y[N-1][M-1] 4.000000
+```
