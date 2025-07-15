@@ -159,7 +159,7 @@ loop rather than worrying about where our array data is located.
 You can experiment with these examples on both a MI300A APU and a discrete GPU such as MI300X or MI200 series GPU. You
 should see a performance difference since the MI300A only has to map the pointer and not move the whole array.
 
-We have one less example to look at. Many scientific codes have multi-dimensional data that need to be operated on.
+We have one more example to look at. Many scientific codes have multi-dimensional data that need to be operated on.
 We can use the collapse clause to spread out the work from both loops rather than just the outer one. This can
 be helpful if the outer loop is small. But since we are always trying to generate more work and parallelism, it
 can also have some benefit for larger outer loops.
@@ -174,6 +174,7 @@ The directive will now become
 Building and running the example
 
 ```
+export HSA_XNACK=1
 make saxpy_gpu_collapse
 ./saxpy_gpu_collapse
 ```

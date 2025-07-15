@@ -24,7 +24,7 @@ contains
   subroutine zeros(a, n)
     implicit none
     integer, intent(in) :: n
-    real(4), intent(out) :: a(n)
+    real(4), intent(inout) :: a(n)
     integer :: i
     !$omp target teams distribute parallel do
     do i = 1, n
