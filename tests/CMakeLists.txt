@@ -650,25 +650,69 @@ add_test(NAME HIPFort_Module_Check_hipfc_2008 COMMAND ../hipfort_module_check_hi
 set_property(TEST HIPFort_Module_Check_hipfc_2008 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST HIPFort_Module_Check_hipfc_2008 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME HIPFort_ROCm_Include_GEMM_Global COMMAND ../hipfort_gemm_global.sh )
+add_test(NAME HIPFort_ROCm_Check_hipfc_2003 COMMAND ../hipfort_rocm_check_hipfc_2003.sh )
+set_property(TEST HIPFort_ROCm_Check_hipfc_2003 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
+set_property(TEST HIPFort_ROCm_Check_hipfc_2003 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPFort_ROCm_Check_hipfc_2008 COMMAND ../hipfort_rocm_check_hipfc_2008.sh )
+set_property(TEST HIPFort_ROCm_Check_hipfc_2008 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
+set_property(TEST HIPFort_ROCm_Check_hipfc_2008 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPFort_ROCm_Include_GEMM_Global COMMAND ../hipfort_rocm_gemm_global.sh )
 set_property(TEST HIPFort_ROCm_Include_GEMM_Global PROPERTY PASS_REGULAR_EXPRESSION "2048")
 set_property(TEST HIPFort_ROCm_Include_GEMM_Global PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME HIPFort_ROCm_Include_GEMM_Local COMMAND ../hipfort_gemm_local.sh )
+add_test(NAME HIPFort_ROCm_Include_GEMM_Local COMMAND ../hipfort_rocm_gemm_local.sh )
 set_property(TEST HIPFort_ROCm_Include_GEMM_Local PROPERTY PASS_REGULAR_EXPRESSION "2048")
 set_property(TEST HIPFort_ROCm_Include_GEMM_Local PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME HIPFort_ROCm_Include_GEMM_Global_SD COMMAND ../hipfort_gemm_global_sd.sh )
+add_test(NAME HIPFort_ROCm_Include_GEMM_Global_SD COMMAND ../hipfort_rocm_gemm_global_sd.sh )
 set_property(TEST HIPFort_ROCm_Include_GEMM_Global_SD PROPERTY PASS_REGULAR_EXPRESSION "2048")
 set_property(TEST HIPFort_ROCm_Include_GEMM_Global_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME HIPFort_ROCm_Include_GEMM_Local_SD COMMAND ../hipfort_gemm_local_sd.sh )
+add_test(NAME HIPFort_ROCm_Include_GEMM_Local_SD COMMAND ../hipfort_rocm_gemm_local_sd.sh )
 set_property(TEST HIPFort_ROCm_Include_GEMM_Local_SD PROPERTY PASS_REGULAR_EXPRESSION "2048")
 set_property(TEST HIPFort_ROCm_Include_GEMM_Local_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPFort_AFAR_Include_GEMM_Global COMMAND ../hipfort_afar_gemm_global.sh )
+set_property(TEST HIPFort_AFAR_Include_GEMM_Global PROPERTY PASS_REGULAR_EXPRESSION "2048")
+set_property(TEST HIPFort_AFAR_Include_GEMM_Global PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPFort_AFAR_Include_GEMM_Local COMMAND ../hipfort_afar_gemm_local.sh )
+set_property(TEST HIPFort_AFAR_Include_GEMM_Local PROPERTY PASS_REGULAR_EXPRESSION "2048")
+set_property(TEST HIPFort_AFAR_Include_GEMM_Local PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPFort_AFAR_Include_GEMM_Global_SD COMMAND ../hipfort_afar_gemm_global_sd.sh )
+set_property(TEST HIPFort_AFAR_Include_GEMM_Global_SD PROPERTY PASS_REGULAR_EXPRESSION "2048")
+set_property(TEST HIPFort_AFAR_Include_GEMM_Global_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPFort_AFAR_Include_GEMM_Local_SD COMMAND ../hipfort_afar_gemm_local_sd.sh )
+set_property(TEST HIPFort_AFAR_Include_GEMM_Local_SD PROPERTY PASS_REGULAR_EXPRESSION "2048")
+set_property(TEST HIPFort_AFAR_Include_GEMM_Local_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPFort_Module_Include_GEMM_Global COMMAND ../hipfort_module_gemm_global.sh )
+set_property(TEST HIPFort_Module_Include_GEMM_Global PROPERTY PASS_REGULAR_EXPRESSION "2048")
+set_property(TEST HIPFort_Module_Include_GEMM_Global PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPFort_Module_Include_GEMM_Local COMMAND ../hipfort_module_gemm_local.sh )
+set_property(TEST HIPFort_Module_Include_GEMM_Local PROPERTY PASS_REGULAR_EXPRESSION "2048")
+set_property(TEST HIPFort_Module_Include_GEMM_Local PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPFort_Module_Include_GEMM_Global_SD COMMAND ../hipfort_module_gemm_global_sd.sh )
+set_property(TEST HIPFort_Module_Include_GEMM_Global_SD PROPERTY PASS_REGULAR_EXPRESSION "2048")
+set_property(TEST HIPFort_Module_Include_GEMM_Global_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPFort_Module_Include_GEMM_Local_SD COMMAND ../hipfort_module_gemm_local_sd.sh )
+set_property(TEST HIPFort_Module_Include_GEMM_Local_SD PROPERTY PASS_REGULAR_EXPRESSION "2048")
+set_property(TEST HIPFort_Module_Include_GEMM_Local_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME HIPFort_Module_Check_Matmult COMMAND ../hipfort_module_check_matmult.sh )
 set_property(TEST HIPFort_Module_Check_Matmult PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST HIPFort_Module_Check_Matmult PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME HIPFort_ROCm_Check_Matmult COMMAND ../hipfort_rocm_check_matmult.sh )
+set_property(TEST HIPFort_ROCm_Check_Matmult PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIPFort_ROCm_Check_Matmult PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Advanced OpenMP Examples
 

@@ -2,8 +2,8 @@
 
 module load hipfort
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/HIPFort/matmult
-make
-./matmult_hipfort
+cd ${REPO_DIR}/HIPFort/hipgemm
+make gemm_global
+./gemm_global
 
 make clean
