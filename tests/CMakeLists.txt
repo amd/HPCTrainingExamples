@@ -627,7 +627,7 @@ set_property(TEST OpenMP_CXX_1_Jacobi_USM PROPERTY PASS_REGULAR_EXPRESSION "1.00
 set_property(TEST OpenMP_CXX_1_Jacobi_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_tests_properties(OpenMP_CXX_1_Jacobi_USM PROPERTIES TIMEOUT 300)
 
-add_test(NAME OpenMP_CXX_2_Jacobi_TargetData COMMAND ../openmp_cxx_2_jacobi_target_data.sh )
+add_test(NAME OpenMP_CXX_2_Jacobi_TargetData COMMAND ../openmp_cxx_2_jacobi_targetdata.sh )
 set_property(TEST OpenMP_CXX_2_Jacobi_TargetData PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 set_property(TEST OpenMP_CXX_2_Jacobi_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_tests_properties(OpenMP_CXX_2_Jacobi_TargetData PROPERTIES TIMEOUT 300)
