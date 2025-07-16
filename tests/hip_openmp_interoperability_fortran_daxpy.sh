@@ -9,7 +9,7 @@ else
    module load amdflang-new
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-   cd ${REPO_DIR}/HIP-OpenMP/Fortran/daxpy
+   cd ${REPO_DIR}/HIP-OpenMP/F/daxpy
    make
    ./daxpy
 
