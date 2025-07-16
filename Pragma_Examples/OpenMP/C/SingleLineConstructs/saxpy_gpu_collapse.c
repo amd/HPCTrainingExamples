@@ -17,8 +17,8 @@ void saxpy(float a, float **x, float **y, int M, int N) {
    printf("Time of kernel: %lf\n", te - tb);
 
    printf("check output:\n");
-   printf("y[0][0] %lf\n",y[0][0]);
-   printf("y[N-1][M-1] %lf\n",y[N-1][M-1]);
+   printf("y[0][0] = %lf\n",y[0][0]);
+   printf("y[N-1][M-1] = %lf\n",y[N-1][M-1]);
 }
 
 float **malloc2D(int jmax, int imax)

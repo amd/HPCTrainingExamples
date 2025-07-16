@@ -598,6 +598,11 @@ add_test(NAME OpenMP_Language_Constructs_C_1_Device_Routine_WDynGlobalData COMMA
 set_property(TEST OpenMP_Language_Constructs_C_1_Device_Routine_WDynGlobalData PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 5500.000000")
 set_property(TEST OpenMP_Language_Constructs_C_1_Device_Routine_WDynGlobalData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+### C SingleLineConstructs
+add_test(NAME OpenMP_C_Single_Line_Constructs_Saxpy_Gpu_Collapse COMMAND ../openmp_c_single_line_constructs_saxpy_gpu_collapse.sh )
+set_property(TEST OpenMP_C_Single_Line_Constructs_Saxpy_Gpu_Collapse PROPERTY PASS_REGULAR_EXPRESSION "y[N-1][M-1] = 4.000000")
+set_property(TEST OpenMP_C_Single_Line_Constructs_Saxpy_Gpu_Collapse PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # C OpenMP Optimization tests
 add_test(NAME OpenMP_Optimizations_C_1_Alloc_Problem COMMAND ../openmp_optimizations_c_1_alloc_problem.sh )
 set_property(TEST OpenMP_Optimizations_C_1_Alloc_Problem PROPERTY PASS_REGULAR_EXPRESSION "Final result: 1.000000")
