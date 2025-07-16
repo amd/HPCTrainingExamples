@@ -1257,7 +1257,7 @@ set_tests_properties(Pytorch_Profile_Rocprofv3 PROPERTIES TIMEOUT 300)
 add_test(NAME Pytorch_Profile_TorchProfiler COMMAND ../../MLExamples/PyTorch_Profiling/torch-profiler/single_process.sh )
 set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY PASS_REGULAR_EXPRESSION "trace_")
 set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_tests_properties(Pytorch_Profile_Torchprofiler PROPERTIES TIMEOUT 300) 
+set_tests_properties(Pytorch_Profile_TorchProfiler PROPERTIES TIMEOUT 300) 
 
 # Python MPI tests
 add_test(NAME MPI4PY_OpenMPI_Check_Import COMMAND ../mpi4py_check_import.sh --module-name openmpi)
