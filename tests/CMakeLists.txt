@@ -351,6 +351,10 @@ add_test(NAME OpenMP_Fortran_2_Reduction_Solution_USM COMMAND ../openmp_fortran_
 set_property(TEST OpenMP_Fortran_2_Reduction_Solution_USM PROPERTY PASS_REGULAR_EXPRESSION "1010")
 set_property(TEST OpenMP_Fortran_2_Reduction_Solution_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME OpenMP_Fortran_Atomic_USM COMMAND ../openmp_fortran_atomic_usm.sh )
+set_property(TEST OpenMP_Fortran_Atomic_USM PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
+set_property(TEST OpenMP_Fortran_Atomic_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # is this supposed to fail?
 add_test(NAME OpenMP_Fortran_3_Reduction_WrongMapping COMMAND ../openmp_fortran_3_reduction_wrongmapping.sh )
 set_property(TEST OpenMP_Fortran_3_Reduction_WrongMapping PROPERTY PASS_REGULAR_EXPRESSION "1010")
@@ -749,13 +753,21 @@ set_property(TEST HIPFort_ROCm_Check_Matmult PROPERTY PASS_REGULAR_EXPRESSION "S
 set_property(TEST HIPFort_ROCm_Check_Matmult PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Advanced OpenMP Examples
-add_test(NAME AdvancedOpenMP_Memory1 COMMAND ../advancedopenmp_memory1.sh )
-set_property(TEST AdvancedOpenMP_Memory1 PROPERTY PASS_REGULAR_EXPRESSION "Entering OpenMP kernel at mem1.cc")
-set_property(TEST AdvancedOpenMP_Memory1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+add_test(NAME AdvancedOpenMP_CXX_Memory1 COMMAND ../advancedopenmp_cxx_memory1.sh )
+set_property(TEST AdvancedOpenMP_CXX_Memory1 PROPERTY PASS_REGULAR_EXPRESSION "Last Value: z[99999]=7.000000")
+set_property(TEST AdvancedOpenMP_CXX_Memory1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
-add_test(NAME AdvancedOpenMP_Memory2 COMMAND ../advancedopenmp_memory2.sh )
-set_property(TEST AdvancedOpenMP_Memory2 PROPERTY PASS_REGULAR_EXPRESSION "Exiting OpenMP data region at mem2.cc;Exiting OpenMP data region with end_mapper at mem2.cc")
-set_property(TEST AdvancedOpenMP_Memory2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+add_test(NAME AdvancedOpenMP_CXX_Memory2 COMMAND ../advancedopenmp_cxx_memory2.sh )
+set_property(TEST AdvancedOpenMP_CXX_Memory2 PROPERTY PASS_REGULAR_EXPRESSION "Last Value: z[99999]=7.000000")
+set_property(TEST AdvancedOpenMP_CXX_Memory2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+
+add_test(NAME AdvancedOpenMP_Fortran_Memory1 COMMAND ../advancedopenmp_fortran_memory1.sh )
+set_property(TEST AdvancedOpenMP_Fortran_Memory1 PROPERTY PASS_REGULAR_EXPRESSION "Last Value: z[99999]=7.000000")
+set_property(TEST AdvancedOpenMP_Fortran_Memory1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+
+add_test(NAME AdvancedOpenMP_Fortran_Memory2 COMMAND ../advancedopenmp_fortran_memory2.sh )
+set_property(TEST AdvancedOpenMP_Fortran_Memory2 PROPERTY PASS_REGULAR_EXPRESSION "Last Value: z[99999]=7.000000")
+set_property(TEST AdvancedOpenMP_Fortran_Memory2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 # GPU-Aware MPI tests
 add_test(NAME GPUAwareOpenMPI_pt2pt COMMAND ../gpuawarempi_pt2pt.sh )
