@@ -501,42 +501,42 @@ set_property(TEST OpenMP_Language_Constructs_Fortran_2_Device_Routine_With_Modul
 #set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Known failure
-#add_test(NAME OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang COMMAND ../openmp_language_constructs_fortran_complex_saxpy_amdflang.sh )
-#set_property(TEST OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang PROPERTY PASS_REGULAR_EXPRESSION "0.00000000,2.00000000")
-#set_property(TEST OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang COMMAND ../openmp_language_constructs_fortran_complex_saxpy.sh )
+set_property(TEST OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang PROPERTY PASS_REGULAR_EXPRESSION "0.00000000,2.00000000")
+set_property(TEST OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Known failure
-#add_test(NAME OpenMP_Language_Constructs_Fortran_Complex_Saxpy_GFortran COMMAND ../openmp_language_constructs_fortran_complex_saxpy_gfortran.sh )
-#set_property(TEST OpenMP_Language_Constructs_Fortran_Complex_Saxpy_GFortran PROPERTY PASS_REGULAR_EXPRESSION "0.00000000,2.00000000")
-#set_property(TEST OpenMP_Language_Constructs_Fortran_Complex_Saxpy_GFortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Language_Constructs_Fortran_Complex_Saxpy_GFortran COMMAND ../openmp_language_constructs_fortran_complex_saxpy_gfortran.sh )
+set_property(TEST OpenMP_Language_Constructs_Fortran_Complex_Saxpy_GFortran PROPERTY PASS_REGULAR_EXPRESSION "0.00000000,2.00000000")
+set_property(TEST OpenMP_Language_Constructs_Fortran_Complex_Saxpy_GFortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Known failure
-#add_test(NAME OpenMP_Language_Constructs_Fortran_Teams_EndLoop COMMAND ../openmp_language_constructs_fortran_teams_endloop.sh )
-#set_property(TEST OpenMP_Language_Constructs_Fortran_Teams_EndLoop PROPERTY PASS_REGULAR_EXPRESSION "Success")
-#set_property(TEST OpenMP_Language_Constructs_Fortran_Teams_EndLoop PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Language_Constructs_Fortran_Teams_EndLoop COMMAND ../openmp_language_constructs_fortran_teams_endloop.sh )
+set_property(TEST OpenMP_Language_Constructs_Fortran_Teams_EndLoop PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST OpenMP_Language_Constructs_Fortran_Teams_EndLoop PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Known failure
-#add_test(NAME OpenMP_Language_Constructs_Fortran_DType_Derived_Type COMMAND ../openmp_language_constructs_fortran_dtype_derived_type.sh )
-#set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Derived_Type PROPERTY PASS_REGULAR_EXPRESSION "10")
-#set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Derived_Type PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Language_Constructs_Fortran_DType_Derived_Type COMMAND ../openmp_language_constructs_fortran_dtype_derived_type.sh )
+set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Derived_Type PROPERTY PASS_REGULAR_EXPRESSION "10")
+set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Derived_Type PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Known failure
-#add_test(NAME OpenMP_Language_Constructs_Fortran_DType_Mapper COMMAND ../openmp_language_constructs_fortran_dtype_mapper.sh )
-#set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Mapper PROPERTY PASS_REGULAR_EXPRESSION "10")
-#set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Mapper PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Language_Constructs_Fortran_DType_Mapper COMMAND ../openmp_language_constructs_fortran_dtype_mapper.sh )
+set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Mapper PROPERTY PASS_REGULAR_EXPRESSION "10")
+set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Mapper PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Language_Constructs_Fortran_DType_Pointer COMMAND ../openmp_language_constructs_fortran_dtype_pointer.sh )
 set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Pointer PROPERTY PASS_REGULAR_EXPRESSION "10")
 set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Pointer PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Known failure
-#add_test(NAME OpenMP_Language_Constructs_Fortran_DType_Scalar_Members COMMAND ../openmp_language_constructs_fortran_dtype_scalar_members.sh )
-#set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Scalar_Members PROPERTY PASS_REGULAR_EXPRESSION "10")
-#set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Scalar_Members PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Language_Constructs_Fortran_DType_Scalar_Members COMMAND ../openmp_language_constructs_fortran_dtype_scalar_members.sh )
+set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Scalar_Members PROPERTY PASS_REGULAR_EXPRESSION "10")
+set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Scalar_Members PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#add_test(NAME OpenMP_Language_Constructs_C_Reduction_Scalar COMMAND ../openmp_language_constructs_c_reduction_scalar.sh )
-#set_property(TEST OpenMP_Language_Constructs_C_Reduction_Scalar PROPERTY PASS_REGULAR_EXPRESSION "ce1 = 1000.000000 ce2 1000.000000")
-#set_property(TEST OpenMP_Language_Constructs_C_Reduction_Scalar PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Language_Constructs_C_Reduction_Scalar COMMAND ../openmp_language_constructs_c_reduction_scalar.sh )
+set_property(TEST OpenMP_Language_Constructs_C_Reduction_Scalar PROPERTY PASS_REGULAR_EXPRESSION "ce1 = 1000.000000 ce2 1000.000000")
+set_property(TEST OpenMP_Language_Constructs_C_Reduction_Scalar PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Fortran OpenMP Optimization tests
 add_test(NAME OpenMP_Optimizations_Fortran_1_Alloc_Problem COMMAND ../openmp_optimizations_fortran_1_alloc_problem.sh )
@@ -1232,18 +1232,22 @@ set_property(TEST Pytorch_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider"
 add_test(NAME Pytorch_Profile_Rocprof-compute_ROCm COMMAND ../../MLExamples/PyTorch_Profiling/rocm-compute-profiler/single_process.sh )
 set_property(TEST Pytorch_Profile_Rocprof-compute_ROCm PROPERTY PASS_REGULAR_EXPRESSION "2.1 Speed-of-Light")
 set_property(TEST Pytorch_Profile_Rocprof-compute_ROCm PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(Pytorch_Profile_Rocprof-compute_ROCm PROPERTIES TIMEOUT 300) 
 
 add_test(NAME Pytorch_Profile_Rocprof-sys_ROCm COMMAND ../../MLExamples/PyTorch_Profiling/rocm-systems-profiler/rocm-systems-profiler.sh )
 set_property(TEST Pytorch_Profile_Rocprof-sys_ROCm PROPERTY PASS_REGULAR_EXPRESSION "perfetto-trace-")
 set_property(TEST Pytorch_Profile_Rocprof-sys_ROCm PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(Pytorch_Profile_Rocprof-sys_ROCm PROPERTIES TIMEOUT 300) 
 
 add_test(NAME Pytorch_Profile_Rocprofv3 COMMAND ../../MLExamples/PyTorch_Profiling/rocprofv3/kernels.sh )
 set_property(TEST Pytorch_Profile_Rocprofv3 PROPERTY PASS_REGULAR_EXPRESSION "kernel_stats.csv")
 set_property(TEST Pytorch_Profile_Rocprofv3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(Pytorch_Profile_Rocprofv3 PROPERTIES TIMEOUT 300) 
 
 add_test(NAME Pytorch_Profile_TorchProfiler COMMAND ../../MLExamples/PyTorch_Profiling/torch-profiler/single_process.sh )
 set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY PASS_REGULAR_EXPRESSION "trace_")
 set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(Pytorch_Profile_Torchprofiler PROPERTIES TIMEOUT 300) 
 
 # Python MPI tests
 
