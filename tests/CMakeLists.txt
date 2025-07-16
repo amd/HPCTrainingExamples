@@ -111,9 +111,13 @@ set_property(TEST HIP_Optimizations_daxpy_5 PROPERTY PASS_REGULAR_EXPRESSION "PA
 set_property(TEST HIP_Optimizations_daxpy_5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # HIP-OpenMP Interoperability Examples
-add_test(NAME HIP_OpenMP_Interoperability_daxpy COMMAND ../hip_openmp_interoperability_daxpy.sh )
-set_property(TEST HIP_OpenMP_Interoperability_daxpy PROPERTY PASS_REGULAR_EXPRESSION "PASS")
-set_property(TEST HIP_OpenMP_Interoperability_daxpy PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+add_test(NAME HIP_OpenMP_Interoperability_CXX_daxpy COMMAND ../hip_openmp_interoperability_cxx_daxpy.sh )
+set_property(TEST HIP_OpenMP_Interoperability_CXX_daxpy PROPERTY PASS_REGULAR_EXPRESSION "PASS")
+set_property(TEST HIP_OpenMP_Interoperability_CXX_daxpy PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+
+add_test(NAME HIP_OpenMP_Interoperability_Fortran_daxpy COMMAND ../hip_openmp_interoperability_fortran_daxpy.sh )
+set_property(TEST HIP_OpenMP_Interoperability_Fortran_daxpy PROPERTY PASS_REGULAR_EXPRESSION "PASS")
+set_property(TEST HIP_OpenMP_Interoperability_Fortran_daxpy PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 add_test(NAME HIP_OpenMP_Interoperability_saxpy_offload COMMAND ../hip_openmp_interoperability_saxpy_offload.sh )
 set_property(TEST HIP_OpenMP_Interoperability_saxpy_offload PROPERTY PASS_REGULAR_EXPRESSION "PASS")
@@ -426,17 +430,29 @@ set_property(TEST OpenMP_Intro_Saxpy7 PROPERTY SKIP_REGULAR_EXPRESSION "module s
 #set_property(TEST OpenMP_Intro_Saxpy2f PROPERTY PASS_REGULAR_EXPRESSION "Time of kernel:")
 #set_property(TEST OpenMP_Intro_Saxpy2f PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Intro_Target_Data_Structured COMMAND ../openmp_intro_target_data_structured.sh )
-set_property(TEST OpenMP_Intro_Target_Data_Structured PROPERTY PASS_REGULAR_EXPRESSION "completed successfully")
-set_property(TEST OpenMP_Intro_Target_Data_Structured PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Intro_Target_Data_Structured_CXX COMMAND ../openmp_intro_target_data_structured_cxx.sh )
+set_property(TEST OpenMP_Intro_Target_Data_Structured_CXX PROPERTY PASS_REGULAR_EXPRESSION "completed successfully")
+set_property(TEST OpenMP_Intro_Target_Data_Structured_CXX PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Intro_Target_Data_Unstructured COMMAND ../openmp_intro_target_data_unstructured.sh )
-set_property(TEST OpenMP_Intro_Target_Data_Unstructured PROPERTY PASS_REGULAR_EXPRESSION "completed successfully")
-set_property(TEST OpenMP_Intro_Target_Data_Unstructured PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Intro_Target_Data_Unstructured_CXX COMMAND ../openmp_intro_target_data_unstructured_cxx.sh )
+set_property(TEST OpenMP_Intro_Target_Data_Unstructured_CXX PROPERTY PASS_REGULAR_EXPRESSION "completed successfully")
+set_property(TEST OpenMP_Intro_Target_Data_Unstructured_CXX PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Intro_Target_Data_Update COMMAND ../openmp_intro_target_data_update.sh )
-set_property(TEST OpenMP_Intro_Target_Data_Update PROPERTY PASS_REGULAR_EXPRESSION "PASS")
-set_property(TEST OpenMP_Intro_Target_Data_Update PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Intro_Target_Data_Update_CXX COMMAND ../openmp_intro_target_data_update_cxx.sh )
+set_property(TEST OpenMP_Intro_Target_Data_Update_CXX PROPERTY PASS_REGULAR_EXPRESSION "PASS")
+set_property(TEST OpenMP_Intro_Target_Data_Update_CXX PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Intro_Target_Data_Structured_Fortran COMMAND ../openmp_intro_target_data_structured_fortran.sh )
+set_property(TEST OpenMP_Intro_Target_Data_Structured_Fortran PROPERTY PASS_REGULAR_EXPRESSION "completed successfully")
+set_property(TEST OpenMP_Intro_Target_Data_Structured_Fortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Intro_Target_Data_Unstructured_Fortran COMMAND ../openmp_intro_target_data_unstructured_fortran.sh )
+set_property(TEST OpenMP_Intro_Target_Data_Unstructured_Fortran PROPERTY PASS_REGULAR_EXPRESSION "completed successfully")
+set_property(TEST OpenMP_Intro_Target_Data_Unstructured_Fortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Intro_Target_Data_Update_Fortran COMMAND ../openmp_intro_target_data_update_fortran.sh )
+set_property(TEST OpenMP_Intro_Target_Data_Update_Fortran PROPERTY PASS_REGULAR_EXPRESSION "PASS")
+set_property(TEST OpenMP_Intro_Target_Data_Update_Fortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Real-World OpenMP Language Constructs
 
@@ -610,22 +626,31 @@ set_property(TEST OpenMP_Optimizations_C_3_MemoryPool PROPERTY SKIP_REGULAR_EXPR
 #set_property(TEST OpenMP_CXX_2_Jacobi_TargetData PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 #set_property(TEST OpenMP_CXX_2_Jacobi_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+### CXX member function set
+add_test(NAME OpenMP_Language_Constructs_CXX_0_Member_Function_PortYourself COMMAND ../openmp_language_constructs_cxx_0_member_function_portyourself.sh )
+set_property(TEST OpenMP_Language_Constructs_CXX_0_Member_Function_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "Last x value: 1")
+set_property(TEST OpenMP_Language_Constructs_CXX_0_Member_Function_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Language_Constructs_CXX_Member_Function COMMAND ../openmp_language_constructs_cxx_member_function.sh )
-set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function PROPERTY PASS_REGULAR_EXPRESSION "Finished calculation")
-set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Language_Constructs_CXX_1_Member_Function_USM COMMAND ../openmp_language_constructs_cxx_1_member_function_usm.sh )
+set_property(TEST OpenMP_Language_Constructs_CXX_1_Member_Function_USM PROPERTY PASS_REGULAR_EXPRESSION "Last x value: 1")
+set_property(TEST OpenMP_Language_Constructs_CXX_1_Member_Function_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Language_Constructs_CXX_Member_Function_PortYourself COMMAND ../openmp_language_constructs_cxx_member_function_portyourself.sh )
-set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "Finished calculation")
-set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Language_Constructs_CXX_2_Member_Function_Map COMMAND ../openmp_language_constructs_cxx_2_member_function_map.sh )
+set_property(TEST OpenMP_Language_Constructs_CXX_2_Member_Function_Map PROPERTY PASS_REGULAR_EXPRESSION "Last x value: 1")
+set_property(TEST OpenMP_Language_Constructs_CXX_2_Member_Function_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Language_Constructs_CXX_Member_Function_External COMMAND ../openmp_language_constructs_cxx_member_function_external.sh )
-set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function_External PROPERTY PASS_REGULAR_EXPRESSION "Finished calculation")
+### CXX member function external set
+add_test(NAME OpenMP_Language_Constructs_CXX_Member_Function_External_Portyourself COMMAND ../openmp_language_constructs_cxx_0_member_function_external_portyourself.sh )
+set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function_External_Portyourself PROPERTY PASS_REGULAR_EXPRESSION "Last x value: 1")
+set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function_External_Portyourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Language_Constructs_CXX_Member_Function_External COMMAND ../openmp_language_constructs_cxx_1_member_function_external_usm.sh )
+set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function_External PROPERTY PASS_REGULAR_EXPRESSION "Last x value: 1")
 set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function_External PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Language_Constructs_CXX_Member_Function_External_PortYourself COMMAND ../openmp_language_constructs_cxx_member_function_external_portyourself.sh )
-set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function_External_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "Finished calculation")
-set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function_External_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Language_Constructs_CXX_Member_Function_External_Data COMMAND ../openmp_language_constructs_cxx_2_member_function_external_data.sh )
+set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function_External_Data PROPERTY PASS_REGULAR_EXPRESSION "Last x value: 1")
+set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function_External_Data PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # CXX OpenMP Optimization tests
 add_test(NAME OpenMP_Optimizations_CXX_1_Alloc_Problem COMMAND ../openmp_optimizations_cxx_1_alloc_problem.sh )
@@ -1174,7 +1199,7 @@ set_property(TEST Pytorch_Triton_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "
 
 add_test(NAME Pytorch_Transformers_Check_Import COMMAND ../transformers_check_import.sh )
 set_property(TEST Pytorch_Transformers_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Pytorch_Transformes_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_Transformers_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Pytorch_SageAttention_Check_Import COMMAND ../sageattention_check_import.sh )
 set_property(TEST Pytorch_SageAttention_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
