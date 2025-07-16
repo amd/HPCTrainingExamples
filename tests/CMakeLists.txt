@@ -60,9 +60,10 @@ add_test(NAME HIPStdPar_ShallowWater_Ver2 COMMAND ../hipstdpar_shallowwater_ver2
 set_property(TEST HIPStdPar_ShallowWater_Ver2 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 set_property(TEST HIPStdPar_ShallowWater_Ver2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#add_test(NAME HIPStdPar_ShallowWater_StdPar COMMAND ../hipstdpar_shallowwater_stdpar.sh )
-#set_property(TEST HIPStdPar_ShallowWater_StdPar PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-#set_property(TEST HIPStdPar_ShallowWater_StdPar PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME HIPStdPar_ShallowWater_StdPar COMMAND ../hipstdpar_shallowwater_stdpar.sh )
+set_property(TEST HIPStdPar_ShallowWater_StdPar PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
+set_property(TEST HIPStdPar_ShallowWater_StdPar PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(HIPStdPar_ShallowWater_StdPar PROPERTIES TIMEOUT 300)
 
 add_test(NAME HIPStdPar_MixAndMatch_Atomic COMMAND ../hipstdpar_mixandmatch_atomic_stdpar_omp.sh )
 set_property(TEST HIPStdPar_MixAndMatch_Atomic PROPERTY PASS_REGULAR_EXPRESSION "StdPar computation took")
@@ -132,7 +133,6 @@ set_property(TEST HIP_OpenMP_Interoperability_saxpy_APU PROPERTY PASS_REGULAR_EX
 set_property(TEST HIP_OpenMP_Interoperability_saxpy_APU PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 # Programming Model Examples
-
 add_test(NAME Programming_Model_CPU COMMAND ../programming_model_cpu.sh )
 set_property(TEST Programming_Model_CPU PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
 set_property(TEST Programming_Model_CPU PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -163,7 +163,6 @@ set_property(TEST Programming_Model_Kokkos PROPERTY SKIP_REGULAR_EXPRESSION "mod
 
 
 # OpenMP Build System Examples
-
 add_test(NAME OpenMP_C_Build_Make COMMAND ../openmp_C_build_make.sh )
 set_property(TEST OpenMP_C_Build_Make PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
 set_property(TEST OpenMP_C_Build_Make PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
@@ -189,7 +188,6 @@ set_property(TEST OpenMP_Fortran_Build_CMake PROPERTY PASS_REGULAR_EXPRESSION "R
 set_property(TEST OpenMP_Fortran_Build_CMake PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 # OpenMP Examples
-
 # Duplicate of OpenMP_C_5_Saxpy_Map
 #add_test(NAME OpenMP_Saxpy_C_AMDClang COMMAND ../openmp_saxpy_c_amdclang.sh )
 #set_property(TEST OpenMP_Saxpy_C_AMDClang PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
@@ -285,7 +283,6 @@ set_property(TEST OpenMP_C_5_Vecadd_Async PROPERTY PASS_REGULAR_EXPRESSION "1.00
 set_property(TEST OpenMP_C_5_Vecadd_Async PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # OpenMP Fortran tests
-
 add_test(NAME OpenMP_Fortran_0_Saxpy_PortYourself COMMAND ../openmp_fortran_0_saxpy_portyourself.sh )
 set_property(TEST OpenMP_Fortran_0_Saxpy_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_Fortran_0_Saxpy_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -355,9 +352,9 @@ set_property(TEST OpenMP_Fortran_2_Reduction_Solution_USM PROPERTY PASS_REGULAR_
 set_property(TEST OpenMP_Fortran_2_Reduction_Solution_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # is this supposed to fail?
-#add_test(NAME OpenMP_Fortran_3_Reduction_WrongMapping COMMAND ../openmp_fortran_3_reduction_wrongmapping.sh )
-#set_property(TEST OpenMP_Fortran_3_Reduction_WrongMapping PROPERTY PASS_REGULAR_EXPRESSION "1010")
-#set_property(TEST OpenMP_Fortran_3_Reduction_WrongMapping PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_3_Reduction_WrongMapping COMMAND ../openmp_fortran_3_reduction_wrongmapping.sh )
+set_property(TEST OpenMP_Fortran_3_Reduction_WrongMapping PROPERTY PASS_REGULAR_EXPRESSION "1010")
+set_property(TEST OpenMP_Fortran_3_Reduction_WrongMapping PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 ## No flang-15 installed in /usr/bin
 ## Linux system flang not built with AMD offloading
@@ -374,7 +371,6 @@ set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "Fin
 set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # OpenMP C++ Classes Examples
-
 add_test(NAME OpenMP_Cpp_Classes_Explicit_Daxpy COMMAND ../openmp_cpp_classes_explicit_daxpy.sh )
 set_property(TEST OpenMP_Cpp_Classes_Explicit_Daxpy PROPERTY PASS_REGULAR_EXPRESSION "PASS")
 set_property(TEST OpenMP_Cpp_Classes_Explicit_Daxpy PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -388,7 +384,6 @@ set_property(TEST OpenMP_Cpp_Classes_USM_Operations PROPERTY PASS_REGULAR_EXPRES
 set_property(TEST OpenMP_Cpp_Classes_USM_Operations PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # OpenMP Intro Examples
-
 add_test(NAME OpenMP_Intro_Saxpy_CPU COMMAND ../openmp_intro_saxpy_cpu.sh )
 set_property(TEST OpenMP_Intro_Saxpy_CPU PROPERTY PASS_REGULAR_EXPRESSION "Time of kernel:")
 set_property(TEST OpenMP_Intro_Saxpy_CPU PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -401,9 +396,9 @@ add_test(NAME OpenMP_Intro_Saxpy2 COMMAND ../openmp_intro_saxpy2.sh )
 set_property(TEST OpenMP_Intro_Saxpy2 PROPERTY PASS_REGULAR_EXPRESSION "Time of kernel:")
 set_property(TEST OpenMP_Intro_Saxpy2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#add_test(NAME OpenMP_Intro_Saxpy1f COMMAND ../openmp_intro_saxpy1f.sh )
-#set_property(TEST OpenMP_Intro_Saxpy1f PROPERTY PASS_REGULAR_EXPRESSION "Time of kernel:")
-#set_property(TEST OpenMP_Intro_Saxpy1f PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Intro_Saxpy1f COMMAND ../openmp_intro_saxpy1f.sh )
+set_property(TEST OpenMP_Intro_Saxpy1f PROPERTY PASS_REGULAR_EXPRESSION "Time of kernel:")
+set_property(TEST OpenMP_Intro_Saxpy1f PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Intro_Saxpy3 COMMAND ../openmp_intro_saxpy3.sh )
 set_property(TEST OpenMP_Intro_Saxpy3 PROPERTY PASS_REGULAR_EXPRESSION "Time of kernel:")
@@ -418,17 +413,17 @@ set_property(TEST OpenMP_Intro_Saxpy5 PROPERTY PASS_REGULAR_EXPRESSION "Time of 
 set_property(TEST OpenMP_Intro_Saxpy5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Failing with segmentation fault
-#add_test(NAME OpenMP_Intro_Saxpy6 COMMAND ../openmp_intro_saxpy6.sh )
-#set_property(TEST OpenMP_Intro_Saxpy6 PROPERTY PASS_REGULAR_EXPRESSION "Time of kernel:")
-#set_property(TEST OpenMP_Intro_Saxpy6 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Intro_Saxpy6 COMMAND ../openmp_intro_saxpy6.sh )
+set_property(TEST OpenMP_Intro_Saxpy6 PROPERTY PASS_REGULAR_EXPRESSION "Time of kernel:")
+set_property(TEST OpenMP_Intro_Saxpy6 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Intro_Saxpy7 COMMAND ../openmp_intro_saxpy7.sh )
 set_property(TEST OpenMP_Intro_Saxpy7 PROPERTY PASS_REGULAR_EXPRESSION "Time of kernel:")
 set_property(TEST OpenMP_Intro_Saxpy7 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#add_test(NAME OpenMP_Intro_Saxpy2f COMMAND ../openmp_intro_saxpy2f.sh )
-#set_property(TEST OpenMP_Intro_Saxpy2f PROPERTY PASS_REGULAR_EXPRESSION "Time of kernel:")
-#set_property(TEST OpenMP_Intro_Saxpy2f PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Intro_Saxpy2f COMMAND ../openmp_intro_saxpy2f.sh )
+set_property(TEST OpenMP_Intro_Saxpy2f PROPERTY PASS_REGULAR_EXPRESSION "Time of kernel:")
+set_property(TEST OpenMP_Intro_Saxpy2f PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Intro_Target_Data_Structured_CXX COMMAND ../openmp_intro_target_data_structured_cxx.sh )
 set_property(TEST OpenMP_Intro_Target_Data_Structured_CXX PROPERTY PASS_REGULAR_EXPRESSION "completed successfully")
@@ -455,7 +450,6 @@ set_property(TEST OpenMP_Intro_Target_Data_Update_Fortran PROPERTY PASS_REGULAR_
 set_property(TEST OpenMP_Intro_Target_Data_Update_Fortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Real-World OpenMP Language Constructs
-
 add_test(NAME OpenMP_Language_Constructs_Fortran_0_Reduction_Scalar_PortYourSelf COMMAND ../openmp_language_constructs_fortran_0_reduction_scalar_portyourself.sh )
 set_property(TEST OpenMP_Language_Constructs_Fortran_0_Reduction_Scalar_PortYourSelf PROPERTY PASS_REGULAR_EXPRESSION "ce1=     1000.000000000000      ce2=     1000.000000000000")
 set_property(TEST OpenMP_Language_Constructs_Fortran_0_Reduction_Scalar_PortYourSelf PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -496,9 +490,9 @@ add_test(NAME OpenMP_Language_Constructs_Fortran_2_Device_Routine_With_Module_US
 set_property(TEST OpenMP_Language_Constructs_Fortran_2_Device_Routine_With_Module_USM PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 1000.000000000000")
 set_property(TEST OpenMP_Language_Constructs_Fortran_2_Device_Routine_With_Module_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#add_test(NAME OpenMP_Language_Constructs_Fortran_Reduction_Array COMMAND ../openmp_language_constructs_fortran_reduction_array.sh )
-#set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array PROPERTY PASS_REGULAR_EXPRESSION "ce1=     1000.000000000000      ce2=     1000.000000000000")
-#set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Language_Constructs_Fortran_Reduction_Array COMMAND ../openmp_language_constructs_fortran_reduction_array.sh )
+set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array PROPERTY PASS_REGULAR_EXPRESSION "ce1=     1000.000000000000      ce2=     1000.000000000000")
+set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Known failure
 add_test(NAME OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang COMMAND ../openmp_language_constructs_fortran_complex_saxpy.sh )
@@ -614,17 +608,20 @@ set_property(TEST OpenMP_Optimizations_C_3_MemoryPool PROPERTY PASS_REGULAR_EXPR
 set_property(TEST OpenMP_Optimizations_C_3_MemoryPool PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # C++ tests
-#add_test(NAME OpenMP_CXX_0_Jacobi_PortYourself COMMAND ../openmp_cxx_0_jacobi_portyourself.sh )
-#set_property(TEST OpenMP_CXX_0_Jacobi_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
-#set_property(TEST OpenMP_CXX_0_Jacobi_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_CXX_0_Jacobi_PortYourself COMMAND ../openmp_cxx_0_jacobi_portyourself.sh )
+set_property(TEST OpenMP_CXX_0_Jacobi_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_CXX_0_Jacobi_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(OpenMP_CXX_0_Jacobi_PortYourself PROPERTIES TIMEOUT 300)
 
-#add_test(NAME OpenMP_CXX_1_Jacobi_USM COMMAND ../openmp_cxx_1_jacobi_usm.sh )
-#set_property(TEST OpenMP_CXX_1_Jacobi_USM PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
-#set_property(TEST OpenMP_CXX_1_Jacobi_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_CXX_1_Jacobi_USM COMMAND ../openmp_cxx_1_jacobi_usm.sh )
+set_property(TEST OpenMP_CXX_1_Jacobi_USM PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_CXX_1_Jacobi_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(OpenMP_CXX_1_Jacobi_USM PROPERTIES TIMEOUT 300)
 
-#add_test(NAME OpenMP_CXX_2_Jacobi_TargetData COMMAND ../openmp_cxx_2_jacobi_target_data.sh )
-#set_property(TEST OpenMP_CXX_2_Jacobi_TargetData PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
-#set_property(TEST OpenMP_CXX_2_Jacobi_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_CXX_2_Jacobi_TargetData COMMAND ../openmp_cxx_2_jacobi_target_data.sh )
+set_property(TEST OpenMP_CXX_2_Jacobi_TargetData PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_CXX_2_Jacobi_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(OpenMP_CXX_2_Jacobi_TargetData PROPERTIES TIMEOUT 300)
 
 ### CXX member function set
 add_test(NAME OpenMP_Language_Constructs_CXX_0_Member_Function_PortYourself COMMAND ../openmp_language_constructs_cxx_0_member_function_portyourself.sh )
@@ -679,7 +676,6 @@ set_property(TEST OpenMP_Optimizations_CXX_3_MemoryPool PROPERTY PASS_REGULAR_EX
 set_property(TEST OpenMP_Optimizations_CXX_3_MemoryPool PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # HIPFort Examples
-
 add_test(NAME HIPFort_Module_Check_hipfc_2003 COMMAND ../hipfort_module_check_hipfc_2003.sh )
 set_property(TEST HIPFort_Module_Check_hipfc_2003 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST HIPFort_Module_Check_hipfc_2003 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -753,7 +749,6 @@ set_property(TEST HIPFort_ROCm_Check_Matmult PROPERTY PASS_REGULAR_EXPRESSION "S
 set_property(TEST HIPFort_ROCm_Check_Matmult PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Advanced OpenMP Examples
-
 add_test(NAME AdvancedOpenMP_Memory1 COMMAND ../advancedopenmp_memory1.sh )
 set_property(TEST AdvancedOpenMP_Memory1 PROPERTY PASS_REGULAR_EXPRESSION "Entering OpenMP kernel at mem1.cc")
 set_property(TEST AdvancedOpenMP_Memory1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
@@ -763,7 +758,6 @@ set_property(TEST AdvancedOpenMP_Memory2 PROPERTY PASS_REGULAR_EXPRESSION "Exiti
 set_property(TEST AdvancedOpenMP_Memory2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 # GPU-Aware MPI tests
-
 add_test(NAME GPUAwareOpenMPI_pt2pt COMMAND ../gpuawarempi_pt2pt.sh )
 set_property(TEST GPUAwareOpenMPI_pt2pt PROPERTY PASS_REGULAR_EXPRESSION "Run successful: received buffer has the right value")
 set_property(TEST GPUAwareOpenMPI_pt2pt PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
@@ -808,9 +802,9 @@ add_test(NAME GPUAwareMPI_OSUBenchmark_OpenMPI COMMAND ../gpuawarempi_osubenchma
 set_property(TEST GPUAwareMPI_OSUBenchmark_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "8388608")
 set_property(TEST GPUAwareMPI_OSUBenchmark_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#add_test(NAME GPUAwareMPI_OSUBenchmark_Mvapich2 COMMAND ../gpuawarempi_osubenchmark_mvapich2.sh )
-#set_property(TEST GPUAwareMPI_OSUBenchmark_Mvapich2 PROPERTY PASS_REGULAR_EXPRESSION "1048576")
-#set_property(TEST GPUAwareMPI_OSUBenchmark_Mvapich2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME GPUAwareMPI_OSUBenchmark_Mvapich2 COMMAND ../gpuawarempi_osubenchmark_mvapich2.sh )
+set_property(TEST GPUAwareMPI_OSUBenchmark_Mvapich2 PROPERTY PASS_REGULAR_EXPRESSION "1048576")
+set_property(TEST GPUAwareMPI_OSUBenchmark_Mvapich2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME MPI_Ghost_Exchange_Orig_OpenMPI COMMAND ../mpi_ghost_exchange_orig.sh )
 set_property(TEST MPI_Ghost_Exchange_Orig_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
@@ -824,13 +818,13 @@ add_test(NAME MPI_Ghost_Exchange_Ver1 COMMAND ../mpi_ghost_exchange_ver1.sh )
 set_property(TEST MPI_Ghost_Exchange_Ver1 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
 set_property(TEST MPI_Ghost_Exchange_Ver1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#   add_test(NAME MPI_Ghost_Exchange_Ver2 COMMAND ../mpi_ghost_exchange_ver2.sh )
-#   set_property(TEST MPI_Ghost_Exchange_Ver2 PROPERTY PASS_REGULAR_EXPRESSION "perfetto")
-#   set_property(TEST MPI_Ghost_Exchange_Ver2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
-#
-#   add_test(NAME MPI_Ghost_Exchange_Ver3 COMMAND ../mpi_ghost_exchange_ver3.sh )
-#   set_property(TEST MPI_Ghost_Exchange_Ver3 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
-#   set_property(TEST MPI_Ghost_Exchange_Ver3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+add_test(NAME MPI_Ghost_Exchange_Ver2 COMMAND ../mpi_ghost_exchange_ver2.sh )
+set_property(TEST MPI_Ghost_Exchange_Ver2 PROPERTY PASS_REGULAR_EXPRESSION "perfetto")
+set_property(TEST MPI_Ghost_Exchange_Ver2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+
+add_test(NAME MPI_Ghost_Exchange_Ver3 COMMAND ../mpi_ghost_exchange_ver3.sh )
+set_property(TEST MPI_Ghost_Exchange_Ver3 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+set_property(TEST MPI_Ghost_Exchange_Ver3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 add_test(NAME MPI_Ghost_Exchange_Ver4 COMMAND ../mpi_ghost_exchange_ver4.sh )
 set_property(TEST MPI_Ghost_Exchange_Ver4 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
@@ -840,16 +834,15 @@ add_test(NAME MPI_Ghost_Exchange_Ver5 COMMAND ../mpi_ghost_exchange_ver5.sh )
 set_property(TEST MPI_Ghost_Exchange_Ver5 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
 set_property(TEST MPI_Ghost_Exchange_Ver5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
-#   add_test(NAME MPI_Ghost_Exchange_Ver6 COMMAND ../mpi_ghost_exchange_ver6.sh )
-#   set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
-#   set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-#
-#   add_test(NAME MPI_Ghost_Exchange_Ver7 COMMAND ../mpi_ghost_exchange_ver7.sh )
-#   set_property(TEST MPI_Ghost_Exchange_Ver7 PROPERTY PASS_REGULAR_EXPRESSION "perfetto")
-#   set_property(TEST MPI_Ghost_Exchange_Ver7 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME MPI_Ghost_Exchange_Ver6 COMMAND ../mpi_ghost_exchange_ver6.sh )
+set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY PASS_REGULAR_EXPRESSION "GhostExchange_ArrayAssign Timing is stencil")
+set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME MPI_Ghost_Exchange_Ver7 COMMAND ../mpi_ghost_exchange_ver7.sh )
+set_property(TEST MPI_Ghost_Exchange_Ver7 PROPERTY PASS_REGULAR_EXPRESSION "perfetto")
+set_property(TEST MPI_Ghost_Exchange_Ver7 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # HIP Examples
-
 add_test(NAME HIP_Vectoradd_Makefile COMMAND ../hip_vectoradd_makefile.sh )
 set_property(TEST HIP_Vectoradd_Makefile PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST HIP_Vectoradd_Makefile PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -858,13 +851,13 @@ add_test(NAME HIP_Vectoradd_CMakeLists COMMAND ../hip_vectoradd_cmakelists.sh )
 set_property(TEST HIP_Vectoradd_CMakeLists PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST HIP_Vectoradd_CMakeLists PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#   add_test(NAME HIP_Vectoradd_Makefile_Batch COMMAND ../hip_vectoradd_makefile_batch.sh )
-#   set_property(TEST HIP_Vectoradd_Makefile_Batch PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
-#   set_property(TEST HIP_Vectoradd_Makefile_Batch PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME HIP_Vectoradd_Makefile_Batch COMMAND ../hip_vectoradd_makefile_batch.sh )
+set_property(TEST HIP_Vectoradd_Makefile_Batch PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
+set_property(TEST HIP_Vectoradd_Makefile_Batch PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#   add_test(NAME HIP_Vectoradd_CMakeLists_Batch COMMAND ../hip_vectoradd_cmakelists_batch.sh )
-#   set_property(TEST HIP_Vectoradd_CMakeLists_Batch PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
-#   set_property(TEST HIP_Vectoradd_CMakeLists_Batch PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME HIP_Vectoradd_CMakeLists_Batch COMMAND ../hip_vectoradd_cmakelists_batch.sh )
+set_property(TEST HIP_Vectoradd_CMakeLists_Batch PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
+set_property(TEST HIP_Vectoradd_CMakeLists_Batch PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME HIP_Vectoradd_Makefile_Batch_Direct COMMAND ../hip_vectoradd_makefile_batch_direct.sh )
 set_property(TEST HIP_Vectoradd_Makefile_Batch_Direct PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
@@ -899,13 +892,11 @@ set_property(TEST HIP_Babel_Stream PROPERTY PASS_REGULAR_EXPRESSION "Function")
 set_property(TEST HIP_Babel_Stream PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # HIPIFY Examples
-
 add_test(NAME Hipify_Nbody COMMAND ../hipify_nbody.sh )
 set_property(TEST Hipify_Nbody PROPERTY PASS_REGULAR_EXPRESSION "3000")
 set_property(TEST Hipify_Nbody PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # HIPIFLY Examples
-
 add_test(NAME Hipifly_Without_Module COMMAND ../hipifly_without_module.sh )
 set_property(TEST Hipifly_Without_Module PROPERTY PASS_REGULAR_EXPRESSION "Validation PASSED.")
 set_property(TEST Hipifly_Without_Module PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -915,7 +906,6 @@ set_property(TEST Hipifly_With_Module PROPERTY PASS_REGULAR_EXPRESSION "Validati
 set_property(TEST Hipifly_With_Module PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # OpenACC Examples
-
 #add_test(NAME OpenACC_Saxpy_C_AMDClang COMMAND ../openacc_saxpy_c_amdclang.sh )
 #set_property(TEST OpenACC_Saxpy_C_AMDClang PROPERTY PASS_REGULAR_EXPRESSION "Final result")
 #set_property(TEST OpenACC_Saxpy_C_AMDClang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -956,7 +946,6 @@ set_property(TEST Hipifly_With_Module PROPERTY SKIP_REGULAR_EXPRESSION "module s
 #set_property(TEST OpenACC_Vecadd_F_GFortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Kokkos
-
 add_test(NAME Kokkos_Test_Install COMMAND ../kokkos_test_install.sh )
 set_property( TEST Kokkos_Test_Install PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
 set_property(TEST Kokkos_Test_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1074,7 +1063,6 @@ set_property(TEST Kokkos_ShallowWater_HIP_Par5 PROPERTY PASS_REGULAR_EXPRESSION 
 set_property(TEST Kokkos_ShallowWater_HIP_Par5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 #Node Memory Model Managed Memory
-
 add_test(NAME NodeMemModel_Managed_Memory_HIP_Orig COMMAND ../nodememmodel_managed_memory_hip_orig.sh )
 set_property(TEST NodeMemModel_Managed_Memory_HIP_Orig PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST NodeMemModel_Managed_Memory_HIP_Orig PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1102,7 +1090,6 @@ set_property(TEST NodeMemModel_Managed_Memory_HIP4 PROPERTY PASS_REGULAR_EXPRESS
 set_property(TEST NodeMemModel_Managed_Memory_HIP4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 #Node Memory Model OpenMP Atomics
-
 add_test(NAME NodeMemModel_OpenMP_Atomics1 COMMAND ../nodememmodel_openmp_atomics1.sh )
 set_property(TEST NodeMemModel_OpenMP_Atomics1 PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
 set_property(TEST NodeMemModel_OpenMP_Atomics1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1131,32 +1118,31 @@ add_test(NAME NodeMemModel_OpenMP_Atomics4_XNACK_On COMMAND ../nodememmodel_open
 set_property(TEST NodeMemModel_OpenMP_Atomics4_XNACK_On PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
 set_property(TEST NodeMemModel_OpenMP_Atomics4_XNACK_On PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
-#add_test(NAME NodeMemModel_OpenMP_Atomics5 COMMAND ../nodememmodel_openmp_atomics5.sh )
-#set_property(TEST NodeMemModel_OpenMP_Atomics5 PROPERTY PASS_REGULAR_EXPRESSION "FAILED")
-#set_property(TEST NodeMemModel_OpenMP_Atomics5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+add_test(NAME NodeMemModel_OpenMP_Atomics5 COMMAND ../nodememmodel_openmp_atomics5.sh )
+set_property(TEST NodeMemModel_OpenMP_Atomics5 PROPERTY PASS_REGULAR_EXPRESSION "FAILED")
+set_property(TEST NodeMemModel_OpenMP_Atomics5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
-#add_test(NAME NodeMemModel_OpenMP_Atomics6 COMMAND ../nodememmodel_openmp_atomics6.sh )
-#set_property(TEST NodeMemModel_OpenMP_Atomics6 PROPERTY PASS_REGULAR_EXPRESSION "FAILED")
-#set_property(TEST NodeMemModel_OpenMP_Atomics6 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+add_test(NAME NodeMemModel_OpenMP_Atomics6 COMMAND ../nodememmodel_openmp_atomics6.sh )
+set_property(TEST NodeMemModel_OpenMP_Atomics6 PROPERTY PASS_REGULAR_EXPRESSION "FAILED")
+set_property(TEST NodeMemModel_OpenMP_Atomics6 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 add_test(NAME NodeMemModel_OpenMP_Atomics7 COMMAND ../nodememmodel_openmp_atomics7.sh )
 set_property(TEST NodeMemModel_OpenMP_Atomics7 PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
 set_property(TEST NodeMemModel_OpenMP_Atomics7 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
-#add_test(NAME NodeMemModel_OpenMP_Atomics8 COMMAND ../nodememmodel_openmp_atomics8.sh )
-#set_property(TEST NodeMemModel_OpenMP_Atomics8 PROPERTY PASS_REGULAR_EXPRESSION "FAILED")
-#set_property(TEST NodeMemModel_OpenMP_Atomics8 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+add_test(NAME NodeMemModel_OpenMP_Atomics8 COMMAND ../nodememmodel_openmp_atomics8.sh )
+set_property(TEST NodeMemModel_OpenMP_Atomics8 PROPERTY PASS_REGULAR_EXPRESSION "FAILED")
+set_property(TEST NodeMemModel_OpenMP_Atomics8 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
-#add_test(NAME NodeMemModel_OpenMP_Atomics9 COMMAND ../nodememmodel_openmp_atomics9.sh )
-#set_property(TEST NodeMemModel_OpenMP_Atomics9 PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
-#set_property(TEST NodeMemModel_OpenMP_Atomics9 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+add_test(NAME NodeMemModel_OpenMP_Atomics9 COMMAND ../nodememmodel_openmp_atomics9.sh )
+set_property(TEST NodeMemModel_OpenMP_Atomics9 PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
+set_property(TEST NodeMemModel_OpenMP_Atomics9 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
-#add_test(NAME NodeMemModel_OpenMP_Atomics10 COMMAND ../nodememmodel_openmp_atomics10.sh )
-#set_property(TEST NodeMemModel_OpenMP_Atomics10 PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
-#set_property(TEST NodeMemModel_OpenMP_Atomics10 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+add_test(NAME NodeMemModel_OpenMP_Atomics10 COMMAND ../nodememmodel_openmp_atomics10.sh )
+set_property(TEST NodeMemModel_OpenMP_Atomics10 PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
+set_property(TEST NodeMemModel_OpenMP_Atomics10 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 # Affinity tests
-
 add_test(NAME Affinity_MPI4_OpenMP2_OpenMPI COMMAND ../affinity_mpi4_openmp2.sh )
 set_property(TEST Affinity_MPI4_OpenMP2_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "MPI 003 - OMP 001")
 set_property(TEST Affinity_MPI4_OpenMP2_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1166,12 +1152,11 @@ set_property(TEST Affinity_MPI2_OpenMP2_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION
 set_property(TEST Affinity_MPI2_OpenMP2_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # bound onto socket 1 for MI300A
-#add_test(NAME Affinity_MPI4_OpenMP2_Bind_OpenMPI COMMAND ../affinity_mpi4_openmp2_bind.sh )
-#set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "MCW rank 3 bound to socket 0")
-#set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Affinity_MPI4_OpenMP2_Bind_OpenMPI COMMAND ../affinity_mpi4_openmp2_bind.sh )
+set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "MCW rank 3 bound to socket 0")
+set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # RocprofV3 tests
-
 add_test(NAME RocprofV3_Mini_Nbody_Kernel_Stats COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
 set_property(TEST RocprofV3_Mini_Nbody_Kernel_Stats PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
 set_property(TEST RocprofV3_Mini_Nbody_Kernel_Stats PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1193,7 +1178,6 @@ set_property(TEST RocprofV3_Mini_Nbody_Memory_Copy_Trace PROPERTY PASS_REGULAR_E
 set_property(TEST RocprofV3_Mini_Nbody_Memory_Copy_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # PyTorch tests
-
 add_test(NAME Pytorch_Check_Import COMMAND ../pytorch_check_import.sh )
 set_property(TEST Pytorch_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST Pytorch_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1234,9 +1218,10 @@ add_test(NAME Pytorch_Check_ROCm_Dependency COMMAND ../pytorch_check_rocm_depend
 set_property(TEST Pytorch_Check_ROCm_Dependency PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST Pytorch_Check_ROCm_Dependency PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#add_test(NAME Pytorch_Unit_Tests COMMAND ../pytorch_unit_tests.py )
-#set_property(TEST Pytorch_Unit_Tests PROPERTY PASS_REGULAR_EXPRESSION "47559 passed")
-#set_property(TEST Pytorch_Unit_Tests PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Pytorch_Unit_Tests COMMAND ../pytorch_unit_tests.py )
+set_property(TEST Pytorch_Unit_Tests PROPERTY PASS_REGULAR_EXPRESSION "47559 passed")
+set_property(TEST Pytorch_Unit_Tests PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(Pytorch_Unit_Tests PROPERTIES TIMEOUT 300) 
 
 add_test(NAME Pytorch_Mnist COMMAND ../pytorch_mnist.sh )
 set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Train Epoch: 14")
@@ -1263,18 +1248,17 @@ set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY SKIP_REGULAR_EXPRESSION
 set_tests_properties(Pytorch_Profile_Torchprofiler PROPERTIES TIMEOUT 300) 
 
 # Python MPI tests
+add_test(NAME MPI4PY_OpenMPI_Check_Import COMMAND ../mpi4py_check_import.sh --module-name openmpi)
+set_property(TEST MPI4PY_OpenMPI_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST MPI4PY_OpenMPI_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#add_test(NAME MPI4PY_OpenMPI_Check_Import COMMAND ../mpi4py_check_import.sh --module-name openmpi)
-#set_property(TEST MPI4PY_OpenMPI_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
-#set_property(TEST MPI4PY_OpenMPI_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME MPI4PY_OpenMPI_Check_Import_MPI COMMAND ../mpi4py_check_import_mpi.sh --module-name openmpi)
+set_property(TEST MPI4PY_OpenMPI_Check_Import_MPI PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST MPI4PY_OpenMPI_Check_Import_MPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#add_test(NAME MPI4PY_OpenMPI_Check_Import_MPI COMMAND ../mpi4py_check_import_mpi.sh --module-name openmpi)
-#set_property(TEST MPI4PY_OpenMPI_Check_Import_MPI PROPERTY PASS_REGULAR_EXPRESSION "Success")
-#set_property(TEST MPI4PY_OpenMPI_Check_Import_MPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-#add_test(NAME MPI4PY_OpenMPI_Cupy COMMAND ../mpi4py_cupy.sh --module-name openmpi)
-#set_property(TEST MPI4PY_OpenMPI_Cupy PROPERTY PASS_REGULAR_EXPRESSION "Success")
-#set_property(TEST MPI4PY_OpenMPI_Cupy PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME MPI4PY_OpenMPI_Cupy COMMAND ../mpi4py_cupy.sh --module-name openmpi)
+set_property(TEST MPI4PY_OpenMPI_Cupy PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST MPI4PY_OpenMPI_Cupy PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME MPI4PY_Standalone_Check_Import COMMAND ../mpi4py_check_import.sh --module-name mpi4py)
 set_property(TEST MPI4PY_Standalone_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
@@ -1289,7 +1273,6 @@ set_property(TEST MPI4PY_Standalone_Cupy PROPERTY PASS_REGULAR_EXPRESSION "Succe
 set_property(TEST MPI4PY_Standalone_Cupy PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # PETSc tests
-
 add_test(NAME PETSc_Bench_KSPSolve COMMAND ../petsc_bench_kspsolve.sh --petsc-module petsc)
 set_property(TEST PETSc_Bench_KSPSolve PROPERTY PASS_REGULAR_EXPRESSION "KSP iters:     41")
 set_property(TEST PETSc_Bench_KSPSolve PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1303,13 +1286,11 @@ set_property(TEST PETSc_AMDFlang_Snes_Ex21 PROPERTY PASS_REGULAR_EXPRESSION "Non
 set_property(TEST PETSc_AMDFlang_Snes_Ex21 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # HYPRE tests
-
 add_test(NAME HYPRE_IJ COMMAND ../hypre_ij.sh )
 set_property(TEST HYPRE_IJ PROPERTY PASS_REGULAR_EXPRESSION "Iterations = 18")
 set_property(TEST HYPRE_IJ PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # TensorFlow tests
-
 add_test(NAME TensorFlow_Check_Import COMMAND ../tensorflow_check_import.sh )
 set_property(TEST TensorFlow_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST TensorFlow_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1319,13 +1300,11 @@ set_property(TEST TensorFlow_Check_Gpu_Name PROPERTY PASS_REGULAR_EXPRESSION "AM
 set_property(TEST TensorFlow_Check_Gpu_Name PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # FTorch tests
-
 add_test(NAME FTorch_MultiGPU_Test COMMAND ../ftorch_multigpu_test.sh )
 set_property(TEST FTorch_MultiGPU_Test PROPERTY PASS_REGULAR_EXPRESSION "MultiGPU example ran successfully")
 set_property(TEST FTorch_MultiGPU_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Julia tests
-
 add_test(NAME Julia_Check_GPU_Access COMMAND ../julia_check_gpu_access.sh )
 set_property(TEST Julia_Check_GPU_Access PROPERTY PASS_REGULAR_EXPRESSION "gfx")
 set_property(TEST Julia_Check_GPU_Access PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1339,7 +1318,6 @@ set_property(TEST Julia_GPU_Oceananigans PROPERTY PASS_REGULAR_EXPRESSION "AMDGP
 set_property(TEST Julia_GPU_Oceananigans PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # CuPy tests
-
 add_test(NAME Cupy_Check_Import COMMAND ../cupy_check_import.sh )
 set_property(TEST Cupy_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST Cupy_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1357,7 +1335,6 @@ set_property(TEST Cupy_Install_Tests PROPERTY PASS_REGULAR_EXPRESSION "11 passed
 set_property(TEST Cupy_Install_Tests PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Rocprof-sys tests
-
 add_test(NAME Rocprof-sys_Source_Avail_Check COMMAND ../rocprof-sys-avail_check.sh --version amd-staging)
 set_property(TEST Rocprof-sys_Source_Avail_Check PROPERTY PASS_REGULAR_EXPRESSION "Outputting text configuration file ")
 set_property(TEST Rocprof-sys_Source_Avail_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1391,7 +1368,6 @@ set_property(TEST Rocprof-sys_ROCm_Stream_Overlap PROPERTY PASS_REGULAR_EXPRESSI
 set_property(TEST Rocprof-sys_ROCm_Stream_Overlap PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Rocprof-compute Tests
-
 add_test(NAME Rocprof-compute_Source_Roofline_Check COMMAND ../rocprof-compute_roofline_check.sh --version develop)
 set_property(TEST Rocprof-compute_Source_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "Empirical Roofline PDFs saved!")
 set_property(TEST Rocprof-compute_Source_Roofline_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1442,7 +1418,6 @@ set_property(TEST HPCToolkit_HPCViewer_Check PROPERTY PASS_REGULAR_EXPRESSION "J
 set_property(TEST HPCToolkit_HPCViewer_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # JAX Tests
-
 add_test(NAME JAX_Check_Import COMMAND ../jax_check_import.sh )
 set_property(TEST JAX_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST JAX_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1455,10 +1430,10 @@ add_test(NAME JAX_Mnist COMMAND ../jax_mnist.sh )
 set_property(TEST JAX_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Epoch 9 in")
 set_property(TEST JAX_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#add_test(NAME JAX_Check_Performance COMMAND ../jax_check_performance.sh )
-#set_property(TEST JAX_Check_Performance PROPERTY PASS_REGULAR_EXPRESSION "Acheived bfloat16 TFLOPS: 129")
-#set_property(TEST JAX_Check_Performance PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
+add_test(NAME JAX_Check_Performance COMMAND ../jax_check_performance.sh )
+set_property(TEST JAX_Check_Performance PROPERTY PASS_REGULAR_EXPRESSION "Acheived bfloat16 TFLOPS: 129")
+set_property(TEST JAX_Check_Performance PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(JAX_Check_Performance PROPERTIES TIMEOUT 300)
 
 # TAU Tests
 
@@ -1480,13 +1455,11 @@ set_property(TEST TAU_Check_MPI_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module
 
 
 # Score-P Tests
-
 add_test(NAME Score-P_Check_Version COMMAND ../scorep_check_version.sh)
 set_property(TEST Score-P_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "Score-P 9.0")
 set_property(TEST Score-P_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Miniconda3 Tests
-
 add_test(NAME Miniconda3_Check_Version COMMAND ../miniconda3_check_version.sh)
 set_property(TEST Miniconda3_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 25.3.1")
 set_property(TEST Miniconda3_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1500,7 +1473,6 @@ set_property(TEST Miniconda3_Env_Install PROPERTY PASS_REGULAR_EXPRESSION "jaxli
 set_property(TEST Miniconda3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Miniforge3 Tests
-
 add_test(NAME Miniforge3_Check_Conda_Version COMMAND ../miniforge3_check_version.sh)
 set_property(TEST Miniforge3_Check_Conda_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 24.9.0")
 set_property(TEST Miniforge3_Check_Conda_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1518,7 +1490,6 @@ set_property(TEST Miniforge3_Env_Install PROPERTY PASS_REGULAR_EXPRESSION "jaxli
 set_property(TEST Miniforge3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 #HDF5 Tests
-
 add_test(NAME HDF5_Check_Version COMMAND ../hdf5_check_version.sh)
 set_property(TEST HDF5_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "h5dump: Version 1.14.6")
 set_property(TEST HDF5_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1528,7 +1499,6 @@ set_property(TEST HDF5_Check_H5Dump PROPERTY PASS_REGULAR_EXPRESSION "391, 392, 
 set_property(TEST HDF5_Check_H5Dump PROPERTY SKIP_REGULAR_EXPRESSION "module spider hdf5" "Skip")
 
 #NETCDF Tests
-
 add_test(NAME Netcdf_C_Check_Version COMMAND ../netcdf-c_check_version.sh)
 set_property(TEST Netcdf_C_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "netcdf library version 4.9.3")
 set_property(TEST Netcdf_C_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1570,7 +1540,6 @@ set_property(TEST Netcdf_Fortran_Check_Parallel_IO PROPERTY PASS_REGULAR_EXPRESS
 set_property(TEST Netcdf_Fortran_Check_Parallel_IO PROPERTY SKIP_REGULAR_EXPRESSION "module spider netcdf-fortran" "module spider netcdf-c" "Skip")
 
 # FFTW Tests
-
 add_test(NAME FFTW_Check_Version COMMAND ../fftw_check_version.sh)
 set_property(TEST FFTW_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "fftw-wisdom tool for FFTW version 3.3.10.")
 set_property(TEST FFTW_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
