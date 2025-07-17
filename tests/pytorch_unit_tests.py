@@ -14,14 +14,24 @@ module purge
 
 module load pytorch
 
-git clone --recursive https://github.com/pytorch/pytorch
+git clone --recursive https://github.com/pytorch/pytorch pytorch_unit_tests
       
-cd pytorch
+cd pytorch_unit_tests
 
-pip install -r .ci/docker/requirements-ci.txt
+mkdir python_deps
+
+cd python_deps
+
+pip3 install expecttest --target=$PWD
+
+export PYTHONPATH=$PYTHONPATH:$PWD
+
+cd ..
+
+pip3 install -r .ci/docker/requirements-ci.txt
 
 PYTORCH_TEST_WITH_ROCM=1 python3 test/run_test.py --verbose --keep-going --include test_nn test_torch test_cuda test_unary_ufuncs test_binary_ufuncs test_autograd
 
 cd ..
 
-rm -rf pytorch
+rm -rf pytorch_unit_tests
