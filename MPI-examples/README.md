@@ -163,3 +163,25 @@ Alternatively, on MI300A, we can run with:
 mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:2:numa -x HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 				   ./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
 ```
+
+## RCCL Test
+
+To run RCCL test, follow these steps:
+
+```
+module load rocm
+module load openmpi
+git clone https://github.com/ROCm/rccl-tests.git
+cd rccl-tests/
+make MPI=1 MPI_HOME=$MPI_PATH HIP_HOME=$ROCM_PATH
+```
+
+where above `MPI_PATH` and `ROCM_PATH` are set by loading the `openmpi` and `rocm` modules respectively, according to the installation of OpenMPI and ROCm provided in our [HPCTrainingDock](https://github.com/amd/HPCTrainingDock) repo.
+
+After successful build, you should be able to see the executables in `./build` directory. You can run the collectives with:
+
+```
+./build/all_reduce_perf -b 4M -e 128M -f 2 -g 4
+```
+
+The above command will run for 4M (`-b`) to 128M (`-e`) messages, with a  multiplication factor between sizes equal to 2 (`-f`), and using 4 GPUs (`-g`).
