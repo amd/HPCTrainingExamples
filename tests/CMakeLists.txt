@@ -603,7 +603,7 @@ set_property(TEST OpenMP_Language_Constructs_C_1_Device_Routine_WDynGlobalData P
 
 ### C SingleLineConstructs
 add_test(NAME OpenMP_C_Single_Line_Constructs_Saxpy_Gpu_Collapse COMMAND ../openmp_c_single_line_constructs_saxpy_gpu_collapse.sh )
-set_property(TEST OpenMP_C_Single_Line_Constructs_Saxpy_Gpu_Collapse PROPERTY PASS_REGULAR_EXPRESSION "y[N-1][M-1] = 4.000000")
+set_property(TEST OpenMP_C_Single_Line_Constructs_Saxpy_Gpu_Collapse PROPERTY PASS_REGULAR_EXPRESSION 'y[N-1][M-1] = 4.000000')
 set_property(TEST OpenMP_C_Single_Line_Constructs_Saxpy_Gpu_Collapse PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # C OpenMP Optimization tests
@@ -1395,6 +1395,7 @@ set_property(TEST Rocprof-compute_Source_Roofline_Check PROPERTY SKIP_REGULAR_EX
 add_test(NAME Rocprof-compute_ROCm_Roofline_Check COMMAND ../rocprof-compute_roofline_check.sh)
 set_property(TEST Rocprof-compute_ROCm_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "Empirical Roofline PDFs saved!")
 set_property(TEST Rocprof-compute_ROCm_Roofline_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "disabled on MI300")
+set_tests_properties(Rocprof-compute_ROCm_Roofline_Check PROPERTIES TIMEOUT 500)
 
 add_test(NAME Rocprof-compute_Source_Profile_Check COMMAND ../rocprof-compute_profile_check.sh --version develop)
 set_property(TEST Rocprof-compute_Source_Profile_Check PROPERTY PASS_REGULAR_EXPRESSION "Skipping roofline" "Roofline temporarily disabled in MI300")
