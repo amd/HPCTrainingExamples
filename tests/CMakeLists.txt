@@ -660,15 +660,15 @@ set_property(TEST OpenMP_Language_Constructs_CXX_Member_Function_External_Data P
 
 ### CXX virtual methods set
 add_test(NAME OpenMP_Language_Constructs_CXX_Virtual_Methods_Portyourself COMMAND ../openmp_language_constructs_cxx_0_virtual_methods_portyourself.sh )
-set_property(TEST OpenMP_Language_Constructs_CXX_Virtual_Methods_Portyourself PROPERTY PASS_REGULAR_EXPRESSION "Last x value: 1")
+set_property(TEST OpenMP_Language_Constructs_CXX_Virtual_Methods_Portyourself PROPERTY PASS_REGULAR_EXPRESSION "Array value is 5")
 set_property(TEST OpenMP_Language_Constructs_CXX_Virtual_Methods_Portyourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Language_Constructs_CXX_Virtual_Methods COMMAND ../openmp_language_constructs_cxx_1_virtual_methods.sh )
-set_property(TEST OpenMP_Language_Constructs_CXX_Virtual_Methods PROPERTY PASS_REGULAR_EXPRESSION "Last x value: 1")
+set_property(TEST OpenMP_Language_Constructs_CXX_Virtual_Methods PROPERTY PASS_REGULAR_EXPRESSION "Array value is 5")
 set_property(TEST OpenMP_Language_Constructs_CXX_Virtual_Methods PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Language_Constructs_CXX_Virtual_Methods_Map COMMAND ../openmp_language_constructs_cxx_2_virtual_methods_map.sh )
-set_property(TEST OpenMP_Language_Constructs_CXX_Virtual_Methods_Map PROPERTY PASS_REGULAR_EXPRESSION "Last x value: 1")
+set_property(TEST OpenMP_Language_Constructs_CXX_Virtual_Methods_Map PROPERTY PASS_REGULAR_EXPRESSION "Array value is 5")
 set_property(TEST OpenMP_Language_Constructs_CXX_Virtual_Methods_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # CXX OpenMP Optimization tests
