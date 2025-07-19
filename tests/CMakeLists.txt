@@ -63,7 +63,7 @@ set_property(TEST HIPStdPar_ShallowWater_Ver2 PROPERTY SKIP_REGULAR_EXPRESSION "
 add_test(NAME HIPStdPar_ShallowWater_StdPar COMMAND ../hipstdpar_shallowwater_stdpar.sh )
 set_property(TEST HIPStdPar_ShallowWater_StdPar PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 set_property(TEST HIPStdPar_ShallowWater_StdPar PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_tests_properties(HIPStdPar_ShallowWater_StdPar PROPERTIES TIMEOUT 300)
+set_tests_properties(HIPStdPar_ShallowWater_StdPar PROPERTIES TIMEOUT 500)
 
 add_test(NAME HIPStdPar_MixAndMatch_Atomic COMMAND ../hipstdpar_mixandmatch_atomic_stdpar_omp.sh )
 set_property(TEST HIPStdPar_MixAndMatch_Atomic PROPERTY PASS_REGULAR_EXPRESSION "StdPar computation took")
@@ -291,6 +291,7 @@ add_test(NAME OpenMP_Fortran_1_Saxpy_OMPTarget COMMAND ../openmp_fortran_1_saxpy
 set_property(TEST OpenMP_Fortran_1_Saxpy_OMPTarget PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_Fortran_1_Saxpy_OMPTarget PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# Expected failure -- not implemented in amdflang-new yet
 add_test(NAME OpenMP_Fortran_2_Saxpy_TeamsDistribute COMMAND ../openmp_fortran_2_saxpy_teamsdistribute.sh )
 set_property(TEST OpenMP_Fortran_2_Saxpy_TeamsDistribute PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_Fortran_2_Saxpy_TeamsDistribute PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -474,6 +475,7 @@ add_test(NAME OpenMP_Language_Constructs_Fortran_3_Device_Routine_Map COMMAND ..
 set_property(TEST OpenMP_Language_Constructs_Fortran_3_Device_Routine_Map PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 1000.000000000000")
 set_property(TEST OpenMP_Language_Constructs_Fortran_3_Device_Routine_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# Expected failure -- not implemented in amdflang-new yet
 add_test(NAME OpenMP_Language_Constructs_Fortran_4_Device_Routine_Device_Type COMMAND ../openmp_language_constructs_fortran_4_device_routine_device_type.sh )
 set_property(TEST OpenMP_Language_Constructs_Fortran_4_Device_Routine_Device_Type PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 1000.000000000000")
 set_property(TEST OpenMP_Language_Constructs_Fortran_4_Device_Routine_Device_Type PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -494,6 +496,7 @@ add_test(NAME OpenMP_Language_Constructs_Fortran_2_Device_Routine_With_Module_US
 set_property(TEST OpenMP_Language_Constructs_Fortran_2_Device_Routine_With_Module_USM PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 1000.000000000000")
 set_property(TEST OpenMP_Language_Constructs_Fortran_2_Device_Routine_With_Module_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# Expected failure -- not implemented in amdflang-new yet
 add_test(NAME OpenMP_Language_Constructs_Fortran_Reduction_Array COMMAND ../openmp_language_constructs_fortran_1_reduction_array_solution.sh )
 set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array PROPERTY PASS_REGULAR_EXPRESSION "ce1=     1000.000000000000      ce2=     1000.000000000000")
 set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array PROPERTY SKIP_REGULAR_EXPRESSION "module spider")

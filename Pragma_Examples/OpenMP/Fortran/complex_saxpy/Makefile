@@ -8,7 +8,7 @@ FC1=$(notdir $(FC))
 
 ifneq ($(findstring amdflang,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
-  FREE_FORM_FLAG = -Mfreeform
+  FREE_FORM_FLAG = -ffreeform
 else ifneq ($(findstring flang,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -Mfreeform
@@ -19,12 +19,7 @@ else ifneq ($(findstring ftn,$(FC1)),)
   OPENMP_FLAGS = -fopenmp
 endif
 
-ifneq ($(findstring ftn,$(FC1)),)
-  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
-else
-  FFLAGS = -g -O3 ${FREE_FORM_FLAG} -fstrict-aliasing ${OPENMP_FLAGS}
-endif
-CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
+FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 ifeq (${FC1},gfortran-13)
    LDFLAGS = ${OPENMP_FLAGS} -fno-lto
 else
