@@ -11,7 +11,8 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/jax_setup.sh
 
 
+REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
 module load jax
 
-python3 jax_check_performance.py
+python3 ${REPO_DIR}/tests/jax_check_performance.py
