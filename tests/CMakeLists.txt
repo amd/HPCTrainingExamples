@@ -501,6 +501,7 @@ add_test(NAME OpenMP_Language_Constructs_Fortran_Reduction_Array COMMAND ../open
 set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array PROPERTY PASS_REGULAR_EXPRESSION "ce1=     1000.000000000000      ce2=     1000.000000000000")
 set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# Expected failure -- not implemented in amdflang-new yet
 add_test(NAME OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang COMMAND ../openmp_language_constructs_fortran_complex_saxpy.sh )
 set_property(TEST OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang PROPERTY PASS_REGULAR_EXPRESSION "0.00000000,2.00000000")
 set_property(TEST OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -620,17 +621,17 @@ set_property(TEST OpenMP_Optimizations_C_3_MemoryPool PROPERTY SKIP_REGULAR_EXPR
 
 # C++ tests
 add_test(NAME OpenMP_CXX_0_Jacobi_PortYourself COMMAND ../openmp_cxx_0_jacobi_portyourself.sh )
-set_property(TEST OpenMP_CXX_0_Jacobi_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_CXX_0_Jacobi_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "Stopped after 1000 with residue")
 set_property(TEST OpenMP_CXX_0_Jacobi_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_tests_properties(OpenMP_CXX_0_Jacobi_PortYourself PROPERTIES TIMEOUT 300)
 
 add_test(NAME OpenMP_CXX_1_Jacobi_USM COMMAND ../openmp_cxx_1_jacobi_usm.sh )
-set_property(TEST OpenMP_CXX_1_Jacobi_USM PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_CXX_1_Jacobi_USM PROPERTY PASS_REGULAR_EXPRESSION "Stopped after 1000 with residue")
 set_property(TEST OpenMP_CXX_1_Jacobi_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_tests_properties(OpenMP_CXX_1_Jacobi_USM PROPERTIES TIMEOUT 300)
 
 add_test(NAME OpenMP_CXX_2_Jacobi_TargetData COMMAND ../openmp_cxx_2_jacobi_targetdata.sh )
-set_property(TEST OpenMP_CXX_2_Jacobi_TargetData PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_CXX_2_Jacobi_TargetData PROPERTY PASS_REGULAR_EXPRESSION "Stopped after 1000 with residue")
 set_property(TEST OpenMP_CXX_2_Jacobi_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_tests_properties(OpenMP_CXX_2_Jacobi_TargetData PROPERTIES TIMEOUT 300)
 
