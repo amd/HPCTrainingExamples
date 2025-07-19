@@ -15,5 +15,5 @@
          ce2=ce2+1
       enddo
 
-      write(*,*) "ce1= ", ce1, "ce2= ", ce2
+      write(*,'(a," ",f14.8," ",a,f14.8)') "ce1 = ", ce1, "ce2 = ", ce2
       end program

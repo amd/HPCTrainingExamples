@@ -455,11 +455,11 @@ set_property(TEST OpenMP_Intro_Target_Data_Update_Fortran PROPERTY SKIP_REGULAR_
 
 # Real-World OpenMP Language Constructs
 add_test(NAME OpenMP_Language_Constructs_Fortran_0_Reduction_Scalar_PortYourSelf COMMAND ../openmp_language_constructs_fortran_0_reduction_scalar_portyourself.sh )
-set_property(TEST OpenMP_Language_Constructs_Fortran_0_Reduction_Scalar_PortYourSelf PROPERTY PASS_REGULAR_EXPRESSION "ce1=     1000.000000000000      ce2=     1000.000000000000")
+set_property(TEST OpenMP_Language_Constructs_Fortran_0_Reduction_Scalar_PortYourSelf PROPERTY PASS_REGULAR_EXPRESSION "ce1 =   1000.00000000 ce2 =  1000.00000000")
 set_property(TEST OpenMP_Language_Constructs_Fortran_0_Reduction_Scalar_PortYourSelf PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Language_Constructs_Fortran_1_Reduction_Scalar COMMAND ../openmp_language_constructs_fortran_1_reduction_scalar.sh )
-set_property(TEST OpenMP_Language_Constructs_Fortran_1_Reduction_Scalar PROPERTY PASS_REGULAR_EXPRESSION "ce1=     1000.000000000000      ce2=     1000.000000000000")
+set_property(TEST OpenMP_Language_Constructs_Fortran_1_Reduction_Scalar PROPERTY PASS_REGULAR_EXPRESSION "ce1 =   1000.00000000 ce2 =  1000.00000000")
 set_property(TEST OpenMP_Language_Constructs_Fortran_1_Reduction_Scalar PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Language_Constructs_Fortran_0_Device_Routine_PortYourSelf COMMAND ../openmp_language_constructs_fortran_0_device_routine_portyourself.sh )
