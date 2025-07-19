@@ -634,15 +634,15 @@ set_tests_properties(OpenMP_CXX_2_Jacobi_TargetData PROPERTIES TIMEOUT 300)
 
 ### CXX member function set
 add_test(NAME OpenMP_Language_Constructs_CXX_0_Member_Function_PortYourself COMMAND ../openmp_language_constructs_cxx_0_member_function_portyourself.sh )
-set_property(TEST OpenMP_Language_Constructs_CXX_0_Member_Function_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "Last x value: 1")
+set_property(TEST OpenMP_Language_Constructs_CXX_0_Member_Function_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "Array value is 5")
 set_property(TEST OpenMP_Language_Constructs_CXX_0_Member_Function_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Language_Constructs_CXX_1_Member_Function_USM COMMAND ../openmp_language_constructs_cxx_1_member_function_usm.sh )
-set_property(TEST OpenMP_Language_Constructs_CXX_1_Member_Function_USM PROPERTY PASS_REGULAR_EXPRESSION "Last x value: 1")
+set_property(TEST OpenMP_Language_Constructs_CXX_1_Member_Function_USM PROPERTY PASS_REGULAR_EXPRESSION "Array value is 5")
 set_property(TEST OpenMP_Language_Constructs_CXX_1_Member_Function_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Language_Constructs_CXX_2_Member_Function_Map COMMAND ../openmp_language_constructs_cxx_2_member_function_map.sh )
-set_property(TEST OpenMP_Language_Constructs_CXX_2_Member_Function_Map PROPERTY PASS_REGULAR_EXPRESSION "Last x value: 1")
+set_property(TEST OpenMP_Language_Constructs_CXX_2_Member_Function_Map PROPERTY PASS_REGULAR_EXPRESSION "Array value is 5")
 set_property(TEST OpenMP_Language_Constructs_CXX_2_Member_Function_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 ### CXX member function external set
