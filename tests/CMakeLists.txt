@@ -761,19 +761,19 @@ set_property(TEST HIPFort_ROCm_Check_Matmult PROPERTY SKIP_REGULAR_EXPRESSION "m
 
 # Advanced OpenMP Examples
 add_test(NAME AdvancedOpenMP_CXX_Memory1 COMMAND ../advancedopenmp_cxx_memory1.sh )
-set_property(TEST AdvancedOpenMP_CXX_Memory1 PROPERTY PASS_REGULAR_EXPRESSION "Last Value: z[99999]=7.000000")
+set_property(TEST AdvancedOpenMP_CXX_Memory1 PROPERTY PASS_REGULAR_EXPRESSION 'Last Value: z[99999]=7.000000')
 set_property(TEST AdvancedOpenMP_CXX_Memory1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 add_test(NAME AdvancedOpenMP_CXX_Memory2 COMMAND ../advancedopenmp_cxx_memory2.sh )
-set_property(TEST AdvancedOpenMP_CXX_Memory2 PROPERTY PASS_REGULAR_EXPRESSION "Last Value: z[99999]=7.000000")
+set_property(TEST AdvancedOpenMP_CXX_Memory2 PROPERTY PASS_REGULAR_EXPRESSION 'Last Value: z[99999]=7.000000')
 set_property(TEST AdvancedOpenMP_CXX_Memory2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 add_test(NAME AdvancedOpenMP_Fortran_Memory1 COMMAND ../advancedopenmp_fortran_memory1.sh )
-set_property(TEST AdvancedOpenMP_Fortran_Memory1 PROPERTY PASS_REGULAR_EXPRESSION "Last Value: z[99999]=7.000000")
+set_property(TEST AdvancedOpenMP_Fortran_Memory1 PROPERTY PASS_REGULAR_EXPRESSION 'Last Value: z[99999]=7.000000')
 set_property(TEST AdvancedOpenMP_Fortran_Memory1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 add_test(NAME AdvancedOpenMP_Fortran_Memory2 COMMAND ../advancedopenmp_fortran_memory2.sh )
-set_property(TEST AdvancedOpenMP_Fortran_Memory2 PROPERTY PASS_REGULAR_EXPRESSION "Last Value: z[99999]=7.000000")
+set_property(TEST AdvancedOpenMP_Fortran_Memory2 PROPERTY PASS_REGULAR_EXPRESSION 'Last Value: z[99999]=7.000000')
 set_property(TEST AdvancedOpenMP_Fortran_Memory2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 # GPU-Aware MPI tests
