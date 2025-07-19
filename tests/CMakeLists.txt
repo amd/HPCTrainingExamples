@@ -450,7 +450,7 @@ set_property(TEST OpenMP_Intro_Target_Data_Unstructured_Fortran PROPERTY PASS_RE
 set_property(TEST OpenMP_Intro_Target_Data_Unstructured_Fortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Intro_Target_Data_Update_Fortran COMMAND ../openmp_intro_target_data_update_fortran.sh )
-set_property(TEST OpenMP_Intro_Target_Data_Update_Fortran PROPERTY PASS_REGULAR_EXPRESSION "PASS")
+set_property(TEST OpenMP_Intro_Target_Data_Update_Fortran PROPERTY PASS_REGULAR_EXPRESSION "Final result:  4000000.0000")
 set_property(TEST OpenMP_Intro_Target_Data_Update_Fortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Real-World OpenMP Language Constructs

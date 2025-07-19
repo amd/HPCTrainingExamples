@@ -64,7 +64,7 @@ program main
 
   !$omp end target data
 
-  print *, "Final result:", res
+  write (*,'(a,f14.4)') "Final result:", res
 
   deallocate(tmp, input)
 
