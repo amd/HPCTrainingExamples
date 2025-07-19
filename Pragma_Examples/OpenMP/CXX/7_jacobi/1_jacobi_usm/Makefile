@@ -5,7 +5,7 @@
 # Compilers and related
 ROCM_PATH     ?= /opt/rocm
 ROCM_GPU      ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//')) 
-CFLAG         = -Ofast -g --offload-arch=$(ROCM_GPU)
+CFLAG         = -O2 -g --offload-arch=$(ROCM_GPU)
 LDFLAG        =
 
 # OpenMP

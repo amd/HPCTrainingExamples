@@ -6,7 +6,7 @@
 ROCM_PATH     ?= /opt/rocm
 ROCM_GPU      ?= $(INSTALLED_GPU)
 INSTALLED_GPU = $(shell $(ROCM_PATH)/bin/rocm_agent_enumerator | grep -m 1 -E gfx[^0]{1})
-CFLAG         = -Ofast -g --offload-arch=$(ROCM_GPU)
+CFLAG         = -O2 -g --offload-arch=$(ROCM_GPU)
 LDFLAG        =
 
 # OpenMP
