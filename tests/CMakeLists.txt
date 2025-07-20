@@ -291,7 +291,7 @@ add_test(NAME OpenMP_Fortran_1_Saxpy_OMPTarget COMMAND ../openmp_fortran_1_saxpy
 set_property(TEST OpenMP_Fortran_1_Saxpy_OMPTarget PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_Fortran_1_Saxpy_OMPTarget PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-# Expected failure -- not implemented in amdflang-new yet
+# Expected failure due to the -g option
 add_test(NAME OpenMP_Fortran_2_Saxpy_TeamsDistribute COMMAND ../openmp_fortran_2_saxpy_teamsdistribute.sh )
 set_property(TEST OpenMP_Fortran_2_Saxpy_TeamsDistribute PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_Fortran_2_Saxpy_TeamsDistribute PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -356,7 +356,6 @@ add_test(NAME OpenMP_Fortran_Atomic_USM COMMAND ../openmp_fortran_atomic_usm.sh 
 set_property(TEST OpenMP_Fortran_Atomic_USM PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
 set_property(TEST OpenMP_Fortran_Atomic_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-# is this supposed to fail?
 add_test(NAME OpenMP_Fortran_3_Reduction_WrongMapping COMMAND ../openmp_fortran_3_reduction_wrongmapping.sh )
 set_property(TEST OpenMP_Fortran_3_Reduction_WrongMapping PROPERTY PASS_REGULAR_EXPRESSION "1000")
 set_property(TEST OpenMP_Fortran_3_Reduction_WrongMapping PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
@@ -1154,6 +1153,7 @@ add_test(NAME NodeMemModel_OpenMP_Atomics8 COMMAND ../nodememmodel_openmp_atomic
 set_property(TEST NodeMemModel_OpenMP_Atomics8 PROPERTY PASS_REGULAR_EXPRESSION "FAILED")
 set_property(TEST NodeMemModel_OpenMP_Atomics8 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
+# Expected failure -- passes if we remove hint(AMD_fast_fp_atomics)
 add_test(NAME NodeMemModel_OpenMP_Atomics9 COMMAND ../nodememmodel_openmp_atomics9.sh )
 set_property(TEST NodeMemModel_OpenMP_Atomics9 PROPERTY PASS_REGULAR_EXPRESSION "Test PASSED")
 set_property(TEST NodeMemModel_OpenMP_Atomics9 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
