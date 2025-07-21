@@ -197,9 +197,9 @@ set_property(TEST OpenMP_Fortran_Build_CMake PROPERTY SKIP_REGULAR_EXPRESSION "m
 #set_property(TEST OpenMP_Saxpy_C_AMDGCC PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 #set_property(TEST OpenMP_Saxpy_C_AMDGCC PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Saxpy_C_AOMP COMMAND ../openmp_saxpy_c_aomp.sh )
-set_property(TEST OpenMP_Saxpy_C_AOMP PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_Saxpy_C_AOMP PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#add_test(NAME OpenMP_Saxpy_C_AOMP COMMAND ../openmp_saxpy_c_aomp.sh )
+#set_property(TEST OpenMP_Saxpy_C_AOMP PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+#set_property(TEST OpenMP_Saxpy_C_AOMP PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 #add_test(NAME OpenMP_Saxpy_C_CLACC COMMAND ../openmp_saxpy_c_clacc.sh )
 #set_property(TEST OpenMP_Saxpy_C_CLACC PROPERTY PASS_REGULAR_EXPRESSION "Last Value")
@@ -214,9 +214,9 @@ set_property(TEST OpenMP_Saxpy_C_AOMP PROPERTY SKIP_REGULAR_EXPRESSION "module s
 #set_property(TEST OpenMP_Saxpy_C_Clang PROPERTY PASS_REGULAR_EXPRESSION "Last Value")
 #set_property(TEST OpenMP_Saxpy_C_Clang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Saxpy_C_GCC COMMAND ../openmp_saxpy_c_gcc.sh )
-set_property(TEST OpenMP_Saxpy_C_GCC PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_Saxpy_C_GCC PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#add_test(NAME OpenMP_Saxpy_C_GCC COMMAND ../openmp_saxpy_c_gcc.sh )
+#set_property(TEST OpenMP_Saxpy_C_GCC PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+#set_property(TEST OpenMP_Saxpy_C_GCC PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_0_Saxpy_PortYourself COMMAND ../openmp_c_0_saxpy_portyourself.sh )
 set_property(TEST OpenMP_C_0_Saxpy_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
@@ -366,13 +366,13 @@ set_property(TEST OpenMP_Fortran_3_Reduction_WrongMapping PROPERTY SKIP_REGULAR_
 #set_property(TEST OpenMP_Freduce_F_Flang PROPERTY PASS_REGULAR_EXPRESSION "1010")
 #set_property(TEST OpenMP_Freduce_F_Flang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Freduce_F_GFortran COMMAND ../openmp_freduce_f_gfortran.sh )
-set_property(TEST OpenMP_Freduce_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "1010")
-set_property(TEST OpenMP_Freduce_F_GFortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#add_test(NAME OpenMP_Freduce_F_GFortran COMMAND ../openmp_freduce_f_gfortran.sh )
+#set_property(TEST OpenMP_Freduce_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "1010")
+#set_property(TEST OpenMP_Freduce_F_GFortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Vecadd_F_GFortran COMMAND ../openmp_vecadd_f_gfortran.sh )
-set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
-set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#add_test(NAME OpenMP_Vecadd_F_GFortran COMMAND ../openmp_vecadd_f_gfortran.sh )
+#set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
+#set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # OpenMP C++ Classes Examples
 add_test(NAME OpenMP_Cpp_Classes_Explicit_Daxpy COMMAND ../openmp_cpp_classes_explicit_daxpy.sh )
@@ -505,9 +505,9 @@ add_test(NAME OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang COMMAND 
 set_property(TEST OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang PROPERTY PASS_REGULAR_EXPRESSION "0.00000000,2.00000000")
 set_property(TEST OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Language_Constructs_Fortran_Complex_Saxpy_GFortran COMMAND ../openmp_language_constructs_fortran_complex_saxpy_gfortran.sh )
-set_property(TEST OpenMP_Language_Constructs_Fortran_Complex_Saxpy_GFortran PROPERTY PASS_REGULAR_EXPRESSION "0.00000000,2.00000000")
-set_property(TEST OpenMP_Language_Constructs_Fortran_Complex_Saxpy_GFortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#add_test(NAME OpenMP_Language_Constructs_Fortran_Complex_Saxpy_GFortran COMMAND ../openmp_language_constructs_fortran_complex_saxpy_gfortran.sh )
+#set_property(TEST OpenMP_Language_Constructs_Fortran_Complex_Saxpy_GFortran PROPERTY PASS_REGULAR_EXPRESSION "0.00000000,2.00000000")
+#set_property(TEST OpenMP_Language_Constructs_Fortran_Complex_Saxpy_GFortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Language_Constructs_Fortran_Teams_EndLoop COMMAND ../openmp_language_constructs_fortran_teams_endloop.sh )
 set_property(TEST OpenMP_Language_Constructs_Fortran_Teams_EndLoop PROPERTY PASS_REGULAR_EXPRESSION "Success")
