@@ -1446,10 +1446,11 @@ add_test(NAME JAX_Mnist COMMAND ../jax_mnist.sh )
 set_property(TEST JAX_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Epoch 9 in")
 set_property(TEST JAX_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME JAX_Check_Performance COMMAND ../jax_check_performance.sh )
-set_property(TEST JAX_Check_Performance PROPERTY PASS_REGULAR_EXPRESSION "Acheived bfloat16 TFLOPS: 129")
-set_property(TEST JAX_Check_Performance PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_tests_properties(JAX_Check_Performance PROPERTIES TIMEOUT 300)
+# commenting this out since passing outcome is hardware dependent
+#add_test(NAME JAX_Check_Performance COMMAND ../jax_check_performance.sh )
+#set_property(TEST JAX_Check_Performance PROPERTY PASS_REGULAR_EXPRESSION "Acheived bfloat16 TFLOPS: 129")
+#set_property(TEST JAX_Check_Performance PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#set_tests_properties(JAX_Check_Performance PROPERTIES TIMEOUT 300)
 
 # TAU Tests
 
