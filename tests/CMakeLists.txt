@@ -1320,17 +1320,17 @@ set_property(TEST FTorch_MultiGPU_Test PROPERTY PASS_REGULAR_EXPRESSION "MultiGP
 set_property(TEST FTorch_MultiGPU_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Julia tests
+add_test(NAME Julia_Check_Install COMMAND ../julia_check_install.sh )
+set_property(TEST Julia_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "1.12     1.12.0-rc1+0.x64.linux.gnu")
+
 add_test(NAME Julia_Check_GPU_Access COMMAND ../julia_check_gpu_access.sh )
 set_property(TEST Julia_Check_GPU_Access PROPERTY PASS_REGULAR_EXPRESSION "gfx")
-set_property(TEST Julia_Check_GPU_Access PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Julia_GPU_Vec_Add COMMAND ../julia_gpu_vec_add.sh )
 set_property(TEST Julia_GPU_Vec_Add PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
-set_property(TEST Julia_GPU_Vec_Add PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Julia_GPU_Oceananigans COMMAND ../julia_gpu_oceananigans.sh )
 set_property(TEST Julia_GPU_Oceananigans PROPERTY PASS_REGULAR_EXPRESSION "AMDGPU extension |   20 ")
-set_property(TEST Julia_GPU_Oceananigans PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # CuPy tests
 add_test(NAME Cupy_Check_Import COMMAND ../cupy_check_import.sh )
@@ -1386,7 +1386,7 @@ set_property(TEST Rocprof-sys_ROCm_Stream_Overlap PROPERTY SKIP_REGULAR_EXPRESSI
 add_test(NAME Rocprof-compute_Source_Roofline_Check COMMAND ../rocprof-compute_roofline_check.sh --version develop)
 set_property(TEST Rocprof-compute_Source_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "Empirical Roofline PDFs saved!")
 set_property(TEST Rocprof-compute_Source_Roofline_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_tests_properties(Rocprof-compute_ROCm_Roofline_Check PROPERTIES TIMEOUT 600)
+set_tests_properties(Rocprof-compute_Source_Roofline_Check PROPERTIES TIMEOUT 600)
 
 add_test(NAME Rocprof-compute_ROCm_Roofline_Check COMMAND ../rocprof-compute_roofline_check.sh)
 set_property(TEST Rocprof-compute_ROCm_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "Empirical Roofline PDFs saved!")
