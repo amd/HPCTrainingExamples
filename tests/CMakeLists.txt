@@ -1321,7 +1321,7 @@ set_property(TEST FTorch_MultiGPU_Test PROPERTY SKIP_REGULAR_EXPRESSION "module 
 
 # Julia tests
 add_test(NAME Julia_Check_Install COMMAND ../julia_check_install.sh )
-set_property(TEST Julia_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "1.12     1.12.0-rc1+0.x64.linux.gnu")
+set_property(TEST Julia_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "Configured the default Julia version to be '1.12'.")
 
 add_test(NAME Julia_Check_GPU_Access COMMAND ../julia_check_gpu_access.sh )
 set_property(TEST Julia_Check_GPU_Access PROPERTY PASS_REGULAR_EXPRESSION "gfx")
