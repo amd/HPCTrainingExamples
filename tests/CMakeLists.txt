@@ -9,23 +9,6 @@ execute_process(COMMAND rocminfo COMMAND grep gfx COMMAND sed "s/Name://" COMMAN
 set(LIBOMPTARGET_INFO_SUPPORT 1)
 set(SLURM_BATCH_WAIT 1)
 
-# Module and software install tests
-#add_test(NAME Module_Test_Omniperf_1.1.0-PR1 COMMAND ../module_test_omniperf_1.1.0-PR1.sh )
-#set_property(TEST Module_Test_Omniperf_1.1.0-PR1 PROPERTY PASS_REGULAR_EXPRESSION "Rocprof-compute version: 1.1.0-PR1")
-#set_property(TEST Module_Test_Omniperf_1.1.0-PR1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-#add_test(NAME Module_Test_Omniperf_1.0.10 COMMAND ../module_test_omniperf_1.0.10.sh )
-#set_property(TEST Module_Test_Omniperf_1.0.10 PROPERTY PASS_REGULAR_EXPRESSION "Rocprof-compute version: 1.0.10")
-#set_property(TEST Module_Test_Omniperf_1.0.10 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-#add_test(NAME Module_Test_Omnitrace COMMAND ../module_test_omnitrace.sh )
-#set_property(TEST Module_Test_Omnitrace PROPERTY PASS_REGULAR_EXPRESSION "omnitrace-instrument v1.11.2")
-#set_property(TEST Module_Test_Omnitrace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-#add_test(NAME Module_Test_AOMP_AMDClang COMMAND ../module_test_aomp_amdclang.sh )
-#set_property(TEST Module_Test_AOMP_AMDClang PROPERTY PASS_REGULAR_EXPRESSION "AOMP_STANDALONE_19.0.0 clang version 19.0.0_AOMP_STANDALONE_19.0.0")
-#set_property(TEST Module_Test_AOMP_AMDClang PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
 # HIP basic functionalities
 add_test(NAME HIP_Query_Device COMMAND ../hip_query_device.sh )
 set_property(TEST HIP_Query_Device PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
