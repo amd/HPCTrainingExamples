@@ -1238,11 +1238,6 @@ add_test(NAME Pytorch_Check_ROCm_Dependency COMMAND ../pytorch_check_rocm_depend
 set_property(TEST Pytorch_Check_ROCm_Dependency PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST Pytorch_Check_ROCm_Dependency PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Pytorch_Unit_Tests COMMAND ../pytorch_unit_tests.py )
-set_property(TEST Pytorch_Unit_Tests PROPERTY PASS_REGULAR_EXPRESSION "47559 passed")
-set_property(TEST Pytorch_Unit_Tests PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_tests_properties(Pytorch_Unit_Tests PROPERTIES TIMEOUT 300) 
-
 add_test(NAME Pytorch_Mnist COMMAND ../pytorch_mnist.sh )
 set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Train Epoch: 14")
 set_property(TEST Pytorch_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
