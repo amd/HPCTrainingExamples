@@ -80,6 +80,7 @@ if [[ "${VERSION}" != "" ]]; then
       TOOL_ORIGIN="source"
       TOOL_NAME="rocprofiler-compute"
       TOOL_COMMAND="rocprof-compute"
+      export ROCPROF=$ROCM_PATH/include/rocprofiler-sdk/
    fi
 else
    VERSION=${ROCM_VERSION}
