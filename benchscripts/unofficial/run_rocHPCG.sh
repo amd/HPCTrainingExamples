@@ -4,10 +4,10 @@ rm -rf rocHPCG
 #echo "Getting master branch version from https://github.com/ROCm/rocHPCG"
 git clone -b master https://github.com/ROCm/rocHPCG
 #echo "Building HPCG code"
-module load amdclang openmpi rocm
+module load rocm amdclang openmpi
 cd rocHPCG/
 ./install.sh \
-  	--with-mpi=/opt/rocmplus-6.1.1/openmpi \
+  	--with-mpi=$MPI_PATH \
  	--with-rocm=$ROCM_PATH \
   	--gpu-aware-mpi=ON \
   	--with-openmp=ON \

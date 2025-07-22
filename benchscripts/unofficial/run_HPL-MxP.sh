@@ -56,9 +56,13 @@ rm -rf rocHPL-MxP
 #echo "Getting version from https://github.com/ROCm/rocHPL-MxP"
 git clone  https://github.com/ROCm/rocHPL-MxP
 #echo "Building HPL code"
-module load amdclang openmpi rocm
+module load rocm amdclang openmpi
+if [[ $MPI_PATH == "" ]]; then
+   echo "MPI module $MPI_MODULE is not setting the MPI_PATH env variable, aborting..."
+   exit 1
+fi
 cd rocHPL-MxP/
-./install.sh --with-rocm=${ROCM_PATH} --with-mpi=/opt/rocmplus-6.1.1/openmpi
+./install.sh --with-rocm=${ROCM_PATH} --with-mpi=${MPI_PATH}
 # Running HPL
 echo "build/rocHPL-MxP/mpirun_rochplmxp -P ${P} -Q ${Q} -N ${MATRIX_SIZE} --NB 512 build/rocHPL-MxP/bin/rochplmxp |& tee rochplmxp.out"
 build/rocHPL-MxP/mpirun_rochplmxp -P ${P} -Q ${Q} -N ${MATRIX_SIZE} --NB 512 build/rocHPL-MxP/bin/rochplmxp |& tee rochplmxp.out
