@@ -859,7 +859,7 @@ set_property(TEST HIP_Vectoradd_Makefile_Batch PROPERTY SKIP_REGULAR_EXPRESSION 
 
 add_test(NAME HIP_Vectoradd_CMakeLists_Batch COMMAND ../hip_vectoradd_cmakelists_batch.sh )
 set_property(TEST HIP_Vectoradd_CMakeLists_Batch PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
-set_property(TEST HIP_Vectoradd_CMakeLists_Batch PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HIP_Vectoradd_CMakeLists_Batch PROPERTY SKIP_REGULAR_EXPRESSION "SKIP")
 
 add_test(NAME HIP_Vectoradd_Makefile_Batch_Direct COMMAND ../hip_vectoradd_makefile_batch_direct.sh )
 set_property(TEST HIP_Vectoradd_Makefile_Batch_Direct PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
