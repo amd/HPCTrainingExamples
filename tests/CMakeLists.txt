@@ -847,7 +847,7 @@ set_property(TEST MPI_Ghost_Exchange_Ver7 PROPERTY SKIP_REGULAR_EXPRESSION "modu
 # HIP Examples
 add_test(NAME HIP_Vectoradd_Makefile COMMAND ../hip_vectoradd_makefile.sh )
 set_property(TEST HIP_Vectoradd_Makefile PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
-set_property(TEST HIP_Vectoradd_Makefile PROPERTY SKIP_REGULAR_EXPRESSION "unk")
+set_property(TEST HIP_Vectoradd_Makefile PROPERTY SKIP_REGULAR_EXPRESSION "SKIP")
 
 add_test(NAME HIP_Vectoradd_CMakeLists COMMAND ../hip_vectoradd_cmakelists.sh )
 set_property(TEST HIP_Vectoradd_CMakeLists PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
