@@ -1,3 +1,5 @@
+module load pytorch
+
 python <<EOF                                     
 import torch
 import sys

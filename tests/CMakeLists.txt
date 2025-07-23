@@ -1185,9 +1185,9 @@ add_test(NAME Pytorch_Check_Import COMMAND ../pytorch_check_import.sh )
 set_property(TEST Pytorch_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST Pytorch_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Pytorch_Verity_ROCm_Enabled COMMAND ../pytorch_verify_rocm_enabled.sh )
-set_property(TEST Pytorch_Verity_ROCm_Enabled PROPERTY PASS_REGULAR_EXPRESSION 'CUDA device name: AMD')
-set_property(TEST Pytorch_Verity_ROCm_Enabled PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Pytorch_Verify_ROCm_Enabled COMMAND ../pytorch_verify_rocm_enabled.sh )
+set_property(TEST Pytorch_Verify_ROCm_Enabled PROPERTY PASS_REGULAR_EXPRESSION 'CUDA device name: AMD')
+set_property(TEST Pytorch_Verify_ROCm_Enabled PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Pytorch_Torchvision_Check_Import COMMAND ../torchvision_check_import.sh )
 set_property(TEST Pytorch_Torchvision_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
