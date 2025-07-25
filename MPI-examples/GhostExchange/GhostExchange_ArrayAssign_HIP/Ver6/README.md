@@ -45,7 +45,6 @@ page migration.
 ## Get a Trace
 
 ```
-export HSA_XNACK=1
 export OMNITRACE_CONFIG_FILE=~/.omnitrace.cfg
 omnitrace-instrument -o ./GhostExchange.inst -- ./GhostExchange
 mpirun -np 4 --mca pml ucx --mca coll ^hcoll --map-by NUMA ../../set_gpu_device.sh omnitrace-run -- ./GhostExchange.inst -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
