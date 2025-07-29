@@ -1180,6 +1180,10 @@ add_test(NAME RocprofV3_Mini_Nbody_Memory_Copy_Trace COMMAND ../rocprofv3_mini_n
 set_property(TEST RocprofV3_Mini_Nbody_Memory_Copy_Trace PROPERTY PASS_REGULAR_EXPRESSION "MEMORY_COPY_DEVICE_TO_HOST")
 set_property(TEST RocprofV3_Mini_Nbody_Memory_Copy_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME ROCprofilerComputeViewerAndTraceDecoder COMMAND ../ROCprofilerComputeViewerAndTraceDecoder.sh )
+set_property(TEST ROCprofilerComputeViewerAndTraceDecoder PROPERTY PASS_REGULAR_EXPRESSION "MEMORY_COPY_DEVICE_TO_HOST")
+set_property(TEST ROCprofilerComputeViewerAndTraceDecoder PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # PyTorch tests
 add_test(NAME Pytorch_Check_Import COMMAND ../pytorch_check_import.sh )
 set_property(TEST Pytorch_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
