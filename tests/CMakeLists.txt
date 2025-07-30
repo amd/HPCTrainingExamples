@@ -1181,7 +1181,7 @@ set_property(TEST RocprofV3_Mini_Nbody_Memory_Copy_Trace PROPERTY PASS_REGULAR_E
 set_property(TEST RocprofV3_Mini_Nbody_Memory_Copy_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME RocprofV3_TraceDecoder COMMAND ../rocprof-tracedecoder.sh )
-set_property(TEST RocprofV3_TraceDecoder PROPERTY PASS_REGULAR_EXPRESSION "PASSED")
+set_property(TEST RocprofV3_TraceDecoder PROPERTY PASS_REGULAR_EXPRESSION "Found json output")
 set_property(TEST RocprofV3_TraceDecoder PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # PyTorch tests

@@ -10,9 +10,8 @@ make vectoradd
 rocprofv3 --att -d out -- ./vectoradd
 numfiles=`ls -l out/ui_output_agent_*_dispatch_1 |wc -l`
 if [[ "$numfiles" -gt 5 ]]; then
-  echo "Found a json output from the rocprofv3 compute viewer and trace decoder"
+  echo "Found json output from the rocprofv3 compute viewer and trace decoder"
   ls -l out/ui_output_agent_*_dispatch_1/
-  echo "PASSED"
 fi
 make clean
 rm -rf out
