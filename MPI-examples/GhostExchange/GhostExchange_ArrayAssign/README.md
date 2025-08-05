@@ -12,8 +12,8 @@ of performance optimization. Generally speaking, however, the various versions f
 - **Ver2**: this is a variation of Ver1, adding `roctx` ranges to get more easily readable profiling output. This change does not affect performance.
 - **Ver3**: this is a variation of Ver2, allocating the communication buffers on GPU using the OpenMP API.
 - **Ver4**: this is a variation of Ver2, exploring dynamically allocating communication buffers on the CPU using malloc.
-- **Ver5**: this version unrolls a 2D array to a 1D array.
-- **Ver6**: this version use explicit memory management directives to specify when data movement should happen. In this context unified shared memory is not required and therefore one could `unset HSA_XNACK`.
+- **Ver5**: this is a variation of Ver4, where the solution arrays is unrolled from a 2D array into a 1D array.
+- **Ver6**: this is a variation of Ver5, using explicit memory management directives to specify when data movement should happen. In this context unified shared memory is not required and therefore one could `unset HSA_XNACK`.
 - **Ver7**: currently under construction, not expected to work at this time.
 
 ## Overview of the implementation 
