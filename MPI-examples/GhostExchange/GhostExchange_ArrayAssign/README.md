@@ -8,10 +8,10 @@ The Ghost Exchange example with OpenMP contains several implementations at varyi
 of performance optimization. Generally speaking, however, the various versions follow the same basic algorithm, what changes is where the computation happens, or the data movement and location. See below a breakdown of the features of the various versions:
 
 - **Orig**: this is a CPU-only implementation that runs in parallel with MPI, and serves as the starting point for further optimizations. It is recommended to start here.
-- **Ver1**: this version uses OpenMP and unified shared memory to offload the computations to the GPUs. Memory can be moved to the GPU using map clauses with OpenMP, however it is much easier to not have to worry about explicit memory management for an initial port, which is what the unified shared memory allows. Note that arrays allocated on the CPU are used for MPI communication, henche GPU aware MPI is not used in this version. To enable unified shared memory, `export HSA_XNACK=1` before running the example. 
-- **Ver2**: this version showcases the usage and advantages of using `roctx` ranges to get more easily readable profiling output from Omnitrace. This change does not affect performance but it rather facilitates the diagnostics of any performance bottlenecks thanks to the inclusion of the `roctx` ranges.
-- **Ver3**: currently under construction, not expected to work at the moment.
-- **Ver4**: this version explores heap-allocating communication buffers once on host.
+- **Ver1**: this version is a variation of Orig that uses OpenMP and unified shared memory to offload the computations to the GPUs. Memory can be moved to the GPU using map clauses with OpenMP, however it is much easier to not have to worry about explicit memory management for an initial port, which is what the unified shared memory allows. Note that arrays allocated on the CPU are used for MPI communication, henche GPU aware MPI is not used in this version. To enable unified shared memory, `export HSA_XNACK=1` before running the example.
+- **Ver2**: this is a variation of Ver1, adding `roctx` ranges to get more easily readable profiling output. This change does not affect performance.
+- **Ver3**: this is a variation of Ver2, allocating the communication buffers on GPU using the OpenMP API.
+- **Ver4**: this is a variation of Ver2, exploring dynamically allocating communication buffers on the CPU using malloc.
 - **Ver5**: this version unrolls a 2D array to a 1D array.
 - **Ver6**: this version use explicit memory management directives to specify when data movement should happen. In this context unified shared memory is not required and therefore one could `unset HSA_XNACK`.
 - **Ver7**: currently under construction, not expected to work at this time.
