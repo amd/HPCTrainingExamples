@@ -1,46 +1,27 @@
-# MPI Ghost Exchange Optimization Examples
+# MPI Example: Ghost Exchange with OpenMP
 
-## Changes Between Example Versions
-This code contains several implementations of the same ghost exchange algorithm at varying stages 
-of optimization:
+In this version of the Ghost Exchange example with use OpenMP to perform the necessary computations in parallel on GPUs.These computations are for instance data initialization and solution advancement. When running in parallel, each MPI process will execute the prescribed kernels in parallel, and these will execute in parallel on the GPU, thanks to OpenMP. 
+We begin with an original implementation that can run in parallel thanks to MPI but is CPU only, meaning that the computations will run in serial on the CPU on a per process basis. Several improved versions are provided which are outlined in the next paragraph.
 
-- **Orig**: Shows a CPU-only implementation that uses MPI, and serves as the starting point for further optimizations. It is recommended to start here!
-- **Ver1**: Shows an OpenMP target offload implementation that uses the Managed memory model to port the code to GPUs using host allocated memory for MPI communication.
-- **Ver2**: Shows the usage and advantages of using `roctx` ranges to get more easily readable profiling output from Omnitrace.
-- **Ver3**: Under Construction, not expected to work at the moment
-- **Ver4**: Explores heap-allocating communication buffers once on host.
-- **Ver5**: Explores unrolling a 2D array to a 1D array.
-- **Ver6**: Explores using explicit memory management directives to specify when data movement should happen.
-- **Ver7**: Under Construction, not expected to work at this time.
+## Features of the various versions
+The Ghost Exchange example with OpenMP contains several implementations at varying stages 
+of performance optimization. Generally speaking, however, the various versions follow the same basic algorithm, what changes is where the computation happens, or the data movement and location. See below a breakdown of the features of the various versions:
 
-<details>
-<summary><h3>Background Terminology: We're Exchanging <i>Ghosts?</i></h3></summary>
-<h4>Problem Decomposition</h4>
-In a context where the problem we're trying to solve is spread across many compute resources, 
-it is usually inefficient to store the entire data set on every compute node working to solve our problem.
-Thus, we "chop up" the problem into small pieces we assign to each node working on our problem.
-Typically, this is referred to as a <b>problem decomposition</b>.<br/>
-<h4>Ghosts, and Their Halos</h4>
-In problem decompositions, we may still need compute nodes to be aware of the work that other nodes 
-are currently doing, so we add an extra layer of data, referred to as a <b>halo</b> of <b>ghosts</b>.
-This region of extra data can also be referred to as a <b>domain boundary</b>, as it is the <b>boundary</b> 
-of the compute node's owned <b>domain</b> of data.
-We call it a <b>halo</b> because typically we need to know all the updates happening in the region surrounding a single compute node's data. 
-These values are called <b>ghosts</b> because they aren't really there: ghosts represent data another
- compute node controls, and the ghost values are usually set unilaterally through communication 
-between compute nodes. 
-This ensures each compute node has up-to-date values from the node that owns the underlying data.
-These updates can also be called <b>ghost exchanges</b>.
-</details>
+- **Orig**: this is a CPU-only implementation that runs in parallel with MPI, and serves as the starting point for further optimizations. It is recommended to start here.
+- **Ver1**: this version uses OpenMP and unified shared memory to offload the computations to the GPUs. Memory can be moved to the GPU using map clauses with OpenMP, however it is much easier to not have to worry about explicit memory management for an initial port, which is what the unified shared memory allows. Note that arrays allocated on the CPU are used for MPI communication, henche GPU aware MPI is not used in this version. To enable unified shared memory, `export HSA_XNACK=1` before running the example. 
+- **Ver2**: this version showcases the usage and advantages of using `roctx` ranges to get more easily readable profiling output from Omnitrace. This change does not affect performance but it rather facilitates the diagnostics of any performance bottlenecks thanks to the inclusion of the `roctx` ranges.
+- **Ver3**: currently under construction, not expected to work at the moment.
+- **Ver4**: this version explores heap-allocating communication buffers once on host.
+- **Ver5**: this version unrolls a 2D array to a 1D array.
+- **Ver6**: this version use explicit memory management directives to specify when data movement should happen. In this context unified shared memory is not required and therefore one could `unset HSA_XNACK`.
+- **Ver7**: currently under construction, not expected to work at this time.
 
-## Overview of the Ghost Exchange Implementation
-The implementations presented in these examples follow the same basic algorithm.
-They each implement the same computation, and set up the same ghost exchange, we just change where computation happens, or specifics with data movement or location. 
+## Overview of the implementation 
 
 The code is controlled with the following arguments:
-- `-i imax -j jmax`: set the total problem size to `imax*jmax` elements.
-- `-x nprocx -y nprocy`: set the number of MPI ranks in the x and y direction, with `nprocx*nprocy` total processes.
-- `-h nhalo`: number of halo layers, typically assumed to be 1 for our diagrams.
+- `-i imax -j jmax`: set the total problem size to `imax*jmax` cells.
+- `-x nprocx -y nprocy`: set the number of MPI processes in the x and y direction respectively, with `nprocx*nprocy` total processes.
+- `-h nhalo`: number of halo layers, the minimum value dictated by the mathematical operator in this case is one, but it can be made bigger to increase the communication work to experiment. 
 - `-t (0|1)`: whether time synchronization should be performed.
 - `-c (0|1)`: whether corners of the ghost halos should also be communicated.
 - `-p (0|1)`: whether matrix, if small enough, should be printed. Used only for debugging.
