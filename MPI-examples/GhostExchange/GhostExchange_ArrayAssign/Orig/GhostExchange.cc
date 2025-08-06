@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
    int rank, nprocs;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-   if (rank == 0) printf("Parallel run with no threads\n");
+   if (rank == 0) printf("------ Initializing the Problem ------\n");
 
    int imax = 2000, jmax = 2000;
    int nprocx = 0, nprocy = 0;
@@ -99,6 +99,7 @@ int main(int argc, char *argv[])
       Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
    }
 
+   if (rank == 0) printf("------ Advancing the Solution ------\n");
    for (int iter = 0; iter < maxIter; iter++){
       cpu_timer_start(&tstart_stencil);
 
@@ -123,6 +124,7 @@ int main(int argc, char *argv[])
    total_time = cpu_timer_stop(tstart_total);
 
    if (rank == 0){
+      printf("------ Printing Timings ------\n"
       printf("GhostExchange_ArrayAssign Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
              stencil_time,boundarycondition_time,ghostcell_time,total_time);
    }
