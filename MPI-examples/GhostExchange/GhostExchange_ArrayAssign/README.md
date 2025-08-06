@@ -14,7 +14,6 @@ of performance optimization. Generally speaking, however, the various versions f
 - **Ver4**: this is a variation of Ver2, exploring dynamically allocating communication buffers on the CPU using malloc.
 - **Ver5**: this is a variation of Ver4, where the solution arrays is unrolled from a 2D array into a 1D array.
 - **Ver6**: this is a variation of Ver5, using explicit memory management directives to specify when data movement should happen. In this context unified shared memory is not required and therefore one could `unset HSA_XNACK`.
-- **Ver7**: currently under construction, not expected to work at this time.
 
 ## Overview of the implementation 
 
