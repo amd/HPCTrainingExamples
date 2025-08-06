@@ -163,7 +163,7 @@ mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:2:numa -x HIP_VISIBLE_DEVI
 				   ./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
 ```
 
-Two more versions are available in the [dedicated directory]((https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange/GhostExchange_ArrayAssign), which are not discussed here.
+Two more versions are available in the dedicated [directory](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange/GhostExchange_ArrayAssign), which are not discussed here.
 
 ## RCCL Test
 
