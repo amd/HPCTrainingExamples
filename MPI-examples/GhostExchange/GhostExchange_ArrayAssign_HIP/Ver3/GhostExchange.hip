@@ -9,6 +9,15 @@
 #include "malloc2D.h"
 #include "timer.h"
 
+#define HIP_CHECK(cmd) \
+{\
+    hipError_t error  = cmd;\
+    if (error != hipSuccess) { \
+        fprintf(stderr, "error: '%s'(%d) at %s:%d\n", hipGetErrorString(error), error,__FILE__, __LINE__); \
+        exit(EXIT_FAILURE);\
+      }\
+}
+
 __global__ void init_core (double **x, int nhalo, int jsize, int isize, double val)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x -nhalo;
@@ -315,6 +324,10 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
    int bufcount = jnum*nhalo;
 
    roctxRangePush("BufAlloc");
+   double* xbuf_left_send;
+   double* xbuf_rght_send;
+   double* xbuf_rght_recv;
+   double* xbuf_left_recv;
    HIP_CHECK(hipMalloc(&xbuf_left_send, bufcount*sizeof(double)));
    HIP_CHECK(hipMalloc(&xbuf_rght_send, bufcount*sizeof(double)));
    HIP_CHECK(hipMalloc(&xbuf_rght_recv, bufcount*sizeof(double)));
