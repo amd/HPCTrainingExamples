@@ -354,14 +354,14 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
    roctxRangePop(); //LoadLeftRight
 
    roctxRangePush("MPILeftRightExchange");
-   MPI_Irecv(&xbuf_rght_recv, bufcount, MPI_DOUBLE, nrght, 1001,
+   MPI_Irecv(xbuf_rght_recv, bufcount, MPI_DOUBLE, nrght, 1001,
              MPI_COMM_WORLD, &request[0]);
-   MPI_Isend(&xbuf_left_send, bufcount, MPI_DOUBLE, nleft, 1001,
+   MPI_Isend(xbuf_left_send, bufcount, MPI_DOUBLE, nleft, 1001,
              MPI_COMM_WORLD, &request[1]);
 
-   MPI_Irecv(&xbuf_left_recv, bufcount, MPI_DOUBLE, nleft, 1002,
+   MPI_Irecv(xbuf_left_recv, bufcount, MPI_DOUBLE, nleft, 1002,
              MPI_COMM_WORLD, &request[2]);
-   MPI_Isend(&xbuf_rght_send, bufcount, MPI_DOUBLE, nrght, 1002,
+   MPI_Isend(xbuf_rght_send, bufcount, MPI_DOUBLE, nrght, 1002,
              MPI_COMM_WORLD, &request[3]);
    MPI_Waitall(4, request, status);
    roctxRangePop(); //MPILeftRightExchange
