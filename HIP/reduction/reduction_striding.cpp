@@ -73,7 +73,7 @@ int main() {
   std::vector<double> h_partial_sums(GRIDSIZE);
 
   // Init host array
-  h_in.assign(h_in.size(), 0.1f);
+  h_in.assign(h_in.size(), 0.1);
 
   // Allocate device memory
   double* d_in;
