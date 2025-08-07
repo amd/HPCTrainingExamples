@@ -303,3 +303,14 @@ __global__ void get_partial_sums(const double* input, double* output, int size) 
 Note that there is now an extra loop that will effectively cause each thread to sum up to the `unroll_factor` number of values. The unroll factor is
 not explicitly sent into the kernel -- it comes in through the new value for the `grid_size`. And we can now see the similarities to the `two_kernel_calls`
 version which sends in a fixed number of workgroups. Try varying the unroll factor and see how the performance changes. 
+
+## Reduction with Warp Shuffles
+
+Warp shuffles load adjacent values from threads in a workgroup. The last example shows a version that uses warp shuffles. The benefits
+of using warp shuffles is that it reduces shared memory usage (LDS) and also reduces synchronization calls. 
+
+
+```
+make reduction_shfl
+./reduction_shfl
+```

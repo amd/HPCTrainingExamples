@@ -27,8 +27,18 @@ const static int BLOCKSIZE = 1024;
 // Define the grid size (number of blocks in grid)
 const static int GRIDSIZE = 1024;
 
-__global__ void reduction_to_array(const double* input,
-                                   double* output,
+// ---------------------------------------------------------------------
+//  reduction_to_array
+//    * each thread accumulates a strided sum over the input array
+//    * the per‑thread sum is reduced inside its own wavefront with
+//      __shfl_down
+//    * the wavefront leader (lane 0) writes its partial sum to a tiny
+//      shared‑memory array (one double per wavefront)
+//    * the first wavefront reduces those per‑wavefront sums to the final
+//      block sum and writes it to output[blockIdx.x]
+// ---------------------------------------------------------------------
+__global__ void reduction_to_array(const double* __restrict__ input,
+                                   double*       __restrict__ output,
                                    int size)
 {
   // Global ID of thread in thread grid
@@ -36,29 +46,46 @@ __global__ void reduction_to_array(const double* input,
 
   // Stride size is equal to total number of threads in grid
   int grid_size = blockDim.x * gridDim.x;
+  int tid   = threadIdx.x;
 
-  extern __shared__ double local_sum[];
-  local_sum[threadIdx.x] = 0.0;
+  double threadSum = 0.0;
   for (int i = idx; i < size; i += grid_size) {
-     local_sum[threadIdx.x] += input[i];
+      threadSum += input[i];
   }
 
-  __syncthreads();
-
-  // note that in this for loop we are using blockDim.x
-  // since this kernel will be called twice with
-  // two different grids
-  // we are also assuming blockDim.x  is a power of 2
-  // and that it is not larger than 1024
-  for (int s = blockDim.x / 2; s > 0; s /= 2) {
-    if (threadIdx.x < s) {
-      local_sum[threadIdx.x] += local_sum[threadIdx.x + s];
-    }
-    __syncthreads();
+  for (int offset = warpSize / 2; offset > 0; offset /= 2) {
+      threadSum += __shfl_down(threadSum, offset);
   }
 
-  if (threadIdx.x == 0) {
-    output[blockIdx.x] = local_sum[0];
+  //  3)  Write each wavefront’s leader (lane 0) to shared memory
+  const int lane   = tid % warpSize;               // 0 … 63
+  const int warpId = tid / warpSize;               // 0 … (BLOCKSIZE/warpSize-1)
+
+  // one double per wavefront – the kernel launch supplies the exact size
+  extern __shared__ double warpSums[];
+  if (lane == 0) {
+      warpSums[warpId] = threadSum;                // one value per wavefront
+  }
+
+  __syncthreads();                                 // make sure all warp sums are visible
+
+  //  4)  The first wavefront reduces the per‑wavefront sums.
+  double blockSum = 0.0;
+  if (warpId == 0) {                               // only the first wavefront participates
+      // load the warp sums into the lanes of the first wavefront
+      if (lane < (blockDim.x / warpSize)) {
+          blockSum = warpSums[lane];
+      }
+
+      // final reduction inside the first wavefront
+      for (int offset = warpSize / 2; offset > 0; offset /= 2) {
+          blockSum += __shfl_down(blockSum, offset);
+      }
+
+      // lane 0 now holds the block‑wide sum
+      if (lane == 0) {
+          output[blockIdx.x] = blockSum;
+      }
   }
 }
 
@@ -103,8 +130,8 @@ int main() {
   hipCheck(hipMemcpy(d_in, h_in.data(), N * sizeof(double), hipMemcpyHostToDevice));
 
   //  Shared‑memory size = (BLOCKSIZE / warpSize) * sizeof(double)
-  const size_t shmem_per_block = BLOCKSIZE  * sizeof(double);
-  const size_t shmem_final = GRIDSIZE * sizeof(double);
+  const size_t shmem_per_block = (BLOCKSIZE / warpSize) * sizeof(double);
+  const size_t shmem_final = (GRIDSIZE / warpSize) * sizeof(double);
 
   // Start event timer to measure kernel timing
   hipCheck( hipEventRecord(start, NULL) );
