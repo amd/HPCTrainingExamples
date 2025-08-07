@@ -30,22 +30,22 @@ reduction_shfl: reduction_shfl.cpp
 	${HIPCC} ${HIPFLAGS} reduction_shfl.cpp -o reduction_shfl
 
 run_tests: reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_two_kernels_unroll reduction_shfl
-	echo "Running reduction_striding"
+	@echo "Running reduction_striding"
 	./reduction_striding
-	echo ""
-	echo "Running reduction_no_striding"
+	@echo ""
+	@echo "Running reduction_no_striding"
 	./reduction_no_striding
-	echo ""
-	echo "Running reduction_atomic"
+	@echo ""
+	@echo "Running reduction_atomic"
 	./reduction_atomic
-	echo ""
-	echo "Running reduction_two_kernel_calls"
+	@echo ""
+	@echo "Running reduction_two_kernel_calls"
 	./reduction_two_kernel_calls
-	echo ""
-	echo "Running reduction_two_kernels_unroll"
+	@echo ""
+	@echo "Running reduction_two_kernels_unroll"
 	./reduction_two_kernels_unroll
-	echo ""
-	echo "Running reduction_shfl"
+	@echo ""
+	@echo "Running reduction_shfl"
 	./reduction_shfl
 
 .PHONY: clean
