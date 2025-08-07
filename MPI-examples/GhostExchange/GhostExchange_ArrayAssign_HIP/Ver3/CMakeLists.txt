@@ -1,8 +1,14 @@
 cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
-project(GhostExchange C CXX)
+project(GhostExchange LANGUAGES C CXX HIP)
 
 set (CMAKE_C_STANDARD 99)
 set (CMAKE_CXX_STANDARD 11)
+set (GPU_RUNTIME "HIP")
+enable_language(${GPU_RUNTIME})
+set(CMAKE_${GPU_RUNTIME}_EXTENSIONS OFF)
+set(CMAKE_${GPU_RUNTIME}_STANDARD_REQUIRED ON)
+
+find_package(hip REQUIRED IMPORTED CONFIG HINTS ${ROCM_PATH})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3")
@@ -29,19 +35,23 @@ find_package(MPI REQUIRED)
 
 execute_process(COMMAND rocminfo COMMAND grep -m 1 -E gfx[^0]{1} COMMAND sed -e "s/ *Name: *//" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE ROCM_GPU)
 
+set(CMAKE_HIP_ARCHITECTURES ${ROCM_GPU})
+set(GPU_TARGETS ${ROCM_GPU})
+
+
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
    # using Clang
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp --offload-arch=${ROCM_GPU} -fstrict-aliasing")
-   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp --offload-arch=${ROCM_GPU} -fstrict-aliasing")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstrict-aliasing")
+   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstrict-aliasing")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
    # using GCC
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -foffload=-march=native -fstrict-aliasing -fopt-info-optimized-omp")
-   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp -foffload=-march=native -fstrict-aliasing -fopt-info-optimized-omp")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstrict-aliasing")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Cray")
 endif()
 
-add_executable(GhostExchange GhostExchange.cc timer.c timer.h)
+add_executable(GhostExchange GhostExchange.hip timer.c timer.h malloc2D.c malloc2D.h)
 
+set_source_files_properties(GhostExchange.hip PROPERTIES LANGUAGE ${GPU_RUNTIME})
 set_target_properties(GhostExchange PROPERTIES INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH};$ENV{ROCM_PATH}/include/roctracer")
 set_target_properties(GhostExchange PROPERTIES COMPILE_FLAGS "${MPI_CXX_COMPILE_FLAGS}")
 target_link_libraries(GhostExchange PRIVATE "${MPI_CXX_LIBRARIES};-L$ENV{ROCM_PATH}/lib -lroctx64")

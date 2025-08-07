@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
    int rank, nprocs;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-   if (rank == 0) printf("Parallel run with no threads\n");
+   if (rank == 0) printf("------> Initializing the Problem\n");
 
    int imax = 2000, jmax = 2000;
    int nprocx = 0, nprocy = 0;
@@ -95,10 +95,11 @@ int main(int argc, char *argv[])
    ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
    if (do_print == 1) {
-      if (rank == 0) printf("Initial State \n");
+      if (rank == 0) printf("------> Initial State \n");
       Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
    }
 
+   if (rank == 0) printf("------> Advancing the Solution\n");
    for (int iter = 0; iter < maxIter; iter++){
       cpu_timer_start(&tstart_stencil);
 
@@ -115,7 +116,7 @@ int main(int argc, char *argv[])
       boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
       ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
-      if (iter%10 == 0 && rank == 0) printf("Iter %d\n",iter);
+      if (iter%10 == 0 && rank == 0) printf("        Iter %d\n",iter);
       if (do_print == 1) {
          Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
       }
@@ -123,8 +124,11 @@ int main(int argc, char *argv[])
    total_time = cpu_timer_stop(tstart_total);
 
    if (rank == 0){
-      printf("GhostExchange_ArrayAssign Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
-             stencil_time,boundarycondition_time,ghostcell_time,total_time);
+      printf("------> Printing Timings\n");
+      printf("        Solution Advancement: %f \n", stencil_time);
+      printf("        Boundary Condition Enforcement:  %f \n", boundarycondition_time);
+      printf("        Ghost Cell Update:  %lf \n", ghostcell_time);
+      printf("        Total: %f\n",total_time);
    }
 
    malloc2D_free(x, nhalo);

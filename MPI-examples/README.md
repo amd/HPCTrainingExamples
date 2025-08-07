@@ -77,22 +77,22 @@ Notes:
 
 ## Ghost Exchange example
 
-This example takes an MPI Ghost Exchange code that runs on the CPU and ports it to
-the GPU and GPU-aware MPI. 
+The Ghost Exchange example is a simplified instance of what we believe a real scientific application code that uses MPI might look like. There are OpenMP and HIP versions of this example in 2D, each of which has multiple implementations tackling progressive code improvements. For detailed instructions, see the dedicated [directory](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange). Low detail, quick start instructions are reported here for people that want to experiment quickly and are OK with filling in the blanks on their own.
 
+For what follows, we focus on the 2D [OpenMP version set](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange/GhostExchange_ArrayAssign), which begins with a CPU only version that can be compiled and run as below:
 ```
 module load amdclang openmpi
 git clone https://github.com/amd/HPCTrainingExamples.git
 cd HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig
 mkdir build && cd build
 cmake ..
-make
+make -j
 mpirun -n 8 --mca pml ucx ./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
 ```
 We can improve this performance by using process placement so that we are using all the memory
 channels.
 
-On MI2100 nodes, we have 2 NUMA per node. So we can assign 4 ranks per NUMA when running with 8 ranks:
+On MI210 nodes, we have 2 NUMA per node. So we can assign 4 ranks per NUMA when running with 8 ranks:
 
 ```
 mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:4:numa --report-bindings ./GhostExchange \
@@ -105,15 +105,14 @@ On MI300A node, we have 4 NUMA per node. So we can assign 2 ranks per NUMA when 
 mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:2:numa --report-bindings ./GhostExchange \
 				    -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
 ```
-
-For the port to the GPU, we are going to take advantage of Managed Memory (or single memory space on MI300A)
+Let's consider the OpenMP version from now on: in Ver1, the original CPU implementation is ported to GPU using OpenMP and unified shared memory (or single memory space when running on MI300A). This is enabled with `export HSA_XNACK=1` as shown below. For MI210 we have:
 
 ```
 export HSA_XNACK=1
 cd ../Ver1
 mkdir build && cd build
 cmake ..
-make
+make -j
 mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:4:numa -x HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \ 
 					./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
 ```
@@ -125,14 +124,14 @@ mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:2:numa -x HIP_VISIBLE_DEVI
 				    ./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
 ```
 
-The MPI buffers are only used on the GPU, so we can just allocate them there and save memory on the CPU.
+The MPI communication buffers up to this point were allocated on the CPU, we can allocate them on the GPU and save memory on the CPU, while at the same time leveraging GPU-aware MPI, as shown in Ver3. For MI210:
 
 ```
 export HSA_XNACK=1
 cd ../Ver3
 mkdir build && cd build
 cmake ..
-make
+make -j
 mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:4:numa -x HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \ 
 					./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
 ```
@@ -144,17 +143,17 @@ mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:2:numa -x HIP_VISIBLE_DEVI
 				    ./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
 ```
 
-Memory allocations can be expensive for the GPU. This next version just allocates the MPI buffers once
+Memory allocations can be expensive for the GPU. This next version just allocates the MPI buffers dynamically once
 in the main routine.
 
 ```
 export HSA_XNACK=1
-cd ../Ver3
+cd ../Ver4
 mkdir build && cd build
 cmake ..
-make
+make -j
 mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:4:numa -x HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
-					./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000cd
+					./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
 ```
 
 Alternatively, on MI300A, we can run with:
@@ -163,6 +162,8 @@ Alternatively, on MI300A, we can run with:
 mpirun -n 8 --mca pml ucx --bind-to core --map-by ppr:2:numa -x HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 				   ./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
 ```
+
+Two more versions are available in the dedicated [directory](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange/GhostExchange_ArrayAssign), which are not discussed here.
 
 ## RCCL Test
 
