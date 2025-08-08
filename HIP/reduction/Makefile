@@ -6,7 +6,7 @@ HIPFLAGS = --offload-arch=${ROCM_GPU}
 
 # ------------------------------
 
-all: reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_two_kernels_unroll reduction_shfl
+all: reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_two_kernels_unroll reduction_shfl reduction_prim
 
 reduction_striding: reduction_striding.cpp
 	${HIPCC} ${HIPFLAGS} reduction_striding.cpp -o reduction_striding
@@ -29,7 +29,10 @@ reduction_two_kernels_unroll: reduction_two_kernels_unroll.cpp
 reduction_shfl: reduction_shfl.cpp
 	${HIPCC} ${HIPFLAGS} reduction_shfl.cpp -o reduction_shfl
 
-run_tests: reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_two_kernels_unroll reduction_shfl
+reduction_prim: reduction_prim.cpp
+	${HIPCC} ${HIPFLAGS} reduction_prim.cpp -o reduction_prim
+
+run_tests: reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_two_kernels_unroll reduction_shfl reduction_prim
 	@echo "Running reduction_striding"
 	./reduction_striding
 	@echo ""
@@ -47,8 +50,11 @@ run_tests: reduction_striding reduction_no_striding reduction_to_fix reduction_a
 	@echo ""
 	@echo "Running reduction_shfl"
 	./reduction_shfl
+	@echo ""
+	@echo "Running reduction_prim"
+	./reduction_prim
 
 .PHONY: clean
 
 clean:
-	rm -f reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_two_kernels_unroll reduction_shfl
+	rm -f reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_two_kernels_unroll reduction_shfl reduction_prim
