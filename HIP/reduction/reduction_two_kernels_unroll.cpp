@@ -108,7 +108,7 @@ int main() {
   hipCheck(hipMemcpy(d_in, h_in.data(), N * sizeof(double), hipMemcpyHostToDevice));
 
   // Start event timer to measure kernel timing
-  hipCheck( hipEventRecord(start, NULL) );
+  hipCheck( hipEventRecord(start, nullptr) );
 
   // Compute the partial sums
   get_partial_sums<<<nblocks, BLOCKSIZE, BLOCKSIZE*sizeof(double)>>>(d_in, d_partial_sums, N);
@@ -117,7 +117,7 @@ int main() {
   }
 
   // Stop event timer
-  hipCheck( hipEventRecord(stop, NULL) );
+  hipCheck( hipEventRecord(stop, nullptr) );
 
   // Calculate time (in ms) for kernel
   float kernel_time;
@@ -147,6 +147,8 @@ int main() {
   }
 
   hipCheck( hipFree(d_in) );
-
+  hipCheck( hipFree(d_partial_sums) );
+  hipCheck( hipEventDestroy(start) );
+  hipCheck( hipEventDestroy(stop) );
+  return 0;
 }
-

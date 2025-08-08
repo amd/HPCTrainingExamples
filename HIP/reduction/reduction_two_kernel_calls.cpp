@@ -107,7 +107,7 @@ int main() {
   const size_t shmem_final = GRIDSIZE * sizeof(double);
 
   // Start event timer to measure kernel timing
-  hipCheck( hipEventRecord(start, NULL) );
+  hipCheck( hipEventRecord(start, nullptr) );
 
   // Compute the reductions
   reduction_to_array<<<GRIDSIZE, BLOCKSIZE, shmem_per_block>>>(d_in, d_partial_sums, N);
@@ -115,7 +115,7 @@ int main() {
   reduction_to_array<<<1, GRIDSIZE, shmem_final>>>(d_partial_sums, d_in, GRIDSIZE);
 
   // Stop event timer
-  hipCheck( hipEventRecord(stop, NULL) );
+  hipCheck( hipEventRecord(stop, nullptr) );
 
   // Calculate time (in ms) for kernel
   float kernel_time = 0.0f;
