@@ -26,13 +26,15 @@ THE SOFTWARE.
 #include<iostream>
 #include "hip/hip_runtime.h"
 
-
-#ifdef NDEBUG
-#define HIP_ASSERT(x) x
-#else
-#define HIP_ASSERT(x) (assert((x)==hipSuccess))
-#endif
-
+// Macro for checking GPU API return values
+#define hipCheck(call)                                                                          \
+do{                                                                                             \
+    hipError_t gpuErr = call;                                                                   \
+    if(hipSuccess != gpuErr){                                                                   \
+        printf("GPU API Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(gpuErr)); \
+        exit(1);                                                                                \
+    }                                                                                           \
+}while(0)
 
 #define WIDTH     1024
 #define HEIGHT    1024
@@ -71,7 +73,7 @@ int main() {
   float* deviceC;
 
   hipDeviceProp_t devProp;
-  HIP_ASSERT(hipGetDeviceProperties(&devProp, 0));
+  hipCheck(hipGetDeviceProperties(&devProp, 0));
   cout << " System minor " << devProp.minor << endl;
   cout << " System major " << devProp.major << endl;
   cout << " agent prop name " << devProp.name << endl;
@@ -94,12 +96,12 @@ int main() {
     hostC[i] = (float)i*100.0f;
   }
 
-  HIP_ASSERT(hipMalloc((void**)&deviceA, NUM * sizeof(float)));
-  HIP_ASSERT(hipMalloc((void**)&deviceB, NUM * sizeof(float)));
-  HIP_ASSERT(hipMalloc((void**)&deviceC, NUM * sizeof(float)));
+  hipCheck(hipMalloc((void**)&deviceA, NUM * sizeof(float)));
+  hipCheck(hipMalloc((void**)&deviceB, NUM * sizeof(float)));
+  hipCheck(hipMalloc((void**)&deviceC, NUM * sizeof(float)));
 
-  HIP_ASSERT(hipMemcpy(deviceB, hostB, NUM*sizeof(float), hipMemcpyHostToDevice));
-  HIP_ASSERT(hipMemcpy(deviceC, hostC, NUM*sizeof(float), hipMemcpyHostToDevice));
+  hipCheck(hipMemcpy(deviceB, hostB, NUM*sizeof(float), hipMemcpyHostToDevice));
+  hipCheck(hipMemcpy(deviceC, hostC, NUM*sizeof(float), hipMemcpyHostToDevice));
 
 
   //hipLaunchKernelGGL(vectoradd_float,
@@ -112,7 +114,7 @@ int main() {
   vectoradd_float<<<grid, block, 0, 0>>>(deviceA, deviceB, deviceC, WIDTH, HEIGHT);
 
 
-  HIP_ASSERT(hipMemcpy(hostA, deviceA, NUM*sizeof(float), hipMemcpyDeviceToHost));
+  hipCheck(hipMemcpy(hostA, deviceA, NUM*sizeof(float), hipMemcpyDeviceToHost));
 
   // verify the results
   errors = 0;
@@ -127,9 +129,9 @@ int main() {
       printf ("PASSED!\n");
   }
 
-  HIP_ASSERT(hipFree(deviceA));
-  HIP_ASSERT(hipFree(deviceB));
-  HIP_ASSERT(hipFree(deviceC));
+  hipCheck(hipFree(deviceA));
+  hipCheck(hipFree(deviceB));
+  hipCheck(hipFree(deviceC));
 
   free(hostA);
   free(hostB);

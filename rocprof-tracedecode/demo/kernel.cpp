@@ -3,6 +3,7 @@
 #include <hip/amd_detail/amd_hip_bf16.h>
 #include <chrono>
 #include <iostream>
+#include <vector>
 
 #define HIP_API_CALL(CALL)                                                                         \
     {                                                                                              \

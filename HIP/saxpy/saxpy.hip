@@ -21,6 +21,16 @@ THE SOFTWARE.
 */
 #include <hip/hip_runtime.h>
 
+// Macro for checking GPU API return values
+#define hipCheck(call)                                                                          \
+do{                                                                                             \
+    hipError_t gpuErr = call;                                                                   \
+    if(hipSuccess != gpuErr){                                                                   \
+        printf("GPU API Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(gpuErr)); \
+        exit(1);                                                                                \
+    }                                                                                           \
+}while(0)
+
 __constant__ float a = 1.0f;
 const float a_h = 1.0f;
 
@@ -68,16 +78,16 @@ int main()
 
     float* d_x;
     float *d_y;
-    hipMalloc(&d_x, size);
-    hipMalloc(&d_y, size);
-    hipMemcpy(d_x, h_x, size, hipMemcpyHostToDevice);
-    hipMemcpy(d_y, h_y, size, hipMemcpyHostToDevice);
+    hipCheck( hipMalloc(&d_x, size) );
+    hipCheck( hipMalloc(&d_y, size) );
+    hipCheck( hipMemcpy(d_x, h_x, size, hipMemcpyHostToDevice) );
+    hipCheck( hipMemcpy(d_y, h_y, size, hipMemcpyHostToDevice) );
 
     int num_groups = 2;
     int group_size = 128;
     saxpy<<<num_groups, group_size>>>(n, d_x, 1, d_y, 1);
-    hipDeviceSynchronize();
-    hipMemcpy(h_y, d_y, size, hipMemcpyDeviceToHost);
+    hipCheck( hipDeviceSynchronize() );
+    hipCheck( hipMemcpy(h_y, d_y, size, hipMemcpyDeviceToHost) );
 
     // Accuracy test
     float tol=1.e-12;
@@ -95,8 +105,8 @@ int main()
     delete [] h_y;
     delete [] h_x0;
     delete [] h_y0;
-    hipFree(d_x);
-    hipFree(d_y);
+    hipCheck( hipFree(d_x) );
+    hipCheck( hipFree(d_y) );
 
     return 0;
 }
