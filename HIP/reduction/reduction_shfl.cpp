@@ -22,10 +22,10 @@ do{                                                                             
 
 // Define the workgroup size (number of threads in workgroup)
 // It is a multiple of 64 (wavefront size)
-const static int BLOCKSIZE = 1024;
+constexpr int BLOCKSIZE = 1024;
 
 // Define the grid size (number of blocks in grid)
-const static int GRIDSIZE = 1024;
+constexpr int GRIDSIZE = 1024;
 
 // ---------------------------------------------------------------------
 //  reduction_to_array
@@ -62,7 +62,7 @@ __global__ void reduction_to_array(const double* __restrict__ input,
   const int warpId = tid / warpSize;               // 0 … (BLOCKSIZE/warpSize-1)
 
   // one double per wavefront – the kernel launch supplies the exact size
-  extern __shared__ double warpSums[];
+  __shared__ double warpSums[(BLOCKSIZE / warpSize)];
   if (lane == 0) {
       warpSums[warpId] = threadSum;                // one value per wavefront
   }
