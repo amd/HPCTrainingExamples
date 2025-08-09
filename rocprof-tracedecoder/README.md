@@ -104,7 +104,8 @@ cd HPCTrainingExamples/rocprof-tracedecoder
 
 ```
 make
-rocprofv3 --att -d tracedecoder_dgemm_library -- ./dgemm`
+rocprofv3 --att -att-perfcounters "SQ_INSTS_LDS SQ_INSTS_VMEM SQ_INSTS_VMEM_WR SQ_INSTS_VMEM_RD" -d tracedecoder_dgemm_library -- ./dgemm`
+
 ```
 
 Transfer files in `tracedecoder_dgemm_library` to your local system

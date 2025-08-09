@@ -6,8 +6,9 @@ all: $(EXECUTABLE)
 OBJECTS = dgemm.o
 
 CXXFLAGS = -g -O2 -DNDEBUG -fPIC
-HIPCC_FLAGS = -g -O2 -DNDEBUG
+HIPCC_FLAGS = -ggdb -DNDEBUG
 LIBS = -L${ROCM_PATH}/lib -lrocblas
+LDFLAGS = -ggdb
 
 HIP_PLATFORM ?= amd
 

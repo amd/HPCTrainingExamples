@@ -5,7 +5,7 @@ cd ../HIP/vectorAdd
 
 #Edit the Makefile and add -g to the HIPFlags
 make vectoradd
-rocprofv3 --att -d tracedecoder_vectorAdd -- ./vectoradd
+rocprofv3 --att -att-activity 16 -d tracedecoder_vectorAdd -- ./vectoradd
 tar -cf ../../tracedecoder.tar tracedecoder_vectorAdd
 make clean
 rm -rf tracedecoder_vectorAdd
@@ -30,7 +30,7 @@ rm -rf build
 
 cd ../../rocprof-tracedecoder/dgemm
 make
-rocprofv3 --att -d tracedecoder_dgemm_library -- ./dgemm
+rocprofv3 --att -att-perfcounters "SQ_INSTS_LDS SQ_INSTS_VMEM SQ_INSTS_VMEM_WR SQ_INSTS_VMEM_RD" -d tracedecoder_dgemm_library -- ./dgemm
 tar -rf ../../tracedecoder.tar tracedecoder_dgemm_library
 make clean
 rm -rf tracedecoder_dgemm_library

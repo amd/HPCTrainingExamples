@@ -2,7 +2,7 @@
 #  Copyright (c) 2022, Advanced Micro Devices, Inc. All rights reserved.
 # ***************************************************************************/
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.5)
 project(xGEMM)
 
 # ----------------------------------------------------------------SET CXX STANDARD--
