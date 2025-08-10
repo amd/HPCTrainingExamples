@@ -1,8 +1,24 @@
+#include <iostream>
+#include <chrono>
+#include <vector>
+#include <iomanip>
+
 #include "transpose_kernels.h"
+
+// Macro for checking GPU API return values
+#define hipCheck(call)                                                                          \
+do{                                                                                             \
+    hipError_t gpuErr = call;                                                                   \
+    if(hipSuccess != gpuErr){                                                                   \
+        printf("GPU API Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(gpuErr)); \
+        exit(1);                                                                                \
+    }                                                                                           \
+}while(0)
 
 // Generic kernel launcher with timing
 template<typename KernelFunc>
-float benchmark_kernel(KernelFunc kernel, float* d_input, float* d_output,
+double benchmark_kernel(KernelFunc kernel, double* __restrict d_input,
+                      double* __restrict d_output,
                       int rows, int cols, const std::string& name,
                       int iterations = 5) {
 
@@ -33,11 +49,11 @@ float benchmark_kernel(KernelFunc kernel, float* d_input, float* d_output,
 }
 
 // Host function to launch all versions
-void run_all_transpose_versions(float* h_input, float* h_output, int rows, int cols) {
+void run_all_transpose_versions(double* h_input, double* h_output, int rows, int cols) {
     // Allocate device memory
-    float *d_input, *d_output;
-    size_t input_size = rows * cols * sizeof(float);
-    size_t output_size = cols * rows * sizeof(float);
+    double *d_input, *d_output;
+    size_t input_size = rows * cols * sizeof(double);
+    size_t output_size = cols * rows * sizeof(double);
 
     hipCheck( hipMalloc(&d_input, input_size) );
     hipCheck( hipMalloc(&d_output, output_size) );
@@ -63,6 +79,13 @@ void run_all_transpose_versions(float* h_input, float* h_output, int rows, int c
         "Basic Transpose, Write Contiguous"
     );
 
+    float time_tiled = benchmark_kernel(
+        transpose_kernel_tiled,
+        d_input, d_output, rows, cols,
+        "Tiled Transpose"
+    );
+
+    /*
     float time_basic = benchmark_kernel(
         transpose_lds_kernel,
         d_input, d_output, rows, cols,
@@ -80,6 +103,7 @@ void run_all_transpose_versions(float* h_input, float* h_output, int rows, int c
         d_input, d_output, rows, cols,
         "Coalesced LDS Transpose"
     );
+    */
 
     // Copy result back to verify correctness (only for first version)
     hipCheck( hipMemcpy(h_output, d_output, output_size, hipMemcpyDeviceToHost) );
@@ -90,23 +114,19 @@ void run_all_transpose_versions(float* h_input, float* h_output, int rows, int c
 
     std::cout << "=========================================" << std::endl;
     std::cout << "Performance Summary:" << std::endl;
-    std::cout << "Basic readopt   " << time_basic_read_contiguous << " μs" << std::endl;
-    std::cout << "Basic writeopt  " << time_basic_write_contiguous << " μs" << std::endl;
-    std::cout << "Basic LDS:      " << time_basic << " μs" << std::endl;
-    std::cout << "Optimized LDS:  " << time_optimized << " μs" << std::endl;
-    std::cout << "Coalesced LDS:  " << time_coalesced << " μs" << std::endl;
+    std::cout << "Basic read contiguous   " << time_basic_read_contiguous  << " μs" << std::endl;
+    std::cout << "Basic write contiguous  " << time_basic_write_contiguous << " μs" << std::endl;
+    std::cout << "Tiled - both contiguous " << time_tiled                  << " μs" << std::endl;
 
     // Calculate speedup relative to basic version
-    if (time_basic > 0) {
-        std::cout << "Speedup (Write Opt): " << time_basic_read_contiguous / time_basic_write_contiguous << "x" << std::endl;
-        std::cout << "Speedup (Basic LDS): " << time_basic_read_contiguous / time_basic << "x" << std::endl;
-        std::cout << "Speedup (Optimized LDS): " << time_basic_read_contiguous / time_optimized << "x" << std::endl;
-        std::cout << "Speedup (Coalesced LDS): " << time_basic_read_contiguous / time_coalesced << "x" << std::endl;
+    if (time_basic_write_contiguous > 0) {
+        std::cout << "Speedup (Write Contiguous):        " << time_basic_read_contiguous / time_basic_write_contiguous << "x" << std::endl;
+        std::cout << "Speedup (Tiled - Both Contiguous): " << time_basic_read_contiguous / time_tiled << "x" << std::endl;
     }
 }
 
 // Verification function to check correctness
-bool verify_transpose(float* h_input, float* h_output, int rows, int cols) {
+bool verify_transpose(double* h_input, double* h_output, int rows, int cols) {
     bool correct = true;
 
     for (int i = 0; i < rows && correct; ++i) {
@@ -122,9 +142,9 @@ bool verify_transpose(float* h_input, float* h_output, int rows, int cols) {
 }
 
 // Generate test matrix
-void generate_test_matrix(float* matrix, int rows, int cols) {
+void generate_test_matrix(double* matrix, int rows, int cols) {
     for (int i = 0; i < rows * cols; ++i) {
-        matrix[i] = static_cast<float>(i % 1000);
+        matrix[i] = static_cast<double>(i % 1000);
     }
 }
 
@@ -150,8 +170,8 @@ int main() {
         std::cout << "\nTesting " << rows << " x " << cols << " matrix:" << std::endl;
 
         // Allocate host memory
-        float* h_input = new float[rows * cols];
-        float* h_output = new float[cols * rows];
+        double* h_input = new double[rows * cols];
+        double* h_output = new double[cols * rows];
 
         // Generate test data
         generate_test_matrix(h_input, rows, cols);
@@ -160,10 +180,8 @@ int main() {
         run_all_transpose_versions(h_input, h_output, rows, cols);
 
         // Verify correctness (only for the first test case)
-        if (rows == 256 && cols == 256) {
-            bool is_correct = verify_transpose(h_input, h_output, rows, cols);
-            std::cout << "Verification: " << (is_correct ? "PASSED" : "FAILED") << std::endl;
-        }
+        bool is_correct = verify_transpose(h_input, h_output, rows, cols);
+        std::cout << "Verification: " << (is_correct ? "PASSED" : "FAILED") << std::endl;
 
         // Cleanup
         delete[] h_input;
