@@ -85,26 +85,6 @@ void run_all_transpose_versions(double* h_input, double* h_output, int rows, int
         "Tiled Transpose"
     );
 
-    /*
-    float time_basic = benchmark_kernel(
-        transpose_lds_kernel,
-        d_input, d_output, rows, cols,
-        "Basic LDS Transpose"
-    );
-
-    float time_optimized = benchmark_kernel(
-        transpose_lds_kernel_optimized,
-        d_input, d_output, rows, cols,
-        "Optimized LDS Transpose"
-    );
-
-    float time_coalesced = benchmark_kernel(
-        transpose_lds_kernel_coalesced,
-        d_input, d_output, rows, cols,
-        "Coalesced LDS Transpose"
-    );
-    */
-
     // Copy result back to verify correctness (only for first version)
     hipCheck( hipMemcpy(h_output, d_output, output_size, hipMemcpyDeviceToHost) );
 
