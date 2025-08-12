@@ -37,7 +37,7 @@ __global__ void transpose_kernel_tiled(double* __restrict input,
     // Synchronize to make sure all of the tile is updated before using it
     __syncthreads();
 
-    // destination global coordinates this thread will read
+    // destination global coordinates this thread will write
     const unsigned int dstRow = blockIdx.x * TILE_SIZE + ty; // swapped axes
     const unsigned int dstCol = blockIdx.y * TILE_SIZE + tx;
 
