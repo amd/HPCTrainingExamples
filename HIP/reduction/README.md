@@ -314,3 +314,15 @@ of using warp shuffles is that it reduces shared memory usage (LDS) and also red
 make reduction_shfl
 ./reduction_shfl
 ```
+
+## Reduction using rocPrim call
+
+Using the rocPrim library for many common operations can greatly simplify programming
+while getting good peformance. To see how to use the rocPrim reduction call, see the 
+reduction_prim.cpp file. Then build and run it with the following.
+
+```
+make reduction_prim
+./reduction_prim
+```
+
