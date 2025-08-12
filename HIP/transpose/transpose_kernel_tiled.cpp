@@ -27,7 +27,7 @@ __global__ void transpose_kernel_tiled(
     __shared__ double tile[TILE_SIZE][TILE_SIZE + PAD];
 
     // Read from global memory into tile with coalesced reads
-    if (srcY < srcYMax && srcX < cols) {
+    if (srcY < srcYMax && srcX < srcXMax) {
         tile[ty][tx] = input[GIDX(srcY, srcX, srcXMax)];
     } else {
         tile[ty][tx] = 0.0;                // guard value – never used for writes
