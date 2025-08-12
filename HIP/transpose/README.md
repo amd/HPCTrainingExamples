@@ -73,4 +73,155 @@ Basic Transpose, Read Contiguous - Average Time: 4450.20 μs
 Verification: PASSED
 ```
 
+## Transpose Write Contiguous
+
+What happens if we make the writes contiguous instead of the reads? Let's
+take a look at the kernel for that case.
+
+```
+#define GIDX(y, x, sizex) y * sizex + x
+
+__global__ void transpose_kernel_write_contiguous(
+  double* __restrict__ input, double* __restrict__ output,
+  int srcYMax, int srcXMax) {
+    // Calculate destination global thread indices
+    const int dstX = blockIdx.x * blockDim.x + threadIdx.x;
+    const int dstY = blockIdx.y * blockDim.y + threadIdx.y;
+    const int dstXMax = srcYMax;
+    const int dstYMax = srcXMax;
+
+    // Boundary check
+    if (dstY < dstYMax && dstX < dstXMax) {
+        // Transpose: output[y][x] = input[x][y]
+        const int input_gid = GIDX(dstX,dstY,srcXMax); // flipped axis
+        const int output_gid = GIDX(dstY,dstX,dstXMax);
+
+        output[output_gid] = input[input_gid];
+    }
+}
+```
+
+Now the write order for the output array is contiguous. Let's compile
+and run it.
+
+```
+make transpose_write_contiguous
+./transpose_write_contiguous
+```
+
+The output for the last matrix size should look like
+
+```
+Testing Matrix dimensions: 8192 x 8192
+Input size: 512.00 MB
+Output size: 512.00 MB
+=========================================
+Basic Transpose, Write Contiguous - Average Time: 2901.80 μs
+=========================================
+Verification: PASSED
+```
+
+We get a substantial speedup. So it is more important to have
+contiguous (coalesced) writes than reads.
+
+Can we do better than this? If we use a shared memory tile, we
+can make both the read and write contiguous.
+
+## Tiled Matrix Transpose
+
+The kernel code for the matrix transpose with a shared memory 
+tile is a little more complicated.
+
+```
+#define GIDX(y, x, sizex) y * sizex + x
+#define PAD 1
+
+/* Use a **shared‑memory tile** (`TILE_SIZE × (TILE_SIZE+PAD)`) to stage the data.
+ *    Pad the shared‑memory tile to avoid bank conflicts.
+ * Load the tile from the **row‑major source** (contiguous reads).
+ * `__syncthreads()`.
+ * Write the transposed tile back to the **row‑major destination** (`output[col][row]`),
+ *    which is now a **contiguous write** pattern.
+ */
+
+__global__ void transpose_kernel_tiled(
+   double* __restrict input, double* __restrict output,
+   const int srcYMax, const int srcXMax)
+{
+    // thread coordinates in the source matrix
+    const int tx = threadIdx.x;
+    const int ty = threadIdx.y;
+
+    // source global coordinates this thread will read
+    const int srcX = blockIdx.x * TILE_SIZE + tx;
+    const int srcY = blockIdx.y * TILE_SIZE + ty;
+
+    // allocate a shared (LDS) memory tile with padding to avoid bank conflicts
+    __shared__ double tile[TILE_SIZE][TILE_SIZE + PAD];
+
+    // Read from global memory into tile with coalesced reads
+    if (srcY < srcYMax && srcX < srcXMax) {
+        tile[ty][tx] = input[GIDX(srcY, srcX, srcXMax)];
+    } else {
+        tile[ty][tx] = 0.0;                // guard value – never used for writes
+    }
+
+    // Synchronize to make sure all of the tile is updated before using it
+    __syncthreads();
+
+    // destination global coordinates this thread will write
+    const int dstY = blockIdx.x * TILE_SIZE + ty; // swapped axes
+    const int dstX = blockIdx.y * TILE_SIZE + tx;
+
+    // Write back to global memory with coalesced writes
+    if (dstY < srcXMax && dstX < srcYMax) {
+        output[GIDX(dstY, dstX, srcYMax)] = tile[tx][ty];
+    }
+}
+```
+
+Compiling and running the tiled transpose.
+
+```
+make transpose_tiled
+./transpose_tiled
+```
+
+The output from the last matrix size
+
+```
+Testing Matrix dimensions: 8192 x 8192
+Input size: 512.00 MB
+Output size: 512.00 MB
+=========================================
+Tiled Transpose, Read and Write Contiguous - Average Time: 2686.40 μs
+=========================================
+Verification: PASSED
+```
+
+We get a little speedup over the contiguous write approach.
+
+### Transpose timed comparison
+
+For convenience, we have written a version which will run
+all the transpose kernels and report a comparison between 
+them.
+
+```
+make transpose_timed
+./transpose_timed
+```
+The last part of the output should be something like:
+
+```
+Performance Summary:
+Basic read contiguous   4439.60 μs
+Basic write contiguous  2899.80 μs
+Tiled - both contiguous 2686.80 μs
+Speedup (Write Contiguous):        1.53x
+Speedup (Tiled - Both Contiguous): 1.65x
+Verification: PASSED
+```
+
+
 
