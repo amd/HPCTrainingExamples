@@ -6,7 +6,7 @@ CXXFLAGS = --offload-arch=${ROCM_GPU}
 
 # ------------------------------
 
-all: transpose_timed
+all: transpose_timed transpose_read_contiguous transpose_write_contiguous
 
 transpose_timed.o: transpose_kernels.h
 transpose_kernel_read_contiguous.o: transpose_kernels.h
@@ -16,8 +16,14 @@ transpose_kernel_tiled.o: transpose_kernels.h
 transpose_timed: transpose_timed.o transpose_kernel_read_contiguous.o transpose_kernel_write_contiguous.o  transpose_kernel_tiled.o
 	${CXX} ${LDFLAGS} $^ -o transpose_timed
 
+transpose_read_contiguous: transpose_read_contiguous.o transpose_kernel_read_contiguous.o
+	${CXX} ${LDFLAGS} $^ -o transpose_read_contiguous
+
+transpose_write_contiguous: transpose_write_contiguous.o transpose_kernel_write_contiguous.o
+	${CXX} ${LDFLAGS} $^ -o transpose_write_contiguous
+
 .PHONY: clean
 
 clean:
-	rm -f *.o transpose_timed transpose_kernel_read_contiguous transpose_kernel_write_contiguous transpose_kernel_tiled
-
+	rm -f *.o transpose_timed transpose_read_contiguous transpose_write_contiguous
+	rm -f transpose_kernel_read_contiguous transpose_kernel_write_contiguous transpose_kernel_tiled
