@@ -25,8 +25,8 @@ do{                                                                             
 
 int main(int argc, char *argv[])
 {
-    std::cout << "AMD GPU Matrix Transpose Benchmark" << std::endl;
-    std::cout << "===================================" << std::endl;
+    std::cout << "AMD GPU Read Contiguous Matrix Transpose Benchmark" << std::endl;
+    std::cout << "==================================================" << std::endl;
 
     int iterations = 5;
 
@@ -43,8 +43,6 @@ int main(int argc, char *argv[])
     for (const auto& size : test_sizes) {
         int rows = size.first;
         int cols = size.second;
-
-        std::cout << "\nTesting " << rows << " x " << cols << " matrix:" << std::endl;
 
         // Allocate host memory
         double* h_input = new double[rows * cols];
@@ -66,7 +64,7 @@ int main(int argc, char *argv[])
         // Copy input data to device
         hipCheck( hipMemcpy(d_input, h_input, input_size, hipMemcpyHostToDevice) );
 
-        std::cout << "Matrix dimensions: " << rows << " x " << cols << std::endl;
+        std::cout << "\nTesting Matrix dimensions: " << rows << " x " << cols << std::endl;
         std::cout << "Input size: " << input_size / (1024.0 * 1024.0) << " MB" << std::endl;
         std::cout << "Output size: " << output_size / (1024.0 * 1024.0) << " MB" << std::endl;
         std::cout << "=========================================" << std::endl;
@@ -95,8 +93,6 @@ int main(int argc, char *argv[])
         std::cout << "Basic Transpose, Read Contiguous - Average Time: " << time_basic_read_contiguous << " μs" << std::endl;
 
         std::cout << "=========================================" << std::endl;
-        std::cout << "Performance Summary:" << std::endl;
-        std::cout << "Basic read contiguous   " << time_basic_read_contiguous  << " μs" << std::endl;
 
         // Copy result back to verify correctness (only for first version)
         hipCheck( hipMemcpy(h_output, d_output, output_size, hipMemcpyDeviceToHost) );
