@@ -22,7 +22,7 @@ transpose_read_contiguous: transpose_read_contiguous.o transpose_kernel_read_con
 transpose_write_contiguous: transpose_write_contiguous.o transpose_kernel_write_contiguous.o
 	${CXX} ${LDFLAGS} $^ -o transpose_write_contiguous
 
-transpose_tile: transpose_tiled.o transpose_kernel_tiled.o
+transpose_tiled: transpose_tiled.o transpose_kernel_tiled.o
 	${CXX} ${LDFLAGS} $^ -o transpose_tiled
 
 .PHONY: clean
