@@ -16,8 +16,6 @@ If the ROCProf trace decoder is installed with a module, load the appropriate mo
 
 ```
 module load rocprofiler-sdk
-  or
-module load rocprof-tracedecoder
 ```
 
 All of these exercises are from the AMD HPC Training Examples which can be retrieved with the following:

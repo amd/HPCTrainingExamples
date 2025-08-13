@@ -1,5 +1,5 @@
 #!/bin/bash
-module load rocprof-tracedecoder
+module load rocprofiler-sdk
 
 cd ../HIP/vectorAdd
 

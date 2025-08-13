@@ -1329,7 +1329,7 @@ set_property(TEST Cupy_Install_Tests PROPERTY PASS_REGULAR_EXPRESSION "11 passed
 set_property(TEST Cupy_Install_Tests PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Rocprof-sys tests
-add_test(NAME Rocprof-sys_Source_Avail_Check COMMAND ../rocprof-sys-avail_check.sh --version amd-staging)
+add_test(NAME Rocprof-sys_Source_Avail_Check COMMAND ../rocprof-sys-avail_check.sh --version develop)
 set_property(TEST Rocprof-sys_Source_Avail_Check PROPERTY PASS_REGULAR_EXPRESSION "Outputting text configuration file ")
 set_property(TEST Rocprof-sys_Source_Avail_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
@@ -1337,7 +1337,7 @@ add_test(NAME Rocprof-sys_ROCm_Avail_Check COMMAND ../rocprof-sys-avail_check.sh
 set_property(TEST Rocprof-sys_ROCm_Avail_Check PROPERTY PASS_REGULAR_EXPRESSION "Outputting text configuration file ")
 set_property(TEST Rocprof-sys_ROCm_Avail_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Rocprof-sys_Source_Instrument_Check COMMAND ../rocprof-sys-instrument_check.sh --version amd-staging)
+add_test(NAME Rocprof-sys_Source_Instrument_Check COMMAND ../rocprof-sys-instrument_check.sh --version develop)
 set_property(TEST Rocprof-sys_Source_Instrument_Check PROPERTY PASS_REGULAR_EXPRESSION "The instrumented executable image is stored in ")
 set_property(TEST Rocprof-sys_Source_Instrument_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
@@ -1345,7 +1345,7 @@ add_test(NAME Rocprof-sys_ROCm_Instrument_Check COMMAND ../rocprof-sys-instrumen
 set_property(TEST Rocprof-sys_ROCm_Instrument_Check PROPERTY PASS_REGULAR_EXPRESSION "The instrumented executable image is stored in ")
 set_property(TEST Rocprof-sys_ROCm_Instrument_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Rocprof-sys_Source_Run_Check COMMAND ../rocprof-sys-run_check.sh --version amd-staging)
+add_test(NAME Rocprof-sys_Source_Run_Check COMMAND ../rocprof-sys-run_check.sh --version develop)
 set_property(TEST Rocprof-sys_Source_Run_Check PROPERTY PASS_REGULAR_EXPRESSION "Tracing session 1 ended, total sessions:0")
 set_property(TEST Rocprof-sys_Source_Run_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
@@ -1353,7 +1353,7 @@ add_test(NAME Rocprof-sys_ROCm_Run_Check COMMAND ../rocprof-sys-run_check.sh )
 set_property(TEST Rocprof-sys_ROCm_Run_Check PROPERTY PASS_REGULAR_EXPRESSION "Tracing session 1 ended, total sessions:0")
 set_property(TEST Rocprof-sys_ROCm_Run_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Rocprof-sys_Source_Stream_Overlap COMMAND ../rocprof-sys_stream_overlap.sh --version amd-staging)
+add_test(NAME Rocprof-sys_Source_Stream_Overlap COMMAND ../rocprof-sys_stream_overlap.sh --version develop)
 set_property(TEST Rocprof-sys_Source_Stream_Overlap PROPERTY PASS_REGULAR_EXPRESSION "proto")
 set_property(TEST Rocprof-sys_Source_Stream_Overlap PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
