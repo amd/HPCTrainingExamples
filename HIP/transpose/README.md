@@ -201,6 +201,63 @@ Verification: PASSED
 
 We get a little speedup over the contiguous write approach.
 
+## Transpose from the rocblas library
+
+Now let's try the rocblas transpose routine. We no longer
+need a kernel since that will be provided by the rocblas library.
+The host code is also simpler, though you do need to know how
+to call the rocblas library routine.
+
+Here is the code required to call the rocblas transpose routine
+
+```
+// See https://github.com/ROCm/rocBLAS/blob/develop/clients/samples/example_c_dgeam.c
+//   for an example how to use the transpose library routine in rocblas
+
+// Create handle to rocblas library
+rocblas_handle handle;
+rocblas_status roc_status=rocblas_create_handle(&handle);
+CHECK_ROCBLAS_STATUS(roc_status);
+
+// scalar arguments will be from host memory
+roc_status = rocblas_set_pointer_mode(handle, rocblas_pointer_mode_host);
+CHECK_ROCBLAS_STATUS(roc_status);
+
+// set up the parameters needed for the transpose operation
+const double alpha = 1.0;
+const double beta  = 0.0;
+
+// For transpose: C= alpha * op(A) + beta * B
+// where op(A) = A^T and B is the zero matrix
+rocblas_operation transa = rocblas_operation_transpose;
+rocblas_operation transb = rocblas_operation_none;
+
+// Call rocblas_geam for the transpose operation
+roc_status =  rocblas_dgeam(handle,
+                  transa, transb,
+                  cols, rows,
+                  &alpha, d_input, cols,
+                  &beta, d_output, rows,
+                  d_output, rows);
+CHECK_ROCBLAS_STATUS(roc_status);
+
+hipCheck( hipDeviceSynchronize() );
+```
+
+Now let's build and run this version.
+
+```
+make transpose_rocblas
+./transpose_rocblas
+```
+
+```
+ROCBlas Transpose - Average Time: 3638.60 μs
+```
+
+So this is a little slower than some of our custom version, but it may
+be because the rocblas routine has to be for general use.
+
 ### Transpose timed comparison
 
 For convenience, we have written a version which will run
@@ -218,24 +275,11 @@ Performance Summary:
 Basic read contiguous   4439.60 μs
 Basic write contiguous  2899.80 μs
 Tiled - both contiguous 2686.80 μs
+ROCBlas                 3638.60 μs
 Speedup (Write Contiguous):        1.53x
 Speedup (Tiled - Both Contiguous): 1.65x
+Speedup (ROCBlas):                 1.22x
 Verification: PASSED
 ```
 
 
-## Transpose from the rocblas library
-
-Now let's try the rocblas transpose routine. We no longer
-need a kernel since that will be provided by the rocblas library.
-The host code is also simpler, though you do need to know how
-to call the rocblas library routine.
-
-```
-make transpose_rocblas
-./transpose_rocblas
-```
-
-```
-ROCBlas Transpose - Average Time: 3638.60 μs
-```
