@@ -17,6 +17,18 @@ do{                                                                             
     }                                                                                           \
 }while(0)
 
+#define CHECK_ROCBLAS_STATUS(status)                  \
+    if(status != rocblas_status_success)              \
+    {                                                 \
+        fprintf(stderr,                               \
+                "rocBLAS error: '%s'(%d) at %s:%d\n", \
+                rocblas_status_to_string(status),     \
+                status,                               \
+                __FILE__,                             \
+                __LINE__);                            \
+        exit(EXIT_FAILURE);                           \
+    }
+
 // Generic kernel launcher with timing
 template<typename KernelFunc>
 double benchmark_kernel(KernelFunc kernel, double* __restrict d_input,
