@@ -3,7 +3,7 @@
 #include <vector>
 #include <iomanip>
 
-#include <rocblas/rocblash.>
+#include <rocblas/rocblas.h>
 
 #include "transpose_kernels.h"
 
