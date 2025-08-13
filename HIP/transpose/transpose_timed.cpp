@@ -131,7 +131,7 @@ void run_all_transpose_versions(double* h_input, double* h_output, int rows, int
     // Time the kernel execution
     auto start = std::chrono::high_resolution_clock::now();
 
-    int interations = 5;
+    int iterations = 5;
     for (int i = 0; i < iterations; ++i) {
        roc_status =  rocblas_dgeam(handle,
                          transa, transb,
