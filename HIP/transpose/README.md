@@ -224,4 +224,18 @@ Verification: PASSED
 ```
 
 
+## Transpose from the rocblas library
 
+Now let's try the rocblas transpose routine. We no longer
+need a kernel since that will be provided by the rocblas library.
+The host code is also simpler, though you do need to know how
+to call the rocblas library routine.
+
+```
+make transpose_rocblas
+./transpose_rocblas
+```
+
+```
+ROCBlas Transpose - Average Time: 3638.60 μs
+```

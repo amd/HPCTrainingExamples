@@ -74,17 +74,28 @@ int main(int argc, char *argv[])
         std::cout << "Output size: " << output_size / (1024.0 * 1024.0) << " MB" << std::endl;
         std::cout << "=========================================" << std::endl;
 
+        // See https://github.com/ROCm/rocBLAS/blob/develop/clients/samples/example_c_dgeam.c
+        //   for an example how to use the transpose library routine in rocblas
+
+        // Create handle to rocblas library
         rocblas_handle handle;
         rocblas_status roc_status=rocblas_create_handle(&handle);
-
         CHECK_ROCBLAS_STATUS(roc_status);
 
+        // scalar arguments will be from host memory
+        roc_status = rocblas_set_pointer_mode(handle, rocblas_pointer_mode_host);
+        CHECK_ROCBLAS_STATUS(roc_status);
+
+        // set up the parameters needed for the transpose operation
         const double alpha = 1.0;
         const double beta  = 0.0;
 
+        // For transpose: C= alpha * op(A) + beta * B
+        // where op(A) = A^T and B is the zero matrix
         rocblas_operation transa = rocblas_operation_transpose;
         rocblas_operation transb = rocblas_operation_none;
 
+        // Call rocblas_geam for the transpose operation
         roc_status =  rocblas_dgeam(handle,
                           transa, transb,
                           cols, rows,
@@ -137,6 +148,9 @@ int main(int argc, char *argv[])
         std::cout << "Verification: " << (is_correct ? "PASSED" : "FAILED") << std::endl;
 
         // Cleanup
+        roc_status = rocblas_destroy_handle(handle);
+        CHECK_ROCBLAS_STATUS(roc_status);
+
         hipCheck( hipFree(d_input) );
         hipCheck( hipFree(d_output) );
 

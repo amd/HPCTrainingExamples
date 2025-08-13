@@ -85,6 +85,59 @@ void run_all_transpose_versions(double* h_input, double* h_output, int rows, int
         "Tiled Transpose"
     );
 
+    // Create handle to rocblas library
+    rocblas_handle handle;
+    rocblas_status roc_status=rocblas_create_handle(&handle);
+    CHECK_ROCBLAS_STATUS(roc_status);
+
+    // scalar arguments will be from host memory
+    roc_status = rocblas_set_pointer_mode(handle, rocblas_pointer_mode_host);
+    CHECK_ROCBLAS_STATUS(roc_status);
+
+    // set up the parameters needed for the transpose operation
+    const double alpha = 1.0;
+    const double beta  = 0.0;
+
+    // For transpose: C= alpha * op(A) + beta * B
+    // where op(A) = A^T and B is the zero matrix
+    rocblas_operation transa = rocblas_operation_transpose;
+    rocblas_operation transb = rocblas_operation_none;
+
+    // Call rocblas_geam for the transpose operation
+    roc_status =  rocblas_dgeam(handle,
+                      transa, transb,
+                      cols, rows,
+                      &alpha, d_input, cols,
+                      &beta, d_output, rows,
+                      d_output, rows);
+    CHECK_ROCBLAS_STATUS(roc_status);
+
+    hipCheck( hipDeviceSynchronize() );
+
+    // Time the kernel execution
+    auto start = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < iterations; ++i) {
+       roc_status =  rocblas_dgeam(handle,
+                         transa, transb,
+                         cols, rows,
+                         &alpha, d_input, cols,
+                         &beta, d_output, rows,
+                         d_output, rows);
+       CHECK_ROCBLAS_STATUS(roc_status);
+    }
+
+    hipCheck( hipDeviceSynchronize() );
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    float time_rocblas = duration.count() / static_cast<float>(iterations);
+
+    std::cout << std::fixed << std::setprecision(2);
+    std::cout << "ROCBlas Transpose - Average Time: " << time_rocblas << " μs" << std::endl;
+
+    std::cout << "=========================================" << std::endl;
+
     // Copy result back to verify correctness (only for first version)
     hipCheck( hipMemcpy(h_output, d_output, output_size, hipMemcpyDeviceToHost) );
 
@@ -97,11 +150,13 @@ void run_all_transpose_versions(double* h_input, double* h_output, int rows, int
     std::cout << "Basic read contiguous   " << time_basic_read_contiguous  << " μs" << std::endl;
     std::cout << "Basic write contiguous  " << time_basic_write_contiguous << " μs" << std::endl;
     std::cout << "Tiled - both contiguous " << time_tiled                  << " μs" << std::endl;
+    std::cout << "ROCBlas                 " << time_rocblas                << " μs" << std::endl;
 
     // Calculate speedup relative to basic version
     if (time_basic_write_contiguous > 0) {
         std::cout << "Speedup (Write Contiguous):        " << time_basic_read_contiguous / time_basic_write_contiguous << "x" << std::endl;
         std::cout << "Speedup (Tiled - Both Contiguous): " << time_basic_read_contiguous / time_tiled << "x" << std::endl;
+        std::cout << "Speedup (ROCBlas):                 " << time_basic_read_contiguous / time_rocblas << "x" << std::endl;
     }
 }
 
