@@ -3,6 +3,8 @@
 #include <vector>
 #include <iomanip>
 
+#include <rocblas/rocblash.>
+
 #include "transpose_kernels.h"
 
 // Macro for checking GPU API return values
