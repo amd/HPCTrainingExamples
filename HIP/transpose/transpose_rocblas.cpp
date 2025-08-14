@@ -46,22 +46,22 @@ int main(int argc, char *argv[])
     };
 
     for (const auto& size : test_sizes) {
-        int rows = size.first;
-        int cols = size.second;
+        int height = size.first;
+        int width = size.second;
 
         // Allocate host memory
-        double* h_input = new double[rows * cols];
-        double* h_output = new double[cols * rows];
+        double* h_input = new double[height * width];
+        double* h_output = new double[width * height];
 
         // Generate test data
-        for (int i = 0; i < rows * cols; ++i) {
+        for (int i = 0; i < height * width; ++i) {
             h_input[i] = static_cast<double>(i % 1000);
         }
 
         // Allocate device memory
         double *d_input, *d_output;
-        size_t input_size = rows * cols * sizeof(double);
-        size_t output_size = cols * rows * sizeof(double);
+        size_t input_size = height * width * sizeof(double);
+        size_t output_size = width * height * sizeof(double);
 
         hipCheck( hipMalloc(&d_input, input_size) );
         hipCheck( hipMalloc(&d_output, output_size) );
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
         // Copy input data to device
         hipCheck( hipMemcpy(d_input, h_input, input_size, hipMemcpyHostToDevice) );
 
-        std::cout << "\nTesting Matrix dimensions: " << rows << " x " << cols << std::endl;
+        std::cout << "\nTesting Matrix dimensions: " << height << " x " << width << std::endl;
         std::cout << "Input size: " << input_size / (1024.0 * 1024.0) << " MiB" << std::endl;
         std::cout << "Output size: " << output_size / (1024.0 * 1024.0) << " MiB" << std::endl;
         std::cout << "=========================================" << std::endl;
@@ -98,10 +98,10 @@ int main(int argc, char *argv[])
         // Call rocblas_geam for the transpose operation
         roc_status =  rocblas_dgeam(handle,
                           transa, transb,
-                          cols, rows,
-                          &alpha, d_input, cols,
-                          &beta, d_output, rows,
-                          d_output, rows);
+                          width, height,
+                          &alpha, d_input, width,
+                          &beta, d_output, height,
+                          d_output, height);
         CHECK_ROCBLAS_STATUS(roc_status);
 
         hipCheck( hipDeviceSynchronize() );
@@ -112,10 +112,10 @@ int main(int argc, char *argv[])
         for (int i = 0; i < iterations; ++i) {
            roc_status =  rocblas_dgeam(handle,
                              transa, transb,
-                             cols, rows,
-                             &alpha, d_input, cols,
-                             &beta, d_output, rows,
-                             d_output, rows);
+                             width, height,
+                             &alpha, d_input, width,
+                             &beta, d_output, height,
+                             d_output, height);
            CHECK_ROCBLAS_STATUS(roc_status);
         }
 
@@ -136,9 +136,9 @@ int main(int argc, char *argv[])
         // Verify correctness
         bool is_correct = true;
 
-        for (int i = 0; i < rows && is_correct; ++i) {
-            for (int j = 0; j < cols; ++j) {
-                if (h_input[i * cols + j] != h_output[j * rows + i]) {
+        for (int i = 0; i < height && is_correct; ++i) {
+            for (int j = 0; j < width; ++j) {
+                if (h_input[i * width + j] != h_output[j * height + i]) {
                     is_correct = false;
                     break;
                 }

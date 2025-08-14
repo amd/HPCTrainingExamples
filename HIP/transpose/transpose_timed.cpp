@@ -33,21 +33,21 @@ do{                                                                             
 template<typename KernelFunc>
 double benchmark_kernel(KernelFunc kernel, const double* __restrict d_input,
                       double* __restrict d_output,
-                      int rows, int cols, const std::string& name,
+                      int height, int width, const std::string& name,
                       int iterations = 5) {
 
     dim3 block_size(TILE_SIZE, TILE_SIZE);
-    dim3 grid_size((cols + TILE_SIZE - 1) / TILE_SIZE, (rows + TILE_SIZE - 1) / TILE_SIZE);
+    dim3 grid_size((width + TILE_SIZE - 1) / TILE_SIZE, (height + TILE_SIZE - 1) / TILE_SIZE);
 
     // Warm up
-    kernel<<<grid_size, block_size>>>(d_input, d_output, rows, cols);
+    kernel<<<grid_size, block_size>>>(d_input, d_output, height, width);
     hipCheck( hipDeviceSynchronize() );
 
     // Time the kernel execution
     auto start = std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < iterations; ++i) {
-        kernel<<<grid_size, block_size>>>(d_input, d_output, rows, cols);
+        kernel<<<grid_size, block_size>>>(d_input, d_output, height, width);
     }
 
     hipCheck( hipDeviceSynchronize() );
@@ -63,11 +63,11 @@ double benchmark_kernel(KernelFunc kernel, const double* __restrict d_input,
 }
 
 // Host function to launch all versions
-void run_all_transpose_versions(double* h_input, double* h_output, int rows, int cols) {
+void run_all_transpose_versions(double* h_input, double* h_output, int height, int width) {
     // Allocate device memory
     double *d_input, *d_output;
-    size_t input_size = rows * cols * sizeof(double);
-    size_t output_size = cols * rows * sizeof(double);
+    size_t input_size = height * width * sizeof(double);
+    size_t output_size = width * height * sizeof(double);
 
     hipCheck( hipMalloc(&d_input, input_size) );
     hipCheck( hipMalloc(&d_output, output_size) );
@@ -75,7 +75,7 @@ void run_all_transpose_versions(double* h_input, double* h_output, int rows, int
     // Copy input data to device
     hipCheck( hipMemcpy(d_input, h_input, input_size, hipMemcpyHostToDevice) );
 
-    std::cout << "Matrix dimensions: " << rows << " x " << cols << std::endl;
+    std::cout << "Matrix dimensions: " << height << " x " << width << std::endl;
     std::cout << "Input size: " << input_size / (1024.0 * 1024.0) << " MB" << std::endl;
     std::cout << "Output size: " << output_size / (1024.0 * 1024.0) << " MB" << std::endl;
     std::cout << "=========================================" << std::endl;
@@ -83,19 +83,19 @@ void run_all_transpose_versions(double* h_input, double* h_output, int rows, int
     // Benchmark all versions
     float time_basic_read_contiguous = benchmark_kernel(
         transpose_kernel_read_contiguous,
-        d_input, d_output, rows, cols,
+        d_input, d_output, height, width,
         "Basic Transpose, Read Contiguous"
     );
 
     float time_basic_write_contiguous = benchmark_kernel(
         transpose_kernel_write_contiguous,
-        d_input, d_output, rows, cols,
+        d_input, d_output, height, width,
         "Basic Transpose, Write Contiguous"
     );
 
     float time_tiled = benchmark_kernel(
         transpose_kernel_tiled,
-        d_input, d_output, rows, cols,
+        d_input, d_output, height, width,
         "Tiled Transpose"
     );
 
@@ -120,10 +120,10 @@ void run_all_transpose_versions(double* h_input, double* h_output, int rows, int
     // Call rocblas_geam for the transpose operation
     roc_status =  rocblas_dgeam(handle,
                       transa, transb,
-                      cols, rows,
-                      &alpha, d_input, cols,
-                      &beta, d_output, rows,
-                      d_output, rows);
+                      width, height,
+                      &alpha, d_input, width,
+                      &beta, d_output, height,
+                      d_output, height);
     CHECK_ROCBLAS_STATUS(roc_status);
 
     hipCheck( hipDeviceSynchronize() );
@@ -135,10 +135,10 @@ void run_all_transpose_versions(double* h_input, double* h_output, int rows, int
     for (int i = 0; i < iterations; ++i) {
        roc_status =  rocblas_dgeam(handle,
                          transa, transb,
-                         cols, rows,
-                         &alpha, d_input, cols,
-                         &beta, d_output, rows,
-                         d_output, rows);
+                         width, height,
+                         &alpha, d_input, width,
+                         &beta, d_output, height,
+                         d_output, height);
        CHECK_ROCBLAS_STATUS(roc_status);
     }
 
@@ -182,12 +182,12 @@ void run_all_transpose_versions(double* h_input, double* h_output, int rows, int
 }
 
 // Verification function to check correctness
-bool verify_transpose(double* h_input, double* h_output, int rows, int cols) {
+bool verify_transpose(double* h_input, double* h_output, int height, int width) {
     bool correct = true;
 
-    for (int i = 0; i < rows && correct; ++i) {
-        for (int j = 0; j < cols; ++j) {
-            if (h_input[i * cols + j] != h_output[j * rows + i]) {
+    for (int i = 0; i < height && correct; ++i) {
+        for (int j = 0; j < width; ++j) {
+            if (h_input[i * width + j] != h_output[j * height + i]) {
                 correct = false;
                 break;
             }
@@ -198,8 +198,8 @@ bool verify_transpose(double* h_input, double* h_output, int rows, int cols) {
 }
 
 // Generate test matrix
-void generate_test_matrix(double* matrix, int rows, int cols) {
-    for (int i = 0; i < rows * cols; ++i) {
+void generate_test_matrix(double* matrix, int height, int width) {
+    for (int i = 0; i < height * width; ++i) {
         matrix[i] = static_cast<double>(i % 1000);
     }
 }
@@ -220,23 +220,23 @@ int main() {
     };
 
     for (const auto& size : test_sizes) {
-        int rows = size.first;
-        int cols = size.second;
+        int height = size.first;
+        int width = size.second;
 
-        std::cout << "\nTesting " << rows << " x " << cols << " matrix:" << std::endl;
+        std::cout << "\nTesting " << height << " x " << width << " matrix:" << std::endl;
 
         // Allocate host memory
-        double* h_input = new double[rows * cols];
-        double* h_output = new double[cols * rows];
+        double* h_input = new double[height * width];
+        double* h_output = new double[width * height];
 
         // Generate test data
-        generate_test_matrix(h_input, rows, cols);
+        generate_test_matrix(h_input, height, width);
 
         // Run all versions
-        run_all_transpose_versions(h_input, h_output, rows, cols);
+        run_all_transpose_versions(h_input, h_output, height, width);
 
         // Verify correctness (only for the first test case)
-        bool is_correct = verify_transpose(h_input, h_output, rows, cols);
+        bool is_correct = verify_transpose(h_input, h_output, height, width);
         std::cout << "Verification: " << (is_correct ? "PASSED" : "FAILED") << std::endl;
 
         // Cleanup

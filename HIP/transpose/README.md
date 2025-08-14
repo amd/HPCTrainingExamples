@@ -235,10 +235,10 @@ rocblas_operation transb = rocblas_operation_none;
 // Call rocblas_geam for the transpose operation
 roc_status =  rocblas_dgeam(handle,
                   transa, transb,
-                  cols, rows,
-                  &alpha, d_input, cols,
-                  &beta, d_output, rows,
-                  d_output, rows);
+                  width, height,
+                  &alpha, d_input, width,
+                  &beta, d_output, height,
+                  d_output, height);
 CHECK_ROCBLAS_STATUS(roc_status);
 
 hipCheck( hipDeviceSynchronize() );

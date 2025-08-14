@@ -10,19 +10,19 @@
 __global__
 void transpose_kernel_read_contiguous(const double* __restrict input,
                                       double* __restrict output,
-                                      const int rows,
-                                      const int cols);
+                                      const int height,
+                                      const int width);
 
 __global__
 void transpose_kernel_write_contiguous(const double* __restrict input,
                                        double* __restrict output,
-                                       const int rows,
-                                       const int cols);
+                                       const int height,
+                                       const int width);
 
 __global__
 void transpose_kernel_tiled(const double* __restrict input,
                             double* __restrict output,
-                            const int rows,
-                            const int cols);
+                            const int height,
+                            const int width);
 
 #endif // TRANSPOSE_KERNELS_H
