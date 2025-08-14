@@ -151,8 +151,6 @@ void run_all_transpose_versions(double* h_input, double* h_output, int rows, int
     std::cout << std::fixed << std::setprecision(2);
     std::cout << "rocBLAS Transpose - Average Time: " << time_rocblas << " μs" << std::endl;
 
-    std::cout << "=========================================" << std::endl;
-
     // Copy result back to verify correctness (only for first version)
     hipCheck( hipMemcpy(h_output, d_output, output_size, hipMemcpyDeviceToHost) );
 
