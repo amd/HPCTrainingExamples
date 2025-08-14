@@ -122,8 +122,8 @@ void run_all_transpose_versions(double* h_input, double* h_output, int height, i
                       transa, transb,
                       width, height,
                       &alpha, d_input, width,
-                      &beta, d_output, height,
-                      d_output, height);
+                      &beta, d_output, width,
+                      d_output, width);
     CHECK_ROCBLAS_STATUS(roc_status);
 
     hipCheck( hipDeviceSynchronize() );
@@ -137,8 +137,8 @@ void run_all_transpose_versions(double* h_input, double* h_output, int height, i
                          transa, transb,
                          width, height,
                          &alpha, d_input, width,
-                         &beta, d_output, height,
-                         d_output, height);
+                         &beta, d_output, width,
+                         d_output, width);
        CHECK_ROCBLAS_STATUS(roc_status);
     }
 

@@ -100,8 +100,8 @@ int main(int argc, char *argv[])
                           transa, transb,
                           width, height,
                           &alpha, d_input, width,
-                          &beta, d_output, height,
-                          d_output, height);
+                          &beta, d_output, width,
+                          d_output, width);
         CHECK_ROCBLAS_STATUS(roc_status);
 
         hipCheck( hipDeviceSynchronize() );
@@ -114,8 +114,8 @@ int main(int argc, char *argv[])
                              transa, transb,
                              width, height,
                              &alpha, d_input, width,
-                             &beta, d_output, height,
-                             d_output, height);
+                             &beta, d_output, width,
+                             d_output, width);
            CHECK_ROCBLAS_STATUS(roc_status);
         }
 
