@@ -8,10 +8,10 @@
 #define TILE_SIZE 32
 
 __global__
-void transpose_kernel_tiled(double* __restrict input,
-                                      double* __restrict output,
-                                      const int rows,
-                                      const int cols);
+void transpose_kernel_tiled(const double* __restrict input,
+                            double* __restrict output,
+                            const int rows,
+                            const int cols);
 
 // Macro for checking GPU API return values
 #define hipCheck(call)                                                                          \

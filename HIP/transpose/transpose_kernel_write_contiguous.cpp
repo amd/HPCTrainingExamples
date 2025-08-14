@@ -16,7 +16,7 @@ writing -- 0 1 2 3 4 5 6 7 8 9 10 11
 #define GIDX(y, x, sizex) y * sizex + x
 
 __global__ void transpose_kernel_write_contiguous(
-  double* __restrict__ input, double* __restrict__ output,
+  const double* __restrict__ input, double* __restrict__ output,
   int srcYMax, int srcXMax) {
     // Calculate destination global thread indices
     const int dstX = blockIdx.x * blockDim.x + threadIdx.x;

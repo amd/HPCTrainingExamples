@@ -8,19 +8,19 @@
 #define PAD 1                 // padding to avoid bank conflicts
 
 __global__
-void transpose_kernel_read_contiguous(double* __restrict input,
+void transpose_kernel_read_contiguous(const double* __restrict input,
                                       double* __restrict output,
                                       const int rows,
                                       const int cols);
 
 __global__
-void transpose_kernel_write_contiguous(double* __restrict input,
+void transpose_kernel_write_contiguous(const double* __restrict input,
                                        double* __restrict output,
                                        const int rows,
                                        const int cols);
 
 __global__
-void transpose_kernel_tiled(double* __restrict input,
+void transpose_kernel_tiled(const double* __restrict input,
                             double* __restrict output,
                             const int rows,
                             const int cols);

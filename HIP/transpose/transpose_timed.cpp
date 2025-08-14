@@ -31,7 +31,7 @@ do{                                                                             
 
 // Generic kernel launcher with timing
 template<typename KernelFunc>
-double benchmark_kernel(KernelFunc kernel, double* __restrict d_input,
+double benchmark_kernel(KernelFunc kernel, const double* __restrict d_input,
                       double* __restrict d_output,
                       int rows, int cols, const std::string& name,
                       int iterations = 5) {

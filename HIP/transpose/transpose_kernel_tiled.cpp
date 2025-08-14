@@ -12,7 +12,7 @@
  */
 
 __global__ void transpose_kernel_tiled(
-   double* __restrict input, double* __restrict output,
+   const double* __restrict input, double* __restrict output,
    const int srcYMax, const int srcXMax)
 {
     // thread coordinates in the source matrix
