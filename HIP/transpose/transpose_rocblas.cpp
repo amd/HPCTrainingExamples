@@ -70,8 +70,8 @@ int main(int argc, char *argv[])
         hipCheck( hipMemcpy(d_input, h_input, input_size, hipMemcpyHostToDevice) );
 
         std::cout << "\nTesting Matrix dimensions: " << rows << " x " << cols << std::endl;
-        std::cout << "Input size: " << input_size / (1024.0 * 1024.0) << " MB" << std::endl;
-        std::cout << "Output size: " << output_size / (1024.0 * 1024.0) << " MB" << std::endl;
+        std::cout << "Input size: " << input_size / (1024.0 * 1024.0) << " MiB" << std::endl;
+        std::cout << "Output size: " << output_size / (1024.0 * 1024.0) << " MiB" << std::endl;
         std::cout << "=========================================" << std::endl;
 
         // See https://github.com/ROCm/rocBLAS/blob/develop/clients/samples/example_c_dgeam.c

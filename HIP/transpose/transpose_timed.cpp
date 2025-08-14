@@ -149,7 +149,7 @@ void run_all_transpose_versions(double* h_input, double* h_output, int rows, int
     float time_rocblas = duration.count() / static_cast<float>(iterations);
 
     std::cout << std::fixed << std::setprecision(2);
-    std::cout << "ROCBlas Transpose - Average Time: " << time_rocblas << " μs" << std::endl;
+    std::cout << "rocBLAS Transpose - Average Time: " << time_rocblas << " μs" << std::endl;
 
     std::cout << "=========================================" << std::endl;
 
@@ -165,13 +165,21 @@ void run_all_transpose_versions(double* h_input, double* h_output, int rows, int
     std::cout << "Basic read contiguous   " << time_basic_read_contiguous  << " μs" << std::endl;
     std::cout << "Basic write contiguous  " << time_basic_write_contiguous << " μs" << std::endl;
     std::cout << "Tiled - both contiguous " << time_tiled                  << " μs" << std::endl;
-    std::cout << "ROCBlas                 " << time_rocblas                << " μs" << std::endl;
+    std::cout << "rocBLAS                 " << time_rocblas                << " μs" << std::endl;
+
+    std::cout << "\nApplication Bandwidth (Hardware bandwidth is 1.5x greater due to load/stores):" << std::endl;
+    double TiB = (input_size+output_size)/1024.0/1024.0/1024.0/1024.0;
+    std::cout << "Basic read contiguous   " << TiB / ((double)time_basic_read_contiguous/1.0e6)  << " TiB/sec" << std::endl;
+    std::cout << "Basic write contiguous  " << TiB / ((double)time_basic_write_contiguous/1.0e6) << " TiB/sec" << std::endl;
+    std::cout << "Tiled                   " << TiB / ((double)time_tiled/1.0e6)                  << " TiB/sec" << std::endl;
+    std::cout << "rocBLAS                 " << TiB / ((double)time_rocblas/1.0e6)                << " TiB/sec" << std::endl;
+    std::cout << std::endl;
 
     // Calculate speedup relative to basic version
     if (time_basic_write_contiguous > 0) {
         std::cout << "Speedup (Write Contiguous):        " << time_basic_read_contiguous / time_basic_write_contiguous << "x" << std::endl;
         std::cout << "Speedup (Tiled - Both Contiguous): " << time_basic_read_contiguous / time_tiled << "x" << std::endl;
-        std::cout << "Speedup (ROCBlas):                 " << time_basic_read_contiguous / time_rocblas << "x" << std::endl;
+        std::cout << "Speedup (rocBLAS):                 " << time_basic_read_contiguous / time_rocblas << "x" << std::endl;
     }
 }
 
