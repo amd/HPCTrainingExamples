@@ -62,7 +62,7 @@ int main() {
      temporary_storage_size_bytes,
      d_in,
      d_out,
-     // Initial value for reduction (e.g., a large number for minimum)
+     // Initial value for reduction (e.g., a large number for minimum, zero for sum)
      0.0,
      N,
      sum_op
