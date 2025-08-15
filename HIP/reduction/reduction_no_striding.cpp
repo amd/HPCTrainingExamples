@@ -17,12 +17,12 @@ do{                                                                             
     }                                                                                           \
 }while(0)
 
-// Defined the workgroup size (number of threads in workgroup)
+// Define the workgroup size (number of threads in workgroup)
 // It is a multiple of 64 (wavefront size)
 const static int BLOCKSIZE = 1024;
 
 __global__ void get_partial_sums(const double* input, double* output, int size) {
-  __shared__ double shared_mem[BLOCKSIZE];
+  __shared__ double local_sum[BLOCKSIZE];
 
   // Local ID of thread in workgroup (block)
   int lid = threadIdx.x;
@@ -33,22 +33,22 @@ __global__ void get_partial_sums(const double* input, double* output, int size) 
   // Note: gid has to span all entries of input
   // this means there need to be enough threads
   // on the thread grid to do so
-  shared_mem[lid] = 0.0;
+  local_sum[lid] = 0.0;
   if (gid < size) {
-     shared_mem[lid] = input[gid];
+     local_sum[lid] = input[gid];
   }
 
   __syncthreads();
 
   for (int s = BLOCKSIZE / 2; s > 0; s /= 2) {
     if (lid < s) {
-      shared_mem[lid] += shared_mem[lid + s];
+      local_sum[lid] += local_sum[lid + s];
     }
     __syncthreads();
   }
 
   if (lid == 0) {
-    output[blockIdx.x] = shared_mem[0];
+    output[blockIdx.x] = local_sum[0];
   }
 }
 
@@ -103,7 +103,7 @@ int main() {
   // Copy d_in back to h_in
   hipCheck( hipMemcpy(h_partial_sums.data(), d_partial_sums, GRIDSIZE * sizeof(double), hipMemcpyDeviceToHost) );
 
-  // Compute the actual reduction from the partial sum
+  // Compute the actual reduction from the partial sums
   double sum = 0.0;
   for (int i = 0; i < GRIDSIZE; ++i) {
      sum += h_partial_sums[i];

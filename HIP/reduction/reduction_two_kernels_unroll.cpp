@@ -34,7 +34,7 @@ __global__ void get_partial_sums(const double* input, double* output, int size) 
 
   local_sum[threadIdx.x] = 0.0;
   for (int i = idx; i < size; i += grid_size) {
-    local_sum[threadIdx.x] += input[i];
+     local_sum[threadIdx.x] += input[i];
   }
 
   // Store local sum in shared memory
@@ -95,11 +95,11 @@ int main() {
   std::vector<double> h_in(N);
 
   // Init host array
-  h_in.assign(h_in.size(), 0.1);
+  h_in.assign(h_in.size(), 0.1);               // fill with 0.1
 
   // Allocate device memory
-  double* d_in;
-  double* d_partial_sums;
+  double *d_in = nullptr;
+  double *d_partial_sums = nullptr;
   hipCheck(hipMalloc(&d_in, N * sizeof(double)));
   int nblocks = ceil(N/BLOCKSIZE/unroll_factor);
   hipCheck(hipMalloc(&d_partial_sums, nblocks * sizeof(double)));
@@ -120,7 +120,7 @@ int main() {
   hipCheck( hipEventRecord(stop, nullptr) );
 
   // Calculate time (in ms) for kernel
-  float kernel_time;
+  float kernel_time = 0.0f;
   hipCheck( hipEventSynchronize(stop) );
   hipCheck( hipEventElapsedTime(&kernel_time, start, stop) );
 
@@ -146,6 +146,7 @@ int main() {
      std::cout<<"Kernel time: " << kernel_time << " ms" << std::endl;
   }
 
+  //  Cleanup
   hipCheck( hipFree(d_in) );
   hipCheck( hipFree(d_partial_sums) );
   hipCheck( hipEventDestroy(start) );

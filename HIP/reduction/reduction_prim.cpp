@@ -49,7 +49,7 @@ int main() {
   // Start event timer to measure kernel timing
   hipCheck( hipEventRecord(start, nullptr) );
 
-  // Reduction operation (minimum)
+  // Reduction operation (sum)
   rocprim::plus<double> sum_op;
 
     // Temporary storage for rocprim::reduce

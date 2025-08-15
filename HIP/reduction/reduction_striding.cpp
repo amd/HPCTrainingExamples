@@ -17,7 +17,6 @@ do{                                                                             
     }                                                                                           \
 }while(0)
 
-
 // Define the workgroup size (number of threads in workgroup)
 // It is a multiple of 64 (wavefront size)
 const static int BLOCKSIZE = 1024;
@@ -28,27 +27,30 @@ const static int GRIDSIZE = 1024;
 __global__ void get_partial_sums(const double* input, double* output, int size) {
   __shared__ double local_sum[BLOCKSIZE];
 
+  // Local ID of thread in workgroup (block)
+  int lid = threadIdx.x;
+
   // Global ID of thread in thread grid
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  int gid = blockIdx.x * blockDim.x + threadIdx.x;
 
   // Stride size is equal to total number of threads in grid
   int grid_size = blockDim.x * gridDim.x;
 
-  local_sum[threadIdx.x]  = 0.0;
-  for (int i = idx; i < size; i += grid_size) {
-    local_sum[threadIdx.x]  += input[i];
+  local_sum[lid] = 0.0;
+  for (int i = gid; i < size; i += grid_size) {
+     local_sum[lid] += input[i];
   }
 
   __syncthreads();
 
   for (int s = BLOCKSIZE / 2; s > 0; s /= 2) {
-    if (threadIdx.x < s) {
-      local_sum[threadIdx.x] += local_sum[threadIdx.x + s];
+    if (lid < s) {
+      local_sum[lid] += local_sum[lid + s];
     }
     __syncthreads();
   }
 
-  if (threadIdx.x == 0) {
+  if (lid == 0) {
     output[blockIdx.x] = local_sum[0];
   }
 }
@@ -72,17 +74,17 @@ int main() {
   std::vector<double> h_in(N);
   std::vector<double> h_partial_sums(GRIDSIZE);
 
-  // Init host array
+  // Initialize host array
   h_in.assign(h_in.size(), 0.1);
 
   // Allocate device memory
   double* d_in;
   double* d_partial_sums;
-  hipCheck(hipMalloc(&d_in, N * sizeof(double)));
-  hipCheck(hipMalloc(&d_partial_sums, GRIDSIZE * sizeof(double)));
+  hipCheck( hipMalloc(&d_in, N * sizeof(double)) );
+  hipCheck( hipMalloc(&d_partial_sums, GRIDSIZE * sizeof(double)) );
 
   // Copy h_in into d_in
-  hipCheck(hipMemcpy(d_in, h_in.data(), N * sizeof(double), hipMemcpyHostToDevice));
+  hipCheck( hipMemcpy(d_in, h_in.data(), N * sizeof(double), hipMemcpyHostToDevice) );
 
   // Start event timer to measure kernel timing
   hipCheck( hipEventRecord(start, nullptr) );
@@ -99,7 +101,7 @@ int main() {
   hipCheck( hipEventElapsedTime(&kernel_time, start, stop) );
 
   // Copy d_in back to h_in
-  hipCheck(hipMemcpy(h_partial_sums.data(), d_partial_sums, GRIDSIZE * sizeof(double), hipMemcpyDeviceToHost));
+  hipCheck( hipMemcpy(h_partial_sums.data(), d_partial_sums, GRIDSIZE * sizeof(double), hipMemcpyDeviceToHost) );
 
   // Compute the actual reduction from the partial sums
   double sum = 0.0;
@@ -128,4 +130,3 @@ int main() {
   hipCheck( hipEventDestroy(stop) );
   return 0;
 }
-
