@@ -52,7 +52,7 @@ int main() {
   // Reduction operation (sum)
   rocprim::plus<double> sum_op;
 
-    // Temporary storage for rocprim::reduce
+  // Temporary storage for rocprim::reduce
   size_t temporary_storage_size_bytes;
   void* temporary_storage_ptr = nullptr;
 
