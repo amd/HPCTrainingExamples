@@ -144,7 +144,7 @@ In this way, we are taking into account all the local sums that are not consider
 
 ## Reduction with Atomics
 
-Another way to fix the above example and actually produce correct code is with the use of atomics to perform the reduction, see `reduction_atomics.cpp`:
+Another way to fix the above example and actually produce correct code is with the use of atomics to perform the reduction, see `reduction_atomic.cpp`:
 
 ```
 __global__ void atomic_reduction(const double* input, double* output, int size) {
