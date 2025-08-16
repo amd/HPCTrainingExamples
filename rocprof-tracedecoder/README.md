@@ -48,6 +48,22 @@ make clean
 rm -rf tracedecoder_vectorAdd
 ```
 
+# ROCprofiler Compute Viewer
+
+The trace decoder data can be viewed in a separate program called ROCprofiler Compute Viewer. There
+are pre-built binaries for Microsoft Windows and source code that can be compiled for others systems.
+
+Now start up the ROCprof Compute Viewer.
+
+Untar the data on your local system.
+
+tar -xzvf tracedecoder_vectorAdd.tgz
+Open up the data file by using the import tab at the upper left. Select one of the ui_output_agent* files in the tracedecoder_vectorAdd directory.
+
+This will open up the Instructions view with the source and ISA windows.
+
+Further exploration: * Open up the summary view and see an overview of the kernel operation. * Open up the Wave States to see the timeline view of the instructions * Go to the HotSpot Timeline view to see the instructions used during the kernel * Examine the Compute Unit timeline view to see the compute units operation ** Use the WaveView zoon setting on the control panel on the left to zoom in and out to see all of the timeline or zoom in to a specific part.
+
 ## Saxpy
 
 ```
@@ -114,10 +130,5 @@ Cleaning up afterwards
 make clean
 rm -rf tracedecoder_dgemm_library
 ```
-
-# ROCprofiler Compute Viewer
-
-The trace decoder data can be viewed in a separate program called ROCprofiler Compute Viewer. There
-are pre-built binaries for Microsoft Windows and source code that can be compiled for others systems.
 
 
