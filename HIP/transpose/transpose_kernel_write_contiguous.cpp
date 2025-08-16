@@ -3,7 +3,7 @@
 /* Basic version with write contiguous memory
  Assume a 3 x 4 matrix (height = 3, width = 4) stored row‑major:
  After transposition we want a 4 x 3 matrix, also stored row‑major:
- height = 3, column = 4   height = 4, width = 3
+ height = 3, width = 4   height = 4, width = 3
  output (row‑major)  input(row_major)
  | 0  1  2  3 |       |  0  4  8 |
  | 4  5  6  7 |       |  1  5  9 |
