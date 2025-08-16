@@ -39,16 +39,16 @@ with striding though memory -- Transpose: output[X][Y] = input[Y][X].
 
 __global__ void transpose_kernel_read_contiguous(
   double* __restrict__ input, double* __restrict__ output,
-  int srcYMax, int srcXMax) {
+  int srcHeight, int srcWidth) {
     // Calculate source global thread indices
     const int srcX = blockIdx.x * blockDim.x + threadIdx.x;
     const int srcY = blockIdx.y * blockDim.y + threadIdx.y;
 
     // Boundary check
-    if (srcY < srcYMax && srcX < srcXMax) {
+    if (srcY < srcHeight && srcX < srcWidth) {
         // Transpose: output[x][y] = input[y][x]
-        const int input_gid = GIDX(srcY,srcX,srcXMax);
-        const int output_gid = GIDX(srcX,srcY,srcYMax); // flipped axis
+        const int input_gid = GIDX(srcY,srcX,srcWidth);
+        const int output_gid = GIDX(srcX,srcY,srcHeight); // flipped axis
         output[output_gid] = input[input_gid];
     }
 }
@@ -83,18 +83,18 @@ take a look at the kernel for that case.
 
 __global__ void transpose_kernel_write_contiguous(
   double* __restrict__ input, double* __restrict__ output,
-  int srcYMax, int srcXMax) {
+  int srcHeight, int srcWidth) {
     // Calculate destination global thread indices
     const int dstX = blockIdx.x * blockDim.x + threadIdx.x;
     const int dstY = blockIdx.y * blockDim.y + threadIdx.y;
-    const int dstXMax = srcYMax;
-    const int dstYMax = srcXMax;
+    const int dstWidth = srcHeight;
+    const int dstHeight = srcWidth;
 
     // Boundary check
-    if (dstY < dstYMax && dstX < dstXMax) {
+    if (dstY < dstHeight && dstX < dstWidth) {
         // Transpose: output[y][x] = input[x][y]
-        const int input_gid = GIDX(dstX,dstY,srcXMax); // flipped axis
-        const int output_gid = GIDX(dstY,dstX,dstXMax);
+        const int input_gid = GIDX(dstX,dstY,srcWidth); // flipped axis
+        const int output_gid = GIDX(dstY,dstX,dstWidth);
 
         output[output_gid] = input[input_gid];
     }
@@ -146,7 +146,7 @@ tile is a little more complicated.
 
 __global__ void transpose_kernel_tiled(
    double* __restrict input, double* __restrict output,
-   const int srcYMax, const int srcXMax)
+   const int srcHeight, const int srcWidth)
 {
     // thread coordinates in the source matrix
     const int tx = threadIdx.x;
@@ -160,8 +160,8 @@ __global__ void transpose_kernel_tiled(
     __shared__ double tile[TILE_SIZE][TILE_SIZE + PAD];
 
     // Read from global memory into tile with coalesced reads
-    if (srcY < srcYMax && srcX < srcXMax) {
-        tile[ty][tx] = input[GIDX(srcY, srcX, srcXMax)];
+    if (srcY < srcHeight && srcX < srcWidth) {
+        tile[ty][tx] = input[GIDX(srcY, srcX, srcWidth)];
     } else {
         tile[ty][tx] = 0.0;                // guard value – never used for writes
     }
@@ -174,8 +174,8 @@ __global__ void transpose_kernel_tiled(
     const int dstX = blockIdx.y * TILE_SIZE + tx;
 
     // Write back to global memory with coalesced writes
-    if (dstY < srcXMax && dstX < srcYMax) {
-        output[GIDX(dstY, dstX, srcYMax)] = tile[tx][ty];
+    if (dstY < srcWidth && dstX < srcHeight) {
+        output[GIDX(dstY, dstX, srcWidth)] = tile[tx][ty];
     }
 }
 ```
