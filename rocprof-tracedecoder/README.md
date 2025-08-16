@@ -62,7 +62,13 @@ Open up the data file by using the import tab at the upper left. Select one of t
 
 This will open up the Instructions view with the source and ISA windows.
 
-Further exploration: * Open up the summary view and see an overview of the kernel operation. * Open up the Wave States to see the timeline view of the instructions * Go to the HotSpot Timeline view to see the instructions used during the kernel * Examine the Compute Unit timeline view to see the compute units operation ** Use the WaveView zoon setting on the control panel on the left to zoom in and out to see all of the timeline or zoom in to a specific part.
+Further exploration: 
+
+* Open up the summary view and see an overview of the kernel operation. 
+* Open up the Wave States to see the timeline view of the instructions 
+* Go to the HotSpot Timeline view to see the instructions used during the kernel 
+* Examine the Compute Unit timeline view to see the compute units operation 
+   * Use the WaveView zoon setting on the control panel on the left to zoom in and out to see all of the timeline or zoom in to a specific part.
 
 ## Saxpy
 
