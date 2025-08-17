@@ -29,15 +29,15 @@ A simple yAx kernel, and more efficient, but more complex yAx kernel to demonstr
 
 ## Results on MI210:
 
-**Note:** This exercise was tested on a system with MI210s, on omniperf version `2.0.0` and ROCm `6.1.2`
-**Omniperf `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
+**Note:** This exercise was tested on a system with MI210s, on rocprof-compute version `2.0.0` and ROCm `6.1.2`
+**ROCprof-compute `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
 
 ### Initial Roofline Analysis
 We should start by doing a roofline to see where the problem executable stands.
 These plots can be generated with:
 
 ```
-omniperf profile -n problem_roof_only --roof-only --kernel-names -- ./problem.exe
+rocprof-compute profile -n problem_roof_only --roof-only --kernel-names -- ./problem.exe
 ```
 The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` directory, if generated on MI200 hardware.
 
@@ -67,18 +67,17 @@ make
 yAx time 12 ms
 ```
 
-This should be in line with our last solution. From the last exercise, we saw this output from `omniperf analyze` for this kernel:
+This should be in line with our last solution. From the last exercise, we saw this output from `rocprof-compute analyze` for this kernel:
 
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
 Analysis mode = cli
-[analysis] deriving Omniperf metrics...
+[analysis] deriving ROCprof-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -152,23 +151,22 @@ re-conceptualizing the problem in a way that allows for a more efficient solutio
 result in impressive speedups. A better runtime is not proof that we are using our caches more efficiently, we have to profile the solution:
 
 ```
-omniperf profile -n solution --no-roof -- ./solution.exe
+rocprof-compute profile -n solution --no-roof -- ./solution.exe
 ```
 (*output omitted*)
 ```
-omniperf analyze -p workloads/solution/MI200 --dispatch 1 --block 16.1 17.1
+rocprof-compute analyze -p workloads/solution/MI200 --dispatch 1 --block 16.1 17.1
 ```
 The output for the solution should look something like:
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
    INFO Analysis mode = cli
-   INFO [analysis] deriving Omniperf metrics...
+   INFO [analysis] deriving ROCprof-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -233,7 +231,7 @@ As a final step, we should check how this new implementation stacks up with the 
 These plots can be generated with:
 
 ```
-omniperf profile -n solution_roof_only --roof-only --kernel-names -- ./solution.exe
+rocprof-compute profile -n solution_roof_only --roof-only --kernel-names -- ./solution.exe
 ```
 The plots will appear as PDF files in the `./workloads/solution_roof_only/MI200` directory, if generated on MI200 hardware.
 
@@ -244,7 +242,7 @@ They are also provided below for easy reference:
 |FP32/FP64      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise5_solution_roofline_fp32.png"/>      |
 |FP16/INT8      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise5_solution_roofline_int8_fp16.png"/> |
 
-As the Omniperf stats indicate, we are more efficiently using the L1 cache, which shows in the roofline as a decrease in Arithmetic Intensity for that cache layer.
+As the ROCprof-compute stats indicate, we are more efficiently using the L1 cache, which shows in the roofline as a decrease in Arithmetic Intensity for that cache layer.
 We have a high hit rate in L1, with a comparatively lower hit rate in L2, and we were able to increase our L2-Fabric bandwidth for the same problem size, more efficiently requesting data from HBM.
 
 ### Roofline Comparison

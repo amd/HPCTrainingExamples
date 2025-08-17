@@ -2,7 +2,7 @@
 # Exercise 4: Strided Data Access Patterns (and how to find them)
 
 This exercise uses a simple implementation of a yAx kernel to show how difficult strided data access patterns can be to spot in code,
-and demonstrates how to use omniperf to begin to diagnose them.
+and demonstrates how to use rocprof-compute to begin to diagnose them.
 
 <details>
 <summary><h3>Background: Acronyms and terms used in this exercise</h3></summary>
@@ -33,15 +33,15 @@ and demonstrates how to use omniperf to begin to diagnose them.
 
 ## Results on MI210
 
-**Note:** This exercise was tested on a system with MI210s, on omniperf version `2.0.0` and ROCm `6.0.2`
-**Omniperf `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
+**Note:** This exercise was tested on a system with MI210s, on rocprof-compute version `2.0.0` and ROCm `6.0.2`
+**ROCperf-compute `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
 
 ### Initial Roofline Analysis
 To start, we want to check the roofline of `problem.exe`, to make sure we are able to improve it.
 These plots can be generated with:
 
 ```
-omniperf profile -n problem_roof_only --roof-only --kernel-names -- ./problem.exe
+rocprof-compute profile -n problem_roof_only --roof-only --kernel-names -- ./problem.exe
 ```
 The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` directory, if generated on MI200 hardware.
 
@@ -67,14 +67,14 @@ make
 yAx time: 70 ms
 ```
 
-From our other experiments, this time seems reasonable. Let's look closer at the memory system usage with omniperf:
+From our other experiments, this time seems reasonable. Let's look closer at the memory system usage with rocprof-compute:
 
 ```
-omniperf profile -n problem --no-roof -- ./problem.exe
+rocprof-compute profile -n problem --no-roof -- ./problem.exe
 ```
 (*omitted output*)
 ```
-omniperf analyze -p workloads/problem/MI200 --dispatch 1 --block 16.1 17.1
+rocprof-compute analyze -p workloads/problem/MI200 --dispatch 1 --block 16.1 17.1
 ```
 >Previous examples have used specific fields inside metrics, but we can also request a group of metrics with just two numbers (i.e. 16.1 vs. 16.1.1)
 
@@ -87,15 +87,14 @@ As such, they're great statistics for seeing if the memory system is generally b
 Output from the `analyze` command should look like this:
 
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
 Analysis mode = cli
-[analysis] deriving Omniperf metrics...
+[analysis] deriving ROCperf-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -173,23 +172,22 @@ yAx time: 12 ms
 We see the runtime here is significantly better than our previous kernel, but we need to check how the caches behave now:
 
 ```
-omniperf profile -n solution --no-roof -- ./solution.exe
+rocprof-compute profile -n solution --no-roof -- ./solution.exe
 ```
 (*output omitted*)
 ```
-omniperf analyze -p workloads/solution/MI200 --dispatch 1 --block 16.1 17.1
+rocprof-compute analyze -p workloads/solution/MI200 --dispatch 1 --block 16.1 17.1
 ```
 The output from this analyze command should look like:
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
 Analysis mode = cli
-[analysis] deriving Omniperf metrics...
+[analysis] deriving ROCperf-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -252,7 +250,7 @@ We should check where our new kernel stands on the roofline.
 These plots can be generated with:
 
 ```
-omniperf profile -n solution_roof_only --roof-only --kernel-names -- ./solution.exe
+rocprof-compute profile -n solution_roof_only --roof-only --kernel-names -- ./solution.exe
 ```
 The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` directory, if generated on MI200 hardware.
 
@@ -306,21 +304,20 @@ Shows a runtime like this:
 12.17 milliseconds
 ```
 
-Now, if we use omniperf to profile these executables we see much the same stats for MI300A as MI200:
+Now, if we use rocprof-compute to profile these executables we see much the same stats for MI300A as MI200:
 ```
-omniperf analyze -p workloads/problem/MI300A_A1 --dispatch 1 --block 16.1 17.1
+rocprof-compute analyze -p workloads/problem/MI300A_A1 --dispatch 1 --block 16.1 17.1
 ```
 Shows
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
    INFO Analysis mode = cli
-   INFO [analysis] deriving Omniperf metrics...
+   INFO [analysis] deriving ROCperf-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -375,19 +372,18 @@ Shows
 
 While analyzing the solution with:
 ```
-omniperf analyze -p workloads/solution/MI300A_A1 --dispatch 1 --block 16.1 17.1
+rocprof-compute analyze -p workloads/solution/MI300A_A1 --dispatch 1 --block 16.1 17.1
 ```
 Shows:
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
    INFO Analysis mode = cli
-   INFO [analysis] deriving Omniperf metrics...
+   INFO [analysis] deriving ROCperf-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -444,19 +440,18 @@ Shows:
 So we see a slowdown despite increasing our L1 hit rate (`16.1.0`) by a large amount. Let's see how the runtime compares to the number of cycles required for problem and solution, as well as atomic latencies per channel for both approaches:
 
 ```
-omniperf analyze -p workloads/problem/MI300A_A1 -p workloads/solution/MI300A_A1 --dispatch 1 --block 7.2.0 7.2.1 17.2.11 18.8
+rocprof-compute analyze -p workloads/problem/MI300A_A1 -p workloads/solution/MI300A_A1 --dispatch 1 --block 7.2.0 7.2.1 17.2.11 18.8
 ```
 Which shows:
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
    INFO Analysis mode = cli
-   INFO [analysis] deriving Omniperf metrics...
+   INFO [analysis] deriving ROCperf-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats

@@ -23,15 +23,15 @@ amount of LDS, and the benefit of using a smaller amount of LDS due to occupancy
 
 ## Results on MI210
 
-**Note:** This exercise was tested on a system with MI210s, on omniperf version `2.0.0` and ROCm `6.0.2`
-**Omniperf `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
+**Note:** This exercise was tested on a system with MI210s, on rocprof-compute version `2.0.0` and ROCm `6.0.2`
+**ROCprof-compute `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
 
 ### Initial Roofline Analysis
 In this exercise we're using a problem code that is slightly different than where we left off in Exercise 1. 
 Regardless, to get started we need to get a roofline by running:
 
 ```
-omniperf profile -n problem_roof_only --roof-only --kernel-names -- ./problem.exe
+rocprof-compute profile -n problem_roof_only --roof-only --kernel-names -- ./problem.exe
 ```
 The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` directory, if generated on MI200 hardware.
 
@@ -41,7 +41,7 @@ For convenience, the resulting plots on a representative system are below:
 |FP32/FP64      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise2_problem_roofline_fp32.png"/>      |
 |FP16/INT8      |<img src="figures/MI210/exercise1_problem_kernelName_legend.png"/>|<img src="figures/MI210/exercise2_problem_roofline_int8_fp16.png"/> |
 
-We see that there looks to be room for improvement here. We'll use omniperf to see what the current limiters are.
+We see that there looks to be room for improvement here. We'll use rocprof-compute to see what the current limiters are.
 
 ### Exercise Instructions:
 First, we should get an idea of the code's runtime:
@@ -61,25 +61,25 @@ That is, more wavefronts cannot be resident on the device, because all of them n
 We need to confirm this hypothesis, let's start by running:
 
 ```
-omniperf profile -n problem --no-roof -- ./problem.exe
+rocprof-compute profile -n problem --no-roof -- ./problem.exe
 ```
-The usage of `omniperf profile` arguments can be found [here](https://rocm.github.io/omniperf/profiling.html), or by running `omniperf profile --help`.
+The usage of `rocprof-compute profile` arguments can be found [here](https://rocm.github.io/rocprof-compute/profiling.html), or by running `rocprof-compute profile --help`.
 
-This `omniperf profile` command will take a minute or two to run, as omniperf must run your code a few times to collect all the hardware counters.
+This `rocprof-compute profile` command will take a minute or two to run, as rocprof-compute must run your code a few times to collect all the hardware counters.
 
 >**Note:** For large scientific codes, it can be useful to profile a small representative workload if possible, as profiling a full run may take prohibitively long.
 
 Once the profiling run completes, let's take a look at the occupancy stats related to LDS allocations:
 
 ```
-omniperf analyze -p workloads/problem/MI200 --dispatch 1 --block 2.1.15 6.2.7
+rocprof-compute analyze -p workloads/problem/MI200 --dispatch 1 --block 2.1.15 6.2.7
 ```
 The metrics we're looking at are:
 - `2.1.15` Wavefront occupancy -- a measure of how many wavefronts, on average, are active on the device
 - `6.2.7` SPI: Insufficient CU LDS -- indicates whether wavefronts are not able to be scheduled due to insufficient LDS
 
 The SPI section (`6.2`) generally shows what resources limit occupancy, while Wavefront occupancy (`2.1.15`) shows how severely occupancy is limited in general. 
-As of Omniperf version `2.0.0`, the SPI 'insufficient' fields are a percentage showing how frequently a given resource prevented the SPI from scheduling a wavefront.
+As of ROCprof-compute version `2.0.0`, the SPI 'insufficient' fields are a percentage showing how frequently a given resource prevented the SPI from scheduling a wavefront.
 If more than one field is nonzero, the relative magnitude of the nonzero fields correspond to the relative severity of the corresponding occupancy limitation (a larger percentage means a resource limits occupancy more than another resource with a smaller percentage), but it is usually impossible to closely correlate the SPI 'insufficient' percentage with the overall occupancy limit. 
 This could mean you reduce a large percentage in an 'insufficient' resource field to zero, and see overall occupancy only increase by a comparatively small amount.
 
@@ -94,18 +94,17 @@ This could mean you reduce a large percentage in an 'insufficient' resource fiel
 </details>
 
 
-The output of the `omniperf analyze` command should look similar to this:
+The output of the `rocprof-compute analyze` command should look similar to this:
 
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
 Analysis mode = cli
-[analysis] deriving Omniperf metrics...
+[analysis] deriving ROCprof-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -163,27 +162,26 @@ yAx time: 70 ms
 We see that the runtime is much better for this solution than the problem, let's see if removing LDS did indeed increase occupancy:
 
 ```
-omniperf profile -n solution --no-roof -- ./solution.exe
+rocprof-compute profile -n solution --no-roof -- ./solution.exe
 ```
 (*output omitted*)
 
 Once the profile command completes, run:
 ```
-omniperf analyze -p workloads/solution/MI200 --dispatch 1 --block 2.1.15 6.2.7
+rocprof-compute analyze -p workloads/solution/MI200 --dispatch 1 --block 2.1.15 6.2.7
 ```
 
 The output should look something like:
 
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
 Analysis mode = cli
-[analysis] deriving Omniperf metrics...
+[analysis] deriving ROCprof-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -243,26 +241,25 @@ This gives us the benefit of having some data pulled closer than it was in `solu
 But is this solution still occupancy limited by LDS?
 
 ```
-omniperf profile -n solution --no-roof -- ./solution.exe
+rocprof-compute profile -n solution --no-roof -- ./solution.exe
 ```
 (*output omitted*)
 
 Once the profile command completes, run:
 ```
-omniperf analyze -p workloads/solution/MI200 --dispatch 1 --block 2.1.15 6.2.7
+rocprof-compute analyze -p workloads/solution/MI200 --dispatch 1 --block 2.1.15 6.2.7
 ```
 The output should look something like:
 
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
 Analysis mode = cli
-[analysis] deriving Omniperf metrics...
+[analysis] deriving ROCprof-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -310,7 +307,7 @@ Pulling some data from global device memory to LDS can be an effective optimizat
 Let's take a look at the roofline for `solution`, which can be generated with:
 
 ```
-omniperf profile -n solution_roof_only --roof-only -- ./solution.exe
+rocprof-compute profile -n solution_roof_only --roof-only -- ./solution.exe
 ```
 The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` directory, if generated on MI200 hardware.
 
@@ -339,7 +336,7 @@ the SPI stats to ensure your LDS usage is not negatively impacting occupancy.
 
 ## Results on MI300A
 
-In this section, we show results obtained running this exercise on a system with MI300A, using ROCm `6.2.1` and the associated Omniperf, version `6.2.1`.
+In this section, we show results obtained running this exercise on a system with MI300A, using ROCm `6.2.1` and the associated ROCprof-compute, version `6.2.1`.
 
 ### Roofline Analysis:
 
@@ -361,27 +358,26 @@ Unlike the MI210 case, the runtime of `problem` is already smaller than it was f
 Once again, we launch the following command to collect complete profiling data for analysis:
 
 ```
-omniperf profile -n problem --no-roof -- ./problem.exe
+rocprof-compute profile -n problem --no-roof -- ./problem.exe
 ```
 
 Followed by:
 
 ```
-omniperf analyze -p workloads/problem/MI300A_A1 --dispatch 1 --block 2.1.15 6.2.7
+rocprof-compute analyze -p workloads/problem/MI300A_A1 --dispatch 1 --block 2.1.15 6.2.7
 ```
 
 Then inspect the output:
 
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
    INFO Analysis mode = cli
-   INFO [analysis] deriving Omniperf metrics...
+   INFO [analysis] deriving ROCprof-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -435,20 +431,19 @@ As in the MI210 case, completely eliminating LDS usage makes the runtime worse.
 
 Let's run the following commands and inspect the output:
 ```
-omniperf profile -n solution --no-roof -- ./solution.exe
-omniperf analyze -p workloads/solution/MI300A_A1/ --dispatch 1 --block 2.1.15 6.2.7
+rocprof-compute profile -n solution --no-roof -- ./solution.exe
+rocprof-compute analyze -p workloads/solution/MI300A_A1/ --dispatch 1 --block 2.1.15 6.2.7
 ```
 Output:
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
    INFO Analysis mode = cli
-   INFO [analysis] deriving Omniperf metrics...
+   INFO [analysis] deriving ROCprof-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -502,23 +497,21 @@ yAx time: 5.80 ms
 This shows that an appropriate reduction of LDS usage did improve the performance of the example. To see the specific values of the metrics of interest, we run:
 
 ```
-omniperf profile -n solution --no-roof -- ./solution.exe
-omniperf analyze -p workloads/solution/MI300A_A1 --dispatch 1 --block 2.1.15 6.2.7
+rocprof-compute profile -n solution --no-roof -- ./solution.exe
+rocprof-compute analyze -p workloads/solution/MI300A_A1 --dispatch 1 --block 2.1.15 6.2.7
 ```
 
 With output:
 
 ```
-
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
    INFO Analysis mode = cli
-   INFO [analysis] deriving Omniperf metrics...
+   INFO [analysis] deriving ROCprof-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats

@@ -3,7 +3,7 @@
 
 More complex yAx implementation to demonstrate a register limited kernel using an innocuous looking
 function call. The register limit no longer shows up for recent versions of ROCm on certain accelerators.
-Nevertheless, this exercise is useful for learning how to find register limited kernels using Omniperf and asks you to imagine the limiter exists for the sake of the exercise.
+Nevertheless, this exercise is useful for learning how to find register limited kernels using ROCprof-compute and asks you to imagine the limiter exists for the sake of the exercise.
 This is an example of how many things influence performance bugs: they exist on hardware, with a software stack, at a certain time. They may never exist outside that context.
 
 <details>
@@ -28,8 +28,8 @@ This is an example of how many things influence performance bugs: they exist on 
 
 ## Results on MI210
 
-**Note:** This exercise was tested on a system with MI210s, on omniperf version `2.0.0` and ROCm `6.0.2`
-**Omniperf `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
+**Note:** This exercise was tested on a system with MI210s, on rocprof-compute version `2.0.0` and ROCm `6.0.2`
+**ROCprof-compute `2.0.0` is incompatible with ROCm versions lesser than `6.0.0`**
 
 
 ### Initial Roofline Analysis
@@ -42,7 +42,7 @@ This kernel is slightly different from the one we used in previous exercises. Le
 
 You can generate these plots by running:
 ```
-omniperf profile -n problem_roof_only --roof-only --kernel-names -- ./problem.exe
+rocprof-compute profile -n problem_roof_only --roof-only --kernel-names -- ./problem.exe
 ```
 The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` directory, if generated on MI200 hardware.
 
@@ -59,28 +59,27 @@ make
 ```
 yAx time 71 ms
 ```
-We see that this kernel seems to be on par with some of our other exercises, but let's see what omniperf shows us:
+We see that this kernel seems to be on par with some of our other exercises, but let's see what rocprof-compute shows us:
 
 ```
-omniperf profile -n problem --no-roof -- ./problem.exe
+rocprof-compute profile -n problem --no-roof -- ./problem.exe
 ```
 (*lots of output from this command*)
 ```
-omniperf analyze -p workloads/problem/MI200 --dispatch 1 --block 2.1.15 6.2.5 7.1.5 7.1.6 7.1.7
+rocprof-compute analyze -p workloads/problem/MI200 --dispatch 1 --block 2.1.15 6.2.5 7.1.5 7.1.6 7.1.7
 ```
 - `2.1.15` Shows Wavefront occupancy
 - `6.2.5` Shows Insufficient SIMD VGPRs -- indicating if this kernel is occupancy limited by VGPR usage
 - `7.1.5-7` Shows the register usage: VGPRs, SGPRs, and AGPRs
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
    INFO Analysis mode = cli
-   INFO [analysis] deriving Omniperf metrics...
+   INFO [analysis] deriving ROCprof-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -150,27 +149,26 @@ make
 yAx time: 70 ms
 ```
 
-Our runtime seems fairly similar with or without the `assert`, but we should also check that omniperf reports that our limiters are gone:
+Our runtime seems fairly similar with or without the `assert`, but we should also check that rocprof-compute reports that our limiters are gone:
 
 ```
-omniperf profile -n solution --no-roof -- ./solution.exe
+rocprof-compute profile -n solution --no-roof -- ./solution.exe
 ```
 (*omitted output*)
 ```
-omniperf analyze -p workloads/solution/MI200 --dispatch 1 --block 2.1.15 6.2.5 7.1.5 7.1.6 7.1.7
+rocprof-compute analyze -p workloads/solution/MI200 --dispatch 1 --block 2.1.15 6.2.5 7.1.5 7.1.6 7.1.7
 ```
 The output of this command should look something like:
 
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
    INFO Analysis mode = cli
-   INFO [analysis] deriving Omniperf metrics...
+   INFO [analysis] deriving ROCprof-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -230,20 +228,18 @@ Looking at this data, we see:
 More generally, you can use this command to look at all SPI "insufficient resource" stats in the same screen, to determine if any resource is currently limiting occupancy.
 In fact, we can use this to ensure our problem implementation no longer has any SPI-related occupancy limiters with the newer version of ROCm:
 ```
-omniperf analyze -p workloads/problem/MI200 --dispatch 1 --block 6.2
+rocprof-compute analyze -p workloads/problem/MI200 --dispatch 1 --block 6.2
 ```
 Which will show output similar to this (note, fields `6.2.4` to `6.2.8` show resources which currently limit occupancy):
 ```
-
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
 Analysis mode = cli
-[analysis] deriving Omniperf metrics...
+[analysis] deriving ROCprof-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -304,7 +300,7 @@ With similar performance, we expect to see similar plots in the roofline for pro
 You can generate these plots with:
 
 ```
-omniperf profile -n problem_roof_only --roof-only --kernel-names -- ./problem.exe
+rocprof-compute profile -n problem_roof_only --roof-only --kernel-names -- ./problem.exe
 ```
 The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` directory, if generated on MI200 hardware.
 
@@ -326,7 +322,7 @@ If you see unexpected resource usage, try eliminating or reducing the use of the
 
 ## Results on MI300A
 
-In this section, we show results obtained running this exercise on a system with MI300A, using ROCm `6.2.1` and the associated Omniperf, version `6.2.1`.
+In this section, we show results obtained running this exercise on a system with MI300A, using ROCm `6.2.1` and the associated ROCprof-compute, version `6.2.1`.
 
 ### Roofline Analysis:
 
@@ -345,23 +341,21 @@ yAx time: 10 ms
 
 Let's run the following commands to explore some metrics:
 ```
-omniperf profile -n problem --no-roof -- ./problem.exe
-omniperf analyze -p workloads/problem/MI300A_A1 --dispatch 1 --block 2.1.15 6.2.5 7.1.5 7.1.6 7.1.7
+rocprof-compute profile -n problem --no-roof -- ./problem.exe
+rocprof-compute analyze -p workloads/problem/MI300A_A1 --dispatch 1 --block 2.1.15 6.2.5 7.1.5 7.1.6 7.1.7
 ```
 
 Then explore the output:
 
 ```
-
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
    INFO Analysis mode = cli
-   INFO [analysis] deriving Omniperf metrics...
+   INFO [analysis] deriving ROCprof-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -429,21 +423,20 @@ The runtime is practically the same as the `problem` implementation.
 For performance metrics, let's run:
 
 ```
-omniperf profile -n solution --no-roof -- ./solution.exe
-omniperf analyze -p workloads/solution/MI300A_A1 --dispatch 1 --block 2.1.15 6.2.5 7.1.5 7.1.6 7.1.7
+rocprof-compute profile -n solution --no-roof -- ./solution.exe
+rocprof-compute analyze -p workloads/solution/MI300A_A1 --dispatch 1 --block 2.1.15 6.2.5 7.1.5 7.1.6 7.1.7
 ```
 
 With output:
 ```
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
    INFO Analysis mode = cli
-   INFO [analysis] deriving Omniperf metrics...
+   INFO [analysis] deriving ROCprof-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
@@ -500,22 +493,20 @@ Just like the case of MI210, the Wavefront Launch Stats differ between `problem`
 
 ```
 cd ..
-omniperf analyze -p workloads/problem/MI300A_A1 --dispatch 1 --block 6.2
+rocprof-compute analyze -p workloads/problem/MI300A_A1 --dispatch 1 --block 6.2
 ```
 
 With output:
 
 ```
-
-  ___                  _                  __
- / _ \ _ __ ___  _ __ (_)_ __   ___ _ __ / _|
-| | | | '_ ` _ \| '_ \| | '_ \ / _ \ '__| |_
-| |_| | | | | | | | | | | |_) |  __/ |  |  _|
- \___/|_| |_| |_|_| |_|_| .__/ \___|_|  |_|
-                        |_|
+ _ __ ___   ___ _ __  _ __ ___  / _|       ___ ___  _ __ ___  _ __  _   _| |_ ___
+| '__/ _ \ / __| '_ \| '__/ _ \| |_ _____ / __/ _ \| '_ ` _ \| '_ \| | | | __/ _ \
+| | | (_) | (__| |_) | | | (_) |  _|_____| (_| (_) | | | | | | |_) | |_| | ||  __/
+|_|  \___/ \___| .__/|_|  \___/|_|        \___\___/|_| |_| |_| .__/ \__,_|\__\___|
+               |_|                                           |_|
 
    INFO Analysis mode = cli
-   INFO [analysis] deriving Omniperf metrics...
+   INFO [analysis] deriving ROCprof-compute metrics...
 
 --------------------------------------------------------------------------------
 0. Top Stats
