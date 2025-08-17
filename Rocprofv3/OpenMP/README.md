@@ -1,5 +1,5 @@
 
-# rocprofv3
+# Rocprofv3 Exercises for OpenMP
 
 In this series of examples, we will demonstrate profiling with rocprofv3 on a platform using an AMD Instinct&trade; MI300 GPU. ROCm releases (6.2+) now include rocprofv3.
 
@@ -20,12 +20,12 @@ cd HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/7_jacobi/1_jacobi_usm
 Load the necessary modules, including flang-new compiler:
 
 ```
-module load rocm/6.2.1
+module load rocm
 module load amdflang-new
 module load openmpi
 ```
 
-For now unset HSA_XNACK environment variable:
+For now unset `HSA_XNACK` environment variable:
 
 ```
 export HSA_XNACK=0
