@@ -31,27 +31,27 @@ hipcc -c --offload-arch=gfx90a -Rpass-analysis=kernel-resource-usage lbm.cpp
 Output should be something like
 
 ```
-lbm.cpp:16:1: remark:     SGPRs: 100 [-Rpass-analysis=kernel-resource-usage]​
-lbm.cpp:16:1: remark:     VGPRs: 104 [-Rpass-analysis=kernel-resource-usage]​
-lbm.cpp:16:1: remark:     AGPRs: 0 [-Rpass-analysis=kernel-resource-usage]​
-lbm.cpp:16:1: remark:     ScratchSize [bytes/lane]: 0 [-Rpass-analysis=kernel-resource-usage]​
-lbm.cpp:16:1: remark:     Dynamic Stack: False [-Rpass-analysis=kernel-resource-usage]​
-lbm.cpp:16:1: remark:     Occupancy [waves/SIMD]: 4 [-Rpass-analysis=kernel-resource-usage]​
-lbm.cpp:16:1: remark:     SGPRs Spill: 0 [-Rpass-analysis=kernel-resource-usage]​
-lbm.cpp:16:1: remark:     VGPRs Spill: 0 [-Rpass-analysis=kernel-resource-usage]​
-lbm.cpp:16:1: remark:     LDS Size [bytes/block]: 0 [-Rpass-analysis=kernel-resource-usage​
+lbm.cpp:16:1: remark:     SGPRs: 100 [-Rpass-analysis=kernel-resource-usage]
+lbm.cpp:16:1: remark:     VGPRs: 104 [-Rpass-analysis=kernel-resource-usage]
+lbm.cpp:16:1: remark:     AGPRs: 0 [-Rpass-analysis=kernel-resource-usage]
+lbm.cpp:16:1: remark:     ScratchSize [bytes/lane]: 0 [-Rpass-analysis=kernel-resource-usage]
+lbm.cpp:16:1: remark:     Dynamic Stack: False [-Rpass-analysis=kernel-resource-usage]
+lbm.cpp:16:1: remark:     Occupancy [waves/SIMD]: 4 [-Rpass-analysis=kernel-resource-usage]
+lbm.cpp:16:1: remark:     SGPRs Spill: 0 [-Rpass-analysis=kernel-resource-usage]
+lbm.cpp:16:1: remark:     VGPRs Spill: 0 [-Rpass-analysis=kernel-resource-usage]
+lbm.cpp:16:1: remark:     LDS Size [bytes/block]: 0 [-Rpass-analysis=kernel-resource-usage
 ```
 
 Repeat for the other cases
 
-1. Remove unnecessary math functions​
+1. Remove unnecessary math functions
 
-pow(current_phi, 2.0) on line 37 can be changed to current_phi * current_phi​
+pow(current_phi, 2.0) on line 37 can be changed to current_phi * current_phi
 
 2. This C function raises the argument to a floating point power in software. It is not a very efficient way to do the
-operation and also consumes a lot of registers.​
+operation and also consumes a lot of registers.
 
-3. Rearrange code so variables are declared close to use​
+3. Rearrange code so variables are declared close to use
 
 Add restrict attribute to function arguments
 
