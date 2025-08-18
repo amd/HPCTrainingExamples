@@ -102,17 +102,12 @@ int main() {
   // Copy h_in into d_in
   hipCheck(hipMemcpy(d_in, h_in.data(), N * sizeof(double), hipMemcpyHostToDevice));
 
-  //  Shared‑memory size = (BLOCKSIZE / warpSize) * sizeof(double)
-  const size_t shmem_per_block = BLOCKSIZE  * sizeof(double);
-  const size_t shmem_final = GRIDSIZE * sizeof(double);
-
   // Start event timer to measure kernel timing
   hipCheck( hipEventRecord(start, nullptr) );
 
   // Compute the reductions
-  reduction_to_array<<<GRIDSIZE, BLOCKSIZE, shmem_per_block>>>(d_in, d_partial_sums, N);
-  //  Second launch: one block, GRIDSIZE threads
-  reduction_to_array<<<1, GRIDSIZE, shmem_final>>>(d_partial_sums, d_in, GRIDSIZE);
+  reduction_to_array<<<GRIDSIZE, BLOCKSIZE, BLOCKSIZE  * sizeof(double)>>>(d_in, d_partial_sums, N);
+  reduction_to_array<<<1, GRIDSIZE, GRIDSIZE * sizeof(double)>>>(d_partial_sums, d_in, GRIDSIZE);
 
   // Stop event timer
   hipCheck( hipEventRecord(stop, nullptr) );

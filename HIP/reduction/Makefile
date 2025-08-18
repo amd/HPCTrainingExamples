@@ -6,7 +6,7 @@ HIPFLAGS = --offload-arch=${ROCM_GPU}
 
 # ------------------------------
 
-all: reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_two_kernels_unroll reduction_shfl reduction_prim
+all: reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_shfl reduction_prim
 
 reduction_striding: reduction_striding.cpp
 	${HIPCC} ${HIPFLAGS} reduction_striding.cpp -o reduction_striding
@@ -23,16 +23,13 @@ reduction_atomic: reduction_atomic.cpp
 reduction_two_kernel_calls: reduction_two_kernel_calls.cpp
 	${HIPCC} ${HIPFLAGS} reduction_two_kernel_calls.cpp -o reduction_two_kernel_calls
 
-reduction_two_kernels_unroll: reduction_two_kernels_unroll.cpp
-	${HIPCC} ${HIPFLAGS} reduction_two_kernels_unroll.cpp -o reduction_two_kernels_unroll
-
 reduction_shfl: reduction_shfl.cpp
 	${HIPCC} ${HIPFLAGS} reduction_shfl.cpp -o reduction_shfl
 
 reduction_prim: reduction_prim.cpp
 	${HIPCC} ${HIPFLAGS} reduction_prim.cpp -o reduction_prim
 
-run_tests: reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_two_kernels_unroll reduction_shfl reduction_prim
+run_tests: reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_shfl reduction_prim
 	@echo "Running reduction_striding"
 	./reduction_striding
 	@echo ""
@@ -45,9 +42,6 @@ run_tests: reduction_striding reduction_no_striding reduction_to_fix reduction_a
 	@echo "Running reduction_two_kernel_calls"
 	./reduction_two_kernel_calls
 	@echo ""
-	@echo "Running reduction_two_kernels_unroll"
-	./reduction_two_kernels_unroll
-	@echo ""
 	@echo "Running reduction_shfl"
 	./reduction_shfl
 	@echo ""
@@ -57,4 +51,4 @@ run_tests: reduction_striding reduction_no_striding reduction_to_fix reduction_a
 .PHONY: clean
 
 clean:
-	rm -f reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_two_kernels_unroll reduction_shfl reduction_prim
+	rm -f reduction_striding reduction_no_striding reduction_to_fix reduction_atomic reduction_two_kernel_calls reduction_shfl reduction_prim

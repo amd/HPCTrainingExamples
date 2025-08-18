@@ -67,8 +67,7 @@ This is the first part of the reduction operation: at the beginning of the for l
 
 Note that a synchronization barrier is also included as the final step of each iteration of the for loop. This is because the `shared_mem` array has been modified and we need to make sure all threads see the correct version before the next iteration of the for loop.
 
-Here we require the thread with local ID equal to 0 to store the partial sum computed by the threads in the current workgroup on the output array.
-Note that the size of the output array is precisely the number of workgroups in the thread grid. This is because the reduction is performed at the workgroup level. At this point, the kernel has computed its execution, but the reduction operation is not yet completed: we need to sum all the partial sums for each workgroup to obtain the final result. This is done again with a reduction operation. In this example, this final reduction is done on the CPU. See `reduction_two_kernel_calls.cpp` for an example of how to call two kernels to perform all the reduction operations on the GPU.
+Here we require the thread with local ID equal to 0 to store the partial sum computed by the threads at the entry equal to the current workgroup, on the output array. Note that the size of the output array is precisely the number of workgroups in the thread grid. This is because the reduction is performed at the workgroup level. At this point, the kernel has computed its execution, but the reduction operation is not yet completed: we need to sum all the partial sums for each workgroup to obtain the final result. This is done again with a reduction operation. In this example, this final reduction is done on the CPU. See `reduction_two_kernel_calls.cpp` for an example of how to call two kernels to perform all the reduction operations on the GPU.
 
 
 ## Reduction with Striding
@@ -197,7 +196,7 @@ __global__ void reduction_to_array(const double* input, double* output, int size
 }
 ```
 
-In this example, we will be performing all the reduction operations on the GPU: we will do so by calling the above kernel twice. Notice that in the second for loop, to initialize `s`, we are using `blockDim.x` and not `BLOCKSIZE` as in the previous examples: this is because we will be calling the same kernel `reduction_to_array` twice, but supplying a different thread grid for each invocation. The first invocation proceeds in the same way as in the previous examples, there is a notable difference though which is that now the shared memory is declared as:
+In this example, we will be performing all the reduction operations on the GPU: we will do so by calling the above kernel twice. The above kernel looks very similar to the one in `reduction_no_striding.cpp`. Notice however that in the second for loop, to initialize `s`, we are using `blockDim.x` instead of `BLOCKSIZE`: this is because we will be calling the same kernel `reduction_to_array` twice, but supplying a different thread grid for each invocation. The first invocation proceeds in the same way as in the previous examples, there is a notable difference though which is that now the shared memory is declared as:
 
 ```
 extern __shared__ double local_sum[];
@@ -212,104 +211,28 @@ reduction_to_array<<<1, GRIDSIZE, GRIDSIZE*sizeof(double)>>>(d_partial_sums, d_i
 
 The second invocation above is accumulating the partial sums in the first entry of `d_in` that now is supplied as output to the kernel. Notice that the grid that is used for the second kernel invocation is one that has only one block, with size equal to the initial block size. This means that `GRIDSIZE` cannot be larger than 1024, which is the maximum block size. Also notice that because of `blockDim.x/2` in the second for loop in the kernel, we also need `GRIDSIZE` to be a power of 2, in addition to `BLOCKSIZE`, as we have mentioned at the beginning of this README. The requirements of `GRIDSIZE` and `BLOCKSIZE` being powers of two can be relaxed, but such cases are not shown in these examples.
 
-## Reduction with Two Different Kernels and Unrolling
-
-In the previous example, there is an implicit unrolling in each kernel. By unrolling, we mean that each thread adds more than one value from the input array. In this
-example, we start off with a simpler technique where in the first kernel we just sum one value per thread. When looking at the source code `reduction_two_kernels_unroll.cpp`, first 
-consider it with the `unroll_factor` variable set to one.
-
-```
-__global__ void get_partial_sums(const double* input, double* output, int size) {
-  extern __shared__ double local_sum[];
-
-  // Global ID of thread in thread grid
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-  // Stride size is equal to total number of threads in grid
-  int grid_size = blockDim.x * gridDim.x;
-
-  local_sum[threadIdx.x] = 0.0;
-  if (idx < size) {
-    local_sum[threadIdx.x] += input[idx];
-  }
-
-  // Store local sum in shared memory
-  __syncthreads();
-
-  for (int s = blockDim.x / 2; s > 0; s /= 2) {
-    if (threadIdx.x < s) {
-      local_sum[threadIdx.x] += local_sum[threadIdx.x + s];
-    }
-    __syncthreads();
-  }
-
-  if (threadIdx.x == 0) {
-    output[blockIdx.x] = local_sum[0];
-  }
-}
-```
-
-We call this kernel with the more usual ceiling function to calculate the number of workgroups. This will than
-take the input data array and sum each workgroup. It writes out a `partial_sum` array that is the original input
-data size divided by the number of workgroups. 
-
-```
- int nblocks = ceil(N/BLOCKSIZE);
- get_partial_sums<<<nblocks, BLOCKSIZE, BLOCKSIZE*sizeof(double)>>>(d_in, d_partial_sums, N);
-```
-
-This will in general be a little slower than the `two_kernel_calls` version because there is not enough 
-work for each thread and more data needs to be written out. So we add an unrolling factor. First, the calls
-to launch the kernel become
-
-```
- int nblocks = ceil(N/BLOCKSIZE/unroll_factor);
- get_partial_sums<<<nblocks, BLOCKSIZE, BLOCKSIZE*sizeof(double)>>>(d_in, d_partial_sums, N);
-```
-
-Note that all that changes is the calculation of `nblocks`.
-
-```
-__global__ void get_partial_sums(const double* input, double* output, int size) {
-  extern __shared__ double local_sum[];
-
-  // Global ID of thread in thread grid
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-  // Stride size is equal to total number of threads in grid
-  int grid_size = blockDim.x * gridDim.x;
-
-  local_sum[threadIdx.x] = 0.0;
-  for (int i = idx; i < size; i += grid_size) {
-    local_sum[threadIdx.x] += input[i];
-  }
-
-  // Store local sum in shared memory
-  __syncthreads();
-
-  for (int s = blockDim.x / 2; s > 0; s /= 2) {
-    if (threadIdx.x < s) {
-      local_sum[threadIdx.x] += local_sum[threadIdx.x + s];
-    }
-    __syncthreads();
-  }
-
-  if (threadIdx.x == 0) {
-    output[blockIdx.x] = local_sum[0];
-  }
-}
-```
-
-Note that there is now an extra loop that will effectively cause each thread to sum up to the `unroll_factor` number of values. The unroll factor is
-not explicitly sent into the kernel -- it comes in through the new value for the `grid_size`. And we can now see the similarities to the `two_kernel_calls`
-version which sends in a fixed number of workgroups. Try varying the unroll factor and see how the performance changes. 
-
 ## Reduction with Warp Shuffles
 
 Warp shuffles load adjacent values from threads in a workgroup. The last example shows a version that uses warp shuffles. The benefits
 of using warp shuffles is that it reduces shared memory usage (LDS) and also reduces synchronization calls. 
+If `blockDim.x=64`, this block of code:
 
+```
+ for (int s = blockDim.x / 2; s > 0; s /= 2) { 
+   if (threadIdx.x < s) {
+      local_sum[threadIdx.x] += local_sum[threadIdx.x + s];   
+   } 
+   __syncthreads();  
+}
+```
 
+could be rewritten as:
+```
+for (int s = blockDim.x / 2; s > 0; s /= 2) {
+   sum += __shfl_down(sum, s);
+}
+```
+To compile and run the example do:
 ```
 make reduction_shfl
 ./reduction_shfl

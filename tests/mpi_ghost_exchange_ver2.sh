@@ -7,7 +7,7 @@ if [ ${XNACK_COUNT} -lt 1 ]; then
 else
 
    export HSA_XNACK=1
-   module load amdclang openmpi omnitrace
+   module load amdclang openmpi
 
    # OpenIB is removed as of OpenMPI 5.0.0, so only needed for older versions
    CurrentVersion=`mpirun --version |head -1 | tr -d '[:alpha:] ) (' `
@@ -30,11 +30,11 @@ else
    cmake ..
    make
 
-   export OMNITRACE_USE_PROCESS_SAMPLING=false
-   omnitrace-instrument -o GhostExchange.inst -- ./GhostExchange
-   mpirun -n 4 omnitrace-run -- ./GhostExchange.inst
+   export ROCPROFSYS_USE_PROCESS_SAMPLING=false
+   rocprof-sys-instrument -o GhostExchange.inst -- ./GhostExchange
+   mpirun -n 4 rocprof-sys-run -- ./GhostExchange.inst
 
-   ls -Rl omnitrace* |grep perfetto
+   ls -Rl rocprofsys-* |grep perfetto
 
    cd ..
    rm -rf build

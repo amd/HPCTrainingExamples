@@ -94,7 +94,7 @@ int main() {
   }
   else{
      std::cout<<"PASS"<<std::endl;
-     std::cout<<"Kernel time: " << kernel_time << " ms" << std::endl;     
+     std::cout<<"Kernel time: " << kernel_time << " ms" << std::endl;
   }
 
   hipCheck( hipFree(d_in) );

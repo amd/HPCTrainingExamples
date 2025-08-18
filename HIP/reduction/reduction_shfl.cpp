@@ -1,8 +1,3 @@
-// Original code by Yifan Sun: https://gitlab.com/syifan/hipbookexample
-// Modified by Giacomo Capodaglio: Giacomo.Capodaglio@amd.com
-// and Bob Robey: Bob.Robey@amd.com
-// see also "Programming in Parallel with CUDA, a Practical Guide by Richard Ansorge"
-
 #include <hip/hip_runtime.h>
 #include <iostream>
 #include <iomanip>
@@ -30,11 +25,11 @@ constexpr int GRIDSIZE = 1024;
 // ---------------------------------------------------------------------
 //  reduction_to_array
 //    * each thread accumulates a strided sum over the input array
-//    * the per‑thread sum is reduced inside its own wavefront with
+//    * the per thread sum is reduced inside its own wavefront with
 //      __shfl_down
 //    * the wavefront leader (lane 0) writes its partial sum to a tiny
-//      shared‑memory array (one double per wavefront)
-//    * the first wavefront reduces those per‑wavefront sums to the final
+//      shared memory array (one double per wavefront)
+//    * the first wavefront reduces those per wavefront sums to the final
 //      block sum and writes it to output[blockIdx.x]
 // ---------------------------------------------------------------------
 __global__ void reduction_to_array(const double* __restrict__ input,
@@ -57,7 +52,7 @@ __global__ void reduction_to_array(const double* __restrict__ input,
       threadSum += __shfl_down(threadSum, offset);
   }
 
-  //  3)  Write each wavefront’s leader (lane 0) to shared memory
+  //  3)  Write each wavefront's leader (lane 0) to shared memory
   const int lane   = tid % warpSize;               // 0 … 63
   const int warpId = tid / warpSize;               // 0 … (BLOCKSIZE/warpSize-1)
 
@@ -69,7 +64,7 @@ __global__ void reduction_to_array(const double* __restrict__ input,
 
   __syncthreads();                                 // make sure all warp sums are visible
 
-  //  4)  The first wavefront reduces the per‑wavefront sums.
+  //  4)  The first wavefront reduces the per wavefront sums.
   double blockSum = 0.0;
   if (warpId == 0) {                               // only the first wavefront participates
       // load the warp sums into the lanes of the first wavefront
@@ -82,7 +77,7 @@ __global__ void reduction_to_array(const double* __restrict__ input,
           blockSum += __shfl_down(blockSum, offset);
       }
 
-      // lane 0 now holds the block‑wide sum
+      // lane 0 now holds the block wide sum
       if (lane == 0) {
           output[blockIdx.x] = blockSum;
       }
@@ -129,7 +124,7 @@ int main() {
   // Copy h_in into d_in
   hipCheck(hipMemcpy(d_in, h_in.data(), N * sizeof(double), hipMemcpyHostToDevice));
 
-  //  Shared‑memory size = (BLOCKSIZE / warpSize) * sizeof(double)
+  //  Shared memory size = (BLOCKSIZE / warpSize) * sizeof(double)
   const size_t shmem_per_block = (BLOCKSIZE / warpSize) * sizeof(double);
   const size_t shmem_final = (GRIDSIZE / warpSize) * sizeof(double);
 
