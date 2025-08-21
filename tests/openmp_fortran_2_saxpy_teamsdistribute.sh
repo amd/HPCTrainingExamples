@@ -1,5 +1,6 @@
 #!/bin/bash
 
+module load rocm
 module load amdflang-new
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
