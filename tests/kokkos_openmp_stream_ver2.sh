@@ -1,7 +1,7 @@
 #!/bin/bash
 
-module load amdclang
 module load rocm
+module load amdclang
 
 PROB_NAME=kokkos_openmp_stream_ver2
 mkdir ${PROB_NAME} && cd ${PROB_NAME}

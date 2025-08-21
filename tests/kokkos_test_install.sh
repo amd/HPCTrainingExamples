@@ -1,5 +1,6 @@
 #!/bin/bash
 
+module load rocm
 module load kokkos
 
 git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 Chapter13

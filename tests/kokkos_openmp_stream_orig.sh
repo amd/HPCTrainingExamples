@@ -1,5 +1,6 @@
 #!/bin/bash
 
+module load rocm
 module load amdclang
 
 PROB_NAME=kokkos_openmp_stream_orig
