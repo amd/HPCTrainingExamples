@@ -1,5 +1,6 @@
 #!/bin/bash
 
+module load rocm
 module load openmpi
 
 mkdir openmpi_hello_world_run && cd openmpi_hello_world_run

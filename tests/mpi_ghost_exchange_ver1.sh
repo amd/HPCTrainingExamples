@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export HSA_XNACK=1
+module load rocm
 module load amdclang openmpi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 unset HSA_XNACK
+module load rocm
 module load amdclang openmpi
 
 # OpenIB is removed as of OpenMPI 5.0.0, so only needed for older versions
