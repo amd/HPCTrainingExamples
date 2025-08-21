@@ -1,7 +1,7 @@
 #!/bin/bash
 module load pytorch
 
-python <<EOF                                     
+python3 <<EOF                                     
 import torch
 import sys
 
