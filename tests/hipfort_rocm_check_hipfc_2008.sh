@@ -1,6 +1,8 @@
 #!/bin/bash
 
+module load rocm
 module load amdclang 
+module load hipfort
 AMDGPU_GFXMODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`
 
 git clone https://github.com/ROCm/hipfort hipfort_for_test

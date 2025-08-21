@@ -1,6 +1,8 @@
 #!/bin/bash
 
+module load rocm
 module load amdclang
+module load rocm
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIPFort/hipgemm
 make clean
