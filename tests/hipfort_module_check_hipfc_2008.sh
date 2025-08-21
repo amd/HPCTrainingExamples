@@ -1,5 +1,6 @@
 #!/bin/bash
 
+module load rocm
 module load hipfort_from_source
 AMDGPU_GFXMODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`
 
