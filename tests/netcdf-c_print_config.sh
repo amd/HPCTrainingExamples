@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
+module load rocm
 module load netcdf-c
 
 if [[ ${HDF5_ENABLE_PARALLEL} == "OFF" ]]; then

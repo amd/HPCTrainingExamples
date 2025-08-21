@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
+module load rocm
 module load netcdf-fortran
 
 # use the compiler used to build netcdf-fortran

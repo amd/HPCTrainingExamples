@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
+module load rocm
 module load netcdf-c
 
 # use the compiler used to build netcdf-c

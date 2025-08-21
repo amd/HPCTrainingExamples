@@ -58,6 +58,7 @@ REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIP/jacobi
 
 
+module load rocm
 module load openmpi
 module load tau
 

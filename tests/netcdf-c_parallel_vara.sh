@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
+module load rocm
 module load netcdf-c
 module load openmpi
 

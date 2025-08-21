@@ -6,6 +6,7 @@
 # to the instructions available in the model installation repo:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/ftorch_setup.sh
 
+module load rocm
 module load ftorch
 
 git clone https://github.com/Cambridge-ICCS/FTorch.git ftorch_test
