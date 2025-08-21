@@ -7,6 +7,7 @@
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
+module load rocm
 module load mpi4py
 module load cupy
 
