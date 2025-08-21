@@ -1,6 +1,7 @@
 // daxpy_kernel.hip.cpp
 #include <hip/hip_runtime.h>
 #include <stdio.h>
+#include<cassert>
 
 
 extern "C" {

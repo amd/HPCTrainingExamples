@@ -1,7 +1,4 @@
-// Original code by Yifan Sun: https://gitlab.com/syifan/hipbookexample
-// Modified by Giacomo Capodaglio: Giacomo.Capodaglio@amd.com
-// and Bob Robey: Bob.Robey@amd.com
-// see also "Programming in Parallel with CUDA, a Practical Guide by Richard Ansorge"
+// Author: Bob Robey: Bob.Robey@amd.com
 
 #include <hip/hip_runtime.h>
 #include <rocprim/rocprim.hpp>
