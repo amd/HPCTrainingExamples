@@ -18,5 +18,5 @@ popd
 
 rm -rf hipfort_for_test
 
-module unload hipfort
+module unload hipfort_from_source
 
