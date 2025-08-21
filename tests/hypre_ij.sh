@@ -7,8 +7,8 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/hypre_setup.sh
 
 
-
-module load rocm openmpi hypre
+module load rocm
+module load openmpi hypre
 
 HYPRE_VERSION=`cat $HYPRE_PATH/lib/cmake/HYPRE/HYPREConfigVersion.cmake | grep "set(PACKAGE_VERSION \"2"`
 HYPRE_VERSION=`echo $HYPRE_VERSION | sed 's/set(PACKAGE_VERSION \"//g'`

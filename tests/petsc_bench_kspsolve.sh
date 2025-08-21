@@ -55,7 +55,8 @@ done
 
 
 
-module load rocm openmpi $PETSC_MODULE
+module load rocm
+module load openmpi $PETSC_MODULE
 
 PETSC_VERSION=`$PETSC_DIR/lib/petsc/bin/petscversion`
 

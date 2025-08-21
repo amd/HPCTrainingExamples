@@ -7,8 +7,8 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/petsc_setup.sh
 
 
-
-module load rocm openmpi petsc_amdflang
+module load rocm
+module load openmpi petsc_amdflang
 
 PETSC_VERSION=`$PETSC_DIR/lib/petsc/bin/petscversion`
 

@@ -8,7 +8,7 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/tensorflow_setup.sh
 
 
-
+module load rocm
 module load tensorflow
 
 python3 -c 'import tensorflow' 2> /dev/null && echo 'Success' || echo 'Failure'
