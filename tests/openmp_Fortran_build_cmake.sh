@@ -16,4 +16,6 @@ else
    ./openmp_code
 
    make clean
+   cd ..
+   rm -rf build
 fi
