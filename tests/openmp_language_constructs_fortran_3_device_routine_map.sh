@@ -1,5 +1,6 @@
 #!/bin/bash
 
+module load rocm
 module load amdflang-new
 export HSA_XNACK=1
 

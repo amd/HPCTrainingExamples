@@ -1,5 +1,6 @@
 #!/bin/bash
 
+module load rocm
 module load amdclang
 export HSA_XNACK=1
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
