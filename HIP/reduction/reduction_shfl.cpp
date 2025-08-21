@@ -1,3 +1,5 @@
+// Author: Bob Robey: Bob.Robey@amd.com
+
 #include <hip/hip_runtime.h>
 #include <iostream>
 #include <iomanip>
