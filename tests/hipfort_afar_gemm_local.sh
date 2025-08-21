@@ -1,5 +1,6 @@
 #!/bin/bash
 
+module load rocm
 module load amdflang-new
 export HIPFORT_PATH=$AFAR_PATH
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
