@@ -8,7 +8,7 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/pytorch_setup.sh
 
 
-
+module load rocm
 module load pytorch
 
 python3 -c 'import torch; print(torch.cuda.is_available())'

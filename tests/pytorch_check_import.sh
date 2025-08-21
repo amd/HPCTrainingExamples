@@ -8,7 +8,7 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/pytorch_setup.sh
 
 
-
+module load rocm
 module load pytorch
 
 python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'

@@ -1,4 +1,5 @@
 #!/bin/bash
+module load rocm
 module load pytorch
 
 python3 <<EOF                                     

@@ -10,7 +10,7 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/pytorch_setup.sh
 
 
-
+module load rocm
 module load pytorch
 
 rm -rf pytorch_mnist
