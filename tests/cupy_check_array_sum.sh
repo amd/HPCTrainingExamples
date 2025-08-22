@@ -8,7 +8,7 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/cupy_setup.sh
 
 
-
+module load rocm
 module load cupy
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
