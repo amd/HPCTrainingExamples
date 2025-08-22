@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export HSA_XNACK=1
 module load gcc
 module load rocm
 git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 Chapter13
@@ -11,5 +12,8 @@ make -j 8 ShallowWater_par2
 
 ./ShallowWater_par2
 
-cd ../../../..
+cd ..
+rm -rf hip_build
+
+cd ../../..
 rm -rf Chapter13

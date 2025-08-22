@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export HSA_XNACK=1
 module load gcc
 module load rocm
 git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 Chapter13
@@ -10,6 +11,8 @@ cmake -DKokkos_ENABLE_HIP=ON -DCMAKE_CXX_COMPILER=hipcc ..
 make -j 8 ShallowWater_par1
 
 ./ShallowWater_par1
+cd ..
+rm -rf hip_build
 
-cd ../../../..
+cd ../../..
 rm -rf Chapter13
