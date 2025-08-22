@@ -9,7 +9,7 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/cupy_setup.sh
 
 
-
+module load rocm
 module load cupy
 
 git clone -q --depth 1 --recursive https://github.com/ROCm/cupy.git

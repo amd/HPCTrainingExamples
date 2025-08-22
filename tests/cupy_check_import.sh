@@ -8,7 +8,7 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/cupy_setup.sh
 
 
-
+module load rocm
 module load cupy
 
 python3 -c 'import cupy' 2> /dev/null && echo 'Success' || echo 'Failure'
