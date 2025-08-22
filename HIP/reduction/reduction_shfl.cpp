@@ -96,13 +96,13 @@ int main() {
   hipCheck( hipEventCreate(&start) );
   hipCheck( hipEventCreate(&stop) );
 
-  if( (GRIDSIZE & (GRIDSIZE - 1)) != 0){
-     std::cout<<"ERROR: GRIDSIZE needs to be a power of 2 in this example" << std::endl;
+  if( GRIDSIZE % warpSize != 0){
+     std::cout<<"ERROR: GRIDSIZE needs to be a multiple of " << warpSize << " in this example" << std::endl;
      abort();
   }
 
-  if( (BLOCKSIZE & (BLOCKSIZE - 1)) != 0){
-     std::cout<<"ERROR: BLOCKSIZE needs to be a power of 2 in this example" << std::endl;
+  if( BLOCKSIZE % warpSize != 0){
+     std::cout<<"ERROR: BLOCKSIZE needs to be a multiple of " << warpSize << " in this example" << std::endl;
      abort();
   }
 
