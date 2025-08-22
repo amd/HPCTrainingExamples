@@ -3,7 +3,7 @@
 # This test checks that hpcrun
 # runs without errors
 
-
+module load rocm
 
 module load hpctoolkit
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
