@@ -42,6 +42,6 @@ __global__ void transpose_kernel_tiled(
 
     // Write back to global memory with coalesced writes
     if (dstY < srcWidth && dstX < srcHeight) {
-        output[GIDX(dstY, dstX, srcWidth)] = tile[tx][ty];
+        output[GIDX(dstY, dstX, srcHeight)] = tile[tx][ty];
     }
 }
