@@ -54,19 +54,19 @@ __global__ void reduction_to_array(const double* __restrict__ input,
       threadSum += __shfl_down(threadSum, offset);
   }
 
-  //  3)  Write each wavefront's leader (lane 0) to shared memory
+  //  Write each wavefront's leader (lane 0) to shared memory
   const int lane   = tid % warpSize;               // 0 … 63
   const int warpId = tid / warpSize;               // 0 … (BLOCKSIZE/warpSize-1)
 
   // one double per wavefront – the kernel launch supplies the exact size
-  __shared__ double warpSums[(BLOCKSIZE / warpSize)];
+  extern __shared__ double warpSums[];
   if (lane == 0) {
       warpSums[warpId] = threadSum;                // one value per wavefront
   }
 
   __syncthreads();                                 // make sure all warp sums are visible
 
-  //  4)  The first wavefront reduces the per wavefront sums.
+  //  The first wavefront reduces the per wavefront sums.
   double blockSum = 0.0;
   if (warpId == 0) {                               // only the first wavefront participates
       // load the warp sums into the lanes of the first wavefront
@@ -96,13 +96,13 @@ int main() {
   hipCheck( hipEventCreate(&start) );
   hipCheck( hipEventCreate(&stop) );
 
-  if( (GRIDSIZE & (GRIDSIZE - 1)) != 0){
-     std::cout<<"ERROR: GRIDSIZE needs to be a power of 2 in this example" << std::endl;
+  if( GRIDSIZE % warpSize != 0){
+     std::cout<<"ERROR: GRIDSIZE needs to be a multiple of " << warpSize << " in this example" << std::endl;
      abort();
   }
 
-  if( (BLOCKSIZE & (BLOCKSIZE - 1)) != 0){
-     std::cout<<"ERROR: BLOCKSIZE needs to be a power of 2 in this example" << std::endl;
+  if( BLOCKSIZE % warpSize != 0){
+     std::cout<<"ERROR: BLOCKSIZE needs to be a multiple of " << warpSize << " in this example" << std::endl;
      abort();
   }
 
@@ -126,17 +126,12 @@ int main() {
   // Copy h_in into d_in
   hipCheck(hipMemcpy(d_in, h_in.data(), N * sizeof(double), hipMemcpyHostToDevice));
 
-  //  Shared memory size = (BLOCKSIZE / warpSize) * sizeof(double)
-  const size_t shmem_per_block = (BLOCKSIZE / warpSize) * sizeof(double);
-  const size_t shmem_final = (GRIDSIZE / warpSize) * sizeof(double);
-
   // Start event timer to measure kernel timing
   hipCheck( hipEventRecord(start, nullptr) );
 
   // Compute the reductions
-  reduction_to_array<<<GRIDSIZE, BLOCKSIZE, shmem_per_block>>>(d_in, d_partial_sums, N);
-  //  Second launch: one block, GRIDSIZE threads
-  reduction_to_array<<<1, GRIDSIZE, shmem_final>>>(d_partial_sums, d_in, GRIDSIZE);
+  reduction_to_array<<<GRIDSIZE, BLOCKSIZE, (BLOCKSIZE / warpSize) * sizeof(double)>>>(d_in, d_partial_sums, N);
+  reduction_to_array<<<1, GRIDSIZE, (GRIDSIZE / warpSize) * sizeof(double)>>>(d_partial_sums, d_in, GRIDSIZE);
 
   // Stop event timer
   hipCheck( hipEventRecord(stop, nullptr) );

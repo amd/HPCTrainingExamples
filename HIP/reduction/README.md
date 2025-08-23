@@ -213,16 +213,18 @@ The second invocation above is accumulating the partial sums in the first entry 
 
 ## Reduction with Warp Shuffles
 
+Before discussing the warp shuffle example, let's remember that for Nvidia a warp is a chunk of 32 threads, whereas for AMD we talk about wavefronts instead of warps, which are made of 64 threads on MI200 and MI300 AMD GPUs. Threads blocks, in Nvidia terminology are called workgroups in AMD terminology. Threads in the same workgroup can synchronize and also share LDS memory. In the following, you will see the term warp used extensively, but please bear in mind that we are actually referring to wavefronts when running on AMD hardware.
+
 Warp shuffles load adjacent values from threads in a workgroup. The last example shows a version that uses warp shuffles. The benefits
-of using warp shuffles is that it reduces shared memory usage (LDS) and also reduces synchronization calls. 
+of using warp shuffles is that it reduces shared memory usage (LDS) and also reduces synchronization calls.
 If `blockDim.x=64`, this block of code:
 
 ```
- for (int s = blockDim.x / 2; s > 0; s /= 2) { 
+ for (int s = blockDim.x / 2; s > 0; s /= 2) {
    if (threadIdx.x < s) {
-      local_sum[threadIdx.x] += local_sum[threadIdx.x + s];   
-   } 
-   __syncthreads();  
+      local_sum[threadIdx.x] += local_sum[threadIdx.x + s];
+   }
+   __syncthreads();
 }
 ```
 
@@ -230,6 +232,60 @@ could be rewritten as:
 ```
 for (int s = blockDim.x / 2; s > 0; s /= 2) {
    sum += __shfl_down(sum, s);
+}
+```
+Let's take a look at the kernel in `reduction_shfl.cpp` (see below): once again we are using striding to access the input array, and each thread computes its own partial sum called `threadSum`. Then, we make use of the built-in runtime variable `warpSize` (which exists for both CUDA and HIP) and perform the first shuffle down operation, where `threadSum` is accumulated on a per wavefront basis. Next, we declare an array of shared memory called `warpSums`: this array is visible by all threads in the same workgroup (block), and as size it has the number of wavefronts in this workgroup. The wavefront's leader, for which `lane==0` writes the wavefront's partial sum that has just been computed to the wavefront's location in the shared memory array, identified by the `warpId` variable. Then, the first wavefront is put in charge of computing the final reduction using the array `warpSums`: it will sum up all the per wavefront partial sums that have been stored in this array.
+```
+__global__ void reduction_to_array(const double* __restrict__ input,
+                                   double*       __restrict__ output,
+                                   int size)
+{
+  // Global ID of thread in thread grid
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+  // Stride size is equal to total number of threads in grid
+  int grid_size = blockDim.x * gridDim.x;
+  int tid   = threadIdx.x;
+
+  double threadSum = 0.0;
+  for (int i = idx; i < size; i += grid_size) {
+      threadSum += input[i];
+  }
+
+  for (int offset = warpSize / 2; offset > 0; offset /= 2) {
+      threadSum += __shfl_down(threadSum, offset);
+  }
+
+  //  Write each wavefront's leader (lane 0) to shared memory
+  const int lane   = tid % warpSize;               // 0 … 63
+  const int warpId = tid / warpSize;               // 0 … (BLOCKSIZE/warpSize-1)
+
+  // one double per wavefront – the kernel launch supplies the exact size
+  extern __shared__ double warpSums[];
+  if (lane == 0) {
+      warpSums[warpId] = threadSum;                // one value per wavefront
+  }
+
+  __syncthreads();                                 // make sure all warp sums are visible
+
+  //  The first wavefront reduces the per wavefront sums.
+  double blockSum = 0.0;
+  if (warpId == 0) {                               // only the first wavefront participates
+      // load the warp sums into the lanes of the first wavefront
+      if (lane < (blockDim.x / warpSize)) {
+          blockSum = warpSums[lane];
+      }
+
+      // final reduction inside the first wavefront
+      for (int offset = warpSize / 2; offset > 0; offset /= 2) {
+          blockSum += __shfl_down(blockSum, offset);
+      }
+
+      // lane 0 now holds the block wide sum
+      if (lane == 0) {
+          output[blockIdx.x] = blockSum;
+      }
+  }
 }
 ```
 To compile and run the example do:
@@ -241,7 +297,7 @@ make reduction_shfl
 ## Reduction using rocPrim call
 
 Using the rocPrim library for many common operations can greatly simplify programming
-while getting good peformance. To see how to use the rocPrim reduction call, see the 
+while getting good peformance. To see how to use the rocPrim reduction call, see the
 reduction_prim.cpp file. Then build and run it with the following.
 
 ```
