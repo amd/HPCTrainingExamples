@@ -1,6 +1,6 @@
 #!/bin/bash
 module load rocm
-module load pytorch
+module load rocm pytorch
 
 python3 <<EOF                                     
 import torch

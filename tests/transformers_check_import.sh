@@ -8,7 +8,7 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/pytorch_setup.sh
 
 
-module load pytorch
+module load rocm pytorch
 
 python3 -c 'import transformers' 2> /dev/null && echo 'Success' || echo 'Failure'
 

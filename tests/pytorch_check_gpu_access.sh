@@ -9,7 +9,7 @@
 
 
 module load rocm
-module load pytorch
+module load rocm pytorch
 
 python3 -c 'import torch; print(torch.cuda.is_available())'
 

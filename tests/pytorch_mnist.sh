@@ -11,7 +11,7 @@
 
 
 module load rocm
-module load pytorch
+module load rocm pytorch
 
 rm -rf pytorch_mnist
 

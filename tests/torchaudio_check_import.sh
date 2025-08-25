@@ -9,7 +9,7 @@
 
 
 
-module load pytorch
+module load rocm pytorch
 
 python3 -c 'import torchaudio' 2> /dev/null && echo 'Success' || echo 'Failure'
 
