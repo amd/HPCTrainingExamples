@@ -9,7 +9,7 @@
 
 
 module load rocm
-module load pytorch
+module load rocm pytorch
 
 python3 -m torch.utils.collect_env | grep ROCM > output.txt
 cut -d : -f 2 output.txt > new.txt

@@ -9,7 +9,7 @@
 
 
 module load rocm
-module load pytorch
+module load rocm pytorch
 
 python3 -c "import torch; print(f'device name [0]:', torch.cuda.get_device_name(0))"
 

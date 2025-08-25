@@ -9,7 +9,7 @@
 
 
 module load rocm
-module load pytorch
+module load rocm pytorch
 
 python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
 
