@@ -1,5 +1,6 @@
 #!/bin/bash
 
+module load rocm
 module load rocprofiler-sdk
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
