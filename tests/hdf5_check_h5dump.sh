@@ -1,6 +1,7 @@
 #!/bin/bash
 
 
+module load rocm
 module load hdf5
 module load openmpi
 
