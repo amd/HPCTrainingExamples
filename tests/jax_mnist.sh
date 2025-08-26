@@ -8,7 +8,7 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/jax_setup.sh
 
 
-
+module load rocm
 module load jax
 
 rm -rf jax_mnist_test_dir
