@@ -78,6 +78,7 @@ else
    VERSION="/${VERSION}"
 fi
 
+module load rocm
 module load ${TOOL_NAME}${VERSION}
 
 pushd ${PROFILER_TOP_DIR}
