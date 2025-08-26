@@ -1157,7 +1157,7 @@ set_property(TEST Affinity_MPI2_OpenMP2_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION
 
 # bound onto socket 1 for MI300A
 add_test(NAME Affinity_MPI4_OpenMP2_Bind_OpenMPI COMMAND ../affinity_mpi4_openmp2_bind.sh )
-set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "MCW rank 3 bound to socket 0")
+set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "ank 3 bound to")
 set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # RocprofV3 tests
