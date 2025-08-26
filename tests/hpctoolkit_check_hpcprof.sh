@@ -16,7 +16,7 @@ make -j
 hpcrun -e CPUTIME -e gpu=amd -t ./compute_comm_overlap 2
 hpcstruct hpctoolkit-compute_comm_overlap-measurements*
 hpcprof hpctoolkit-compute_comm_overlap-measurements*
-ls hpctoolkit-compute_comm_overlap-database
+ls hpctoolkit-compute_comm_overlap-database*
 
 cd ..
 rm -rf build_for_test

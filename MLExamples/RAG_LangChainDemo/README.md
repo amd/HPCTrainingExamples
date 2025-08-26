@@ -1,7 +1,33 @@
 # AI and ML exercises-  RAG Chatbot Demo
 
-**NOTE**: these exercises have been tested on MI300X accelerators.
-To see details on the environment (such as operating system and modules available) please see `README.md` on [this](https://github.com/amd/HPCTrainingDock) repo.
+We will be creating an AI assistant you can interact with to ask AMD related questions.
+
+First, create a directory for the necessary software and the software dependencies:
+
+```
+mkdir ai_assistant_install
+cd ai_assistant_install
+export AI_ASSISTANT_INSTALL_DIR=$PWD
+cd ..
+mkdir ai_assistant_dependencies
+cd ai_assistant_dependencies
+export AI_ASSISTANT_DEPS_DIR=$PWD
+cd ..
+```
+
+Then, clone our exercises repo and move to the relevant directory:
+
+```
+git clone https://github.com/amd/HPCTrainingExamples.git
+cd HPCTrainingExamples/MLExamples/RAG_LangChainDemo
+```
+
+
+
+Once in the above directory, you will see a file called `requirements.txt` which we will be using to install the requirements for LangChain:
+
+```
+pip3 install -r requirements.txt 
 
 Throughout these exercises we'll be leveraging the existing ROCm installation (minimum 6.2). 
 It is expected that ROCm installation has been completed prior to installing the dependencies outlined below.
