@@ -296,10 +296,47 @@ make reduction_shfl
 
 ## Reduction using rocPrim call
 
-Using the rocPrim library for many common operations can greatly simplify programming
+Using the `rocPrim` library for many common operations can greatly simplify programming
 while getting good peformance. To see how to use the rocPrim reduction call, see the
-reduction_prim.cpp file. Then build and run it with the following.
+`reduction_prim.cpp` file: below we report the most relevant part of the code.
 
+```
+ // Reduction operation (sum)
+  rocprim::plus<double> sum_op;
+
+  // Temporary storage for rocprim::reduce
+  size_t temporary_storage_size_bytes;
+  void* temporary_storage_ptr = nullptr;
+
+  // Get required size of the temporary storage
+  rocprim::reduce(
+     temporary_storage_ptr,
+     temporary_storage_size_bytes,
+     d_in,
+     d_out,
+     // Initial value for reduction (e.g., a large number for minimum, zero for sum)
+     0.0,
+     N,
+     sum_op
+  );
+
+  // Allocate temporary storage
+  hipCheck(hipMalloc(&temporary_storage_ptr, temporary_storage_size_bytes));
+
+  // Perform the reduce operation
+  rocprim::reduce(
+     temporary_storage_ptr,
+     temporary_storage_size_bytes,
+     d_in,
+     d_out,
+     0.0,
+     N,
+     sum_op
+  );
+```
+Note that after defining the reduction operation, we have to declare the number of bytes and pointer to the temporary storage needed by `rocPrim` to perform the reduction operation. We then perform a call to `rocprim::reduce`, needed to actually compute the amount of temporary storage. After this call, we allocate the memory using the pointer we declared and the amount of storage returned by the call to `rocprim::reduce`. Then, we call again this function with exactly the same arguments: this is the call that actually performs the reduction.
+
+To build and run this example just do:
 ```
 make reduction_prim
 ./reduction_prim
