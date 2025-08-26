@@ -13,6 +13,7 @@
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
+module load rocm
 module load jax
 
 python3 ${REPO_DIR}/tests/jax_check_performance.py

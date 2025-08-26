@@ -7,6 +7,7 @@
 # to the instructions available in the model installation repo:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/jax_setup.sh
 
+module load rocm
 module load jax
 
 python3 -c 'import jax; print(jax.devices())'
