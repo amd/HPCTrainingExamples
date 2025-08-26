@@ -18,7 +18,7 @@ pushd Chapter16/HDF5Examples/hdf5block2d
 sed -i '37i target_link_libraries(hdf5block2d m)' CMakeLists.txt
 sed -i '37i target_link_libraries(hdf5block2d z)' CMakeLists.txt
 
-mkdir build && cd build && cmake .. && make
+mkdir build && cd build && cmake -DHDF5_IS_PARALLEL=ON .. && make
 
 mpirun -n 4 ./hdf5block2d
 
