@@ -14,6 +14,11 @@ then
     export MASTER_PORT=1234
 fi
 
+if [[ -z "${NPROCS}" ]];
+then
+    export NPROCS=1
+fi
+
 PROFILER_TOP_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
 # Call the software set up script:
