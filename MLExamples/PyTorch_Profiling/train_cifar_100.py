@@ -205,17 +205,22 @@ def init_process(backend="nccl"):
 
     # Detect the launch: 
 
+    if 'NPROCS' in os.environ:
+        size = int(os.environ['NPROCS'])
+    elif 'OMPI_COMM_WORLD_RANK' in os.environ:
+        # Probably open mpi
+        size = int(os.environ['OMPI_COMM_WORLD_SIZE'])
+    elif 'SLURM_NPROCS' in os.environ:
+        size = int(os.environ['SLURM_NPROCS'])
+    else:
+        size = 1
+
+    rank = 0
     if 'OMPI_COMM_WORLD_RANK' in os.environ:
         # Probably open mpi
         rank = int(os.environ['OMPI_COMM_WORLD_RANK'])
-        size = int(os.environ['OMPI_COMM_WORLD_SIZE'])
     elif 'SLURM_NPROCS' in os.environ:
         rank = int(os.environ['SLURM_PROCID'])
-        size = int(os.environ['SLURM_NPROCS'])
-    else:
-        print("Couldn't determine rank and size - if this is a distributed run, this is a problem!")
-        rank = 0
-        size = 1
 
     dist.init_process_group(backend, rank=rank, world_size=size)
     return rank

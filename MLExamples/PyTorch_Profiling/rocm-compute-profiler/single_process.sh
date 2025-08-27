@@ -59,6 +59,8 @@ PROFILER_TOP_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 # Call the software set up script:
 source ${PROFILER_TOP_DIR}/setup.sh
 
+export NPROCS=1
+
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
 result=`echo ${ROCM_VERSION} | awk '$1>6.1.2'`
 

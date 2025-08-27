@@ -11,6 +11,11 @@ then
     export MASTER_PORT=1234
 fi
 
+if [[ -z "${NPROCS}" ]];
+then
+    export NPROCS=1
+fi
+
 # Call the software set up script:
 source ${PROFILER_TOP_DIR}/setup.sh
 
