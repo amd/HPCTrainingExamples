@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/bin/bash
 
 PROFILER_TOP_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
