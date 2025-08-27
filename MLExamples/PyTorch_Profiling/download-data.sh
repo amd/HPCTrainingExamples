@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/bin/bash
 
 # Call the software set up script:
 source setup.sh
