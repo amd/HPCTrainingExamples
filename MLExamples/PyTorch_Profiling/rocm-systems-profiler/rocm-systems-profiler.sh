@@ -19,6 +19,8 @@ PROFILER_TOP_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 # Call the software set up script:
 source ${PROFILER_TOP_DIR}/setup.sh
 
+export NPROCS=1
+
 TOOL_ORIGIN="AMD Research"
 TOOL_NAME="omnitrace"
 TOOL_COMMAND="omnitrace"
