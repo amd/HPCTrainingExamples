@@ -1239,7 +1239,7 @@ set_property(TEST Pytorch_No_Profile PROPERTY PASS_REGULAR_EXPRESSION "2.1 Speed
 set_property(TEST Pytorch_No_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_tests_properties(Pytorch_No_Profile PROPERTIES TIMEOUT 300) 
 
-add_test(NAME Pytorch_Profile_Rocprof-compute_ROCm COMMAND ../pytorch_profiling_rocm-compute.sh )
+add_test(NAME Pytorch_Profile_Rocprof-compute_ROCm COMMAND ../pytorch_profiling_rocprof-compute.sh )
 set_property(TEST Pytorch_Profile_Rocprof-compute_ROCm PROPERTY PASS_REGULAR_EXPRESSION "2.1 Speed-of-Light")
 set_property(TEST Pytorch_Profile_Rocprof-compute_ROCm PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_tests_properties(Pytorch_Profile_Rocprof-compute_ROCm PROPERTIES TIMEOUT 300) 
