@@ -1249,7 +1249,7 @@ set_property(TEST Pytorch_Profile_Rocprof-sys_ROCm PROPERTY PASS_REGULAR_EXPRESS
 set_property(TEST Pytorch_Profile_Rocprof-sys_ROCm PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_tests_properties(Pytorch_Profile_Rocprof-sys_ROCm PROPERTIES TIMEOUT 300) 
 
-add_test(NAME Pytorch_Profile_Rocprofv3 COMMAND ../pytorch_profiling_rocprof-systems.sh )
+add_test(NAME Pytorch_Profile_Rocprofv3 COMMAND ../pytorch_profiling_rocprofv3.sh )
 set_property(TEST Pytorch_Profile_Rocprofv3 PROPERTY PASS_REGULAR_EXPRESSION "kernel_stats.csv")
 set_property(TEST Pytorch_Profile_Rocprofv3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_tests_properties(Pytorch_Profile_Rocprofv3 PROPERTIES TIMEOUT 800) 
@@ -1257,7 +1257,7 @@ set_tests_properties(Pytorch_Profile_Rocprofv3 PROPERTIES TIMEOUT 800)
 add_test(NAME Pytorch_Profile_TorchProfiler COMMAND ../pytorch_profiling_torch-profiler.sh )
 set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY PASS_REGULAR_EXPRESSION "trace_")
 set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_tests_properties(Pytorch_Profile_TorchProfiler PROPERTIES TIMEOUT 800) 
+set_tests_properties(Pytorch_Profile_TorchProfiler PROPERTIES TIMEOUT 200) 
 
 # Python MPI tests
 add_test(NAME MPI4PY_Check_Import COMMAND ../mpi4py_check_import.sh)
