@@ -25,4 +25,4 @@ if [ ! -f data/cifar-100-python ]; then
 fi
 popd
 
-python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 20 --data-path ${PROFILER_TOP_DIR}/data
+python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 10 --data-path ${PROFILER_TOP_DIR}/data
