@@ -5,9 +5,9 @@ module load amdclang
 module load hipfort
 AMDGPU_GFXMODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`
 
-git clone https://github.com/ROCm/hipfort hipfort_for_test
+git clone https://github.com/ROCm/hipfort hipfort_for_test_rocm_2008
 
-pushd hipfort_for_test/test/f2008/vecadd
+pushd hipfort_for_test_rocm_2008/test/f2008/vecadd
 
 HIPFORT_COMP=`which amdflang`
 
@@ -17,7 +17,7 @@ hipfc -v --offload-arch=${AMDGPU_GFXMODEL} -hipfort-compiler ${HIPFORT_COMP} hip
 
 popd
 
-rm -rf hipfort_for_test
+rm -rf hipfort_for_test_rocm_2008
 
 module unload hipfort
 
