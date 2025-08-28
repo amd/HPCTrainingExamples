@@ -1235,7 +1235,7 @@ set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Train Epoch: 1
 set_property(TEST Pytorch_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Pytorch_No_Profile COMMAND ../pytorch_noprofile.sh )
-set_property(TEST Pytorch_No_Profile PROPERTY PASS_REGULAR_EXPRESSION "2.1 Speed-of-Light")
+set_property(TEST Pytorch_No_Profile PROPERTY PASS_REGULAR_EXPRESSION "10: loss")
 set_property(TEST Pytorch_No_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_tests_properties(Pytorch_No_Profile PROPERTIES TIMEOUT 800) 
 
