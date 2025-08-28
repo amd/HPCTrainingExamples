@@ -14,12 +14,15 @@ then
     export MASTER_PORT=1234
 fi
 
+if [[ -z "${NPROCS}" ]];
+then
+    export NPROCS=1
+fi
+
 PROFILER_TOP_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
 # Call the software set up script:
 source ${PROFILER_TOP_DIR}/setup.sh
-
-export NPROCS=1
 
 TOOL_ORIGIN="AMD Research"
 TOOL_NAME="omnitrace"
@@ -46,7 +49,6 @@ else
    VERSION="/${VERSION}"
 fi
 
-module load rocm
 module load ${TOOL_NAME}${VERSION}
 
 pushd ${PROFILER_TOP_DIR}
@@ -64,12 +66,12 @@ result=`echo ${ROCM_VERSION} | awk '$1>6.3.9'`
 if [[ "${result}" ]]; then
    ${TOOL_COMMAND}-sample -c $RSP_CFG \
    -I  kokkosp mpip ompt rocm-smi rocprofiler-sdk rw-locks spin-locks -- \
-   python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 20 \
+   python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 10 \
    --data-path ${PROFILER_TOP_DIR}/data
 else
    ${TOOL_COMMAND}-sample -c $RSP_CFG \
    -I  kokkosp mpip ompt rocm-smi rocprofiler roctracer roctx rw-locks spin-locks -- \
-   python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 20 \
+   python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 10 \
    --data-path ${PROFILER_TOP_DIR}/data
 fi
 
