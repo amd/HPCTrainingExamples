@@ -127,5 +127,4 @@ gr.ChatInterface(
     examples=["How can I install ROCm", "What installation methods exist for ROCm"],
     cache_examples=False,
     theme="Glass",
-    retry_btn=None,
 ).launch(share = True, server_name="0.0.0.0")
