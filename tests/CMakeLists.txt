@@ -1558,3 +1558,7 @@ set_property(TEST FFTWL_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module s
 add_test(NAME Apptainer_Test COMMAND ../apptainer_test.sh)
 set_property(TEST Apptainer_Test PROPERTY PASS_REGULAR_EXPRESSION "HSA System Attributes")
 set_property(TEST Apptainer_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Podman_Test COMMAND ../podman_test.sh)
+set_property(TEST Podman_Test PROPERTY PASS_REGULAR_EXPRESSION "HSA System Attributes")
+set_property(TEST Podman_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
