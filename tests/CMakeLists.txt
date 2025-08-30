@@ -1554,3 +1554,7 @@ set_property(TEST FFTWF_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module s
 add_test(NAME FFTWL_Check_Version COMMAND ../fftwl_check_version.sh)
 set_property(TEST FFTWL_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "fftw-wisdom tool for FFTW version 3.3.10.")
 set_property(TEST FFTWL_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Apptainer_Test COMMAND ../apptainer_test.sh)
+set_property(TEST Apptainer_Test PROPERTY PASS_REGULAR_EXPRESSION "HSA System Attributes")
+set_property(TEST Apptainer_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
