@@ -146,12 +146,12 @@ async def recursive_scrape(session, url, base_url, max_depth=MAX_DEPTH, current_
 
 
 async def scrape_all(rocm_version):
+    rocm_docs_url=rocm_version
+    if rocm_version == "latest":
+       rocm_docs_url=rocm_version
+    else:
+       rocm_docs_url=f"docs-{rocm_version}"
     main_urls = [
-        rocm_docs_url=rocm_version
-        if rocm_version == "latest":
-           rocm_docs_url=rocm_version
-        else:
-           rocm_docs_url=f"docs-{rocm_version}"
         f"https://rocm.docs.amd.com/en/{rocm_docs_url}/",
         "https://rocm.blogs.amd.com/verticals-ai.html",
         "https://rocm.blogs.amd.com/verticals-ai-page2.html",
