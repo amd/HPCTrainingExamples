@@ -1,0 +1,26 @@
+#!/bin/bash
+#SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
+#SBATCH --gpus=1
+#SBATCH --time=05:00:0
+#SBATCH --ntasks=4
+#SBATCH --output=pytorch_mnist_apptainer.out
+#SBATCH --error=pytorch_mnist_apptainer.err
+
+date
+
+# on front end, pull rocm-pytorch image
+#time apptainer pull rocm-pytorch.sif docker://rocm/pytorch:latest
+
+apptainer exec --rocm rocm-pytorch.sif \
+   python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure' \
+   python3 -c 'import torch; print(torch.cuda.is_available())' \
+   git clone https://github.com/pytorch/examples.git pytorch_examples \
+   cd pytorch_examples/mnist \
+   sed -i -e '/device = torch.device("cpu")/a\    print(f"Using device: {device}")' main.py \
+   echo "Starting mnist" \
+   date \
+   time python3 main.py \
+   date \
+   cd ../.. \
+   rm -rf pytorch_examples \
+   date
