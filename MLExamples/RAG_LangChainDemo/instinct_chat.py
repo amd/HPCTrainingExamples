@@ -63,7 +63,7 @@ for link in links:
             all_content.append(Document(page_content=content, metadata={"source": full_url}))
 
 # Define llm
-llm = Ollama(model="llama3.1:70b")
+llm = Ollama(model="llama3.3:70b")
 
 # Split the text into chunks
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
@@ -119,12 +119,22 @@ def respond(question,history):
     return qa(question)["result"]
 
 
-gr.ChatInterface(
-    respond,
-    chatbot=gr.Chatbot(height=500),
-    textbox=gr.Textbox(placeholder="Ask me question related to the awesomeness of ROCm and how it can revolutionize your AI workflows", container=False, scale=7),
-    title="Rocm-bot",
-    examples=["How can I install ROCm", "What installation methods exist for ROCm"],
-    cache_examples=False,
-    theme="Glass",
-).launch(share = True, server_name="0.0.0.0")
+print("\nAMD AI Assistant Ready! Type your questions. Type 'exit', 'quit' or 'bye' to stop.\n")
+
+ while True:
+     user_input = input("Prompt: ")
+     if user_input.lower() in ["exit", "quit", "bye"]:
+         print("Goodbye!")
+         break
+     answer = respond(user_input, history=None)
+     print(f"AMD AI Assistant: {answer}\n")
+
+#gr.ChatInterface(
+#    respond,
+#    chatbot=gr.Chatbot(height=500),
+#    textbox=gr.Textbox(placeholder="Ask me question related to the awesomeness of ROCm and how it can revolutionize your AI workflows", container=False, scale=7),
+#    title="Rocm-bot",
+#    examples=["How can I install ROCm", "What installation methods exist for ROCm"],
+#    cache_examples=False,
+#    theme="Glass",
+#).launch(share = True, server_name="0.0.0.0")

@@ -77,7 +77,7 @@ vectorstore = Chroma.from_documents(texts, embeddings)
 retriever = vectorstore.as_retriever()
 
 # Define four LLMs
-llm1 = Ollama(model="llama3:70b")
+llm1 = Ollama(model="llama3.3:70b")
 llm2 = Ollama(model="gemma2:27b")
 llm3 = Ollama(model="mistral-large")  # Add a third model
 llm4 = Ollama(model="phi3:14b")    # Add a fourth model
