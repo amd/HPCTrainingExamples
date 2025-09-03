@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved This software is distributed under the MIT License, Contact: Peter Cross
+import sys
 import requests
 import logging
 from langchain_community.document_loaders import PDFPlumberLoader
@@ -115,26 +115,33 @@ qa = RetrievalQA(
                   retriever=retriever,
                   return_source_documents=True)
 
-def respond(question,history):
+def respond(question, history=None):
     return qa(question)["result"]
 
+def run_cli():
+    print("\nAMD AI Assistant Ready! Type your questions. Type 'exit', 'quit' or 'bye' to stop.\n")
+    while True:
+        user_input = input("Prompt: ")
+        if user_input.lower() in ["exit", "quit", "bye"]:
+            print("Goodbye!")
+            break
+        answer = respond(user_input)
+        print(f"AMD AI Assistant: {answer}\n")
 
-print("\nAMD AI Assistant Ready! Type your questions. Type 'exit', 'quit' or 'bye' to stop.\n")
+def run_webui():
+    gr.ChatInterface(
+        respond,
+        chatbot=gr.Chatbot(height=500),
+        textbox=gr.Textbox(placeholder="Ask me question related to the awesomeness of ROCm and how it can revolutionize your AI workflows", container=False, scale=7),
+        title="Rocm-bot",
+        examples=["How can I install ROCm", "What installation methods exist for ROCm"],
+        cache_examples=False,
+        theme="Glass",
+    ).launch(share=True, server_name="0.0.0.0")
 
- while True:
-     user_input = input("Prompt: ")
-     if user_input.lower() in ["exit", "quit", "bye"]:
-         print("Goodbye!")
-         break
-     answer = respond(user_input, history=None)
-     print(f"AMD AI Assistant: {answer}\n")
+if __name__ == "__main__":
+    if "--webui" in sys.argv:
+        run_webui()
+    else:
+        run_cli()
 
-#gr.ChatInterface(
-#    respond,
-#    chatbot=gr.Chatbot(height=500),
-#    textbox=gr.Textbox(placeholder="Ask me question related to the awesomeness of ROCm and how it can revolutionize your AI workflows", container=False, scale=7),
-#    title="Rocm-bot",
-#    examples=["How can I install ROCm", "What installation methods exist for ROCm"],
-#    cache_examples=False,
-#    theme="Glass",
-#).launch(share = True, server_name="0.0.0.0")
