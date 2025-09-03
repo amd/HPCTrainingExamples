@@ -1,69 +1,92 @@
-# AI and ML exercises-  RAG Chatbot Demo
+# AMD AI Assistant using retrieval augmented generation (RAG) 
 
-We will be creating an AI assistant you can interact with to ask AMD related questions.
+We will be using retrieval augmented generation (RAG) to create an AMD AI assistant you can interact with to answer questions on AMD GPU software and programming.
 
-First, create a directory for the necessary software and the software dependencies:
+With RAG, pre-trained, parametric-memory generation models are endowed with a non-parametric memory through a general-purpose fine-tuning approach. This means that you can supply the most up to date content to a pre existing model and, without additional training, use this new material as context to adjust the answers of the pre-existing model to fit your needs.
+
+## Ollama 
+
+The main building block we will use is **Ollama**, which is a platform to interact with large language models.
+Running the AI assistant needs the Ollama server to run the LLM model on which it is based: to install Ollama see these [instructions](https://ollama.com/download).
+
+Consider the sequence of commands below: note that the first command below will kill all ollama processes already running on your system
+```
+pkill -f ollama
+ollama serve &
+ollama pull llama3.3:70b
+```
+The `ollama serve &` command will run Ollama in the background. If this command does not work because Ollama's default port (11434) is already in use, set `OLLAMA_HOST` appropriately, then run `ollama serve &` again. A way to set `OLLAMA_HOST` properly is to just increase by one the port number (so for example `export OLLAMA_HOST=127.0.0.1:11435`).  Then the `Llama3.3` model with 70 billion parameters is pulled.
+
+To test that Ollama is working you can do:
+```
+ollama run llama3.3:70b
+```
+The above command will run the LLM  locally, you can interact with it through the prompt and then exit with `/bye`.
+
+
+We will show two ways of creating the AI assistant depending on the number of users in your system.
+
+### System with a limited amount of users
+
+In this case, we assume the system has a small number of users, and that it can sustain the case where all of them are running Ollama locally.
+The bigger in terms of parameters the models pulled from Ollama, the larger the memory requirements, hence if the number of users is large and the models are big, you could quickly finish up all the memory in the system. This is why we recommend the approach below only if the amount of users on the system is limited.
+
+#### Setting up
+
+The first thing to do, is to install the necessary software requirements: one could do it using `conda` (see [here](https://github.com/amd/HPCTrainingDock/blob/ecb81e4d7055f8594d34743b59cdeb1923faf40b/extras/scripts/miniconda3_setup.sh#L166) for how we setup the `miniconda3` module invoked below):
+
+```
+module load miniconda3
+conda create -y -n amd_ai_assistant
+conda activate amd_ai_assistant
+git clone https://github.com/amd/HPCTrainingExamples.git
+cd HPCTrainingExamples/MLExamples/RAG_LangChainDemo
+pip3 install -r requirements.txt 
+```
+
+The installation of the requirements (last line above) will take quite a bit of time. If you do not want to use `conda`, and feel like you are aware of what you keep in your `PYTHONPATH`, you can do this instead:
 
 ```
 mkdir ai_assistant_deps
 cd ai_assistant_deps
 export AI_ASSISTANT_DEPS=$PWD
 cd ..
-```
-
-Then, clone our exercises repo and move to the relevant directory:
-
-```
 git clone https://github.com/amd/HPCTrainingExamples.git
 cd HPCTrainingExamples/MLExamples/RAG_LangChainDemo
-```
-
-Once in the above directory, you will see a file called `requirements.txt` which we will be using to install the software requirements for the AI assistant:
-
-```
 pip3 install -r requirements.txt --target=$AI_ASSISTANT_DEPS
-```
-
-Make sure to export the paths of the software just installed into your `PYTHONPATH`:
-
-```
 export PYTHONPATH=$AI_ASSISTANT_DEPS:$PYTHONPATH
 ```
 
-Running the AI assistant needs the Ollama server to run the LLM model on which it is based: to install Ollama see these [instructions](https://ollama.com/download).
+Note that it is **very** important to specify the target option when doing the installation with `pip` because that's where you specify the installation directory. In this way you will (hopefully) avoid messing up other Python packages you may have already installed in your local directory. The last line above will add the packages you just installed to your `PYTHONPATH` so they will be visible when you want to do `import <package>` in your Python scripts.
 
-For this example, we are going to be using `Llama3.3:70b`. To setup ollama after installation, run the following commands. Note that the first command below will kill all ollama processes already running on your system
-```
-pkill -f ollama
-ollama serve &
-ollama pull llama3.3:70b
-```
-To test that ollama is working you can do:
-```
-ollama run llama3.3:70b
-```
-The above command will run the LLM  locally, you can interact with it through the prompt and then exit with `/bye`.
+In the present directory, there currently are three versions of the AI assistant script you can run:
 
-There currently are three versions of the AI assistant script you can run:
+	1. amd_ai_assistant.py
+	2. instinct_chat.py
+	3. instinct_chat_4_llm.py
 
-1. instinct_chat.py
-2. instinct_chat_4_llm.py
-3. amd_ai_assistant.py
+We recommend you begin with `amd_ai_assistant.py` since it is the most complete, optimized and up to date of the three scripts.
 
-All the above scripts will implement a retrieval augmented generation (RAG) model by scraping the web to get information on AMD and AMD software to provide the necessary context to Llama3.3 to be able to answer AMD specific questions leveraging the info from those specific websites.
+All the above scripts will implement a retrieval augmented generation (RAG) model by scraping the web to get information on AMD and AMD software to provide the necessary context to pre trained  LLMs to be able to answer AMD specific questions leveraging the info from those specific websites. We will focus on `amd_ai_assistant.py` for the reasons mentioned above. To see what websites and content is scraped, look at the urls in the `scrape_all` function.
 
-## Running the scripts
-All scripts can be run with `python3` as follows:
+
+####  Interacting with the assistant
+
+Let's assume that Ollama is running effectively on the background and you pulled `LLama3.3:70b` (which is the LLM we will be relying on for RAG).
+To interact with the assistant, do:
 
 ```
-python3 ./instinct_chat.py
-python3 ./instinct_chat_4_llm.py
-python3 ./amd_ai_assistant.py
-
+cd HPCTrainingExamples/MLExamples/RAG_LangChainDemo
+python3 ./amd_ai_assistant.py --rocm-version <rocm_version>
 ```
 
-Note that the first two scripts will use a web interface to interact with the model, whereas the third one will work on the command line locally.
-To use the web interface, copy the URL that is displayed and paste it in your browser.
-The `amd_ai_assistant.py` script will save the scraped pages in a file and will not scrape again if you run it a second time, unless you provide the `--scrape` flag when launching it. You can also provide the ROCm version with `--rocm-version <version>` to scrape from the documentation associated to the input version, otherwise all scripts will scrape from the latests docs.
+You can specify the `<rocm_version>` of the documentation you want to pull so that it matches the ROCm installed in your system. Note that the script will check whether scraped data is already present: if not, it will scrape and save that data so that the next time you run the script you will be able to interact with the LLM right away without having to wait for the scraping again. You can force the scraping by including the `--scrape` flag. If you are not scraping, including the rocm version as input does nothing.
 
+You will see a prompt that looks like this:
+```
+AMD AI Assistant Ready! Type your questions. Type 'exit', 'quit' or 'bye' to stop.
+
+Prompt:
+
+```
 
