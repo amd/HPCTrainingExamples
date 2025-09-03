@@ -301,7 +301,16 @@ async def main():
 
     QA_CHAIN_PROMPT = PromptTemplate.from_template(prompt)
 
-    llm = Ollama(model="llama3.3:70b")
+    ollama_host = os.getenv("OLLAMA_HOST", "127.0.0.1:11434")  # default just in case
+
+    # Split host and port
+    host, port = ollama_host.split(":")
+
+    # Construct base_url using only host and port
+    base_url = f"http://{host}:{port}"
+
+    # Create Ollama instance
+    llm = Ollama(model="llama3.3:70b", base_url=base_url)
 
     llm_chain = LLMChain(
         llm=llm,
