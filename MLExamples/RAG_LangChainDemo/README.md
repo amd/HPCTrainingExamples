@@ -26,7 +26,7 @@ The above command will run the LLM  locally, you can interact with it through th
 
 We will show two ways of creating the AI assistant depending on the number of users in your system.
 
-### System with a limited amount of users
+### System with a limited number of users
 
 In this case, we assume the system has a small number of users, and that it can sustain the case where all of them are running Ollama locally.
 The bigger in terms of parameters the models pulled from Ollama, the larger the memory requirements, hence if the number of users is large and the models are big, you could quickly finish up all the memory in the system. This is why we recommend the approach below only if the amount of users on the system is limited.
@@ -61,9 +61,9 @@ Note that it is **very** important to specify the target option when doing the i
 
 In the present directory, there currently are three versions of the AI assistant script you can run:
 
-	1. amd_ai_assistant.py
-	2. instinct_chat.py
-	3. instinct_chat_4_llm.py
+1. amd_ai_assistant.py
+2. instinct_chat.py
+3. instinct_chat_4_llm.py
 
 We recommend you begin with `amd_ai_assistant.py` since it is the most complete, optimized and up to date of the three scripts.
 
@@ -89,4 +89,37 @@ AMD AI Assistant Ready! Type your questions. Type 'exit', 'quit' or 'bye' to sto
 Prompt:
 
 ```
+
+### System with a large number of users
+
+On a system with a large number of users, having each one of them run Ollama locally might be prohibitive. In such a case it could be helpful to have Ollama run on a dedicated node and then have users hop onto a web interface to interact with the models. This can be done in various ways, here we report one way to achieve it: below we assume Ollama is already installed and Podman is used as containers manager:
+1. Ssh to the host system (something similar to `ssh $USER@aac6.amd.com`)
+2. Ssh to the compute node on the host system (this is where Ollama will run)
+3. Add this line: `host: 0.0.0.0` to the `.ollama/config.yaml`
+4. Run `export OLLAMA_HOST=0.0.0.0:<port_number>` (for instance the port number might be 11435)
+5. Run: `ollama serve &` to have Ollama run in the background
+6. Run: `ollama pull <some_model>`: this step is not striclty necessary as you will be able to pull models as admin user of the Open WebUI
+7. Run: `podman pull ghcr.io/open-webui/open-webui:ollama`: this command will pull the image you will run
+8. Run: `podman run -d   -p 3000:8080   -e OLLAMA_BASE_URL=http://host.containers.internal:<port_number>   --gpus all   -v open-webui:/app/backend/data   --name open-webui-ollama   --restart always   ghcr.io/open-webui/open-webui:ollama`: this command will run the container using the image pulled at the previous step
+9. From your local machine run: `ssh -L 3000:<compute_node>:3000 <host address>` (for instance <host address> could be `aac6.amd.com`)
+10. Type this in the address bar of your browser (such as Microsoft Edge): `localhost:3000`
+11. Create an admin account and make sure to remember the password you set. This is all done locally so if you remove the Open WebUI data from your host system you will be allowed to start over (you will lose all the data though, so make sure to take note of the password).
+
+#### Troubleshooting tips
+
+If you encounter unexpected behavior while setting up Open WebUI here is something you can do:
+
+1. Kill Ollama
+```
+ps aux | grep 'ollama serve'
+sudo pkill -f "ollama serve"
+```
+2. Stop and remove the container and volume on Podman
+```
+podman stop open-webui-ollama
+podman rm open-webui-ollama
+podman volume rm open-webui
+```
+3. If you get `505:internal error` when accessing `localhost:3000`, keep refreshing the page and it should get you there
+
 
