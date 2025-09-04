@@ -8,6 +8,7 @@ mkdir ${PROB_NAME} && cd ${PROB_NAME}
 
 PWDir=`pwd`
 
+rm -rf Chapter13
 git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 Chapter13
 cd Chapter13/Kokkos/StreamTriad/Orig
 sed -i -e 's/80000000/100000/' StreamTriad.cc

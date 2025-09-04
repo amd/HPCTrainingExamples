@@ -30,6 +30,7 @@ rm -rf Kokkos_build
 
 export Kokkos_DIR=${PWDir}/Kokkos_HIP
 
+rm -rf Chapter13
 git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 Chapter13
 cd Chapter13/Kokkos/StreamTriad/Ver2
 sed -i -e 's/80000000/100000/' StreamTriad.cc
