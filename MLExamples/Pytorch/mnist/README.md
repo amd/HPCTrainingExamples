@@ -1,6 +1,44 @@
 #MNIST pytorch examples
 
-We'll cover three different ways to run Pytorch jobs. Each has its advantages.
+We'll cover three different ways to run Pytorch jobs.
+
+First we'll set up the problem and make a few small modifications.
+
+```
+git clone https://github.com/pytorch/examples.git pytorch_examples
+cd pytorch_examples
+```
+
+The example we want to run is the MNIST training
+example. It is a Image classification (MNIST) using Convnets.
+We go to that directory and set up for our run.
+
+```
+cd mnist
+```
+
+The key file in this directory is main.py. This script will run on either CPUs or GPUs,
+depending on what is available. For a GPU, the data and
+the model need to be transferred to the GPU device. This
+is done with the "to.device" commands. The device will
+be defined as a CPU on a CPU and a GPU on a system with
+a GPU that is available and can be used.
+
+To enhance the example, we'll modify a line to confirm
+that we are running on our AMD GPU and not the CPU.
+Just after line 101, add a line to print out the device
+being used. The line to be added to main.py is:
+
+```
+   print(f"Using device: {device}")' main.py`
+```
+
+For our scripts, we'll use a stream editor, sed, to add the
+line on the fly.
+
+```
+sed -i -e '/device = torch.device("cpu")/a\    print(f"Using device: {device}")' main.py
+```
 
 ## Virtual environment
 
@@ -52,43 +90,6 @@ environment. Then we'll check that we can access a GPU.
 ```
 pytorch -c 'import torch` | 
 pytorch -c '
-```
-
-Now we are ready to download our examples and run them.
-
-```
-git clone https://pytorch/examples pytorch-examples
-cd pytorch-examples
-```
-
-The example we want to run is the MNIST training
-example. We go to that directory and set up for our run.
-
-```
-cd mnist
-```
-
-The key file in this directory is main.py. This script will run on either CPUs or GPUs,
-depending on what is available. For a GPU, the data and
-the model need to be transferred to the GPU device. This
-is done with the "to.device" commands. The device will
-be defined as a CPU on a CPU and a GPU on a system with
-a GPU that is available and can be used.
-
-To enhance the example, we'll modify a line to confirm
-that we are running on our AMD GPU and not the CPU.
-Just after line 101, add a line to print out the device
-being used. The line to be added to main.py is:
-
-```
-print
-```
-
-For our scripts, we'll use a stream editor, sed, to add the
-line on the fly.
-
-```
-sed
 ```
 
 Now let's run the MNIST example
@@ -180,7 +181,7 @@ Output will be in `pytorch_mnist_venv_2gpus.out`
 ## Container Environment
 
 We'll look at two different container systems for running this problem. HPC centers usually
-support only non-root options for containers. Check with your local HPC documentation on
+support only non-root options for containers. Check with your local HPC documentation for
 what they recommend.
 
 
@@ -191,15 +192,84 @@ images are in docker format, so we download it and convert it to the "sif" forma
 in advance and keep the converted image local for future runs. Check with your local system
 on whether they recommend that this is done on the front-end or as a batch job. 
 
+Going to https://hub.docker.com/r/rocm/pytorch, we look for the closest version to the system
+we are running on. At this time, we are using Ubuntu 22.04, python 3.10, and ROCm 6.4.1. There
+isn't an exact match. The closest is `rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1`.
+
 ```
-apptainer
+apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
 ```
 
 Now we can follow similar steps as done in the previous example, but replace the pip install
-with starting up the apptainer image.
+with starting up the apptainer image. We get an GPU allocation with salloc and start up the 
+container image with a shell.
 
 ```
+salloc --ntasks 16 --gpus=1 --time=04:00:0``
+apptainer shell --rocm rocm-pytorch.sif
 ```
+
+We can test whether the pytorch is functioning correctly and that we can access a GPU.
+
+```
+python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import torch; print(torch.cuda.is_available())'
+```
+
+We are ready to run the example problem. We go to the directory with the example files.
+
+```
+cd pytorch_examples/mnist
+```
+
+We need to install the python library requirements.
+
+```
+pip3 install --user -r requirements.txt
+```
+
+And we are finally ready to run the example.
+
+```
+python3 main.py
+```
+
+Exit the shell and the allocation and clean up.
+
+#### Apptainer batch file
+
+It is better to run as a batch job once you have the verified the steps that you need.
+We put all the commands in a batch file. And we change the apptainer command to exec
+instead of shell. Apptainer will run the command following the load of the container
+image, so we put all our commands into a single set of double quotes and use the bash
+command to execute it as a script in that shell. The batch file should look something
+like the following. We'll name the file pytorch_mnist_apptainer.batch.
+
+``` bash
+#!/bin/bash
+#SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
+#SBATCH --gpus=1
+#SBATCH --time=05:00:0
+#SBATCH --ntasks=4
+#SBATCH --output=pytorch_mnist_apptainer.out
+#SBATCH --error=pytorch_mnist_apptainer.err
+
+apptainer exec --rocm rocm-pytorch.sif bash -c " \
+   python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure' && \
+   python3 -c 'import torch; print(torch.cuda.is_available())' && \
+   pip3 install --user -r requirements.txt; \
+   cd pytorch_examples/mnist && \
+   python3 main.py && \
+   echo 'Finished'"
+```
+
+We submit the job with 
+
+```
+sbatch pytorch_mnist_apptainer.batch
+```
+
+Output will be in `pytorch_mnist_apptainer.out`
 
 ### Podman
 
