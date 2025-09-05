@@ -192,12 +192,12 @@ images are in docker format, so we download it and convert it to the "sif" forma
 in advance and keep the converted image local for future runs. Check with your local system
 on whether they recommend that this is done on the front-end or as a batch job. 
 
-Going to https://hub.docker.com/r/rocm/pytorch, we look for the closest version to the system
-we are running on. At this time, we are using Ubuntu 22.04, python 3.10, and ROCm 6.4.1. There
-isn't an exact match. The closest is `rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1`.
+The container image will have a self-contained operating system, python and ROCm version.
+So we can just get the latest version. You may also want to use the latest named version
+to get more reproducible results.
 
 ```
-apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
+apptainer pull rocm-pytorch.sif docker://rocm/pytorch:latest
 ```
 
 Now we can follow similar steps as done in the previous example, but replace the pip install
