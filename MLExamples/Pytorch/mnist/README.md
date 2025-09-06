@@ -1,6 +1,10 @@
 #MNIST pytorch examples
 
-We'll cover three different ways to run Pytorch jobs.
+We'll cover three different ways to run Pytorch jobs. Why are
+there different ways? Each method fits a different scenario
+and system configuration. Knowing how to use each of them is
+important since the method you use on your laptop or workstation
+may not be ideal on an HPC system.
 
 First we'll set up the problem and make a few small modifications.
 
@@ -88,8 +92,15 @@ confirm that we can import the torch module in our python
 environment. Then we'll check that we can access a GPU.
 
 ```
-pytorch -c 'import torch` | 
-pytorch -c '
+python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import torch; print(torch.cuda.is_available())'
+```
+
+We first need to retrieve the python packages that the application
+requires.
+
+```
+pip3 install -r requirements.txt
 ```
 
 Now let's run the MNIST example
@@ -114,7 +125,31 @@ to the HPC cluster using a batch script. Exit the allocation
 and set up to submit the job using a batch script.
 
 ```
-#SBATCH
+#!/bin/bash
+#SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
+#SBATCH --gpus=1
+#SBATCH --time=05:00:0
+#SBATCH --ntasks=4
+#SBATCH --output=pytorch_mnist_venv.out
+#SBATCH --error=pytorch_mnist_venv.err
+
+python3 -m venv rocm-pytorch
+cd rocm-pytorch
+source bin/activate
+echo "Starting pytorch install"
+pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
+
+python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import torch; print(torch.cuda.is_available())'
+
+echo "Starting mnist"
+python3 main.py
+cd ../..
+
+deactivate
+cd ..
+rm -rf rocm-pytorch
+                                                                                                                                              echo "Finished"
 ```
 
 And we submit the batch script with 
@@ -123,60 +158,13 @@ And we submit the batch script with
 sbatch pytorch_mnist_venv.batch
 ```
 
-The output will show up in pytorch_mnist_venv.out. Check the result and the
+The output will show up in `pytorch_mnist_venv.out`. Check the result and the
 time it took to run the job. Also, confirm that it ran on the GPU.
 
 If we wanted to reuse the virtual environment that we created. we could
 leave the directory and just start with sourcing the activate script. This
 would save some time and network traffic.
 
-Multiple GPU runs
-
-To change the script to run on multiple GPUs, we can follow the same
-general procedure. First, we modify the batch script to get two GPUs.
-
-```
-```
-
-Then we modify the main.py script to use the GPUs that we have allocated.
-This is done right after line 127 by wrapping the ... But to do this, we
-have to split the line setting the model from the operation sending it
-to the device.
-
-```
-model = Net().to(device)
-```
-
-becomes
-
-```
-model = Net()
-model.to(device)
-```
-
-### Modifications to run on multiple GPUs
-
-Now we can add the code to model to make it use multiple GPUs. The 
-added lines are:
-
-```
-```
-
-We have conveniently created a sed script that can be used to make
-this modification on the fly for our Slurm batch script:
-
-```
-sed
-```
-
-And now we put this all together into a new batch script which we
-can submit to run.
-
-```
-sbatch pytorch_mnist_venv_2gpus.batch
-```
-
-Output will be in `pytorch_mnist_venv_2gpus.out`
 
 ## Container Environment
 
@@ -249,18 +237,34 @@ like the following. We'll name the file pytorch_mnist_apptainer.batch.
 #!/bin/bash
 #SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
 #SBATCH --gpus=1
-#SBATCH --time=05:00:0
 #SBATCH --ntasks=4
+#SBATCH --time=01:00:00
 #SBATCH --output=pytorch_mnist_apptainer.out
-#SBATCH --error=pytorch_mnist_apptainer.err
+#SBATCH --error=pytorch_mnist_apptainer.out
 
-apptainer exec --rocm rocm-pytorch.sif bash -c " \
-   python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure' && \
-   python3 -c 'import torch; print(torch.cuda.is_available())' && \
-   pip3 install --user -r requirements.txt; \
-   cd pytorch_examples/mnist && \
-   python3 main.py && \
-   echo 'Finished'"
+# Pre-pull rocm-pytorch image on a login/front-end node
+#  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:latest
+#  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
+
+apptainer exec --rocm --cleanenv rocm-pytorch.sif bash -lc '
+
+python3 - << EOF
+import torch, platform
+print("Torch module location: ",torch)
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("Platform:", platform.platform())
+print("torch.cuda.is_available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+EOF
+
+cd pytorch_examples/mnist
+pip3 install -r requirements.txt
+python3 main.py
+
+echo "Finished"
+'
 ```
 
 We submit the job with 
@@ -286,7 +290,7 @@ and providing it to users in a module environment. The local pytorch installatio
 with pip installs or by building from source. Building from source allows customization and
 optimization for the local CPU and GPU hardware. 
 
-In the local pytorch module, the version is built from source with the GPU-aware MPI and only
+In this local pytorch module, the version is built from source with the GPU-aware MPI and only
 the MI200 and MI300 series GPU gfx model support. The build is also done without miniconda
 or miniforge so that it is self-standing and not dependent on another package.
 Also, many additional pytorch packages have been 
@@ -301,24 +305,126 @@ sageattention
 transformers
 ```
 
-To run the examples with a pytorch module
+To run the examples with a pytorch module, we first load the environment
+and check that it is working properly.
 
 ```
 module load rocm pytorch
-git clone
-cd pytorch-examples/mnist
+python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import torch; print(torch.cuda.is_available())'
+```
+We can now move on to running our pytorch application
+
+```
+cd pytorch_examples/mnist
+pip3 install --user -r requirements.txt
 python3 main.py
 ```
 
-If additional python packages need to be added, it is suggested to create a python virtual
+If additional python packages need to be added, like above, it is suggested to create a python virtual
 environment as in the first example. Also, to fully isolate the pytorch module, it is recommended to
 clear the PYTHONPATH variable. The pytorch module will add to the PYTHONPATH variable the paths
 necessary for the software in the module. To support loading other module packages, the additions
-are appended to the existing PYTHONPATH. 
+are appended to the existing PYTHONPATH. With these additions, our example looks like:
+
+```
+python3 -m venv rocm-pytorch
+cd rocm-pytorch
+source bin/activate
+
+module load rocm pytorch
+python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import torch; print(torch.cuda.is_available())'
+
+cd pytorch_examples/mnist
+pip3 install --user -r requirements.txt
+python3 main.py
+
+deactivate
+cd ../../..
+rm -rf rocm-pytorch
+```
+
+We can make this run as a batch file by adding the batch file directives
+at the top.
+
+```
+#!/bin/bash
+#SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
+#SBATCH --gpus=1
+#SBATCH --time=05:00:0
+#SBATCH --ntasks=4
+#SBATCH --output=pytorch_mnist_apptainer.out
+#SBATCH --error=pytorch_mnist_apptainer.err
+
+python3 -m venv rocm-pytorch
+cd rocm-pytorch
+source bin/activate
+
+module load rocm pytorch
+python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import torch; print(torch.cuda.is_available())'
+
+cd pytorch_examples/mnist
+pip3 install --user -r requirements.txt
+python3 main.py
+
+deactivate
+cd ../../..
+rm -rf rocm-pytorch
+```
+
+And submit the job with
+
+```
+sbatch pytorch_mnist_module.batch
+```
+
+### Modifications to run on multiple GPUs
+
+It is a simple procedure to run on multiple GPUs.
+
+We first modify the main.py script to use the GPUs that we have allocated.
+This is done right after line 127 by wrapping the ... But to do this, we
+have to split the line setting the model from the operation sending it
+to the device.
+
+```
+model = Net().to(device)
+```
+
+becomes
+
+```
+model = Net()
+model.to(device)
+```
+
+Now we can add the code to `model` to make it use multiple GPUs. The 
+added lines are:
+
+```
+```
+
+We have conveniently created a sed script that can be used to make
+this modification on the fly for our Slurm batch script:
+
+```
+sed
+```
+
+And now we make a new batch script with a simple change to the SBATCH 
+directives to get more GPUs. All that is left to do is submit the job.
+
+```
+sbatch pytorch_mnist_venv_2gpus.batch
+```
+
+Output will be in `pytorch_mnist_venv_2gpus.out`
 
 ## Wrapup
 
-There are also many combinations of the approaches presented. There is not an ideal choice that will
+There are also many combinations of the approaches presented. There is not one ideal choice that will
 work on every system. Consider how each works for your situation and the system you are running on. Consult
 the recommendations for your HPC center for guidance.
 What works best on your local system may not be the best in an HPC or cloud environment. Consider the
