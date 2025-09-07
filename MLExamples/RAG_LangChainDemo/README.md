@@ -67,28 +67,66 @@ In the present directory, there currently are three versions of the AI assistant
 
 We recommend you begin with `amd_ai_assistant.py` since it is the most complete, optimized and up to date of the three scripts.
 
-All the above scripts will implement a retrieval augmented generation (RAG) model by scraping the web to get information on AMD and AMD software to provide the necessary context to pre trained  LLMs to be able to answer AMD specific questions leveraging the info from those specific websites. We will focus on `amd_ai_assistant.py` for the reasons mentioned above. To see what websites and content is scraped, look at the urls in the `scrape_all` function.
+All the above scripts will implement a retrieval augmented generation (RAG) model by scraping the web to get information on AMD and AMD software to provide the necessary context to pre trained  LLMs to be able to answer AMD specific questions leveraging the info from those specific websites. We initially focus on `amd_ai_assistant.py` for the reasons mentioned above. To see what websites and content is scraped in `amd_ai_assistant.py`, look at the urls in the `scrape_all` function:
 
-
-####  Interacting with the assistant
-
-Let's assume that Ollama is running effectively on the background and you pulled `LLama3.3:70b` (which is the LLM we will be relying on for RAG).
-To interact with the assistant, do:
-
+```
+async def scrape_all(rocm_version):
+    rocm_docs_url=rocm_version
+    if rocm_version == "latest":
+       rocm_docs_url=rocm_version
+    else:
+       rocm_docs_url=f"docs-{rocm_version}"
+    main_urls = [
+        f"https://rocm.docs.amd.com/en/{rocm_docs_url}/",
+        "https://rocm.blogs.amd.com/verticals-ai.html",
+        "https://rocm.blogs.amd.com/verticals-ai-page2.html",
+        "https://rocm.blogs.amd.com/verticals-ai-page3.html",
+        "https://rocm.blogs.amd.com/verticals-ai-page4.html",
+        "https://rocm.blogs.amd.com/verticals-ai-page5.html",
+        "https://rocm.blogs.amd.com/verticals-ai-page6.html",
+        "https://rocm.blogs.amd.com/verticals-ai-page7.html",
+        "https://rocm.blogs.amd.com/verticals-ai-page8.html",
+        "https://rocm.blogs.amd.com/verticals-ai-page9.html",
+        "https://rocm.blogs.amd.com/verticals-ai-page10.html",
+        "https://rocm.blogs.amd.com/verticals-ai-page11.html",
+        "https://rocm.blogs.amd.com/verticals-ai-page12.html",
+        "https://rocm.blogs.amd.com/verticals-ai-page13.html",
+        "https://rocm.blogs.amd.com/verticals-ai-page14.html",
+        "https://rocm.blogs.amd.com/verticals-hpc.html",
+                              .
+                              .
+                              .
+```
+You can edit the above list adding or removing urls at your discretion. Note that you can decide the level of recursion by which links at the above urls will be scraped (default is one level of recursion):
+```
+TIMEOUT = 5  # seconds
+MAX_DEPTH = 1
+CRAWL_DELAY = 1  # seconds delay between requests to avoid overload
+CONCURRENT_REQUESTS = 5  # Limit max concurrent requests for politeness
+```
+Above, if you modify `MAX_DEPTH` to two for example, starting from the above urls, the script will scrape links at those urls and then the links at the links.
+Let's assume that Ollama is running effectively on the background and you pulled `LLama3.3:70b` (which is the LLM `mad_ai_assistant.py` will be relying on for RAG): to run the code do:
 ```
 cd HPCTrainingExamples/MLExamples/RAG_LangChainDemo
-python3 ./amd_ai_assistant.py --rocm-version <rocm_version>
+python3 amd_ai_assistant.py --rocm-version <rocm_version> --scrape
 ```
-
-You can specify the `<rocm_version>` of the documentation you want to pull so that it matches the ROCm installed in your system. Note that the script will check whether scraped data is already present: if not, it will scrape and save that data so that the next time you run the script you will be able to interact with the LLM right away without having to wait for the scraping again. You can force the scraping by including the `--scrape` flag. If you are not scraping, including the rocm version as input does nothing.
-
-You will see a prompt that looks like this:
+The above flags will specify what ROCm version to pull the documentation of, and also that we want to force scraping: this is because the script will save the scraped data locally so that the next time you run the script it will not scrape again, unless you force it with the `--scrape` option. Without scraping again, you will be immediately be supplied the prompt to interact with the model, saving considerable time:
 ```
 AMD AI Assistant Ready! Type your questions. Type 'exit', 'quit' or 'bye' to stop.
 
-Prompt:
-
+Prompt: 
 ```
+The script called `instinct_chat.py` has either the option to be used from command line, or to use a web user interface. The default is to use the command line option, to use the web interface (provided by Gradio) run it with:
+```
+cd HPCTrainingExamples/MLExamples/RAG_LangChainDemo
+python3 instinct_chat.py --webui
+```
+otherwise, just omit the `--webui` option and you will get the command line prompt. Then copy paste the link displayed on terminal to your browser and you will get to the web user interface. Note that if you are running this script on a cluster, you will need to take care of the proper ssh tunneling to be able to open the user interface from your local browser. The script `instinct_chat_4_llm.py` only works with the Gradio web interface so running it with:
+```
+cd HPCTrainingExamples/MLExamples/RAG_LangChainDemo
+python3 instinct_chat_4_llm.py
+``` 
+will give you the web interface option by default. The above script considers `llama3.3:70b`, `gemma2:27b`, `mistral-large` and `phi3:14b` to provide four answers to your prompt that will be displayed side by side in the Gradio interface. Remember to pull all these four models with Ollama before running the script.
 
 ### System with a large number of users
 
