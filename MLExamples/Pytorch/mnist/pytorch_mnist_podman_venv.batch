@@ -21,6 +21,8 @@ podman run --rm \
   rocm/pytorch:latest \
   bash -lc '
 
+python -m venv rocm-pytorch
+
 python3 - << EOF
 import torch, platform
 print("Torch module location: ",torch)
@@ -33,8 +35,14 @@ if torch.cuda.is_available():
 EOF
 
 cd pytorch_examples/mnist
-echo "Starting mnist"
+source rocm-pytorch/bin/activate
 pip3 install -r requirements.txt
+
+echo "Starting mnist"
 python3 main.py
+
+deactivate
+cd ../../..
+rm -rf rocm-pytorch
 
 echo "Finished"

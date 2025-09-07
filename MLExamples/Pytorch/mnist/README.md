@@ -234,10 +234,13 @@ command to execute it as a script in that shell. The batch file should look some
 like the following. We'll name the file pytorch_mnist_apptainer.batch.
 
 ``` bash
+What improvements would you suggest for the following apptainer script for a pytorch example being submitted as a Slurm batch job on Ubuntu 22.04 with ROCm 6.4.1?
+```
 #!/bin/bash
 #SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
 #SBATCH --gpus=1
-#SBATCH --ntasks=4
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
 #SBATCH --time=01:00:00
 #SBATCH --output=pytorch_mnist_apptainer.out
 #SBATCH --error=pytorch_mnist_apptainer.out
@@ -246,7 +249,14 @@ like the following. We'll name the file pytorch_mnist_apptainer.batch.
 #  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:latest
 #  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
 
-apptainer exec --rocm --cleanenv rocm-pytorch.sif bash -lc '
+export OMP_NUM_THREADS=4
+
+mkdir -p .torch
+
+apptainer exec --rocm --cleanenv \
+   --bind "$PWD:/workspace" -W /workspace \
+   --env TORCH_HOME=/workspace/.torch \
+   rocm-pytorch.sif bash -lc '
 
 python3 - << EOF
 import torch, platform
@@ -265,6 +275,7 @@ python3 main.py
 
 echo "Finished"
 '
+```
 ```
 
 We submit the job with 
