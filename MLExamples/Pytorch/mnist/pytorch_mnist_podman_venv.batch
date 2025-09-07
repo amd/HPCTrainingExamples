@@ -46,3 +46,4 @@ cd ../../..
 rm -rf rocm-pytorch
 
 echo "Finished"
+'

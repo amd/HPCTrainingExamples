@@ -1,4 +1,4 @@
-#MNIST pytorch examples
+# MNIST pytorch examples
 
 We'll cover three different ways to run Pytorch jobs. Why are
 there different ways? Each method fits a different scenario
@@ -149,7 +149,8 @@ cd ../..
 deactivate
 cd ..
 rm -rf rocm-pytorch
-                                                                                                                                              echo "Finished"
+
+echo "Finished"
 ```
 
 And we submit the batch script with 
@@ -234,8 +235,6 @@ command to execute it as a script in that shell. The batch file should look some
 like the following. We'll name the file pytorch_mnist_apptainer.batch.
 
 ``` bash
-What improvements would you suggest for the following apptainer script for a pytorch example being submitted as a Slurm batch job on Ubuntu 22.04 with ROCm 6.4.1?
-```
 #!/bin/bash
 #SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
 #SBATCH --gpus=1
@@ -276,7 +275,6 @@ python3 main.py
 echo "Finished"
 '
 ```
-```
 
 We submit the job with 
 
@@ -286,12 +284,170 @@ sbatch pytorch_mnist_apptainer.batch
 
 Output will be in `pytorch_mnist_apptainer.out`
 
+### Apptainer with venv
+
+There is one problem with the apptainer script. We generally don't want a bunch of the
+software installed with the script to persist after the run. The pip install does add
+to the python packages in our home directory. While for this example, it is not a lot
+of extra packages, there may be cases where it is a log. To avoid this, we use the virtual environment
+in conjunction with the container. The batch script now looks like this:
+
+``` bash
+#!/bin/bash
+#SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
+#SBATCH --gpus=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=01:00:00
+#SBATCH --output=pytorch_mnist_apptainer_venv.out
+#SBATCH --error=pytorch_mnist_apptainer_venv.out
+
+# Pre-pull rocm-pytorch image on a login/front-end node
+#  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:latest
+#  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
+
+export OMP_NUM_THREADS=1
+
+mkdir -p .torch
+
+python3 -m venv rocm-pytorch
+source rocm-pytorch/bin/activate
+
+apptainer exec --rocm --cleanenv \
+   --bind "$PWD:/workspace" -W /workspace \
+   --env TORCH_HOME=/workspace/.torch \
+   rocm-pytorch.sif bash -lc '
+
+python3 - << EOF
+import torch, platform
+print("Torch module location: ",torch)
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("Platform:", platform.platform())
+print("torch.cuda.is_available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+EOF
+
+cd pytorch_examples/mnist
+pip3 install -r requirements.txt
+python3 main.py
+
+echo "Finished"
+'
+
+deactivate
+cd ../../..
+rm -rf rocm-pytorch
+```
+
 ### Podman
 
-To run the same example with podman, we can directly use the docker container. The steps are
-
+To run the same example with podman, we can directly use the docker container. We still
+have to download it prior to the batch job. The steps are
 
 ```
+podman pull docker://rocm/pytorch:latest
+```
+
+Then the Slurm batch file for the podman job is
+
+```
+#!/bin/bash
+#SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
+#SBATCH --gpus=1
+#SBATCH --ntasks=4
+#SBATCH --time=01:00:00
+#SBATCH --output=pytorch_mnist_podman.out
+#SBATCH --error=pytorch_mnist_podman.out
+
+#podman pull docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
+#podman pull docker://rocm/pytorch:latest
+
+# Run your containerized workload
+podman run --rm \
+  --device=/dev/dri --device=/dev/kfd \
+  --network=host --ipc=host \
+  --userns=keep-id \
+  --group-add=keep-groups \
+  --cgroupns=host \
+  -v "$PWD":"$PWD" \
+  -w "$PWD" \
+  rocm/pytorch:latest \
+  bash -lc '
+
+python3 - << EOF
+import torch, platform
+print("Torch module location: ",torch)
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("Platform:", platform.platform())
+print("torch.cuda.is_available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+EOF
+
+cd pytorch_examples/mnist
+echo "Starting mnist"
+pip3 install -r requirements.txt
+python3 main.py
+
+echo "Finished"
+```
+
+Again, we would like to avoid software being installed during the batch job. We can add a 
+virtual environment to avoid these python software installs.
+
+```
+#!/bin/bash
+#SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
+#SBATCH --gpus=1
+#SBATCH --ntasks=4
+#SBATCH --time=01:00:00
+#SBATCH --output=pytorch_mnist_podman_venv.out
+#SBATCH --error=pytorch_mnist_podman_venv.out
+
+#podman pull docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
+#podman pull docker://rocm/pytorch:latest
+
+# Run your containerized workload
+podman run --rm \
+  --device=/dev/dri --device=/dev/kfd \
+  --network=host --ipc=host \
+  --userns=keep-id \
+  --group-add=keep-groups \
+  --cgroupns=host \
+  -v "$PWD":"$PWD" \
+  -w "$PWD" \
+  rocm/pytorch:latest \
+  bash -lc '
+
+python -m venv rocm-pytorch
+
+python3 - << EOF
+import torch, platform
+print("Torch module location: ",torch)
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("Platform:", platform.platform())
+print("torch.cuda.is_available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+EOF
+
+cd pytorch_examples/mnist
+source rocm-pytorch/bin/activate
+pip3 install -r requirements.txt
+
+echo "Starting mnist"
+python3 main.py
+
+deactivate
+cd ../../..
+rm -rf rocm-pytorch
+
+echo "Finished"
+'
 ```
 
 ## Modules with local rocm and pytorch software
@@ -307,14 +463,11 @@ or miniforge so that it is self-standing and not dependent on another package.
 Also, many additional pytorch packages have been 
 added. These include
 
-```
-maybe numbered?
-torchvision
-torchaudio
-flashattention
-sageattention
-transformers
-```
+- torchvision
+- torchaudio
+- transformers
+- sageattention
+- flashattention
 
 To run the examples with a pytorch module, we first load the environment
 and check that it is working properly.
@@ -323,6 +476,22 @@ and check that it is working properly.
 module load rocm pytorch
 python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
 python3 -c 'import torch; print(torch.cuda.is_available())'
+```
+
+We can get more information with the same check script that we used above in the
+container examples.
+
+```
+python3 - << EOF
+import torch, platform
+print("Torch module location: ",torch)
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("Platform:", platform.platform())
+print("torch.cuda.is_available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+EOF
 ```
 We can now move on to running our pytorch application
 
@@ -344,8 +513,16 @@ cd rocm-pytorch
 source bin/activate
 
 module load rocm pytorch
-python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
-python3 -c 'import torch; print(torch.cuda.is_available())'
+python3 - << EOF
+import torch, platform
+print("Torch module location: ",torch)
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("Platform:", platform.platform())
+print("torch.cuda.is_available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+EOF
 
 cd pytorch_examples/mnist
 pip3 install --user -r requirements.txt
@@ -373,8 +550,16 @@ cd rocm-pytorch
 source bin/activate
 
 module load rocm pytorch
-python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
-python3 -c 'import torch; print(torch.cuda.is_available())'
+python3 - << EOF
+import torch, platform
+print("Torch module location: ",torch)
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("Platform:", platform.platform())
+print("torch.cuda.is_available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+EOF
 
 cd pytorch_examples/mnist
 pip3 install --user -r requirements.txt
