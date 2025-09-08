@@ -465,6 +465,7 @@ added. These include
 
 - torchvision
 - torchaudio
+- triton
 - transformers
 - sageattention
 - flashattention
