@@ -1,0 +1,5 @@
+tqdm==*
+numpy==*
+argparse==*
+neuralop==*
+the_well==*
