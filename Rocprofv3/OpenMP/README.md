@@ -3,7 +3,7 @@
 
 In this series of examples, we will demonstrate profiling with rocprofv3 on a platform using an AMD Instinct&trade; MI300 GPU. ROCm releases (6.2+) now include rocprofv3.
 
-Note that the focus of this exercise is on rocprofv3 profiler, not on how to achieve optimal performance on MI300A.
+Note that the focus of this exercise is on rocprofv3 profiler, not on how to achieve optimal performance on MI300A. This exercise was last tested with ROCm 6.4.2 on MI300A [MPCDF Viper-GPU](https://docs.mpcdf.mpg.de/doc/computing/viper-gpu-user-guide.html).
 
 The examples are based on [Fortran+OpenMP Jacobi porting example from HPCTrainingExamples](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/Fortran/7_jacobi). 
 
@@ -17,12 +17,11 @@ git clone https://github.com/amd/HPCTrainingExamples.git
 cd HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/7_jacobi/1_jacobi_usm
 ```
 
-Load the necessary modules, including flang-new compiler:
+Load the necessary modules, including flang-new compiler (module name for flang-new compiler on your system might differ, check for `rocm-afar-drop`, `amd-llvm` or something similar).
 
 ```
 module load rocm
 module load amdflang-new
-module load openmpi
 ```
 
 For now unset `HSA_XNACK` environment variable:
@@ -38,7 +37,7 @@ No profiling yet, just check that the code compiles and runs correctly.
 
 ```
 make clean
-make
+make FC=amdflang
 ./jacobi -m 1024
 ```
 
@@ -161,7 +160,7 @@ If it is not, continue by visualizing the traces.
 Create trace file suitable for `Perfetto`. If the application execution is short (such as this example), consider using `--sys-trace` option to collect as much information as possible:
 
 ```
-rocprofv3 --sys-trace --output-format pftrace -- ./jacobi -m 1024
+rocprofv3 --runtime-trace --output-format pftrace -- ./jacobi -m 1024
 ```
 
 This should generate a pftrace file.
@@ -180,7 +179,11 @@ Now on your laptop:
   4. Use the keystrokes W,A,S,D to zoom in and move right and left in the GUI.
 
 Below, you can see an example of how the trace file would be visualized in `Perfetto`:
-![image](images/perfetto_example.png)
+![image](images/rocprofv3_runtime_main.png)
+
+If you zoom in, you should be able to see OpenMP kernels in more details:
+![image](images/rocprofv3_runtime_zoomed.png)
+
 
 ## Additional features
 
@@ -198,6 +201,8 @@ Create an `input_counters.txt` counters input file with the counters you would l
 echo "pmc: VALUUtilization VALUBusy FetchSize WriteSize MemUnitStalled" > input_counters.txt
 echo "pmc: GPU_UTIL CU_OCCUPANCY MeanOccupancyPerCU MeanOccupancyPerActiveCU" >> input_counters.txt
 ```
+
+Note that not all the GPUs have the same counters, so if profile the counters above generates errors, consider testing a single counter (e.g., `VALUUtilization` only).
 
 Execute with the counters you just added:
 
