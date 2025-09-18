@@ -1,6 +1,6 @@
 # Fourier Neural Operators for Scientific Applications
 
-In this example, we will show how to train Fourier Neural Operators for scientific applications. This will be followed by brief performance profile and then z simple data transfer optimization.
+In this example, we will show how to train Fourier Neural Operators for scientific applications. This will be followed by brief performance profiling and then data transfer optimization.
 The examples in this directory are loosely based on [this](https://github.com/PolymathicAI/the_well/blob/master/docs/tutorials/dataset.ipynb) tutorial.
 
 ## Prerequisites
