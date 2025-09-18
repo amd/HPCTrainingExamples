@@ -93,7 +93,7 @@ For good performance on ML tasks, it is crucial to optimize the data pipeline to
 This depends on the ratio between the computational cost of the model and the size of the training data, the batch size, available memory bandwidth, etc. and is thus case-specific.
 However, a few general steps can be considered to improve the performance:
 - Use pinned memory for the dataset to improve memory throughput.
-  This can be easily done by passing an additional flag to the `DatLoader`:
+  This can be easily done by passing an additional flag to the `DataLoader`:
 ```python
 data_loader = torch.utils.data.DataLoader(
     dataset = dataset_train,
