@@ -1,13 +1,19 @@
 # Fourier Neural Operators for Scientific Applications
 
 ## Prerequisites
-The following example assumes that PyTorch with ROCm support was installed into the virtual environment `$HOME/venv-pt` following [these instructions](https://github.com/marikurz-amd/HPCTrainingExamples-Test/tree/main/MLExamples).
-If that's not the case, please first create the environment following [these instructions](https://github.com/marikurz-amd/HPCTrainingExamples-Test/tree/main/MLExamples).
-Then, activate the environment and install the remaining dependencies using
+
+> [!NOTE]
+> The following example assumes that PyTorch with ROCm support was installed on the system and is available as a loadable module file.
+> If that's not the case, please review the following resources to install it either
+> - [as an `lmod` module](https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/pytorch_setup.sh) as used in the following, or
+> - [as a `pip` package](https://github.com/marikurz-amd/HPCTrainingExamples-Test/tree/main/MLExamples).
+
+First, setup your environment for the example by loading the PyTorch module and installing the remaining packages with `pip` by running
 ```bash
-deactivate
+module load pytorch
+python3 -m venv $HOME/venv-pt
 source $HOME/venv-pt/bin/activate
-pip3 install torch_harmonics --no-deps
+cd HPCTrainingExamples/MLExamples/Neural_Operators
 pip3 install -r requirements.txt
 ```
 
