@@ -1,5 +1,7 @@
 # Fourier Neural Operators for Scientific Applications
 
+The examples in this directory are loosely based on [this](https://github.com/PolymathicAI/the_well/blob/master/docs/tutorials/dataset.ipynb) tutorial.
+
 ## Prerequisites
 
 > [!NOTE]
