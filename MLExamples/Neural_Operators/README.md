@@ -1,11 +1,14 @@
 # Fourier Neural Operators for Scientific Applications
 
 ## Prerequisites
-This examples assume that PyTorch with ROCm support is correctly installed on the system.
-If that's not the case, follow [these instructions](https://github.com/marikurz-amd/HPCTrainingExamples-Test/tree/main/MLExamples) to install PyTorch.
-The remaining dependencies can be installed with
+The following example assumes that PyTorch with ROCm support was installed into the virtual environment `$HOME/venv-pt` following [these instructions](https://github.com/marikurz-amd/HPCTrainingExamples-Test/tree/main/MLExamples).
+If that's not the case, please first create the environment following [these instructions](https://github.com/marikurz-amd/HPCTrainingExamples-Test/tree/main/MLExamples).
+Then, activate the environment and install the remaining dependencies using
 ```bash
-pip install -r requirements.txt
+deactivate
+source $HOME/venv-pt/bin/activate
+pip3 install torch_harmonics --no-deps
+pip3 install -r requirements.txt
 ```
 
 ## A Brief Introduction to Neural Operators
@@ -28,11 +31,11 @@ The development of ML in computer vision in the early 2010s was among others fue
 A similar movement in the computational natural sciences has got traction much more recently.
 Unfortunately, such problems are oftentimes very high-dimensional, time-dependent and parametrized by a range of similarity parameters.
 This renders it challenging to obtain, save and distribute exhaustive datasets in these domains.
-Two exemplary projects that provide a set of such benchmark datasets are 
+Two exemplary projects that address this issue and provide a set of such benchmark datasets are
 - The Well [(GitHub)](https://github.com/PolymathicAI/the_well)
 - PDEBench [(GitHub)](https://github.com/pdebench/PDEBench)
 
-The following example will use datasets from "The Well".
+The following example will use datasets from ["The Well"](https://github.com/PolymathicAI/the_well).
 
 > [!WARNING]
 > The datasets differ significantly in size and the overall data pool contains around 15 TB of data.
@@ -42,16 +45,18 @@ The following example will use datasets from "The Well".
 ## Training a Model
 Run a few episodes of training with
 ```bash
-python fno.py --num_episodes=5 --batch_size=4
+python3 fno.py --num_episodes=5 --batch_size=4
 ```
 The script automatically downloads the dataset if it does not exist yet, so it might take a few minutes.
 If the dataset has already been downloaded, you can pass the location of the dataset via `--base_path=/my/path/to/datasets/`. 
-After training, the model is evaluated on an example of the validation set auto-regressively, where the model's prediction are fed back into it to produce a whole trajectory of how the system will evolve.
-The following compares the predictions of the FNO with the true trajectory at distinct points in time:
+After training, the model is evaluated on an example of the validation set auto-regressively, i.e. the model's prediction are fed back into it to produce a whole trajectory of how the system will evolve.
+The following image compares the predictions of the FNO with the true trajectory during the first few time steps:
 
 ![Comparisons of the reference data and model predictions for an entire time-series.](images/FNO_predictions.png)
 
-Clearly, the FNO model provides useful predictions during the first timesteps, but tends to diverge over time due to the exponential error growth over time.
+Clearly, the FNO model provides useful predictions in the beginning, but tends to diverge over time due to the exponential error growth over time.
+The reference paper by [Ohana et al. 2024](https://proceedings.neurips.cc/paper_files/paper/2024/file/4f9a5acd91ac76569f2fe291b1f4772b-Paper-Datasets_and_Benchmarks_Track.pdf) provides an overview of the different Neural Operator models and their performance on specific datasets of The Well.
+Feel free to modify the script and try out other suggested architectures to improve the quality of the predictions.
 
 ## Profiling
 Depending on the GPU you have available, training an episode should take between a minute up to an hour.
@@ -65,8 +70,8 @@ Augment the training script `fno.py` by the necessary commands to obtain a profi
 > Or look at the proposed solution in the `fno_profile.py` file.
 
 After obtaining a profile by running
-````bas
-python fno_profile.py --torch-profile --num_episodes=1
+````bash
+python3 fno_profile.py --torch_profile --num_episodes=1
 ````
 open the resulting JSON file in Perfetto as explained [in this excercise](ttps://github.com/amd/HPCTrainingExamples/tree/main/MLExamples/PyTorch_Profiling/torch-profiler).
 Depending on your hardware, the trace should look something like this:
