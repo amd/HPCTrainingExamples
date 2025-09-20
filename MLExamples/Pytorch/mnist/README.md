@@ -216,14 +216,16 @@ what they recommend.
 With Apptainer, we first need to download the container to the local system. Most container
 images are in docker format, so we download it and convert it to the "sif" format. We can do this 
 in advance and keep the converted image local for future runs. Check with your local system
-on whether they recommend that this is done on the front-end or as a batch job. 
+on whether they recommend that this is done on the front-end or as a batch job. On this
+system, we use the SH5 nodes with the single GPU so that we don't tie up the nodes
+with more GPUs.
 
 The container image will have a self-contained operating system, python and ROCm version.
 So we can just get the latest version. You may also want to use the latest named version
 to get more reproducible results.
 
 ```
-apptainer pull rocm-pytorch.sif docker://rocm/pytorch:latest
+time srun -p 1CN48C1G1H_MI300A_Ubuntu22 --ntasks 12 apptainer pull rocm-pytorch.sif docker://rocm/pytorch:latest
 ```
 
 Now we can follow similar steps as done in the previous example, but replace the pip install
@@ -231,8 +233,8 @@ with starting up the apptainer image. We get an GPU allocation with salloc and s
 container image with a shell.
 
 ```
-salloc --ntasks 16 --gpus=1 --time=04:00:0``
-apptainer shell --rocm rocm-pytorch.sif
+salloc --ntasks 48 --gpus=1 --time=04:00:00
+apptainer shell --rocm ~/rocm-pytorch.sif
 ```
 
 We can test whether the pytorch is functioning correctly and that we can access a GPU.
@@ -251,13 +253,13 @@ cd pytorch_examples/mnist
 We need to install the python library requirements.
 
 ```
-pip3 install --user -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 And we are finally ready to run the example.
 
 ```
-python3 main.py
+time python3 main.py
 ```
 
 Exit the shell and the allocation and clean up.
@@ -269,15 +271,13 @@ We put all the commands in a batch file. And we change the apptainer command to 
 instead of shell. Apptainer will run the command following the load of the container
 image, so we put all our commands into a single set of double quotes and use the bash
 command to execute it as a script in that shell. The batch file should look something
-like the following. We'll name the file pytorch_mnist_apptainer.batch.
+like the following. We'll name the file `pytorch_mnist_apptainer.batch`.
 
 ``` bash
 #!/bin/bash
-#SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
 #SBATCH --gpus=1
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
-#SBATCH --time=01:00:00
+#SBATCH --ntasks=48
+#SBATCH --time=04:00:00
 #SBATCH --output=pytorch_mnist_apptainer.out
 #SBATCH --error=pytorch_mnist_apptainer.out
 
@@ -285,14 +285,12 @@ like the following. We'll name the file pytorch_mnist_apptainer.batch.
 #  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:latest
 #  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
 
-export OMP_NUM_THREADS=4
-
 mkdir -p .torch
 
 apptainer exec --rocm --cleanenv \
    --bind "$PWD:/workspace" -W /workspace \
    --env TORCH_HOME=/workspace/.torch \
-   rocm-pytorch.sif bash -lc '
+   ~/rocm-pytorch.sif bash -lc '
 
 python3 - << EOF
 import torch, platform
@@ -305,7 +303,7 @@ if torch.cuda.is_available():
     print("Device 0:", torch.cuda.get_device_name(0))
 EOF
 
-cd pytorch_examples/mnist
+cd ~/pytorch_examples/mnist
 pip3 install -r requirements.txt
 python3 main.py
 
@@ -331,19 +329,15 @@ in conjunction with the container. The batch script now looks like this:
 
 ``` bash
 #!/bin/bash
-#SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
 #SBATCH --gpus=1
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=1
-#SBATCH --time=01:00:00
+#SBATCH --ntasks=48
+#SBATCH --time=04:00:00
 #SBATCH --output=pytorch_mnist_apptainer_venv.out
 #SBATCH --error=pytorch_mnist_apptainer_venv.out
 
 # Pre-pull rocm-pytorch image on a login/front-end node
 #  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:latest
 #  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
-
-export OMP_NUM_THREADS=1
 
 mkdir -p .torch
 
@@ -353,7 +347,7 @@ source rocm-pytorch/bin/activate
 apptainer exec --rocm --cleanenv \
    --bind "$PWD:/workspace" -W /workspace \
    --env TORCH_HOME=/workspace/.torch \
-   rocm-pytorch.sif bash -lc '
+   ~/rocm-pytorch.sif bash -lc '
 
 python3 - << EOF
 import torch, platform
@@ -366,7 +360,7 @@ if torch.cuda.is_available():
     print("Device 0:", torch.cuda.get_device_name(0))
 EOF
 
-cd pytorch_examples/mnist
+cd ~/pytorch_examples/mnist
 pip3 install -r requirements.txt
 python3 main.py
 
@@ -391,7 +385,6 @@ Then the Slurm batch file for the podman job is
 
 ```
 #!/bin/bash
-#SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
 #SBATCH --gpus=1
 #SBATCH --ntasks=4
 #SBATCH --time=01:00:00
@@ -507,6 +500,12 @@ added. These include
 - sageattention
 - flashattention
 
+We get an interactive compute node with a single GPU
+
+```
+salloc --ntasks 24 --gpus=1 --time=01:00:00
+```
+
 To run the examples with a pytorch module, we first load the environment
 and check that it is working properly.
 
@@ -534,9 +533,9 @@ EOF
 We can now move on to running our pytorch application
 
 ```
-cd pytorch_examples/mnist
+cd ~/pytorch_examples/mnist
 pip3 install --user -r requirements.txt
-python3 main.py
+time python3 main.py
 ```
 
 If additional python packages need to be added, like above, it is suggested to create a python virtual
@@ -547,7 +546,7 @@ are appended to the existing PYTHONPATH. With these additions, our example looks
 
 ```
 python3 -m venv rocm-pytorch
-cd rocm-pytorch
+pushd rocm-pytorch
 source bin/activate
 
 module load rocm pytorch
@@ -562,30 +561,26 @@ if torch.cuda.is_available():
     print("Device 0:", torch.cuda.get_device_name(0))
 EOF
 
-cd pytorch_examples/mnist
-pip3 install --user -r requirements.txt
+pushd ~/pytorch_examples/mnist
+pip3 install -r requirements.txt
 python3 main.py
 
+popd
 deactivate
-cd ../../..
+popd
 rm -rf rocm-pytorch
 ```
 
 We can make this run as a batch file by adding the batch file directives
-at the top.
+at the top. First without the virtual environment
 
 ```
 #!/bin/bash
-#SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
 #SBATCH --gpus=1
-#SBATCH --time=05:00:0
-#SBATCH --ntasks=4
-#SBATCH --output=pytorch_mnist_apptainer.out
-#SBATCH --error=pytorch_mnist_apptainer.err
-
-python3 -m venv rocm-pytorch
-cd rocm-pytorch
-source bin/activate
+#SBATCH --time=01:00:0
+#SBATCH --ntasks=48
+#SBATCH --output=pytorch_mnist_module.out
+#SBATCH --error=pytorch_mnist_module.out
 
 module load rocm pytorch
 python3 - << EOF
@@ -599,19 +594,57 @@ if torch.cuda.is_available():
     print("Device 0:", torch.cuda.get_device_name(0))
 EOF
 
-cd pytorch_examples/mnist
+~/pytorch_examples/mnist
 pip3 install --user -r requirements.txt
-python3 main.py
-
-deactivate
-cd ../../..
-rm -rf rocm-pytorch
+time python3 main.py
 ```
 
 And submit the job with
 
 ```
 sbatch pytorch_mnist_module.batch
+```
+
+With a virtual environment in the `pytorch_mnist_module_venv.batch` file
+
+```
+#!/bin/bash
+#SBATCH --gpus=1
+#SBATCH --time=01:00:0
+#SBATCH --ntasks=48
+#SBATCH --output=pytorch_mnist_module_venv.out
+#SBATCH --error=pytorch_mnist_module_venv.out
+
+python3 -m venv rocm-pytorch
+pushd rocm-pytorch
+source bin/activate
+
+module load rocm pytorch
+python3 - << EOF
+import torch, platform
+print("Torch module location: ",torch)
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("Platform:", platform.platform())
+print("torch.cuda.is_available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+EOF
+
+pushd ~/pytorch_examples/mnist
+pip3 install -r requirements.txt
+python3 main.py
+
+popd
+deactivate
+popd
+rm -rf rocm-pytorch
+```
+
+And submit the job with
+
+```
+sbatch pytorch_mnist_module_venv.batch
 ```
 
 ### Modifications to run on multiple GPUs
