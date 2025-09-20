@@ -1,26 +1,30 @@
 #!/bin/bash
-#SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
 #SBATCH --gpus=1
-#SBATCH --time=05:00:0
-#SBATCH --ntasks=4
+#SBATCH --time=01:00:00
+#SBATCH --ntasks=1
 #SBATCH --output=pytorch_mnist_venv.out
-#SBATCH --error=pytorch_mnist_venv.err
+#SBATCH --error=pytorch_mnist_venv.out
 
 python3 -m venv rocm-pytorch
 cd rocm-pytorch
 source bin/activate
 echo "Starting pytorch install"
-pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
+time pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
 
 python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
 python3 -c 'import torch; print(torch.cuda.is_available())'
 
+git clone --depth=1 https://github.com/pytorch/examples.git pytorch_examples
+cd pytorch_examples/mnist
+sed -i -e '/device = torch.device("cpu")/a\    print(f"Using device: {device}")' main.py
+
+pip3 install -r requirements.txt
+
 echo "Starting mnist"
-python3 main.py
-cd ../..
+time python3 main.py
+cd ../../..
 
 deactivate
-cd ..
 rm -rf rocm-pytorch
 
 echo "Finished"
