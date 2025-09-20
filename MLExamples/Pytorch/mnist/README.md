@@ -44,6 +44,12 @@ line on the fly.
 sed -i -e '/device = torch.device("cpu")/a\    print(f"Using device: {device}")' main.py
 ```
 
+And return to the base directory with
+
+```
+cd ../..
+```
+
 ## Virtual environment
 
 Probably the most common way to run a pytorch application is to use a python
@@ -56,7 +62,7 @@ run this exercise. We'll get just one GPU to begin with so that we don't
 monopolize the resources.
 
 ```
-salloc -p 1CN192C4G1H_MI300A_Ubuntu22 --ntasks 24 --gpus=1 --time=04:00:0
+salloc --ntasks 24 --gpus=1 --time=01:00:00
 ```
 
 First create a virtual environment. This will provide an isolated working space that
@@ -76,15 +82,14 @@ source bin/activate
 
 This is an empty environment. We have to populate it with the 
 software that we need. There is a python package containing 
-ROCm and pytorch that we will use.
+ROCm and pytorch that we will use. We time the install for comparison.
 
 ```
-pip3 install rocm=pytorch:latest-release
+time pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
 ```
 
-There are other versions such as "latest". We want a more
-reproducible version. Another option is to install a
-numbered pytorch version for even more reproducibility.
+This is for ROCm 6.4.x releases. If you have a different ROCm release, you
+should modify it for your version.
 
 Before we jump into running our project, lets confirm that
 the environment is set up and running properly. We'll first 
@@ -96,18 +101,30 @@ python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
 python3 -c 'import torch; print(torch.cuda.is_available())'
 ```
 
-We first need to retrieve the python packages that the application
+We'll need the examples in this virtual environment
+
+```
+git clone --depth=1 https://github.com/pytorch/examples.git pytorch_examples
+cd pytorch_examples/mnist
+sed -i -e '/device = torch.device("cpu")/a\    print(f"Using device: {device}")' main.py
+```
+
+And we need to retrieve the python packages that the application
 requires.
 
 ```
 pip3 install -r requirements.txt
 ```
 
-Now let's run the MNIST example
+Now let's run the MNIST example. We time it for later analysis.
 
 ```
-python3 main.py
+time python3 main.py
 ```
+
+You should see a line at the start that says `Using device: cuda`. It
+confirms that you are running on the GPU. It is the AMD GPU even
+though it says cuda.
 
 Cleaning up after our run, we deactivate the virtual environment
 and remove our directory. With the amount of disk space that these
@@ -115,39 +132,59 @@ environments can consume, it is important to clean up if we don't
 plan to reuse it.
 
 ```
-deactivate
 cd ../../..
+deactivate
 rm -rf rocm-pytorch
+```
+
+Be sure and exit the allocation to free it up for other users.
+
+```
+exit
 ```
 
 Now that we have it running, it is best to submit the project
 to the HPC cluster using a batch script. Exit the allocation
-and set up to submit the job using a batch script.
+and set up to submit the job using a batch script. For convenience,
+clone the HPC Training Examples and go to the directory with
+the scripts. Or you can cut and paste the following into a batch script named
+`pytorch_mnist_venv.batch`.
+
+```
+git clone https://github.com/AMD/HPCTrainingExamples
+cd HPCTrainingExamples/MLExamples/Pytorch/mnist
+```
+
+Here are the contents of the batch script.
 
 ```
 #!/bin/bash
-#SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
 #SBATCH --gpus=1
-#SBATCH --time=05:00:0
-#SBATCH --ntasks=4
+#SBATCH --time=01:00:00
+#SBATCH --ntasks=1
 #SBATCH --output=pytorch_mnist_venv.out
-#SBATCH --error=pytorch_mnist_venv.err
+#SBATCH --error=pytorch_mnist_venv.out
 
 python3 -m venv rocm-pytorch
 cd rocm-pytorch
 source bin/activate
 echo "Starting pytorch install"
-pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
+time pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
 
 python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
 python3 -c 'import torch; print(torch.cuda.is_available())'
 
+git clone --depth=1 https://github.com/pytorch/examples.git pytorch_examples
+cd pytorch_examples/mnist
+sed -i -e '/device = torch.device("cpu")/a\    print(f"Using device: {device}")' main.py
+
+pip3 install -r requirements.txt
+
 echo "Starting mnist"
-python3 main.py
-cd ../..
+time python3 main.py
+cd ../../..
 
 deactivate
-cd ..
 rm -rf rocm-pytorch
 
 echo "Finished"
