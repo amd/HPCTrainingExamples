@@ -62,23 +62,24 @@ run this exercise. We'll get just one GPU to begin with so that we don't
 monopolize the resources.
 
 ```
-salloc --ntasks 24 --gpus=1 --time=01:00:00
+salloc --ntasks 1 --gpus=1 --time=01:00:00
 ```
 
-First create a virtual environment. This will provide an isolated working space that
+Go to the directory with the mnist example
+
+```
+cd ~/pytorch_examples/mnist
+```
+
+Create a virtual environment. This will provide an isolated working space that
 will be separated from other python packages.
 
 ```
 python3 -m venv rocm-pytorch
+source rocm-pytorch/bin/activate
 ```
 
-This will create a directory rocm-pytorch. We'll change to that
-directory and activate the virtual environment.
-
-```
-cd rocm-pytorch
-source bin/activate
-```
+This will create a directory rocm-pytorch.
 
 This is an empty environment. We have to populate it with the 
 software that we need. There is a python package containing 
@@ -101,21 +102,6 @@ python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
 python3 -c 'import torch; print(torch.cuda.is_available())'
 ```
 
-We'll need the examples in this virtual environment
-
-```
-git clone --depth=1 https://github.com/pytorch/examples.git pytorch_examples
-cd pytorch_examples/mnist
-sed -i -e '/device = torch.device("cpu")/a\    print(f"Using device: {device}")' main.py
-```
-
-And we need to retrieve the python packages that the application
-requires.
-
-```
-pip3 install -r requirements.txt
-```
-
 Now let's run the MNIST example. We time it for later analysis.
 
 ```
@@ -132,7 +118,6 @@ environments can consume, it is important to clean up if we don't
 plan to reuse it.
 
 ```
-cd ../../..
 deactivate
 rm -rf rocm-pytorch
 ```
@@ -165,24 +150,17 @@ Here are the contents of the batch script.
 #SBATCH --output=pytorch_mnist_venv.out
 #SBATCH --error=pytorch_mnist_venv.out
 
+cd ~/pytorch_examples/mnist
 python3 -m venv rocm-pytorch
-cd rocm-pytorch
-source bin/activate
+source rocm-pytorch/bin/activate
 echo "Starting pytorch install"
 time pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
 
 python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
 python3 -c 'import torch; print(torch.cuda.is_available())'
 
-git clone --depth=1 https://github.com/pytorch/examples.git pytorch_examples
-cd pytorch_examples/mnist
-sed -i -e '/device = torch.device("cpu")/a\    print(f"Using device: {device}")' main.py
-
-pip3 install -r requirements.txt
-
 echo "Starting mnist"
 time python3 main.py
-cd ../../..
 
 deactivate
 rm -rf rocm-pytorch
@@ -225,6 +203,7 @@ We try to get the closest matches to our current system versions.
 
 ```
 time srun -p 1CN48C1G1H_MI300A_Ubuntu22 --ntasks 12 apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
+time srun -p 1CN48C1G1H_MI300A_Ubuntu22 --ntasks 12 apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu24.04_py3.12_pytorch_release_2.6.0
 ```
 
 Now we can follow similar steps as done in the previous example, but replace the pip install
@@ -317,8 +296,37 @@ Output will be in `pytorch_mnist_apptainer.out`
 
 ### Podman
 
-To run the same example with podman, we can directly use the docker container. We still
-have to download it prior to the batch job. The steps are
+To run the same example with podman, we can directly use the docker container.
+The steps for an interactive job are
+
+First, get an allocation with a GPU
+
+```
+salloc --ntasks 1 --gpus=1 --time=01:00:00
+```
+
+Now start up an interactive shell in Podman
+
+```
+podman run -it --device=/dev/dri --device=/dev/kfd --network=host --ipc=host --userns=keep-id --group-add=keep-groups --cgroupns=host --cap-add=SYS_PTRACE --security-o
+pt seccomp=unconfined -v $HOME:/workdir -w /workdir docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.6.0 bash
+```
+
+cd pytorch_examples/mnist
+pip3 install -r requirements.txt
+
+python3 - << EOF
+import torch, platform
+print("Torch module location: ",torch)
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("Platform:", platform.platform())
+print("torch.cuda.is_available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+EOF
+
+time python3 main.py
 
 ```
 podman pull docker://rocm/pytorch:latest
@@ -329,25 +337,20 @@ Then the Slurm batch file for the podman job is
 ```
 #!/bin/bash
 #SBATCH --gpus=1
-#SBATCH --ntasks=4
+#SBATCH --ntasks=1
 #SBATCH --time=01:00:00
 #SBATCH --output=pytorch_mnist_podman.out
 #SBATCH --error=pytorch_mnist_podman.out
 
-#podman pull docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
-#podman pull docker://rocm/pytorch:latest
+cd $HOME/pytorch_examples/mnist
 
-# Run your containerized workload
 podman run --rm \
-  --device=/dev/dri --device=/dev/kfd \
-  --network=host --ipc=host \
-  --userns=keep-id \
-  --group-add=keep-groups \
-  --cgroupns=host \
-  -v "$PWD":"$PWD" \
-  -w "$PWD" \
-  rocm/pytorch:latest \
-  bash -lc '
+  --device=/dev/dri --device=/dev/kfd --network=host --ipc=host \
+  --userns=keep-id --group-add=keep-groups --cgroupns=host \
+  --cap-add=SYS_PTRACE --security-opt seccomp=unconfined \
+  -v $PWD:/workdir -w /workdir \
+  docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.6.0 \
+pip3 install --user -r requirements.txt
 
 python3 - << EOF
 import torch, platform
@@ -360,67 +363,7 @@ if torch.cuda.is_available():
     print("Device 0:", torch.cuda.get_device_name(0))
 EOF
 
-cd pytorch_examples/mnist
-echo "Starting mnist"
-pip3 install -r requirements.txt
-python3 main.py
-
-echo "Finished"
-```
-
-Again, we would like to avoid software being installed during the batch job. We can add a 
-virtual environment to avoid these python software installs.
-
-```
-#!/bin/bash
-#SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
-#SBATCH --gpus=1
-#SBATCH --ntasks=4
-#SBATCH --time=01:00:00
-#SBATCH --output=pytorch_mnist_podman_venv.out
-#SBATCH --error=pytorch_mnist_podman_venv.out
-
-#podman pull docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
-#podman pull docker://rocm/pytorch:latest
-
-# Run your containerized workload
-podman run --rm \
-  --device=/dev/dri --device=/dev/kfd \
-  --network=host --ipc=host \
-  --userns=keep-id \
-  --group-add=keep-groups \
-  --cgroupns=host \
-  -v "$PWD":"$PWD" \
-  -w "$PWD" \
-  rocm/pytorch:latest \
-  bash -lc '
-
-python -m venv rocm-pytorch
-
-python3 - << EOF
-import torch, platform
-print("Torch module location: ",torch)
-print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
-print("Platform:", platform.platform())
-print("torch.cuda.is_available:", torch.cuda.is_available())
-print("Device count:", torch.cuda.device_count())
-if torch.cuda.is_available():
-    print("Device 0:", torch.cuda.get_device_name(0))
-EOF
-
-cd pytorch_examples/mnist
-source rocm-pytorch/bin/activate
-pip3 install -r requirements.txt
-
-echo "Starting mnist"
-python3 main.py
-
-deactivate
-cd ../../..
-rm -rf rocm-pytorch
-
-echo "Finished"
-'
+time python3 main.py
 ```
 
 ## Modules with local rocm and pytorch software
@@ -446,14 +389,25 @@ added. These include
 We get an interactive compute node with a single GPU
 
 ```
-salloc --ntasks 24 --gpus=1 --time=01:00:00
+salloc --ntasks 1 --gpus=1 --time=01:00:00
 ```
 
-To run the examples with a pytorch module, we first load the environment
-and check that it is working properly.
+Load the environment
 
 ```
 module load rocm pytorch
+```
+
+Going to the mnist example
+
+```
+cd ~/pytorch_examples/mnist
+pip3 install --user -r requirements.txt
+```
+
+Check that it is working properly.
+
+```
 python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
 python3 -c 'import torch; print(torch.cuda.is_available())'
 ```
@@ -473,12 +427,17 @@ if torch.cuda.is_available():
     print("Device 0:", torch.cuda.get_device_name(0))
 EOF
 ```
+
 We can now move on to running our pytorch application
 
 ```
-cd ~/pytorch_examples/mnist
-pip3 install --user -r requirements.txt
 time python3 main.py
+```
+
+Exit the allocation
+
+```
+exit
 ```
 
 If additional python packages need to be added, like above, it is suggested to create a python virtual
@@ -487,12 +446,21 @@ clear the PYTHONPATH variable. The pytorch module will add to the PYTHONPATH var
 necessary for the software in the module. To support loading other module packages, the additions
 are appended to the existing PYTHONPATH. With these additions, our example looks like:
 
-```
-python3 -m venv rocm-pytorch
-pushd rocm-pytorch
-source bin/activate
+We get an interactive compute node with a single GPU
 
+```
+salloc --ntasks 1 --gpus=1 --time=01:00:00
+```
+
+Changing to the location of the mnist example and creating a virtual environment
+
+```
 module load rocm pytorch
+cd ~/pytorch_examples/mnist
+python3 -m venv rocm-pytorch
+source rocm-pytorch/bin/activate
+pip3 install -r requirements.txt
+
 python3 - << EOF
 import torch, platform
 print("Torch module location: ",torch)
@@ -504,13 +472,9 @@ if torch.cuda.is_available():
     print("Device 0:", torch.cuda.get_device_name(0))
 EOF
 
-pushd ~/pytorch_examples/mnist
-pip3 install -r requirements.txt
-python3 main.py
+time python3 main.py
 
-popd
 deactivate
-popd
 rm -rf rocm-pytorch
 ```
 

@@ -5,18 +5,13 @@
 #SBATCH --output=pytorch_mnist_apptainer.out
 #SBATCH --error=pytorch_mnist_apptainer.out
 
-# Pre-pull rocm-pytorch image on a login/front-end node
-#  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
-
-mkdir -p .torch
-
 cd $HOME/pytorch_examples/mnist
 
 apptainer exec --rocm \
    --bind "$PWD:/workspace" -W /workspace \
-   --env TORCH_HOME=/workspace/.torch \
    ~/rocm-pytorch.sif  \
-pwd
+pip3 install --user -r requirements.txt
+
 python3 - << EOF
 import torch, platform
 print("Torch module location: ",torch)
@@ -28,5 +23,4 @@ if torch.cuda.is_available():
     print("Device 0:", torch.cuda.get_device_name(0))
 EOF
 
-pip3 install --user -r requirements.txt
 time python3 main.py

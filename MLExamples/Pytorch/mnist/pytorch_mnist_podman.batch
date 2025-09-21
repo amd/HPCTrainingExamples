@@ -1,25 +1,19 @@
 #!/bin/bash
-#SBATCH --partition=1CN192C4G1H_MI300A_Ubuntu22
 #SBATCH --gpus=1
-#SBATCH --ntasks=4
+#SBATCH --ntasks=1
 #SBATCH --time=01:00:00
 #SBATCH --output=pytorch_mnist_podman.out
 #SBATCH --error=pytorch_mnist_podman.out
 
-#podman pull docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
-#podman pull docker://rocm/pytorch:latest
+cd $HOME/pytorch_examples/mnist
 
-# Run your containerized workload
 podman run --rm \
-  --device=/dev/dri --device=/dev/kfd \
-  --network=host --ipc=host \
-  --userns=keep-id \
-  --group-add=keep-groups \
-  --cgroupns=host \
-  -v "$PWD":"$PWD" \
-  -w "$PWD" \
-  rocm/pytorch:latest \
-  bash -lc '
+  --device=/dev/dri --device=/dev/kfd --network=host --ipc=host \
+  --userns=keep-id --group-add=keep-groups --cgroupns=host \
+  --cap-add=SYS_PTRACE --security-opt seccomp=unconfined \
+  -v $PWD:/workdir -w /workdir \
+  docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.6.0 \
+pip3 install --user -r requirements.txt
 
 python3 - << EOF
 import torch, platform
@@ -32,9 +26,4 @@ if torch.cuda.is_available():
     print("Device 0:", torch.cuda.get_device_name(0))
 EOF
 
-cd pytorch_examples/mnist
-echo "Starting mnist"
-pip3 install -r requirements.txt
-python3 main.py
-
-echo "Finished"
+time python3 main.py

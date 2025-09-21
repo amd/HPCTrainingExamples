@@ -1,15 +1,18 @@
 #!/bin/bash
 #SBATCH --gpus=1
 #SBATCH --time=01:00:0
-#SBATCH --ntasks=48
+#SBATCH --ntasks=1
 #SBATCH --output=pytorch_mnist_module_venv.out
 #SBATCH --error=pytorch_mnist_module_venv.out
 
-python3 -m venv rocm-pytorch
-pushd rocm-pytorch
-source bin/activate
-
 module load rocm pytorch
+
+cd ~/pytorch_examples/mnist
+
+python3 -m venv rocm-pytorch-module
+source rocm-pytorch/bin/activate
+pip3 install -r requirements.txt
+
 python3 - << EOF
 import torch, platform
 print("Torch module location: ",torch)
@@ -21,10 +24,6 @@ if torch.cuda.is_available():
     print("Device 0:", torch.cuda.get_device_name(0))
 EOF
 
-pushd ~/pytorch_examples/mnist
-pip3 install --user -r requirements.txt
 time python3 main.py
-popd
 deactivate
-popd
-rm -rf rocm-pytorch
+rm -rf rocm-pytorch-module
