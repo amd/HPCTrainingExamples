@@ -199,11 +199,13 @@ system, we use the SH5 nodes with the single GPU so that we don't tie up the nod
 with more GPUs.
 
 The container image will have a self-contained operating system, python and ROCm version.
-We try to get the closest matches to our current system versions.
+We try to get the closest matches to our current system versions. Squashfs needs a lot of
+memory, soe we'll get an exclusive allocation on one of the SH5 nodes.
 
 ```
-time srun -p 1CN48C1G1H_MI300A_Ubuntu22 --ntasks 12 apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
-time srun -p 1CN48C1G1H_MI300A_Ubuntu22 --ntasks 12 apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu24.04_py3.12_pytorch_release_2.6.0
+salloc --exclusive  -p 1CN48C1G1H_MI300A_Ubuntu22
+apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu24.04_py3.12_pytorch_release_2.6.0
+exit
 ```
 
 Now we can follow similar steps as done in the previous example, but replace the pip install
@@ -559,7 +561,8 @@ sbatch pytorch_mnist_module_venv.batch
 It is a simple procedure to run on multiple GPUs.
 
 We first modify the main.py script to use the GPUs that we have allocated.
-This is done right after line 127 by wrapping the ... But to do this, we
+This is done right after line 127 by wrapping the model in a DataParallel
+block. But to do this, we
 have to split the line setting the model from the operation sending it
 to the device.
 
@@ -574,21 +577,59 @@ model = Net()
 model.to(device)
 ```
 
-Now we can add the code to `model` to make it use multiple GPUs. The 
-added lines are:
+Now we can add the code to `model` to make it use multiple GPUs. 
+The revised and lines are:
 
 ```
+model = Net()
+if torch.cuda.device_count() > 1:
+    print(f"Using {torch.cuda.device_count()} GPUs!")
+    model = nn.DataParallel(model)
+model.to(device)
+optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
 ```
 
 We have conveniently created a sed script that can be used to make
 this modification on the fly for our Slurm batch script:
 
 ```
-sed
+sed -i -e '/device = torch.device("cpu")/a\    print(f"Using device: {device}")' main.py
+sed -i -e '/model = Net().to(device)/s/.to(device)//' main.py
+sed -i -e '/model = Net()/a\    if torch.cuda.device_count() > 1:\
+        print(f"Using {torch.cuda.device_count()} GPUs!")\
+        model = nn.DataParallel(model)\
+    model.to(device)' main.py
 ```
 
 And now we make a new batch script with a simple change to the SBATCH 
-directives to get more GPUs. All that is left to do is submit the job.
+directives to get more GPUs. 
+
+```
+#!/bin/bash
+#SBATCH --gpus=2
+#SBATCH --time=01:00:0
+#SBATCH --ntasks=2
+#SBATCH --output=pytorch_mnist_venv_2gpus.out
+#SBATCH --error=pytorch_mnist_venv_2gpus.out
+
+module load rocm pytorch
+
+cd ~/pytorch_examples/mnist
+python3 -m venv rocm-pytorch-2gpus
+source rocm-pytorch-2gpus/bin/activate
+echo "Starting pytorch install"
+pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
+
+python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import torch; print(torch.cuda.is_available())'
+
+echo "Starting mnist"
+time python3 main.py
+
+deactivate
+rm -rf rocm-pytorch-2gpus
+```
+All that is left to do is submit the job.
 
 ```
 sbatch pytorch_mnist_venv_2gpus.batch
@@ -603,11 +644,4 @@ work on every system. Consider how each works for your situation and the system 
 the recommendations for your HPC center for guidance.
 What works best on your local system may not be the best in an HPC or cloud environment. Consider the
 load on the system, especially network load and file system space.
-
-Here is a table summarizing the pros and cons of each approach.
-
-* Network load
-* Filesystem space
-* Runtime
-
 

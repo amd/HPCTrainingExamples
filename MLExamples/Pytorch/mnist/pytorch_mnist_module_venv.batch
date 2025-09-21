@@ -10,7 +10,7 @@ module load rocm pytorch
 cd ~/pytorch_examples/mnist
 
 python3 -m venv rocm-pytorch-module
-source rocm-pytorch/bin/activate
+source rocm-pytorch-module/bin/activate
 pip3 install -r requirements.txt
 
 python3 - << EOF
