@@ -221,11 +221,10 @@ system, we use the SH5 nodes with the single GPU so that we don't tie up the nod
 with more GPUs.
 
 The container image will have a self-contained operating system, python and ROCm version.
-So we can just get the latest version. You may also want to use the latest named version
-to get more reproducible results.
+We try to get the closest matches to our current system versions.
 
 ```
-time srun -p 1CN48C1G1H_MI300A_Ubuntu22 --ntasks 12 apptainer pull rocm-pytorch.sif docker://rocm/pytorch:latest
+time srun -p 1CN48C1G1H_MI300A_Ubuntu22 --ntasks 12 apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
 ```
 
 Now we can follow similar steps as done in the previous example, but replace the pip install
@@ -233,7 +232,7 @@ with starting up the apptainer image. We get an GPU allocation with salloc and s
 container image with a shell.
 
 ```
-salloc --ntasks 48 --gpus=1 --time=04:00:00
+salloc --ntasks 1 --gpus=1 --time=01:00:00
 apptainer shell --rocm ~/rocm-pytorch.sif
 ```
 
@@ -253,7 +252,7 @@ cd pytorch_examples/mnist
 We need to install the python library requirements.
 
 ```
-pip3 install -r requirements.txt
+pip3 install --user -r requirements.txt
 ```
 
 And we are finally ready to run the example.
@@ -262,36 +261,36 @@ And we are finally ready to run the example.
 time python3 main.py
 ```
 
-Exit the shell and the allocation and clean up.
+Exit the shell and then exit the allocation and clean up.
 
 #### Apptainer batch file
 
 It is better to run as a batch job once you have the verified the steps that you need.
 We put all the commands in a batch file. And we change the apptainer command to exec
-instead of shell. Apptainer will run the command following the load of the container
-image, so we put all our commands into a single set of double quotes and use the bash
-command to execute it as a script in that shell. The batch file should look something
+instead of "shell". Apptainer will run the command following the load of the container
+image. The batch file should look something
 like the following. We'll name the file `pytorch_mnist_apptainer.batch`.
 
 ``` bash
 #!/bin/bash
 #SBATCH --gpus=1
-#SBATCH --ntasks=48
-#SBATCH --time=04:00:00
+#SBATCH --ntasks=1
+#SBATCH --time=01:00:00
 #SBATCH --output=pytorch_mnist_apptainer.out
 #SBATCH --error=pytorch_mnist_apptainer.out
 
 # Pre-pull rocm-pytorch image on a login/front-end node
-#  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:latest
 #  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
 
 mkdir -p .torch
 
-apptainer exec --rocm --cleanenv \
+cd $HOME/pytorch_examples/mnist
+
+apptainer exec --rocm \
    --bind "$PWD:/workspace" -W /workspace \
    --env TORCH_HOME=/workspace/.torch \
-   ~/rocm-pytorch.sif bash -lc '
-
+   ~/rocm-pytorch.sif  \
+pwd
 python3 - << EOF
 import torch, platform
 print("Torch module location: ",torch)
@@ -303,12 +302,8 @@ if torch.cuda.is_available():
     print("Device 0:", torch.cuda.get_device_name(0))
 EOF
 
-cd ~/pytorch_examples/mnist
-pip3 install -r requirements.txt
-python3 main.py
-
-echo "Finished"
-'
+pip3 install --user -r requirements.txt
+time python3 main.py
 ```
 
 We submit the job with 
@@ -319,58 +314,6 @@ sbatch pytorch_mnist_apptainer.batch
 
 Output will be in `pytorch_mnist_apptainer.out`
 
-### Apptainer with venv
-
-There is one problem with the apptainer script. We generally don't want a bunch of the
-software installed with the script to persist after the run. The pip install does add
-to the python packages in our home directory. While for this example, it is not a lot
-of extra packages, there may be cases where it is a log. To avoid this, we use the virtual environment
-in conjunction with the container. The batch script now looks like this:
-
-``` bash
-#!/bin/bash
-#SBATCH --gpus=1
-#SBATCH --ntasks=48
-#SBATCH --time=04:00:00
-#SBATCH --output=pytorch_mnist_apptainer_venv.out
-#SBATCH --error=pytorch_mnist_apptainer_venv.out
-
-# Pre-pull rocm-pytorch image on a login/front-end node
-#  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:latest
-#  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
-
-mkdir -p .torch
-
-python3 -m venv rocm-pytorch
-source rocm-pytorch/bin/activate
-
-apptainer exec --rocm --cleanenv \
-   --bind "$PWD:/workspace" -W /workspace \
-   --env TORCH_HOME=/workspace/.torch \
-   ~/rocm-pytorch.sif bash -lc '
-
-python3 - << EOF
-import torch, platform
-print("Torch module location: ",torch)
-print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
-print("Platform:", platform.platform())
-print("torch.cuda.is_available:", torch.cuda.is_available())
-print("Device count:", torch.cuda.device_count())
-if torch.cuda.is_available():
-    print("Device 0:", torch.cuda.get_device_name(0))
-EOF
-
-cd ~/pytorch_examples/mnist
-pip3 install -r requirements.txt
-python3 main.py
-
-echo "Finished"
-'
-
-deactivate
-cd ../../..
-rm -rf rocm-pytorch
-```
 
 ### Podman
 
