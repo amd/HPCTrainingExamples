@@ -99,6 +99,7 @@ Please refer to this table of contents to locate the exercises and examples you 
 23. [`Python`](https://github.com/amd/HPCTrainingExamples/tree/main/Python): growing directory of material on Python examples.
     1. [`cupy`](https://github.com/amd/HPCTrainingExamples/tree/main/Python/cupy): an example showing how to perform array sums on GPU and CPU using CuPy and NumPy. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/Python/cupy/README.md).
     2. [`mpi4py`](https://github.com/amd/HPCTrainingExamples/blob/main/Python/mpi4py): an example showing MPI communication in Python, leveraging MPI4Py. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/Python/mpi4py/README.md).
+    3. [`tensorflow`](https://github.com/amd/HPCTrainingExamples/blob/main/Python/tensorflow): an example where TensorFlow is used for an MNIST classification problem. 
 24. [**Doc**](https://github.com/amd/HPCTrainingExamples/tree/main/Doc): directory with LaTeX and PDF documents that contain some of the most relevant README files properly formatted for ease of reading. The PDF document is obtained building the LaTeX document. Note: the document may be out of date compared to the READMEs in the repo which are most current source of information for these exercises.
 25. [`tests`](https://github.com/amd/HPCTrainingExamples/tree/main/tests): this directory contains a huge number of test scripts aimed at testing the installation of the software provided by the scripts in the companing repo [`HPCTrainingDock`](https://github.com/amd/HPCTrainingDock).
 
