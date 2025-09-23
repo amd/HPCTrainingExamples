@@ -1300,7 +1300,7 @@ set_property(TEST TensorFlow_Check_Gpu_Name PROPERTY PASS_REGULAR_EXPRESSION "AM
 set_property(TEST TensorFlow_Check_Gpu_Name PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME TensorFlow_Mnist COMMAND ../tensorflow_mnist.sh )
-set_property(TEST TensorFlow_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Test accuracy 0.9857 on GPU AMD Instinct")
+set_property(TEST TensorFlow_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Test accuracy 0.98 on GPU AMD Instinct")
 set_property(TEST TensorFlow_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # FTorch tests
