@@ -11,4 +11,4 @@
 module load rocm
 module load hip-python
 
-python3 -c 'import hip' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import hip, hiprtc' 2> /dev/null && echo 'Success' || echo 'Failure'
