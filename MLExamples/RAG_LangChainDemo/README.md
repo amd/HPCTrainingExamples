@@ -135,13 +135,14 @@ On a system with a large number of users, having each one of them run Ollama loc
 2. Ssh to the compute node on the host system (this is where Ollama will run)
 3. Add this line: `host: 0.0.0.0` to the `.ollama/config.yaml`
 4. Run `export OLLAMA_HOST=0.0.0.0:<port_number>` (for instance the port number might be 11435)
-5. Run: `ollama serve &` to have Ollama run in the background
-6. Run: `ollama pull <some_model>`: this step is not striclty necessary as you will be able to pull models as admin user of the Open WebUI
-7. Run: `podman pull ghcr.io/open-webui/open-webui:ollama`: this command will pull the image you will run
-8. Run: `podman run -d   -p 3000:8080   -e OLLAMA_BASE_URL=http://host.containers.internal:<port_number>   --gpus all   -v open-webui:/app/backend/data   --name open-webui-ollama   --restart always   ghcr.io/open-webui/open-webui:ollama`: this command will run the container using the image pulled at the previous step
-9. From your local machine run: `ssh -L 3000:<compute_node>:3000 <host address>` (for instance <host address> could be `aac6.amd.com`)
-10. Type this in the address bar of your browser (such as Microsoft Edge): `localhost:3000`
-11. Create an admin account and make sure to remember the password you set. This is all done locally so if you remove the Open WebUI data from your host system you will be allowed to start over (you will lose all the data though, so make sure to take note of the password).
+5. Run `export OLLAMA_PORT=<port_number>`
+6. Run: `ollama serve &` to have Ollama run in the background
+7. Run: `ollama pull <some_model>`: this step is not striclty necessary as you will be able to pull models as admin user of the Open WebUI
+8. Run: `podman pull ghcr.io/open-webui/open-webui:ollama`: this command will pull the image you will run
+9. Run: `podman run -d   -p 3000:8080   -e OLLAMA_BASE_URL=http://<host_sys_IP_address>:<port_number>   --gpus all   -v open-webui:/app/backend/data   --name open-webui-ollama   --restart always   ghcr.io/open-webui/open-webui:ollama`: this command will run the container using the image pulled at the previous step
+10. From your local machine run: `ssh -L 3000:<compute_node>:3000 <host address>` (for instance <host address> could be `aac6.amd.com`)
+11. Type this in the address bar of your browser (such as Microsoft Edge): `localhost:3000`
+12. Create an admin account and make sure to remember the password you set. This is all done locally so if you remove the Open WebUI data from your host system you will be allowed to start over (you will lose all the data though, so make sure to take note of the password).
 
 #### Troubleshooting tips
 
@@ -152,12 +153,11 @@ If you encounter unexpected behavior while setting up Open WebUI here is somethi
 ps aux | grep 'ollama serve'
 sudo pkill -f "ollama serve"
 ```
-2. Stop and remove the container and volume on Podman
+2. Stop and remove the container on Podman
 ```
 podman stop open-webui-ollama
 podman rm open-webui-ollama
-podman volume rm open-webui
 ```
 3. If you get `505:internal error` when accessing `localhost:3000`, keep refreshing the page and it should get you there
 
-
+Careful to not remove the volume (that you can see by doing `podman volume ls`) otherwise you will lose all the local data such as knowledge base, admin login info, user list etc.
