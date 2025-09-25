@@ -5,10 +5,14 @@
 
 File: [login_info/AAC/README.md](`https://raw.githubusercontent.com/amd/HPCTrainingExamples/refs/heads/main/login_info/AAC/README.md`) at https://github.com/amd/HPCTrainingExamples
 
-To support trainings, we can upload training containers to the AMD Accelerator Cloud (AAC), and have attendees login using the instructions below. This set of instructions assumes that users have already received their `<username>` and `<port_number>` for the container, and that they have either provided an ssh key to the training team, or they have received a password from the training team.
+We have some small cloud based systems available for training activities. Attendees can login using the instructions 
+below. This set of instructions assumes that users have already received their `<username>` and `<port_number>` for 
+the container, and that they have either provided an ssh key to the training team, or they have received a password from the training team.
 
 ## Login Instructions
-The instructions below rely on ssh to access the AAC. Remember that when a container is brought down, it will not be possible to access the user data on it, so make sure to backup your data frequently if you want to keep it.
+The instructions below rely on ssh to access the AAC. If you have not sent your public key in for an account and do not have an ssh public
+key, start with the instructions on how to generate an ssh key. If you have sent an ssh key and received your account information, skip to
+the section on how to log into the system. 
 
 ### SSH-Key Generation
 Generate an ssh key on your local system, which will be stored in `.ssh`:
@@ -27,34 +31,28 @@ cat $HOME/.ssh/id_ed25519.pub
 ### Login with SSH-Key
 
 **IMPORTANT**: if you are supposed to login with an ssh key and you are prompted a password, do not type any password!
-Instead, type `Ctrl+C` and contact us to let us know about the incident.
+Instead, type `Ctrl+C` and contact us to get some help.
 
-To login to an AAC MI300A system using the ssh key use the `<username>` and `<port_number>` that the training team has provided you, for instance:
+To login to an AAC MI300A system using the ssh key use the `<username>` that the training team has provided you, for instance:
 ```bash
-ssh <username>@aac6.amd.com -i <path/to/ssh/key> -p <port_number> (1)
-```
-
-For an MI210 or MI250 system, use aac1.amd.com
-```bash
-ssh <username>@aac1.amd.com -i <path/to/ssh/key> -p <port_number> (1)
+ssh <username>@aac6.amd.com -i <path/to/ssh/key> (1)
 ```
 
 ### Login with password
 For a password login, the command is the same as in `(1)`, except that it is not necessary to specify a path to the ssh key. Just type the password that has been given to you when prompted:
 ```bash
-ssh <username>@aac6.amd.com -p <port_number> 
+ssh <username>@aac6.amd.com 
 ```
 **IMPORTANT**: It is fundamental to not type the wrong password more than two times otherwise your I.P. address will be blacklisted and you will not be allowed access to AAC until we modify our firewall to get you back in. This is especially important if you are at an event where all the attendees are connecting to the same wireless network.
 
 If you are using a password login, you can upload an ssh key with the following command to avoid using a password
 
 ```bash
-ssh-copy-id -i <path/to/ssh/key.pub> -p <port_number> -o UpdateHostKeys=yes <username>@aac6.amd.com
+ssh-copy-id -i <path/to/ssh/key.pub> -o UpdateHostKeys=yes <username>@aac6.amd.com
 ```
 
-In the commands above, `-p` refers to the port number and `-i` points to the path of your ssh key. The `-i` option is not needed if your
-default key is used. Note that different port numbers
-will be associated with different containers on the AAC, and anytime a container is brought up, the port number will change in general.
+In the commands above `-i` points to the path of your ssh key. The `-i` option is not needed if your
+default key is used. 
 
  
 To simplify the login even further, you can add the following to your `.ssh/config` file:
@@ -65,7 +63,6 @@ Host aac
    User <username>
    Hostname aac6.amd.com // this may be different depending on the container
    IdentityFile <path/to/ssh/key> // this points to the private key file
-   Port <port_number>
    ServerAliveInterval 600
    ServerAliveCountMax 30
 ```
@@ -87,46 +84,46 @@ In such a case, remove in your local system the offending keys located in `.ssh/
 ### Login Troubleshooting
 Here are some troubleshooting tips if you cannot login to AAC following the instructions above:
 
-1. Check the spelling of the command ssh, in particular `<username>`, ` <port_number>` and password. 
+1. Check the spelling of the command ssh, in particular `<username>` and password. 
 2. Turn off VPN if on.
 3. Try logging in from a different machine if available (and migrate the ssh key to the new machine or generate a new one and send it to us).
 4. Try a ***jump host***: this is a local server that you ssh to and then do a second ssh command from there.
 
-In case none of these options work, send us the output of the ssh command followed by `-vv` and also the output of `traceroute aac6.amd.com`. Additionally, let us know if the command `ping aac1.amd.com` works on your end.
+In case none of these options work, send us the output of the ssh command followed by `-vv` and also 
+the output of `traceroute aac6.amd.com`. Additionally, let us know if the command `ping aac6.amd.com` works on your end.
 
 
 ### Directories and Files
 
-Persistent storage is at `/home/aac/shared/teams/hackathon-testing/<group>/<username>`. Your home directory will be set to this directory: 
-
 ```bash
 $HOME=/home/aac/shared/teams/hackathon-testing/<group>/<username>`
 ```
-Files in the above directory will persist across container starts and stops and even be available from another container with the same `<username>` on systems at the same hosting location. Remember that it will not be possible to retrieve your data once the container has been brought down.
-
 You can copy files in or out of AAC with the `scp` or the `rsync` command.
 
 Copy into AAC from your local system, for instance:
 
 ```bash
-scp -i <path/to/ssh/key> -P <port_number> <file> <username>@aac6.amd.com:~/<path/to/file>
+scp -i <path/to/ssh/key> <file> <username>@aac6.amd.com:~/<path/to/file>
 ```
 Copy from AAC to your local system:
 
 ```bash
-scp -i <path/to/ssh/key> -P <port_number> <username>@aac6.amd.com:~/<path/to/file> .
+scp -i <path/to/ssh/key> <username>@aac6.amd.com:~/<path/to/file> .
 ```
 
 To copy files in or out of the container, you can also use `rsync` as shown below:
 ```bash
-rsync -avz -e "ssh -i <path/to/ssh/key> -p <port_number>" <file> <username>@aac6.amd.com:~/<path/to/file>
+rsync -avz -e "ssh -i <path/to/ssh/key>" <file> <username>@aac6.amd.com:~/<path/to/file>
 ```
 
 ## Container Environment
 
 Please consult the container's [README](https://github.com/amd/HPCTrainingDock/blob/main/README.md) to learn about the latest specs of the training container.
 
-The container is based on the Ubuntu 24.04 Operating System with the latest version of the ROCm software stack. It contains multiple versions of AMD, GCC, and LLVM compilers, hip libraries, GPU-Aware MPI, AMD profiling tools and HPC community tools. The container also has modules set up with the lua modules package and a slurm package and configuration. It includes the following additional packages:
+The software on the node is based on the Ubuntu 22.04 Operating System with one of the latest versions of the 
+ROCm software stack. It contains multiple versions of AMD, GCC, and LLVM compilers, 
+hip libraries, GPU-Aware MPI, AMD profiling tools and HPC community tools. The container 
+also has modules set up with the lua modules package and a slurm package and configuration. It includes the following additional packages:
 
 - emacs
 - vim
@@ -206,32 +203,24 @@ Compiler modules set the C, CXX, FC flags. Only one compiler module can be loade
 
 ## Slurm Information
 
-The training container comes equipped with Slurm. Slurm configuration is for a single queue that is shared with the rest of the node. Run the following command to get info on Slurm: 
+The AAC6 node is set up with Slurm. Slurm configuration is for a single queue that is shared with the rest of the node. Run the following command to get info on Slurm: 
 
 ```bash
 sinfo 
 ```
 
-| PARTITION | AVAIL  | TIMELIMIT | NODES | STATE | NODELIST   |
-|-----------|--------|-----------|-------|-------|------------|
-| LocalQ    |  up    |	2:00:00  | 1     | idle  | localhost  |
+```
+PARTITION                    AVAIL  TIMELIMIT  NODES  STATE NODELIST
+1CN192C4G1H_MI300A_Ubuntu22*    up 8-00:00:00      3   idle ppac-pl1-s24-[16,26,30,35],ppac-pl1-s25-40
+1CN48C1G1H_MI300A_Ubuntu22      up 8-00:00:00      4   idle sh5-pl1-s12-[09,12,15,33,36]
+```
 
 The Slurm `salloc` command may be used to acquire a long term session that exclusively grants access to one or more GPUs. Alternatively, the `srun` or `sbatch` commands may be used to acquire a session with one or more GPUs and only exclusively use the session for the life of the run of an application. `squeue` will show information on who is currently running jobs.
 
-## Exercise Examples
-
-The exercise examples are preloaded into the `/Shared` directory. Copy the files into your home directory with:
-
-```bash
-mkdir -p $HOME/HPCTrainingExamples
-scp -pr /Shared/HPCTrainingExamples/* $HOME/HPCTrainingExamples/
-```
-
 ## Training Examples Repo
 
-
-Alternatively, you can get the examples from our repo.
-This repo contains all the code that we normally use during our training events: 
+You can get the examples from our repository.
+This repository contains all the code that we normally use during our training events: 
 ```bash
 cd $HOME
 git clone https://github.com/amd/HPCTrainingExamples.git
