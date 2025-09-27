@@ -1,6 +1,16 @@
 
 # HIP-Python
 
+For these examples, get a GPU with salloc or srun.
+
+```
+salloc -N 1 --ntasks 16 --gpus=1 --time=01:00:00
+or
+srun -N 1 --ntasks 16 --gpus=1 --time=01:00:00 --pty /bin/bash
+```
+
+Be sure and free up the GPU when you are done with the exercises.
+
 The first test is to check that the hip-python environment is set up correctly.
 
 ```
