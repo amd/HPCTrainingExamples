@@ -1,0 +1,3 @@
+from hip cimport chip, chiprtc
+
+def array_sum(double[:, ::1] A):
