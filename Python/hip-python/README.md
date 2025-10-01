@@ -858,4 +858,60 @@ python3 kernel_with_args.py
 ```
 
 
+## numba-HIP
 
+A simple numba-HIP vector addition example
+
+```
+from numba import hip
+
+@hip.jit
+def f(a, b, c):
+   # like threadIdx.x + (blockIdx.x * blockDim.x)
+   tid = hip.grid(1)
+   size = len(c)
+
+   if tid < size:
+       c[tid] = a[tid] + b[tid]
+
+print("Ok")
+```
+
+To run the example
+
+```
+module load rocm hip-python
+python3 numba-hip.py
+```
+
+An alternative approach to changing all the `@cuda.jit` to `@hip.jit` is to have 
+numba-hip pose as CUDA. We do this with the addition of the following two lines:
+
+```
+hip.pose_as_cuda()
+from numba import cuda
+```
+```
+from numba import hip
+
+hip.pose_as_cuda()
+from numba import cuda
+
+@cuda.jit
+def f(a, b, c):
+   # like threadIdx.x + (blockIdx.x * blockDim.x)
+   tid = cuda.grid(1)
+   size = len(c)
+
+   if tid < size:
+       c[tid] = a[tid] + b[tid]
+
+print("Ok")
+```
+
+Running this example
+
+```
+module load rocm hip-python
+python3 numba-hip-cuda-posing.py
+```
