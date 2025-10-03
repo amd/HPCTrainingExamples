@@ -613,11 +613,37 @@ def train_tiny_llama(
     # Training loop
     model.train()
 
-    # Start FLOPS profiler
+    # Warmup steps to eliminate compilation overhead
+    warmup_steps = 5
+    print(f"\nRunning {warmup_steps} warmup steps to eliminate compilation overhead...")
+    model.train()
+
+    for step in range(warmup_steps):
+        input_ids, labels = dataset.get_batch(batch_size)
+        input_ids = input_ids.to(device)
+        labels = labels.to(device)
+
+        if use_amp:
+            with autocast():
+                outputs = model(input_ids, labels)
+                loss = outputs['loss']
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            outputs = model(input_ids, labels)
+            loss = outputs['loss']
+            loss.backward()
+            optimizer.step()
+
+        optimizer.zero_grad()
+
+    print(f"Warmup complete. Starting measured training loop...")
+
+    # Start FLOPS profiler after warmup
     if deepspeed_profiler:
         deepspeed_profiler.start_profile()
 
-    print(f"\nStarting training loop...")
     print("=" * 70)
 
     for step in range(num_steps):
@@ -702,9 +728,14 @@ def train_tiny_llama(
 
     # Performance summary
     summary = monitor.get_summary()
+    avg_speed = summary.get('avg_training_speed', 0)
+    seq_len = config.max_seq_len
+    tokens_per_sec = avg_speed * seq_len
+
     print(f"\nPerformance Summary:")
     print(f"   Total samples processed: {summary.get('total_samples', 0):,}")
-    print(f"   Average training speed: {summary.get('avg_training_speed', 0):.1f} samples/sec")
+    print(f"   Average training speed: {avg_speed:.1f} samples/sec")
+    print(f"   Throughput: {tokens_per_sec:.0f} tokens/sec")
     print(f"   Average batch time: {summary.get('avg_batch_time', 0)*1000:.1f} ms")
     print(f"   Average forward time: {summary.get('avg_forward_time', 0)*1000:.1f} ms")
     print(f"   Average backward time: {summary.get('avg_backward_time', 0)*1000:.1f} ms")
@@ -716,7 +747,11 @@ def train_tiny_llama(
 
     # Save performance data
     if profiler_config.profile_dir:
+        timestamp_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+
         profile_data = {
+            'version': 'v1_baseline',
+            'timestamp': timestamp_str,
             'config': config.to_dict(),
             'profiler_config': asdict(profiler_config),
             'performance_summary': summary,
@@ -730,7 +765,8 @@ def train_tiny_llama(
                 'device': str(device),
                 'gpu_name': torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
                 'pytorch_version': torch.__version__,
-                'timestamp': datetime.now().isoformat()
+                'rocm_version': os.environ.get('ROCM_VERSION', 'N/A'),
+                'timestamp_iso': datetime.now().isoformat()
             }
         }
 
@@ -749,10 +785,10 @@ def main():
 
     # Model configuration
     parser.add_argument('--vocab-size', type=int, default=1000, help='Vocabulary size')
-    parser.add_argument('--hidden-dim', type=int, default=256, help='Hidden dimension')
-    parser.add_argument('--num-layers', type=int, default=4, help='Number of transformer layers')
+    parser.add_argument('--hidden-dim', type=int, default=512, help='Hidden dimension')
+    parser.add_argument('--num-layers', type=int, default=8, help='Number of transformer layers')
     parser.add_argument('--num-heads', type=int, default=8, help='Number of attention heads')
-    parser.add_argument('--seq-len', type=int, default=128, help='Sequence length')
+    parser.add_argument('--seq-len', type=int, default=256, help='Sequence length')
 
     # Training configuration
     parser.add_argument('--num-steps', type=int, default=50, help='Number of training steps')
@@ -789,6 +825,7 @@ def main():
         hidden_dim=args.hidden_dim,
         n_layers=args.num_layers,
         n_heads=args.num_heads,
+        intermediate_dim=args.hidden_dim * 4,  # Standard 4x multiplier for fair comparison
         max_seq_len=args.seq_len
     )
 
@@ -836,10 +873,10 @@ def main():
         print(f"\nTraining completed successfully!")
 
         if profiler_config.enable_pytorch_profiler:
-            print(f"📁 PyTorch profiling data saved to: {args.profile_dir}")
+            print(f"PyTorch profiling data saved to: {args.profile_dir}")
             print(f"   Launch TensorBoard: tensorboard --logdir {args.profile_dir}")
 
-        print(f"\n🔄 Next Steps:")
+        print(f"\nNext Steps:")
         print(f"   1. Analyze profiling results to identify bottlenecks")
         print(f"   2. Review performance metrics and optimization opportunities")
         print(f"   3. Proceed to Version 2 for kernel fusion optimizations")

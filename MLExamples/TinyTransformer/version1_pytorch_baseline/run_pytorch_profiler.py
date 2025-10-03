@@ -151,6 +151,10 @@ class PyTorchProfilerAnalyzer:
         cpu_stats = prof.key_averages().table(sort_by="self_cpu_time_total", row_limit=50)
         cuda_stats = prof.key_averages().table(sort_by="self_cuda_time_total", row_limit=50) if torch.cuda.is_available() else None
 
+        # Calculate total time for percentage calculation
+        total_cpu_time = sum(event.cpu_time_total for event in prof.key_averages())
+        total_cuda_time = sum(getattr(event, 'cuda_time_total', 0) for event in prof.key_averages()) if torch.cuda.is_available() else 0
+
         # Parse operator data
         operator_data = []
         for event in prof.key_averages():
@@ -158,16 +162,24 @@ class PyTorchProfilerAnalyzer:
                 'name': event.key,
                 'cpu_time_total': event.cpu_time_total,
                 'cpu_time_avg': event.cpu_time / max(1, event.count),
-                'cpu_time_percent': event.cpu_time_total / prof.key_averages().table(sort_by="cpu_time_total", row_limit=1),
+                'cpu_time_percent': (event.cpu_time_total / total_cpu_time * 100) if total_cpu_time > 0 else 0,
                 'count': event.count,
                 'input_shapes': str(event.input_shapes) if hasattr(event, 'input_shapes') else '',
                 'flops': getattr(event, 'flops', 0)
             }
 
             if torch.cuda.is_available():
+                # Avoid accessing deprecated cuda_time attribute
+                if hasattr(event, 'device_time'):
+                    device_time = event.device_time
+                    device_time_total = event.device_time_total
+                else:
+                    device_time = 0
+                    device_time_total = 0
+
                 operator_info.update({
-                    'cuda_time_total': event.cuda_time_total,
-                    'cuda_time_avg': event.cuda_time / max(1, event.count),
+                    'cuda_time_total': device_time_total,
+                    'cuda_time_avg': device_time / max(1, event.count),
                     'cuda_memory_usage': getattr(event, 'cuda_memory_usage', 0)
                 })
 
