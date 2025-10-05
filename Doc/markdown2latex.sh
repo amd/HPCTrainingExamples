@@ -2,24 +2,24 @@
 
 if [ $# -ne 1 ]
 then
-	echo "Requires one argument with filename of markdown file"
-	echo "Usage: ./markdown2pdf.sh test.md"
+       echo "Requires one argument with filename of markdown file"
+       echo "Usage: ./markdown2pdf.sh event_name"
 fi
 
 if [ -z "$1" ]
 then
-	echo "Requires one argument with filename of markdown file"
-	echo "Usage: ./markdown2pdf.sh test.md"
+       echo "Requires one argument with filename of markdown file"
+       echo "Usage: ./markdown2pdf.sh event_name"
 fi
 
 if [ ! -f "$1" ]
 then
-	echo "file $1 does not exist"
-	echo "Usage: ./markdown2pdf.sh test.md"
+       echo "file $1 does not exist"
+       echo "Usage: ./markdown2pdf.sh event_name"
 fi
 
-filename="${1%.*}"
-EVENT_NAME=`cat ${filename} | sed -e 's/_/ /` `
+filename="${1}"
+EVENT_NAME=`echo ${1} | sed -e 's/_/ /g' `
 sed -i 's/╒/-/g' "$filename.md"
 sed -i 's/╕/-/g' "$filename.md"
 sed -i 's/═/-/g' "$filename.md"
@@ -38,7 +38,7 @@ sed -i 's/┤/-/g' "$filename.md"
 sed -i 's/μ/micro/g' "$filename.md"
 sed -i 's/<img src="/![image](/g' "$filename.md"
 sed -i 's|.png"/>|.png)|g' "$filename.md"
-pandoc --metadata title="${EVENT_NAME}" "$1" -V geometry:margin=1in --extract-media=. --toc -s -o "$filename.tex"
+pandoc --metadata title="${EVENT_NAME}" "$filename.md" -V geometry:margin=1in --extract-media=. --toc -s -o "$filename.tex"
 
 
 sed -i -e '/\\author{}/i\
@@ -64,4 +64,3 @@ sed -i -e '/\\author{}/i\
 sed -i 's/\\begin{verbatim}/\\begin{Verbatim}[fontsize=\\small]/' "$filename.tex"
 
 sed -i 's/\\end{verbatim}/\\end{Verbatim}/' "$filename.tex"
-
