@@ -3,19 +3,19 @@
 if [ $# -ne 1 ]
 then
        echo "Requires one argument with filename of markdown file"
-       echo "Usage: ./markdown2pdf.sh event_name"
+       echo "Usage: ./markdown2latex.sh event_name"
 fi
 
 if [ -z "$1" ]
 then
        echo "Requires one argument with filename of markdown file"
-       echo "Usage: ./markdown2pdf.sh event_name"
+       echo "Usage: ./markdown2latex.sh event_name"
 fi
 
 if [ ! -f "$1.md" ]
 then
        echo "file $1 does not exist"
-       echo "Usage: ./markdown2pdf.sh event_name"
+       echo "Usage: ./markdown2latex.sh event_name"
 fi
 
 filename="${1}"
