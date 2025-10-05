@@ -1,4 +1,7 @@
-# Submodule test -- does the Fortran compiler support the new submodules feature in the Fortran 2008 standard (extension in 2003)
+
+## Submodule test -- does the Fortran compiler support the new submodules feature in the Fortran 2008 standard (extension in 2003)
+
+README.md in `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/Submodules` of the Training Exercises repository.
 
 Try with the old flang compiler -- Load the amdclang module and you get
 

@@ -1,4 +1,7 @@
-# Find the error
+
+## Find the error
+
+README.md in `HPCTrainingExamples/HIP/01_error_check` of the Training Exercises repository.
 
 Compile and run the vector addition program and use the error from the error-checking macro to decide how to fix the problem.
 

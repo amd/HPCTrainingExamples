@@ -1,4 +1,7 @@
-# hipify the CUDA pingpong code
+
+## hipify the CUDA pingpong code
+
+README.md in `HPCTrainingExamples/HIP/06_hipify_pingpong` of the Training Exercises repository.
 
 This code sends data back and forth between the host and device 50 times and calculates the bandwidth. 
 

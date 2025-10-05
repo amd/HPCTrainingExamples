@@ -1,4 +1,7 @@
-# Complete the matrix multiply kernel
+
+## Complete the matrix multiply kernel
+
+README.md in `HPCTrainingExamples/HIP//04_complete_matrix_multiply` of the Training Exercises repository.
 
 In this exercise, a matrix multiply is performed on the GPU. In the code, the indices `row_index` and `col_index` iterate through the arrays in row-major (across the first row, then across the second row, etc.) and column-major (down the first column, then down the second column, etc.) order, respectively.
 

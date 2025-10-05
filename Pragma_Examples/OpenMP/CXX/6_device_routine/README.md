@@ -1,3 +1,4 @@
+
 ## C++ member function
 
 README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/CXX/5_device_routines` in Training Examples repository

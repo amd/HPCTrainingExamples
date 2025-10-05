@@ -1,4 +1,12 @@
-# OpenMP C Build systems: make and cmake
+
+# Introduction to OpenMP Offloading
+
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/BuildExamples` in the Training Examples repository
+
+We start the introduction with how to compile programs using OpenMP offloading to GPUs. This leads us to how to write makefiles and 
+CMakeLists.
+
+## OpenMP C Build systems: make and cmake
 
 README.md in `HPCTrainingExamples/Pragma_Examples/OpenMP/C/BuildExamples` of the Training Examples repository
 
@@ -6,7 +14,7 @@ Build systems for make and cmake are an important starting step to working with 
 We'll start with samples for C builds. We'll test them with
 some of our sample code to make sure your system is setup properly.
 
-## Make
+### Make
 
 ```
 cd HPCTrainingExamples/Pragma_Examples/OpenMP/C/BuildExamples
@@ -60,7 +68,7 @@ Now run the executable
 ./openmp_code
 ```
 
-## CMake
+### CMake
 
 Looking at the CMakeLists.txt
 

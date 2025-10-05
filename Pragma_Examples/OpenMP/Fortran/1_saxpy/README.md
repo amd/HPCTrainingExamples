@@ -1,6 +1,7 @@
-# First Fortran OpenMP offload: Porting saxpy step by step and explore the discrete GPU and APU programming models:
 
-This is HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/1_saxpy/README.md in the training examples repository.
+## First Fortran OpenMP offload: Porting saxpy step by step and explore the discrete GPU and APU programming models:
+
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/1_saxpy` in the Training Examples repository
 
 This excercise will show in a step by step solution how to port a your first kernels. 
 This simple example will not use a Makefile to practice how to compile for the GPU or APU. 
@@ -10,7 +11,7 @@ There are 6 different enumerated folders. (Reccomendation: ```vimdiff saxpy.f90 
 
 First, prepare the environment (load modules, set environment variables), if you didn't do so before.
 
-## Part 1: Porting with unified shared memory enabled
+### Part 1: Porting with unified shared memory enabled
 For now, set
 ```
 export HSA_XNACK=1
@@ -82,7 +83,7 @@ add "parallel do" for more parellelism
 The observed time is much better than all previous versions.
 Note that the initialization kernel is a warm-up kernel here. If we do not have a warm-up kernel, the observed performance would be significantly worse. Hence the benefit of the accelerator is usually seen only after the first kernel. You can try this by commenting the !$omp target... in the initialize subroutine, then the meassured kernel is the first which touches the arrays used in the kernel.
 
-## Part 2: explore the impact of unified shared memory
+### Part 2: explore the impact of unified shared memory
 4) Explore impact of unified memory:
 ```
 cd ../4_saxpy_nousm
@@ -98,7 +99,7 @@ export HSA_XNACK=0
 to get similar behaviour like on discrete GPUs (with memory copies).
 Compiling and running this version without any map clauses will result in much worse performance than with unified shared memory and ```HSA_XNACK=1``` (no memory copies on MI300A).
 
-## Part 3: with map clauses
+### Part 3: with map clauses
 Set
 ```
 export HSA_XNACK=0

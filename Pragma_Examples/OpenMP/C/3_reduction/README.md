@@ -1,4 +1,5 @@
-# Reduction excercise:
+
+## Reduction excercise:
 
 README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/2_reduction` from the Training Examples repository.
 

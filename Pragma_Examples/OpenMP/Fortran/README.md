@@ -1,3 +1,4 @@
+
 # Porting excercises
 The Fortran porting excercises can be found here (this is the directory of this README): 
 ```
@@ -57,7 +58,7 @@ This flag
 ```
 export HSA_XNACK=1
 ```
-will enable no memory copies (use of unified_shared_memory) on MI300A
+will enable no memory copies (use of `unified_shared_memory`) on MI300A
 ```
 export HSA_XNACK=0
 ```
@@ -75,7 +76,7 @@ Each excercise has it's own README with instructions.
 The excercises 1-5 have a CPU only code to try porting yourself and (intermediate steps) of a solution. Excercise 6 does not have a version to port yourself, but explains a common challenge for porting to discrete GPUs.
 The instructions assume you work on MI300A and some of the excercises explore the differences of using the discrete GPU or APU programming model (```HSA_XNACK=0``` or ```=1```).
 The reccomended order to do the exercises is the order in which they are numbered and first all with unified memory and then again with map clauses or data region.
-Excercise 7 is a small app with a Jacobi solver. (Note: A C/C++ version of this Fortran code is explained in detail a Blogpost https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-jacobi-readme/.) 
+Excercise 8 is a small app with a Jacobi solver. (Note: A C/C++ version of this Fortran code is explained in detail a Blogpost https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-jacobi-readme/.) 
 
 Choose one of the excercises in the sub-directories and use the README there for instructions (reccomended: follow them as they are numbered, do all excercises first with unified memory and then with map clauses):
 ```
@@ -83,7 +84,8 @@ cd 1_saxpy
 cd 2_vecadd  
 cd 3_reduction 
 cd 4_reduction_scalars  
-cd 5_device_routine 
-cd 6_derived_types
-cd 7_jacobi
+cd 5_reduction_array  
+cd 6_device_routine 
+cd 7_derived_types
+cd 8_jacobi
 ```

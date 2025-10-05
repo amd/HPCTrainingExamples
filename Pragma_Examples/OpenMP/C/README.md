@@ -1,3 +1,4 @@
+
 # Porting excercises
 The C porting excercises can be found here (this is the directory of this README): 
 ```
@@ -92,8 +93,4 @@ cd 3_reduction
 cd 4_reduction_scalars  
 cd 5_reduction_array
 cd 6_device_routine
-```
-# Porting of a small app:
-```
-cd 7_jacobi
 ```

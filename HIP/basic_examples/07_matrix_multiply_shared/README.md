@@ -1,4 +1,7 @@
-# Complete the matrix multiply with shared memory
+
+## Complete the matrix multiply with shared memory
+
+README.md in `HPCTrainingExamples/HIP/07_matrix_multiply_shared` of the Training Exercises repository.
 
 In this example, a matrix multiply is performed with shared memory, where each thread computes 1 element of the resultant matrix.
 

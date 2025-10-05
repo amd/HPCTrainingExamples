@@ -1,11 +1,16 @@
-# OpenMP Single Line Compute Constructs:
+
+# Real World OpenMP Language Constructs
 
 README.md in `HPCTrainingExamples/Pragma_Examples/OpenMP/C/SingleLineConstructs` of the Training Exercises repository.
+
+We start off the real world language constructs by looking at single line compute constructs.
+
+## OpenMP Single Line Compute Constructs:
 
 We start with adding a single line directive to move the computation of a loop to the GPU. The exercises for this will utilize
 the saxpy example.
 
-## CPU version
+### CPU version
 
 This example uses OpenMP on the CPU with threading for parallelism. The pragma used is
 

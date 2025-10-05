@@ -1,4 +1,7 @@
-# Complete the matrix multiply kernel
+
+## Complete the matrix multiply kernel
+
+README.md in `HPCTrainingExamples/HIP/05_compare_with_library` of the Training Exercises repository.
 
 In this exercise, we will use the `matrix_multiply` kernel we completed in `04_complete_the_kernel` and compare its performance against the hipBLAS version of DGEMM. 
 

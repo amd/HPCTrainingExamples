@@ -1,4 +1,4 @@
-# OpenMP CXX Build systems: make and cmake
+## OpenMP CXX Build systems: make and cmake
 
 README.md in `HPCTrainingExamples/Pragma_Examples/OpenMP/CXX/BuildExamples` of the Training Examples repository
 
@@ -6,7 +6,7 @@ Build systems for make and cmake are an important starting step to working with 
 We'll show samples for CXX builds. We'll test them with
 some of our sample code to make sure your system is setup properly.
 
-## Make
+### Make
 
 ```
 cd ../../CXX/BuildExamples
@@ -60,7 +60,7 @@ Now run the executable
 ./openmp_code
 ```
 
-## CMake
+### CMake
 
 Looking at the CMakeLists.txt
 

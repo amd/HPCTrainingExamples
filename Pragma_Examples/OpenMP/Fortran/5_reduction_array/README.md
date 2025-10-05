@@ -1,4 +1,5 @@
-# Porting excercise reduction of multiple scalars in one kernel
+
+## Porting excercise reduction of multiple scalars in one kernel
 
 README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/9_reduction_array` from the Training Examples repository.
 

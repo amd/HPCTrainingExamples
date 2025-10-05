@@ -1,4 +1,5 @@
-# OpenMP complex compute constructs in C
+
+## OpenMP complex compute constructs in C
 
 README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/ComplexComputeConstructs` in the Training Examples repository
 
@@ -12,7 +13,7 @@ git clone https://github.com/amd/HPCTrainingExamples
 
 ```
 
-## Full combined compute directive
+### Full combined compute directive
 
 We'll start with a baseline from the full combined compute directive
 
@@ -50,7 +51,7 @@ Time of kernel: 0.082906
 There are 416 teams (workgroups) of size 256. There is a low vector register usage a 8. We'll also look at the run-time of 0.082906 for comparison.
 
 
-## Target directive
+### Target directive
 
 We'll start with what happens with just the target directive
 
@@ -78,7 +79,7 @@ Time of kernel: 5.407085
 
 We only have one team of 256 workgroup size. Basically we are running serial -- one thread on one team (workgroup). The runtime reflects that with 65 times longer than the combined directive.
 
-## Teams clause
+### Teams clause
 
 The teams exercise will add the teams clause after the target directive.
 
@@ -97,7 +98,7 @@ Time of kernel: 11.166301
 There are 624 workgroups, but each one is doing all the work. This duplicates the effort and ends up taking twice the time as the target directive alone.
 Note that this is also creating a race condition when threads are trying to write to the same location, which produces an incorrect output that is also non deterministic. One could add `num_teams(1)` to the pragma directive to require the creation of a single team, in which case no race condition can occur.
 
-### Distribute clause
+#### Distribute clause
 
 Adding the distribute clause starts to get some parallelism by partitioning the work across the workgroups. But still with only one thread per workgroup.
 
@@ -115,7 +116,7 @@ Time of kernel: 0.149113
 
 We have more workgroups at 624 than the baseline case, but we are not using all the threads. This is using more of the compute capacity at 624/416 times as many workgroups and associated compute units. The runtime is much closer to the baseline. As a further exploration, try changing the array size in the example or trying a different kernel with more work.
 
-### parallel for without the teams distribute clauses
+#### parallel for without the teams distribute clauses
 
 As a further experiment, let's try just adding parallel for to engage all the threads on one workgroup. The directive is the following:
 
@@ -139,7 +140,7 @@ Time of kernel: 0.126748
 
 This gives a pretty good runtime while using fewer GPU compute units.
 
-## Split multi-level directive
+### Split multi-level directive
 
 Build both the collapse and split level C examples.
 

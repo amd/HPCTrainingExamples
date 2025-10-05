@@ -1,4 +1,7 @@
-# Add the device-to-host data transfer
+
+## Add the device-to-host data transfer
+
+README.md in `HPCTrainingExamples/HIP/02_add_d2h_data_transfer` of the Training Exercises repository.
 
 This example simply initializes an array of integers to 0 on the host, sends the 0s from the host array to the device array, then adds 1 to each element in the kernel, then sends the 1s back to the host array.
 

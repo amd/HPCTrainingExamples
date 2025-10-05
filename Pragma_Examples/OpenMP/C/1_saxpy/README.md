@@ -1,6 +1,7 @@
-# First OpenMP C offload: 
 
-This README.md is at HPCTrainingExamples/Pragma_Examples/OpenMP/C/1_saxpy/README.md
+## First OpenMP C offload: 
+
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/1_saxpy` in the Training Examples repository
 
 Porting of saxpy step by step and explore the discrete GPU and APU programming models:
 
@@ -13,7 +14,7 @@ after Part 1 you may want to explore the excercises 2-5 first with usm before yo
 
 This excercise will show in a step by step solution how to port a your first kernels. 
 
-## Part 1: Unified shared memory
+### Part 1: Unified shared memory
 For now, set
 ```
 export HSA_XNACK=1
@@ -111,7 +112,7 @@ Note that the initialization kernel is a warm-up kernel here. If we do not have 
 
 Reccomendation: After Part 1 you may want to explore the excercises 2-5 first with usm before you come to explore the behavior without USM.
 
-## Part 2: Impact of USM
+### Part 2: Impact of USM
 #### 4) Explore impact of unified memory:
 ```
 cd ../4_saxpy_nousm
@@ -133,7 +134,7 @@ export HSA_XNACK=0
 to get similar behaviour like on discrete GPUs (with memory copies).
 Compiling and running this version without any map clauses will result in much worse performance than with unified shared memory and ```HSA_XNACK=1``` (no memory copies on MI300A).
 
-## Part 3: Map clauses
+### Part 3: Map clauses
 #### 5) map clauses
 this version introduces  map clauses for each kernel.
 ```
