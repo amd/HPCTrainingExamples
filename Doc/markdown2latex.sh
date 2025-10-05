@@ -12,7 +12,7 @@ then
        echo "Usage: ./markdown2pdf.sh event_name"
 fi
 
-if [ ! -f "$1" ]
+if [ ! -f "$1.md" ]
 then
        echo "file $1 does not exist"
        echo "Usage: ./markdown2pdf.sh event_name"
