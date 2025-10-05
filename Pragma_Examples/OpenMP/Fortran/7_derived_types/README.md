@@ -1,10 +1,10 @@
 
-## Excercise: mapping of different datatypes
+## Exercise: mapping of different datatypes
 
 README.md in `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/7_derived_types` of the Training Exercises repository.
 
-This excercise explores the possibilities of mapping derived types. This is one of the main challenges one may encounter when porting a Fortran app to discrete GPUs. This excercise also shows that on the APU using `HSA_XNACK=1` such problems do not exist.
-Note: This excercise was designed for amdflang-new.
+This exercise explores the possibilities of mapping derived types. This is one of the main challenges one may encounter when porting a Fortran app to discrete GPUs. This exercise also shows that on the APU using `HSA_XNACK=1` such problems do not exist.
+Note: This exercise was designed for amdflang-new.
 
 Compile the examples:
 ```
@@ -84,4 +84,4 @@ You may want to set
 ```
 export LIBOMPTARGET_INFO=0
 ```
-before you run the next excercise.
+before you run the next exercise.

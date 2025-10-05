@@ -1,6 +1,6 @@
 
-# Porting excercises
-The Fortran porting excercises can be found here (this is the directory of this README): 
+# Porting exercises
+The Fortran porting exercises can be found here (this is the directory of this README): 
 ```
 cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran
 ```
@@ -72,13 +72,13 @@ if xnack+ (unified memory enabled) or xnack- (with memory copies) is set.
 Note: In the beta release of the amdflang-new/4.0 compiler ```HSA_XNACK=0``` with a code with !$omp requires unified_shared_memory can be compiled in some cases as if no unified_shared_memory is required. This is a behavior not according to the standard and will lead to an error message in future releases!
 
 The exercises in the folders numbered 1 to 6 are small examples of what one may encounter when porting a real world code. 
-Each excercise has it's own README with instructions.
-The excercises 1-5 have a CPU only code to try porting yourself and (intermediate steps) of a solution. Excercise 6 does not have a version to port yourself, but explains a common challenge for porting to discrete GPUs.
-The instructions assume you work on MI300A and some of the excercises explore the differences of using the discrete GPU or APU programming model (```HSA_XNACK=0``` or ```=1```).
+Each exercise has it's own README with instructions.
+The exercises 1-5 have a CPU only code to try porting yourself and (intermediate steps) of a solution. Excercise 6 does not have a version to port yourself, but explains a common challenge for porting to discrete GPUs.
+The instructions assume you work on MI300A and some of the exercises explore the differences of using the discrete GPU or APU programming model (```HSA_XNACK=0``` or ```=1```).
 The reccomended order to do the exercises is the order in which they are numbered and first all with unified memory and then again with map clauses or data region.
 Excercise 8 is a small app with a Jacobi solver. (Note: A C/C++ version of this Fortran code is explained in detail a Blogpost https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-jacobi-readme/.) 
 
-Choose one of the excercises in the sub-directories and use the README there for instructions (reccomended: follow them as they are numbered, do all excercises first with unified memory and then with map clauses):
+Choose one of the exercises in the sub-directories and use the README there for instructions (reccomended: follow them as they are numbered, do all exercises first with unified memory and then with map clauses):
 ```
 cd 1_saxpy
 cd 2_vecadd  

@@ -1,5 +1,7 @@
-# Porting a small app: jacobi
-Note: This excercise code and solutions were tested with amdflang-new.
+
+## Porting a small app: jacobi
+
+Note: This exercise code and solutions were tested with amdflang-new.
 ```
 cd 0_jacobi_portyourself
 ```
@@ -34,7 +36,7 @@ On the CPU the default problem size may take a minute to get solved, on the GPU 
 - introduce map clauses (in case ```export HSA_XNACK=1``` is set)
 - optimize data movement (in case ```export HSA_XNACK=0``` is set)
 
-## Example solutions:
+### Example solutions:
 For the unified shared memory version:
 ```
 export HSA_XNACK=1

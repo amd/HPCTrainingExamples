@@ -6,13 +6,13 @@ README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/1_saxpy` in the Tra
 Porting of saxpy step by step and explore the discrete GPU and APU programming models:
 
 - Part 1: Unified shared memory
-after Part 1 you may want to explore the excercises 2-5 first with usm before you come to explore the behavior without USM.
+after Part 1 you may want to explore the exercises 2-5 first with usm before you come to explore the behavior without USM.
 
 - Part 2: Explore differences of ```HSA_XNACK=0``` and ```1```
 
 - Part 3: Map clauses
 
-This excercise will show in a step by step solution how to port a your first kernels. 
+This exercise will show in a step by step solution how to port a your first kernels. 
 
 ### Part 1: Unified shared memory
 For now, set
@@ -27,7 +27,7 @@ There are 6 different enumerated folders. (Reccomendation: ```vimdiff saxpy.cpp 
 ```
 cd 0_saxpy_serial_portyourself
 ```
-Try to port this example yourself. If you are stuck, use the step by step solution in folders 1-6 and read the instructions for those excersices below. Recommendation for your first port: use ```#pragma omp requires unified_shared memory``` and ```export HSA_XNACK=1``` (before running) that you do not have to worry about map clauses. Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behaviour of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps.
+Try to port this example yourself. If you are stuck, use the step by step solution in folders 1-6 and read the instructions for those exersices below. Recommendation for your first port: use ```#pragma omp requires unified_shared memory``` and ```export HSA_XNACK=1``` (before running) that you do not have to worry about map clauses. Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behaviour of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps.
 
 - Compile the serial version. Note that ```-fopenmp``` is required as omp_get_wtime is used to time the loop execution.
 ```
@@ -110,7 +110,7 @@ amdclang++ -fopenmp --offload-arch=gfx942 saxpy.cpp -o saxpy
 The observed time is much better than all previous versions.
 Note that the initialization kernel is a warm-up kernel here. If we do not have a warm-up kernel, the observed performance would be significantly worse. Hence the benefit of the accelerator is usually seen only after the first kernel. You can try this by commenting the !$omp target... in the initialize subroutine, then the meassured kernel is the first which touches the arrays used in the kernel.
 
-Reccomendation: After Part 1 you may want to explore the excercises 2-5 first with usm before you come to explore the behavior without USM.
+Reccomendation: After Part 1 you may want to explore the exercises 2-5 first with usm before you come to explore the behavior without USM.
 
 ### Part 2: Impact of USM
 #### 4) Explore impact of unified memory:
@@ -168,7 +168,7 @@ amdclang++ -fopenmp --offload-arch=gfx942 saxpy.cpp -o saxpy
 ```
 ./saxpy
 ```
-Additional excercise: What happens to the result, if you comment the ```omp target update```? 
+Additional exercise: What happens to the result, if you comment the ```omp target update```? 
 ```
 vi saxpy.cpp
 ```

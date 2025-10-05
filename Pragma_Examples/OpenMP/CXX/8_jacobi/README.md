@@ -1,11 +1,12 @@
-# Porting a small app: jacobi
-## AMD training container environment (aac6):
+
+## Porting a small app: jacobi
+### AMD training container environment (aac6):
 ```
 module load rocm
 export CC=amdclang++
 ```
 Note: CC is used in the Makefile as otherwise the compiler wrappers in the HPE environment on aac7 do not work.
-## Cray environment (aac7):
+### Cray environment (aac7):
 ```
 module load craype-accel-amd-gfx942
 module load craype-x86-genoa
@@ -18,7 +19,7 @@ CC --version´
 ```
 shows a c++ compiler.
 
-## Excercise:
+### Excercise:
 ```
 cd 0_jacobi_portyourself
 ```

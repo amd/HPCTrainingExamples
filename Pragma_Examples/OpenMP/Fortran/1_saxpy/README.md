@@ -3,9 +3,9 @@
 
 README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/1_saxpy` in the Training Examples repository
 
-This excercise will show in a step by step solution how to port a your first kernels. 
+This exercise will show in a step by step solution how to port a your first kernels. 
 This simple example will not use a Makefile to practice how to compile for the GPU or APU. 
-All following excercises will use a Makefile.
+All following exercises will use a Makefile.
 
 There are 6 different enumerated folders. (Reccomendation: ```vimdiff saxpy.f90 ../<X_saxpy_version>/saxpy.f90``` may help you to see the differences):
 
@@ -25,7 +25,7 @@ to make use of the APU programming model (unified memory).
 ```
 cd 0_saxpy_serial_portyourself
 ```
-Try to port this example yourself. If you are stuck, use the step by step solution in folders 1-6 and read the instructions for those excersices below. Recommendation for your first port: use ```!$omp requires unified_shared memory``` (in the code after ```implicit none``` in each module) and ```export HSA_XNACK=1``` (before running) that you do not have to worry about map clauses. Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behaviour of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps.
+Try to port this example yourself. If you are stuck, use the step by step solution in folders 1-6 and read the instructions for those exersices below. Recommendation for your first port: use ```!$omp requires unified_shared memory``` (in the code after ```implicit none``` in each module) and ```export HSA_XNACK=1``` (before running) that you do not have to worry about map clauses. Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behaviour of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps.
 
 - Compile the serial version. Note that ```-fopenmp``` is required as omp_get_wtime is used to time the loop execution.
 ```
@@ -125,7 +125,7 @@ vi saxpy.f90
 ```
 - compile again
 - run again
-Additional excercise: What happens to the result, if you comment the !$omp target update (in line 29)? 
+Additional exercise: What happens to the result, if you comment the !$omp target update (in line 29)? 
 ```
 vi saxpy.f90
 ```
@@ -143,7 +143,7 @@ specify num_teams(...) choose a number of teams you want to test
 - run again
 investigating different numbers of teams you will find that the compiler default (without setting this) was already leading to good performance. saxpy is a very simple kernel, this finding may differ for very complex kernels.
 
-After finishing this introductory excercise, go to the next excercise in the Fortran folder:
+After finishing this introductory exercise, go to the next exercise in the Fortran folder:
 ```
 cd ../..
 ```

@@ -1,6 +1,7 @@
-# Porting excercise: vecadd
 
-This excercise combines what you learned in the previous two excercises: porting simple kernels without and with reduction.
+## Porting exercise: vecadd
+
+This exercise combines what you learned in the previous two exercises: porting simple kernels without and with reduction.
 Decide, if you want to use the APU or discrete GPU programming model. Set export ```HSA_XNACK=1``` or ```=0``` appropriately.
 
 #### 0) serial CPU version

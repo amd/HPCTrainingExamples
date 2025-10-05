@@ -3,7 +3,7 @@
 
 README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/2_reduction` from the Training Examples repository.
 
-This excercise focusses on two things:
+This exercise focusses on two things:
 - Part 1: how to port a reduction to the GPU
 - Part 2: importance of map clauses on discrete GPUs or HSA_XNACK=0 on MI300A
   
@@ -14,7 +14,7 @@ First, prepare the environment (loading modules, set environment variables), if 
 cd 0_reduction_portyourself
 vi freduce.F
 ```
-- Only port the Makefile and the reduction itself. This excercise focusses on how to implement a reduction, not on porting the full example.
+- Only port the Makefile and the reduction itself. This exercise focusses on how to implement a reduction, not on porting the full example.
 
 How to build all versions:
 ```
@@ -33,14 +33,14 @@ vi freduce.F
 contains a sample solution for unified shared memory / APU programming model (correct output: each element 1010)  run this with setting ```export HSA_XNACK=1``` in advance
 
 ### Part 2: Port with map clause
-#### 2.1 Porting excercise
+#### 2.1 Porting exercise
 ```
 cd 2_reduction_solution
 vi freduce.F
 ```
 Contains a sample solution for discrete GPUs (correct output: each element 1010) run this with setting ```export HSA_XNACK=0``` in advance
 #### 2.2 Behaviour with and without USM
-The third folder contains an excercise to explore the behavior with and without USM:
+The third folder contains an exercise to explore the behavior with and without USM:
 ```
 cd 3_reduction_solution
 vi freduce.F

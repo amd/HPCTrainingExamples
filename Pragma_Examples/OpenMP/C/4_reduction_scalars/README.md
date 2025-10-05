@@ -1,4 +1,5 @@
-# Porting excercise reduction of multiple scalars in one kernel
+
+## Porting exercise reduction of multiple scalars in one kernel
 
 README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/4_reduction_scalars` from the Training Examples repository.
 
