@@ -1,3 +1,4 @@
+
 # AMD AI Assistant using retrieval augmented generation (RAG) 
 
 We will be using retrieval augmented generation (RAG) to create an AMD AI assistant you can interact with to answer questions on AMD GPU software and programming.

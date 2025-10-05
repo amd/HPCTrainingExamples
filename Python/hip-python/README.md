@@ -124,7 +124,7 @@ hipDeviceAttributeWarpSize: 64
 ok
 ```
 
-# Accessing HIP Streams using HIP-Python
+## Accessing HIP Streams using HIP-Python
 
 In the HIP streams example, we'll see how to create streams from Python
 and pass array data to the stream routines from Python arrays.
