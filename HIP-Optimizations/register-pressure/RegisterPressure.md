@@ -1,4 +1,5 @@
-# Register Exercises
+
+## Register Exercises
 
 In this set of examples, we explore
 
@@ -6,7 +7,7 @@ In this set of examples, we explore
 * SGPRs -- Scalar General Purpose Registers
 * Occupancy
 
-## Register Pressure - ROCm Blogs
+### Register Pressure - ROCm Blogs
 
 For these exercises, retrieve them with 
 
@@ -46,7 +47,7 @@ lbm.cpp:16:1: remark:     LDS Size [bytes/block]: 0 [-Rpass-analysis=kernel-reso
 
 Repeat for the other cases
 
-### Remove unnecessary math functions
+#### Remove unnecessary math functions
 
 pow(current_phi, 2.0) on line 37 can be changed to current_phi * current_phi
 
@@ -57,13 +58,13 @@ operation and also consumes a lot of registers.
 hipcc -c --offload-arch=gfx90a -Rpass-analysis=kernel-resource-usage lbm_1_nopow.cpp
 ```
 
-### Rearrange code so variables are declared close to use
+#### Rearrange code so variables are declared close to use
 
 ```
 hipcc -c --offload-arch=gfx90a -Rpass-analysis=kernel-resource-usage lbm_2_rearrange.cpp
 ```
 
-### Add restrict attribute to function arguments
+#### Add restrict attribute to function arguments
 
 ```
 hipcc -c --offload-arch=gfx90a -Rpass-analysis=kernel-resource-usage lbm_3_restrict.cpp

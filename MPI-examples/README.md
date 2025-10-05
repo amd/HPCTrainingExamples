@@ -1,4 +1,8 @@
+
 # GPU Aware MPI
+
+README.md from `HPCTrainingExamples/MPI-examples` from the Training Examples repository.
+
 ## Point-to-point and collective
 
 **NOTE**: these exercises have been tested on MI210 and MI300A accelerators using a container environment.

@@ -1,4 +1,7 @@
-# HIP Transpose Examples
+
+## HIP Transpose Examples
+
+README.md from `HPCTrainingExamples/HIP/transpose` from the Training Examples repository.
 
 In this set of examples, we explore
 
@@ -20,7 +23,7 @@ module load rocm
 
 The exercises were tested on an MI210 with ROCm version 6.4.1.
 
-## Transpose Read Contiguous
+### Transpose Read Contiguous
 
 In this example, we will read the matrix data in a contiguous 
 manner. This means that the data read varies quickest by the
@@ -73,7 +76,7 @@ Basic Transpose, Read Contiguous - Average Time: 4450.20 μs
 Verification: PASSED
 ```
 
-## Transpose Write Contiguous
+### Transpose Write Contiguous
 
 What happens if we make the writes contiguous instead of the reads? Let's
 take a look at the kernel for that case.
@@ -127,7 +130,7 @@ contiguous (coalesced) writes than reads.
 Can we do better than this? If we use a shared memory tile, we
 can make both the read and write contiguous.
 
-## Tiled Matrix Transpose
+### Tiled Matrix Transpose
 
 The kernel code for the matrix transpose with a shared memory 
 tile is a little more complicated.
@@ -201,7 +204,7 @@ Verification: PASSED
 
 We get a little speedup over the contiguous write approach.
 
-## Transpose from the rocblas library
+### Transpose from the rocblas library
 
 Now let's try the rocblas transpose routine. We no longer
 need a kernel since that will be provided by the rocblas library.
@@ -258,7 +261,7 @@ ROCBlas Transpose - Average Time: 3638.60 μs
 So this is a little slower than some of our custom version, but it may
 be because the rocblas routine has to be for general use.
 
-### Transpose timed comparison
+#### Transpose timed comparison
 
 For convenience, we have written a version which will run
 all the transpose kernels and report a comparison between 
