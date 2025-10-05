@@ -19,6 +19,7 @@ then
 fi
 
 filename="${1%.*}"
+EVENT_NAME=`cat ${filename} | sed -e 's/_/ /` `
 sed -i 's/╒/-/g' "$filename.md"
 sed -i 's/╕/-/g' "$filename.md"
 sed -i 's/═/-/g' "$filename.md"
@@ -37,7 +38,7 @@ sed -i 's/┤/-/g' "$filename.md"
 sed -i 's/μ/micro/g' "$filename.md"
 sed -i 's/<img src="/![image](/g' "$filename.md"
 sed -i 's|.png"/>|.png)|g' "$filename.md"
-pandoc "$1" -V geometry:margin=1in --extract-media=. --toc -s -o "$filename.tex"
+pandoc --metadata title="${EVENT_NAME}" "$1" -V geometry:margin=1in --extract-media=. --toc -s -o "$filename.tex"
 
 
 sed -i -e '/\\author{}/i\
