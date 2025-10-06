@@ -63,6 +63,7 @@ Where:
 - Complex multiplication implemented as 2D rotation matrix
 
 **RoPE Implementation:**
+
 $$\begin{pmatrix}
 q_{2i} \\
 q_{2i+1}
@@ -114,6 +115,7 @@ $$\begin{aligned}
 \end{aligned}$$
 
 **Complete FFN Block:**
+
 $$\begin{aligned}
 \text{FFN}(x) &= \text{SwiGLU}(x)W_3 + b_3 \\
 &= (\text{Swish}(xW_{\text{gate}}) \odot xW_{\text{up}})W_{\text{down}}
