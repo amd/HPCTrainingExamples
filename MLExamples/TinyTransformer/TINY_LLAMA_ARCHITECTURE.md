@@ -147,8 +147,8 @@ x → RMSNorm → Multi-Head Attention → Residual Connection →
 **Mathematical Formulation:**
 
 $$\begin{aligned}
-\text{attn\_out} &= x + \text{MultiHead}(\text{RMSNorm}(x)) \\
-\text{block\_out} &= \text{attn\_out} + \text{FFN}(\text{RMSNorm}(\text{attn\_out}))
+\text{attn_out} &= x + \text{MultiHead}(\text{RMSNorm}(x)) \\
+\text{block_out} &= \text{attn_out} + \text{FFN}(\text{RMSNorm}(\text{attn_out}))
 \end{aligned}$$
 
 ### 3. Model Dimensions and Configuration
