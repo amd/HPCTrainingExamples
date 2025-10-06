@@ -145,6 +145,7 @@ x → RMSNorm → Multi-Head Attention → Residual Connection →
 ```
 
 **Mathematical Formulation:**
+
 $$\begin{aligned}
 \text{attn\_out} &= x + \text{MultiHead}(\text{RMSNorm}(x)) \\
 \text{block\_out} &= \text{attn\_out} + \text{FFN}(\text{RMSNorm}(\text{attn\_out}))
@@ -220,6 +221,7 @@ Output: [batch_size, seq_len, hidden_dim] → [batch_size, seq_len, vocab_size]
 ### 3. Memory Allocation Patterns
 
 **Parameter Memory:**
+
 $$\begin{aligned}
 \text{Embedding} &: V \times d \\
 \text{Attention} &: 4 \times L \times d \times d_{\text{head}} \times h \\
@@ -229,6 +231,7 @@ $$\begin{aligned}
 \end{aligned}$$
 
 **Activation Memory (per layer):**
+
 $$\begin{aligned}
 \text{Attention} &: B \times S \times d + B \times h \times S \times S \\
 \text{FFN} &: B \times S \times d_{\text{ff}} \\
@@ -259,6 +262,7 @@ $$\begin{aligned}
 ### 3. Total Model Complexity
 
 **FLOP Count per Forward Pass:**
+
 $$\begin{aligned}
 \text{Embedding} &: B \times S \times d \\
 \text{Attention} &: L \times B \times S \times (4 \times S \times d + S^{2} \times h) \\
