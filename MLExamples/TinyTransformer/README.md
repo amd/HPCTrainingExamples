@@ -66,6 +66,14 @@ Each version introduces additional profiling capabilities:
 
 ## Quick Start
 
+### 0. Set up environment
+On the training cluster's compute node, the required environment may be set up using the following
+commands:
+
+```bash
+module load rocm pytorch openmpi rocprofiler-compute rocprofiler-systems/develop
+```
+
 ### 1. Verify Environment
 ```bash
 # Check ROCm installation
@@ -116,13 +124,18 @@ cd version3_triton/exercises/performance_debugging/
 ### 5. Profile with ROCm Tools (Optional)
 ```bash
 # Basic profiling
-rocprof --stats python tiny_llama_v3.py --batch-size 8 --seq-len 128 --num-steps 10
-
-# Detailed kernel trace
-rocprofv2 --kernel-trace -o trace.json python tiny_llama_v3.py --batch-size 8 --seq-len 128 --num-steps 5
-
-# View trace at https://ui.perfetto.dev
+rocprofv3 --stats --kernel-trace --truncate-kernels -- python tiny_llama_v3.py --batch-size 8 --seq-len 128 --num-steps 10
 ```
+The above command produces a hotspot list of GPU kernels. The `--truncate-kernels` option helps remove arguments
+from the kernel name for better readability.
+
+```bash
+# Detailed kernel trace
+rocprofv3 --runtime-trace --output-format pftrace -- python tiny_llama_v3.py --batch-size 8 --seq-len 128 --num-steps 5
+```
+The above command generates a Perfetto trace file with a timeline view of GPU kernels, memory copies
+to and from device, runtime API activity, and any ROCtx markers. View the trace at
+[https://ui.perfetto.dev](https://ui.perfetto.dev).
 
 ## Directory Structure
 

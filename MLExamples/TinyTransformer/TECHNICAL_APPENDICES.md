@@ -127,7 +127,6 @@ $$\begin{aligned}
 #### B.1.1 Attention Mechanism
 
 **Multi-Head Attention:**
-
 $$\begin{aligned}
 \text{MultiHead}(Q, K, V) &= \text{Concat}(h_1, h_2, \ldots, h_H)W^O \\
 \text{where } h_i &= \text{Attention}(QW_i^Q, KW_i^K, VW_i^V) \\
@@ -135,7 +134,6 @@ $$\begin{aligned}
 \end{aligned}$$
 
 **Grouped-Query Attention (GQA):**
-
 $$\begin{aligned}
 \text{GQA}(Q, K, V) &= \text{Concat}(g_1, g_2, \ldots, g_G)W^O \\
 \text{where } g_j &= \text{Concat}(h_{j,1}, h_{j,2}, \ldots, h_{j,\frac{H}{G}}) \\
@@ -145,7 +143,6 @@ $$\begin{aligned}
 #### B.1.2 Feed-Forward Networks
 
 **SwiGLU Activation:**
-
 $$\begin{aligned}
 \text{SwiGLU}(x) &= \text{Swish}(xW_1) \odot (xW_2) \\
 \text{Swish}(x) &= x \cdot \sigma(\beta x) = \frac{x}{1 + e^{-\beta x}} \\
@@ -153,7 +150,6 @@ $$\begin{aligned}
 \end{aligned}$$
 
 **GLU Variants Comparison:**
-
 $$\begin{array}{|l|c|c|}
 \hline
 \text{Activation} & \text{Formula} & \text{Computational Cost} \\
@@ -168,7 +164,6 @@ $$\begin{array}{|l|c|c|}
 #### B.1.3 Normalization Techniques
 
 **RMSNorm vs LayerNorm:**
-
 $$\begin{aligned}
 \text{LayerNorm}(x) &= \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} \cdot \gamma + \beta \\
 \text{where } \mu &= \frac{1}{d}\sum_{i=1}^d x_i, \quad \sigma^2 = \frac{1}{d}\sum_{i=1}^d (x_i - \mu)^2 \\
@@ -187,7 +182,6 @@ $$\begin{aligned}
 #### B.2.1 Kernel Fusion Efficiency
 
 **Memory Bandwidth Reduction:**
-
 $$\text{Bandwidth Reduction} = 1 - \frac{\text{Bytes}_{\text{fused}}}{\text{Bytes}_{\text{unfused}}}$$
 
 $$\begin{aligned}
@@ -200,7 +194,6 @@ $$\begin{aligned}
 #### B.2.2 Arithmetic Intensity Analysis
 
 **Roofline Model:**
-
 $$\begin{aligned}
 \text{Arithmetic Intensity} &= \frac{\text{FLOPs}}{\text{Bytes Accessed}} \\
 \text{Performance} &= \min\left(\text{Peak Compute}, \text{AI} \times \text{Peak Bandwidth}\right) \\
@@ -208,7 +201,6 @@ $$\begin{aligned}
 \end{aligned}$$
 
 **Transformer Operations Analysis:**
-
 $$\begin{array}{|l|c|c|c|}
 \hline
 \text{Operation} & \text{FLOPs} & \text{Bytes} & \text{AI (FLOPs/Byte)} \\
@@ -226,7 +218,6 @@ $$\begin{array}{|l|c|c|c|}
 #### B.3.1 Cache Analysis
 
 **Cache Hit Rate Impact:**
-
 $$\begin{aligned}
 T_{\text{effective}} &= H \times T_{\text{cache}} + (1-H) \times T_{\text{memory}} \\
 \text{where } H &= \text{cache hit rate} \\
@@ -235,13 +226,11 @@ T_{\text{memory}} &= \text{main memory access time}
 \end{aligned}$$
 
 **Optimal Block Size for Cache:**
-
 $$\text{Optimal Block Size} = \sqrt{\frac{\text{Cache Size}}{\text{Data Element Size}}}$$
 
 #### B.3.2 Memory Bandwidth Utilization
 
 **Coalescing Efficiency:**
-
 $$\begin{aligned}
 \text{Coalescing Efficiency} &= \frac{\text{Useful Bytes Transferred}}{\text{Total Bytes Transferred}} \\
 \text{For Stride } s: \quad \eta &= \frac{1}{\max(1, s)} \\
@@ -258,60 +247,57 @@ $$\begin{aligned}
 
 | Feature | rocprof (v3) | rocprof-sys | rocprof-compute |
 |---------|--------------|-------------|-----------------|
-| **Kernel Profiling** | ✓ Basic | ✓ System-wide | ✓ Advanced |
-| **Memory Analysis** | ✓ Limited | ✓ System-level | ✓ Detailed |
-| **Multi-process** | ✗ No | ✓ Yes | ✓ Yes |
-| **Real-time** | ✗ No | ✓ Yes | ✓ Limited |
-| **Optimization Hints** | ✗ No | ✗ No | ✓ Yes |
+| **Hotspots** | ✓ GPU kernels | ✓ System-wide | ✓ GPU kernels |
+| **Timeline Trace** | ✓ Device | ✓ System-wide | ✗ No |
+| **Hardware Counter Collection** | ✓ Device | ✓ System-wide | ✓ Automated Device |
+| **Kernel Analysis** | ✓ Basic | ✓ System-wide | ✓ Advanced |
 | **Roofline Analysis** | ✗ No | ✗ No | ✓ Yes |
-| **HIP Trace** | ✓ Yes | ✓ Yes | ✓ Yes |
-| **Kernel Trace** | ✓ Yes | ✓ Yes | ✓ Yes |
+| **Multi-process** | ✗ Yes | ✓ Yes | ✗ No |
 
 #### C.1.2 Command Reference
 
-**ROCprof (Legacy v3):**
+**rocprofv3:**
 ```bash
-# Basic kernel profiling
-rocprof --stats python3 script.py
+# Basic kernel hotspots
+rocprofv3 --stats --kernel-trace --truncate-kernels -- python3 script.py
 
-# Kernel and HIP trace
-rocprof --kernel-trace --hip-trace python3 script.py
+# Kernel trace, HIP trace, marker trace, memory copy trace
+rocprofv3 --runtime-trace --output-format pftrace -- python3 script.py
 
 # Custom metrics
-rocprof --input metrics.txt python3 script.py
+rocprofv3 --input metrics.txt -- python3 script.py
 
 # Output formats
-rocprof --csv --json python3 script.py
+rocprofv3 --kernel-trace --output-format csv json -- python3 script.py
 ```
 
-**ROCprof-sys (System Profiler):**
+**rocprof-sys (ROCm Systems Profiler):**
+
 ```bash
-# System-wide profiling
-rocprof-sys record python3 script.py
+# System-wide timeline trace with runtime instrumentation of host functions and MPI calls
+rocprof-sys-python -- script.py
 
-# Real-time monitoring
-rocprof-sys top
+# Optionally, create configuration file for tuning runtime parameters
+rocprof-sys-avail -G /path/to/.rocprofsys.cfg
+export ROCPROFSYS_CONFIG_FILE=/path/to/.rocprofsys.cfg
 
-# Multi-process profiling
-rocprof-sys record --pid $(pgrep python)
-
-# Resource utilization
-rocprof-sys record --cpu --memory --gpu python3 script.py
+# View the trace (.proto file) in Perfetto UI
 ```
 
-**ROCprof-compute (Advanced Profiler):**
+**rocprof-compute (ROCm Compute Profiler):**
+
 ```bash
-# Advanced kernel analysis
-rocprof-compute profile --name experiment python3 script.py
+# Collect a profile
+rocprof-compute profile --name experiment --no-roof -- python3 script.py
 
-# Roofline analysis
-rocprof-compute profile --roofline --name roofline_analysis python3 script.py
+# Generate roofline plots with legend by running empirical benchmarks on device 0 only
+rocprof-compute profile --roof-only --kernel-names --device 0 --name roofline_experiment -- python3 script.py
 
-# Memory bandwidth analysis
-rocprof-compute profile --memory-bandwidth --name memory_test python3 script.py
+# List GPU kernel hotspots and dispatches
+rocprof-compute analyze -p workloads/experiment/<GPU_ARCH> --list-stats
 
-# Optimization recommendations
-rocprof-compute analyze --optimization-hints experiment/
+# Analyze kernel performance metrics for kernel corresponding to dispatch N
+rocprof-compute analyze -p workloads/experiment/<GPU_ARCH> --dispatch N
 ```
 
 ### C.2 Metric Definitions and Interpretations
