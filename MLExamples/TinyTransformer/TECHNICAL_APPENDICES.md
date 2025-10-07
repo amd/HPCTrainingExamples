@@ -127,6 +127,7 @@ $$\begin{aligned}
 #### B.1.1 Attention Mechanism
 
 **Multi-Head Attention:**
+
 $$\begin{aligned}
 \text{MultiHead}(Q, K, V) &= \text{Concat}(h_1, h_2, \ldots, h_H)W^O \\
 \text{where } h_i &= \text{Attention}(QW_i^Q, KW_i^K, VW_i^V) \\
