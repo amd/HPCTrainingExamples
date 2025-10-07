@@ -288,13 +288,16 @@ export ROCPROFSYS_CONFIG_FILE=/path/to/.rocprofsys.cfg
 
 ```bash
 # Collect a profile
-rocprof-compute profile --name experiment -- python3 script.py
+rocprof-compute profile --name experiment --no-roof -- python3 script.py
 
 # Generate roofline plots with legend by running empirical benchmarks on device 0 only
 rocprof-compute profile --roof-only --kernel-names --device 0 --name roofline_experiment -- python3 script.py
 
-# Analyze kernel performance metrics for top kernel corresponding to dispatch N
-rocprof-compute analyze -p workloads/experiment/<GPU_ARCH> --kernel 0 --dispatch N
+# List GPU kernel hotspots and dispatches
+rocprof-compute analyze -p workloads/experiment/<GPU_ARCH> --list-stats
+
+# Analyze kernel performance metrics for kernel corresponding to dispatch N
+rocprof-compute analyze -p workloads/experiment/<GPU_ARCH> --dispatch N
 ```
 
 ### C.2 Metric Definitions and Interpretations

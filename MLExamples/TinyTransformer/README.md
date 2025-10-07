@@ -124,7 +124,7 @@ cd version3_triton/exercises/performance_debugging/
 ### 5. Profile with ROCm Tools (Optional)
 ```bash
 # Basic profiling
-rocprofv3 --stats --kernel-trace --truncate-kernels python tiny_llama_v3.py --batch-size 8 --seq-len 128 --num-steps 10
+rocprofv3 --stats --kernel-trace --truncate-kernels -- python tiny_llama_v3.py --batch-size 8 --seq-len 128 --num-steps 10
 ```
 The above command produces a hotspot list of GPU kernels. The `--truncate-kernels` option helps remove arguments
 from the kernel name for better readability.
@@ -134,7 +134,8 @@ from the kernel name for better readability.
 rocprofv3 --runtime-trace --output-format pftrace -- python tiny_llama_v3.py --batch-size 8 --seq-len 128 --num-steps 5
 ```
 The above command generates a Perfetto trace file with a timeline view of GPU kernels, memory copies
-to and from device, runtime API activity, etc. View the trace at [https://ui.perfetto.dev](https://ui.perfetto.dev).
+to and from device, runtime API activity, and any ROCtx markers. View the trace at
+[https://ui.perfetto.dev](https://ui.perfetto.dev).
 
 ## Directory Structure
 
