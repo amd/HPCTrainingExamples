@@ -1,5 +1,6 @@
 // Copyright AMD 2024, MIT License, contact Bob.Robey@amd.com
 #include <stdio.h>
+#include <assert.h>
 
 #ifdef __DEVICE_CODE__
 #include <hip/hip_runtime.h>
