@@ -243,16 +243,26 @@ $$\begin{aligned}
 
 ### C.1 ROCm Profiling Tools Comparison
 
+Profiling and tracing capabilities for AMD GPUs are offered in the newly designed
+`rocprofiler-sdk` library shipped with ROCm. The three primary tools built upon the
+`rocprofiler-sdk` infrastructure are listed below.
+
+- `rocprofv3`: List GPU kernel hotspots, trace device & runtime API activity, and collect GPU hardware counters 
+- `rocprof-sys`: Collect application timeline traces including host, device, and communication activity
+- `rocprof-compute`: Analyze kernel performance and rooflines using automated counter collection via application replays
+
+For more details, refer to this [ROCm blog post](https://rocm.blogs.amd.com/software-tools-optimization/profiling-guide/intro/README.html) that introduces the various tools available today.
+
 #### C.1.1 Tool Feature Matrix
 
-| Feature | rocprof (v3) | rocprof-sys | rocprof-compute |
+| Feature | rocprofv3 | rocprof-sys | rocprof-compute |
 |---------|--------------|-------------|-----------------|
 | **Hotspots** | ✓ GPU kernels | ✓ System-wide | ✓ GPU kernels |
 | **Timeline Trace** | ✓ Device | ✓ System-wide | ✗ No |
 | **Hardware Counter Collection** | ✓ Device | ✓ System-wide | ✓ Automated Device |
-| **Kernel Analysis** | ✓ Basic | ✓ System-wide | ✓ Advanced |
+| **Kernel Performance Analysis** | ✓ Basic | ✓ Basic | ✓ Advanced |
 | **Roofline Analysis** | ✗ No | ✗ No | ✓ Yes |
-| **Multi-process** | ✗ Yes | ✓ Yes | ✗ No |
+| **Multi-process** | ✓ Yes | ✓ Yes | ✗ No |
 
 #### C.1.2 Command Reference
 
@@ -264,7 +274,7 @@ rocprofv3 --stats --kernel-trace --truncate-kernels -- python3 script.py
 # Kernel trace, HIP trace, marker trace, memory copy trace
 rocprofv3 --runtime-trace --output-format pftrace -- python3 script.py
 
-# Custom metrics
+# Hardware counter collection with counters listed in input file `metrics.txt`
 rocprofv3 --input metrics.txt -- python3 script.py
 
 # Output formats

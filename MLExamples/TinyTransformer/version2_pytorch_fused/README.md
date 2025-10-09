@@ -386,20 +386,10 @@ TORCH_COMPILE_OPTIMIZATIONS = {
 
 ## ROCm Profiling Tools Integration
 
-### ROCprofv3 (Legacy Profiler)
-- **Purpose**: Backward compatibility and kernel-level analysis
-- **Usage**: Basic GPU kernel profiling and metrics collection
-- **Output**: Kernel execution times, memory transfers, GPU utilization
-
-### ROCprof-sys (System Profiler)
-- **Purpose**: System-wide performance monitoring
-- **Usage**: Multi-process profiling, system resource utilization
-- **Output**: System-level metrics, resource contention analysis
-
-### ROCprof-compute (Advanced Profiler)
-- **Purpose**: Detailed compute kernel analysis and optimization
-- **Usage**: Advanced kernel profiling with optimization recommendations
-- **Output**: Detailed kernel metrics, roofline analysis, bottleneck identification
+AMD offers three performance profiling tools for ROCm based applications:
+`rocprofv3`, `rocprof-sys`, and `rocprof-compute`. For more details about these tools, see 
+[Appendix C of the TECHNICAL_APPENDICES.md](https://github.com/amd/HPCTrainingExamples/blob/main/MLExamples/TinyTransformer/TECHNICAL_APPENDICES.md#appendix-c-rocm-profiling-tools-reference).
+about each tool.
 
 ### Fusion Performance Analysis Framework
 
@@ -529,7 +519,7 @@ python run_deepspeed_flops.py \
 
 **Objective**: Master ROCm profiling tools for hardware-level optimization.
 
-#### Step 1: ROCprofv3 Basic Profiling
+#### Step 1: rocprofv3 Basic Profiling
 ```bash
 # Basic kernel profiling
 bash run_rocprofv3.sh --batch-size 8 --profile-kernels
@@ -538,7 +528,7 @@ bash run_rocprofv3.sh --batch-size 8 --profile-kernels
 python analyze_rocprof_results.py --input ./rocprofv3_results
 ```
 
-#### Step 2: ROCprof-sys System Analysis
+#### Step 2: rocprof-sys System Analysis
 ```bash
 # System-wide profiling
 bash run_rocprof_sys.sh --duration 60 --output-dir ./system_profile
@@ -547,7 +537,7 @@ bash run_rocprof_sys.sh --duration 60 --output-dir ./system_profile
 python analyze_system_metrics.py --profile-dir ./system_profile
 ```
 
-#### Step 3: ROCprof-compute Advanced Analysis
+#### Step 3: rocprof-compute Advanced Analysis
 ```bash
 # Advanced kernel analysis
 bash run_rocprof_compute.sh \
@@ -597,9 +587,9 @@ bash run_all_profilers.sh \
 This orchestrates:
 1. **PyTorch Profiler** - Framework-level analysis
 2. **DeepSpeed FLOPS** - Computational efficiency
-3. **ROCprofv3** - Basic kernel profiling
-4. **ROCprof-sys** - System monitoring
-5. **ROCprof-compute** - Advanced analysis
+3. **rocprofv3** - Basic kernel profiling
+4. **rocprof-sys** - System monitoring
+5. **rocprof-compute** - Advanced analysis
 
 ### Profiling Data Analysis
 

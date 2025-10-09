@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# ROCprofv3 (Legacy) Profiling Integration for Tiny LLaMA V2
-# This script provides comprehensive ROCprofv3 profiling for kernel-level analysis
+# rocprofv3 (Legacy) Profiling Integration for Tiny LLaMA V2
+# This script provides comprehensive rocprofv3 profiling for kernel-level analysis
 
 set -e  # Exit on error
 
@@ -93,7 +93,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --help|-h)
-            echo "ROCprofv3 Profiling for Tiny LLaMA V2"
+            echo "rocprofv3 Profiling for Tiny LLaMA V2"
             echo ""
             echo "Usage: $0 [OPTIONS]"
             echo ""
@@ -134,16 +134,16 @@ echo ""
 # Validate environment
 log_step "1. Environment Validation"
 
-# Check if rocprof is available
-if ! command -v rocprof &> /dev/null; then
-    log_error "rocprof (ROCprofv3) not found in PATH"
-    log_error "Please ensure ROCm is properly installed and rocprof is available"
+# Check if rocprofv3 is available
+if ! command -v rocprofv3 &> /dev/null; then
+    log_error "rocprofv3 not found in PATH"
+    log_error "Please ensure ROCm is properly installed and rocprofv3 is available"
     exit 1
 fi
 
 # Check ROCm version
-ROCPROF_VERSION=$(rocprof --version 2>&1 | head -n1 || echo "Unknown")
-log_info "ROCprof version: $ROCPROF_VERSION"
+ROCPROF_VERSION=$(rocprofv3 --version 2>&1 | head -n1 || echo "Unknown")
+log_info "rocprofv3 version: $ROCPROF_VERSION"
 
 # Check GPU availability
 if ! rocm-smi &> /dev/null; then
@@ -179,7 +179,7 @@ if [ "$FUSION_ANALYSIS" = true ]; then
         --num-steps $NUM_STEPS \
         --disable-all-fusion"
 
-    # Build rocprof command
+    # Build rocprofv3 command
     ROCPROF_ARGS=""
 
     if [ "$PROFILE_KERNELS" = true ]; then
@@ -199,7 +199,7 @@ if [ "$FUSION_ANALYSIS" = true ]; then
     fi
 
     # Run baseline profiling
-    rocprof $ROCPROF_ARGS --output-file baseline_results.csv $BASELINE_CMD > baseline_profile.log 2>&1
+    rocprofv3 $ROCPROF_ARGS --output-file baseline_results.csv $BASELINE_CMD > baseline_profile.log 2>&1
 
     if [ $? -eq 0 ]; then
         log_info "PASS Baseline profiling completed"
@@ -227,7 +227,7 @@ FUSED_CMD="python ../tiny_llama_v2.py \
     --enable-all-fusion"
 
 # Run fused profiling with same parameters
-rocprof $ROCPROF_ARGS --output-file fused_results.csv $FUSED_CMD > fused_profile.log 2>&1
+rocprofv3 $ROCPROF_ARGS --output-file fused_results.csv $FUSED_CMD > fused_profile.log 2>&1
 
 if [ $? -eq 0 ]; then
     log_info "PASS Fused profiling completed"
@@ -255,7 +255,7 @@ if [ "$FUSION_ANALYSIS" = true ]; then
 
     # QKV Fusion Only
     log_rocprof "Testing QKV fusion only..."
-    rocprof $ROCPROF_ARGS --output-file qkv_only_results.csv \
+    rocprofv3 $ROCPROF_ARGS --output-file qkv_only_results.csv \
         python ../tiny_llama_v2.py \
             --batch-size $BATCH_SIZE \
             --seq-len $SEQ_LEN \
@@ -265,7 +265,7 @@ if [ "$FUSION_ANALYSIS" = true ]; then
 
     # Flash Attention Only
     log_rocprof "Testing Flash Attention only..."
-    rocprof $ROCPROF_ARGS --output-file flash_only_results.csv \
+    rocprofv3 $ROCPROF_ARGS --output-file flash_only_results.csv \
         python ../tiny_llama_v2.py \
             --batch-size $BATCH_SIZE \
             --seq-len $SEQ_LEN \
@@ -275,7 +275,7 @@ if [ "$FUSION_ANALYSIS" = true ]; then
 
     # SwiGLU Fusion Only
     log_rocprof "Testing SwiGLU fusion only..."
-    rocprof $ROCPROF_ARGS --output-file swiglu_only_results.csv \
+    rocprofv3 $ROCPROF_ARGS --output-file swiglu_only_results.csv \
         python ../tiny_llama_v2.py \
             --batch-size $BATCH_SIZE \
             --seq-len $SEQ_LEN \
@@ -293,17 +293,17 @@ log_step "5. Analysis and Report Generation"
 ANALYSIS_REPORT="rocprofv3_analysis_report.md"
 
 cat > "$ANALYSIS_REPORT" << EOF
-# ROCprofv3 Analysis Report - Tiny LLaMA V2
+# rocprofv3 Analysis Report - Tiny LLaMA V2
 
 **Generated:** $(date '+%Y-%m-%d %H:%M:%S')
 **Configuration:** Batch size $BATCH_SIZE, Sequence length $SEQ_LEN, Steps $NUM_STEPS
 
 ## Executive Summary
 
-This report provides ROCprofv3 kernel-level analysis of the Tiny LLaMA V2 implementation,
+This report provides rocprofv3 kernel-level analysis of the Tiny LLaMA V2 implementation,
 comparing baseline and fused implementations to quantify the impact of fusion optimizations.
 
-## ROCprof Configuration
+## rocprofv3 Configuration
 
 - **Kernel Tracing:** $PROFILE_KERNELS
 - **HIP API Tracing:** $PROFILE_HIP_TRACE
@@ -368,23 +368,23 @@ cat >> "$ANALYSIS_REPORT" << EOF
 
 ## Next Steps
 
-1. **Detailed Analysis**: Use \`rocprof --hip-trace --kernel-trace\` for timing analysis
+1. **Detailed Analysis**: Use \`rocprofv3 --runtime-trace\` for timing analysis
 2. **Memory Analysis**: Examine memory access patterns in detail
-3. **ROCprof-compute**: Use advanced profiler for optimization recommendations
+3. **rocprof-compute**: Analyze kernel performance
 4. **Version Comparison**: Compare with V1 baseline metrics
-
-## ROCprof Commands Used
+<!--
+## rocprofv3 Commands Used
 
 \`\`\`bash
 # Baseline profiling
-rocprof $ROCPROF_ARGS --output-file baseline_results.csv [baseline_command]
+rocprofv3 $ROCPROF_ARGS --output-file baseline_results --output-format csv -- [baseline_command]
 
 # Fused profiling
-rocprof $ROCPROF_ARGS --output-file fused_results.csv [fused_command]
+rocprofv3 $ROCPROF_ARGS --output-file fused_results --output-format csv -- [fused_command]
 \`\`\`
 
 ---
-*Generated by Castille AI Workshop ROCprofv3 Analysis Tool*
+*Generated by Castille AI Workshop rocprofv3 Analysis Tool*
 EOF
 
 log_info "Analysis report generated: $ANALYSIS_REPORT"
@@ -396,8 +396,8 @@ log_step "6. Data Processing and CSV Analysis"
 cat > analyze_rocprof_data.py << 'EOF'
 #!/usr/bin/env python3
 """
-ROCprofv3 Data Analysis Script
-Processes CSV output from rocprof for detailed kernel analysis
+rocprofv3 Data Analysis Script
+Processes CSV output from rocprofv3 for detailed kernel analysis
 """
 
 import pandas as pd
@@ -406,7 +406,7 @@ import json
 from pathlib import Path
 
 def analyze_rocprof_csv(csv_file):
-    """Analyze rocprof CSV output."""
+    """Analyze rocprofv3 CSV output."""
     try:
         df = pd.read_csv(csv_file)
 
@@ -440,16 +440,16 @@ def analyze_rocprof_csv(csv_file):
         return {"error": f"Failed to analyze {csv_file}: {str(e)}"}
 
 def main():
-    """Analyze all available rocprof CSV files."""
+    """Analyze all available rocprofv3 CSV files."""
     results = {}
 
     csv_files = list(Path('.').glob('*_results.csv'))
 
     if not csv_files:
-        print("No rocprof CSV files found")
+        print("No rocprofv3 CSV files found")
         return
 
-    print("Analyzing rocprof CSV files...")
+    print("Analyzing rocprofv3 CSV files...")
 
     for csv_file in csv_files:
         print(f"Processing: {csv_file}")
@@ -488,10 +488,10 @@ else
 fi
 
 # Step 7: Final Summary
-log_step "7. ROCprofv3 Analysis Complete"
+log_step "7. rocprofv3 Analysis Complete"
 
 echo ""
-echo "ROCprofv3 profiling analysis completed!"
+echo "rocprofv3 profiling analysis completed!"
 echo ""
 echo "📁 Results Location: $(pwd)"
 echo ""
@@ -519,19 +519,20 @@ echo ""
 echo "🔄 Next Steps:"
 echo "   1. Review analysis report: cat $ANALYSIS_REPORT"
 echo "   2. Examine kernel traces: head -20 fused_results.csv"
-echo "   3. Run ROCprof-sys for system-level analysis"
-echo "   4. Use ROCprof-compute for advanced optimization hints"
+echo "   3. Run rocprof-sys for system-level analysis"
+echo "   4. Use rocprof-compute for advanced optimization hints"
 echo ""
 echo "Advanced Analysis:"
-echo "   # Detailed timing analysis"
-echo "   rocprof --hip-trace --kernel-trace --stats python ../tiny_llama_v2.py --enable-all-fusion"
+echo "   # Detailed kernel timing analysis"
+echo "   rocprofv3 --kernel-trace --stats --truncate-kernels -- python ../tiny_llama_v2.py --enable-all-fusion"
 echo ""
-echo "   # Memory bandwidth analysis"
-echo "   rocprof --hip-trace python ../tiny_llama_v2.py --enable-all-fusion"
+echo "   # Collect timeline trace"
+echo "   rocprofv3 --runtime-trace -- python ../tiny_llama_v2.py --enable-all-fusion"
 echo ""
 
-log_info "ROCprofv3 analysis data saved to: $(pwd)"
+log_info "rocprofv3 analysis data saved to: $(pwd)"
 log_info "Fusion optimization analysis complete!"
 
 # Return to original directory
 cd - > /dev/null
+-->
