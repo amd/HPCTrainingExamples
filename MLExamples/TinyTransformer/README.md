@@ -46,9 +46,9 @@ Each version introduces additional profiling capabilities:
 
 1. **PyTorch Profiler**: Framework-level performance analysis
 2. **DeepSpeed FLOPS Profiler**: Computational efficiency metrics
-3. **ROCprofv3**: Legacy ROCm profiling for compatibility
-4. **ROCprof-sys**: System-level performance monitoring
-5. **ROCprof-compute**: Advanced kernel-level analysis and optimization
+3. **rocprofv3**: GPU hotspots, device activity tracing and hardware counter collection
+4. **rocprof-sys**: System-level performance monitoring
+5. **rocprof-compute**: Advanced kernel-level analysis and optimization
 
 ## Prerequisites
 
@@ -165,7 +165,7 @@ castille-ai-workshop-training/
     tiny_llama_v2.py                   # Fused implementation
     run_pytorch_profiler.py            # Enhanced PyTorch profiling
     run_deepspeed_flops.py            # FLOPS analysis
-    run_rocprofv3.sh                   # ROCprofv3 integration
+    run_rocprofv3.sh                   # rocprofv3 integration
     run_rocprof_sys.sh                # System profiling
     run_rocprof_compute.sh             # Kernel-level profiling
     run_all_profilers.sh              # Complete profiling suite
@@ -282,8 +282,7 @@ castille-ai-workshop-training/
 
 ### Profiling Tool Capabilities
 - **PyTorch Profiler**: Framework overhead, operator timing, memory tracking
-- **ROCm rocprof**: Kernel execution stats, memory bandwidth, occupancy
-- **ROCm rocprofv2**: Detailed kernel traces, timeline visualization (Perfetto)
+- **rocprofv3**: Kernel execution stats, device activity and runtime API timeline tracing, hardware counter collection
 - **Manual Timing**: CUDA synchronization for accurate GPU timing
 
 ## Contributing
@@ -298,7 +297,9 @@ This workshop is designed for continuous improvement. Contributions are welcome:
 
 - **Workshop Issues**: Submit GitHub issues for technical problems
 - **AMD ROCm Documentation**: [ROCm Developer Portal](https://rocm.docs.amd.com/)
-- **ROCprof-compute Guide**: [Profiling Documentation](https://rocm.docs.amd.com/projects/rocprof-compute/)
+- **rocprofv3 tool usage**: [Using rocprofv3](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-rocprofv3.html#using-rocprofv3)
+- **rocprof-sys Guide**: [rocprof-sys documentation](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/index.html#rocm-systems-profiler-documentation)
+- **rocprof-compute Guide**: [rocprof-compute Documentation](https://rocm.docs.amd.com/projects/rocprofiler-compute/en/latest/#rocm-compute-profiler-documentation)
 - **PyTorch ROCm Support**: [PyTorch ROCm Installation](https://pytorch.org/get-started/locally/)
 
 ## Authors and Acknowledgments
