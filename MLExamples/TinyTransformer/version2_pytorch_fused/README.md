@@ -45,16 +45,22 @@ Kernel fusion combines multiple operations into a single GPU kernel to reduce me
 #### Fusion Efficiency Analysis
 
 **Memory Bandwidth Reduction:**
-$$\text{Bandwidth Reduction} = 1 - \frac{\text{Fused Operations Memory}}{\text{Separate Operations Memory}}$$
+
+$$
+\text{Bandwidth Reduction} = 1 - \frac{\text{Fused Operations Memory}}{\text{Separate Operations Memory}}
+$$
 
 **For QKV Fusion:**
-$$\begin{aligned}
+
+$$
+\begin{aligned}
 \text{Separate}: & \quad 3 \times (\text{Input Read} + \text{Weight Read} + \text{Output Write}) \\
 & = 3 \times (B \times S \times D + D^2 + B \times S \times D) \\
 \text{Fused}: & \quad \text{Input Read} + 3 \times \text{Weight Read} + \text{Output Write} \\
 & = B \times S \times D + 3 \times D^2 + B \times S \times 3D \\
 \text{Reduction}: & \quad \frac{2 \times B \times S \times D}{\text{Total Separate Memory}} \approx 40\% \text{ for typical batch sizes}
-\end{aligned}$$
+\end{aligned}
+$$
 
 ### 1. QKV Fusion Implementation
 
@@ -164,20 +170,26 @@ class FusedQKVAttention(nn.Module):
 #### Memory Complexity Analysis
 
 **Standard Attention Memory:**
-$$\begin{aligned}
+
+$$
+\begin{aligned}
 \text{Attention Matrix} &: \mathcal{O}(B \times H \times S^{2}) \\
 \text{For } S=1024: &\quad 1024^2 = 1M \text{ elements per head} \\
 \text{Total Memory} &: B \times H \times S^{2} \times 4 \text{ bytes} \\
 \text{Example}: &\quad 8 \times 8 \times 1024^2 \times 4 = 268\text{MB}
-\end{aligned}$$
+\end{aligned}
+$$
 
 **Flash Attention Memory:**
-$$\begin{aligned}
+
+$$
+\begin{aligned}
 \text{Block Size} &: B_r \times B_c \quad (\text{typically } 64 \times 64) \\
 \text{Memory Usage} &: \mathcal{O}(B \times H \times (B_r + B_c) \times \frac{S^{2}}{B_r \times B_c}) \\
 &= \mathcal{O}(B \times H \times S) \text{ (linear in sequence length!)} \\
 \text{Reduction} &: \frac{S^{2}}{S} = S \text{-fold memory reduction}
-\end{aligned}$$
+\end{aligned}
+$$
 
 #### Flash Attention Implementation Details
 
@@ -228,20 +240,26 @@ FLASH_ATTENTION_BENEFITS = {
 #### SwiGLU Mathematical Analysis
 
 **Baseline SwiGLU (Separate Operations):**
-$$\begin{aligned}
+
+$$
+\begin{aligned}
 \text{gate} &= xW_{\text{gate}} + b_{\text{gate}} \quad \text{(Linear projection 1)} \\
 \text{up} &= xW_{\text{up}} + b_{\text{up}} \quad \text{(Linear projection 2)} \\
 \text{activated} &= \text{SiLU}(\text{gate}) \quad \text{(Activation function)} \\
 \text{intermediate} &= \text{activated} \odot \text{up} \quad \text{(Element-wise multiply)} \\
 \text{output} &= \text{intermediate} W_{\text{down}} + b_{\text{down}} \quad \text{(Linear projection 3)}
-\end{aligned}$$
+\end{aligned}
+$$
 
 **Fused SwiGLU (Optimized):**
-$$\begin{aligned}
+
+$$
+\begin{aligned}
 \text{gate\_up} &= x[W_{\text{gate}} \parallel W_{\text{up}}] \quad \text{(Single GEMM)} \\
 \text{gate, up} &= \text{split}(\text{gate\_up}, \text{dim}=-1) \quad \text{(Tensor view)} \\
 \text{output} &= (\text{SiLU}(\text{gate}) \odot \text{up})W_{\text{down}} \quad \text{(Fused activation + projection)}
-\end{aligned}$$
+\end{aligned}
+$$
 
 #### Performance Impact Analysis
 
