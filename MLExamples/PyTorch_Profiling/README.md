@@ -2,7 +2,7 @@
 
 This repository provides an overview of the tools available for profiling applications on AMD GPUs, with a specific focus on applications using pytorch in a multinode, slurm-based environment. The scripts used to reproduce some examples are available within this repository.
 
-Some tools described below are AMD products, while others are community-based, open source products supported by AMD on Instinct graphics cards.
+Some tools described below are AMD products, while others are community-based, open-source products supported by AMD on Instinct graphics cards.
 
 ## Profiling Methodology
 
@@ -24,11 +24,11 @@ The following tools are available for profiling applications. Examples of all to
 
 - Pytorch profiler is an open source pytorch-level profiler available directly from pytorch (built-in to pytorch itself). This document does not cover the pytorch profiler, however it is supported natively on Instinct GPUs, e.g., AMD MI300X.
 
-- RocProfiler is the default profiling tool that ships with ROCm and is available by default. RocProfiler provides ability to collect GPU kernel execution statistics as well as application GPU trace information. RocProfiler has undergone significant development and enhancement and the current best known configuration is to use rocprofv3.
+- RocProfiler is the default profiling tool that ships with ROCm and is available by default. RocProfiler provides ability to collect GPU kernel execution statistics as well as application GPU trace information. RocProfiler has undergone significant development and enhancement and the current best-known configuration is to use rocprofv3.
 
-- ROCm Systems Profiler (formerly Omnitrace) is an enhanced tracing tool that can work with both instrumented code as well as provide sampling based trace collection and profiling. It focussed on system level trace collection and shows both GPU and CPU activity on a same timeline.
+- ROCm Systems Profiler (formerly Omnitrace) is an enhanced tracing tool that can work with both instrumented code as well as provide sampling-based trace collection and profiling. It focussed on system level trace collection and shows both GPU and CPU activity on a same timeline.
 
-- ROCm Compute Profiler (formerly Omniperf) is a GPU kernel-focus profiling and analysis tool. It is the tool of choice for easily accessing highlevel analysis based on hardware counters, though some features for MI300X are available only starting with ROCm version 6.4.
+- ROCm Compute Profiler (formerly Omniperf) is a GPU kernel-focus profiling and analysis tool. It is the tool of choice for easily accessing high-level analysis based on hardware counters, though some features for MI300X are available only starting with ROCm version 6.4.
 
 
 # Organization of this Repository
@@ -41,7 +41,7 @@ Each profiling tool in a sub-directory has a dedicated README to elaborate on th
 
 ## Workload Description
 
-The workload in the `train_cifar_100.py` script is simple: this workload will train some number of iterations of a vision model to classifiy against the cifar100 dataset.  Data is provided from `torchvision`, while models are enabled through the `transformers` package. In the future, we hope to add additional datasets and models to encompass a broader range of results. Currently available configuration options are:
+The workload in the `train_cifar_100.py` script is simple: this workload will train some number of iterations of a vision model to classify against the cifar100 dataset.  Data is provided from `torchvision`, while models are enabled through the `transformers` package. In the future, we hope to add additional datasets and models to encompass a broader range of results. Currently available configuration options are:
 
 ```bash
 usage: train_cifar_100.py [-h] [--data-path DATA_PATH] [--batch-size BATCH_SIZE] [--download-only]
@@ -69,11 +69,11 @@ In the current workload, users may configure the datatype used (float32, bfloat1
 
 ### Dataset Access
 
-The datasets are available from `torchvision`, and the script can be run once in offline mode to download the data with `python train_cifar_100.py --download-only`. The data path can be configured with `--data-path [path]`.
+The datasets are available from `torchvision`, and the script `./download-data.sh` can be run once on a node with a GPU to download the data. By default, the data will be stored in a `data/` folder, and this is also the path where other scripts in this repo will search for the input data. You can also run `python train_cifar_100.py --download-only`, and if needed configure the data path using `--data-path [path]`.
 
 ## Organization of the Scripts
 
-The scripts in this repository are meant to be used in the `slurm` job scheduler environment, without containers (baremetal). Each script has available a "single process" configuration (same algorithm, but not using more than one GPU) to show the basic profiling tool usage.
+The scripts in this repository are meant to be used in the `slurm` job scheduler environment, without containers (baremetal). Make sure that the slurm config options match the ones available on your system (e.g., `--partition`). Each script has available a "single process" configuration (same algorithm but not using more than one GPU) to show the basic profiling tool usage.
 
 <!-- There are also `MPI` examples, and corresponding single-process scripts where appropriate.  For the `MPI` cases, the scripts assume OpenMPI and corresponding environment variables, which are used to initialize pytorch. -->
 
@@ -82,12 +82,12 @@ The scripts in this repository are meant to be used in the `slurm` job scheduler
 This repository is meant as a development repository for profiling examples.  To simplify portability, please export this environment variable at the top level of the repository:
 
 ```bash
-# (git clone the repo...)
-cd pytorch-profiling-examples
+git clone https://github.com/amd/HPCTrainingExamples.git
+cd HPCTrainingExamples/MLExamples/PyTorch_Profiling/
 export PROFILER_TOP_DIR=$PWD
 ```
 
-The scripts will expect the variables `MASTER_ADDR`, `MASTER_PORT`, and either `SLURM_PROCID`/`SLURM_NPROCS` or `OMPI_COMM_WORLD_RANK`/`OMPI_COMM_WORLD_SIZE` to configure the distributed process group.  For single node tests, it will emit a warning if it does not find all variables, while multinode tests will run incorrectly without all.
+The scripts will expect the variables `MASTER_ADDR`, `MASTER_PORT`, and either `SLURM_PROCID`/`SLURM_NPROCS` or `OMPI_COMM_WORLD_RANK`/`OMPI_COMM_WORLD_SIZE` to configure the distributed process group. If these variables are not specified, scripts will assume certain default which may or may not work on the machine reader is using for testing. For single node tests, it will emit a warning if it does not find all variables, while multinode tests will run incorrectly without all.
 
 Additionally, depending on the cluster environment, configure the `setup.sh` to load python, pytorch, and any other necessary tools unique to your environment.
 
