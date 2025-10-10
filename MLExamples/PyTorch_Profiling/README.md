@@ -77,7 +77,7 @@ Each exercise folder contains bash scripts that wrap the main `train_cifar_100.p
 
 Single process scripts are the simplest, as they are using a single GPU to show the basic profiling functionallities. MPI scripts are similar, just demonstrating the usage for parallel, multi-process executions. Finally, `Slurm` scripts can help launch the jobs with the `Slurm` job scheduler environment. If you are using `Slurm` scripts, make sure that the `Slurm` config options match the ones available on your system (e.g., `--partition`).
 
-Although these bash scripts should works in most system setups without any modifications, we encourage reader to carefully study them, especially their last commands which is profiling the execution.
+Although these bash scripts should work on most system setups without any modifications, we encourage readers to carefully study them, especially the last commands which is profiling the execution.
 
 <!-- The scripts in this repository are meant to be used in the `slurm` job scheduler environment, without containers (baremetal). Make sure that the slurm config options match the ones available on your system (e.g., `--partition`). Each script has available a "single process" configuration (same algorithm but not using more than one GPU) to show the basic profiling tool usage. -->
 
