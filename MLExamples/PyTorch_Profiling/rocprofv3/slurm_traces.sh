@@ -24,7 +24,7 @@ if [ ! -f data/cifar-100-python ]; then
 fi
 popd
 
-# Collect and application trace via rocprof:
+# Collect GPU timeline traces with rocprofv3:
 srun --nodes=1 --ntasks=4 \
-rocprofv3 --stats --sys-trace --kernel-trace --output-format pftrace -- \
-python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 20 --data-path ${PROFILER_TOP_DIR}/data
+rocprofv3 --sys-trace --output-format pftrace --output-directory slurm --output-file traces -- \
+python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --data-path ${PROFILER_TOP_DIR}/data     

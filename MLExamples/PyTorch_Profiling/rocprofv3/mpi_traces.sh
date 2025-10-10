@@ -1,8 +1,4 @@
 #!/bin/bash -l
-#SBATCH --job-name=pytorch-training
-#SBATCH --nodes=1
-#SBATCH --ntasks=4 # N GPUs per node * number of nodes
-#SBATCH --partition=LocalQ
 
 if [[ -z "${MASTER_ADDR}" ]]; then
     export MASTER_ADDR=`hostname`
@@ -18,7 +14,7 @@ PROFILER_TOP_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 # Call the software set up script:
 source ${PROFILER_TOP_DIR}/setup.sh
 
-# Collect and application trace via rocprof:
+# Collect GPU timeline traces with rocprofv3:
 mpirun -n 8 \
-rocprofv3 --stats --sys-trace --kernel-trace --output-format pftrace -- \
-python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 20 --data-path ${PROFILER_TOP_DIR}/data
+rocprofv3 --sys-trace --output-format pftrace --output-directory mpi --output-file traces -- \
+python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --data-path ${PROFILER_TOP_DIR}/data
