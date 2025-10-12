@@ -34,7 +34,7 @@ The following tools are available for profiling applications. Examples of all to
 - ROCm Compute Profiler (formerly Omniperf) is a GPU kernel-focus profiling and analysis tool. It is the tool of choice for easily accessing high-level analysis based on hardware counters, though some features for MI300X are available only starting with ROCm version 6.4.
 
 
-# Organization of this Repository
+## Organization of this Repository
 
 
 This repository contains a simple pytorch training script that will train a classifier on CIFAR-100, and a collection of example scripts for the aforementioned profiling tools. The selected AI training example is simple on purpose, as the focus of this repository is to demonstrate how to use profiling tools with pytorch applications. Model is unoptimized to make performance problems easier to spot, and to the reader to potentially implement improvements.
@@ -86,7 +86,7 @@ Although these bash scripts should work on most system setups without any modifi
 
 <!-- There are also `MPI` examples, and corresponding single-process scripts where appropriate.  For the `MPI` cases, the scripts assume OpenMPI and corresponding environment variables, which are used to initialize pytorch. -->
 
-# Running the Scripts
+## Running the Scripts
 
 This repository is meant as a development repository for profiling examples.  To simplify portability, please export this environment variable at the top level of the repository:
 

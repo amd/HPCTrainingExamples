@@ -1,4 +1,7 @@
+
 # Version 3: Triton Kernel Integration
+
+README.md from `HPCTrainingExamples/MLExamples/TinyTransformer/version3_triton` in the Training Examples repository
 
 **Objective**: Implement custom GPU kernels using Triton for maximum performance optimization
 
@@ -762,3 +765,5 @@ Version 4 will combine all optimizations into ultra-fused kernels that process e
 - [ROCm Documentation](https://rocmdocs.amd.com/)
 - [HIP Programming Guide](https://rocmdocs.amd.com/en/latest/Programming_Guides/HIP-GUIDE.html)
 - [Performance Optimization Tips](https://rocmdocs.amd.com/en/latest/Programming_Guides/Opencl-programming-guide.html)
+
+

@@ -1,4 +1,7 @@
+
 # Version 3: Triton Kernel Integration - Workshop Edition
+
+`README_WORKSHOP.md` from `HPCTrainingExamples/MLExamples/TinyTransformer/version3_triton` in the Training Examples repository
 
 **Objective**: Implement custom GPU kernels using Triton for maximum performance optimization
 
@@ -372,3 +375,5 @@ python -c "import torch; print(torch.cuda.is_available())"
 **Key insight:** Best performance comes from using the right tool for each operation - not from using custom kernels everywhere!
 
 **Ready to debug?** Start with `cd exercises/performance_debugging/`
+
+

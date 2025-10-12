@@ -1,9 +1,9 @@
 
-# Training Notes
+# Inference Benchmark Notes
 
-README.md from `HPCTrainingExamples/MLExamples/inference_benchmark` in the Training Examples repository
+`INFERENCE_BENCHMARKK_NOTES.md` from `HPCTrainingExamples/MLExamples/inference_benchmark` in the Training Examples repository
 
-## Basic Training Run
+## Basic Inference Run
 
 DenseNet121 with torch.compile and mixed precision (FP16):
 
