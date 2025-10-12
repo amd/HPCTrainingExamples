@@ -1,6 +1,8 @@
 
 # AI and ML exercises
 
+README_OnInstinctNode.md in HPCTrainingExamples/MLExamples
+
 Last revision of this README: **April 14th 2025**.
 
 **NOTE**: these exercises have been tested on MI210 and MI300A accelerators using a container environment.
@@ -29,7 +31,7 @@ python3 -m venv --system-site-packages $HOME/venv-tf
 ```
 
 ## Installing the frameworks
-Let's install a PytTorch and Tensorflow suitable for the ROCm version we have available. To check the ROCm version run:
+Let's install a PyTorch and Tensorflow suitable for the ROCm version we have available. To check the ROCm version run:
 
 ```
 cat $ROCM_PATH/.info/version
