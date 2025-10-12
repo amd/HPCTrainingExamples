@@ -45,16 +45,22 @@ Kernel fusion combines multiple operations into a single GPU kernel to reduce me
 #### Fusion Efficiency Analysis
 
 **Memory Bandwidth Reduction:**
-$$\text{Bandwidth Reduction} = 1 - \frac{\text{Fused Operations Memory}}{\text{Separate Operations Memory}}$$
+
+$$
+\text{Bandwidth Reduction} = 1 - \frac{\text{Fused Operations Memory}}{\text{Separate Operations Memory}}
+$$
 
 **For QKV Fusion:**
-$$\begin{aligned}
+
+$$
+\begin{aligned}
 \text{Separate}: & \quad 3 \times (\text{Input Read} + \text{Weight Read} + \text{Output Write}) \\
 & = 3 \times (B \times S \times D + D^2 + B \times S \times D) \\
 \text{Fused}: & \quad \text{Input Read} + 3 \times \text{Weight Read} + \text{Output Write} \\
 & = B \times S \times D + 3 \times D^2 + B \times S \times 3D \\
 \text{Reduction}: & \quad \frac{2 \times B \times S \times D}{\text{Total Separate Memory}} \approx 40\% \text{ for typical batch sizes}
-\end{aligned}$$
+\end{aligned}
+$$
 
 ### 1. QKV Fusion Implementation
 
@@ -164,20 +170,26 @@ class FusedQKVAttention(nn.Module):
 #### Memory Complexity Analysis
 
 **Standard Attention Memory:**
-$$\begin{aligned}
+
+$$
+\begin{aligned}
 \text{Attention Matrix} &: \mathcal{O}(B \times H \times S^{2}) \\
 \text{For } S=1024: &\quad 1024^2 = 1M \text{ elements per head} \\
 \text{Total Memory} &: B \times H \times S^{2} \times 4 \text{ bytes} \\
 \text{Example}: &\quad 8 \times 8 \times 1024^2 \times 4 = 268\text{MB}
-\end{aligned}$$
+\end{aligned}
+$$
 
 **Flash Attention Memory:**
-$$\begin{aligned}
+
+$$
+\begin{aligned}
 \text{Block Size} &: B_r \times B_c \quad (\text{typically } 64 \times 64) \\
 \text{Memory Usage} &: \mathcal{O}(B \times H \times (B_r + B_c) \times \frac{S^{2}}{B_r \times B_c}) \\
 &= \mathcal{O}(B \times H \times S) \text{ (linear in sequence length!)} \\
 \text{Reduction} &: \frac{S^{2}}{S} = S \text{-fold memory reduction}
-\end{aligned}$$
+\end{aligned}
+$$
 
 #### Flash Attention Implementation Details
 
@@ -228,20 +240,26 @@ FLASH_ATTENTION_BENEFITS = {
 #### SwiGLU Mathematical Analysis
 
 **Baseline SwiGLU (Separate Operations):**
-$$\begin{aligned}
+
+$$
+\begin{aligned}
 \text{gate} &= xW_{\text{gate}} + b_{\text{gate}} \quad \text{(Linear projection 1)} \\
 \text{up} &= xW_{\text{up}} + b_{\text{up}} \quad \text{(Linear projection 2)} \\
 \text{activated} &= \text{SiLU}(\text{gate}) \quad \text{(Activation function)} \\
 \text{intermediate} &= \text{activated} \odot \text{up} \quad \text{(Element-wise multiply)} \\
 \text{output} &= \text{intermediate} W_{\text{down}} + b_{\text{down}} \quad \text{(Linear projection 3)}
-\end{aligned}$$
+\end{aligned}
+$$
 
 **Fused SwiGLU (Optimized):**
-$$\begin{aligned}
+
+$$
+\begin{aligned}
 \text{gate\_up} &= x[W_{\text{gate}} \parallel W_{\text{up}}] \quad \text{(Single GEMM)} \\
 \text{gate, up} &= \text{split}(\text{gate\_up}, \text{dim}=-1) \quad \text{(Tensor view)} \\
 \text{output} &= (\text{SiLU}(\text{gate}) \odot \text{up})W_{\text{down}} \quad \text{(Fused activation + projection)}
-\end{aligned}$$
+\end{aligned}
+$$
 
 #### Performance Impact Analysis
 
@@ -386,20 +404,10 @@ TORCH_COMPILE_OPTIMIZATIONS = {
 
 ## ROCm Profiling Tools Integration
 
-### ROCprofv3 (Legacy Profiler)
-- **Purpose**: Backward compatibility and kernel-level analysis
-- **Usage**: Basic GPU kernel profiling and metrics collection
-- **Output**: Kernel execution times, memory transfers, GPU utilization
-
-### ROCprof-sys (System Profiler)
-- **Purpose**: System-wide performance monitoring
-- **Usage**: Multi-process profiling, system resource utilization
-- **Output**: System-level metrics, resource contention analysis
-
-### ROCprof-compute (Advanced Profiler)
-- **Purpose**: Detailed compute kernel analysis and optimization
-- **Usage**: Advanced kernel profiling with optimization recommendations
-- **Output**: Detailed kernel metrics, roofline analysis, bottleneck identification
+AMD offers three performance profiling tools for ROCm based applications:
+`rocprofv3`, `rocprof-sys`, and `rocprof-compute`. For more details about these tools, see 
+[Appendix C of the TECHNICAL_APPENDICES.md](https://github.com/amd/HPCTrainingExamples/blob/main/MLExamples/TinyTransformer/TECHNICAL_APPENDICES.md#appendix-c-rocm-profiling-tools-reference).
+about each tool.
 
 ### Fusion Performance Analysis Framework
 
@@ -529,7 +537,7 @@ python run_deepspeed_flops.py \
 
 **Objective**: Master ROCm profiling tools for hardware-level optimization.
 
-#### Step 1: ROCprofv3 Basic Profiling
+#### Step 1: rocprofv3 Basic Profiling
 ```bash
 # Basic kernel profiling
 bash run_rocprofv3.sh --batch-size 8 --profile-kernels
@@ -538,7 +546,7 @@ bash run_rocprofv3.sh --batch-size 8 --profile-kernels
 python analyze_rocprof_results.py --input ./rocprofv3_results
 ```
 
-#### Step 2: ROCprof-sys System Analysis
+#### Step 2: rocprof-sys System Analysis
 ```bash
 # System-wide profiling
 bash run_rocprof_sys.sh --duration 60 --output-dir ./system_profile
@@ -547,7 +555,7 @@ bash run_rocprof_sys.sh --duration 60 --output-dir ./system_profile
 python analyze_system_metrics.py --profile-dir ./system_profile
 ```
 
-#### Step 3: ROCprof-compute Advanced Analysis
+#### Step 3: rocprof-compute Advanced Analysis
 ```bash
 # Advanced kernel analysis
 bash run_rocprof_compute.sh \
@@ -597,9 +605,9 @@ bash run_all_profilers.sh \
 This orchestrates:
 1. **PyTorch Profiler** - Framework-level analysis
 2. **DeepSpeed FLOPS** - Computational efficiency
-3. **ROCprofv3** - Basic kernel profiling
-4. **ROCprof-sys** - System monitoring
-5. **ROCprof-compute** - Advanced analysis
+3. **rocprofv3** - Basic kernel profiling
+4. **rocprof-sys** - System monitoring
+5. **rocprof-compute** - Advanced analysis
 
 ### Profiling Data Analysis
 

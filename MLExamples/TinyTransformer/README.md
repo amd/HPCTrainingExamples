@@ -46,9 +46,9 @@ Each version introduces additional profiling capabilities:
 
 1. **PyTorch Profiler**: Framework-level performance analysis
 2. **DeepSpeed FLOPS Profiler**: Computational efficiency metrics
-3. **ROCprofv3**: Legacy ROCm profiling for compatibility
-4. **ROCprof-sys**: System-level performance monitoring
-5. **ROCprof-compute**: Advanced kernel-level analysis and optimization
+3. **rocprofv3**: GPU hotspots, device activity tracing and hardware counter collection
+4. **rocprof-sys**: System-level performance monitoring
+5. **rocprof-compute**: Advanced kernel-level analysis and optimization
 
 ## Prerequisites
 
@@ -65,6 +65,14 @@ Each version introduces additional profiling capabilities:
 - Triton (for advanced versions)
 
 ## Quick Start
+
+### 0. Set up environment
+On the training cluster's compute node, the required environment may be set up using the following
+commands:
+
+```bash
+module load rocm pytorch openmpi rocprofiler-compute rocprofiler-systems/develop
+```
 
 ### 1. Verify Environment
 ```bash
@@ -116,13 +124,18 @@ cd version3_triton/exercises/performance_debugging/
 ### 5. Profile with ROCm Tools (Optional)
 ```bash
 # Basic profiling
-rocprof --stats python tiny_llama_v3.py --batch-size 8 --seq-len 128 --num-steps 10
-
-# Detailed kernel trace
-rocprofv2 --kernel-trace -o trace.json python tiny_llama_v3.py --batch-size 8 --seq-len 128 --num-steps 5
-
-# View trace at https://ui.perfetto.dev
+rocprofv3 --stats --kernel-trace --truncate-kernels -- python tiny_llama_v3.py --batch-size 8 --seq-len 128 --num-steps 10
 ```
+The above command produces a hotspot list of GPU kernels. The `--truncate-kernels` option helps remove arguments
+from the kernel name for better readability.
+
+```bash
+# Detailed kernel trace
+rocprofv3 --runtime-trace --output-format pftrace -- python tiny_llama_v3.py --batch-size 8 --seq-len 128 --num-steps 5
+```
+The above command generates a Perfetto trace file with a timeline view of GPU kernels, memory copies
+to and from device, runtime API activity, and any ROCtx markers. View the trace at
+[https://ui.perfetto.dev](https://ui.perfetto.dev).
 
 ## Directory Structure
 
@@ -152,7 +165,7 @@ castille-ai-workshop-training/
     tiny_llama_v2.py                   # Fused implementation
     run_pytorch_profiler.py            # Enhanced PyTorch profiling
     run_deepspeed_flops.py            # FLOPS analysis
-    run_rocprofv3.sh                   # ROCprofv3 integration
+    run_rocprofv3.sh                   # rocprofv3 integration
     run_rocprof_sys.sh                # System profiling
     run_rocprof_compute.sh             # Kernel-level profiling
     run_all_profilers.sh              # Complete profiling suite
@@ -269,8 +282,7 @@ castille-ai-workshop-training/
 
 ### Profiling Tool Capabilities
 - **PyTorch Profiler**: Framework overhead, operator timing, memory tracking
-- **ROCm rocprof**: Kernel execution stats, memory bandwidth, occupancy
-- **ROCm rocprofv2**: Detailed kernel traces, timeline visualization (Perfetto)
+- **rocprofv3**: Kernel execution stats, device activity and runtime API timeline tracing, hardware counter collection
 - **Manual Timing**: CUDA synchronization for accurate GPU timing
 
 ## Contributing
@@ -285,7 +297,9 @@ This workshop is designed for continuous improvement. Contributions are welcome:
 
 - **Workshop Issues**: Submit GitHub issues for technical problems
 - **AMD ROCm Documentation**: [ROCm Developer Portal](https://rocm.docs.amd.com/)
-- **ROCprof-compute Guide**: [Profiling Documentation](https://rocm.docs.amd.com/projects/rocprof-compute/)
+- **rocprofv3 tool usage**: [Using rocprofv3](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-rocprofv3.html#using-rocprofv3)
+- **rocprof-sys Guide**: [rocprof-sys documentation](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/index.html#rocm-systems-profiler-documentation)
+- **rocprof-compute Guide**: [rocprof-compute Documentation](https://rocm.docs.amd.com/projects/rocprofiler-compute/en/latest/#rocm-compute-profiler-documentation)
 - **PyTorch ROCm Support**: [PyTorch ROCm Installation](https://pytorch.org/get-started/locally/)
 
 ## Authors and Acknowledgments

@@ -24,7 +24,7 @@ if [ ! -f data/cifar-100-python ]; then
 fi
 popd
 
-# Collect and application trace via rocprof:
+# Profile the workload with rocprofv3:
 srun --nodes=1 --ntasks=4 \
-rocprofv3 --stats --kernel-trace -- \
-python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 20 --data-path ${PROFILER_TOP_DIR}/data
+rocprofv3 --stats --kernel-trace --output-directory slurm --output-file kernels -- \
+python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --data-path ${PROFILER_TOP_DIR}/data

@@ -236,11 +236,12 @@ if __name__ == "__main__":
                         help="Top level data storage",
                         type=str,
                         default="data/")
+
     parser.add_argument("--batch-size", "-bs", 
                         help="Batch size per rank",
                         type=int,
-                        default=512)
-    
+                        default=256)
+
     parser.add_argument("--download-only", action='store_true')
 
     parser.add_argument("--precision", choices=["float32", "automixed", "bfloat16"],
@@ -251,7 +252,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--max-steps", "-ms", type=int, default=20,
                         help="Maximum number of steps to run for profiling")
-    
+
     parser.add_argument("--torch-profile", action="store_true",
                         help="Activate the pytorch profiler")
 

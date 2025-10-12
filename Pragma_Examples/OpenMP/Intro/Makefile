@@ -28,11 +28,7 @@ else ifneq ($(findstring gfortran,$(FC1)),)
   FREE_FORM_FLAG = -ffree-form
 endif
 
-ifneq ($(findstring ftn,$(FC1)),)
-  FFLAGS = -g -O3 ${OPENMP_FLAGS}
-else
-  FFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
-endif
+FFLAGS = -g -O3 ${OPENMP_FLAGS}
 
 ifeq (${CXX1},g++-13)
    LDFLAGS = ${OPENMP_FLAGS} -fno-lto -lm
