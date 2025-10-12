@@ -1,13 +1,13 @@
 
-# Python Import Time Profiling
+## Python Import Time Profiling
 
 IMPORTTIME_PROFILING.md from `HPCTrainingExamples/MLExamples/TinyTransformer/version1_pytorch_baseline` in the Training Examples repository
 
-## Overview
+### Overview
 
 The `python -X importtime` flag provides detailed timing information about module imports during Python script execution. This is useful for identifying slow imports that can impact startup time and overall application performance.
 
-## Basic Usage
+### Basic Usage
 
 ```bash
 python -X importtime script.py
@@ -18,7 +18,7 @@ This outputs a hierarchical tree showing:
 - Cumulative time including sub-imports
 - Self time (time spent in the module itself)
 
-## Output Format
+### Output Format
 
 ```
 import time: self [us] | cumulative | imported package
@@ -33,9 +33,9 @@ import time:      1521 |       2865 | encodings
 - **cumulative**: Total time including all sub-imports (microseconds)
 - **imported package**: Module name with indentation showing import hierarchy
 
-## Example: Profiling TinyLlama V1
+### Example: Profiling TinyLlama V1
 
-### Basic Import Analysis
+#### Basic Import Analysis
 
 ```bash
 python -X importtime tiny_llama_v1.py 2> import_times.txt
@@ -43,7 +43,7 @@ python -X importtime tiny_llama_v1.py 2> import_times.txt
 
 This redirects the import timing output (stderr) to a file for analysis.
 
-### Analyzing PyTorch Import Time
+#### Analyzing PyTorch Import Time
 
 ```bash
 python -X importtime -c "import torch" 2>&1 | grep -E "torch|time:"
@@ -54,40 +54,40 @@ Expected output shows PyTorch's heavy import cost:
 import time:   1234567 |   1234567 | torch
 ```
 
-### Analyzing DeepSpeed Import Time
+#### Analyzing DeepSpeed Import Time
 
 ```bash
 python -X importtime -c "import deepspeed" 2>&1 | grep -E "deepspeed|time:"
 ```
 
-## Common Import Time Bottlenecks in AI Workloads
+### Common Import Time Bottlenecks in AI Workloads
 
-### 1. PyTorch (torch)
+#### 1. PyTorch (torch)
 - Typical import time: 500ms - 2000ms
 - Loads CUDA/ROCm libraries
 - Initializes operator registry
 - Sets up autograd engine
 
-### 2. Transformers Library
+#### 2. Transformers Library
 - Typical import time: 300ms - 1000ms
 - Loads tokenizers
 - Registers model architectures
 - Initializes configuration classes
 
-### 3. DeepSpeed
+#### 3. DeepSpeed
 - Typical import time: 200ms - 800ms
 - Loads distributed training components
 - Initializes optimization kernels
 - Sets up communication backends
 
-### 4. NumPy/SciPy
+#### 4. NumPy/SciPy
 - Typical import time: 50ms - 200ms
 - Loads optimized BLAS/LAPACK libraries
 - Initializes array operations
 
-## Best Practices
+### Best Practices
 
-### 1. Lazy Imports
+#### 1. Lazy Imports
 Move imports inside functions for code that's not always executed:
 
 ```python
@@ -97,7 +97,7 @@ def run_with_profiler():
     ...
 ```
 
-### 2. Conditional Imports
+#### 2. Conditional Imports
 Import heavy dependencies only when needed:
 
 ```python
@@ -105,7 +105,7 @@ if args.enable_profiler:
     import deepspeed.profiling.flops_profiler as fp
 ```
 
-### 3. Import Grouping
+#### 3. Import Grouping
 Organize imports by load time to understand startup cost:
 
 ```python
@@ -123,9 +123,9 @@ import torch
 import deepspeed
 ```
 
-## Optimization Techniques
+### Optimization Techniques
 
-### 1. Module-Level Import Caching
+#### 1. Module-Level Import Caching
 Python caches imports in `sys.modules`, so subsequent imports are fast:
 
 ```python
@@ -133,7 +133,7 @@ import torch  # Slow first time
 import torch  # Fast - already cached
 ```
 
-### 2. Using `__import__()` for Dynamic Imports
+#### 2. Using `__import__()` for Dynamic Imports
 For plugins or optional features:
 
 ```python
@@ -143,12 +143,12 @@ def load_profiler(profiler_type):
         return torch_prof
 ```
 
-### 3. Parallel Import Loading
+#### 3. Parallel Import Loading
 Not natively supported, but can structure code to minimize import depth.
 
-## Analyzing Import Time Results
+### Analyzing Import Time Results
 
-### Generate Report
+#### Generate Report
 ```bash
 python -X importtime tiny_llama_v1.py 2>&1 | \
     grep "import time:" | \
@@ -156,7 +156,7 @@ python -X importtime tiny_llama_v1.py 2>&1 | \
     head -20 > top_imports.txt
 ```
 
-### Parse with Script
+#### Parse with Script
 ```python
 import re
 import sys
@@ -172,15 +172,15 @@ with open('import_times.txt', 'r') as f:
                 print(f"{module}: {cumulative/1000:.2f}ms")
 ```
 
-## ROCm/PyTorch Specific Considerations
+### ROCm/PyTorch Specific Considerations
 
-### HIP Runtime Loading
+#### HIP Runtime Loading
 ROCm's HIP runtime can add significant import overhead:
 - libamdhip64.so loading
 - GPU device detection
 - Architecture-specific kernel initialization
 
-### Environment Variables Impact
+#### Environment Variables Impact
 These can affect import time:
 ```bash
 # Reduce logging overhead during import
@@ -190,9 +190,9 @@ AMD_LOG_LEVEL=0 MIOPEN_LOG_LEVEL=0 python -X importtime script.py
 HIP_VISIBLE_DEVICES=-1 python -X importtime script.py
 ```
 
-## Integration with Other Profiling Tools
+### Integration with Other Profiling Tools
 
-### Combine with cProfile
+#### Combine with cProfile
 ```bash
 # First check import time
 python -X importtime script.py 2> imports.txt
@@ -201,7 +201,7 @@ python -X importtime script.py 2> imports.txt
 python -m cProfile -o profile.stats script.py
 ```
 
-### Combine with PyTorch Profiler
+#### Combine with PyTorch Profiler
 ```python
 # Fast startup with lazy imports
 def main():
@@ -215,9 +215,9 @@ if __name__ == "__main__":
     main()
 ```
 
-## Example Analysis for Version 1
+### Example Analysis for Version 1
 
-### Expected Import Hierarchy
+#### Expected Import Hierarchy
 
 ```
 import time: self [us] | cumulative | imported package
@@ -231,27 +231,27 @@ import time:      8000 |       8000 | argparse
 import time:      3500 |       3500 | json
 ```
 
-### Interpreting Results
+#### Interpreting Results
 
 - **torch**: Largest import cost (850ms typical)
 - **torch.nn**: Additional overhead for neural network modules
 - **apex**: NVIDIA optimizations (ROCm compatible)
 - Standard library imports (argparse, json): Negligible cost
 
-## When to Use Import Time Profiling
+### When to Use Import Time Profiling
 
 1. **Debugging slow script startup**: Identify which imports are causing delays
 2. **Optimizing CLI tools**: Reduce time-to-first-output for user experience
 3. **Container startup optimization**: Minimize cold-start latency
 4. **CI/CD pipeline optimization**: Reduce test suite initialization time
 
-## Limitations
+### Limitations
 
 - Does not profile runtime execution (use cProfile or PyTorch Profiler for that)
 - Import time varies based on system load and cold vs. warm cache
 - First import after system reboot will be slower due to OS page cache
 
-## References
+### References
 
 - [PEP 565 - Show DeprecationWarning in __main__](https://www.python.org/dev/peps/pep-0565/)
 - [Python -X Options Documentation](https://docs.python.org/3/using/cmdline.html#id5)
