@@ -1,6 +1,8 @@
 
 # AMD AI Assistant using retrieval augmented generation (RAG) 
 
+README.md from `HPCTrainingExamples/MLExamples/RAG_LangChainDemo` in the Training Examples repository
+
 We will be using retrieval augmented generation (RAG) to create an AMD AI assistant you can interact with to answer questions on AMD GPU software and programming.
 
 With RAG, pre-trained, parametric-memory generation models are endowed with a non-parametric memory through a general-purpose fine-tuning approach. This means that you can supply the most up to date content to a pre existing model and, without additional training, use this new material as context to adjust the answers of the pre-existing model to fit your needs.
@@ -162,3 +164,6 @@ podman rm open-webui-ollama
 3. If you get `505:internal error` when accessing `localhost:3000`, keep refreshing the page and it should get you there
 
 Careful to not remove the volume (that you can see by doing `podman volume ls`) otherwise you will lose all the local data such as knowledge base, admin login info, user list etc.
+
+
+

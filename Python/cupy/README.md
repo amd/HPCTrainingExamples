@@ -1,4 +1,7 @@
+
 # CuPy Examples
+
+README.md from `HPCTrainingExamples/Python/cupy` in the Training Examples repository
 
 **NOTE**: these exercises have been tested on MI210 and MI300A accelerators using a container environment.
 To see details on the container environment (such as operating system and modules available) please see `README.md` on [this](https://github.com/amd/HPCTrainingDock) repo.

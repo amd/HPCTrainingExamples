@@ -1,4 +1,8 @@
+
+
 # Castille AI Workshop: ROCm Tools for PyTorch AI Workload Profiling
+
+README.md from `HPCTrainingExamples/MLExamples/TinyTransformer` in the Training Examples repository
 
 ## Workshop Overview
 
@@ -313,3 +317,5 @@ MIT License - See LICENSE file for details
 ---
 
 **Ready to start profiling? Begin with the [Environment Setup Guide](setup/environment_setup.md)**
+
+

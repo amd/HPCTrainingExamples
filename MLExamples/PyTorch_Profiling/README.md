@@ -1,4 +1,7 @@
+
 # AMD Profiling Tools for Python Machine Learning Applications
+
+README.md from `HPCTrainingExamples/MLExamples/PyTorch_Profiling` in the Training Examples repository
 
 This repository provides an overview of the tools available for profiling pytorch applications on AMD GPUs. The scripts used to reproduce some examples are available within this repository.
 
@@ -100,3 +103,6 @@ Additionally, depending on the cluster environment, configure the `setup.sh` to 
 ## Development of Tools
 
 AMD is continuing to update and improve profiling tools, both AMD-built tools as well as integrations into community tools. As these tools develop and continue to mature, users will find that sometimes arguments and configurations will change. We will strive to keep these examples up to date, but please open issues for any broken or outdated instructions. 
+
+
+

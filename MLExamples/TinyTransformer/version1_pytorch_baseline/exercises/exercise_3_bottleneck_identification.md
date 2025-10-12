@@ -1,16 +1,19 @@
-# Exercise 3: Bottleneck Identification and Optimization Planning
 
-## Objective
+## Exercise 3: Bottleneck Identification and Optimization Planning
+
+`exercise3_bottleneck_identification.md` from `HPCTrainingExamples/MLExamples/TinyTransformer/version1_pytorch_baseline` in the Training Examples repository
+
+### Objective
 Systematically identify performance bottlenecks in the baseline model and create an optimization roadmap for Version 2 and beyond.
 
-## Prerequisites
+### Prerequisites
 - Completed Exercises 1 and 2
 - Understanding of profiling results analysis
 
-## Duration
+### Duration
 **Estimated Time:** 30-35 minutes
 
-## Background
+### Background
 
 Bottleneck identification is critical for effective optimization:
 - **Amdahl's Law**: Overall speedup is limited by the slowest component
@@ -18,14 +21,14 @@ Bottleneck identification is critical for effective optimization:
 - **Systematic Approach**: Use data-driven decisions rather than intuition
 - **Baseline Establishment**: Create benchmarks for measuring improvement
 
-## Instructions
+### Instructions
 
-### Step 1: Comprehensive Profiling Run (10 minutes)
+#### Step 1: Comprehensive Profiling Run (10 minutes)
 
 Run the complete profiling suite to gather all necessary data:
 
 ```bash
-# Run comprehensive profiling analysis
+## Run comprehensive profiling analysis
 bash run_all_profilers.sh \
     --batch-size 8 \
     --seq-len 128 \
@@ -45,15 +48,15 @@ This will generate:
 - Profile data location: _______
 - Any errors or warnings: _______
 
-### Step 2: Operator-Level Bottleneck Analysis (10 minutes)
+#### Step 2: Operator-Level Bottleneck Analysis (10 minutes)
 
 Analyze the detailed profiling results to identify computational bottlenecks:
 
 ```bash
-# View the comprehensive profiling report
+## View the comprehensive profiling report
 cat ./bottleneck_analysis/performance_summary_report.md
 
-# Examine PyTorch profiler operator breakdown
+## Examine PyTorch profiler operator breakdown
 python run_pytorch_profiler.py \
     --analyze-existing ./bottleneck_analysis/pytorch_profiling \
     --generate-report \
@@ -82,12 +85,12 @@ From the PyTorch profiler results, identify the top 10 operations by GPU time:
 - How many separate linear projection operations are there? _______
 - What's the overhead from kernel launches vs. computation? _______%
 
-### Step 3: FLOPS Efficiency Analysis (8 minutes)
+#### Step 3: FLOPS Efficiency Analysis (8 minutes)
 
 Examine computational efficiency using the FLOPS analysis:
 
 ```bash
-# View FLOPS analysis results
+## View FLOPS analysis results
 python -c "
 import json
 with open('./bottleneck_analysis/flops_analysis/flops_profile.json', 'r') as f:
@@ -114,12 +117,12 @@ print(f'Throughput: {data[\"performance_metrics\"][\"throughput_samples_per_sec\
 - [ ] 40-60% MFU: Mixed workload with optimization opportunities
 - [ ] > 60% MFU: Well-optimized compute-bound workload
 
-### Step 4: Memory Bottleneck Assessment (7 minutes)
+#### Step 4: Memory Bottleneck Assessment (7 minutes)
 
 Analyze memory-related bottlenecks:
 
 ```bash
-# Check computational intensity analysis
+## Check computational intensity analysis
 python -c "
 import json
 import os
@@ -150,7 +153,7 @@ else:
 - [ ] On roofline - balanced (optimize both)
 - [ ] Below compute ceiling - compute bound (optimize kernels)
 
-### Step 5: Systematic Bottleneck Ranking (10 minutes)
+#### Step 5: Systematic Bottleneck Ranking (10 minutes)
 
 Create a systematic ranking of bottlenecks based on impact and effort:
 
@@ -185,9 +188,9 @@ Low Impact, High Effort (Priority 4 - Skip):
 - _______________________________
 - _______________________________
 
-## Analysis and Optimization Roadmap
+### Analysis and Optimization Roadmap
 
-### Step 6: Create Version 2 Optimization Plan (10 minutes)
+#### Step 6: Create Version 2 Optimization Plan (10 minutes)
 
 Based on your analysis, create a detailed optimization plan for Version 2:
 
@@ -217,7 +220,7 @@ Based on your analysis, create a detailed optimization plan for Version 2:
 
 **Expected Overall Speedup for Version 2:** _______x
 
-### Step 7: Validation Metrics Definition (5 minutes)
+#### Step 7: Validation Metrics Definition (5 minutes)
 
 Define metrics to validate Version 2 improvements:
 
@@ -241,9 +244,9 @@ Define metrics to validate Version 2 improvements:
 - [ ] Memory usage reduced or stable
 - [ ] Throughput improved by >30%
 
-## Expected Results
+### Expected Results
 
-### Typical Bottleneck Hierarchy
+#### Typical Bottleneck Hierarchy
 1. **Attention Operations (35-45% of time)**
    - Multiple QKV projections
    - Attention score computation
@@ -262,28 +265,28 @@ Define metrics to validate Version 2 improvements:
    - Tensor allocations/deallocations
    - Memory fragmentation
 
-### Optimization Priority Order
+#### Optimization Priority Order
 1. **QKV Fusion** (Low effort, medium impact)
 2. **Flash Attention** (Medium effort, high impact)
 3. **SwiGLU Fusion** (Low effort, low-medium impact)
 4. **Torch Compile** (Very low effort, variable impact)
 
-## Troubleshooting
+### Troubleshooting
 
 **Missing Analysis Files:**
 ```bash
-# Re-run comprehensive profiling if files are missing
+## Re-run comprehensive profiling if files are missing
 bash run_all_profilers.sh --batch-size 8 --profile-dir ./bottleneck_retry
 ```
 
 **Profiling Data Errors:**
 ```bash
-# Check for GPU memory issues
+## Check for GPU memory issues
 nvidia-smi  # or rocm-smi
-# Reduce batch size if necessary
+## Reduce batch size if necessary
 ```
 
-## Analysis Questions
+### Analysis Questions
 
 **📝 Critical Analysis Questions:**
 
@@ -318,7 +321,7 @@ nvidia-smi  # or rocm-smi
    - [ ] 2.0-3.0x (optimistic)
    - [ ] >3.0x (unlikely without major changes)
 
-## Deliverables
+### Deliverables
 
 At the end of this exercise, you should have:
 
@@ -328,7 +331,7 @@ At the end of this exercise, you should have:
 4. **Success Metrics** for validating improvements
 5. **Baseline Measurements** for comparison
 
-## Next Steps
+### Next Steps
 
 1. **Document all findings** in the performance summary template
 2. **Review optimization priorities** with team/instructor
@@ -336,7 +339,7 @@ At the end of this exercise, you should have:
 4. **Proceed to Version 2** implementation with clear targets
 5. **Set up regression testing** framework for validation
 
-## Success Criteria
+### Success Criteria
 
 **Exercise Complete When:**
 - [ ] Comprehensive bottleneck analysis completed
@@ -351,3 +354,5 @@ At the end of this exercise, you should have:
 **Key Takeaway**: Systematic bottleneck identification reveals that the baseline model has clear optimization opportunities in kernel fusion, attention computation, and memory usage. The data-driven approach provides a roadmap for achieving 1.5-2.0x speedup in Version 2.
 
 **Next Phase**: [Version 2 - PyTorch Fused](../version2_pytorch_fused/README.md)
+
+

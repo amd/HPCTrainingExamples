@@ -1,4 +1,7 @@
+
 # Technical Appendices - Castille AI Workshop
+
+`TECHNICAL_APPENDICES.md` from `HPCTrainingExamples/MLExamples/TinyTransformer` in the Training Examples repository
 
 **Comprehensive Technical Reference for ROCm Profiling and GPU Optimization**
 
@@ -1272,3 +1275,5 @@ This technical appendix provides comprehensive reference material for the Castil
 These appendices serve as a comprehensive technical reference for understanding transformer optimization, ROCm profiling, and GPU performance engineering principles covered throughout the workshop.
 
 For hands-on implementation details, refer to the version-specific README files in each workshop directory.
+
+

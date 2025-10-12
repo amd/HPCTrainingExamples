@@ -1,4 +1,7 @@
+
 # Python Import Time Profiling
+
+IMPORTTIME_PROFILING.md from `HPCTrainingExamples/MLExamples/TinyTransformer/version1_pytorch_baseline` in the Training Examples repository
 
 ## Overview
 
@@ -253,3 +256,5 @@ import time:      3500 |       3500 | json
 - [PEP 565 - Show DeprecationWarning in __main__](https://www.python.org/dev/peps/pep-0565/)
 - [Python -X Options Documentation](https://docs.python.org/3/using/cmdline.html#id5)
 - [PyTorch Performance Tuning Guide](https://pytorch.org/tutorials/recipes/recipes/tuning_guide.html)
+
+

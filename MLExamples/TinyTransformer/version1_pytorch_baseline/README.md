@@ -1,4 +1,7 @@
+
 # Version 1: PyTorch Baseline - Profiling Foundation
+
+README.md from `HPCTrainingExamples/MLExamples/TinyTransformer/version1_pytorch_baseline` in the Training Examples repository
 
 ## Overview
 
@@ -644,3 +647,5 @@ Use this template to document your Version 1 results:
 - [ ] SwiGLU fusion
 - [ ] Other: ___________
 ```
+
+

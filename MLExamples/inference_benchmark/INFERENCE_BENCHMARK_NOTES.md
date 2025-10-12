@@ -1,4 +1,7 @@
+
 # Training Notes
+
+README.md from `HPCTrainingExamples/MLExamples/inference_benchmark` in the Training Examples repository
 
 ## Basic Training Run
 
@@ -136,3 +139,5 @@ Profile captures per-GPU metrics at specified iteration.
 - Memory bandwidth saturation (% of theoretical)
 - Kernel occupancy
 - Compilation overhead (first iteration vs steady state)
+
+

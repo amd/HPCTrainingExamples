@@ -1,16 +1,19 @@
-# Exercise 2: Memory Analysis and Optimization
 
-## Objective
+## Exercise 2: Memory Analysis and Optimization
+
+`exercise2_memory_analysis.md` from `HPCTrainingExamples/MLExamples/TinyTransformer/version1_pytorch_baseline` in the Training Examples repository
+
+### Objective
 Understand memory usage patterns, identify memory bottlenecks, and analyze memory bandwidth utilization in the baseline Tiny LLaMA model.
 
-## Prerequisites
+### Prerequisites
 - Completed Exercise 1
 - Basic understanding of GPU memory hierarchy
 
-## Duration
+### Duration
 **Estimated Time:** 25-30 minutes
 
-## Background
+### Background
 
 Memory optimization is crucial for transformer models because:
 - **Memory Bandwidth**: Often the limiting factor for inference
@@ -18,14 +21,14 @@ Memory optimization is crucial for transformer models because:
 - **Memory Fragmentation**: Can reduce effective memory utilization
 - **Attention Memory**: Quadratic scaling with sequence length
 
-## Instructions
+### Instructions
 
-### Step 1: Memory-Focused Profiling (10 minutes)
+#### Step 1: Memory-Focused Profiling (10 minutes)
 
 Run profiling with enhanced memory analysis:
 
 ```bash
-# Memory profiling with different batch sizes
+## Memory profiling with different batch sizes
 python tiny_llama_v1.py \
     --batch-size 4 \
     --seq-len 128 \
@@ -59,12 +62,12 @@ python tiny_llama_v1.py \
 | 8          |                  |                 |                              |
 | 16         |                  |                 |                              |
 
-### Step 2: Memory Timeline Analysis (10 minutes)
+#### Step 2: Memory Timeline Analysis (10 minutes)
 
 Analyze memory patterns using TensorBoard:
 
 ```bash
-# Launch TensorBoard for memory analysis
+## Launch TensorBoard for memory analysis
 tensorboard --logdir ./memory_analysis_bs8 --port 6007
 ```
 
@@ -85,12 +88,12 @@ In TensorBoard:
 - Are there unnecessary memory allocations? ________________
 - What's the memory utilization pattern during attention? ________________
 
-### Step 3: Sequence Length Scaling (8 minutes)
+#### Step 3: Sequence Length Scaling (8 minutes)
 
 Test how memory scales with sequence length:
 
 ```bash
-# Test different sequence lengths
+## Test different sequence lengths
 python tiny_llama_v1.py \
     --batch-size 8 \
     --seq-len 64 \
@@ -105,7 +108,7 @@ python tiny_llama_v1.py \
     --enable-memory-profiling \
     --profile-dir ./memory_seq256
 
-# Note: seq-len 512 might OOM - try with smaller batch size if needed
+## Note: seq-len 512 might OOM - try with smaller batch size if needed
 python tiny_llama_v1.py \
     --batch-size 4 \
     --seq-len 512 \
@@ -128,12 +131,12 @@ python tiny_llama_v1.py \
 2. Which component shows the steepest memory scaling?
 3. At what sequence length do you hit memory limits?
 
-### Step 4: Memory Bandwidth Analysis (7 minutes)
+#### Step 4: Memory Bandwidth Analysis (7 minutes)
 
 Use the memory profiling results to analyze bandwidth utilization:
 
 ```bash
-# Run bandwidth-focused analysis
+## Run bandwidth-focused analysis
 python run_deepspeed_flops.py \
     --batch-size 8 \
     --seq-len 128 \
@@ -147,7 +150,7 @@ python run_deepspeed_flops.py \
 Check the `bandwidth_analysis/computational_intensity.json` file:
 
 ```bash
-# View bandwidth metrics
+## View bandwidth metrics
 python -c "
 import json
 data = json.load(open('./bandwidth_analysis/computational_intensity.json'))
@@ -164,9 +167,9 @@ print('Workload Type:', data['memory_bound_vs_compute_bound'])
 - Bandwidth Utilization: _______ %
 - Workload Classification: _______
 
-## Analysis and Interpretation
+### Analysis and Interpretation
 
-### Step 5: Memory Optimization Opportunities (10 minutes)
+#### Step 5: Memory Optimization Opportunities (10 minutes)
 
 Based on your analysis, identify optimization opportunities:
 
@@ -196,7 +199,7 @@ Rank these optimizations by memory impact (1=highest, 4=lowest):
 - [ ] Mixed precision (reduce memory per parameter) - Rank: ___
 - [ ] Tensor fusion (reduce intermediate allocations) - Rank: ___
 
-### Step 6: Memory Bottleneck Identification (5 minutes)
+#### Step 6: Memory Bottleneck Identification (5 minutes)
 
 Determine if your workload is memory-bound or compute-bound:
 
@@ -220,41 +223,41 @@ Based on your bandwidth analysis:
 - [ ] Mixed (balanced utilization)
 - [ ] Kernel overhead (low both)
 
-## Expected Results
+### Expected Results
 
-### Memory Usage Patterns
+#### Memory Usage Patterns
 - **Peak Memory Growth**: Approximately linear with batch size
 - **Sequence Scaling**: Quadratic scaling due to attention matrices
 - **Memory Hotspots**: Attention computation and intermediate tensors
 - **Bandwidth Utilization**: 30-60% on most modern GPUs
 
-### Key Findings
+#### Key Findings
 1. **Attention Memory**: Consumes significant memory, scales quadratically
 2. **Memory Fragmentation**: Multiple small allocations create overhead
 3. **Peak vs Average**: Large difference indicates optimization opportunity
 4. **Bandwidth Bound**: Likely memory-bound for typical configurations
 
-## Troubleshooting
+### Troubleshooting
 
 **Out of Memory Errors:**
 ```bash
-# Reduce batch size and/or sequence length
+## Reduce batch size and/or sequence length
 python tiny_llama_v1.py --batch-size 2 --seq-len 64
 ```
 
 **Memory Profiling Failed:**
 ```bash
-# Check CUDA memory debugging
+## Check CUDA memory debugging
 export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
 ```
 
 **Bandwidth Analysis Error:**
 ```bash
-# Check DeepSpeed installation
+## Check DeepSpeed installation
 pip install deepspeed
 ```
 
-## Analysis Questions
+### Analysis Questions
 
 **📝 Critical Analysis Questions:**
 
@@ -284,7 +287,7 @@ pip install deepspeed
    - [ ] Mixed precision FP16/BF16 (2x memory reduction)
    - [ ] Tensor fusion (reduce intermediate allocations)
 
-## Next Steps
+### Next Steps
 
 1. **Document your memory analysis** results
 2. **Compare memory patterns** across different configurations
@@ -292,7 +295,7 @@ pip install deepspeed
 4. **Understand the memory vs compute trade-offs**
 5. **Proceed to Exercise 3** for bottleneck identification
 
-## Success Criteria
+### Success Criteria
 
 **Exercise Complete When:**
 - [ ] Memory profiling completed for multiple configurations
@@ -306,3 +309,5 @@ pip install deepspeed
 **Key Takeaway**: Memory analysis reveals that the baseline model has significant memory optimization opportunities, particularly in attention computation which scales quadratically with sequence length. Flash Attention and kernel fusion will be primary targets for Version 2.
 
 **Next Exercise**: [Exercise 3 - Bottleneck Identification](exercise_3_bottleneck_identification.md)
+
+

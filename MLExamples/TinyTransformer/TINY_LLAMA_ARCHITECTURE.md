@@ -1,4 +1,7 @@
+
 # Tiny LLaMA Model Architecture and Mathematical Foundations
+
+TINY_LLAMA_ARCHITECTURE.md from `HPCTrainingExamples/MLExamples/TinyTransformer` in the Training Examples repository
 
 ## Table of Contents
 
@@ -337,3 +340,5 @@ This architecture serves as the foundation for all four workshop versions:
 - **Version 4**: Ultra-fused implementations
 
 Each version maintains this core architecture while progressively optimizing the implementation for maximum performance on AMD ROCm hardware.
+
+

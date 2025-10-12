@@ -1,4 +1,7 @@
+
 # Version 2: PyTorch Fused - Kernel Fusion and ROCm Tools Integration
+
+README.md from `HPCTrainingExamples/MLExamples/TinyTransformer/version2_pytorch_fused` in the Training Examples repository
 
 ## Overview
 
@@ -776,3 +779,5 @@ python generate_fusion_report.py --output-dir ./optimization_analysis
 ```
 
 **Expected Results**: 1.6-2.5x speedup, 60-90% memory reduction, comprehensive ROCm profiling mastery.
+
+

@@ -1,6 +1,8 @@
 
 # HIP-Python
 
+README.md from `HPCTrainingExamples/Python/hip-python` in the Training Examples repository
+
 For these examples, get a GPU with salloc or srun.
 
 ```
