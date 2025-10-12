@@ -12,6 +12,7 @@
 ### Background
 
 The SwiGLU (Swish-Gated Linear Unit) is a key component in modern transformer architectures. It combines:
+
 - Gate projection with SiLU activation
 - Up projection
 - Element-wise multiplication
@@ -452,6 +453,7 @@ benchmark_kernel_variants()
 ### Next Steps
 
 Exercise 3 will cover Flash Attention implementation, focusing on:
+
 - Memory-efficient attention patterns
 - Tiling strategies for large sequences
 - Numerical stability in custom kernels

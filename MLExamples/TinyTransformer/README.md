@@ -285,6 +285,7 @@ castille-ai-workshop-training/
 - **Both achieve 3.1x speedup** - demonstrates that highly-optimized PyTorch operations can match custom kernels
 
 ### Profiling Tool Capabilities
+
 - **PyTorch Profiler**: Framework overhead, operator timing, memory tracking
 - **rocprofv3**: Kernel execution stats, device activity and runtime API timeline tracing, hardware counter collection
 - **Manual Timing**: CUDA synchronization for accurate GPU timing
@@ -292,6 +293,7 @@ castille-ai-workshop-training/
 ## Contributing
 
 This workshop is designed for continuous improvement. Contributions are welcome:
+
 - Additional optimization techniques
 - Enhanced profiling methodologies
 - Extended GPU architecture support

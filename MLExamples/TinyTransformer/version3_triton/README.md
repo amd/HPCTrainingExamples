@@ -60,9 +60,11 @@ HBM (slowest, ~64GB)                  → Main memory
 ```
 
 **Triton Optimization Strategy:**
+
 $$\text{Arithmetic Intensity} = \frac{\text{FLOPS}}{\text{Memory Bytes Accessed}}$$
 
 Triton maximizes this ratio by:
+
 1. **Tiling**: Processing data in blocks that fit in fast memory
 2. **Fusion**: Combining multiple operations to reuse data
 3. **Vectorization**: Using SIMD instructions efficiently
@@ -174,6 +176,7 @@ RMSNORM_PERFORMANCE = {
 #### SwiGLU Fusion Analysis
 
 **Memory Access Pattern Optimization:**
+
 $$\begin{aligned}
 \text{Standard SwiGLU}: & \quad \text{4 separate operations} \\
 \text{gate} &= xW_{\text{gate}} \quad \text{(GEMM 1)} \\
@@ -184,6 +187,7 @@ $$\begin{aligned}
 \end{aligned}$$
 
 **Triton Fused SwiGLU:**
+
 $$\begin{aligned}
 \text{Triton SwiGLU}: & \quad \text{Single fused operation} \\
 \text{output} &= \text{SiLU}(xW_{\text{gate}}) \odot (xW_{\text{up}}) \\
@@ -287,6 +291,7 @@ SWIGLU_TRITON_BENEFITS = {
 #### Flash Attention Tiling Strategy
 
 **Memory Complexity Analysis:**
+
 $$\begin{aligned}
 \text{Standard Attention Memory} &: O(B \times H \times S^{2}) \\
 \text{Flash Attention Memory} &: O(B \times H \times S) \\
@@ -605,18 +610,21 @@ TRITON_OPTIMIZATION_CHECKLIST = {
 Work through the exercises in order to build understanding:
 
 ### Exercise 1: Triton Basics (45 minutes)
+
 - Understand Triton kernel structure
 - Analyze memory access patterns
 - Optimize block sizes
 - Compare with PyTorch implementations
 
 ### Exercise 2: SwiGLU Optimization (60 minutes)
+
 - Multi-dimensional kernel programming
 - Arithmetic intensity analysis
 - Memory layout optimization
 - Advanced kernel variants
 
 ### Exercise 3: Flash Attention (75 minutes)
+
 - Memory-efficient attention algorithms
 - Tiling strategies and optimization
 - Numerical stability considerations
@@ -765,5 +773,4 @@ Version 4 will combine all optimizations into ultra-fused kernels that process e
 - [ROCm Documentation](https://rocmdocs.amd.com/)
 - [HIP Programming Guide](https://rocmdocs.amd.com/en/latest/Programming_Guides/HIP-GUIDE.html)
 - [Performance Optimization Tips](https://rocmdocs.amd.com/en/latest/Programming_Guides/Opencl-programming-guide.html)
-
 

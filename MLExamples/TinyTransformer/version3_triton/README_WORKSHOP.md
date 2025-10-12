@@ -84,6 +84,7 @@ output = attn @ V
 ```
 
 **Result:**
+
 - 46% memory reduction (282 MB vs 522 MB)
 - Enables longer sequences
 - Slightly faster forward pass
@@ -106,6 +107,7 @@ output = (x * rstd) * weight                 # Kernel 3
 ```
 
 **Result:**
+
 - 3x fewer kernel launches
 - Better cache utilization
 - Reduced memory bandwidth
@@ -154,6 +156,7 @@ v = v.repeat_interleave(n_rep, dim=1).contiguous()  # Now Triton-friendly!
 ```
 
 **Result:**
+
 - 20x speedup! (15.2 → 310.8 samples/sec)
 - Triton kernels depend on contiguous memory for efficient access
 - Always check tensor contiguity before passing to custom kernels
@@ -206,6 +209,7 @@ cat README.md
 ```
 
 **What you'll learn:**
+
 - How to diagnose incorrect model behavior (exploding loss)
 - How to identify performance bottlenecks with profiling
 - When to use custom kernels vs. optimized libraries
@@ -233,6 +237,7 @@ rocprofv2 --kernel-trace -o v3_trace.json python tiny_llama_v3.py --batch-size 8
 ```
 
 ### What to Look For in Profiles
+
 1. **Kernel Execution Time:** Which kernels take the most time?
 2. **Memory Bandwidth:** Are you memory-bound or compute-bound?
 3. **Occupancy:** How many wavefronts/warps are active?
@@ -243,27 +248,32 @@ rocprofv2 --kernel-trace -o v3_trace.json python tiny_llama_v3.py --batch-size 8
 ##  Key Learnings
 
 ### 1. Correctness First, Performance Second
+
 - Stage 1 had broken loss (942 instead of 7)
 - No point optimizing a broken model!
 - Always validate correctness before optimizing
 
 ### 2. Memory Layout Matters
+
 - Non-contiguous tensors killed performance (20x slower!)
 - Always `.contiguous()` before Triton kernels
 - Check with `tensor.is_contiguous()`
 
 ### 3. Hybrid Optimization Wins
+
 - Don't write custom kernels for everything
 - Use Triton for: memory-bound ops, fusion opportunities
 - Use PyTorch/BLAS for: large matrix multiplies
 - Profile to decide!
 
 ### 4. Measure Accurately
+
 - GPU operations are asynchronous
 - Always `torch.cuda.synchronize()` for accurate timing
 - Without sync, timings are meaningless
 
 ### 5. Iterative Debugging
+
 - Fix one issue at a time
 - Re-measure after each fix
 - Profile to identify next bottleneck
@@ -342,11 +352,13 @@ python -c "import torch; print(torch.cuda.is_available())"
 ```
 
 ### Issue 3: Loss is not ~7.0
+
 - Check weight initialization is enabled
 - Verify model architecture matches V1
 - Check for tensor shape mismatches
 
 ### Issue 4: Performance slower than expected
+
 - Ensure tensors are contiguous: `.contiguous()`
 - Check CUDA synchronization for accurate timing
 - Profile to identify bottleneck kernel
@@ -366,6 +378,7 @@ python -c "import torch; print(torch.cuda.is_available())"
 ##  Summary
 
 **V3 achieves 5.5x speedup through:**
+
 1.  Flash Attention (Triton) - 46% memory reduction
 2.  RMSNorm (Triton) - Fused kernel
 3.  Hybrid SwiGLU - Use rocBLAS for matmul

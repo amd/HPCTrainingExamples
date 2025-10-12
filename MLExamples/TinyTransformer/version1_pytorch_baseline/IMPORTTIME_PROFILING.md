@@ -1,7 +1,7 @@
 
 ## Python Import Time Profiling
 
-IMPORTTIME_PROFILING.md from `HPCTrainingExamples/MLExamples/TinyTransformer/version1_pytorch_baseline` in the Training Examples repository
+`IMPORTTIME_PROFILING.md` from `HPCTrainingExamples/MLExamples/TinyTransformer/version1_pytorch_baseline` in the Training Examples repository
 
 ### Overview
 
@@ -14,6 +14,7 @@ python -X importtime script.py
 ```
 
 This outputs a hierarchical tree showing:
+
 - Import time for each module
 - Cumulative time including sub-imports
 - Self time (time spent in the module itself)
@@ -63,24 +64,28 @@ python -X importtime -c "import deepspeed" 2>&1 | grep -E "deepspeed|time:"
 ### Common Import Time Bottlenecks in AI Workloads
 
 #### 1. PyTorch (torch)
+
 - Typical import time: 500ms - 2000ms
 - Loads CUDA/ROCm libraries
 - Initializes operator registry
 - Sets up autograd engine
 
 #### 2. Transformers Library
+
 - Typical import time: 300ms - 1000ms
 - Loads tokenizers
 - Registers model architectures
 - Initializes configuration classes
 
 #### 3. DeepSpeed
+
 - Typical import time: 200ms - 800ms
 - Loads distributed training components
 - Initializes optimization kernels
 - Sets up communication backends
 
 #### 4. NumPy/SciPy
+
 - Typical import time: 50ms - 200ms
 - Loads optimized BLAS/LAPACK libraries
 - Initializes array operations

@@ -12,6 +12,7 @@
 ### Background
 
 Triton is a language and compiler for writing custom GPU kernels. It provides:
+
 - Python-like syntax for GPU programming
 - Automatic memory coalescing and optimization
 - Block-level programming model

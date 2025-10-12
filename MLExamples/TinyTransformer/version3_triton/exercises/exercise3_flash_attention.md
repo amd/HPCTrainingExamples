@@ -12,6 +12,7 @@
 ### Background
 
 Flash Attention is a memory-efficient implementation of scaled dot-product attention that:
+
 - Reduces memory complexity from O(N^2) to O(N)
 - Uses tiling to fit computations in SRAM
 - Maintains numerical stability through online statistics

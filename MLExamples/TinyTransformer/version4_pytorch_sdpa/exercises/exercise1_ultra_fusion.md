@@ -457,16 +457,19 @@ performance_predictions = performance_prediction_model()
 Fill in your analysis results:
 
 **Memory Efficiency:**
+
 - Register usage per token: _____
 - Memory traffic reduction: _____%
 - L1 cache hit rate: _____%
 
 **Performance Characteristics:**
+
 - Arithmetic intensity: _____ FLOPs/byte
 - Performance bottleneck: _____ (compute/memory)
 - Theoretical peak: _____ TFLOPS
 
 **Optimization Impact:**
+
 - Kernel count reduction: _____x
 - Memory bandwidth savings: _____%
 - Register utilization: _____%
@@ -507,6 +510,7 @@ Design a debugging framework for ultra-fused kernels that can isolate performanc
 ### Next Steps
 
 This exercise completes your understanding of ultra-fusion techniques. In Exercise 2, you'll:
+
 - Compare all four versions comprehensively
 - Analyze performance scaling characteristics
 - Create optimization decision frameworks

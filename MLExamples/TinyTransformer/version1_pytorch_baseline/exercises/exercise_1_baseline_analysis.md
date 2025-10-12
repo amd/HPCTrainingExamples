@@ -7,6 +7,7 @@
 Establish baseline performance metrics for Tiny LLaMA V1 and understand the profiling methodology that will be used throughout the workshop.
 
 ### Prerequisites
+
 - Completed environment setup from `../setup/`
 - Verified environment with validation scripts
 
@@ -28,12 +29,14 @@ python tiny_llama_v1.py --batch-size 8 --seq-len 128 --num-steps 20
 ```
 
 **Expected Output:**
+
 - Model configuration summary
 - Training progress with loss values
 - Performance metrics (samples/sec, memory usage)
 - Final performance summary
 
 **📝 Record the following baseline metrics:**
+
 - Training speed: _____ samples/sec
 - Peak memory usage: _____ MB
 - Final loss: _____
@@ -54,11 +57,13 @@ python tiny_llama_v1.py \
 ```
 
 **Expected Output:**
+
 - Same training output as before
 - Additional profiling information
 - Profile files generated in `./exercise1_profiles/`
 
 **📝 Answer these questions:**
+
 1. How much overhead did profiling add to training time?
 2. What files were generated in the `exercise1_profiles/` directory?
 3. What's the difference in memory usage with profiling enabled?
@@ -76,6 +81,7 @@ ls -la ./exercise1_profiles/
 ```
 
 **TensorBoard Analysis:**
+
 1. Open your browser to `http://localhost:6006`
 2. Navigate to the "PROFILE" tab
 3. Select the most recent run
@@ -83,17 +89,20 @@ ls -la ./exercise1_profiles/
 **📝 Explore and document:**
 
 **Trace Timeline:**
+
 - What are the top 3 longest-running operations?
   1. _________________
   2. _________________
   3. _________________
 
 **Operator View:**
+
 - Which operation consumes the most GPU time?
 - What percentage of time is spent in attention operations?
 - How many different kernel types are launched?
 
 **Memory Timeline:**
+
 - What is the peak memory usage?
 - When does peak memory occur (forward/backward pass)?
 - Are there any memory spikes or unusual patterns?
@@ -105,19 +114,23 @@ Based on your analysis, identify patterns in the baseline model:
 **📝 Pattern Analysis:**
 
 **Compute Patterns:**
+
 - [ ] Attention operations dominate compute time
 - [ ] Matrix multiplications are the primary kernels
 - [ ] Many small operations with low utilization
 - [ ] Memory transfers visible between operations
 
 **Memory Patterns:**
+
 - [ ] Memory usage grows during forward pass
 - [ ] Peak memory during attention computation
 - [ ] Frequent small allocations
 - [ ] Memory fragmentation visible
 
 **Optimization Opportunities:**
+
 Based on the profiling results, which of these optimizations would likely provide the biggest benefit:
+
 - [ ] Kernel fusion (reduce number of operations)
 - [ ] Memory layout optimization
 - [ ] Flash Attention implementation
@@ -129,12 +142,14 @@ Based on the profiling results, which of these optimizations would likely provid
 After completing this exercise, you should have:
 
 #### Performance Baseline
+
 - **Training Speed**: 50-100 samples/sec (varies by hardware)
 - **GPU Utilization**: 60-75% (typical for baseline PyTorch)
 - **Memory Usage**: 2-4 GB depending on batch size
 - **Kernel Count**: 40-50 different kernel launches per step
 
 #### Key Observations
+
 - Attention operations consume ~40% of total compute time
 - Matrix multiplications (GEMM) are the dominant kernels
 - Multiple small operations create kernel launch overhead
@@ -223,6 +238,7 @@ After completing this exercise:
 ### Success Criteria
 
 **Exercise Complete When:**
+
 - [ ] Baseline training runs successfully
 - [ ] Profiling data generated and analyzed
 - [ ] Performance metrics documented

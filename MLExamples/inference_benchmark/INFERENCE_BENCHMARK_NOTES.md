@@ -1,7 +1,7 @@
 
 # Inference Benchmark Notes
 
-`INFERENCE_BENCHMARKK_NOTES.md` from `HPCTrainingExamples/MLExamples/inference_benchmark` in the Training Examples repository
+`INFERENCE_BENCHMARK_NOTES.md` from `HPCTrainingExamples/MLExamples/inference_benchmark` in the Training Examples repository
 
 ## Basic Inference Run
 
@@ -24,6 +24,7 @@ python micro_benchmarking_pytorch.py --network densenet121 --batch-size 2048 --c
 Output: `trace<step>.json` files (viewable in chrome://tracing)
 
 Options:
+
 - `--kineto`: Enable Kineto profiler (torch.profiler with Chrome trace export)
 - `--iterations`: Number of iterations (profiler captures wait=1, warmup=2, active=2)
 
@@ -46,10 +47,12 @@ python micro_benchmarking_pytorch.py --network densenet121 --batch-size 2048 --f
 ```
 
 Options:
+
 - `--flops-prof-step`: Iteration at which to capture profile (0-based index)
 - `--iterations`: Total iterations (must be > flops-prof-step)
 
 Output includes:
+
 - FLOPS per layer and operation type
 - Memory bandwidth utilization
 - Parameter count and activation memory
@@ -102,6 +105,7 @@ torchrun --nproc-per-node 8 micro_benchmarking_pytorch.py --network densenet121 
 ```
 
 **Batch size behavior:**
+
 - `--batch-size` specifies global batch size across all GPUs
 - Each GPU processes `batch-size / nproc-per-node` samples
 - Example: `--batch-size 2048` with 4 GPUs → 512 samples/GPU
