@@ -22,5 +22,5 @@ popd
 
 # Profile the workload with rocprofv3:
 mpirun -n 4 \
-rocprofv3 --stats --kernel-trace --output-directory mpi --output-file kernels -- \
+rocprofv3 --stats --kernel-trace --output-format csv --output-directory mpi --output-file kernels -- \
 python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --data-path ${PROFILER_TOP_DIR}/data

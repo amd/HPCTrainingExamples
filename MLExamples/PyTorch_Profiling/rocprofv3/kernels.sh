@@ -26,5 +26,5 @@ fi
 popd
 
 # Profile the workload with rocprofv3:
-rocprofv3 --stats --kernel-trace --output-directory single_process --output-file kernels -- \
+rocprofv3 --stats --kernel-trace --output-format csv --output-directory single_process --output-file kernels -- \
 python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --data-path ${PROFILER_TOP_DIR}/data
