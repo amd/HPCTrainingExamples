@@ -30,7 +30,5 @@ if [ ! -f data/cifar-100-python ]; then
 fi
 popd
 
-# Execute the python script:
-python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 20 --data-path ${PROFILER_TOP_DIR}/data/ --torch-profile
-
-ls
+# Profile the workload with PyTorch Profiler:
+python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --data-path ${PROFILER_TOP_DIR}/data/ --torch-profile

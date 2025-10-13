@@ -1,4 +1,7 @@
+
 # Version 1: PyTorch Baseline - Profiling Foundation
+
+README.md from `HPCTrainingExamples/MLExamples/TinyTransformer/version1_pytorch_baseline` in the Training Examples repository
 
 ## Overview
 
@@ -7,6 +10,7 @@ Version 1 establishes the profiling foundation for the workshop using a standard
 ## Learning Objectives
 
 After completing this version, you will be able to:
+
 - Configure deterministic execution for reproducible profiling
 - Use PyTorch Profiler for detailed operator-level analysis
 - Integrate DeepSpeed FLOPS profiler for computational efficiency metrics
@@ -16,6 +20,7 @@ After completing this version, you will be able to:
 ## Architecture Overview
 
 This implementation uses the standard transformer architecture with:
+
 - **Multi-Head Attention**: Standard scaled dot-product attention
 - **Feed-Forward Network**: SwiGLU activation with separate gate/up projections
 - **Layer Normalization**: RMSNorm for improved training stability
@@ -122,6 +127,7 @@ def rms_norm_forward(self, hidden_states):
 ```
 
 **Implementation Details:**
+
 - **Variance computation**: Single reduction operation
 - **Epsilon for numerical stability**: Prevents division by zero
 - **Mixed precision handling**: Maintains numerical precision
@@ -201,6 +207,7 @@ KERNEL_LAUNCHES = {
 ```
 
 **Optimization Implications:**
+
 - **High kernel launch overhead**: 68+ kernels create GPU scheduling overhead
 - **Memory bandwidth underutilization**: Many small operations
 - **Fusion opportunities**: Adjacent operations can be combined
@@ -311,6 +318,7 @@ def forward(self, hidden_states, attention_mask=None, position_ids=None):
 ```
 
 **Profiling Annotations:**
+
 - `@profile_function`: Enables detailed timing analysis
 - `nvtx.range()`: Creates named regions in profiler traces
 - Performance counters will show exact kernel timing
@@ -352,6 +360,7 @@ python run_pytorch_profiler.py --analyze-existing pytorch_profiles/profile_*.jso
 ```
 
 **Expected Analysis Results:**
+
 - Attention operations consuming ~40% of compute time
 - Matrix multiplications (GEMM) as primary compute kernels
 - Memory transfer overhead between operations
@@ -370,6 +379,7 @@ python run_deepspeed_flops.py --analyze-results flops_profile.json
 ```
 
 **Expected FLOPS Analysis:**
+
 - Total FLOPS per forward/backward pass
 - FLOPS breakdown by operation type
 - Model FLOPS Utilization (MFU) calculation
@@ -415,6 +425,7 @@ python analyze_batch_scaling.py --profile-dirs scaling_bs*
 ```
 
 **Expected Memory Analysis:**
+
 - Memory usage scaling with batch size
 - Peak memory allocation points
 - Memory fragmentation patterns
@@ -460,6 +471,7 @@ python analyze_gemm_operations.py \
 ```
 
 **Expected Bottleneck Analysis:**
+
 - Attention QKV projection overhead
 - Softmax computation inefficiency
 - Multiple small GEMM operations
@@ -622,25 +634,31 @@ Use this template to document your Version 1 results:
 # Version 1 Baseline Results
 
 ## Configuration
+
 - Batch Size: ___
 - Sequence Length: ___
 - GPU: ___
 - ROCm Version: ___
 
 ## Performance Metrics
+
 - Training Speed: ___ samples/sec
 - GPU Utilization: ___%
 - Memory Usage: ___ GB
 - FLOPS Utilization: ___%
 
 ## Top Bottlenecks
+
 1. _________________ (__% of time)
 2. _________________ (__% of time)
 3. _________________ (__% of time)
 
 ## Optimization Targets for Version 2
+
 - [ ] QKV fusion
 - [ ] Flash Attention
 - [ ] SwiGLU fusion
 - [ ] Other: ___________
 ```
+
+

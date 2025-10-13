@@ -1,4 +1,7 @@
+
 # Version 2: PyTorch Fused - Kernel Fusion and ROCm Tools Integration
+
+README.md from `HPCTrainingExamples/MLExamples/TinyTransformer/version2_pytorch_fused` in the Training Examples repository
 
 ## Overview
 
@@ -7,6 +10,7 @@ Version 2 demonstrates the power of kernel fusion and introduces comprehensive R
 ## Learning Objectives
 
 After completing this version, you will be able to:
+
 - Implement QKV fusion to reduce kernel launch overhead
 - Integrate Flash Attention for memory-efficient attention computation
 - Apply SwiGLU fusion in feed-forward networks
@@ -17,21 +21,25 @@ After completing this version, you will be able to:
 ## Key Optimizations Implemented
 
 ### 1. QKV Fusion
+
 - **Problem**: Separate Q, K, V linear projections create 3 kernel launches
 - **Solution**: Fused QKV projection with single kernel launch
 - **Expected Benefit**: 20-30% reduction in attention overhead
 
 ### 2. Flash Attention Integration
+
 - **Problem**: Standard attention has O(n^2) memory complexity
 - **Solution**: PyTorch's scaled_dot_product_attention with Flash Attention
 - **Expected Benefit**: Significant memory reduction, enables larger sequences
 
 ### 3. SwiGLU Fusion
+
 - **Problem**: Separate gate and up projections in feed-forward network
 - **Solution**: Combined gate/up computation with element-wise operations
 - **Expected Benefit**: 15-25% feed-forward network speedup
 
 ### 4. Torch Compile Integration
+
 - **Problem**: Remaining kernel launch overhead
 - **Solution**: Automatic fusion through torch.compile()
 - **Expected Benefit**: Additional 10-20% speedup through automatic optimizations
@@ -529,6 +537,7 @@ python run_deepspeed_flops.py \
 ```
 
 **Expected Results:**
+
 - Linear memory scaling vs. quadratic for baseline
 - 2-4x memory reduction for longer sequences
 - Improved arithmetic intensity metrics
@@ -731,12 +740,14 @@ python memory_bandwidth_analyzer.py \
 ## Expected Learning Outcomes
 
 ### Technical Skills Developed
+
 - **Kernel Fusion Techniques**: Practical implementation of operation fusion
 - **Memory Optimization**: Understanding memory-efficient algorithm design
 - **ROCm Profiling Mastery**: Comprehensive hardware profiling skills
 - **Performance Analysis**: Data-driven optimization decision making
 
 ### Performance Engineering Insights
+
 - **Amdahl's Law in Practice**: Understanding optimization impact distribution
 - **Memory vs. Compute Trade-offs**: Balancing different optimization strategies
 - **Hardware Utilization**: Maximizing GPU resource utilization
@@ -776,3 +787,5 @@ python generate_fusion_report.py --output-dir ./optimization_analysis
 ```
 
 **Expected Results**: 1.6-2.5x speedup, 60-90% memory reduction, comprehensive ROCm profiling mastery.
+
+

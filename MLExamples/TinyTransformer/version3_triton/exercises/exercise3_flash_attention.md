@@ -1,4 +1,7 @@
-# Exercise 3: Flash Attention Implementation and Optimization
+
+## Exercise 3: Flash Attention Implementation and Optimization
+
+`exercise3_flash_attention.md` from `HPCTrainingExamples/MLExamples/TinyTransformer/version3_triton/exercises` in the Training Examples repository
 
 **Objective**: Master advanced memory-efficient attention patterns and understand the Flash Attention algorithm implementation in Triton.
 
@@ -6,9 +9,10 @@
 
 **Prerequisites**: Completed Exercises 1 and 2
 
-## Background
+### Background
 
 Flash Attention is a memory-efficient implementation of scaled dot-product attention that:
+
 - Reduces memory complexity from O(N^2) to O(N)
 - Uses tiling to fit computations in SRAM
 - Maintains numerical stability through online statistics
@@ -16,9 +20,9 @@ Flash Attention is a memory-efficient implementation of scaled dot-product atten
 
 This exercise explores the Triton implementation and optimization strategies.
 
-## Part A: Flash Attention Algorithm Understanding (25 minutes)
+### Part A: Flash Attention Algorithm Understanding (25 minutes)
 
-### Step 1: Analyze the Algorithm Structure
+#### Step 1: Analyze the Algorithm Structure
 
 Examine the `flash_attention_kernel` in `tiny_llama_v3.py`:
 
@@ -39,7 +43,7 @@ def flash_attention_kernel(
 2. **Online Statistics**: How are max values and sum exponentials maintained?
 3. **Numerical Stability**: What prevents overflow in the softmax computation?
 
-### Step 2: Understand the Core Loop
+#### Step 2: Understand the Core Loop
 
 Analyze the main computation loop:
 
@@ -71,7 +75,7 @@ for k_block_start in range(0, seq_len, BLOCK_SIZE_K):
 2. **Numerical Stability**: Why subtract the maximum before exponentiation?
 3. **Online Updates**: How are the running statistics updated correctly?
 
-### Step 3: Compare with Standard Attention
+#### Step 3: Compare with Standard Attention
 
 Create a comparison analysis:
 
@@ -111,7 +115,7 @@ def compare_attention_algorithms():
 compare_attention_algorithms()
 ```
 
-### Step 4: Analyze Causal Masking
+#### Step 4: Analyze Causal Masking
 
 Understand how causal masking is implemented:
 
@@ -127,9 +131,9 @@ scores = tl.where(causal_mask, scores, -float('inf'))
 2. **Memory Impact**: What's the memory overhead of masking?
 3. **Alternative Strategies**: What other masking approaches exist?
 
-## Part B: Performance Analysis and Optimization (30 minutes)
+### Part B: Performance Analysis and Optimization (30 minutes)
 
-### Step 5: Benchmark Flash Attention Performance
+#### Step 5: Benchmark Flash Attention Performance
 
 Create a comprehensive benchmark:
 
@@ -265,7 +269,7 @@ def benchmark_attention_implementations():
 attention_results = benchmark_attention_implementations()
 ```
 
-### Step 6: Block Size Optimization
+#### Step 6: Block Size Optimization
 
 Optimize block sizes for different sequence lengths:
 
@@ -336,7 +340,7 @@ def optimize_flash_attention_blocks():
 optimize_flash_attention_blocks()
 ```
 
-### Step 7: Memory Pattern Analysis
+#### Step 7: Memory Pattern Analysis
 
 Analyze memory access patterns:
 
@@ -411,9 +415,9 @@ def analyze_flash_attention_memory():
 memory_analysis = analyze_flash_attention_memory()
 ```
 
-## Part C: Advanced Optimizations and Debugging (20 minutes)
+### Part C: Advanced Optimizations and Debugging (20 minutes)
 
-### Step 8: Numerical Stability Testing
+#### Step 8: Numerical Stability Testing
 
 Test numerical stability across different conditions:
 
@@ -469,7 +473,7 @@ def test_numerical_stability():
 test_numerical_stability()
 ```
 
-### Step 9: Performance Profiling Integration
+#### Step 9: Performance Profiling Integration
 
 Integrate with ROCProfiler for detailed analysis:
 
@@ -498,9 +502,9 @@ kernel: flash_attention_kernel
 create_flash_attention_profile()
 ```
 
-## Exercise Results
+### Exercise Results
 
-### Performance Summary Table
+#### Performance Summary Table
 
 | Sequence Length | Flash Attention (ms) | Standard Attention (ms) | Speedup | Memory Reduction |
 |----------------|---------------------|------------------------|---------|------------------|
@@ -510,7 +514,7 @@ create_flash_attention_profile()
 | 1024 | | | | |
 | 2048 | | | | |
 
-### Block Size Optimization Results
+#### Block Size Optimization Results
 
 | Sequence Length | Optimal Q Block | Optimal K Block | Best Time (ms) | Notes |
 |----------------|----------------|----------------|----------------|-------|
@@ -518,21 +522,21 @@ create_flash_attention_profile()
 | 512 | | | | |
 | 1024 | | | | |
 
-### Memory Analysis Results
+#### Memory Analysis Results
 
 - **Flash Attention Memory**: _____ MB
 - **Standard Attention Memory**: _____ MB
 - **Memory Reduction**: _____x
 - **Arithmetic Intensity**: _____ FLOPs/byte
 
-### Key Insights
+#### Key Insights
 
 1. **Performance Scaling**: How does Flash Attention performance scale with sequence length?
 2. **Memory Efficiency**: What's the memory reduction at different sequence lengths?
 3. **Optimal Block Sizes**: What patterns emerge in optimal block size selection?
 4. **Numerical Stability**: Are there any stability concerns with the implementation?
 
-## Discussion Questions
+### Discussion Questions
 
 1. **Algorithm Trade-offs**: What are the trade-offs between memory efficiency and computational complexity in Flash Attention?
 
@@ -542,7 +546,7 @@ create_flash_attention_profile()
 
 4. **Hardware Considerations**: How might different GPU architectures affect Flash Attention performance?
 
-## Next Steps
+### Next Steps
 
 With Version 3 complete, you've learned:
 - Advanced Triton kernel development
@@ -552,9 +556,9 @@ With Version 3 complete, you've learned:
 
 Version 4 will cover ultra-fused implementations combining all optimizations into a single, highly optimized kernel suite.
 
-## Troubleshooting Guide
+### Troubleshooting Guide
 
-### Common Issues
+#### Common Issues
 
 1. **Kernel Compilation Errors**
    - Check tensor dimension compatibility
@@ -575,3 +579,4 @@ Version 4 will cover ultra-fused implementations combining all optimizations int
    - Reduce block sizes if running out of memory
    - Check for memory leaks in repeated runs
    - Monitor peak memory usage during profiling
+

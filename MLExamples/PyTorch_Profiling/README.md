@@ -1,6 +1,9 @@
+
 # AMD Profiling Tools for Python Machine Learning Applications
 
-This repository provides an overview of the tools available for profiling applications on AMD GPUs, with a specific focus on applications using pytorch in a multinode, slurm-based environment. The scripts used to reproduce some examples are available within this repository.
+README.md from `HPCTrainingExamples/MLExamples/PyTorch_Profiling` in the Training Examples repository
+
+This repository provides an overview of the tools available for profiling pytorch applications on AMD GPUs. The scripts used to reproduce some examples are available within this repository.
 
 Some tools described below are AMD products, while others are community-based, open-source products supported by AMD on Instinct graphics cards.
 
@@ -31,7 +34,7 @@ The following tools are available for profiling applications. Examples of all to
 - ROCm Compute Profiler (formerly Omniperf) is a GPU kernel-focus profiling and analysis tool. It is the tool of choice for easily accessing high-level analysis based on hardware counters, though some features for MI300X are available only starting with ROCm version 6.4.
 
 
-# Organization of this Repository
+## Organization of this Repository
 
 
 This repository contains a simple pytorch training script that will train a classifier on CIFAR-100, and a collection of example scripts for the aforementioned profiling tools. The selected AI training example is simple on purpose, as the focus of this repository is to demonstrate how to use profiling tools with pytorch applications. Model is unoptimized to make performance problems easier to spot, and to the reader to potentially implement improvements.
@@ -67,17 +70,23 @@ options:
 
 In the current workload, users may configure the datatype used (float32, bfloat16, or automatic fp16 with grad scaling) as well as the batch size and maximum number of iterations. By default, the maximum number of iterations is limited to 20 iterations to keep profiling runs short yet representative.
 
-### Dataset Access
+## Dataset Access
 
-The datasets are available from `torchvision`, and the script `./download-data.sh` can be run once on a node with a GPU to download the data. By default, the data will be stored in a `data/` folder, and this is also the path where other scripts in this repo will search for the input data. You can also run `python train_cifar_100.py --download-only`, and if needed configure the data path using `--data-path [path]`.
+The datasets are available from `torchvision`, and the script `./download-data.sh` can be run once on a node with a GPU to download the data. By default, the data will be stored in a `data/` folder, and this is also the path where other scripts in this repo will search for the input data. You can also run `python3 train_cifar_100.py --download-only`, and if needed configure the data path using `--data-path [path]`.
 
-## Organization of the Scripts
+## Helper Scripts
 
-The scripts in this repository are meant to be used in the `slurm` job scheduler environment, without containers (baremetal). Make sure that the slurm config options match the ones available on your system (e.g., `--partition`). Each script has available a "single process" configuration (same algorithm but not using more than one GPU) to show the basic profiling tool usage.
+Each exercise folder contains bash scripts that wrap the main `train_cifar_100.py` with the appropriate setup and profiling commands. These scripts are meant to be used without containers (baremetal).
+
+Single process scripts are the simplest, as they are using a single GPU to show the basic profiling functionallities. MPI scripts are similar, just demonstrating the usage for parallel, multi-process executions. Finally, `Slurm` scripts can help launch the jobs with the `Slurm` job scheduler environment. If you are using `Slurm` scripts, make sure that the `Slurm` config options match the ones available on your system (e.g., `--partition`).
+
+Although these bash scripts should work on most system setups without any modifications, we encourage readers to carefully study them, especially the last commands which is profiling the execution.
+
+<!-- The scripts in this repository are meant to be used in the `slurm` job scheduler environment, without containers (baremetal). Make sure that the slurm config options match the ones available on your system (e.g., `--partition`). Each script has available a "single process" configuration (same algorithm but not using more than one GPU) to show the basic profiling tool usage. -->
 
 <!-- There are also `MPI` examples, and corresponding single-process scripts where appropriate.  For the `MPI` cases, the scripts assume OpenMPI and corresponding environment variables, which are used to initialize pytorch. -->
 
-# Running the Scripts
+## Running the Scripts
 
 This repository is meant as a development repository for profiling examples.  To simplify portability, please export this environment variable at the top level of the repository:
 
@@ -94,3 +103,6 @@ Additionally, depending on the cluster environment, configure the `setup.sh` to 
 ## Development of Tools
 
 AMD is continuing to update and improve profiling tools, both AMD-built tools as well as integrations into community tools. As these tools develop and continue to mature, users will find that sometimes arguments and configurations will change. We will strive to keep these examples up to date, but please open issues for any broken or outdated instructions. 
+
+
+

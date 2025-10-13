@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Version 3: Tiny LLaMA with Triton Custom Kernels
-Castille AI Workshop - AI Workload Profiling and Optimization
+AI Workshop - AI Workload Profiling and Optimization
 
 This version demonstrates custom Triton GPU kernels for memory-bound operations,
 achieving significant performance improvements through Flash Attention and fused operations.

@@ -1,26 +1,31 @@
-# Exercise 2: Memory Analysis and Optimization
 
-## Objective
+## Exercise 2: Memory Analysis and Optimization
+
+`exercise2_memory_analysis.md` from `HPCTrainingExamples/MLExamples/TinyTransformer/version1_pytorch_baseline` in the Training Examples repository
+
+### Objective
 Understand memory usage patterns, identify memory bottlenecks, and analyze memory bandwidth utilization in the baseline Tiny LLaMA model.
 
-## Prerequisites
+### Prerequisites
+
 - Completed Exercise 1
 - Basic understanding of GPU memory hierarchy
 
-## Duration
+### Duration
 **Estimated Time:** 25-30 minutes
 
-## Background
+### Background
 
 Memory optimization is crucial for transformer models because:
+
 - **Memory Bandwidth**: Often the limiting factor for inference
 - **Peak Memory**: Determines maximum batch size and model size
 - **Memory Fragmentation**: Can reduce effective memory utilization
 - **Attention Memory**: Quadratic scaling with sequence length
 
-## Instructions
+### Instructions
 
-### Step 1: Memory-Focused Profiling (10 minutes)
+#### Step 1: Memory-Focused Profiling (10 minutes)
 
 Run profiling with enhanced memory analysis:
 
@@ -59,7 +64,7 @@ python tiny_llama_v1.py \
 | 8          |                  |                 |                              |
 | 16         |                  |                 |                              |
 
-### Step 2: Memory Timeline Analysis (10 minutes)
+#### Step 2: Memory Timeline Analysis (10 minutes)
 
 Analyze memory patterns using TensorBoard:
 
@@ -69,6 +74,7 @@ tensorboard --logdir ./memory_analysis_bs8 --port 6007
 ```
 
 In TensorBoard:
+
 1. Go to the **PROFILE** tab
 2. Select **Memory Timeline** view
 3. Examine the memory usage pattern
@@ -76,16 +82,18 @@ In TensorBoard:
 **📝 Memory Pattern Analysis:**
 
 **Memory Allocation Timeline:**
+
 - At what point does memory usage peak? ________________
 - What operations cause the largest memory spikes? ________________
 - Are there memory deallocations visible? ________________
 
 **Memory Efficiency:**
+
 - Is memory usage steady or fluctuating? ________________
 - Are there unnecessary memory allocations? ________________
 - What's the memory utilization pattern during attention? ________________
 
-### Step 3: Sequence Length Scaling (8 minutes)
+#### Step 3: Sequence Length Scaling (8 minutes)
 
 Test how memory scales with sequence length:
 
@@ -124,11 +132,12 @@ python tiny_llama_v1.py \
 | 512        | 4          |                  |                  |                 |
 
 **Memory Scaling Questions:**
+
 1. Is memory scaling linear, quadratic, or something else with sequence length?
 2. Which component shows the steepest memory scaling?
 3. At what sequence length do you hit memory limits?
 
-### Step 4: Memory Bandwidth Analysis (7 minutes)
+#### Step 4: Memory Bandwidth Analysis (7 minutes)
 
 Use the memory profiling results to analyze bandwidth utilization:
 
@@ -159,50 +168,56 @@ print('Workload Type:', data['memory_bound_vs_compute_bound'])
 ```
 
 **Key Metrics:**
+
 - Arithmetic Intensity: _______ FLOPS/byte
 - Memory Bandwidth Used: _______ GB/s
 - Bandwidth Utilization: _______ %
 - Workload Classification: _______
 
-## Analysis and Interpretation
+### Analysis and Interpretation
 
-### Step 5: Memory Optimization Opportunities (10 minutes)
+#### Step 5: Memory Optimization Opportunities (10 minutes)
 
 Based on your analysis, identify optimization opportunities:
 
 **📝 Memory Optimization Assessment:**
 
 **1. Memory Scaling Efficiency**
+
 - [ ] Linear scaling with batch size (good)
 - [ ] Quadratic scaling with sequence length (attention bottleneck)
 - [ ] Peak memory much higher than average (fragmentation)
 - [ ] Memory plateaus (good memory reuse)
 
 **2. Bandwidth Utilization**
+
 - [ ] High bandwidth utilization (>70%) - compute bound
 - [ ] Medium bandwidth utilization (30-70%) - mixed workload
 - [ ] Low bandwidth utilization (<30%) - memory bound
 
 **3. Memory Hotspots** (check profiling results)
+
 - [ ] Attention QKV matrices
 - [ ] Attention score computation
 - [ ] Feed-forward intermediate tensors
 - [ ] Gradient accumulation
 
 **4. Optimization Targets**
+
 Rank these optimizations by memory impact (1=highest, 4=lowest):
 - [ ] Flash Attention (reduce attention memory) - Rank: ___
 - [ ] Gradient checkpointing (trade compute for memory) - Rank: ___
 - [ ] Mixed precision (reduce memory per parameter) - Rank: ___
 - [ ] Tensor fusion (reduce intermediate allocations) - Rank: ___
 
-### Step 6: Memory Bottleneck Identification (5 minutes)
+#### Step 6: Memory Bottleneck Identification (5 minutes)
 
 Determine if your workload is memory-bound or compute-bound:
 
 **📝 Bottleneck Classification:**
 
 Based on your bandwidth analysis:
+
 - **Arithmetic Intensity < 10 FLOPS/byte** → Memory-bound workload
 - **Arithmetic Intensity 10-100 FLOPS/byte** → Mixed workload
 - **Arithmetic Intensity > 100 FLOPS/byte** → Compute-bound workload
@@ -210,31 +225,35 @@ Based on your bandwidth analysis:
 **Your Classification:** _______________________
 
 **Evidence:**
+
 - Arithmetic intensity: _______ FLOPS/byte
 - Memory bandwidth utilization: _______ %
 - GPU compute utilization: _______ % (from Exercise 1)
 
 **Primary Bottleneck:**
+
 - [ ] Memory bandwidth (low compute util, high memory util)
 - [ ] Compute throughput (high compute util, low memory util)
 - [ ] Mixed (balanced utilization)
 - [ ] Kernel overhead (low both)
 
-## Expected Results
+### Expected Results
 
-### Memory Usage Patterns
+#### Memory Usage Patterns
+
 - **Peak Memory Growth**: Approximately linear with batch size
 - **Sequence Scaling**: Quadratic scaling due to attention matrices
 - **Memory Hotspots**: Attention computation and intermediate tensors
 - **Bandwidth Utilization**: 30-60% on most modern GPUs
 
-### Key Findings
+#### Key Findings
+
 1. **Attention Memory**: Consumes significant memory, scales quadratically
 2. **Memory Fragmentation**: Multiple small allocations create overhead
 3. **Peak vs Average**: Large difference indicates optimization opportunity
 4. **Bandwidth Bound**: Likely memory-bound for typical configurations
 
-## Troubleshooting
+### Troubleshooting
 
 **Out of Memory Errors:**
 ```bash
@@ -254,7 +273,7 @@ export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
 pip install deepspeed
 ```
 
-## Analysis Questions
+### Analysis Questions
 
 **📝 Critical Analysis Questions:**
 
@@ -284,7 +303,7 @@ pip install deepspeed
    - [ ] Mixed precision FP16/BF16 (2x memory reduction)
    - [ ] Tensor fusion (reduce intermediate allocations)
 
-## Next Steps
+### Next Steps
 
 1. **Document your memory analysis** results
 2. **Compare memory patterns** across different configurations
@@ -292,9 +311,10 @@ pip install deepspeed
 4. **Understand the memory vs compute trade-offs**
 5. **Proceed to Exercise 3** for bottleneck identification
 
-## Success Criteria
+### Success Criteria
 
 **Exercise Complete When:**
+
 - [ ] Memory profiling completed for multiple configurations
 - [ ] Memory scaling patterns understood
 - [ ] Bandwidth utilization analyzed
@@ -306,3 +326,5 @@ pip install deepspeed
 **Key Takeaway**: Memory analysis reveals that the baseline model has significant memory optimization opportunities, particularly in attention computation which scales quadratically with sequence length. Flash Attention and kernel fusion will be primary targets for Version 2.
 
 **Next Exercise**: [Exercise 3 - Bottleneck Identification](exercise_3_bottleneck_identification.md)
+
+

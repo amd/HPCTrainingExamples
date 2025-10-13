@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Version 4: Tiny LLaMA with PyTorch SDPA Optimization
-Castille AI Workshop - AI Workload Profiling and Optimization
+AI Workshop - AI Workload Profiling and Optimization
 
 This version demonstrates that library-optimized operations can match custom kernels.
 Uses PyTorch's hardware-accelerated SDPA instead of custom Triton Flash Attention.

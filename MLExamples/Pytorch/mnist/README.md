@@ -1,5 +1,7 @@
 # MNIST pytorch examples
 
+README.md from `HPCTrainingExamples/MLExamples/Pytorch/mnist` in the Training Examples repository
+
 We'll cover three different ways to run Pytorch jobs. Why are
 there different ways? Each method fits a different scenario
 and system configuration. Knowing how to use each of them is

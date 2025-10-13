@@ -1,4 +1,7 @@
+
 # Fourier Neural Operators for Scientific Applications
+
+README.md from `HPCTrainingExamples/MLExamples/Neural_Operators` in the Training Examples repository
 
 In this example, we will show how to train Fourier Neural Operators for scientific applications. This will be followed by brief performance profiling and then data transfer optimization.
 The examples in this directory are loosely based on [this](https://github.com/PolymathicAI/the_well/blob/master/docs/tutorials/dataset.ipynb) tutorial.

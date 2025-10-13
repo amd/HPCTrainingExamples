@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/bin/bash
 
 PROFILER_TOP_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
@@ -21,4 +21,4 @@ fi
 popd
 
 # Run the workload:
-mpirun -n 4 python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 20 --data-path ${PROFILER_TOP_DIR}/data
+mpirun -n 4 python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --data-path ${PROFILER_TOP_DIR}/data

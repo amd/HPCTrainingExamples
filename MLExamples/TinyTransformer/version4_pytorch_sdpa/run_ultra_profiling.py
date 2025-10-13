@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Ultra-Fused Performance Profiling and Analysis
-Castille AI Workshop - Version 4
+AI Workshop - Version 4
 
 This script provides comprehensive profiling and analysis for the ultra-fused
 Triton implementation, measuring the ultimate performance achievements.

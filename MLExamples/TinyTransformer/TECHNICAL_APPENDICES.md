@@ -1,8 +1,11 @@
-# Technical Appendices - Castille AI Workshop
+
+# Technical Appendices - AI Workshop
+
+`TECHNICAL_APPENDICES.md` from `HPCTrainingExamples/MLExamples/TinyTransformer` in the Training Examples repository
 
 **Comprehensive Technical Reference for ROCm Profiling and GPU Optimization**
 
-This document provides detailed technical appendices supporting the Castille AI Workshop on transformer optimization and ROCm profiling. For core architectural details, see [TINY_LLAMA_ARCHITECTURE.md](./TINY_LLAMA_ARCHITECTURE.md).
+This document provides detailed technical appendices supporting the AI Workshop on transformer optimization and ROCm profiling. For core architectural details, see [TINY_LLAMA_ARCHITECTURE.md](./TINY_LLAMA_ARCHITECTURE.md).
 
 ---
 
@@ -127,6 +130,7 @@ $$\begin{aligned}
 #### B.1.1 Attention Mechanism
 
 **Multi-Head Attention:**
+
 $$\begin{aligned}
 \text{MultiHead}(Q, K, V) &= \text{Concat}(h_1, h_2, \ldots, h_H)W^O \\
 \text{where } h_i &= \text{Attention}(QW_i^Q, KW_i^K, VW_i^V) \\
@@ -134,6 +138,7 @@ $$\begin{aligned}
 \end{aligned}$$
 
 **Grouped-Query Attention (GQA):**
+
 $$\begin{aligned}
 \text{GQA}(Q, K, V) &= \text{Concat}(g_1, g_2, \ldots, g_G)W^O \\
 \text{where } g_j &= \text{Concat}(h_{j,1}, h_{j,2}, \ldots, h_{j,\frac{H}{G}}) \\
@@ -143,6 +148,7 @@ $$\begin{aligned}
 #### B.1.2 Feed-Forward Networks
 
 **SwiGLU Activation:**
+
 $$\begin{aligned}
 \text{SwiGLU}(x) &= \text{Swish}(xW_1) \odot (xW_2) \\
 \text{Swish}(x) &= x \cdot \sigma(\beta x) = \frac{x}{1 + e^{-\beta x}} \\
@@ -150,6 +156,7 @@ $$\begin{aligned}
 \end{aligned}$$
 
 **GLU Variants Comparison:**
+
 $$\begin{array}{|l|c|c|}
 \hline
 \text{Activation} & \text{Formula} & \text{Computational Cost} \\
@@ -164,6 +171,7 @@ $$\begin{array}{|l|c|c|}
 #### B.1.3 Normalization Techniques
 
 **RMSNorm vs LayerNorm:**
+
 $$\begin{aligned}
 \text{LayerNorm}(x) &= \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} \cdot \gamma + \beta \\
 \text{where } \mu &= \frac{1}{d}\sum_{i=1}^d x_i, \quad \sigma^2 = \frac{1}{d}\sum_{i=1}^d (x_i - \mu)^2 \\
@@ -173,6 +181,7 @@ $$\begin{aligned}
 \end{aligned}$$
 
 **Computational Complexity:**
+
 - LayerNorm: $3d$ operations (mean, variance, normalize)
 - RMSNorm: $2d$ operations (RMS, normalize)
 - **Memory Access**: RMSNorm eliminates mean computation and centering
@@ -182,6 +191,7 @@ $$\begin{aligned}
 #### B.2.1 Kernel Fusion Efficiency
 
 **Memory Bandwidth Reduction:**
+
 $$\text{Bandwidth Reduction} = 1 - \frac{\text{Bytes}_{\text{fused}}}{\text{Bytes}_{\text{unfused}}}$$
 
 $$\begin{aligned}
@@ -194,6 +204,7 @@ $$\begin{aligned}
 #### B.2.2 Arithmetic Intensity Analysis
 
 **Roofline Model:**
+
 $$\begin{aligned}
 \text{Arithmetic Intensity} &= \frac{\text{FLOPs}}{\text{Bytes Accessed}} \\
 \text{Performance} &= \min\left(\text{Peak Compute}, \text{AI} \times \text{Peak Bandwidth}\right) \\
@@ -201,6 +212,7 @@ $$\begin{aligned}
 \end{aligned}$$
 
 **Transformer Operations Analysis:**
+
 $$\begin{array}{|l|c|c|c|}
 \hline
 \text{Operation} & \text{FLOPs} & \text{Bytes} & \text{AI (FLOPs/Byte)} \\
@@ -218,6 +230,7 @@ $$\begin{array}{|l|c|c|c|}
 #### B.3.1 Cache Analysis
 
 **Cache Hit Rate Impact:**
+
 $$\begin{aligned}
 T_{\text{effective}} &= H \times T_{\text{cache}} + (1-H) \times T_{\text{memory}} \\
 \text{where } H &= \text{cache hit rate} \\
@@ -226,11 +239,13 @@ T_{\text{memory}} &= \text{main memory access time}
 \end{aligned}$$
 
 **Optimal Block Size for Cache:**
+
 $$\text{Optimal Block Size} = \sqrt{\frac{\text{Cache Size}}{\text{Data Element Size}}}$$
 
 #### B.3.2 Memory Bandwidth Utilization
 
 **Coalescing Efficiency:**
+
 $$\begin{aligned}
 \text{Coalescing Efficiency} &= \frac{\text{Useful Bytes Transferred}}{\text{Total Bytes Transferred}} \\
 \text{For Stride } s: \quad \eta &= \frac{1}{\max(1, s)} \\
@@ -1260,7 +1275,7 @@ class PerformanceRegressionTester:
 
 ## Summary
 
-This technical appendix provides comprehensive reference material for the Castille AI Workshop, covering:
+This technical appendix provides comprehensive reference material for the AI Workshop, covering:
 
 - **Performance Analysis**: Detailed comparison matrices and scaling behavior
 - **Mathematical Foundations**: Core equations and optimization mathematics
@@ -1272,3 +1287,5 @@ This technical appendix provides comprehensive reference material for the Castil
 These appendices serve as a comprehensive technical reference for understanding transformer optimization, ROCm profiling, and GPU performance engineering principles covered throughout the workshop.
 
 For hands-on implementation details, refer to the version-specific README files in each workshop directory.
+
+

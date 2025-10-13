@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Castille AI Workshop - Version 2 Performance Study Launcher
+# AI Workshop - Version 2 Performance Study Launcher
 #
 # Runs PyTorch fused optimizations with configurable problem sizes to demonstrate
 # kernel fusion benefits and compare against V1 baseline.

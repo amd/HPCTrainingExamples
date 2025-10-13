@@ -1,4 +1,7 @@
-# Exercise 1: Understanding Triton Kernel Basics
+
+## Exercise 1: Understanding Triton Kernel Basics
+
+`exercise1_triton_basics.md from `HPCTrainingExamples/MLExamples/TinyTransformer/version3_triton/exercises` in the Training Examples repository
 
 **Objective**: Learn the fundamentals of Triton GPU programming and analyze basic kernel performance.
 
@@ -6,9 +9,10 @@
 
 **Prerequisites**: Completed Version 1 and Version 2 exercises
 
-## Background
+### Background
 
 Triton is a language and compiler for writing custom GPU kernels. It provides:
+
 - Python-like syntax for GPU programming
 - Automatic memory coalescing and optimization
 - Block-level programming model
@@ -16,9 +20,9 @@ Triton is a language and compiler for writing custom GPU kernels. It provides:
 
 In this exercise, you'll analyze the basic structure of Triton kernels and understand their performance characteristics.
 
-## Part A: Kernel Structure Analysis (15 minutes)
+### Part A: Kernel Structure Analysis (15 minutes)
 
-### Step 1: Examine the RMSNorm Kernel
+#### Step 1: Examine the RMSNorm Kernel
 
 Open `tiny_llama_v3.py` and locate the `rmsnorm_kernel` function:
 
@@ -39,7 +43,7 @@ def rmsnorm_kernel(
 3. **Constexpr Usage**: Why are `eps` and `BLOCK_SIZE` marked as `tl.constexpr`?
 4. **Memory Access Pattern**: How does the kernel ensure coalesced memory access?
 
-### Step 2: Analyze Memory Access Patterns
+#### Step 2: Analyze Memory Access Patterns
 
 Look at the variance computation loop:
 
@@ -57,7 +61,7 @@ for i in range(0, n_elements, BLOCK_SIZE):
 2. **Boundary Handling**: What does the `mask` parameter accomplish?
 3. **Reduction Pattern**: How does this implement an efficient parallel reduction?
 
-### Step 3: Compare with PyTorch Implementation
+#### Step 3: Compare with PyTorch Implementation
 
 Compare the Triton RMSNorm with the PyTorch version:
 
@@ -74,9 +78,9 @@ def pytorch_rmsnorm(x):
 2. **Memory Efficiency**: What memory advantages does the Triton version have?
 3. **Numerical Precision**: Are there any precision considerations?
 
-## Part B: Performance Profiling (20 minutes)
+### Part B: Performance Profiling (20 minutes)
 
-### Step 4: Run Basic Profiling
+#### Step 4: Run Basic Profiling
 
 Execute the Triton profiling script:
 
@@ -103,7 +107,7 @@ python3 run_triton_profiling.py
 2. **Accuracy Check**: What is the maximum error between implementations? Is this acceptable?
 3. **Memory Usage**: How does memory usage compare between the implementations?
 
-### Step 5: Analyze ROCProfiler Results
+#### Step 5: Analyze ROCProfiler Results
 
 Run the ROCProfiler analysis:
 
@@ -125,9 +129,9 @@ cat rocprof_results/triton_analysis_summary.md
 2. **Memory Bandwidth**: What memory bandwidth utilization are you achieving?
 3. **GPU Utilization**: How well are you utilizing the available compute units?
 
-## Part C: Block Size Optimization (10 minutes)
+### Part C: Block Size Optimization (10 minutes)
 
-### Step 6: Experiment with Block Sizes
+#### Step 6: Experiment with Block Sizes
 
 Modify the `rmsnorm_kernel` call in `TritonRMSNorm.forward()`:
 
@@ -146,7 +150,7 @@ for block_size in [64, 128, 256, 512, 1024]:
 2. **Memory Analysis**: How does block size affect memory access patterns?
 3. **Occupancy Impact**: What's the relationship between block size and GPU occupancy?
 
-### Step 7: Memory Access Analysis
+#### Step 7: Memory Access Analysis
 
 Create a simple memory access pattern analyzer:
 
@@ -173,11 +177,11 @@ def analyze_memory_pattern():
 2. **Transaction Overhead**: How does the number of memory transactions scale?
 3. **Cache Utilization**: What's the impact on L1/L2 cache utilization?
 
-## Exercise Results
+### Exercise Results
 
 Document your findings:
 
-### Performance Results Table
+#### Performance Results Table
 
 | Metric | Triton RMSNorm | PyTorch RMSNorm | Speedup |
 |--------|----------------|------------------|---------|
@@ -185,7 +189,7 @@ Document your findings:
 | Memory Usage (MB) | | | |
 | Bandwidth (GB/s) | | | |
 
-### Block Size Analysis
+#### Block Size Analysis
 
 | Block Size | Execution Time (ms) | Memory Transactions | GPU Occupancy |
 |------------|-------------------|-------------------|---------------|
@@ -195,14 +199,14 @@ Document your findings:
 | 512 | | | |
 | 1024 | | | |
 
-### Key Insights
+#### Key Insights
 
 1. **Best Block Size**: _____
 2. **Primary Performance Bottleneck**: _____
 3. **Memory Efficiency**: _____
 4. **Optimization Opportunities**: _____
 
-## Discussion Questions
+### Discussion Questions
 
 1. **Triton vs CUDA**: How does Triton kernel development compare to writing CUDA kernels?
 
@@ -212,7 +216,7 @@ Document your findings:
 
 4. **Integration Complexity**: What are the challenges of integrating Triton kernels into PyTorch models?
 
-## Next Steps
+### Next Steps
 
 In Exercise 2, you'll dive deeper into the SwiGLU kernel implementation and learn about:
 - Multi-dimensional memory access patterns
@@ -220,23 +224,24 @@ In Exercise 2, you'll dive deeper into the SwiGLU kernel implementation and lear
 - Advanced optimization techniques
 - Debugging Triton kernels
 
-## Common Issues and Solutions
+### Common Issues and Solutions
 
-### Issue 1: Compilation Errors
+#### Issue 1: Compilation Errors
 **Problem**: Triton kernel fails to compile
 **Solution**: Check that all tensor shapes are compatible and constexpr values are properly defined
 
-### Issue 2: Performance Regression
+#### Issue 2: Performance Regression
 **Problem**: Triton kernel is slower than PyTorch
 **Solution**: Verify block size tuning and memory access patterns; ensure proper warmup
 
-### Issue 3: Numerical Differences
+#### Issue 3: Numerical Differences
 **Problem**: Results don't match PyTorch exactly
 **Solution**: Check floating-point precision and reduction order; small differences are normal
 
-## Additional Resources
+### Additional Resources
 
 - [Triton Documentation](https://triton-lang.org/main/index.html)
 - [Triton Tutorials](https://triton-lang.org/main/getting-started/tutorials/index.html)
 - [GPU Memory Coalescing Guide](https://developer.nvidia.com/blog/how-access-global-memory-efficiently-cuda-c-kernels/)
 - [ROCm Performance Guidelines](https://rocmdocs.amd.com/)
+

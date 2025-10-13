@@ -1,4 +1,8 @@
-# Castille AI Workshop: ROCm Tools for PyTorch AI Workload Profiling
+
+
+# AI Workshop: ROCm Tools for PyTorch AI Workload Profiling
+
+README.md from `HPCTrainingExamples/MLExamples/TinyTransformer` in the Training Examples repository
 
 ## Workshop Overview
 
@@ -140,7 +144,7 @@ to and from device, runtime API activity, and any ROCtx markers. View the trace 
 ## Directory Structure
 
 ```
-castille-ai-workshop-training/
+ai-workshop-training/
  README.md                              # This overview
  setup/                                 # Environment and prerequisites
     environment_setup.md               # Detailed setup instructions
@@ -203,7 +207,7 @@ castille-ai-workshop-training/
     regression_tester.py               # Automated regression testing
     report_generator.py                # Comprehensive report generation
  slides/                                # Presentation materials
-     luka_presentation_materials/        # Castille AI workshop slides
+     luka_presentation_materials/        # AI workshop slides
          workshop_overview.pptx
          profiling_methodology.pptx
          optimization_techniques.pptx
@@ -281,6 +285,7 @@ castille-ai-workshop-training/
 - **Both achieve 3.1x speedup** - demonstrates that highly-optimized PyTorch operations can match custom kernels
 
 ### Profiling Tool Capabilities
+
 - **PyTorch Profiler**: Framework overhead, operator timing, memory tracking
 - **rocprofv3**: Kernel execution stats, device activity and runtime API timeline tracing, hardware counter collection
 - **Manual Timing**: CUDA synchronization for accurate GPU timing
@@ -288,6 +293,7 @@ castille-ai-workshop-training/
 ## Contributing
 
 This workshop is designed for continuous improvement. Contributions are welcome:
+
 - Additional optimization techniques
 - Enhanced profiling methodologies
 - Extended GPU architecture support
@@ -304,7 +310,7 @@ This workshop is designed for continuous improvement. Contributions are welcome:
 
 ## Authors and Acknowledgments
 
-Developed for the Castille AI Workshop (October 16, 2024) by HPC/AI performance engineers with extensive experience optimizing production ML workloads on AMD GPU infrastructure.
+Developed for the CASTIEL AI Workshop (October 16, 2024) by HPC/AI performance engineers with extensive experience optimizing production ML workloads on AMD GPU infrastructure.
 
 ## License
 
@@ -313,3 +319,5 @@ MIT License - See LICENSE file for details
 ---
 
 **Ready to start profiling? Begin with the [Environment Setup Guide](setup/environment_setup.md)**
+
+

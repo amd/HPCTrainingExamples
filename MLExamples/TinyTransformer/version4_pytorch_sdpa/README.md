@@ -1,4 +1,7 @@
+
 # Version 4: Ultra-Fused Triton Implementation
+
+README.md from `HPCTrainingExamples/MLExamples/TinyTransformer/version4_pytorch_sdpa` in the Training Examples repository
 
 **Objective**: Achieve maximum performance through ultra-fusion techniques and state-of-the-art optimization
 
@@ -40,6 +43,7 @@ Ultra-fusion represents the theoretical limit of kernel fusion, combining entire
 #### Ultra-Fusion Efficiency Analysis
 
 **Kernel Launch Overhead Elimination:**
+
 $$\begin{aligned}
 \text{Baseline Kernel Count} &: K_{\text{base}} = 12 \text{ kernels per block} \\
 \text{Ultra-Fused Count} &: K_{\text{ultra}} = 1 \text{ kernel per block} \\
@@ -48,6 +52,7 @@ $$\begin{aligned}
 \end{aligned}$$
 
 **Memory Bandwidth Optimization:**
+
 $$\begin{aligned}
 \text{Baseline Memory Access} &: \sum_{i=1}^{12} (\text{Input}_i + \text{Output}_i) \\
 \text{Ultra-Fused Access} &: \text{Input}_{\text{block}} + \text{Output}_{\text{block}} \\
@@ -59,6 +64,7 @@ $$\begin{aligned}
 #### Complete Mathematical Flow
 
 **Single-Kernel Transformer Block:**
+
 $$\begin{aligned}
 \text{Input:} \quad & x \in \mathbb{R}^{B \times S \times D} \\
 \text{Attention Block:} \quad & \text{attn\_out} = x + \text{Attention}(\text{RMSNorm}(x)) \\
@@ -665,6 +671,7 @@ final_output = residual_2 + ffn_output
 ```
 
 **Memory Efficiency:**
+
 - **Register Reuse**: Maximizes data kept in fast registers
 - **Memory Coalescing**: Optimal access patterns for global memory
 - **Cache Optimization**: Designed for L1/L2 cache efficiency
@@ -725,6 +732,7 @@ python3 run_ultra_profiling.py
 ```
 
 **Analysis Outputs:**
+
 - End-to-end performance comparison
 - Scaling behavior analysis
 - Kernel efficiency metrics
@@ -751,16 +759,19 @@ cat ultra_profiling_results/ultra_performance_report.md
 ### Scaling Characteristics
 
 **Sequence Length Scaling:**
+
 - **Short sequences (≤256)**: 4.0-5.0x speedup
 - **Medium sequences (512)**: 3.5-4.5x speedup
 - **Long sequences (1024+)**: 3.0-4.0x speedup
 
 **Batch Size Scaling:**
+
 - **Single batch**: 3.5-4.5x speedup
 - **Small batches (2-4)**: 4.0-5.0x speedup
 - **Large batches (8+)**: 3.5-4.5x speedup
 
 **Model Size Scaling:**
+
 - **Small models**: 4.5-5.0x speedup
 - **Medium models**: 4.0-4.5x speedup
 - **Large models**: 3.5-4.0x speedup
@@ -789,16 +800,19 @@ else:
 ### 2. Memory Hierarchy Optimization
 
 **L1 Cache Optimization:**
+
 - Temporal locality maximization
 - Spatial locality optimization
 - Cache line utilization
 
 **L2 Cache Strategy:**
+
 - Weight reuse patterns
 - Prefetching optimization
 - Bank conflict avoidance
 
 **Global Memory Efficiency:**
+
 - Coalescing optimization
 - Bandwidth utilization
 - Access pattern optimization
@@ -824,12 +838,14 @@ else:
 ### Exercise 1: Ultra-Fusion Architecture (90 minutes)
 
 **Focus Areas:**
+
 - Ultra-fusion architecture analysis
 - Advanced memory management
 - Performance engineering deep dive
 - Roofline model application
 
 **Key Learning Objectives:**
+
 1. Understand ultra-fusion principles and trade-offs
 2. Analyze advanced memory hierarchy optimization
 3. Apply performance engineering techniques
@@ -897,6 +913,7 @@ rocprof --input roofline_config.txt python3 tiny_llama_v4.py
 ### Performance Metrics
 
 **Key Metrics to Monitor:**
+
 1. **Kernel Efficiency**: Execution time, occupancy, utilization
 2. **Memory Performance**: Bandwidth, cache hit rates, access patterns
 3. **System Integration**: CPU-GPU coordination, data transfer efficiency
@@ -1014,3 +1031,4 @@ This implementation demonstrates the pinnacle of what's possible with current GP
 - [AMD ROCm Community](https://github.com/RadeonOpenCompute/ROCm)
 - [Triton Community](https://github.com/openai/triton)
 - [GPU Optimization Forums](https://developer.amd.com/community/)
+

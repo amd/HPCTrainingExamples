@@ -1,4 +1,7 @@
-# Exercise 1: Ultra-Fusion Architecture and Design
+
+## Exercise 1: Ultra-Fusion Architecture and Design
+
+`exercise1_ultra_fusion.md` from `HPCTrainingExamples/MLExamples/TinyTransformer/version4_pytorch_sdpa/exercises` in the Training Examples repository
 
 **Objective**: Understand ultra-fusion principles and analyze the most advanced optimization techniques in GPU kernel development.
 
@@ -6,7 +9,7 @@
 
 **Prerequisites**: Completed all exercises in Versions 1-3
 
-## Background
+### Background
 
 Ultra-fusion represents the pinnacle of GPU optimization, where entire transformer blocks are processed in single kernel launches with minimal memory traffic. This exercise explores the advanced techniques used to achieve maximum performance:
 
@@ -15,9 +18,9 @@ Ultra-fusion represents the pinnacle of GPU optimization, where entire transform
 - Ultra-efficient data flow patterns
 - State-of-the-art performance engineering
 
-## Part A: Ultra-Fusion Architecture Analysis (30 minutes)
+### Part A: Ultra-Fusion Architecture Analysis (30 minutes)
 
-### Step 1: Understand the Ultra-Fused Transformer Block
+#### Step 1: Understand the Ultra-Fused Transformer Block
 
 Examine the `ultra_fused_transformer_block_kernel` in `tiny_llama_v4.py`:
 
@@ -45,7 +48,7 @@ def ultra_fused_transformer_block_kernel(
 3. **Computational Overlap**: How are different computations overlapped for efficiency?
 4. **Register Usage**: How is register pressure managed with so many operations?
 
-### Step 2: Analyze the Computation Flow
+#### Step 2: Analyze the Computation Flow
 
 Follow the ultra-fused execution pattern:
 
@@ -77,7 +80,7 @@ residual_2 = x_token
 3. **Parallelization**: Analyze how different operations can be parallelized
 4. **Critical Path**: Identify the critical path through the computation
 
-### Step 3: Compare with Previous Versions
+#### Step 3: Compare with Previous Versions
 
 Create a comparison table of kernel launches:
 
@@ -104,9 +107,9 @@ Create a comparison table of kernel launches:
 2. **Memory Bandwidth**: Estimate memory bandwidth reduction
 3. **Cache Efficiency**: Analyze L1/L2 cache utilization improvements
 
-## Part B: Advanced Memory Management Analysis (35 minutes)
+### Part B: Advanced Memory Management Analysis (35 minutes)
 
-### Step 4: Memory Hierarchy Optimization
+#### Step 4: Memory Hierarchy Optimization
 
 Analyze how the ultra-fused kernel optimizes memory usage:
 
@@ -181,7 +184,7 @@ def analyze_memory_hierarchy():
 memory_analysis = analyze_memory_hierarchy()
 ```
 
-### Step 5: Cache Optimization Strategies
+#### Step 5: Cache Optimization Strategies
 
 Examine cache optimization techniques:
 
@@ -236,7 +239,7 @@ def analyze_cache_optimization():
 cache_analysis = analyze_cache_optimization()
 ```
 
-### Step 6: Register Pressure Management
+#### Step 6: Register Pressure Management
 
 Analyze register usage optimization:
 
@@ -294,9 +297,9 @@ def analyze_register_pressure():
 register_analysis = analyze_register_pressure()
 ```
 
-## Part C: Performance Engineering Deep Dive (25 minutes)
+### Part C: Performance Engineering Deep Dive (25 minutes)
 
-### Step 7: Roofline Model Analysis
+#### Step 7: Roofline Model Analysis
 
 Apply roofline analysis to ultra-fused kernels:
 
@@ -384,7 +387,7 @@ def roofline_analysis():
 roofline_results = roofline_analysis()
 ```
 
-### Step 8: Performance Prediction Model
+#### Step 8: Performance Prediction Model
 
 Create a performance prediction model:
 
@@ -447,35 +450,38 @@ def performance_prediction_model():
 performance_predictions = performance_prediction_model()
 ```
 
-## Exercise Results
+### Exercise Results
 
-### Ultra-Fusion Analysis Summary
+#### Ultra-Fusion Analysis Summary
 
 Fill in your analysis results:
 
 **Memory Efficiency:**
+
 - Register usage per token: _____
 - Memory traffic reduction: _____%
 - L1 cache hit rate: _____%
 
 **Performance Characteristics:**
+
 - Arithmetic intensity: _____ FLOPs/byte
 - Performance bottleneck: _____ (compute/memory)
 - Theoretical peak: _____ TFLOPS
 
 **Optimization Impact:**
+
 - Kernel count reduction: _____x
 - Memory bandwidth savings: _____%
 - Register utilization: _____%
 
-### Key Insights
+#### Key Insights
 
 1. **Most Critical Optimization**: _____
 2. **Biggest Performance Bottleneck**: _____
 3. **Next Optimization Opportunity**: _____
 4. **Scalability Limitations**: _____
 
-## Discussion Questions
+### Discussion Questions
 
 1. **Ultra-Fusion Trade-offs**: What are the main trade-offs of ultra-fusion (complexity, maintainability, portability)?
 
@@ -487,31 +493,33 @@ Fill in your analysis results:
 
 5. **Future Directions**: What future GPU architecture features would enable even better ultra-fusion?
 
-## Advanced Challenges
+### Advanced Challenges
 
-### Challenge 1: Register Optimization
+#### Challenge 1: Register Optimization
 Redesign a portion of the ultra-fused kernel to reduce register pressure while maintaining performance.
 
-### Challenge 2: Memory Pattern Analysis
+#### Challenge 2: Memory Pattern Analysis
 Implement a tool to visualize memory access patterns in the ultra-fused kernel.
 
-### Challenge 3: Performance Modeling
+#### Challenge 3: Performance Modeling
 Create a detailed performance model that predicts ultra-fused kernel performance across different GPU architectures.
 
-### Challenge 4: Debugging Framework
+#### Challenge 4: Debugging Framework
 Design a debugging framework for ultra-fused kernels that can isolate performance issues.
 
-## Next Steps
+### Next Steps
 
 This exercise completes your understanding of ultra-fusion techniques. In Exercise 2, you'll:
+
 - Compare all four versions comprehensively
 - Analyze performance scaling characteristics
 - Create optimization decision frameworks
 - Design production deployment strategies
 
-## Additional Resources
+### Additional Resources
 
 - [Advanced GPU Programming Patterns](https://developer.nvidia.com/blog/cuda-pro-tip-optimize-pointer-aliasing)
 - [Memory Optimization Techniques](https://rocmdocs.amd.com/en/latest/Programming_Guides/Performance_optimization.html)
 - [Roofline Model Deep Dive](https://crd.lbl.gov/departments/computer-science/PAR/research/roofline/)
 - [Register Pressure Analysis](https://developer.nvidia.com/blog/cuda-pro-tip-understand-fat-binaries-jit-caching/)
+

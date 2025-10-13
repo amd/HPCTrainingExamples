@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/bin/bash
 #SBATCH --job-name=pytorch-training
 #SBATCH --nodes=1
 #SBATCH --ntasks=4 # N GPUs per node * number of nodes
@@ -24,4 +24,5 @@ if [ ! -f data/cifar-100-python ]; then
 fi
 popd
 
+# Run the workload:
 srun --nodes=1 --ntasks=4 python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --data-path ${PROFILER_TOP_DIR}/data

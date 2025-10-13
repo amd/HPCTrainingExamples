@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Triton Kernel Profiling and Analysis
-Castille AI Workshop - Version 3
+AI Workshop - Version 3
 
 This script profiles Triton kernels and analyzes their performance
 characteristics compared to PyTorch native operations.

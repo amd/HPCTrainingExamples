@@ -1,4 +1,7 @@
-# Exercise 2: SwiGLU Kernel Optimization
+
+## Exercise 2: SwiGLU Kernel Optimization
+
+`exercise2_swiglu_optimization.md` from `HPCTrainingExamples/MLExamples/TinyTransformer/version3_triton` in the Training Examples repository
 
 **Objective**: Master advanced Triton kernel development through SwiGLU optimization and learn multi-dimensional memory access patterns.
 
@@ -6,9 +9,10 @@
 
 **Prerequisites**: Completed Exercise 1
 
-## Background
+### Background
 
 The SwiGLU (Swish-Gated Linear Unit) is a key component in modern transformer architectures. It combines:
+
 - Gate projection with SiLU activation
 - Up projection
 - Element-wise multiplication
@@ -16,9 +20,9 @@ The SwiGLU (Swish-Gated Linear Unit) is a key component in modern transformer ar
 
 Traditional implementations require multiple kernel launches and intermediate storage. Our Triton kernel fuses the gate and up projections with activation, reducing memory traffic and improving performance.
 
-## Part A: SwiGLU Kernel Deep Dive (20 minutes)
+### Part A: SwiGLU Kernel Deep Dive (20 minutes)
 
-### Step 1: Analyze the Kernel Structure
+#### Step 1: Analyze the Kernel Structure
 
 Examine the `swiglu_kernel` in `tiny_llama_v3.py`:
 
@@ -39,7 +43,7 @@ def swiglu_kernel(
 2. **Memory Layout**: How are the tensors laid out in memory (batch, sequence, feature dimensions)?
 3. **Compute Intensity**: What is the arithmetic intensity of this kernel?
 
-### Step 2: Understand the Computation Flow
+#### Step 2: Understand the Computation Flow
 
 Follow the kernel execution:
 
@@ -68,7 +72,7 @@ result = gate_activated * up_sum
 2. **Reduction Pattern**: Explain the dot product computation strategy
 3. **Activation Fusion**: How is the SiLU activation integrated efficiently?
 
-### Step 3: Memory Access Pattern Visualization
+#### Step 3: Memory Access Pattern Visualization
 
 Create a visualization tool for memory access patterns:
 
@@ -117,9 +121,9 @@ def visualize_swiglu_access_pattern():
 visualize_swiglu_access_pattern()
 ```
 
-## Part B: Performance Optimization (25 minutes)
+### Part B: Performance Optimization (25 minutes)
 
-### Step 4: Block Size Tuning
+#### Step 4: Block Size Tuning
 
 Create a systematic block size tuning script:
 
@@ -188,7 +192,7 @@ def tune_swiglu_block_sizes():
 block_results = tune_swiglu_block_sizes()
 ```
 
-### Step 5: Memory Layout Optimization
+#### Step 5: Memory Layout Optimization
 
 Experiment with different memory layouts:
 
@@ -249,7 +253,7 @@ def estimate_bandwidth(x, swiglu, exec_time):
 analyze_memory_layouts()
 ```
 
-### Step 6: Arithmetic Intensity Analysis
+#### Step 6: Arithmetic Intensity Analysis
 
 Calculate and optimize arithmetic intensity:
 
@@ -321,9 +325,9 @@ def analyze_arithmetic_intensity():
 intensity_results = analyze_arithmetic_intensity()
 ```
 
-## Part C: Advanced Optimization Techniques (15 minutes)
+### Part C: Advanced Optimization Techniques (15 minutes)
 
-### Step 7: Implement Kernel Variants
+#### Step 7: Implement Kernel Variants
 
 Create optimized kernel variants:
 
@@ -409,9 +413,9 @@ def benchmark_kernel_variants():
 benchmark_kernel_variants()
 ```
 
-## Exercise Results
+### Exercise Results
 
-### Performance Comparison Table
+#### Performance Comparison Table
 
 | Configuration | Time (ms) | Speedup vs PyTorch | Memory Usage | Bandwidth (GB/s) |
 |---------------|-----------|-------------------|--------------|------------------|
@@ -421,7 +425,7 @@ benchmark_kernel_variants()
 | Block Size (1,1,128) | | | | |
 | Memory Optimized | | | | |
 
-### Arithmetic Intensity Analysis
+#### Arithmetic Intensity Analysis
 
 - **Total FLOPs**: _____ GFLOPs
 - **Memory Traffic**: _____ MB
@@ -429,14 +433,14 @@ benchmark_kernel_variants()
 - **Performance Bottleneck**: _____ (compute/memory)
 - **Optimization Strategy**: _____
 
-### Key Findings
+#### Key Findings
 
 1. **Optimal Block Size**: _____
 2. **Memory Layout Impact**: _____
 3. **Arithmetic Intensity**: _____
 4. **Performance Bottleneck**: _____
 
-## Discussion Questions
+### Discussion Questions
 
 1. **Multi-dimensional Blocking**: How do you choose optimal block sizes for multi-dimensional problems?
 
@@ -446,10 +450,12 @@ benchmark_kernel_variants()
 
 4. **Scalability**: How do these optimizations scale with different problem sizes?
 
-## Next Steps
+### Next Steps
 
 Exercise 3 will cover Flash Attention implementation, focusing on:
+
 - Memory-efficient attention patterns
 - Tiling strategies for large sequences
 - Numerical stability in custom kernels
 - Advanced debugging techniques
+

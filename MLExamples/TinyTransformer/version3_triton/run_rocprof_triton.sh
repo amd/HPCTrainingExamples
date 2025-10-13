@@ -1,7 +1,7 @@
 #!/bin/bash
 """
 ROCProfiler Analysis for Triton Kernels
-Castille AI Workshop - Version 3
+AI Workshop - Version 3
 
 This script runs comprehensive ROCm profiling on Triton kernels
 to analyze GPU utilization, memory patterns, and kernel efficiency.

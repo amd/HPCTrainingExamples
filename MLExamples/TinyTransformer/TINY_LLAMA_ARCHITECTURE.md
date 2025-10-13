@@ -1,4 +1,7 @@
+
 # Tiny LLaMA Model Architecture and Mathematical Foundations
+
+`TINY_LLAMA_ARCHITECTURE.md` from `HPCTrainingExamples/MLExamples/TinyTransformer` in the Training Examples repository
 
 ## Table of Contents
 
@@ -31,6 +34,7 @@ The Tiny LLaMA model follows the standard transformer decoder architecture with 
 $$E = \text{Embedding}(x) \in \mathbb{R}^{B \times S \times d}$$
 
 Where:
+
 - $B$ = batch size
 - $S$ = sequence length
 - $d$ = model dimension (hidden_dim)
@@ -43,6 +47,7 @@ Unlike standard LayerNorm, Tiny LLaMA uses RMSNorm for improved numerical stabil
 $$\text{RMSNorm}(x) = \frac{x}{\sqrt{\frac{1}{d} \sum_{i=1}^{d} x_i^2 + \epsilon}} \cdot \gamma$$
 
 **Mathematical Advantages:**
+
 - Eliminates mean centering computation
 - Reduces numerical precision requirements
 - Better gradient flow properties
@@ -58,6 +63,7 @@ k_n &= \text{RoPE}(k, n) = k \cdot e^{in\theta}
 \end{aligned}$$
 
 Where:
+
 - $m, n$ are position indices
 - $\theta_j = 10000^{-2j/d}$ for dimension $j$
 - Complex multiplication implemented as 2D rotation matrix
@@ -89,6 +95,7 @@ $$\begin{aligned}
 \end{aligned}$$
 
 **Parameter Matrices:**
+
 - $W_i^Q \in \mathbb{R}^{d \times d_k}$ (Query projection)
 - $W_i^K \in \mathbb{R}^{d \times d_k}$ (Key projection)
 - $W_i^V \in \mathbb{R}^{d \times d_v}$ (Value projection)
@@ -181,7 +188,7 @@ $$\begin{aligned}
 
 ## Implementation Patterns
 
-### 1. PyTorch Module Hierarchy
+### 1. PyTorch Model Hierarchy
 
 ```python
 TinyLlama
@@ -213,6 +220,7 @@ Output: [batch_size, seq_len, hidden_dim] → [batch_size, seq_len, vocab_size]
 ```
 
 **Key Implementation Details:**
+
 - Pre-norm architecture (normalization before sub-layers)
 - Residual connections around each sub-layer
 - Weight sharing between embedding and output projection
@@ -243,20 +251,24 @@ $$\begin{aligned}
 ### 1. Attention Complexity
 
 **Standard Attention:**
+
 - Time: $O(S^{2} \cdot d)$ per layer
 - Memory: $O(S^{2})$ for attention matrix storage
 
 **With Sequence Length $S = 128$:**
+
 - Attention matrix: $128 \times 128 = 16,384$ elements per head
 - Total attention matrices: $8 \times 16,384 = 131,072$ elements per layer
 
 ### 2. FFN Complexity
 
 **Per Layer:**
+
 - Time: $O(S \cdot d \cdot d_{\text{ff}})$
 - Parameters: $2 \times d \times d_{\text{ff}} + d_{\text{ff}} \times d = 3 \times d \times d_{\text{ff}}$
 
 **For Tiny LLaMA:**
+
 - FFN operations: $S \times d \times d_{\text{ff}} = 128 \times 256 \times 512 = 16,777,216$ operations per layer
 
 ### 3. Total Model Complexity
@@ -272,6 +284,7 @@ $$\begin{aligned}
 \end{aligned}$$
 
 **For Default Configuration:**
+
 - Attention: $4 \times 128 \times 128 \times 256 \times 8 = 134,217,728$ FLOPs per layer
 - FFN: $4 \times 128 \times 3 \times 256 \times 512 = 201,326,592$ FLOPs per layer
 - **Total per forward pass**: ~1.34 GFLOPs (batch_size=1)
@@ -281,10 +294,12 @@ $$\begin{aligned}
 ### 1. Memory Bandwidth Requirements
 
 **Parameter Access:**
+
 - Model parameters: ~2.8M parameters × 4 bytes = 11.2 MB
 - Bandwidth requirement: 11.2 MB per forward pass
 
 **Activation Memory:**
+
 - Peak activation memory: ~50 MB (batch_size=8, seq_len=128)
 - Memory bandwidth utilization: Critical for performance
 
@@ -293,11 +308,13 @@ $$\begin{aligned}
 $$\text{Arithmetic Intensity} = \frac{\text{FLOPs}}{\text{Bytes Accessed}}$$
 
 **For Tiny LLaMA:**
+
 - FLOPs per forward pass: ~1.34 × 10^9
 - Memory accessed: ~61.2 MB
 - **Arithmetic Intensity**: ~21.9 FLOPs/byte
 
 **Performance Implications:**
+
 - Compute-bound on modern GPUs (good for optimization)
 - Benefits significantly from kernel fusion
 - Memory layout optimization crucial for performance
@@ -305,12 +322,14 @@ $$\text{Arithmetic Intensity} = \frac{\text{FLOPs}}{\text{Bytes Accessed}}$$
 ### 3. Optimization Opportunities
 
 **Identified Bottlenecks:**
+
 1. **Attention Memory**: $O(S^{2})$ memory scaling
 2. **Kernel Launch Overhead**: Multiple small operations
 3. **Memory Bandwidth**: Activation tensor transfers
 4. **Load Imbalance**: Variable sequence lengths
 
 **Optimization Strategies:**
+
 1. **Kernel Fusion**: Combine multiple operations
 2. **Flash Attention**: Reduce memory complexity
 3. **Custom Kernels**: Triton implementations
@@ -337,3 +356,4 @@ This architecture serves as the foundation for all four workshop versions:
 - **Version 4**: Ultra-fused implementations
 
 Each version maintains this core architecture while progressively optimizing the implementation for maximum performance on AMD ROCm hardware.
+
