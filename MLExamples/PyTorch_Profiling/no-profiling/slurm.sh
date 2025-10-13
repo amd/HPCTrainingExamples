@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/bin/bash
 #SBATCH --job-name=pytorch-training
 #SBATCH --nodes=1
 #SBATCH --ntasks=4 # N GPUs per node * number of nodes

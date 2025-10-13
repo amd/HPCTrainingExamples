@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/bin/bash
 
 if [[ -z "${MASTER_ADDR}" ]]; then
     export MASTER_ADDR=`hostname`
