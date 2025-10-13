@@ -26,5 +26,5 @@ popd
 
 # Collect GPU timeline traces with rocprofv3:
 srun --nodes=1 --ntasks=4 \
-rocprofv3 --sys-trace --output-format pftrace --output-directory slurm --output-file traces -- \
+rocprofv3 --sys-trace --output-format pftrace --output-directory slurm --output-file pid%pid%_traces -- \
 python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --data-path ${PROFILER_TOP_DIR}/data     
