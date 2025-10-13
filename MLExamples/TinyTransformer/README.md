@@ -144,7 +144,7 @@ to and from device, runtime API activity, and any ROCtx markers. View the trace 
 ## Directory Structure
 
 ```
-castille-ai-workshop-training/
+ai-workshop-training/
  README.md                              # This overview
  setup/                                 # Environment and prerequisites
     environment_setup.md               # Detailed setup instructions
