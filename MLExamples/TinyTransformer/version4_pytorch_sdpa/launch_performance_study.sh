@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Castille AI Workshop - Version 4 Performance Study Launcher
+# AI Workshop - Version 4 Performance Study Launcher
 #
 # Runs PyTorch SDPA optimized model to demonstrate that library implementations
 # can match custom Triton kernels. Achieves same 3.1x speedup as V3.

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Castille AI Workshop - Version 3 Performance Study Launcher
+# AI Workshop - Version 3 Performance Study Launcher
 #
 # Runs custom Triton GPU kernels with configurable problem sizes to demonstrate
 # low-level optimization benefits and compare against V1/V2.

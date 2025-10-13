@@ -2,7 +2,7 @@
 """
 Tiny LLaMA V1: PyTorch Baseline with Comprehensive Profiling Integration
 
-Enhanced version of the baseline Tiny LLaMA implementation for the Castille AI Workshop.
+Enhanced version of the baseline Tiny LLaMA implementation for the AI Workshop.
 This version integrates PyTorch Profiler, DeepSpeed FLOPS profiler, and comprehensive
 performance analysis capabilities while maintaining deterministic execution.
 

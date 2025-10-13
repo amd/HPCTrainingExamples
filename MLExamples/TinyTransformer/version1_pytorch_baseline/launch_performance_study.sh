@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Castille AI Workshop - Version 1 Performance Study Launcher
+# AI Workshop - Version 1 Performance Study Launcher
 #
 # Runs PyTorch baseline with configurable problem sizes to demonstrate
 # performance characteristics and establish baseline metrics.

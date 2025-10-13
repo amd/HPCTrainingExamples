@@ -1,6 +1,6 @@
 
 
-# Castille AI Workshop: ROCm Tools for PyTorch AI Workload Profiling
+# AI Workshop: ROCm Tools for PyTorch AI Workload Profiling
 
 README.md from `HPCTrainingExamples/MLExamples/TinyTransformer` in the Training Examples repository
 
@@ -207,7 +207,7 @@ castille-ai-workshop-training/
     regression_tester.py               # Automated regression testing
     report_generator.py                # Comprehensive report generation
  slides/                                # Presentation materials
-     luka_presentation_materials/        # Castille AI workshop slides
+     luka_presentation_materials/        # AI workshop slides
          workshop_overview.pptx
          profiling_methodology.pptx
          optimization_techniques.pptx
@@ -310,7 +310,7 @@ This workshop is designed for continuous improvement. Contributions are welcome:
 
 ## Authors and Acknowledgments
 
-Developed for the Castille AI Workshop (October 16, 2024) by HPC/AI performance engineers with extensive experience optimizing production ML workloads on AMD GPU infrastructure.
+Developed for the CASTIEL AI Workshop (October 16, 2024) by HPC/AI performance engineers with extensive experience optimizing production ML workloads on AMD GPU infrastructure.
 
 ## License
 

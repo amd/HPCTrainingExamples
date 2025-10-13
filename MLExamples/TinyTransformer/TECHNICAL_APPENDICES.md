@@ -1,11 +1,11 @@
 
-# Technical Appendices - Castille AI Workshop
+# Technical Appendices - AI Workshop
 
 `TECHNICAL_APPENDICES.md` from `HPCTrainingExamples/MLExamples/TinyTransformer` in the Training Examples repository
 
 **Comprehensive Technical Reference for ROCm Profiling and GPU Optimization**
 
-This document provides detailed technical appendices supporting the Castille AI Workshop on transformer optimization and ROCm profiling. For core architectural details, see [TINY_LLAMA_ARCHITECTURE.md](./TINY_LLAMA_ARCHITECTURE.md).
+This document provides detailed technical appendices supporting the AI Workshop on transformer optimization and ROCm profiling. For core architectural details, see [TINY_LLAMA_ARCHITECTURE.md](./TINY_LLAMA_ARCHITECTURE.md).
 
 ---
 
@@ -1275,7 +1275,7 @@ class PerformanceRegressionTester:
 
 ## Summary
 
-This technical appendix provides comprehensive reference material for the Castille AI Workshop, covering:
+This technical appendix provides comprehensive reference material for the AI Workshop, covering:
 
 - **Performance Analysis**: Detailed comparison matrices and scaling behavior
 - **Mathematical Foundations**: Core equations and optimization mathematics
