@@ -57,7 +57,7 @@ The following example will use datasets from ["The Well"](https://github.com/Pol
 ## Training a Model
 Run a few episodes of training with
 ```bash
-python3 fno.py --num_episodes=5 --batch_size=4
+python3 fno.py --num_episodes=5 --batchsize=4
 ```
 The script automatically downloads the dataset if it does not exist yet, so it might take a few minutes.
 If the dataset has already been downloaded, you can pass the location of the dataset via `--base_path=/my/path/to/datasets/`. 
@@ -85,18 +85,19 @@ After obtaining a profile by running
 ````bash
 python3 fno_profile.py --torch_profile --num_episodes=1
 ````
-open the resulting JSON file in Perfetto as explained [in this excercise](ttps://github.com/amd/HPCTrainingExamples/tree/main/MLExamples/PyTorch_Profiling/torch-profiler).
+open the resulting JSON file in Perfetto as explained [in this excercise](https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples/PyTorch_Profiling/torch-profiler).
 Depending on your hardware, the trace should look something like this:
 
 ![Screenshot of profile output of the model training opened in Perfetto.](images/FNO_profile.jpg)
 
-Apparently, the training throughput is mainly limited by the data transfer of the individual training batches from the host to the GPU device indicated by the `hipMemcpyWithStream` blocks.
+It is important to keep in mind that oftentimes the training throughput might not be limited by the available compute performance but rather by providing the GPU with the training data in time.
+The following paragraph provides a few tips on how to optimize the data transfer and potentially increase the training performance.
 
 ## Optimizing the Data Transfer
-For good performance on ML tasks, it is crucial to optimize the data pipeline to hide the memory transfer of the training data with the computations, i.e. evaluating the model and performing backpropagation.
+For good performance on ML tasks, it is crucial to optimize the data pipeline to hide the preparation and transfer of the training data with computations, i.e. evaluating the model and performing backpropagation.
 This depends on the ratio between the computational cost of the model and the size of the training data, the batch size, available memory bandwidth, etc. and is thus case-specific.
 However, a few general steps can be considered to improve the performance:
-- Use pinned memory for the dataset to improve memory throughput.
+- Use pinned memory for the dataset to improve memory throughput and allow for asynchronous memory transfers.
   This can be easily done by passing an additional flag to the `DataLoader`:
 ```python
 data_loader = torch.utils.data.DataLoader(
@@ -106,8 +107,9 @@ data_loader = torch.utils.data.DataLoader(
     pin_memory = True
 )
 ``` 
-- The PyTorch `DataLoader` supports to prefetch batches into GPU memory.
-  This can be utlized by passing the following arguments to the `DataLoader` constructor:
+- The PyTorch `DataLoader` also supports multi-threading and prefetching.
+  This allows to prepare multiple batches of training data with multiple threads on the host before they are actually requested to reduce the idle time on the GPU.   
+  This feature can be utilized by passing the following arguments to the `DataLoader` constructor:
 ```python
 data_loader = torch.utils.data.DataLoader(
     dataset = dataset_train,
@@ -119,7 +121,7 @@ data_loader = torch.utils.data.DataLoader(
 }
 ```
 - Data transfer between host and device is significantly impacted by the affinity between CPUs, GPUs, and memory on multi-GPU systems.
-  Have a look at [this exercise](https://github.com/amd/HPCTrainingExamples/tree/main/Affinity) to learn about how to correctly set the affinity of the problem.
+  Have a look at [this exercise](https://github.com/amd/HPCTrainingExamples/tree/main/Affinity) to learn how to set the correct affinity for a specific system.
 
 Add these strategies to the training script and test the performance by looking at the number of `batches/s` you achieve.
 > [!NOTE]
