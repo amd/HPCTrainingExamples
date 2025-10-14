@@ -339,6 +339,8 @@ python tiny_llama_v1.py --batch-size 8 --seq-len 128 --num-steps 10
 
 #### Step 2: Enable PyTorch Profiler
 ```bash
+# Make directory for the profiles
+mkdir pytorch_profiles
 # Run with PyTorch profiler enabled
 python tiny_llama_v1.py \
     --batch-size 8 \

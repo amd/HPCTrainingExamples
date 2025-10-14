@@ -47,7 +47,8 @@ python tiny_llama_v1.py --batch-size 8 --seq-len 128 --num-steps 20
 Now let's add PyTorch profiler to understand what's happening under the hood:
 
 ```bash
-## Run with PyTorch profiler enabled
+# Run with PyTorch profiler enabled
+mkdir exercise1_profiles
 python tiny_llama_v1.py \
     --batch-size 8 \
     --seq-len 128 \

@@ -300,7 +300,7 @@ need the environment variable `HSA_XNACK` set to one.
 ```
 module load rocm hip-python
 export HSA_XNACK=1
-python3 hipblas_numpy_USM.py
+python3 hipblas_numpy_USM_example.py
 ```
 
 ## Calling hipFFT from Python using HIP-Python
