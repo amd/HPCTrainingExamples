@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/bin/bash
 #SBATCH --job-name=pytorch-training
 #SBATCH --nodes=1
 #SBATCH --ntasks=4 # N GPUs per node * number of nodes
@@ -26,5 +26,5 @@ popd
 
 # Profile the workload with rocprofv3:
 srun --nodes=1 --ntasks=4 \
-rocprofv3 --stats --kernel-trace --output-directory slurm --output-file kernels -- \
+rocprofv3 --stats --kernel-trace --output-format csv --output-directory slurm --output-file pid%pid%_kernels -- \
 python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --data-path ${PROFILER_TOP_DIR}/data
