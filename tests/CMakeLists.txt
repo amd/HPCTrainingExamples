@@ -1202,6 +1202,10 @@ add_test(NAME Pytorch_Torchaudio_Check_Import COMMAND ../torchaudio_check_import
 set_property(TEST Pytorch_Torchaudio_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST Pytorch_Torchaudio_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME Pytorch_Deepspeed_Check_Import COMMAND ../deepspeed_check_import.sh )
+set_property(TEST Pytorch_Deepspeed_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST Pytorch_Deepspeed_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 add_test(NAME Pytorch_Triton_Check_Import COMMAND ../triton_check_import.sh )
 set_property(TEST Pytorch_Triton_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST Pytorch_Triton_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
