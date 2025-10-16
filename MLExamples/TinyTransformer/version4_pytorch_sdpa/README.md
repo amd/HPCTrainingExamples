@@ -725,6 +725,7 @@ Maximum speedup: Y.YYx
 Peak throughput: ZZZZ tokens/s
 ```
 
+<!--
 ### 2. Run Comprehensive Profiling
 
 ```bash
@@ -744,6 +745,7 @@ python3 run_ultra_profiling.py
 ls ultra_profiling_results/
 cat ultra_profiling_results/ultra_performance_report.md
 ```
+-->
 
 ## Performance Analysis
 
@@ -875,7 +877,6 @@ else:
 1. **Profile-Guided Optimization**
    ```bash
    # Profile → Analyze → Optimize → Validate
-   python3 run_ultra_profiling.py
    # Identify bottlenecks
    # Apply targeted optimizations
    # Measure improvements
@@ -895,6 +896,7 @@ else:
    # Performance regression detection
    ```
 
+<!--
 ## Integration with ROCm Ecosystem
 
 ### ROCProfiler Integration
@@ -909,6 +911,7 @@ rocprof --memory-trace --sys-trace python3 tiny_llama_v4.py
 # Roofline analysis
 rocprof --input roofline_config.txt python3 tiny_llama_v4.py
 ```
+-->
 
 ### Performance Metrics
 
