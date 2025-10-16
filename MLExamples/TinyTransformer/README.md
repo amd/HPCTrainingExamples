@@ -109,12 +109,12 @@ please follow the workshop exercises in
 ```bash
 cd version2_pytorch_fused
 python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
-```
 
 # Expected output:
 # Loss: 6.9310 
 # Speed: 187.6 samples/sec (2x faster)
 # Memory: 370.4 MB
+```
 
 To compare the baseline version1 to the fused version2 performance,
 follow instructions in [version2_pytorch_fused/README.md](https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples/TinyTransformer/version2_pytorch_fused#step-1-baseline-comparison).
@@ -156,7 +156,7 @@ cd version4_pytorch_sdpa/
 python3 tiny_llama_v4.py
 ```
 
-<-- 
+<!-- 
 ```
 ### 4. Performance Debugging Exercise - 15 minutes
 ```bash

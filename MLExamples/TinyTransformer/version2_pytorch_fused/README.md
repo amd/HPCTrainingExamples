@@ -586,11 +586,12 @@ The `--list-stats` option provides a hotspot list of GPU kernels and a list of d
 kernel that you want to analyze further and use that in the subsequent analyze command. For example, we are
 analyzing dispatch 1538 here.
 
-
+<!--
 **Expected Results:**
 - Detailed kernel performance metrics
 - Memory hierarchy utilization analysis
 - Optimization recommendations for Version 3
+-->
 
 ## Key Performance Improvements
 

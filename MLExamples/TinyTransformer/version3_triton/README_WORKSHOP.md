@@ -218,6 +218,7 @@ cat README.md
 
 ---
 
+<!--
 ##  Profiling Commands
 
 ### Basic Profiling
@@ -244,6 +245,7 @@ rocprofv2 --kernel-trace -o v3_trace.json python tiny_llama_v3.py --batch-size 8
 4. **Launch Overhead:** Too many small kernel launches?
 
 ---
+-->
 
 ##  Key Learnings
 
