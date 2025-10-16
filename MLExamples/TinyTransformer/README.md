@@ -101,6 +101,34 @@ python tiny_llama_v1.py --batch-size 8 --seq-len 128 --num-steps 20
 # Memory: ~522 MB
 ```
 
+For a deeper analysis with the PyTorch profiler, and visualizing the output in TensorBoard,
+please follow the workshop exercises in
+[version1_pytorch_baseline/README.md](https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples/TinyTransformer/version1_pytorch_baseline#workshop-exercises).
+
+### 3. Run Version 2 (Fused) - 5 minutes
+```bash
+cd version2_pytorch_fused
+python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
+```
+
+# Expected output:
+# Loss: 6.9310 
+# Speed: 187.6 samples/sec (2x faster)
+# Memory: 370.4 MB
+
+To compare the baseline version1 to the fused version2 performance,
+follow instructions in [version2_pytorch_fused/README.md](https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples/TinyTransformer/version2_pytorch_fused#step-1-baseline-comparison).
+
+Try profiling this workload with ROCm profilers using commands listed in
+[version2_pytorch_fused/README.md](https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples/TinyTransformer/version2_pytorch_fused#exercise-3-rocm-tools-deep-dive).
+An example of using rocprofv3 on this example is provided below:
+
+```bash
+rocprofv3 --kernel-trace --stats --truncate-kernels -- python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
+```
+The above command produces a hotspot list of GPU kernels. The `--truncate-kernels` option helps remove arguments
+from the kernel name for better readability.
+
 ### 3. Run Version 3 (Optimized) - 5 minutes
 ```bash
 cd version3_triton/
@@ -112,6 +140,24 @@ python tiny_llama_v3.py --batch-size 8 --seq-len 128 --num-steps 20
 # Memory: ~282 MB (46% less!)
 ```
 
+An exercise similar to the one you did for version2 is recommended for
+this version as well using ROCm profiling tools. As an example, you can
+collect a comprehensive timeline trace with host and device activity
+with `rocprof-sys` using the command below:
+
+```bash
+rocprof-sys-run --profile --trace -- python tiny_llama_v3.py --batch-size 8 --seq-len 128 --num-steps 30
+```
+View the trace at [https://ui.perfetto.dev](https://ui.perfetto.dev).
+
+### 4. Run Version 4 (Ultra optimized) - 5 minutes
+```bash
+cd version4_pytorch_sdpa/
+python3 tiny_llama_v4.py
+```
+
+<-- 
+```
 ### 4. Performance Debugging Exercise - 15 minutes
 ```bash
 cd version3_triton/exercises/performance_debugging/
@@ -124,22 +170,7 @@ cd version3_triton/exercises/performance_debugging/
 # Stage 2: Slow (15 samp/s) → Fix tensor layout
 # Stage 3: Fast (2065 samp/s) → Optimal!
 ```
-
-### 5. Profile with ROCm Tools (Optional)
-```bash
-# Basic profiling
-rocprofv3 --stats --kernel-trace --truncate-kernels -- python tiny_llama_v3.py --batch-size 8 --seq-len 128 --num-steps 10
-```
-The above command produces a hotspot list of GPU kernels. The `--truncate-kernels` option helps remove arguments
-from the kernel name for better readability.
-
-```bash
-# Detailed kernel trace
-rocprofv3 --runtime-trace --output-format pftrace -- python tiny_llama_v3.py --batch-size 8 --seq-len 128 --num-steps 5
-```
-The above command generates a Perfetto trace file with a timeline view of GPU kernels, memory copies
-to and from device, runtime API activity, and any ROCtx markers. View the trace at
-[https://ui.perfetto.dev](https://ui.perfetto.dev).
+-->
 
 ## Directory Structure
 
