@@ -300,7 +300,7 @@ rocprofv3 --kernel-trace --output-format csv json -- python3 script.py
 
 ```bash
 # System-wide timeline trace with runtime instrumentation of host functions and MPI calls
-rocprof-sys-python -- script.py
+rocprof-sys-run --profile --trace -- script.py
 
 # Optionally, create configuration file for tuning runtime parameters
 rocprof-sys-avail -G /path/to/.rocprofsys.cfg
