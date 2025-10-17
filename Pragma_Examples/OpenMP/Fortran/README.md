@@ -27,7 +27,7 @@ check for available nodes.
 ```
 squeue
 ```
-check for you job(s). In case it was not terminated correctly, you may have to use
+check for your job(s). In case it was not terminated correctly, you may have to use
 ```
 scancel <JobID>
 ```
@@ -38,8 +38,7 @@ You can choose the Cray Fortran compiler (ftn) or the amdflang-new compiler.
 ```
 module load amdflang-new
 ```
-The module sets ```FC=amdflang```
-for you
+This module sets ```FC=amdflang``` for you.
 
 ##### ftn compiler on aac7:
 Prepare the environment:
@@ -53,7 +52,7 @@ module load rocm
 ```
 export FC=ftn
 ```
-#### on all systems independent of the compiler:
+#### On all systems independent of the compiler:
 This flag
 ```
 export HSA_XNACK=1
@@ -62,22 +61,22 @@ will enable no memory copies (use of `unified_shared_memory`) on MI300A
 ```
 export HSA_XNACK=0
 ```
-will disable this and behave similar to a discrete GPU with memory copies.
+will disable this and behave similarly to a discrete GPU with memory copies.
 Check with
 ```
 rocminfo
 ```
-if xnack+ (unified memory enabled) or xnack- (with memory copies) is set.
+if ```xnack+``` (unified memory enabled) or ```xnack-``` (with memory copies) is set.
 
-Note: In the beta release of the amdflang-new compiler ```HSA_XNACK=0``` with a code with !$omp requires unified_shared_memory can be compiled in some cases as if no unified_shared_memory is required. This is a behavior not according to the standard and will lead to an error message in future releases! Use the compiler flag ```-fopenmp-force-usm``` to enforce the correct behavior. This flag can also be used to enforce unified_shared_memory everywhere in the code compiled with it.
+Note: In the beta release of the amdflang-new compiler ```HSA_XNACK=0``` with a code with ```!$omp requires unified_shared_memory``` can be compiled in some cases as if no ```unified_shared_memory``` is required. This is a behavior not according to the standard and will lead to an error message in future releases! Use the compiler flag ```-fopenmp-force-usm``` to enforce the correct behavior. This flag can also be used to enforce unified_shared_memory everywhere in the code compiled with it.
 
 The exercises in the folders numbered 1 to 6 are small examples of what one may encounter when porting a real world code. 
-Each exercise has it's own README with instructions.
-The exercises 1-5 have a CPU only code to try porting yourself and (intermediate steps) of a solution. Excercise 6 does not have a version to port yourself, but explains a common challenge for porting to discrete GPUs.
+Each exercise has its own README with instructions.
+The exercises 1-5 have a CPU only code to try porting yourself and (intermediate steps) of a solution. Exercise 6 does not have a version to port yourself, but explains a common challenge for porting to discrete GPUs.
 The instructions assume you work on MI300A and some of the exercises explore the differences of using the discrete GPU or APU programming model (```HSA_XNACK=0``` or ```=1```).
-The reccomended order to do the exercises is the order in which they are numbered and first all with unified memory and then again with map clauses or data region.
+The recommended order to do the exercises is the order in which they are numbered and first all with unified memory and then again with map clauses or data region.
 
-Excercise 8 is a small app with a Jacobi solver. Note: A C/C++ version of this Fortran code is explained in detail a Blogpost https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html. The Fortran version is additionally described here: https://rocm.blogs.amd.com/ecosystems-and-partners/fortran-journey/README.html
+Exercise 8 is a small app with a Jacobi solver. Note: A C/C++ version of this Fortran code is explained in detail a Blogpost https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html. The Fortran version is additionally described here: https://rocm.blogs.amd.com/ecosystems-and-partners/fortran-journey/README.html
 
 Choose one of the exercises in the sub-directories and use the README there for instructions:
 ```
@@ -85,8 +84,8 @@ cd 1_saxpy
 cd 2_vecadd  
 cd 3_reduction 
 cd 4_reduction_scalars  
-cd 5_reduction_array  
-cd 6_device_routine 
+cd 5_reduction_array
+cd 6_device_routine
 cd 7_derived_types
 cd 8_jacobi
 ```
