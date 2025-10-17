@@ -76,9 +76,14 @@ The exercises 1-5 have a CPU only code to try porting yourself and (intermediate
 The instructions assume you work on MI300A and some of the exercises explore the differences of using the discrete GPU or APU programming model (```HSA_XNACK=0``` or ```=1```).
 The recommended order to do the exercises is the order in which they are numbered and first all with unified memory and then again with map clauses or data region.
 
-Exercise 8 is a small app with a Jacobi solver. Note: A C/C++ version of this Fortran code is explained in detail a Blogpost https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html. The Fortran version is additionally described here: https://rocm.blogs.amd.com/ecosystems-and-partners/fortran-journey/README.html
+Exercise 8 is a small app with a Jacobi solver. 
+Note: A C/C++ version of this Fortran code is explained in detail in a blogpost 
+https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html. 
+The Fortran version is additionally described here: 
+https://rocm.blogs.amd.com/ecosystems-and-partners/fortran-journey/README.html
+<hr>
 
-Choose one of the exercises in the sub-directories and use the README there for instructions:
+Choose one of the exercises in the sub-directories and use the README there for instructions, we reccomend to start with 1_saxpy:
 ```
 cd 1_saxpy
 cd 2_vecadd  
