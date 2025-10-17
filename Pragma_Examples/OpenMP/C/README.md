@@ -34,11 +34,8 @@ to terminate a job.
 
 You can choose the Cray C compiler (cc) or the amdclang compiler.
 ##### amdclang compiler on aac7:
+Note that in CPE/25.03 the CC compiler wrapper leads to a segfault at program finalization. Therefore we decided to not reccomend to use the compiler wrappers for now on aac7 with amdclang. If you have rocm 6.3.3 or greater in that version of CPE you should not encounter any issues.
 ```
-module load PrgEnv-amd
-module load craype-x86-genoa
-module load craype-accel-amd-gfx942
-module load cce
 module load rocm
 ```
 ```
@@ -53,6 +50,7 @@ module load craype-accel-amd-gfx942
 module load cce
 module load rocm
 ```
+Note: This will overwrite the CC compiler wrapper for cray clang++, but will work for the portable Makefiles in this repository for the cray clang compiler:
 ```
 export CC=cc
 ```
