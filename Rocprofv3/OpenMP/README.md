@@ -3,9 +3,9 @@
 
 In this series of examples, we will demonstrate profiling with rocprofv3 on a platform using an AMD Instinct&trade; MI300 GPU. ROCm releases (6.2+) now include rocprofv3.
 
-Note that the focus of this exercise is on rocprofv3 profiler, not on how to achieve optimal performance on MI300A. This exercise was last tested with ROCm 6.4.2 on MI300A [MPCDF Viper-GPU](https://docs.mpcdf.mpg.de/doc/computing/viper-gpu-user-guide.html).
+Note that the focus of this exercise is on rocprofv3 profiler, not on how to achieve optimal performance on MI300A. This exercise was last tested with ROCm 6.4.2 on MI300A [MPCDF Viper-GPU](https://docs.mpcdf.mpg.de/doc/computing/viper-gpu-user-guide.html). It is important to note that starting from ROCm 7.0, the default output format has change from csv to db, thus, so getting the described csv outputs it is necessary in this case to specify `--output-format csv`.
 
-The examples are based on [Fortran+OpenMP Jacobi porting example from HPCTrainingExamples](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/Fortran/7_jacobi). 
+The examples are based on [Fortran+OpenMP Jacobi porting example from HPCTrainingExamples](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/Fortran/8_jacobi). 
 
 
 ## Setup environment
@@ -14,10 +14,10 @@ Download examples repo and navigate to the Fortran+OpenMP Jacobi example exercis
 
 ```
 git clone https://github.com/amd/HPCTrainingExamples.git
-cd HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/7_jacobi/1_jacobi_usm
+cd HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/8_jacobi/1_jacobi_usm
 ```
 
-Load the necessary modules, including flang-new compiler (module name for flang-new compiler on your system might differ, check for `rocm-afar-drop`, `amd-llvm` or something similar).
+Load the necessary modules, including amdflang (a.k.a. flang-new) compiler. Note that the module name for amdflang compiler on your system might differ, check for `rocm-afar-drop`, `amd-llvm`, `amdflang-new` or something similar.
 
 ```
 module load rocm
@@ -79,23 +79,23 @@ NOTE: When profing OpenMP offloading, do not forget to use `--kernel-trace` opti
 
 ### First kernel information
 
-Collect first profiles (do not forget `--` between rocprofv3 options and application binary).
+Collect first profiles (do not forget `--` between rocprofv3 options and application binary). For a more consistent output path, we will you optional arguments `--output-directory` and `--output-file`. To make the commands compatible with ROCm >=7.0, we will add `--output-format csv`, which is not strictly necessary for ROCm 6 version of rocprofv3.
 
 ```
-rocprofv3 --kernel-trace -- ./jacobi -m 1024
+rocprofv3 --kernel-trace --output-directory omp_output --output-file omp --output-format csv -- ./jacobi -m 1024
 ```
 
-rocprofv3 should generate 2 output files (XXXXX numbers are corresponding to the process id): 
+rocprofv3 should generate 2 output files (without specifying output directory and file name, generated profiles will have XXXXX numbers corresponding to the process id in their file name): 
 
-  1. `XXXXX_agent_info.csv` with information for the used hardware APU/GPU and CPU.
-  2. `XXXXX_kernel_traces.csv` with information per each call of the kernel.
+  1. `omp_output/omp_agent_info.csv` with information for the used hardware APU/GPU and CPU.
+  2. `omp_output/omp_kernel_traces.csv` with information per each call of the kernel.
 
 Check those output files using (adapt file paths if needed):
 
 ```
-cat *_agent_info.csv
+cat omp_output/omp_agent_info.csv
 echo
-head *_kernel_trace.csv
+head omp_output/omp_kernel_trace.csv
 ```
 
 The output should be:
@@ -127,16 +127,16 @@ So the kernel trace file shows each kernel call, with its start and end timestam
 
 ### Create statistics
 
-One can create kernel statistics file using `--stats` option:
+One can create kernel statistics file using `--stats` option. Additionally, consider adding `-S` option to see the summary printed at the end of execution:
 
 ```
-rocprofv3 --stats --kernel-trace -- ./jacobi -m 1024
+rocprofv3 --stats --kernel-trace --output-directory omp_output --output-file omp --output-format csv -- ./jacobi -m 1024
 ```
 
 This creates two additional output files:
 
-  1. `XXXXX_kernel_stats.csv` with statistics grouped by each kernel.
-  2. `XXXXX_domain_stats.csv` with statistics grouped by domain, such as KERNEL_DISPATCH, HIP_API, etc.
+  1. `omp_output/omp_kernel_stats.csv` with statistics grouped by each kernel.
+  2. `omp_output/omp_domain_stats.csv` with statistics grouped by domain, such as KERNEL_DISPATCH, HIP_API, etc.
 
 
 The content of kernel stats file should resemble the following:
@@ -149,7 +149,7 @@ The content of kernel stats file should resemble the following:
 "__omp_offloading_32_2f3c0__QMboundary_modPboundary_conditions_l24",1000,9759423,9759.423000,4.85,7640,13080,673.670901
 ```
 
-In this file, all the calls to a specific OpenMP block are in the same row, and you can see in the column Calls how times this OpenMP block was called. The column Percentage means how much percentage of the execution time this OpenMP block takes. 
+In this file, all the calls to a specific OpenMP block are in the same row, and you can see in the column Calls how many times this OpenMP block was called. The column Percentage means how much percentage of the GPU execution time this OpenMP block takes. 
 
 **In many cases, simply checking the kernel stats file might be sufficient for your profiling!**
 
@@ -157,10 +157,10 @@ If it is not, continue by visualizing the traces.
 
 ### Visualizing traces using `Perfetto`
 
-Create trace file suitable for `Perfetto`. If the application execution is short (such as this example), consider using `--sys-trace` option to collect as much information as possible:
+Create trace file suitable for `Perfetto`. If the application execution is short (such as this example), consider using `--sys-trace` option instead of `--runtime-trace` to collect even more information.
 
 ```
-rocprofv3 --runtime-trace --output-format pftrace -- ./jacobi -m 1024
+rocprofv3 --runtime-trace --output-format pftrace --output-directory omp_output --output-file omp_trace -- ./jacobi -m 1024
 ```
 
 This should generate a pftrace file.
@@ -168,7 +168,7 @@ This should generate a pftrace file.
 Download the trace to your laptop:
 
 ```
-scp -P <port> aac6.amd.com:<path_to_file>/XXXXX_results.pftrace jacobi.pftrace
+scp aac6.amd.com:<path_to_file>/omp_output/omp_trace_results.pftrace jacobi.pftrace
 ```
 
 Now on your laptop:
@@ -198,8 +198,8 @@ less $ROCM_PATH/lib/rocprofiler/gfx_metrics.xml
 Create an `input_counters.txt` counters input file with the counters you would like to collect, for example:
 
 ```
-echo "pmc: VALUUtilization VALUBusy FetchSize WriteSize MemUnitStalled" > input_counters.txt
-echo "pmc: GPU_UTIL CU_OCCUPANCY MeanOccupancyPerCU MeanOccupancyPerActiveCU" >> input_counters.txt
+echo "pmc: VALUUtilization VALUBusy FetchSize MemUnitStalled" > input_counters.txt
+echo "pmc: WriteSize GPU_UTIL CU_OCCUPANCY MeanOccupancyPerCU MeanOccupancyPerActiveCU" >> input_counters.txt
 ```
 
 Note that not all the GPUs have the same counters, so if profile the counters above generates errors, consider testing a single counter (e.g., `VALUUtilization` only).
@@ -207,25 +207,25 @@ Note that not all the GPUs have the same counters, so if profile the counters ab
 Execute with the counters you just added:
 
 ```
- rocprofv3 -i input_counters.txt --kernel-trace -- ./jacobi -m 1024
- ```
+rocprofv3 -i input_counters.txt --kernel-trace --output-directory omp_counters --output-file omp --output-format csv -- ./jacobi -m 1024
+```
  
 You'll notice that rocprofv3 runs 2 passes, one for each set of counters we have in that file. Now the data is in two different folders: pmc_1 and pmc_2. Explore the content of the pmc_* directories.
 
 ```
-head pmc_1/*_counter_collection.csv
+head omp_counters/pmc_1/omp_counter_collection.csv
 echo
-head pmc_2/*_counter_collection.csv
+head omp_counters/pmc_2/omp_counter_collection.csv
 ```
 
 ## Next steps
 
 Try to add `export HSA_XNACK=1`, and check the performance. Is it better or worse? Repeat the profiling commands and compare the outputs. What is the overhead of profiling?
 
+Explore the example with roctx markers which discusses a common performance optimization for applications on MI300A in 
+```
+cd Rocprofv3/OpenMP/Allocations_and_MemoryPool_MI300A/Fortran/README.md
+```
 
-**Explore the example with roctx markers which discusses a common performance optimization for applications on MI300A in 
-```
-cd Example_Allocations_and_MemoryPool_MI300A/Fortran/README.md
-```
 **Finally, try to profile your own application!**
 
