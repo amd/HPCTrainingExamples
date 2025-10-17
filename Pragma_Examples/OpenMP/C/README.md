@@ -4,21 +4,16 @@ The C porting exercises can be found here (this is the directory of this README)
 ```
 cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/C
 ```
-load the amdclang++  compiler and set up the environment
+#### on aac6: 
 
-## on aac6: 
+Load the amdclang compiler and set up the environment 
 ```
 module load rocm
-```
-or
-```
-module load aomp/amdclang-19.0
-```
-```
 export CC=amdclang
-export CXX=amdclang++
 ```
-## on aac7:
+Note that everyone shares a single node, so performance can be severely impacted due to a noisy environment.
+
+#### on aac7:
 Get an interactive session on a node:
 ```
 srun -N 1 --mem=100GB --gpus=1 --pty bash -i
@@ -32,60 +27,60 @@ check for available nodes.
 ```
 squeue
 ```
-check for you job(s). In case it was not terminated correctly, you may have to use
+check for your job(s). In case it was not terminated correctly, you may have to use
 ```
 scancel <JobID>
 ```
 to terminate a job.
 
-For amd compiler:
+You can choose the Cray C compiler (cc) or the amdclang compiler.
+##### amdclang compiler on aac7:
 ```
 module load PrgEnv-amd
-module load craype-accel-amd-gfx942
 module load craype-x86-genoa
+module load craype-accel-amd-gfx942
+module load cce
 module load rocm
 ```
-For cray compiler:
+```
+export CC=amdclang
+```
+##### Cray C compiler on aac7:
+Prepare the environment:
 ```
 module load PrgEnv-cray
-module load craype-accel-amd-gfx942
 module load craype-x86-genoa
+module load craype-accel-amd-gfx942
+module load cce
 module load rocm
 ```
-Check, if 
 ```
-CC --version
+export CC=cc
 ```
-shows a C compiler with offload capabilities.
-Some Makefiles use the environment variable CXX, hence:
-```
-export CXX=CC
-```
-## Both systems:
-
+#### On all systems independent of the compiler:
 This flag
 ```
 export HSA_XNACK=1
 ```
-will enable no memory copies (use of unified_shared_memory) on MI300A
+will enable no memory copies (use of `unified_shared_memory`) on MI300A
 ```
 export HSA_XNACK=0
 ```
-will disable this and behave similar to a discrete GPU.
+will disable this and behave similarly to a discrete GPU.
 Check with
 ```
 rocminfo
 ```
-if xnack+ (unified memory enabled) or xnack- (with memory copies) is set.
-# Excercises
-The exercises in the folders numbered 1 to 6 are small examples of what one may encounter when porting a real world code. 
-Each exercise has it's own README with instructions.
-The exercises 1-6 have a CPU only code to try porting yourself and (intermediate steps) of a solution. Excercise 6 does not have a version to port yourself, but explains a common challenge for porting to discrete GPUs.
-The instructions assume you work on MI300A and some of the exercises explore the differences of using the discrete GPU or APU programming model (HSA_XNACK=0 or =1).
-The reccomended order to do the exercises is the order in which they are numbered, but any sub-folder with exercises has instructions to do them stand-alone.
-Excercise 7 is a small app with a Jacobi solver. (Note: This code is explained in detail a blogpost https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-jacobi-readme/.) 
+if ```xnack+``` (unified memory enabled) or ```xnack-``` (with memory copies) is set.
 
-Choose one of the exercises in the sub-directories and use the README there for instructions (reccomended: follow them as they are numbered, first do each exercise with unified memory and later without):
+The exercises in the folders numbered 1 to 6 are small examples of what one may encounter when porting a real world code. 
+Each exercise has its own README with instructions.
+The exercises 1-5 have a CPU only code to try porting yourself and (intermediate steps) of a solution. Exercise 6 does not have a version to port yourself, but explains a common challenge for porting to discrete GPUs.
+The instructions assume you work on MI300A and some of the exercises explore the differences of using the discrete GPU or APU programming model (```HSA_XNACK=0``` or ```=1```).
+The recommended order to do the exercises is the order in which they are numbered and first all with unified memory and then again with map clauses or data region.
+Exercise 8 is a small app with a Jacobi solver that you can find in the CXX section. (Note: This code is explained in detail a blogpost https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-jacobi-readme/.) 
+
+Choose one of the exercises in the sub-directories and use the README there for instructions (recommended: follow them as they are numbered, do all exercises first with unified memory and then with map clauses):
 ```
 cd 1_saxpy
 cd 2_vecadd  

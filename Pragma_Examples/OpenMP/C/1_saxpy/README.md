@@ -25,7 +25,7 @@ There are 6 different enumerated folders. (Reccomendation: ```vimdiff saxpy.cpp 
 
 #### 0) the serial CPU code.
 ```
-cd 0_saxpy_serial_portyourself
+cd 0_saxpy_portyourself
 ```
 Try to port this example yourself. If you are stuck, use the step by step solution in folders 1-6 and read the instructions for those exersices below. Recommendation for your first port: use ```#pragma omp requires unified_shared memory``` and ```export HSA_XNACK=1``` (before running) that you do not have to worry about map clauses. Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behaviour of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps.
 

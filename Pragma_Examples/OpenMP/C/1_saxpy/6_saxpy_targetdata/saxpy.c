@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <omp.h>
-#include<memory>
+//#include<memory>
 
 void saxpy() {
    int N=1000000;
@@ -8,8 +8,8 @@ void saxpy() {
    double t = 0.0;
    double tb, te;
 
-   x = new (std::align_val_t(128)) float[N];
-   y = new (std::align_val_t(128)) float[N];
+   x = (float *)malloc(N*sizeof(float));
+   y = (float *)malloc(N*sizeof(float));
 
    #pragma omp target enter data map(to:x[0:N],y[0:N])
    #pragma omp target teams distribute parallel for
@@ -31,7 +31,7 @@ void saxpy() {
 
    printf("Time of kernel: %lf\n", t);
 
-   //#pragma omp target update from(y[0:N])
+   #pragma omp target update from(y[0:N])
 
    printf("plausibility check output:\n");
    printf("y[0] %lf\n",y[0]);
