@@ -7,12 +7,11 @@ cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran
 #### on aac6:
 
 Follow the message of the day how to allocate a gpu interactively.
-Load the amdflang-new compiler and set up the environment 
+Load the amdflang-new compiler to set up the environment 
 ```
 module load amdflang-new
-export FC=amdflang
 ```
-Note that everyone shares a single node, so performance can be severely impacted due to a noisy environment.
+This module sets ```FC=amdflang``` for you.
 
 #### on aac7:
 Get an interactive session on a node:
