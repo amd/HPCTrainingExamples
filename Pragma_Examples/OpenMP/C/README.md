@@ -16,7 +16,7 @@ Note that everyone shares a single node, so performance can be severely impacted
 #### on aac7:
 Get an interactive session on a node:
 ```
-srun -N 1 --mem=100GB --gpus=1 --pty bash -i
+srun -N 1 --mem=100GB --gpus=1
 ```
 Note: you will get 1 GPU and 100 GB of memory. This will allow others to use the remaining resources of a node.
 Useful commands:
@@ -66,7 +66,7 @@ will enable no memory copies (use of `unified_shared_memory`) on MI300A
 ```
 export HSA_XNACK=0
 ```
-will disable this and behave similarly to a discrete GPU.
+will disable this and behave similarly to a discrete GPU with memory copies.
 Check with
 ```
 rocminfo
@@ -78,9 +78,9 @@ Each exercise has its own README with instructions.
 The exercises 1-5 have a CPU only code to try porting yourself and (intermediate steps) of a solution. Exercise 6 does not have a version to port yourself, but explains a common challenge for porting to discrete GPUs.
 The instructions assume you work on MI300A and some of the exercises explore the differences of using the discrete GPU or APU programming model (```HSA_XNACK=0``` or ```=1```).
 The recommended order to do the exercises is the order in which they are numbered and first all with unified memory and then again with map clauses or data region.
-Exercise 8 is a small app with a Jacobi solver that you can find in the CXX section. (Note: This code is explained in detail a blogpost https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-jacobi-readme/.) 
 
-Choose one of the exercises in the sub-directories and use the README there for instructions (recommended: follow them as they are numbered, do all exercises first with unified memory and then with map clauses):
+Exercise 8 is a small app with a Jacobi solver that you can find in the CXX section. (Note: This code is explained in detail a blogpost https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-jacobi-readme/.) 
+Choose one of the exercises in the sub-directories and use the README there for instructions:
 ```
 cd 1_saxpy
 cd 2_vecadd  
