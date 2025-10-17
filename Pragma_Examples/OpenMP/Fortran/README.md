@@ -6,6 +6,7 @@ cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran
 ```
 #### on aac6:
 
+Follow the message of the day how to allocate a gpu interactively.
 Load the amdflang-new compiler and set up the environment 
 ```
 module load amdflang-new
