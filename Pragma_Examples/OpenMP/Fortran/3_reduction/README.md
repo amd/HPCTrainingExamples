@@ -5,7 +5,7 @@ README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/2_reduction` 
 
 This exercise focusses on two things:
 - Part 1: how to port a reduction to the GPU
-- Part 2: importance of map clauses on discrete GPUs or HSA_XNACK=0 on MI300A
+- Part 2: importance of map clauses on discrete GPUs or ```HSA_XNACK=0``` on MI300A
   
 First, prepare the environment (loading modules, set environment variables), if you didn't do so before.
 ### For Part 1 and 2: serial CPU version to port
