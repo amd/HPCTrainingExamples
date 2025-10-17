@@ -6,13 +6,12 @@ cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/C
 ```
 #### on aac6: 
 
+Follow the message of the day how to allocate one GPU interactively.
 Load the amdclang compiler and set up the environment 
 ```
 module load rocm
 export CC=amdclang
 ```
-Note that everyone shares a single node, so performance can be severely impacted due to a noisy environment.
-
 #### on aac7:
 Get an interactive session on a node:
 ```
