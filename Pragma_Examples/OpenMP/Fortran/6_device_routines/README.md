@@ -116,8 +116,8 @@ make
 ./device_routine
 ```
 
-Some of the other clauses that can be uses are the `device_type(nohost)` that only generates device code 
-for the declare target clauses. Check out the example at
+Another clause that can be useful is the `device_type(nohost)` that only generates device code 
+for the target, otherwise it will also generate a host version of that subroutine or function. Check out the example at
 
 ```
 cd ../4_device_routine_device_type
