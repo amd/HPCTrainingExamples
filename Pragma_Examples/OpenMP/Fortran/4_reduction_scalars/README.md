@@ -5,7 +5,7 @@ README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/4_reduction_s
 
 This folder has two code versions:
 
-0) a serial cpu version to port yourself. 
+### 0 a serial cpu version to port yourself. 
 
 Hint: don't forget to port the Makefile.
 
@@ -18,4 +18,4 @@ Run:
 ./reduction_scalar
 ```
 
-1) an openmp offload ported solution. It shows how you can do a reduction of multiple scalars in one kernel. Note that scalars do not need to be explicitly mapped.
+### 1 an openmp offload ported solution. It shows how you can do a reduction of multiple scalars in one kernel. Note that scalars do not need to be explicitly mapped.
