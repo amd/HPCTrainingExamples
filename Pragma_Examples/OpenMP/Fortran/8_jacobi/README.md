@@ -4,6 +4,7 @@
 Note: This exercise code and solutions were tested with amdflang-new. Using cray ftn is also possible. Setup the enviroment accordingly.
 
 The C++ version of this code is described in detail https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html
+
 The Fortran code is described here: https://rocm.blogs.amd.com/ecosystems-and-partners/fortran-journey/README.html
 ```
 cd 0_jacobi_portyourself
