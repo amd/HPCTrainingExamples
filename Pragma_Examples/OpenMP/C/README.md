@@ -15,7 +15,7 @@ export C_COMPILER=amdclang
 #### on aac7:
 Get an interactive session on a node:
 ```
-srun -N 1 --mem=100GB --gpus=1
+salloc -N 1 --mem=100GB --gpus=1
 ```
 Note: you will get 1 GPU and 100 GB of memory. This will allow others to use the remaining resources of a node.
 Useful commands:
@@ -34,7 +34,7 @@ to terminate a job.
 
 You can choose the Cray C compiler (cc) or the amdclang compiler.
 ##### amdclang compiler on aac7:
-Note that in CPE/25.03 the cc compiler wrapper leads to a segfault at program finalization. Therefore we decided to not reccomend to use the compiler wrappers for now on aac7 with amdclang. If you have rocm 6.3.3 or greater in that version of CPE you should not encounter any issues.
+Note that in CPE/25.03 the cc compiler wrapper leads to a segfault at program finalization. Therefore we decided to not reccomend to use the compiler wrappers for now on aac7 with amdclang. If you have rocm 6.3.3 or greater in that or following versions of CPE you should not encounter any issues with PrgEnv-amd and the wrappers.
 ```
 module load rocm
 ```
@@ -42,7 +42,7 @@ module load rocm
 export C_COMPILER=amdclang
 ```
 ##### Cray C compiler on aac7:
-Prepare the environment:
+Prepare the environment (those are default, check with ```module list```):
 ```
 module load PrgEnv-cray
 module load craype-x86-genoa
