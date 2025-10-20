@@ -34,7 +34,7 @@ to terminate a job.
 
 You can choose the Cray C++ compiler (CC) or the amdclang++ compiler.
 ##### amdclang++ compiler on aac7:
-Prepare the environment (should be default, check with ```module list```):
+Prepare the environment:
 ```
 module load PrgEnv-amd
 module load craype-x86-genoa
@@ -53,7 +53,7 @@ module load rocm
 export CXX=amdclang++
 ```
 ##### Cray C++ compiler on aac7:
-Prepare the environment:
+Prepare the environment (should be default, check with ```module list```):
 ```
 module load PrgEnv-cray
 module load craype-x86-genoa
