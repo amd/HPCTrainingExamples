@@ -29,6 +29,9 @@ endif
 CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
 LDFLAGS = ${OPENMP_FLAGS} -fno-lto -lm
 
+${EXEC}.o: ${EXEC}.c
+	$(COMPILER) $(CFLAGS) -c ${EXEC}.c -o ${EXEC}.o
+
 ${EXEC}: ${EXEC}.o
 	$(COMPILER) $(LDFLAGS) $^ -o $@
 
