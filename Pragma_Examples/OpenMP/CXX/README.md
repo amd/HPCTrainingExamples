@@ -39,7 +39,7 @@ Prepare the environment (should be default, check with ```module list```):
 module load PrgEnv-amd
 module load craype-x86-genoa
 module load craype-accel-amd-gfx942
-module load cce
+module load amd
 module load rocm
 ```
 ```
