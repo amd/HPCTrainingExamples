@@ -1,5 +1,4 @@
 
-NOTE: this example is work in progress
 # ROCm&trade; Systems Profiler aka `rocprof-sys`
 
 NOTE: extensive documentation on how to use `rocprof-sys` (formerly omnitrace) for the [GhostExchange examples](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange) is also available as `README.md` in this exercises repo. The examples there still use the older version of the tool named omnitrace, but most functionality did not change.
@@ -264,7 +263,7 @@ If you look at the trace in perfetto:
 
 ### Sampling
 
-To reduce the overhead of profiling, one can use call stack sampling. Set the following in your configuration file (or prepend to your `mpirun` command):
+To reduce the overhead of profiling, one can use call stack sampling. Set the following in your configuration file (or prepend to your run command):
 
 ```
 ROCPROFSYS_USE_SAMPLING = true
@@ -274,27 +273,21 @@ ROCPROFSYS_SAMPLING_FREQ = 100
 Execute the instrumented binary, inspect `sampling*` files and visualize the `Perfetto` trace:
 
 ```
-mpirun -np 1 rocprof-sys-run -- ./Jacobi_hip.inst -g 1 1
-ls rocprofsys-Jacobi_hip.inst-output/<TIMESTAMP>/* | grep sampling
+rocprof-sys-run -- ./Jacobi_omp.inst -m 1024 1024
+```
+The following will show you the files now generated with sampling:
+```
+ls rocprofsys-Jacobi_omp.inst-output/<TIMESTAMP>/* | grep sampling
 ```
 
 ### Profiling multiple MPI processes
 
-Run the instrumented binary with multiple MPI ranks. Note separate output files for each rank, including `perfetto-trace-*.proto` and `wall_clock-*.txt` files.
+If you have an MPI application, you can run the instrumented binary with multiple MPI ranks. Note separate output files for each rank, including `perfetto-trace-*.proto` and `wall_clock-*.txt` files. This is not further adressed in this exercise.
 
-```
-mpirun -np 2 rocprof-sys-run -- ./Jacobi_hip.inst -g 2 1
-```
-
-Inspect output text files. Then visualize `perfetto-trace-*.proto` files in `Perfetto`. Note that one can merge multiple trace files into a single one using simple concatenation:
-
-```
-cat perfetto-trace-*.proto > merged.proto
-```
 
 ## Next steps
 
-Try to use `rocprof-sys` to profile [GhostExchange examples](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange).
+Try to use `rocprof-sys` to profile [GhostExchange examples](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange). Note that the Ghost Exchange OpenMP example is still for older rocm with omnitrace. Or just continue directly to the next step:
 
 **Finally, try to profile your own application!**
 
