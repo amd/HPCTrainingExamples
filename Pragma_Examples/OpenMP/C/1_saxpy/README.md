@@ -23,9 +23,10 @@ The AMD Compiler
 ```
 module load PrgEnv-amd
 module load rocm
-module load cce
+module load amd
 export C_COMPILER = amdclang
 ```
+Note: to correctly use the cray wrappers one should export C_COMPILER = cc, as the cray wrappers are broken in combination with rocm 6.3.0 we reccomend using amdclang directly in this training. This is not a good advise in general if you e.g. want to link Cray MPICH in your application!
 
 **or** (only available on systems with CPE installed)
 ```
@@ -41,7 +42,7 @@ $C_COMPILER --version
 ```
 if you loaded the compiler you expect.
 > [!NOTE]
-> Setting ```C_COMPILER``` to the desired compiler is only necessary when using the provided Makefiles in this or later examples. It is not required in this example if you compile by hand.
+> Setting ```C_COMPILER``` to the desired compiler is only necessary when using the provided Makefiles in this or later examples. It is not required in this example if you compile by hand as shown in the following for educational purposes.
 > The `C_COMPILER` environment variable is chosen instead of the standard `CC` variable for C compilers since `CC` clashes with the Cray C++ compiler wrapper `CC`.
 
 #### 1.0) the serial CPU code.
