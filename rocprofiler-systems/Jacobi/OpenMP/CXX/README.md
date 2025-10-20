@@ -190,10 +190,10 @@ Copy generated `perfetto-trace-0.proto` file to your local machine, and using th
 
 Click `Open trace file` and select the `perfetto-trace-<id>.proto` file. Below, you can see an example of how the trace file would be visualized on `Perfetto`:
 
-<img src="Example_rocprof-sys_Jacobi_omp.png"/>
+<img src="images/Example_rocprof-sys_Jacobi_omp.png"/>
 
 If you Zoom in, you can see the kernels (use asdw keys to Zoom and move, or press Ctrl + scroll mouse):
-<img src="Zoom_Example_rocprof-sys_Jacobi_omp.png"/>
+<img src="images/Zoom_Example_rocprof-sys_Jacobi_omp.png"/>
 
 
 
@@ -260,7 +260,7 @@ cat rocprof-sys-Jacobi_hip.inst-output/<TIMESTAMP>/rocprof-device-0-VALUUtilizat
 will show you the output of one of the selected counters in the text file.
 If you look at the trace in perfetto:
 
-<img src="Zoom_Metric_Example_rocprof-sys_Jacobi_omp.png"/>
+<img src="images/Zoom_Metric_Example_rocprof-sys_Jacobi_omp.png"/>
 
 ### Sampling
 
