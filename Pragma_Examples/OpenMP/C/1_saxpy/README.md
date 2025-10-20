@@ -24,7 +24,7 @@ The AMD Compiler
 module load PrgEnv-amd
 module load rocm
 module load cce
-export CC = amdclang
+export C_COMPILER = amdclang
 ```
 
 **or** (only available on systems with CPE installed)
@@ -32,15 +32,17 @@ export CC = amdclang
 module load PrgEnv-cray
 module load rocm
 module load cce
-export CC = cc
+export C_COMPILER = cc
 ```
 
 Check with 
 ```
-$CC --version
+$C_COMPILER --version
 ```
 if you loaded the compiler you expect.
-Note: we are setting ```CC``` here already as later examples will use a Makefile which uses ```CC``` to be flexible for different compilers. Here it is not needed if you compile by hand.
+> [!NOTE]
+> Setting ```C_COMPILER``` to the desired compiler is only necessary when using the provided Makefiles in this or later examples. It is not required in this example if you compile by hand.
+> The `C_COMPILER` environment variable is chosen instead of the standard `CC` variable for C compilers since `CC` clashes with the Cray C++ compiler wrapper `CC`.
 
 #### 1.0) the serial CPU code.
 ```
