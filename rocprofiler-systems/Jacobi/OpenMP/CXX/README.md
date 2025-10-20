@@ -190,7 +190,11 @@ Copy generated `perfetto-trace-0.proto` file to your local machine, and using th
 
 Click `Open trace file` and select the `perfetto-trace-<id>.proto` file. Below, you can see an example of how the trace file would be visualized on `Perfetto`:
 
-<img src="figures/Example_rocprof-sys_Jacobi_omp.png"/>
+<img src="Example_rocprof-sys_Jacobi_omp.png"/>
+
+If you Zoom in, you can see the kernels (use asdw keys to Zoom and move, or press Ctrl + scroll mouse):
+<img src="Zoom_Example_rocprof-sys_Jacobi_omp.png"/>
+
 
 
 If there is an error opening trace file, try using an older `Perfetto` version, e.g., by opening the web page [https://ui.perfetto.dev/v46.0-35b3d9845/#!/](https://ui.perfetto.dev/v46.0-35b3d9845/#!/).
@@ -198,15 +202,37 @@ If there is an error opening trace file, try using an older `Perfetto` version, 
 ## Additional features
 ### Flat profiles
 
-Append advanced option `ROCPROFSYS_FLAT_PROFILE=true` to `~/.rocprofsys.cfg` or prepend it to the `mpirun` command:
+Append advanced option `ROCPROFSYS_FLAT_PROFILE=true` to `~/.rocprofsys.cfg` or prepend it to the run command:
 
 ```
-ROCPROFSYS_FLAT_PROFILE=true mpirun -np 1 rocprof-sys-run -- ./Jacobi_hip.inst -g 1 1
+ROCPROFSYS_FLAT_PROFILE=true rocprof-sys-run -- ./Jacobi_omp.inst -m 1024 1024
 ```
 
-`wall_clock-0.txt` file now shows overall time in seconds for each function.
+`rocprofsys-Jacobi_omp.inst-output/<TIMESTAMP>/wall_clock-<id>.txt` file now shows overall time in seconds for each function.
 
-Note the significant total execution time for `hipMemcpy` and `Jacobi_t::Run` calls.
+```
+cat rocprofsys-Jacobi_omp.inst-output/2025-10-20_09.22/wall_clock-155021.txt
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|                                                                             REAL-CLOCK TIMER (I.E. WALL-CLOCK TIMER)                                                                            |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|                                    LABEL                                     | COUNT  | DEPTH  |   METRIC   | UNITS  |   SUM    |   MEAN   |   MIN    |   MAX    |   VAR    | STDDEV   | % SELF |
+|------------------------------------------------------------------------------|--------|--------|------------|--------|----------|----------|----------|----------|----------|----------|--------|
+| |0>>> mbind                                                                  |     28 |      0 | wall_clock | sec    | 0.000482 | 0.000017 | 0.000003 | 0.000146 | 0.000000 | 0.000031 |  100.0 |
+| |0>>> pthread_create                                                         |      4 |      0 | wall_clock | sec    | 0.015467 | 0.003867 | 0.003737 | 0.004205 | 0.000000 | 0.000226 |  100.0 |
+| |0>>> Jacobi_omp.inst                                                        |      1 |      0 | wall_clock | sec    | 0.508704 | 0.508704 | 0.508704 | 0.508704 | 0.000000 | 0.000000 |  100.0 |
+| |0>>> Jacobi_t::Run                                                          |      1 |      0 | wall_clock | sec    | 0.490124 | 0.490124 | 0.490124 | 0.490124 | 0.000000 | 0.000000 |  100.0 |
+| |2>>> start_thread                                                           |      1 |      0 | wall_clock | sec    | 0.000011 | 0.000011 | 0.000011 | 0.000011 | 0.000000 | 0.000000 |  100.0 |
+| |4>>> start_thread                                                           |      1 |      0 | wall_clock | sec    | 0.519817 | 0.519817 | 0.519817 | 0.519817 | 0.000000 | 0.000000 |  100.0 |
+| |3>>> start_thread                                                           |      1 |      0 | wall_clock | sec    | 0.556519 | 0.556519 | 0.556519 | 0.556519 | 0.000000 | 0.000000 |  100.0 |
+| |1>>> start_thread                                                           |      1 |      0 | wall_clock | sec    | 0.600203 | 0.600203 | 0.600203 | 0.600203 | 0.000000 | 0.000000 |  100.0 |
+| |0>>> MEMORY_COPY_DEVICE_TO_DEVICE                                           |   3016 |      0 | wall_clock | sec    | 0.000138 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 |  100.0 |
+| |0>>> __omp_offloading_3a_d8d1b__Z4NormR6mesh_tPd_l13.kd                     |   1001 |      0 | wall_clock | sec    | 0.000046 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 |  100.0 |
+| |0>>> __omp_offloading_3a_d8d18__Z9LaplacianR6mesh_tddPdS1__l19.kd           |   1000 |      0 | wall_clock | sec    | 0.000045 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 |  100.0 |
+| |0>>> __omp_offloading_3a_d8d1c__Z6UpdateR6mesh_tdPdS1_S1_S1__l17.kd         |   1000 |      0 | wall_clock | sec    | 0.000046 | 0.000000 | 0.000000 | 0.000001 | 0.000000 | 0.000000 |  100.0 |
+| |0>>> __omp_offloading_3a_d8d0e__Z18BoundaryConditionsR6mesh_tddPdS1__l18.kd |   1000 |      0 | wall_clock | sec    | 0.000046 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 |  100.0 |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+```
+Depending on what you try to investigate this may be an option to find out how much time is spent in each routine independent of th call tree.
 
 ### Hardware counters
 
@@ -215,21 +241,26 @@ To see a list of all the counters for all the devices on the node, do:
 ```
 rocprof-sys-avail --all
 ```
+Note: The output is very verbose.
 
-Select the counter you are interested in, and then declare them in your configuration file (or prepend to your `mpirun` command):
+Select the counter you are interested in, and then declare them in your configuration file (or prepend to your run command):
 
 ```
 ROCPROFSYS_ROCM_EVENTS = VALUUtilization,FetchSize
 ```
 
-Run the instrumented binary, and you will observe an output file for each hardware counter specified. You should also see a row for each hardware counter in the `Perfetto` trace generated by `rocprof-sys`.
+Run the instrumented binary, and you will observe an output file for each hardware counter specified. You should also see a row for each hardware counter in the `Perfetto` trace generated by `rocprof-sys`. Note that the files are generated as a flat profile, the ```ROCPROFSYS_FLAT_PROFILE=true``` is still in the config.
 
 Note that you do not have to instrument again after making changes to the config file. Just running the instrumented binary picks up the changes.
 
 ```
-ROCPROFSYS_ROCM_EVENTS=VALUUtilization,FetchSize mpirun -np 1 rocprof-sys-run -- ./Jacobi_hip.inst -g 1 1
-cat rocprof-sys-Jacobi_hip.inst-output/<TIMESTAMP>/rocprof-device-0-VALUUtilization-0.txt
+ROCPROFSYS_ROCM_EVENTS=VALUUtilization,FetchSize rocprof-sys-run -- ./Jacobi_omp.inst -m 1024 1024
+cat rocprof-sys-Jacobi_hip.inst-output/<TIMESTAMP>/rocprof-device-0-VALUUtilization-<id>.txt
 ```
+will show you the output of one of the selected counters in the text file.
+If you look at the trace in perfetto:
+
+<img src="Zoom_Metric_Example_rocprof-sys_Jacobi_omp.png"/>
 
 ### Sampling
 
