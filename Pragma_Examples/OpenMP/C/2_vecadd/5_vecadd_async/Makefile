@@ -33,6 +33,9 @@ else
    LDFLAGS = ${OPENMP_FLAGS} -lm
 endif
 
+${EXEC}.o: ${EXEC}.c
+	$(COMPILER) $(CFLAGS) -c ${EXEC}.c -o ${EXEC}.o
+
 ${EXEC}: ${EXEC}.o
 	$(COMPILER) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
