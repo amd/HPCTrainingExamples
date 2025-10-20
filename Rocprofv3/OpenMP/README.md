@@ -3,7 +3,7 @@
 
 In this series of examples, we will demonstrate profiling with rocprofv3 on a platform using an AMD Instinct&trade; MI300 GPU. ROCm releases (6.2+) now include rocprofv3.
 
-Note that the focus of this exercise is on rocprofv3 profiler, not on how to achieve optimal performance on MI300A. This exercise was last tested with ROCm 6.4.2 on MI300A [MPCDF Viper-GPU](https://docs.mpcdf.mpg.de/doc/computing/viper-gpu-user-guide.html). It is important to note that starting from ROCm 7.0, the default output format has change from csv to db, thus, so getting the described csv outputs it is necessary in this case to specify `--output-format csv`.
+Note that the focus of this exercise is on rocprofv3 profiler, not on how to achieve optimal performance on MI300A. This exercise was last tested with ROCm 6.4.2 on MI300A [MPCDF Viper-GPU](https://docs.mpcdf.mpg.de/doc/computing/viper-gpu-user-guide.html) and then with ROCm 7.0.2 on MI300A AAC6 cluster. It is important to note that starting from ROCm 7.0, the default output format has change from csv to db, thus, so getting the described csv outputs it is necessary in this case to specify `--output-format csv`.
 
 The examples are based on [Fortran+OpenMP Jacobi porting example from HPCTrainingExamples](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/Fortran/8_jacobi). 
 
@@ -181,7 +181,7 @@ Now on your laptop:
 Below, you can see an example of how the trace file would be visualized in `Perfetto`:
 ![image](images/rocprofv3_runtime_main.png)
 
-If you zoom in, you should be able to see OpenMP kernels in more details:
+If you zoom in, you should be able to see OpenMP kernels in more details (flows between kernels and memory copies are errors in ROCm 6.4.2 that were later fixed in ROCm 7.0.2):
 ![image](images/rocprofv3_runtime_zoomed.png)
 
 
