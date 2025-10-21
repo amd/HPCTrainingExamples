@@ -50,7 +50,7 @@ cd 3_vecadd_targetdata
 ```
 
 ## Part 3: asynchronous offload
-This secton presents a solution for asynchronous offload both with USM
+This section presents a solution for asynchronous offload both with USM
 ```
 cd 4_vecadd_usm_async
 ```

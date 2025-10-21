@@ -11,12 +11,14 @@ Load the amdflang-new compiler to set up the environment
 ```
 module load amdflang-new
 ```
+The naming of the versions changed from drop 7.x to drop <llvm-version>.<drop_revision> e.g. afar-drop-22.2.0 to avoid confusion with rocm version numbers.
+
 This module sets ```FC=amdflang``` for you.
 
 #### on aac7:
 Get an interactive session on a node:
 ```
-srun -N 1 --mem=100GB --gpus=1
+salloc -N 1 --mem=100GB --gpus=1
 ```
 Note: you will get 1 GPU and 100 GB of memory. This will allow others to use the remaining resources of a node.
 Useful commands:
@@ -38,10 +40,10 @@ You can choose the Cray Fortran compiler (ftn) or the amdflang-new compiler.
 ```
 module load amdflang-new
 ```
-This module sets ```FC=amdflang``` for you.
+This module sets ```FC=amdflang``` for you, check with ```echo $FC```.
 
 ##### ftn compiler on aac7:
-Prepare the environment:
+Prepare the environment (those modules should be default, check with ```module list```):
 ```
 module load PrgEnv-cray
 module load craype-x86-genoa
@@ -94,3 +96,4 @@ cd 6_device_routine
 cd 7_derived_types
 cd 8_jacobi
 ```
+There are also additional examples and tests in this folder to explore.

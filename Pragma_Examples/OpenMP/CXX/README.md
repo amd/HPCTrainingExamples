@@ -15,7 +15,7 @@ export CXX=amdclang++
 #### on aac7:
 Get an interactive session on a node:
 ```
-srun -N 1 --mem=100GB --gpus=1
+salloc -N 1 --mem=100GB --gpus=1
 ```
 Note: you will get 1 GPU and 100 GB of memory. This will allow others to use the remaining resources of a node.
 Useful commands:
@@ -39,13 +39,13 @@ Prepare the environment:
 module load PrgEnv-amd
 module load craype-x86-genoa
 module load craype-accel-amd-gfx942
-module load cce
+module load amd
 module load rocm
 ```
 ```
 export CXX=CC
 ```
-Note that in CPE/25.03 the CC compiler wrapper leads to a segfault at program finalization. Therefore we decided to not recommend to use the compiler wrappers for now on aac7 with amdclang++. If you have rocm 6.3.3 or greater in that version of CPE you should not encounter any issues. You can use it without Cray wrappers by settimg:
+Note that in CPE/25.03 the CC compiler wrapper in PrgEnv-amd leads to a segfault at program finalization. Therefore we decided to not recommend to use the compiler wrappers for now on aac7 with amdclang++. If you have rocm 6.3.3 or greater in that version of CPE you should not encounter any issues. You can use it without Cray wrappers by settimg:
 ```
 module load rocm
 ```
@@ -53,7 +53,7 @@ module load rocm
 export CXX=amdclang++
 ```
 ##### Cray C++ compiler on aac7:
-Prepare the environment:
+Prepare the environment (should be default, check with ```module list```):
 ```
 module load PrgEnv-cray
 module load craype-x86-genoa

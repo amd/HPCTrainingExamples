@@ -231,4 +231,3 @@ cat perfetto-trace-*.proto > merged.proto
 Try to use `rocprof-sys` to profile [GhostExchange examples](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange).
 
 **Finally, try to profile your own application!**
-

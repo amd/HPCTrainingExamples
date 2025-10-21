@@ -10,12 +10,12 @@ Follow the message of the day how to allocate one GPU interactively.
 Load the amdclang compiler and set up the environment 
 ```
 module load rocm
-export CC=amdclang
+export C_COMPILER=amdclang
 ```
 #### on aac7:
 Get an interactive session on a node:
 ```
-srun -N 1 --mem=100GB --gpus=1
+salloc -N 1 --mem=100GB --gpus=1
 ```
 Note: you will get 1 GPU and 100 GB of memory. This will allow others to use the remaining resources of a node.
 Useful commands:
@@ -34,15 +34,15 @@ to terminate a job.
 
 You can choose the Cray C compiler (cc) or the amdclang compiler.
 ##### amdclang compiler on aac7:
-Note that in CPE/25.03 the CC compiler wrapper leads to a segfault at program finalization. Therefore we decided to not reccomend to use the compiler wrappers for now on aac7 with amdclang. If you have rocm 6.3.3 or greater in that version of CPE you should not encounter any issues.
+Note that in CPE/25.03 the cc compiler wrapper leads to a segfault at program finalization. Therefore we decided to not reccomend to use the compiler wrappers for now on aac7 with amdclang. If you have rocm 6.3.3 or greater in that or following versions of CPE you should not encounter any issues with PrgEnv-amd and the wrappers.
 ```
 module load rocm
 ```
 ```
-export CC=amdclang
+export C_COMPILER=amdclang
 ```
 ##### Cray C compiler on aac7:
-Prepare the environment:
+Prepare the environment (those are default, check with ```module list```):
 ```
 module load PrgEnv-cray
 module load craype-x86-genoa
@@ -50,10 +50,11 @@ module load craype-accel-amd-gfx942
 module load cce
 module load rocm
 ```
-Note: This will overwrite the CC compiler wrapper for cray clang++, but will work for the portable Makefiles in this repository for the cray clang compiler:
 ```
-export CC=cc
+export C_COMPILER=cc
 ```
+> [!NOTE]
+> The `C_COMPILER` environment variable is chosen instead of the standard `CC` variable for C compilers since `CC` clashes with the Cray C++ compiler wrapper `CC`.
 #### On all systems independent of the compiler:
 This flag
 ```
