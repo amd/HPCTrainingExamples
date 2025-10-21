@@ -9,7 +9,7 @@ salloc -N 1 --mem=100GB --gpus=1
 ```
 module load amdflang-new
 ```
-to get the latest Next Generation Fortran Compiler beta release and rocprofv3.
+to get the latest Next Generation Fortran Compiler beta release and rocprofv3. Make sure it loads the most recent version, an older version may be default.
 
 Set
 ```
