@@ -1,11 +1,11 @@
 
 # ROCm&trade; Systems Profiler aka `rocprof-sys`
 
-NOTE: extensive documentation on how to use `rocprof-sys` (formerly omnitrace) for the [GhostExchange examples](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange) is also available as `README.md` in this exercises repo. The examples there still use the older version of the tool named omnitrace, but most functionality did not change.
+Note that extensive documentation on how to use `rocprof-sys` (formerly `Omnitrace`) for the [GhostExchange examples](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange) is also available as `README.md` in this exercises repo. The examples there still use the older version of the tool named `Omnitrace`, but basic functionalities did not change.
 
-In the example here we show how to use `rocprof-sys` tools considering the example in [https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/CXX/8_jacobi](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/CXX/8_jacobi).
+In the example here we show how to use `rocprof-sys` tools considering the example in [C++ OpenMP Jacobi](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/CXX/8_jacobi).
 
-Note that the focus of this exercise is on `rocprof-sys` profiler, not on how to achieve optimal performance.
+Note that the focus of this exercise is on `rocprof-sys` profiler, not on how to achieve optimal performance. This exercise was last tested with ROCm 7.0.1 on MI300A AAC6 cluster.
 
 First, start by cloning HPCTrainingExamples repository:
 
@@ -15,35 +15,21 @@ git clone https://github.com/amd/HPCTrainingExamples.git
 
 ## Environment setup
 
-For this example, one requires recent ROCm (>=6.3) which contains `rocprof-sys`, as well as an MPI installation.
+Follow the environment setup for the OpenMP C++ Jacobi training example (if not done already previously). Load rocm module that contains `rocprof-sys`. If necessary, load any additional modules, as how `rocprof-sys` is set up may depend on the system you are using.
 
-Follow the environment setup for the OpenMP C++ jacobi training example (if not done already previously).
-Check if rocprof-sys-run can be found in the loaded rocm version.
 ```
+module load rocm/7.0.1
 rocprof-sys-run --version
 ```
-If it shows you a version, you are good to go, if it shows
-```
-rocprof-sys-run: command not found
-```
-Additionally load
-```
-module load rocprofiler-systems
-```
-then you should be able to see a reasonable output of a version for rocprof-sys-run.
-How rocprof-sys is set up depends on the system you are using. Starting with rocm 6.4 rocprof-sys is part of rocm.
 
 ## Build and run the application
-Build according to the Jacobi exercise instructions. 
-[https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/CXX/8_jacobi](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/CXX/8_jacobi
 
-The following instructions were validated for CXX=amdclang++ with amdclang++ from rocm 6.3.0, but instructions should be fairly independent of the compiler.
-
-No profiling yet, just check that the code compiles and runs correctly:
+Build according to the Jacobi exercise instructions. No profiling yet, just check that the code compiles and runs correctly:
 
 ```
 cd HPCTrainingExamples/Pragma_Examples/OpenMP/CXX/8_jacobi/2_jacobi_targetdata
- ./Jacobi_omp -m 1024 1024
+make COMPILER_OMP=amdclang++
+./Jacobi_omp -m 1024 1024
 ```
 
 The above run should show output that looks like this:
@@ -69,9 +55,23 @@ Measured FLOPS: 107.65 GFLOPS
 Measured device bandwidth: 607.92 GB/s
 Measured AI=0.177083
 ```
-Note: The meassured performance data this reports will vary with the system, enviroment setup and compiler used. Also the problem size specified with -m has a large influence on the meassured performance.
 
-## `rocprof-sys` config
+Note that the reported measured performance data will vary depending on the system, enviroment setup and compiler used. Moreover, the problem size specified with `-m` has a large influence on the measured performance.
+
+## Simple (default) approach
+
+Run:
+```
+rocprof-sys-run --profile --trace --include ompt -- ./Jacobi_omp -m 1024 1024
+```
+
+Inspect wall_clock test files and visualize .proto files in `Perfetto`.
+
+**DONE!**
+
+However, if you need more control over what you want to profile and analyze, check the following steps.
+
+## `rocprof-sys` config (optional)
 
 First, generate the `rocprof-sys` configuration file, and ensure that this file is known to `rocprof-sys`. 
 
@@ -81,10 +81,13 @@ export ROCPROFSYS_CONFIG_FILE=~/.rocprofsys.cfg
 ```
 
 Second, inspect configuration file, possibly changing some variables. For example, one can modify the following lines:
+
 ```
 vi $ROCPROFSYS_CONFIG_FILE
 ```
+
 modify to:
+
 ```
 ROCPROFSYS_PROFILE                                  = true
 ```
@@ -109,9 +112,9 @@ You can also create a configuration file with description per option. Beware, th
 rocprof-sys-avail -G ~/rocprofsys_all.cfg --all
 ```
 
-## Instrument application binary
+## Instrument application binary (optional)
 
-You can instrument the binary, and inspect which functions were instrumented (note that you need to change `<TIMESTAMP>` according to your generated folder path). 
+You can instrument the binary and inspect which functions were instrumented (note that you need to change `<TIMESTAMP>` according to your generated folder path). 
 
 ```
 rocprof-sys-instrument -o ./Jacobi_omp.inst -- ./Jacobi_omp
@@ -145,16 +148,18 @@ $ cat rocprofsys-Jacobi_omp.inst-output/<TIMESTAMP>/instrumentation/instrumented
 
 ## Run instrumented binary
 
-Now that we have a new application binary where the most important function is instrumented, we can profile it using `rocprof-sys-run`.
+Now that we have a new application binary where the most important function is instrumented, we can profile it using `rocprof-sys-run`:
 
 ```
 rocprof-sys-run -- ./Jacobi_omp.inst -m 1024 1024
 ```
-Running with the tool will take a few milliseconds longer. There is a tool overhead, but note that we are exploring a very small problem size here for educational reasons. Experiment ith the problem size to see the overhead impact for larger problem sizes.
 
-Check the command line output generated by `rocprof-sys-run`, it contains some useful overviews and **paths to generated files**. Observe that the overhead to the application runtime is small. If you had previously set `ROCPROFSYS_PROFILE=true`, inspect `wall_clock-0.txt` which includes information on the function calls made in the code, such as how many times these calls have been called (`COUNT`) and the time in seconds they took in total (`SUM`).
+Running with the tool will take a few milliseconds longer. There is an overhead of the tool, but note that we are exploring a very small problem size here for educational reasons. Experiment with the problem size to see the overhead impact for larger problem sizes.
+
+Check the command line output generated by `rocprof-sys-run`, it contains some useful overviews and **paths to generated files**. Observe in the reported performance numbers that the overhead to the application runtime is small. If you had previously set `ROCPROFSYS_PROFILE=true`, inspect `wall_clock-0.txt` which includes information on the function calls made in the code, such as how many times these calls have been called (`COUNT`) and the time in seconds they took in total (`SUM`).
+
 ```
-cat rocprofsys-Jacobi_omp.inst-output/<TIMESTAMP>/wall_clock-<id>.txt
+cat rocprofsys-Jacobi_omp.inst-output/<TIMESTAMP>/wall_clock-<pid>.txt
 
 |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 |                                                                               REAL-CLOCK TIMER (I.E. WALL-CLOCK TIMER)                                                                              |
@@ -187,14 +192,12 @@ If it is not, continue by visualizing the trace.
 
 Copy generated `perfetto-trace-0.proto` file to your local machine, and using the Chrome browser open the web page [https://ui.perfetto.dev/](https://ui.perfetto.dev/):
 
-Click `Open trace file` and select the `perfetto-trace-<id>.proto` file. Below, you can see an example of how the trace file would be visualized on `Perfetto`:
+Click `Open trace file` and select the `perfetto-trace-<pid>.proto` file. Below, you can see an example of how the trace file would be visualized in `Perfetto`:
 
 <img src="images/Example_rocprof-sys_Jacobi_omp.png"/>
 
-If you Zoom in, you can see the kernels (use asdw keys to Zoom and move, or press Ctrl + scroll mouse):
+If you Zoom in, you can see the kernels (use WASD keys to zoom and move, or press Ctrl + scroll mouse):
 <img src="images/Zoom_Example_rocprof-sys_Jacobi_omp.png"/>
-
-
 
 If there is an error opening trace file, try using an older `Perfetto` version, e.g., by opening the web page [https://ui.perfetto.dev/v46.0-35b3d9845/#!/](https://ui.perfetto.dev/v46.0-35b3d9845/#!/).
 
@@ -207,10 +210,10 @@ Append advanced option `ROCPROFSYS_FLAT_PROFILE=true` to `~/.rocprofsys.cfg` or 
 ROCPROFSYS_FLAT_PROFILE=true rocprof-sys-run -- ./Jacobi_omp.inst -m 1024 1024
 ```
 
-`rocprofsys-Jacobi_omp.inst-output/<TIMESTAMP>/wall_clock-<id>.txt` file now shows overall time in seconds for each function.
+`rocprofsys-Jacobi_omp.inst-output/<TIMESTAMP>/wall_clock-<pid>.txt` file now shows overall time in seconds for each function without hierarhy (which may be easier to look at).
 
 ```
-cat rocprofsys-Jacobi_omp.inst-output/2025-10-20_09.22/wall_clock-155021.txt
+cat rocprofsys-Jacobi_omp.inst-output/<TIMESTAMP>/wall_clock-<pid>.txt
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 |                                                                             REAL-CLOCK TIMER (I.E. WALL-CLOCK TIMER)                                                                            |
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -231,6 +234,7 @@ cat rocprofsys-Jacobi_omp.inst-output/2025-10-20_09.22/wall_clock-155021.txt
 | |0>>> __omp_offloading_3a_d8d0e__Z18BoundaryConditionsR6mesh_tddPdS1__l18.kd |   1000 |      0 | wall_clock | sec    | 0.000046 | 0.000000 | 0.000000 | 0.000000 | 0.000000 | 0.000000 |  100.0 |
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 ```
+
 Depending on what you try to investigate this may be an option to find out how much time is spent in each routine independent of th call tree.
 
 ### Hardware counters
@@ -240,30 +244,29 @@ To see a list of all the counters for all the devices on the node, do:
 ```
 rocprof-sys-avail --all
 ```
-Note: The output is very verbose.
 
-Select the counter you are interested in, and then declare them in your configuration file (or prepend to your run command):
+Note that the output is very verbose. Select the counter you are interested in, and then declare them in your configuration file (or prepend to your run command):
 
 ```
 ROCPROFSYS_ROCM_EVENTS = VALUUtilization,FetchSize
 ```
 
-Run the instrumented binary, and you will observe an output file for each hardware counter specified. You should also see a row for each hardware counter in the `Perfetto` trace generated by `rocprof-sys`. Note that the files are generated as a flat profile, the ```ROCPROFSYS_FLAT_PROFILE=true``` is still in the config.
+Run the instrumented binary, and you will observe an output file for each hardware counter specified. You should also see a row for each hardware counter in the `Perfetto` trace generated by `rocprof-sys`. Note that the files are generated as a flat profile if ```ROCPROFSYS_FLAT_PROFILE=true``` is still in the config.
 
 Note that you do not have to instrument again after making changes to the config file. Just running the instrumented binary picks up the changes.
 
 ```
 ROCPROFSYS_ROCM_EVENTS=VALUUtilization,FetchSize rocprof-sys-run -- ./Jacobi_omp.inst -m 1024 1024
-cat rocprof-sys-Jacobi_hip.inst-output/<TIMESTAMP>/rocprof-device-0-VALUUtilization-<id>.txt
+cat rocprof-sys-Jacobi_omp.inst-output/<TIMESTAMP>/rocprof-device-0-VALUUtilization-<pid>.txt
 ```
-will show you the output of one of the selected counters in the text file.
-If you look at the trace in perfetto:
+
+This will show you the output of one of the selected counters in the text file. `Perfetto` output should look like the following:
 
 <img src="images/Zoom_Metric_Example_rocprof-sys_Jacobi_omp.png"/>
 
 ### Sampling
 
-To reduce the overhead of profiling, one can use call stack sampling. Set the following in your configuration file (or prepend to your run command):
+To reduce the overhead of profiling and inspect call stack, one can use sampling. Set the following in your configuration file (or prepend to your run command):
 
 ```
 ROCPROFSYS_USE_SAMPLING = true
@@ -275,19 +278,23 @@ Execute the instrumented binary, inspect `sampling*` files and visualize the `Pe
 ```
 rocprof-sys-run -- ./Jacobi_omp.inst -m 1024 1024
 ```
+
 The following will show you the files now generated with sampling:
+
 ```
 ls rocprofsys-Jacobi_omp.inst-output/<TIMESTAMP>/* | grep sampling
 ```
 
+In the `Perfetto` trace, search for the `Thread X (S) PID` rows.
+
 ### Profiling multiple MPI processes
 
-If you have an MPI application, you can run the instrumented binary with multiple MPI ranks. Note separate output files for each rank, including `perfetto-trace-*.proto` and `wall_clock-*.txt` files. This is not further adressed in this exercise.
+If you have an MPI application, you can run the instrumented binary with multiple MPI ranks. Note separate output files for each rank, including `perfetto-trace-*.proto` and `wall_clock-*.txt` files. This is not further addressed in this exercise, but it is described in detail in [GhostExchange examples](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange).
 
 
 ## Next steps
 
-Try to use `rocprof-sys` to profile [GhostExchange examples](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange). Note that the Ghost Exchange OpenMP example is still for older rocm with omnitrace. Or just continue directly to the next step:
+Try to use `rocprof-sys` to profile [GhostExchange examples](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange). Note that the Ghost Exchange OpenMP example is still for older rocm with`Omnitrace`.
 
 **Finally, try to profile your own application!**
 
