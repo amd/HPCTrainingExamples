@@ -235,7 +235,7 @@ cat rocprofsys-Jacobi_omp.inst-output/<TIMESTAMP>/wall_clock-<pid>.txt
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 ```
 
-Depending on what you try to investigate this may be an option to find out how much time is spent in each routine independent of th ceall tree.
+Depending on what you try to investigate this may be an option to find out how much time is spent in each routine independent of the call tree.
 
 ### Hardware counters
 
