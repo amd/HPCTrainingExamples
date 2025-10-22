@@ -3,28 +3,28 @@
 
 In this series of examples, we will demonstrate profiling with rocprofv3 on a platform using an AMD Instinct&trade; MI300 GPU. ROCm releases (6.2+) now include rocprofv3.
 
-Note that the focus of this exercise is on rocprofv3 profiler, not on how to achieve optimal performance on MI300A. This exercise was last tested with ROCm 6.4.2 on MI300A [MPCDF Viper-GPU](https://docs.mpcdf.mpg.de/doc/computing/viper-gpu-user-guide.html) and then with ROCm 7.0.2 on MI300A AAC6 cluster. It is important to note that starting from ROCm 7.0, the default output format has change from csv to db, thus, so getting the described csv outputs it is necessary in this case to specify `--output-format csv`.
+Note that the focus of this exercise is on the rocprofv3 profiler, not on how to achieve optimal performance on MI300A. This exercise was last tested with ROCm 6.4.2 on MI300A [MPCDF Viper-GPU](https://docs.mpcdf.mpg.de/doc/computing/viper-gpu-user-guide.html) and then with ROCm 7.0.2 on the MI300A AAC6 cluster. It is important to note that starting from ROCm 7.0, the default output format has change from csv to db. Thus, it is necessary in this case to specify `--output-format csv` for getting the described csv outputs.
 
 The examples are based on [Fortran+OpenMP Jacobi porting example from HPCTrainingExamples](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/Fortran/8_jacobi). 
 
 
 ## Setup environment
 
-Download examples repo and navigate to the Fortran+OpenMP Jacobi example exercises:
+Download the examples repo and navigate to the Fortran+OpenMP Jacobi example exercises:
 
 ```
 git clone https://github.com/amd/HPCTrainingExamples.git
 cd HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/8_jacobi/1_jacobi_usm
 ```
 
-Load the necessary modules, including amdflang (a.k.a. flang-new) compiler. Note that the module name for amdflang compiler on your system might differ, check for `rocm-afar-drop`, `amd-llvm`, `amdflang-new` or something similar.
+Load the necessary modules, including amdflang (a.k.a. flang-new) compiler. Note that the module name for the amdflang compiler on your system might differ, check for `rocm-afar-drop`, `amd-llvm`, `amdflang-new` or something similar.
 
 ```
 module load rocm
 module load amdflang-new
 ```
 
-For now unset `HSA_XNACK` environment variable:
+For now unset the `HSA_XNACK` environment variable:
 
 ```
 export HSA_XNACK=0
@@ -68,18 +68,18 @@ Effective AI=0.177
 ## Basic rocprov3 profiling
 ### Available options
 
-Inspect rocprofv3 available options:
+Inspect the available options of rocprofv3 with:
 
 ```
 rocprofv3 -h
 ```
 
-NOTE: When profing OpenMP offloading, do not forget to use `--kernel-trace` option.
+NOTE: When profiling OpenMP offloading, do not forget to use the `--kernel-trace` option.
 
 
 ### First kernel information
 
-Collect first profiles (do not forget `--` between rocprofv3 options and application binary). For a more consistent output path, we will you optional arguments `--output-directory` and `--output-file`. To make the commands compatible with ROCm >=7.0, we will add `--output-format csv`, which is not strictly necessary for ROCm 6 version of rocprofv3.
+Collect the first profiles (do not forget `--` between rocprofv3 options and application binary). For a more consistent output path, we will the use the optional arguments `--output-directory` and `--output-file`. To make the commands compatible with ROCm >=7.0, we will add `--output-format csv`, which is not strictly necessary for rocprofv3 of ROCm 6.
 
 ```
 rocprofv3 --kernel-trace --output-directory omp_output --output-file omp --output-format csv -- ./jacobi -m 1024
@@ -98,7 +98,7 @@ echo
 head omp_output/omp_kernel_trace.csv
 ```
 
-The output should be:
+The output should be similar to:
 
 ```
 "Node_Id","Logical_Node_Id","Agent_Type","Cpu_Cores_Count","Simd_Count","Cpu_Core_Id_Base","Simd_Id_Base","Max_Waves_Per_Simd","Lds_Size_In_Kb","Gds_Size_In_Kb","Num_Gws","Wave_Front_Size","Num_Xcc","Cu_Count","Array_Count","Num_Shader_Banks","Simd_Arrays_Per_Engine","Cu_Per_Simd_Array","Simd_Per_Cu","Max_Slots_Scratch_Cu","Gfx_Target_Version","Vendor_Id","Device_Id","Location_Id","Domain","Drm_Render_Minor","Num_Sdma_Engines","Num_Sdma_Xgmi_Engines","Num_Sdma_Queues_Per_Engine","Num_Cp_Queues","Max_Engine_Clk_Ccompute","Max_Engine_Clk_Fcompute","Sdma_Fw_Version","Fw_Version","Capability","Cu_Per_Engine","Max_Waves_Per_Cu","Family_Id","Workgroup_Max_Size","Grid_Max_Size","Local_Mem_Size","Hive_Id","Gpu_Id","Workgroup_Max_Dim_X","Workgroup_Max_Dim_Y","Workgroup_Max_Dim_Z","Grid_Max_Dim_X","Grid_Max_Dim_Y","Grid_Max_Dim_Z","Name","Vendor_Name","Product_Name","Model_Name"
@@ -127,10 +127,10 @@ So the kernel trace file shows each kernel call, with its start and end timestam
 
 ### Create statistics
 
-One can create kernel statistics file using `--stats` option. Additionally, consider adding `-S` option to see the summary printed at the end of execution:
+One can create a file containing the kernel statistics with the `--stats` option. Additionally, consider adding the `-S` option to see the summary printed at the end of execution:
 
 ```
-rocprofv3 --stats --kernel-trace --output-directory omp_output --output-file omp --output-format csv -- ./jacobi -m 1024
+rocprofv3 --stats --kernel-trace -S --output-directory omp_output --output-file omp --output-format csv -- ./jacobi -m 1024
 ```
 
 This creates two additional output files:
