@@ -5,9 +5,9 @@ Note that extensive documentation on how to use `rocprof-sys` (formerly `Omnitra
 
 In the example here we show how to use `rocprof-sys` tools considering the example in [C++ OpenMP Jacobi](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/CXX/8_jacobi).
 
-Note that the focus of this exercise is on `rocprof-sys` profiler, not on how to achieve optimal performance. This exercise was last tested with ROCm 7.0.1 on MI300A AAC6 cluster.
+Note that the focus of this exercise is on the `rocprof-sys` profiler, not on how to achieve optimal performance. This exercise was last tested with ROCm 7.0.1 on the MI300A AAC6 cluster.
 
-First, start by cloning HPCTrainingExamples repository:
+First, start by cloning the HPCTrainingExamples repository:
 
 ```
 git clone https://github.com/amd/HPCTrainingExamples.git
@@ -15,7 +15,7 @@ git clone https://github.com/amd/HPCTrainingExamples.git
 
 ## Environment setup
 
-Follow the environment setup for the OpenMP C++ Jacobi training example (if not done already previously). Load rocm module that contains `rocprof-sys`. If necessary, load any additional modules, as how `rocprof-sys` is set up may depend on the system you are using.
+Follow the environment setup for the OpenMP C++ Jacobi training example (if not done already previously). Load a rocm module that contains `rocprof-sys`. If necessary, load any additional modules, as how `rocprof-sys` is set up may depend on the system you are using.
 
 ```
 module load rocm/7.0.1
@@ -56,7 +56,7 @@ Measured device bandwidth: 607.92 GB/s
 Measured AI=0.177083
 ```
 
-Note that the reported measured performance data will vary depending on the system, enviroment setup and compiler used. Moreover, the problem size specified with `-m` has a large influence on the measured performance.
+Note that the reported measured performance data will vary depending on the system, environment setup and compiler used. Moreover, the problem size specified with `-m` has a large influence on the measured performance.
 
 ## Simple (default) approach
 
@@ -65,7 +65,8 @@ Run:
 rocprof-sys-run --profile --trace --include ompt -- ./Jacobi_omp -m 1024 1024
 ```
 
-Inspect wall_clock test files and visualize .proto files in `Perfetto`.
+This should create a new folder within the current directory containing the profiling output.
+Inspect the `wall_clock*` files and visualize the `.proto` files in `Perfetto` using the instructions below.
 
 **DONE!**
 
@@ -80,13 +81,12 @@ rocprof-sys-avail -G ~/.rocprofsys.cfg
 export ROCPROFSYS_CONFIG_FILE=~/.rocprofsys.cfg
 ```
 
-Second, inspect configuration file, possibly changing some variables. For example, one can modify the following lines:
+Second, you can inspect the configuration file and possibly change some variables:
 
 ```
 vi $ROCPROFSYS_CONFIG_FILE
 ```
-
-modify to:
+For example, one can modify the following lines to:
 
 ```
 ROCPROFSYS_PROFILE                                  = true
@@ -190,13 +190,13 @@ If it is not, continue by visualizing the trace.
 
 ## Visualizing traces using `Perfetto`
 
-Copy generated `perfetto-trace-0.proto` file to your local machine, and using the Chrome browser open the web page [https://ui.perfetto.dev/](https://ui.perfetto.dev/):
+Copy the generated `perfetto-trace-0.proto` file to your local machine, and using the Chrome browser open the web page [https://ui.perfetto.dev/](https://ui.perfetto.dev/):
 
 Click `Open trace file` and select the `perfetto-trace-<pid>.proto` file. Below, you can see an example of how the trace file would be visualized in `Perfetto`:
 
 <img src="images/Example_rocprof-sys_Jacobi_omp.png"/>
 
-If you Zoom in, you can see the kernels (use WASD keys to zoom and move, or press Ctrl + scroll mouse):
+If you zoom in, you can see the kernels (use WASD keys to zoom and move, or press Ctrl + scroll mouse):
 <img src="images/Zoom_Example_rocprof-sys_Jacobi_omp.png"/>
 
 If there is an error opening trace file, try using an older `Perfetto` version, e.g., by opening the web page [https://ui.perfetto.dev/v46.0-35b3d9845/#!/](https://ui.perfetto.dev/v46.0-35b3d9845/#!/).
@@ -204,13 +204,13 @@ If there is an error opening trace file, try using an older `Perfetto` version, 
 ## Additional features
 ### Flat profiles
 
-Append advanced option `ROCPROFSYS_FLAT_PROFILE=true` to `~/.rocprofsys.cfg` or prepend it to the run command:
+Append the advanced option `ROCPROFSYS_FLAT_PROFILE=true` to `~/.rocprofsys.cfg` or prepend it to the run command:
 
 ```
 ROCPROFSYS_FLAT_PROFILE=true rocprof-sys-run -- ./Jacobi_omp.inst -m 1024 1024
 ```
 
-`rocprofsys-Jacobi_omp.inst-output/<TIMESTAMP>/wall_clock-<pid>.txt` file now shows overall time in seconds for each function without hierarhy (which may be easier to look at).
+The `rocprofsys-Jacobi_omp.inst-output/<TIMESTAMP>/wall_clock-<pid>.txt` file now shows the overall time in seconds for each function without hierarchy (which may be easier to look at).
 
 ```
 cat rocprofsys-Jacobi_omp.inst-output/<TIMESTAMP>/wall_clock-<pid>.txt
@@ -235,7 +235,7 @@ cat rocprofsys-Jacobi_omp.inst-output/<TIMESTAMP>/wall_clock-<pid>.txt
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 ```
 
-Depending on what you try to investigate this may be an option to find out how much time is spent in each routine independent of th call tree.
+Depending on what you try to investigate this may be an option to find out how much time is spent in each routine independent of the call tree.
 
 ### Hardware counters
 
