@@ -20,7 +20,22 @@ and surrounding the region of interest using the roctx API:
   ret = roctxRangePop()
 ```
 
-Then you can trace markers using rocprofv3 using a command such as:
+Do not forget to include the hipfort module directory in the compilation command
+in the Makefile:
+
+```
+%.o : %.f90 Makefile
+    $(FC) $(FFLAGS) -c $< -o $@ -I${HIPFORT_INC}
+```
+
+and to link with the `rocprofiler-sdk-roctx` library:
+
+```
+${EXEC}: ${OBJS}
+    $(FC) $(LDFLAGS) $^ -o $@ -lrocprofiler-sdk-roctx
+```
+
+Now, you can trace markers using rocprofv3 using a command such as:
 
 ```
 rocprofv3 --runtime-trace -- ./jacobi
