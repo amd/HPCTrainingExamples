@@ -12,6 +12,9 @@ It uses HIP to enumerate GPUs and NumaWindowsTools to query the NUMA node for ea
 
 ## Build Instructions of the Demo
 
+You can install ROCm on Windows following [these](https://www.amd.com/en/developer/resources/rocm-hub/hip-sdk.html) instructions.
+The installation path will be `C:/Program Files/AMD/ROCm/x.x`.
+
 ```bat
 cmake -B build -G "Visual Studio 17 2022" -DCMAKE_PREFIX_PATH="C:/Program Files/AMD/ROCm/6.4"
 cmake --build build --config Release
