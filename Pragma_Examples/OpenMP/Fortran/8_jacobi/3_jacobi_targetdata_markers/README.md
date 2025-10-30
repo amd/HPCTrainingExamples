@@ -42,4 +42,8 @@ rocprofv3 --runtime-trace -- ./jacobi
 rocpd2pftrace -i <path_to_rocpd_db_file> -o <path_to_pftrace_file>
 ```
 
-and view the perfetto trace in a browser. 
+and view the perfetto trace in a browser. The trace should now have a track with your
+ROCtx markers as shown in the figure below:
+
+<p><img src="images/roctx_in_pftrace.png"/></p>
+
