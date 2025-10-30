@@ -1168,30 +1168,30 @@ add_test(NAME Affinity_MPI4_OpenMP2_Bind_OpenMPI COMMAND ../affinity_mpi4_openmp
 set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "ank 3 bound to")
 set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-# RocprofV3 tests
-add_test(NAME RocprofV3_Mini_Nbody_Kernel_Stats COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
-set_property(TEST RocprofV3_Mini_Nbody_Kernel_Stats PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
-set_property(TEST RocprofV3_Mini_Nbody_Kernel_Stats PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+# Rocprofv3 tests
+add_test(NAME Rocprofv3_Mini_Nbody_Kernel_Stats COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
+set_property(TEST Rocprofv3_Mini_Nbody_Kernel_Stats PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
+set_property(TEST Rocprofv3_Mini_Nbody_Kernel_Stats PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME RocprofV3_Mini_Nbody_Marker_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
-set_property(TEST RocprofV3_Mini_Nbody_Marker_Trace PROPERTY PASS_REGULAR_EXPRESSION "randomizeBodies_marker")
-set_property(TEST RocprofV3_Mini_Nbody_Marker_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Rocprofv3_Mini_Nbody_Marker_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
+set_property(TEST Rocprofv3_Mini_Nbody_Marker_Trace PROPERTY PASS_REGULAR_EXPRESSION "randomizeBodies_marker")
+set_property(TEST Rocprofv3_Mini_Nbody_Marker_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME RocprofV3_Mini_Nbody_HIP_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
-set_property(TEST RocprofV3_Mini_Nbody_HIP_Trace PROPERTY PASS_REGULAR_EXPRESSION "hipLaunchKernel")
-set_property(TEST RocprofV3_Mini_Nbody_HIP_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Rocprofv3_Mini_Nbody_HIP_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
+set_property(TEST Rocprofv3_Mini_Nbody_HIP_Trace PROPERTY PASS_REGULAR_EXPRESSION "hipLaunchKernel")
+set_property(TEST Rocprofv3_Mini_Nbody_HIP_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME RocprofV3_Mini_Nbody_HSA_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
-set_property(TEST RocprofV3_Mini_Nbody_HSA_Trace PROPERTY PASS_REGULAR_EXPRESSION "hsa_system_get_info")
-set_property(TEST RocprofV3_Mini_Nbody_HSA_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Rocprofv3_Mini_Nbody_HSA_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
+set_property(TEST Rocprofv3_Mini_Nbody_HSA_Trace PROPERTY PASS_REGULAR_EXPRESSION "hsa_system_get_info")
+set_property(TEST Rocprofv3_Mini_Nbody_HSA_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME RocprofV3_Mini_Nbody_Memory_Copy_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
-set_property(TEST RocprofV3_Mini_Nbody_Memory_Copy_Trace PROPERTY PASS_REGULAR_EXPRESSION "MEMORY_COPY_DEVICE_TO_HOST")
-set_property(TEST RocprofV3_Mini_Nbody_Memory_Copy_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Rocprofv3_Mini_Nbody_Memory_Copy_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
+set_property(TEST Rocprofv3_Mini_Nbody_Memory_Copy_Trace PROPERTY PASS_REGULAR_EXPRESSION "MEMORY_COPY_DEVICE_TO_HOST")
+set_property(TEST Rocprofv3_Mini_Nbody_Memory_Copy_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME RocprofV3_TraceDecoder COMMAND ../rocprof-tracedecoder.sh )
-set_property(TEST RocprofV3_TraceDecoder PROPERTY PASS_REGULAR_EXPRESSION "Found json output")
-set_property(TEST RocprofV3_TraceDecoder PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Rocprofv3_TraceDecoder COMMAND ../rocprof-tracedecoder.sh )
+set_property(TEST Rocprofv3_TraceDecoder PROPERTY PASS_REGULAR_EXPRESSION "Found json output")
+set_property(TEST Rocprofv3_TraceDecoder PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # PyTorch tests
 add_test(NAME Pytorch_Check_Import COMMAND ../pytorch_check_import.sh )
