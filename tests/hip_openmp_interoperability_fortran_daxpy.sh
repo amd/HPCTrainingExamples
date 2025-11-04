@@ -6,7 +6,7 @@ if [ ${XNACK_COUNT} -lt 1 ]; then
    echo "Skip"
 else
    export HSA_XNACK=1
-   module load amdflang-new
+   module load amdflang-new >& /dev/null
    if [ "$?" == "1" ]; then
       module load amdclang
    fi

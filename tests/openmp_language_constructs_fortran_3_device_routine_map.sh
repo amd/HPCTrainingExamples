@@ -1,7 +1,7 @@
 #!/bin/bash
 
 module load rocm
-module load amdflang-new
+module load amdflang-new >& /dev/null
 if [ "$?" == "1" ]; then
    module load amdclang
 fi
