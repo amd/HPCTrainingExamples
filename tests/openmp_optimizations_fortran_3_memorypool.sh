@@ -1,9 +1,12 @@
 #!/bin/bash
 
 module load rocm
-module load amdflang-new
-export CXX=amdclang++
-export CC=amdclang
+module load amdflang-new >& /dev/null
+if [ "$?" == "1" ]; then
+   module load amdclang
+fi
+#export CXX=amdclang++
+#export CC=amdclang
 export HSA_XNACK=1
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"

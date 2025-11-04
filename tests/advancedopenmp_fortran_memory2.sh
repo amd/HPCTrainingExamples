@@ -5,7 +5,10 @@ GFX_MODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`
 if [ "${GFX_MODEL}" = "gfx1030" ] ; then
    echo "Skip"
 else
-   module load amdflang-new
+   module load amdflang-new >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load amdclang
+   fi
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/memory_pragmas
