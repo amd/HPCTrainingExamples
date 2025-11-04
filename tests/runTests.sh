@@ -388,7 +388,7 @@ elif [ ${NODE_MEM_MODEL} -eq 1 ]; then
 elif [ ${PROG_MODEL} -eq 1 ]; then
    ctest -R Programming_Model
 elif [ ${ROCPROFV3} -eq 1 ]; then
-   ctest -R RocprofV3
+   ctest -R Rocprofv3
 elif [ ${USM} -eq 1 ]; then
    ctest -R USM
 else

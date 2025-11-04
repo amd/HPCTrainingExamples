@@ -209,13 +209,13 @@ add_test(NAME OpenMP_C_1_Saxpy_OMPTarget COMMAND ../openmp_c_1_saxpy_omptarget.s
 set_property(TEST OpenMP_C_1_Saxpy_OMPTarget PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_C_1_Saxpy_OMPTarget PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_2_Saxpy_ParallelForSimd COMMAND ../openmp_c_2_saxpy_parallelforsimd.sh )
-set_property(TEST OpenMP_C_2_Saxpy_ParallelForSimd PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_C_2_Saxpy_ParallelForSimd PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_2_Saxpy_TeamsDistribute COMMAND ../openmp_c_2_saxpy_teamsdistribute.sh )
+set_property(TEST OpenMP_C_2_Saxpy_TeamsDistribute PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_2_Saxpy_TeamsDistribute PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_3_Saxpy_TeamsDistribute COMMAND ../openmp_c_3_saxpy_teamsdistribute.sh )
-set_property(TEST OpenMP_C_3_Saxpy_TeamsDistribute PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_C_3_Saxpy_TeamsDistribute PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_3_Saxpy_ParallelForSimd COMMAND ../openmp_c_3_saxpy_parallelforsimd.sh )
+set_property(TEST OpenMP_C_3_Saxpy_ParallelForSimd PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_3_Saxpy_ParallelForSimd PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_4_Saxpy_NoUSM COMMAND ../openmp_c_4_saxpy_nousm.sh )
 set_property(TEST OpenMP_C_4_Saxpy_NoUSM PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
@@ -226,8 +226,12 @@ set_property(TEST OpenMP_C_5_Saxpy_Map PROPERTY PASS_REGULAR_EXPRESSION "4.00000
 set_property(TEST OpenMP_C_5_Saxpy_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_6_Saxpy_TargetData COMMAND ../openmp_c_6_saxpy_targetdata.sh )
-set_property(TEST OpenMP_C_6_Saxpy_TargetData PROPERTY PASS_REGULAR_EXPRESSION "0.000000")
+set_property(TEST OpenMP_C_6_Saxpy_TargetData PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_C_6_Saxpy_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_C_7_Saxpy_NumTeams COMMAND ../openmp_c_7_saxpy_numteams.sh )
+set_property(TEST OpenMP_C_7_Saxpy_NumTeams PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_7_Saxpy_NumTeams PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_0_Reduction_PortYourself COMMAND ../openmp_c_0_reduction_portyourself.sh )
 set_property(TEST OpenMP_C_0_Reduction_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "200000.000000")
@@ -240,6 +244,10 @@ set_property(TEST OpenMP_C_1_Reduction_USM PROPERTY SKIP_REGULAR_EXPRESSION "mod
 add_test(NAME OpenMP_C_2_Reduction_Map COMMAND ../openmp_c_2_reduction_map.sh )
 set_property(TEST OpenMP_C_2_Reduction_Map PROPERTY PASS_REGULAR_EXPRESSION "200000.000000")
 set_property(TEST OpenMP_C_2_Reduction_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_C_3_Reduction_WrongMapping COMMAND ../openmp_c_3_reduction_wrongmapping.sh )
+set_property(TEST OpenMP_C_3_Reduction_WrongMapping PROPERTY PASS_REGULAR_EXPRESSION "0.000000")
+set_property(TEST OpenMP_C_3_Reduction_WrongMapping PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_0_Vecadd_PortYourself COMMAND ../openmp_c_0_vecadd_portyourself.sh )
 set_property(TEST OpenMP_C_0_Vecadd_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
@@ -1160,30 +1168,30 @@ add_test(NAME Affinity_MPI4_OpenMP2_Bind_OpenMPI COMMAND ../affinity_mpi4_openmp
 set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "ank 3 bound to")
 set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-# RocprofV3 tests
-add_test(NAME RocprofV3_Mini_Nbody_Kernel_Stats COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
-set_property(TEST RocprofV3_Mini_Nbody_Kernel_Stats PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
-set_property(TEST RocprofV3_Mini_Nbody_Kernel_Stats PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+# Rocprofv3 tests
+add_test(NAME Rocprofv3_Mini_Nbody_Kernel_Stats COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
+set_property(TEST Rocprofv3_Mini_Nbody_Kernel_Stats PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
+set_property(TEST Rocprofv3_Mini_Nbody_Kernel_Stats PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME RocprofV3_Mini_Nbody_Marker_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
-set_property(TEST RocprofV3_Mini_Nbody_Marker_Trace PROPERTY PASS_REGULAR_EXPRESSION "randomizeBodies_marker")
-set_property(TEST RocprofV3_Mini_Nbody_Marker_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Rocprofv3_Mini_Nbody_Marker_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
+set_property(TEST Rocprofv3_Mini_Nbody_Marker_Trace PROPERTY PASS_REGULAR_EXPRESSION "randomizeBodies_marker")
+set_property(TEST Rocprofv3_Mini_Nbody_Marker_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME RocprofV3_Mini_Nbody_HIP_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
-set_property(TEST RocprofV3_Mini_Nbody_HIP_Trace PROPERTY PASS_REGULAR_EXPRESSION "hipLaunchKernel")
-set_property(TEST RocprofV3_Mini_Nbody_HIP_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Rocprofv3_Mini_Nbody_HIP_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
+set_property(TEST Rocprofv3_Mini_Nbody_HIP_Trace PROPERTY PASS_REGULAR_EXPRESSION "hipLaunchKernel")
+set_property(TEST Rocprofv3_Mini_Nbody_HIP_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME RocprofV3_Mini_Nbody_HSA_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
-set_property(TEST RocprofV3_Mini_Nbody_HSA_Trace PROPERTY PASS_REGULAR_EXPRESSION "hsa_system_get_info")
-set_property(TEST RocprofV3_Mini_Nbody_HSA_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Rocprofv3_Mini_Nbody_HSA_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
+set_property(TEST Rocprofv3_Mini_Nbody_HSA_Trace PROPERTY PASS_REGULAR_EXPRESSION "hsa_system_get_info")
+set_property(TEST Rocprofv3_Mini_Nbody_HSA_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME RocprofV3_Mini_Nbody_Memory_Copy_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
-set_property(TEST RocprofV3_Mini_Nbody_Memory_Copy_Trace PROPERTY PASS_REGULAR_EXPRESSION "MEMORY_COPY_DEVICE_TO_HOST")
-set_property(TEST RocprofV3_Mini_Nbody_Memory_Copy_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Rocprofv3_Mini_Nbody_Memory_Copy_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
+set_property(TEST Rocprofv3_Mini_Nbody_Memory_Copy_Trace PROPERTY PASS_REGULAR_EXPRESSION "MEMORY_COPY_DEVICE_TO_HOST")
+set_property(TEST Rocprofv3_Mini_Nbody_Memory_Copy_Trace PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME RocprofV3_TraceDecoder COMMAND ../rocprof-tracedecoder.sh )
-set_property(TEST RocprofV3_TraceDecoder PROPERTY PASS_REGULAR_EXPRESSION "Found json output")
-set_property(TEST RocprofV3_TraceDecoder PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Rocprofv3_TraceDecoder COMMAND ../rocprof-tracedecoder.sh )
+set_property(TEST Rocprofv3_TraceDecoder PROPERTY PASS_REGULAR_EXPRESSION "Found json output")
+set_property(TEST Rocprofv3_TraceDecoder PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # PyTorch tests
 add_test(NAME Pytorch_Check_Import COMMAND ../pytorch_check_import.sh )
@@ -1201,6 +1209,10 @@ set_property(TEST Pytorch_Torchvision_Check_Import PROPERTY SKIP_REGULAR_EXPRESS
 add_test(NAME Pytorch_Torchaudio_Check_Import COMMAND ../torchaudio_check_import.sh )
 set_property(TEST Pytorch_Torchaudio_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST Pytorch_Torchaudio_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Pytorch_Deepspeed_Check_Import COMMAND ../deepspeed_check_import.sh )
+set_property(TEST Pytorch_Deepspeed_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST Pytorch_Deepspeed_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Pytorch_Triton_Check_Import COMMAND ../triton_check_import.sh )
 set_property(TEST Pytorch_Triton_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")

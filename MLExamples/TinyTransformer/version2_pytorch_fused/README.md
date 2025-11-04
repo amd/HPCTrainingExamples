@@ -410,13 +410,6 @@ TORCH_COMPILE_OPTIMIZATIONS = {
 }
 ```
 
-## ROCm Profiling Tools Integration
-
-AMD offers three performance profiling tools for ROCm based applications:
-`rocprofv3`, `rocprof-sys`, and `rocprof-compute`. For more details about these tools, see 
-[Appendix C of the TECHNICAL_APPENDICES.md](https://github.com/amd/HPCTrainingExamples/blob/main/MLExamples/TinyTransformer/TECHNICAL_APPENDICES.md#appendix-c-rocm-profiling-tools-reference).
-about each tool.
-
 ### Fusion Performance Analysis Framework
 
 #### Kernel Launch Reduction Analysis
@@ -546,38 +539,59 @@ python run_deepspeed_flops.py \
 
 **Objective**: Master ROCm profiling tools for hardware-level optimization.
 
-#### Step 1: rocprofv3 Basic Profiling
-```bash
-# Basic kernel profiling
-bash run_rocprofv3.sh --batch-size 8 --profile-kernels
+AMD offers three performance profiling tools for ROCm based applications:
+`rocprofv3`, `rocprof-sys`, and `rocprof-compute`. For more details about these tools, see 
+[Appendix C of the TECHNICAL_APPENDICES.md](https://github.com/amd/HPCTrainingExamples/blob/main/MLExamples/TinyTransformer/TECHNICAL_APPENDICES.md#appendix-c-rocm-profiling-tools-reference).
+about each tool. 
 
-# Analyze kernel execution patterns
-python analyze_rocprof_results.py --input ./rocprofv3_results
+#### Step 1: rocprofv3 Basic Profiling
+
+Running rocprofv3 to collect GPU hotspots on this example would look like this:
+
+```bash
+rocprofv3 --kernel-trace --stats --truncate-kernels -- python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
 ```
+
+View the `<pid>_kernel_stats.csv` file to see the GPU kernel hotspots.
 
 #### Step 2: rocprof-sys System Analysis
-```bash
-# System-wide profiling
-bash run_rocprof_sys.sh --duration 60 --output-dir ./system_profile
 
-# Analyze system resource utilization
-python analyze_system_metrics.py --profile-dir ./system_profile
+To collect a comprehensive timeline trace with host and device activity, run rocprof-sys as shown below:
+
+```bash
+rocprof-sys-run --profile --trace -- python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
 ```
+
+Copy the `.proto` file to your laptop to visualize with the Perfetto browser based tool at [https://ui.perfetto.dev](https://ui.perfetto.dev).
 
 #### Step 3: rocprof-compute Advanced Analysis
+
+To collect roofline plots, run the following command:
+
 ```bash
-# Advanced kernel analysis
-bash run_rocprof_compute.sh \
-    --batch-size 8 \
-    --seq-len 128 \
-    --detailed-analysis \
-    --optimization-hints
+rocprof-compute profile -n roof --kernel-names --roof-only --device 0 -- python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
 ```
 
+This generates three PDF files: two roofline plots and a legend.
+
+To collect a profile, then analyze a particular dispatch, run the following commands:
+
+```bash
+rocprof-compute profile -n ver2 --no-roof -- python3 tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
+rocprof-compute analyze -p workloads/ver2/MI300A_A1 --list-stats >& stats.txt
+rocprof-compute analyze -p workloads/ver2/MI300A_A1 --dispatch 1538 >& dispatch_1538.txt
+```
+
+The `--list-stats` option provides a hotspot list of GPU kernels and a list of dispatches. Pick a dispatch of the
+kernel that you want to analyze further and use that in the subsequent analyze command. For example, we are
+analyzing dispatch 1538 here.
+
+<!--
 **Expected Results:**
 - Detailed kernel performance metrics
 - Memory hierarchy utilization analysis
 - Optimization recommendations for Version 3
+-->
 
 ## Key Performance Improvements
 
@@ -597,6 +611,8 @@ bash run_rocprof_compute.sh \
 - **Sequence Length Scaling**: Near-linear memory scaling (vs. quadratic)
 - **Model Size Scaling**: Better utilization for larger hidden dimensions
 - **Multi-GPU Scaling**: Reduced communication overhead
+
+<!-- Commenting this until we can fix scripts
 
 ## ROCm Profiling Workflow
 
@@ -627,6 +643,7 @@ python generate_fusion_report.py \
     --fused ./complete_rocm_analysis \
     --output ./fusion_comparison_report.md
 ```
+-->
 
 ## Advanced Features
 
@@ -720,6 +737,7 @@ export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:256
 export HIP_LAUNCH_BLOCKING=1  # For debugging
 ```
 
+<!-- 
 ### Performance Debugging
 
 #### Kernel Launch Analysis
@@ -736,6 +754,7 @@ python memory_bandwidth_analyzer.py \
     --profile-data ./complete_rocm_analysis \
     --generate-roofline-plot
 ```
+-->
 
 ## Expected Learning Outcomes
 
@@ -765,6 +784,7 @@ After mastering Version 2:
 
 **Ready for Custom Kernels? Proceed to [Version 3: Triton Integration](../version3_triton/README.md)**
 
+<!--
 ---
 
 ## Quick Start Commands
@@ -785,6 +805,7 @@ python compare_versions.py --v1 ../version1_pytorch_baseline --v2 .
 # 4. Generate optimization report
 python generate_fusion_report.py --output-dir ./optimization_analysis
 ```
+-->
 
 **Expected Results**: 1.6-2.5x speedup, 60-90% memory reduction, comprehensive ROCm profiling mastery.
 

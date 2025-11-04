@@ -512,11 +512,15 @@ Run comprehensive profiling:
 ```bash
 # Triton-specific profiling
 python3 run_triton_profiling.py
+```
 
+<!--
+```
 # ROCProfiler analysis
 chmod +x run_rocprof_triton.sh
 ./run_rocprof_triton.sh
 ```
+-->
 
 ### 4. Analyze Results
 
@@ -525,7 +529,10 @@ Check generated results:
 ```bash
 ls profiling_results/
 cat profiling_results/triton_summary_report.md
+```
 
+<!--
+```
 ls rocprof_results/
 cat rocprof_results/triton_analysis_summary.md
 ```
@@ -668,6 +675,7 @@ Work through the exercises in order to build understanding:
 
 ## Integration with ROCm Tools
 
+<!--
 ### ROCProfiler Analysis
 
 The provided scripts integrate with ROCm profiling tools:
@@ -682,6 +690,7 @@ rocprof --hip-trace --memory-trace python3 tiny_llama_v3.py
 # Detailed metrics
 rocprof --input kernel_metrics.txt python3 tiny_llama_v3.py
 ```
+-->
 
 ### Key Metrics to Monitor
 

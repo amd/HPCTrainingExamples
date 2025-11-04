@@ -29,7 +29,7 @@ endif
 ifeq (${FC1},gfortran-13)
    LDFLAGS = ${OPENMP_FLAGS} -fno-lto
 else ifneq ($(findstring ftn,$(FC1)),)
-   LDFLAGS = ${OPENMP_FLAGS} -L/opt/rh/gcc-toolset-12/root/usr/lib/gcc/x86_64-redhat-linux/12
+   LDFLAGS = ${OPENMP_FLAGS} #only needed on systems with non-matching default -L/opt/rh/gcc-toolset-12/root/usr/lib/gcc/x86_64-redhat-linux/12
 else
    LDFLAGS = ${OPENMP_FLAGS}
 endif

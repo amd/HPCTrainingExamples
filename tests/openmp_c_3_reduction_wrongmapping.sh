@@ -2,11 +2,10 @@
 
 module load rocm
 module load amdclang
-export HSA_XNACK=1
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/C/1_saxpy/2_saxpy_parallelforsimd
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/C/3_reduction/3_reduction_wrongmapping
 
 make
-./saxpy
+./reduction
 make clean

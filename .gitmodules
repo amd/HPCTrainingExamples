@@ -1,3 +1,0 @@
-[submodule "MLExamples/inference_benchmark"]
-	path = MLExamples/inference_benchmark
-	url = https://github.com/ROCm/pytorch-micro-benchmarking.git
