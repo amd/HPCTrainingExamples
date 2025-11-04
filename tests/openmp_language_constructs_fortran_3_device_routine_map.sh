@@ -2,6 +2,9 @@
 
 module load rocm
 module load amdflang-new
+if [ "$?" == "1" ]; then
+   module load amdclang
+fi
 export HSA_XNACK=1
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"

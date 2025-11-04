@@ -18,7 +18,7 @@ the section on how to log into the system.
 Generate an ssh key on your local system, which will be stored in `.ssh`:
 ```bash
 cd $HOME
-ssh-keygen -t ed25519 -N ''
+ssh-keygen -t ed25519
 ```
 
 To  examine the content of your public key do:
