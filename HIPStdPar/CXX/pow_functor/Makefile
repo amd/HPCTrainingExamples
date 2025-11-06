@@ -23,6 +23,12 @@ LDFLAGS = -fno-lto -lm
 pow_functor_inline: pow_functor_inline.o
 	${CXX} ${STDPAR_FLAGS} $(LDFLAGS) $^ -o $@
 
+pow_functor_inline_always: pow_functor_inline_always.o
+	${CXX} ${STDPAR_FLAGS} $(LDFLAGS) $^ -o $@
+
+pow_functor_working: pow_functor_working.o
+	${CXX} ${STDPAR_FLAGS} $(LDFLAGS) $^ -o $@
+
 # Cleanup
 clean:
-	rm -f *.o pow_functor_inline
+	rm -f *.o pow_functor_inline pow_functor_inline_always pow_functor_working
