@@ -1,6 +1,6 @@
 all: openmp_code openmp_code1
 
-AMDGPU_GFXMODEL ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
+AMDGPU_GFXMODEL = $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 
 CC1=$(notdir $(CC))
 
