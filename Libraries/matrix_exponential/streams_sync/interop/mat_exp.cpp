@@ -43,6 +43,10 @@ int main(int argc, char* argv[]) {
    h_A[2]=1.0;
    h_A[3]=-2.0;
 
+   double *d_A;
+   hipCheck( hipMalloc(&d_A, 4 * sizeof(double)) );
+   hipCheck( hipMemcpy(d_A, h_A.data(), 4 * sizeof(double), hipMemcpyHostToDevice) );
+
    // i=1 in the series
    double h_EXP[4] = {1.0 + h_A[0] * t, h_A[1] * t, h_A[2] * t, 1.0 + h_A[3] * t};
 
@@ -51,7 +55,7 @@ int main(int argc, char* argv[]) {
    x_exact[0]=exp(-2.0*t)*cos(t);
    x_exact[1]=exp(-2.0*t)*sin(t);
 
-#pragma omp parallel for reduction(+:h_EXP[:4]) firstprivate(h_powA) schedule(dynamic)
+#pragma omp parallel for reduction(+:h_EXP[:4]) schedule(dynamic)
    for(int i=2; i<N; i++){
       int tid = omp_get_thread_num();
       omp_interop_t iobj = omp_interop_none;
@@ -67,15 +71,16 @@ int main(int argc, char* argv[]) {
       // print
       //std::cout<<"Thread id: " << tid << " i : " << i << " Stream: " << stream << std::endl;
 
-      h_powA[0]=h_A[0];
-      h_powA[1]=h_A[1];
-      h_powA[2]=h_A[2];
-      h_powA[3]=h_A[3];
+      double *d_powA;
+      hipCheck( hipMalloc(&d_powA, 4 * sizeof(double)) );
+      
+      hipCheck( hipMemcpy(d_powA, h_A.data(), 4 * sizeof(double), hipMemcpyHostToDevice) );
+
       double denom = i;
       double num = t;
       for(int k=1; k<i; k++){
         roctxRangePush("rocblas_dgemm");
-        rocblas_status status= rocblas_dgemm(handle,op,op,2,2,2,&alpha_dgemm,h_powA.data(),2,h_A.data(),2,&beta_dgemm,h_powA.data(),2);
+	rocblas_status status= rocblas_dgemm(handle,op,op,2,2,2,&alpha_dgemm,d_powA,2,d_A,2,&beta_dgemm,d_powA,2);
         roctxRangePop();
 	hipCheck( hipStreamSynchronize(stream) );
         // Check for errors
@@ -86,6 +91,7 @@ int main(int argc, char* argv[]) {
         denom *= k;
         num *= t;
       }
+      hipCheck( hipMemcpy(h_powA.data(), d_powA, 4 * sizeof(double), hipMemcpyDeviceToHost) );
       // reduction to array step
       for(int m=0; m<4; m++){
          double factor = num / denom;
@@ -96,8 +102,10 @@ int main(int argc, char* argv[]) {
          std::cout << "Total num of threads is: " << num_threads << std::endl;
       }
       #pragma omp interop destroy(iobj)
+      hipCheck( hipFree(d_powA) );
       rocblas_destroy_handle(handle);
-    }
+      hipCheck( hipStreamDestroy(stream) );
+   }
 
    // initial solution
    std::vector<double> x_0(2);
@@ -122,6 +130,8 @@ int main(int argc, char* argv[]) {
       std::cout<<"FAILED!"<<std::endl;
       std::cout<<std::setprecision(16)<<"L2 norm of error is larger than prescribed tolerance..." << norm << std::endl;
    }
+
+   hipCheck( hipFree(d_A) );
 
    return 0;
 
