@@ -2,7 +2,6 @@
 
 ROCM_PATH ?= /opt/rocm
 HIPCC = ${ROCM_PATH}/llvm/bin/amdclang++
-# ifdef CXX and not equals to HIPCC and g++, then set CXX to HIPCC
 ifneq ($(CXX), g++)
 	ifneq ($(CXX), ${HIPCC})
 	HIPCC = ${CXX}
