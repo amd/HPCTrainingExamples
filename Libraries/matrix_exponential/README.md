@@ -83,20 +83,34 @@ $$
 
 ## Compile and Run
 
-There are currently two directories: `device_sync` and `streams_sync`: the main difference between the code in these two directories is that in `device_sync` we are calling `hipDeviceSynchronize()` after each `rocblas_dgemm` call whereas in `streams_sync` we are creating streams for each OpenMP CPU thread and then synchronizing with `hipStreamSynchronize(stream)`. In `stream_sync` there are two sub-directories, one called `hip` and one called `interop`. In the one called `hip` we are manually setting the number of OpenMP CPU threads to 4, and then creating 4 streams for each OpenMP CPU thread. This is done before the `#pragma omp parallel for ...` that creates the threads. In the `interop` sub-directory, we are using the OpenMP `interop` directive to create a foreign (to OpenMP) synchronization object (a HIP stream) from within the parallel OpenMP loop and then set the execution of rocblas on this specific stream. Note that in this way the OpenMP threads are using more than one stream since a new stream is created during each iteration of the parallel for loop. 
+There are currently two directories: `device_sync` and `streams_sync`: the main difference between the code in these two directories is that in `device_sync` we are calling `hipDeviceSynchronize()` after each `rocblas_dgemm` call whereas in `streams_sync` we are creating streams for each OpenMP CPU thread and then synchronizing with `hipStreamSynchronize(stream)`. In `stream_sync` there are two sub-directories, one called `hip` and one called `interop`. In the one called `hip` we are manually setting the number of OpenMP CPU threads to 4, and then creating 4 streams for each OpenMP CPU thread. This is done before the `#pragma omp parallel for ...` that creates the threads. In the `interop` sub-directory, we are using the OpenMP `interop` directive to create a foreign (to OpenMP) synchronization object (a HIP stream) from within the parallel OpenMP loop and then set the execution of rocblas on this specific stream. Note that in this way the OpenMP threads are using more than one stream since a new stream is created during each iteration of the parallel for loop.
+
+All three implementations (`device_sync`, `streams_sync/hip`, and `streams_sync/interop`) now include automatic unified memory detection and will automatically use managed memory when available, falling back to explicit memory management when not supported. 
 
 To compile and run do (this applies to both directories):
 
 ```
-module load rocm
-module load amdclang
-export HSA_XNACK=1
 make
 ./mat_exp
 ```
 
-If the `amdclang` module is not available in your system, after loading the ROCm module, do `export CXX=$(which amdclang++)`.
-Setting the environment variable `HSA_XNACK=1` enables managed memory and is necessary to not incur in memory access faults, as we are passing host pointers to the `rocblas_dgemm` call.
+The Makefile defaults to using `/opt/rocm/llvm/bin/amdclang++` as the compiler. If you want to use a different compiler, you can set the `CXX` environment variable:
+
+```
+export CXX=/path/to/your/compiler
+make
+```
+
+**Note on Managed Memory:** The code automatically detects the current unified memory status using `hipDeviceGetAttribute` with the `hipDeviceAttributePageableMemoryAccess` attribute and uses it when enabled. If unified memory is not supported/enabled, it falls back to explicit memory management (`hipMalloc`/`hipMemcpy`). The code will print messages at runtime indicating which memory management mode is being used (e.g., "Unified memory support detected" or "Unified memory not supported, using explicit memory management"). 
+
+If you want to run the application with managed memory support, you may need to enable XNACK:
+
+```
+export HSA_XNACK=1
+./mat_exp
+```
+
+This is optional and only needed if you require to run the app with managed memory support.
 
 ## Comment on Performance
 
