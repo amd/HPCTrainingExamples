@@ -73,6 +73,8 @@ In the current workload, users may configure the datatype used (float32, bfloat1
 
 The datasets are available from `torchvision`, and the script `./download-data.sh` can be run once on a node with a GPU to download the data. By default, the data will be stored in a `data/` folder, and this is also the path where other scripts in this repo will search for the input data. You can also run `python3 train_cifar_100.py --download-only`, and if needed configure the data path using `--data-path [path]`.
 
+If the machine you are using for downloading the data doesnt have GPUs (e.g., login node of a cluster), consider using a simplified `download_only_nogpus.py` script.
+
 
 ## Helper Scripts
 
