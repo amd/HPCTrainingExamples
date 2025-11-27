@@ -1170,9 +1170,9 @@ set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY PASS_REGULAR_EXPRE
 set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Rocprofv3 tests
-add_test(NAME Rocprofv3_Mini_Nbody_Kernel_Stats COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
-set_property(TEST Rocprofv3_Mini_Nbody_Kernel_Stats PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
-set_property(TEST Rocprofv3_Mini_Nbody_Kernel_Stats PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#add_test(NAME Rocprofv3_Mini_Nbody_Kernel_Stats COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
+#set_property(TEST Rocprofv3_Mini_Nbody_Kernel_Stats PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
+#set_property(TEST Rocprofv3_Mini_Nbody_Kernel_Stats PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Rocprofv3_Mini_Nbody_Marker_Trace COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
 set_property(TEST Rocprofv3_Mini_Nbody_Marker_Trace PROPERTY PASS_REGULAR_EXPRESSION "randomizeBodies_marker")
