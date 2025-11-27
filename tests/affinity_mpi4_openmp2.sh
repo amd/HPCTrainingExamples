@@ -1,6 +1,11 @@
 #!/bin/bash
 
-module load gcc rocm openmpi
+if ! module is-loaded "rocm"; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
+module load gcc openmpi
 
 git clone https://code.ornl.gov/olcf/hello_mpi_omp.git
 cd hello_mpi_omp
