@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export HSA_XNACK=1
 module load gcc
 if ! module is-loaded "rocm"; then
   echo "rocm module is not loaded"
