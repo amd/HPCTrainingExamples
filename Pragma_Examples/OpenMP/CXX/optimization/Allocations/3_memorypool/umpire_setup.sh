@@ -11,8 +11,15 @@ sed -i 's/Mfree/ffree-form/g' tests/integration/interface/fortran/CMakeLists.txt
 mkdir -p build && cd build
 mkdir $UMPIRE_PATH
 
-module load rocm
-module load amdflang-new
+if ! module is-loaded "rocm"; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
+module load amdflang-new >& /dev/null
+if [ "$?" == "1" ]; then
+   module load amdclang
+fi
 
 AMDGPU_GFXMODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`
 
