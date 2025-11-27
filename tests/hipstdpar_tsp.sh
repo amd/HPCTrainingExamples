@@ -11,7 +11,11 @@ patch -p1 < TSP.patch
 cd stdpar
 
 export HSA_XNACK=1
-module load rocm
+if ! module is-loaded "rocm"; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 module load amdclang
 export STDPAR_CXX=$CXX
 export ROCM_GPU=`rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'`

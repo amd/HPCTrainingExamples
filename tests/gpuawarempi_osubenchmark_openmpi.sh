@@ -9,8 +9,13 @@ tar -xvf osu-micro-benchmarks-7.3.tar.gz
 cd osu-micro-benchmarks-7.3
 
 
+if ! module is-loaded "rocm"; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 
-module load rocm openmpi
+module load openmpi
 
 rm -rf build
 
