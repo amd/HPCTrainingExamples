@@ -1,6 +1,10 @@
 #!/bin/bash
 
-module load rocm
+if ! module is-loaded "rocm"; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 GPU_COUNT=`rocminfo | grep "Device Type:             GPU"  | wc -l`
 if [ ${GPU_COUNT} -lt 2 ]; then
    echo "Skip"

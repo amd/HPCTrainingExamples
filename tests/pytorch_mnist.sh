@@ -10,8 +10,12 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/pytorch_setup.sh
 
 
-module load rocm
-module load rocm pytorch
+if ! module is-loaded "rocm"; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
+module load pytorch
 
 rm -rf pytorch_mnist
 

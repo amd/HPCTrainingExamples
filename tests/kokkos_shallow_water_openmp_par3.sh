@@ -1,7 +1,11 @@
 #!/bin/bash
 
 module load gcc
-module load rocm
+if ! module is-loaded "rocm"; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 
 rm -rf Chapter13
 git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 Chapter13

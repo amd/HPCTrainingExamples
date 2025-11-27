@@ -8,7 +8,11 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/cupy_setup.sh
 
 
-module load rocm
+if ! module is-loaded "rocm"; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 module load cupy
 
 python3 -c 'import cupy' 2> /dev/null && echo 'Success' || echo 'Failure'

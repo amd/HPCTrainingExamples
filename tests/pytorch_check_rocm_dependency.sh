@@ -8,8 +8,12 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/pytorch_setup.sh
 
 
-module load rocm
-module load rocm pytorch
+if ! module is-loaded "rocm"; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
+module load pytorch
 
 python3 -m torch.utils.collect_env | grep ROCM > output.txt
 cut -d : -f 2 output.txt > new.txt

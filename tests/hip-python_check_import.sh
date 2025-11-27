@@ -7,8 +7,11 @@
 # to the instructions available in the model installation repo:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/hip-python_setup.sh
 
-
-module load rocm
+if ! module is-loaded "rocm"; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 module load hip-python
 
 python3 -c 'import hip, hiprtc' 2> /dev/null && echo 'Success' || echo 'Failure'

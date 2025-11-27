@@ -1,6 +1,10 @@
 #!/bin/bash
 
-module load rocm
+if ! module is-loaded "rocm"; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 module load netcdf-c
 
 # use the compiler used to build netcdf-c

@@ -8,7 +8,11 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/tensorflow_setup.sh
 
 
-module load rocm
+if ! module is-loaded "rocm"; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 module load tensorflow
 
 python3 -c 'from tensorflow.python.client import device_lib; print(device_lib.list_local_devices())'

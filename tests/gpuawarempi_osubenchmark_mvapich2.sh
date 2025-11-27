@@ -2,7 +2,12 @@
 
 
 
-module load rocm mvapich2/2.3.7
+if ! module is-loaded "rocm"; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
+module load mvapich2/2.3.7
 
 export HIP_VISIBLE_DEVICES=0,1
 

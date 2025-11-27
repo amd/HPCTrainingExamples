@@ -2,7 +2,11 @@
 NY=1024 ; NZ=1024 ; NX=256 ; TBSIZE=256; NUMTIMES=1000
 BABELSTREAM_ROOT=${PWD}/BabelStream
 rm -rf ${BABELSTREAM_ROOT}
-module load rocm
+if ! module is-loaded "rocm"; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 git clone https://github.com/UoB-HPC/BabelStream.git ${BABELSTREAM_ROOT}
 cd ${BABELSTREAM_ROOT}
 # -DDEFAULT -- good performance

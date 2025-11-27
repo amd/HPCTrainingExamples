@@ -8,7 +8,11 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/jax_setup.sh
 
 
-module load rocm
+if ! module is-loaded "rocm"; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 module load jax
 
 rm -rf jax_mnist_test_dir

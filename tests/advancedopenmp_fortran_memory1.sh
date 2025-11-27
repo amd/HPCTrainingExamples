@@ -1,6 +1,10 @@
 #!/bin/bash
 
-module load rocm
+if ! module is-loaded "rocm"; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 GFX_MODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`
 if [ "${GFX_MODEL}" = "gfx1030" ] ; then
    echo "Skip"
