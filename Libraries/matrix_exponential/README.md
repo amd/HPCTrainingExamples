@@ -90,13 +90,11 @@ To compile and run do (this applies to both directories):
 ```
 module load rocm
 module load amdclang
-export HSA_XNACK=1
 make
 ./mat_exp
 ```
 
 If the `amdclang` module is not available in your system, after loading the ROCm module, do `export CXX=$(which amdclang++)`.
-Setting the environment variable `HSA_XNACK=1` enables managed memory and is necessary to not incur in memory access faults, as we are passing host pointers to the `rocblas_dgemm` call.
 
 ## Comment on Performance
 

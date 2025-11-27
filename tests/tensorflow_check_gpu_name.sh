@@ -11,4 +11,4 @@
 module load rocm
 module load tensorflow
 
-python3 -c 'from tensorflow.python.client import device_lib ; device_lib.list_local_devices()'
+python3 -c 'from tensorflow.python.client import device_lib; print(device_lib.list_local_devices())'

@@ -1,8 +1,8 @@
 # No Profiling?
 
-The scripts here represent bare bones launch scripts that can measure baseline performance before profiling, as reported by throughput in images / gpu / second.  You can and should execute these scripts to get a sense of total performance.  The model is doing classification of the CIFAR100 dataset, and reports training accuracy only.  Test accuracy could be added but isn't included for this performance study.
+The scripts here represent bare bones launch scripts that can measure baseline performance before profiling, as reported by throughput in images / gpu / second. You can and should execute these scripts to get a sense of total performance. The model is doing classification of the CIFAR100 dataset, and reports training accuracy only. Test accuracy could be added but isn't included for this performance study so far.
 
-If you run on a single 300X, on ROCm 6.2, results may look something like this:
+If you run on a single MI300X, on ROCm 6.2, results may look something like this:
 
 ```
 0 / 0: loss 5.00, acc 0.39%, images / second / gpu: 564.89.
@@ -53,4 +53,5 @@ On average, performance per GPU is peaking around 12000 or more images per secon
 0 / 19: loss 4.58, acc 2.94%, images / second / gpu: 3115.56.
 ```
 
-Overall, this represents approximately 75% scale up efficiency for this model.  Note that this application has extremely tiny images, and the ratio of computation to communication is poor for scale up efficiency.
+Overall, this represents approximately 75% scale up efficiency for this model. Note that this application has extremely tiny images, and the ratio of computation to communication is poor for scale up efficiency.
+
