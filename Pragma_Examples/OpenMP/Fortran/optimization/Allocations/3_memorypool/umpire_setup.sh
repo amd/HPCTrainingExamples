@@ -1,6 +1,7 @@
 #!/bin/bash
 
 UMPIRE_PATH=${PWD}/Umpire_install
+rm -rf Umpire_source
 git clone --recursive https://github.com/LLNL/Umpire.git Umpire_source
 cd Umpire_source
 sed -i 's/memoryType/type/g' src/umpire/tpl/camp/include/camp/resource/hip.hpp
