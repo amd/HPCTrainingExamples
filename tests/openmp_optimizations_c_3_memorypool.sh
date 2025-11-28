@@ -18,3 +18,4 @@ make
 make clean
 
 rm -rf Umpire_source Umpire_install
+rm -rf umpire-2025.09.0
