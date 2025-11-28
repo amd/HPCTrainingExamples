@@ -41,7 +41,7 @@ rocprof-compute analyze -p workloads/cifar_100_single_proc/MI* -b 2.1.2 2.1.3 2.
 ╘═════════════╧═══════════════════╧═════════╧════════╧════════════╧═══════════════╛
 ```
 
-As seen above, this workload in fp16 did in fact execute in fp16, but with incredibly poor compute efficiency.  We can dig deeper into this execution with block 10.1 (Compute Units Instruction Mix) and 11.1 (Compute Units – Compute Pipeline Speed of Light):
+As seen above, this workload in fp16 did in fact execute in fp16, but with incredibly poor compute efficiency. We can dig deeper into this execution with block 10.1 (Compute Units Instruction Mix) and 11.1 (Compute Units – Compute Pipeline Speed of Light):
 
 ```
 rocprof-compute analyze -p workloads/cifar_100_single_proc/MI* -b 10.1 11.1
@@ -86,5 +86,4 @@ rocprof-compute analyze -p workloads/cifar_100_single_proc/MI* -b 10.1 11.1
 ╘═════════════╧═══════════════════╧═════════╧════════╧════════════╧═══════════════╛
 ```
 
-As is already known about this workload, it has simply not enough input data and compute requirements to keep the GPU pipelines fed.  
-
+As is already known about this workload, it has simply not enough input data and compute requirements to keep the GPU pipelines fed.
