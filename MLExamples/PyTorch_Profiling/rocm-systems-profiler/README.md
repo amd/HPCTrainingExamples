@@ -29,7 +29,7 @@ ROCm Systems Profiler is compatible with MPI (and Slurm) and will generate one p
 ```bash
 mpirun -n 4 \
 rocprof-sys-sample -c $RSP_CFG \
--I  kokkosp mpip ompt rocm-smi rocprofiler roctracer roctx rw-locks spin-locks -- \
+-I  all -- \
 python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --data-path ${PROFILER_TOP_DIR}/data
 ```
 
