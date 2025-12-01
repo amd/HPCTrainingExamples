@@ -13,6 +13,7 @@ if ! module is-loaded "rocm"; then
   echo "loading default rocm module"
   module load rocm
 fi
+module load pytorch
 
 python3 -c 'import sageattention' 2> /dev/null && echo 'Success' || echo 'Failure'
 
