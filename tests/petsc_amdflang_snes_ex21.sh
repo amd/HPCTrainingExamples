@@ -12,7 +12,12 @@ if ! module is-loaded "rocm"; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load openmpi petsc_amdflang
+module load openmpi
+module load petsc_amdflang >& /dev/null
+if [ "$?" == "1" ]; then
+    module load petsc
+fi
+
 
 PETSC_VERSION=`$PETSC_DIR/lib/petsc/bin/petscversion`
 
