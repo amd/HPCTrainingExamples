@@ -14,7 +14,7 @@ if ! module is-loaded "rocm"; then
 fi
 module load openmpi hypre
 
-HYPRE_VERSION=`cat $HYPRE_PATH/lib/cmake/HYPRE/HYPREConfigVersion.cmake | grep "set(PACKAGE_VERSION \"2"`
+HYPRE_VERSION=`cat $HYPRE_PATH/lib/cmake/HYPRE/HYPREConfigVersion.cmake | grep "set(PACKAGE_VERSION \"3"`
 HYPRE_VERSION=`echo $HYPRE_VERSION | sed 's/set(PACKAGE_VERSION \"//g'`
 HYPRE_VERSION=`echo $HYPRE_VERSION | sed 's/\")//g'`
 
