@@ -280,3 +280,5 @@ if __name__ == "__main__":
     model, opt = init_model(args, rank)
 
     train(train_data, val_data, model, opt, rank)
+
+    dist.destroy_process_group()
