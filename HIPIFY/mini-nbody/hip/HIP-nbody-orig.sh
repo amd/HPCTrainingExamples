@@ -7,11 +7,8 @@ then
     rm nbody-orig
 fi
 
-echo hipcc -I../ -DSHMOO nbody-orig.hip -o nbody-orig
-$ROCM_PATH/bin/hipcc -I../ -DSHMOO nbody-orig.hip -o nbody-orig
-
-#To print our more details, remove  flag
-#hipcc -I../  nbody-orig.hip -o nbody-orig
+echo hipcc -I../ nbody-orig.hip -o nbody-orig
+$ROCM_PATH/bin/hipcc -I../ nbody-orig.hip -o nbody-orig -lrocprofiler-sdk-roctx
 
 #execute the program
 
