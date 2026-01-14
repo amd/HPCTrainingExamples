@@ -10,11 +10,8 @@ then
     rm nbody-soa
 fi
 
-echo hipcc -I../ -DSHMOO nbody-soa.hip -o nbody-soa
-$ROCM_PATH/bin/hipcc -I../ -DSHMOO nbody-soa.hip -o nbody-soa
-
-#To print our more details, remove DSHMOO flag
-#hipcc -I../  nbody-soa.hip -o nbody-soa
+echo hipcc -I../ nbody-soa.hip -o nbody-soa
+$ROCM_PATH/bin/hipcc -I../ nbody-soa.hip -o nbody-soa
 
 #execute the program
 EXE=nbody-soa

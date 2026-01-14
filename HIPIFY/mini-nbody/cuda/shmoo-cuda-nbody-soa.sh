@@ -1,7 +1,7 @@
 SRC=nbody-soa.cu
 EXE=nbody-soa
 
-nvcc -arch=sm_35 -I../ -DSHMOO -o $EXE $SRC
+nvcc -arch=sm_35 -I../ -o $EXE $SRC
 
 echo $EXE
 

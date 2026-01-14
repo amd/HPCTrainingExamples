@@ -1,7 +1,7 @@
 SRC=nbody-soa.cu
 EXE=nbody-ftz
 
-nvcc -arch=sm_35 -ftz=true -I../ -o $EXE $SRC -DSHMOO
+nvcc -arch=sm_35 -ftz=true -I../ -o $EXE $SRC
 
 echo $EXE
 

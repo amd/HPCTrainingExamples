@@ -10,11 +10,8 @@ then
     rm nbody-block
 fi
 
-echo hipcc -I../ -DSHMOO nbody-block.hip -o nbody-block
-$ROCM_PATH/bin/hipcc -I../ -DSHMOO nbody-block.hip -o nbody-block
-
-#To print our more details, remove DSHMOO flag
-#hipcc -I../  nbody-block.cpp -o nbody-block
+echo hipcc -I../ nbody-block.hip -o nbody-block
+$ROCM_PATH/bin/hipcc -I../ nbody-block.hip -o nbody-block
 
 #execute the program
 EXE=nbody-block
