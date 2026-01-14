@@ -81,7 +81,9 @@ else
 fi
 
 module load rocm
-module load ${TOOL_NAME}${VERSION}
+if [ ! -f "`which rocprof-compute`.bin" ]; then
+   module load ${TOOL_NAME}${VERSION}
+fi
 
 pushd ${PROFILER_TOP_DIR}
 if [ ! -f data/cifar-100-python ]; then

@@ -104,7 +104,9 @@ echo "tool command is ${TOOL_COMMAND}"
 echo " "
 echo " ------------------------------- "
 module show ${TOOL_NAME}${VERSION}
-module load ${TOOL_NAME}${VERSION}
+if [ ! -f "`which rocprof-compute`.bin" ]; then
+   module load ${TOOL_NAME}${VERSION}
+fi
 
 export HSA_XNACK=1
 ${TOOL_COMMAND} profile -n rooflines_PDF --roof-only  -- ./saxpy

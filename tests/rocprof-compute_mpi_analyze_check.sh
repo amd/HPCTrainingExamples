@@ -102,7 +102,9 @@ echo "tool command is ${TOOL_COMMAND}"
 echo " "
 echo " ------------------------------- "
 module show ${TOOL_NAME}${VERSION}
-module load ${TOOL_NAME}${VERSION}
+if [ ! -f "`which rocprof-compute`.bin" ]; then
+   module load ${TOOL_NAME}${VERSION}
+fi
 
 export HSA_XNACK=1
 ${TOOL_COMMAND} profile -n v1 --no-roof -- ./GhostExchange -x 1 -y 1 -i 200 -j 200 -h 2 -t -c -I 100
