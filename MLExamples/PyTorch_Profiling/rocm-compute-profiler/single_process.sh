@@ -81,7 +81,7 @@ else
 fi
 
 module load rocm
-if [ ! -f "`which rocprof-compute`.bin" ]; then
+if [ ! -f "${ROCM_PATH}/bin/rocprof-compute.bin" ]; then
    module load ${TOOL_NAME}${VERSION}
 fi
 

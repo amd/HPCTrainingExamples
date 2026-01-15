@@ -90,7 +90,7 @@ else
    VERSION="/${VERSION}"
 fi
 
-if [ ! -f "`which rocprof-compute`.bin" ]; then
+if [ ! -f "${ROCM_PATH}/bin/rocprof-compute.bin" ]; then
    echo " ------------------------------- "
    echo " "
    echo "loaded ${TOOL_NAME} from ${TOOL_ORIGIN}"
