@@ -90,21 +90,21 @@ else
    VERSION="/${VERSION}"
 fi
 
-echo " ------------------------------- "
-echo " "
-echo "loaded ${TOOL_NAME} from ${TOOL_ORIGIN}"
-echo " "
-echo " ------------------------------- "
-echo " "
-echo "module load ${TOOL_NAME}${VERSION}"
-echo " "
-echo " ------------------------------- "
-echo " "
-echo "tool command is ${TOOL_COMMAND}"
-echo " "
-echo " ------------------------------- "
-module show ${TOOL_NAME}${VERSION}
 if [ ! -f "`which rocprof-compute`.bin" ]; then
+   echo " ------------------------------- "
+   echo " "
+   echo "loaded ${TOOL_NAME} from ${TOOL_ORIGIN}"
+   echo " "
+   echo " ------------------------------- "
+   echo " "
+   echo "module load ${TOOL_NAME}${VERSION}"
+   echo " "
+   echo " ------------------------------- "
+   echo " "
+   echo "tool command is ${TOOL_COMMAND}"
+   echo " "
+   echo " ------------------------------- "
+   module show ${TOOL_NAME}${VERSION}
    module load ${TOOL_NAME}${VERSION}
 fi
 

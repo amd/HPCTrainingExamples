@@ -99,7 +99,7 @@ echo "tool command is ${TOOL_COMMAND}-instrument"
 echo " "
 echo " ------------------------------- "
 module show ${TOOL_NAME}${VERSION}
-module load ${TOOL_NAME}${VERSION}
+#module load ${TOOL_NAME}${VERSION}
 
 ${TOOL_COMMAND}-instrument -o compute_comm_overlap.inst -- compute_comm_overlap
 

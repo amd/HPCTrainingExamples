@@ -94,7 +94,7 @@ echo "tool command is ${TOOL_COMMAND}-avail"
 echo " "
 echo " ------------------------------- "
 module show ${TOOL_NAME}${VERSION}
-module load ${TOOL_NAME}${VERSION}
+#module load ${TOOL_NAME}${VERSION}
 
 ${TOOL_COMMAND}-avail -G $PWD/.configure.cfg
 
