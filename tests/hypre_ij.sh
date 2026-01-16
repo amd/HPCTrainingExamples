@@ -7,7 +7,8 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/hypre_setup.sh
 
 
-if ! module is-loaded "rocm"; then
+module list 2>&1 | grep -q -w "rocm"
+if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
   module load rocm

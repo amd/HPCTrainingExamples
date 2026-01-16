@@ -2,7 +2,8 @@
 NY=1024 ; NZ=1024 ; NX=256 ; TBSIZE=256; NUMTIMES=1000
 BABELSTREAM_ROOT=${PWD}/BabelStream
 rm -rf ${BABELSTREAM_ROOT}
-if ! module is-loaded "rocm"; then
+module list 2>&1 | grep -q -w "rocm"
+if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
   module load rocm
