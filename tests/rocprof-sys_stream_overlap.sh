@@ -92,24 +92,27 @@ else
    VERSION="/${VERSION}"
 fi
 
-echo " ------------------------------- "
-echo " "
-echo "loaded ${TOOL_NAME} from ${TOOL_ORIGIN}"
-echo " "
-echo " ------------------------------- "
-echo " "
-echo "module load ${TOOL_NAME}${VERSION}"
-echo " "
-echo " ------------------------------- "
-echo " "
-echo "tool commands are:"
-echo "${TOOL_COMMAND}-avail"
-echo "${TOOL_COMMAND}-instrument"
-echo "${TOOL_COMMAND}-run"
-echo " "
-echo " ------------------------------- "
-module show ${TOOL_NAME}${VERSION}
-module load ${TOOL_NAME}${VERSION}
+module avail 2>&1 | grep -q -w "${TOOL_NAME}"
+   if [ $? -eq 0 ]; then
+   echo " ------------------------------- "
+   echo " "
+   echo "loaded ${TOOL_NAME} from ${TOOL_ORIGIN}"
+   echo " "
+   echo " ------------------------------- "
+   echo " "
+   echo "module load ${TOOL_NAME}${VERSION}"
+   echo " "
+   echo " ------------------------------- "
+   echo " "
+   echo "tool commands are:"
+   echo "${TOOL_COMMAND}-avail"
+   echo "${TOOL_COMMAND}-instrument"
+   echo "${TOOL_COMMAND}-run"
+   echo " "
+   echo " ------------------------------- "
+   module show ${TOOL_NAME}${VERSION}
+   module load ${TOOL_NAME}${VERSION}
+fi
 
 ${TOOL_COMMAND}-avail -G $PWD/.configure.cfg
 export ${TOOL_CONFIG}_CONFIG_FILE=$PWD/.configure.cfg

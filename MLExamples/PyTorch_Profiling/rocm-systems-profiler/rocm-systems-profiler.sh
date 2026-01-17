@@ -49,7 +49,10 @@ else
    VERSION="/${VERSION}"
 fi
 
-module load ${TOOL_NAME}${VERSION}
+module avail 2>&1 | grep -q -w "${TOOL_NAME}"
+if [ $? -eq 0 ]; then
+   module load ${TOOL_NAME}${VERSION}
+fi
 
 pushd ${PROFILER_TOP_DIR}
 if [ ! -f data/cifar-100-python ]; then

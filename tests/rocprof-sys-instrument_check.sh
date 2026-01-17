@@ -86,21 +86,24 @@ else
    VERSION="/${VERSION}"
 fi
 
-echo " ------------------------------- "
-echo " "
-echo "loaded ${TOOL_NAME} from ${TOOL_ORIGIN}"
-echo " "
-echo " ------------------------------- "
-echo " "
-echo "module load ${TOOL_NAME}${VERSION}"
-echo " "
-echo " ------------------------------- "
-echo " "
-echo "tool command is ${TOOL_COMMAND}-instrument"
-echo " "
-echo " ------------------------------- "
-module show ${TOOL_NAME}${VERSION}
-#module load ${TOOL_NAME}${VERSION}
+module avail 2>&1 | grep -q -w "${TOOL_NAME}"
+if [ $? -eq 0 ]; then
+   echo " ------------------------------- "
+   echo " "
+   echo "loaded ${TOOL_NAME} from ${TOOL_ORIGIN}"
+   echo " "
+   echo " ------------------------------- "
+   echo " "
+   echo "module load ${TOOL_NAME}${VERSION}"
+   echo " "
+   echo " ------------------------------- "
+   echo " "
+   echo "tool command is ${TOOL_COMMAND}-instrument"
+   echo " "
+   echo " ------------------------------- "
+   module show ${TOOL_NAME}${VERSION}
+   module load ${TOOL_NAME}${VERSION}
+fi
 
 ${TOOL_COMMAND}-instrument -o compute_comm_overlap.inst -- compute_comm_overlap
 
