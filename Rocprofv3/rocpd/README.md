@@ -1,62 +1,115 @@
+# Using `rocpd` for performance analysis
 
-# rocpd
+`rocpd` stores profiling data in a SQLite3 database format, enabling post-processing analysis without re-profiling. This minimizes profiling stage dependencies—you only need `rocprofv3` during data collection, not during analysis.
 
-In this series of examples, we will demonstrate the capabilities of rocprofv3 combined with rocpd for profiling two versions of Jacobi application. rocpd is often referred to both as a format (SQLite3 database) and as a command line tool for manipulating and analyzing that database generated through rocprofv3 profiling. For a full list of rocpd options, please check `rocpd --help` and the [rocpd documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-rocpd-output-format.html).
+## What is `rocpd`?
 
-Note that the focus of this exercise is on the rocprofv3 and rocpd, not on how to achieve optimal performance on MI300A. This exercise was last tested with ROCm 7.1.1 on the MI300A AAC6 cluster.
+`rocpd` is referred to as both a format (SQLite3 database) and a command-line tool for analyzing profiling data from `rocprofv3`. The database consolidates execution traces, performance counters, hardware metrics, and metadata in a single `.db` file, queryable via SQL interfaces.
 
-The examples are based on [Fortran+OpenMP Jacobi](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/Fortran/8_jacobi/1_jacobi_usm) and [MPI HIP Jacobi](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/jacobi) porting examples from HPCTrainingExamples.
+This tutorial covers converting databases to CSV and PFTrace formats, generating performance summaries, filtering by time windows, comparing multiple runs, and analyzing MPI applications. For advanced features (SQL queries, email reporting), see the [rocpd documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/develop/how-to/using-rocpd-output-format.html).
 
-## rocpd database format for rocprov3 and rocprof-sys
+> **Note:** The focus of this exercise is on `rocprofv3` and `rocpd`, not on how to achieve optimal performance on MI300A. This exercise was last tested with ROCm 7.1.1 on the MI300A AAC6 cluster.
 
-For more details about rocprofv3 options check its [documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-rocprofv3.html), and for examples of typical profiling and analysis with rocprofv3 check [HIP](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/HIP) and [OpenMP](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/OpenMP). If you are used in rocprofv3 behavior prior to ROCm 7.0 and commands that existed before rocpd was introduced, you can still typically achieve the same with newer rocprofv3 just by adding the option `--output-format` (e.g., `--output-format csv` for analysis of the text files in the terminal or `--output-format pftrace` for Perfetto traces).
+In this tutorial, we use two case studies to demonstrate the `rocprofv3` + `rocpd` profiling workflow:
 
-In the rest of this example, we focus on rocprofv3, but similar things apply for rocprof-sys. Rocprof-sys also supports for rocpd database output with the `ROCPROFSYS_USE_ROCPD` configuration setting. For more info check [Understanding the Systems Profiler output — ROCm Systems Profiler 1.2.1 documentation](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/how-to/understanding-rocprof-sys-output.html#generating-rocpd-output).
+1. [Fortran+OpenMP Jacobi](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/Fortran/8_jacobi/1_jacobi_usm)
+2. [MPI HIP Jacobi](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/jacobi)
 
-## rocpd dependencies
+## Before you begin
 
-Note that rocpd tool for ROCm 7.0 and 7.1 should be used with the default Python that was used for its installation (e.g., Python 3.6). This strict dependency was removed starting from ROCm 7.2.0. Additionally, rocpd tool has a dependency on pandas, so make user might need to install it using virtual environment (this is not needed on AAC6).
+**Prerequisites:**
+- ROCm 7.0+ installed
+- Access to an AMD GPU system (tested on MI300A)
+- Basic familiarity with terminal commands
 
-## Main rocpd functionalities
+**What you'll need:**
+- About 30 minutes for both examples
+- The HPCTrainingExamples repository cloned locally
 
-The rocpd tool provides three main subcommands for different analysis workflows:
-    1. convert - Transform rocpd databases to alternative formats (csv, OTF2, pftrace)
-    2. summary - Generate statistical analysis reports equivalent to rocprofv3 summary functionality
-    3. query - Execute SQL queries against rocpd databases with flexible output options
+## Quick start: The `rocpd` workflow
 
-While option to query rocpd database is very powerful, it is not commonly used for the basic analysis of HPC profiles. Hence, this option won't be discussed in this example, but we refer the curios user to the [rocpd query documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-rocpd-output-format.html#query) for more info.
+1. **Profile once**: `rocprofv3 --kernel-trace --output-directory results -- ./your_app`
+2. **Analyze many times**: Use `rocpd` to convert, summarize, filter, and compare
+3. **Key insight**: The database format enables flexible post-processing without re-profiling
 
-Note that there also a couple of convenient helper scripts which mimic the bahavior of the original rocpd with most common options:
-     - `rocpd2csv` == `rocpd convert --output-format csv`
-     - `rocpd2pftrace` == `rocpd convert --output-format pftrace`
-     - `rocpd2summary` == `rocpd summary`
+## Understanding `rocpd`
+
+For a full list of `rocpd` options, check `rocpd --help` and the [rocpd documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/develop/how-to/using-rocpd-output-format.html).
+
+### `rocpd` database format for `rocprofv3` and `rocprof-sys`
+
+For more details about `rocprofv3` options check its [documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-rocprofv3.html), and for examples of typical profiling and analysis with `rocprofv3` check [HIP](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/HIP) and [OpenMP](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/OpenMP). If you are used to `rocprofv3` behavior prior to ROCm 7.0 and commands that existed before `rocpd` was introduced, you can still typically achieve the same with newer `rocprofv3` just by adding the option `--output-format` (e.g., `--output-format csv` for analysis of the text files in the terminal or `--output-format pftrace` for Perfetto traces).
+
+In the rest of this example, we focus on `rocprofv3`, but similar things apply for `rocprof-sys`. `rocprof-sys` also supports `rocpd` database output with the `ROCPROFSYS_USE_ROCPD` configuration setting. For more info check [Understanding the Systems Profiler output — ROCm Systems Profiler 1.2.1 documentation](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/how-to/understanding-rocprof-sys-output.html#generating-rocpd-output).
+
+### `rocpd` dependencies
+
+Note that `rocpd` tool for ROCm 7.0 and 7.1 should be used with the default Python that was used for its installation (e.g., Python 3.6). This strict dependency was removed starting from ROCm 7.2.0. 
+
+**Required dependency:** `rocpd` requires pandas for its analysis operations. You may need to install it using a virtual environment if it's not already available in your Python environment (this is not needed on AAC6). Since analysis happens during post-processing, pandas only needs to be available on the system where you run `rocpd` commands, not necessarily on the system where you run `rocprofv3`.
+
+## `rocpd` commands
+
+`rocpd` provides three main subcommands: `convert` (transform databases to CSV, PFTrace, or OTF2), `summary` (generate statistical reports and compare runs), and `query` (execute custom SQL queries). Helper scripts `rocpd2csv`, `rocpd2pftrace`, and `rocpd2summary` provide shortcuts for common operations.
+
+## Workflow
+
+**Traditional approach** (requires re-profiling for each analysis):
+
+```bash
+# Profile to get CSV output
+rocprofv3 --kernel-trace --output-format csv -- ./app > kernel_trace.csv
+# Get Perfetto trace output
+rocprofv3 --kernel-trace --output-format pftrace  -- ./app > timeline.csv
+# Get hotspot list of kernels
+rocprofv3 --kernel-trace --stats -- ./app > summary.txt
+# Re-profiling 3 times!
+```
+
+**`rocpd` approach** (profile once, analyze many times):
+
+```bash
+# Profile once
+rocprofv3 --kernel-trace --output-directory results -- ./app
+# Convert to CSV
+rocpd2csv -i results/app_results.db                           
+# Convert to Perfetto trace format
+rocpd2pftrace -i results/app_results.db                        
+# Generate summary of top kernels
+rocpd2summary --region-categories KERNEL -i results/app_results.db                       
+# All from one profiling run!
+```
+
+Analysis can be performed on different systems or at different times; only `rocprofv3` is needed during profiling.
+
+---
 
 ## Example 1: Fortran OpenMP Jacobi
 ### Setup, build and run
 
 Download the examples repository and navigate to the Fortran+OpenMP Jacobi example exercises:
 
-```
+```bash
 git clone https://github.com/amd/HPCTrainingExamples.git
 cd HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/8_jacobi/1_jacobi_usm
 ```
 
-Load the necessary modules, including amdflang (a.k.a. flang-new) compiler. Note that the module name for the amdflang compiler on your system might differ, check for `rocm-afar-drop`, `amd-llvm`, `amdflang-new` or something similar.
+Load the necessary modules, including `amdflang` (a.k.a. `flang-new`) compiler. Note that the module name for the `amdflang` compiler on your system might differ, check for `rocm-afar-drop`, `amd-llvm`, `amdflang-new` or something similar.
 
-```
+```bash
 module load rocm
 module load amdflang-new
 ```
 
 For now, unset the `HSA_XNACK` environment variable:
 
-```
+```bash
 export HSA_XNACK=0
 ```
 
 No profiling yet, just check that the code compiles and runs correctly:
 
-```
+```bash
 make clean
 make FC=amdflang
 ./jacobi -m 1024
@@ -88,29 +141,31 @@ Effective AI=0.177
 
 ### Profile application only once
 
-Collect the first profile about the GPU kernels used by the Fortran+OpenMP Jacobi application. Do not forget `--` between rocprofv3 options and application binary. For a more consistent output path, we will use the optional arguments `--output-directory` and `--output-file`. Rocpd database format is a default one starting from ROCm 7.0, but you can also explicitly specify it by adding `--output-format rocpd`.
+Collect the first profile about the GPU kernels used by the Fortran+OpenMP Jacobi application. Do not forget `--` between `rocprofv3` options and application binary. For a more consistent output path, use the optional arguments `--output-directory` and `--output-file`. `rocpd` database format is the default starting from ROCm 7.0, but you can explicitly specify it with `--output-format rocpd`.
 
-```
+```bash
 rocprofv3 --kernel-trace --output-directory omp_output --output-file omp -- ./jacobi -m 1024
 ```
 
-rocprofv3 should generate a single rocpd database file `omp_output/omp_results.db`. Profiling data is now available and there is no longer need to additionally profile the code with rocprofv3 - just do different analysis using rocpd tool!
+`rocprofv3` generates a single `rocpd` database file `omp_output/omp_results.db`. All subsequent analysis uses this database file without re-profiling.
 
-### Conversion to csv
+### Conversion to CSV
 
-First to generate csv outputs, there are two simple alternatives:
+Convert the database to CSV format for tabular analysis:
 
-```
+```bash
 rocpd2csv -i omp_output/omp_results.db
 # or
 rocpd convert --output-format csv -i omp_output/omp_results.db
 ```
 
-One can now observe newly generated `rocpd-output-data/out_agent_info.csv` and `rocpd-output-data/out_kernel_trace.csv`, which can be opened in the terminal or with the sheet viewer and analyzed following the same instructions as in the other [example](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/OpenMP).
+You can now observe newly generated `rocpd-output-data/out_agent_info.csv` and `rocpd-output-data/out_kernel_trace.csv`, which can be opened in the terminal or with a spreadsheet viewer and analyzed following the same instructions as in the other [example](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/OpenMP).
+
+```bash
+head rocpd-output-data/out_kernel_trace.csv
+```
 
 ```
-head rocpd-output-data/out_kernel_trace.csv
-
 "Guid","Kind","Agent_Id","Queue_Id","Stream_Id","Thread_Id","Dispatch_Id","Kernel_Id","Kernel_Name","Correlation_Id","Start_Timestamp","End_Timestamp","Lds_Block_Size","Scratch_Size","Vgpr_Count","Accum_Vgpr_Count","Sgpr_Count","Workgroup_Size_X","Workgroup_Size_Y","Workgroup_Size_Z","Grid_Size_X","Grid_Size_Y","Grid_Size_Z"
 "00006409-00d1-70d1-a5cb-b5ab88214544","KERNEL_DISPATCH","Agent 4",1,0,714789,1,3,"__omp_offloading_30_57b9f__QMnorm_modPnorm_l23",1,1678314002982197,1678314003082277,8456,0,16,0,32,256,1,1,233472,1,1
 "00006409-00d1-70d1-a5cb-b5ab88214544","KERNEL_DISPATCH","Agent 4",1,0,714789,2,2,"__omp_offloading_30_57b8c__QMlaplacian_modPlaplacian_l22",2,1678314008879169,1678314008930489,0,0,32,0,32,256,1,1,233472,1,1
@@ -125,25 +180,21 @@ head rocpd-output-data/out_kernel_trace.csv
 
 ### Conversion to pftrace
 
-Similarly to csv conversion, one can generate pftrace files that can be opened in Perfetto:
+Convert the database to pftrace format for visualization in Perfetto:
 
-```
+```bash
 rocpd2pftrace -i omp_output/omp_results.db
 # or
 rocpd convert --output-format pftrace -i omp_output/omp_results.db
 ```
 
-Then, the same way as in [example](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/OpenMP), one should copy the `rocpd-output-data/out_results.pftrace` file to the local machine and open it in a browser using Perfetto.
-
-Note that additional options are available related to buffers (e.g., `--perfetto-buffer-size`) or hardware queues (`--group-by-queue`), which can be interesting when analyzing large executions or the ones using multiple streams (e.g., see [stream example](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/Stream_Overlap).
-
-It is also possible to convert traces to the otf2 format, suitable for visualization by different 3rd party tools.
+Copy `rocpd-output-data/out_results.pftrace` to your local machine and open it in Perfetto. You can also convert to OTF2 format using `--output-format otf2` for third-party tool interoperability.
 
 ### Filtering
 
-From the original large database file, one can use filtering to generate a csv/pftrace output for only a subsection of the whole execution. This allows users to exclude initialization/finalization phases or to focus only on a handful of iterations. It is achieved either by specifying the absolute timestamps in nanoseconds or using the percentage notation. Note that we will additionally specify a new output file name using `--output-file out_filtered`, in order not to override the existing csv output files:
+Filter the database to extract specific time windows using absolute timestamps (nanoseconds) or percentage notation. Use `--output-file` to avoid overwriting existing output:
 
-```
+```bash
 rocpd2csv -i omp_output/omp_results.db --output-file out_filtered --start 1678314981964256 --end 1678317483667894
 # or
 rocpd2csv -i omp_output/omp_results.db --output-file out_filtered --start 25% --end 75%
@@ -160,15 +211,13 @@ Exported to: <PATH TO EXAMPLE>/rocpd-output-data/out_filtered_agent_info.csv
 Exported to: <PATH TO EXAMPLE>/rocpd-output-data/out_filtered_kernel_trace.csv
 ```
 
-For the application that contains markers, there is additionally a method to get a time-windowed trace export is using `--start-marker` and `--end-marker`.
+For applications with markers, use `--start-marker` and `--end-marker` to define time windows.
 
 ### Basic summary
 
-One can use SQL queries or Python API to generate custom summaries. However, rocpd tool already provides several useful pre-defined analyses, and more are coming in the near future.
+Generate statistical summaries using `rocpd2summary` or `rocpd summary`:
 
-By default, `rocpd2summary` provides a useful summary overview of the execution:
-
-```
+```bash
 rocpd2summary -i omp_output/omp_results.db
 # or
 rocpd summary -i omp_output/omp_results.db
@@ -185,30 +234,30 @@ KERNELS_SUMMARY:
 __omp_offloading_30_57b7d__QMboundary_modPboundary_conditions_l24   1000         28575181    28575.181000      13.065686       14560       34921 2319.276042
 ```
 
-rocpd summary can also generate data analysis reports of the same data in different formats (csv, html,):
+The `PERCENT (INC)` column indicates which kernels consume the most time. Generate reports in CSV or HTML format:
 
-```
+```bash
 rocpd2summary -i omp_output/omp_results.db --format html --output-path reports/
 ```
 
 ### Comparing multiple executions
 
-Let's collect a profile for a second, slightly different execution, and then do comparative analysis. For this example, the easiest is to change `HSA_XNACK` variable, and then rerun the profiling:
+Compare multiple profiling runs by specifying multiple database files. First, collect a second profile with different settings. In this case, let's examine the impact of setting the HSA_XNACK variable in the environment:
 
-```
+```bash
 export HSA_XNACK=1
 rocprofv3 --kernel-trace --output-directory omp_output --output-file omp2 -- ./jacobi -m 1024
 ```
 
-One can now observe 2 databases from two profile runs using a single `-i` (`-i omp_output/omp_results.db omp_output/omp2_results.db`). First, we can merge them into a single, new csv/pftrace output:
+You can now observe 2 databases from two profile runs using a single `-i` (`-i omp_output/omp_results.db omp_output/omp2_results.db`). First, we can merge them into a single, new CSV/pftrace output:
 
-```
+```bash
 rocpd convert -i omp_output/omp_results.db omp_output/omp2_results.db --output-format csv pftrace --output-path combined_folder --output-file combined_profile
 ```
 
-We can also generate a unified_summary report:
+We can also generate a unified summary report:
 
-```
+```bash
 rocpd summary -i omp_output/omp_results.db -i omp_output/omp2_results.db --output-path combined_folder
 ```
 
@@ -221,14 +270,13 @@ KERNELS_SUMMARY:
          __omp_offloading_30_57b8c__QMlaplacian_modPlaplacian_l22   2000        292131291   146065.645500      32.883697       26440    25579602 625033.260297
                    __omp_offloading_30_57b9f__QMnorm_modPnorm_l23   2002        235146210   117455.649351      26.469183       84200    15000641 375054.076868
 __omp_offloading_30_57b7d__QMboundary_modPboundary_conditions_l24   2000         56607620    28303.810000       6.372025       14560       34921   2088.160445
-
 ```
 
 The number of kernel calls has doubled, which clearly indicates that the two runs were merged.
 
 Let's now compare two runs by adding the `--summary-by-rank` option (the name of this option comes from the most common use case which compares output of different MPI ranks):
 
-```
+```bash
 rocpd summary -i omp_output/omp_results.db omp_output/omp2_results.db --output-path combined_folder --summary-by-rank
 ```
 
@@ -247,30 +295,31 @@ KERNELS_SUMMARY_BY_RANK:
     715613 ppac-pl1-s24-26 __omp_offloading_30_57b7d__QMboundary_modPboundary_conditions_l24   1000         28032439    28032.439000       4.185988       24720       33200   1788.496474
 ```
 
-Hostnames are the same, but two profiling runs had different process id. One can now analyze the difference in kernel behavior depending on the `HSA_XNACK` variable.
+The `KERNELS_SUMMARY_BY_RANK` output shows performance per process ID, allowing comparison of kernel behavior across different runs or configurations.
 
-To explore slightly more advanced rocpd summary options, let's use another example that parallelizes application execution using multiple MPI ranks.
+---
 
-## Example 2: MPI HIP Jacobi
+## Example 2: MPI HIP Jacobi - Multi-rank analysis
+
 ### Setup, build and run
 
-Download the examples repository and navigate to the Fortran+OpenMP Jacobi example exercises:
+Download the examples repository and navigate to the MPI HIP Jacobi example exercises:
 
-```
+```bash
 git clone https://github.com/amd/HPCTrainingExamples.git
 cd HPCTrainingExamples/HIP/jacobi
 ```
 
-Load the necessary modules, including openmpi.
+Load the necessary modules, including `openmpi`:
 
-```
+```bash
 module load rocm
 module load openmpi
 ```
 
 No profiling yet, just check that the code compiles and runs correctly with 2 MPI ranks:
 
-```
+```bash
 make clean
 make
 mpirun -np 2 ./Jacobi_hip -g 2 1
@@ -306,31 +355,31 @@ Percentage of MPI traffic hidden by computation: 87.7
 
 ### MPI application performance analysis of different ranks
 
-Let's first collect a profile for this MPI+HIP Jacobi application, running with 4 MPI ranks:
+Profile an MPI application with multiple ranks:
 
-```
+```bash
 mpirun -np 4 rocprofv3 --hip-trace --output-directory mpi_output -- ./Jacobi_hip -g 2 2
 ```
 
 Generate unified summary for overall application performance:
 
-```
+```bash
 rocpd summary -i mpi_output/ppac-pl1-s24-26/*_results.db --output-path mpi_output --output-file application_overview
 ```
 
 Now we can use the `--summary-by-rank` option to identify load-balancing issues with rank-by-rank comparison:
 
-```
+```bash
 rocpd summary -i mpi_output/ppac-pl1-s24-26/*_results.db --output-path mpi_output --output-file load_balance_analysis --summary-by-rank
 ```
 
-It is important to note that while rocprofv3 can be used to run MPI application with multiple ranks, the tool does not profile MPI communications. rocprof-sys tool is much more suited for that type of analysis. 
+Different `AVERAGE (nsec)` values across ranks for the same kernel indicate load imbalance. Note: `rocprofv3` does not profile MPI communications; use `rocprof-sys` for MPI communication analysis.
 
 ### GPU scaling study
 
-Similar approach can be use for analysis of weak/strong scaling performance, e.g.:
+Analyze weak/strong scaling performance across different GPU counts:
 
-```
+```bash
 for gpus in 1 2 4; do
     mpirun -np $gpus rocprofv3 --kernel-trace --output-format rocpd --output-directory scaling_${gpus} -- ./Jacobi_hip -g $gpus 1
 done
@@ -338,7 +387,7 @@ done
 
 Then to compare the GPU kernel performance for these three different runs, again use `--summary-by-rank`:
 
-```
+```bash
 rocpd summary -i scaling_1/ppac-pl1-s24-26/718729_results.db scaling_2/ppac-pl1-s24-26/718764_results.db scaling_4/ppac-pl1-s24-26/718835_results.db --summary-by-rank
 ```
 
@@ -380,10 +429,54 @@ KERNELS_SUMMARY_BY_RANK:
     718835 ppac-pl1-s24-26                                                             __amd_rocclr_fillBufferAligned      1             3560     3560.000000       0.000432        3560        3560          NaN
 ```
 
+The `KERNELS_SUMMARY_BY_RANK` section shows per-rank performance, making it easy to identify underperforming ranks or kernels that don't scale well.
+
+---
+
+## Common pitfalls and how to avoid them
+
+**Forgetting the `--` separator**: Always use `--` between `rocprofv3` options and your application. The command `rocprofv3 --kernel-trace -- ./app` is correct, while `rocprofv3 --kernel-trace ./app` will fail.
+
+**Python version mismatch**: ROCm 7.0-7.1 requires specific Python versions. Check `rocpd --help` if you encounter import errors. This strict dependency was removed starting from ROCm 7.2.0.
+
+**Overwriting output files**: Use `--output-file` with unique names when generating multiple analyses from the same database. For example, `rocpd2csv -i results.db --output-file analysis1` followed by `rocpd2csv -i results.db --output-file analysis2` won't overwrite the first analysis.
+
+**Not specifying output directory**: Always use `--output-directory` for predictable, organized output paths.
+
+---
+
+## Known issues
+
+1. **No kernel name truncation option**: `rocpd` does not currently have an equivalent option to `rocprofv3 --truncate-kernels` for truncating kernel arguments when showing kernel names in summary views. When using `rocpd summary`, kernel names will display with their full function signatures, which can make the output wider and harder to read for kernels with many parameters. If you need truncated kernel names, you may need to use `rocprofv3` with `--truncate-kernels` and `--output-format csv` instead, or post-process the `rocpd` summary output manually.
+
+---
+
+## Additional resources
+
+The following are links to documentation and resources for quick reference:
+
+**`rocpd`:**
+- [rocpd documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/develop/how-to/using-rocpd-output-format.html)
+- [rocpd query documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-rocpd-output-format.html#query)
+
+**`rocprofv3`:**
+- [rocprofv3 documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-rocprofv3.html)
+- [ROCprofiler-SDK GitHub repository](https://github.com/ROCm/rocprofiler-sdk)
+
+**Related profiling examples:**
+- [ROCprofv3 HIP examples](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/HIP)
+- [ROCprofv3 OpenMP examples](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/OpenMP)
+- [HPCTrainingExamples repository](https://github.com/amd/HPCTrainingExamples)
+
+**Visualization tools:**
+- [Perfetto UI](https://ui.perfetto.dev/) - For viewing PFTrace files
+- [Perfetto documentation](https://perfetto.dev/docs/)
+
+**Systems profiling:**
+- [rocprof-sys documentation](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/how-to/understanding-rocprof-sys-output.html#generating-rocpd-output)
+
+---
 
 ## Next steps
 
-Try to use rocpd for some more example from HPCTrainingExamples repository.
-
-**Finally, try to profile your own application!**
-
+Try using `rocpd` with other examples from the HPCTrainingExamples repository, then profile your own application.
