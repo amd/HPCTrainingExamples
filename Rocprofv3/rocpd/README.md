@@ -1,12 +1,14 @@
 # Using `rocpd` for performance analysis
 
-`rocpd` stores profiling data in a SQLite3 database format, enabling post-processing analysis without re-profiling. This minimizes profiling stage dependencies—you only need `rocprofv3` during data collection, not during analysis.
+When profiling GPU applications, you typically need multiple analysis views: CSV reports for spreadsheet analysis, Perfetto traces for timeline visualization, statistical summaries for bottleneck identification, and filtered views for specific execution phases. Traditionally, each view requires a separate profiling run, which is time-consuming and can produce inconsistent results.
+
+`rocpd` solves this by storing all profiling data in a SQLite3 database format. Profile your application once with `rocprofv3`, then use `rocpd` to generate any analysis view from the same database—without re-profiling. This approach also minimizes profiling stage dependencies: you only need `rocprofv3` during data collection, while analysis tools (including `rocpd` and pandas) are only required during post-processing, which can be done on different systems or at different times.
 
 ## What is `rocpd`?
 
-`rocpd` is referred to as both a format (SQLite3 database) and a command-line tool for analyzing profiling data from `rocprofv3`. The database consolidates execution traces, performance counters, hardware metrics, and metadata in a single `.db` file, queryable via SQL interfaces.
+`rocpd` refers to both a format (SQLite3 database) and a command-line tool for analyzing profiling data from `rocprofv3`. The database consolidates execution traces, performance counters, hardware metrics, and metadata in a single `.db` file, queryable via standard SQL interfaces.
 
-This tutorial covers converting databases to CSV and PFTrace formats, generating performance summaries, filtering by time windows, comparing multiple runs, and analyzing MPI applications. For advanced features (SQL queries, email reporting), see the [rocpd documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/develop/how-to/using-rocpd-output-format.html).
+This tutorial demonstrates practical `rocpd` workflows through two case studies: converting databases to CSV and PFTrace formats, generating performance summaries, filtering by time windows, comparing multiple runs, and analyzing MPI applications. For advanced features (SQL queries, email reporting, custom analytics), see the [rocpd documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/develop/how-to/using-rocpd-output-format.html).
 
 > **Note:** The focus of this exercise is on `rocprofv3` and `rocpd`, not on how to achieve optimal performance on MI300A. This exercise was last tested with ROCm 7.1.1 on the MI300A AAC6 cluster.
 
