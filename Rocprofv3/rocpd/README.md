@@ -2,68 +2,63 @@
 
 When profiling GPU applications, you typically need multiple analysis views: CSV reports for spreadsheet analysis, Perfetto traces for timeline visualization, statistical summaries for bottleneck identification, and filtered views for specific execution phases. Traditionally, each view requires a separate profiling run, which is time-consuming and can produce inconsistent results.
 
-`rocpd` solves this by storing all profiling data in a SQLite3 database format. Profile your application once with `rocprofv3`, then use `rocpd` to generate any analysis view from the same database—without re-profiling. This approach also minimizes profiling stage dependencies: you only need `rocprofv3` during data collection, while analysis tools (including `rocpd` and pandas) are only required during post-processing, which can be done on different systems or at different times.
+`rocpd` solves this by storing all profiling data in a SQLite3 database format. Profile your application once with `rocprofv3`, then use `rocpd` to generate any analysis view from the same database—without re-profiling. This approach also minimizes profiling stage dependencies: you only need `rocprofv3` during data collection, while analysis tools such as `rocpd` are only required during post-processing, which can be done on different systems or at different times.
 
 ## What is `rocpd`?
 
 `rocpd` refers to both a format (SQLite3 database) and a command-line tool for analyzing profiling data from `rocprofv3`. The database consolidates execution traces, performance counters, hardware metrics, and metadata in a single `.db` file, queryable via standard SQL interfaces.
 
-This tutorial demonstrates practical `rocpd` workflows through two case studies: converting databases to CSV and PFTrace formats, generating performance summaries, filtering by time windows, comparing multiple runs, and analyzing MPI applications. For advanced features (SQL queries, email reporting, custom analytics), see the [rocpd documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/develop/how-to/using-rocpd-output-format.html).
+This tutorial demonstrates practical `rocpd` workflows through two case studies: converting databases to CSV and PFTrace formats, generating performance summaries, filtering by time windows, comparing multiple runs, and analyzing MPI applications. For advanced features (SQL queries, email reporting, custom analytics), see the [rocpd documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/develop/how-to/using-rocpd-output-format.html). 
 
-> **Note:** The focus of this exercise is on `rocprofv3` and `rocpd`, not on how to achieve optimal performance on MI300A. This exercise was last tested with ROCm 7.1.1 on the MI300A AAC6 cluster.
-
-In this tutorial, we use two case studies to demonstrate the `rocprofv3` + `rocpd` profiling workflow:
+The following are the two case studies we use to demonstrate the `rocprofv3` + `rocpd` profiling workflow:
 
 1. [Fortran+OpenMP Jacobi](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/Fortran/8_jacobi/1_jacobi_usm)
 2. [MPI HIP Jacobi](https://github.com/amd/HPCTrainingExamples/tree/main/HIP/jacobi)
 
-## Before you begin
+> **Note:** The focus of this exercise is on `rocprofv3` and `rocpd`, not on how to achieve optimal performance on MI300A. This exercise was last tested with ROCm 7.1.1 on the MI300A AAC6 cluster.
 
-**Prerequisites:**
+## Prerequisites
+
 - ROCm 7.0+ installed
 - Access to an AMD GPU system (tested on MI300A)
-- Basic familiarity with terminal commands
-
-**What you'll need:**
-- About 30 minutes for both examples
 - The HPCTrainingExamples repository cloned locally
-
-## Quick start: The `rocpd` workflow
-
-1. **Profile once**: `rocprofv3 --kernel-trace --output-directory results -- ./your_app`
-2. **Analyze many times**: Use `rocpd` to convert, summarize, filter, and compare
-3. **Key insight**: The database format enables flexible post-processing without re-profiling
 
 ## Understanding `rocpd`
 
-For a full list of `rocpd` options, check `rocpd --help` and the [rocpd documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/develop/how-to/using-rocpd-output-format.html).
-
 ### `rocpd` database format for `rocprofv3` and `rocprof-sys`
-
-For more details about `rocprofv3` options check its [documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-rocprofv3.html), and for examples of typical profiling and analysis with `rocprofv3` check [HIP](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/HIP) and [OpenMP](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/OpenMP). If you are used to `rocprofv3` behavior prior to ROCm 7.0 and commands that existed before `rocpd` was introduced, you can still typically achieve the same with newer `rocprofv3` just by adding the option `--output-format` (e.g., `--output-format csv` for analysis of the text files in the terminal or `--output-format pftrace` for Perfetto traces).
 
 In the rest of this example, we focus on `rocprofv3`, but similar things apply for `rocprof-sys`. `rocprof-sys` also supports `rocpd` database output with the `ROCPROFSYS_USE_ROCPD` configuration setting. For more info check [Understanding the Systems Profiler output — ROCm Systems Profiler 1.2.1 documentation](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/how-to/understanding-rocprof-sys-output.html#generating-rocpd-output).
 
 ### `rocpd` dependencies
 
-Note that `rocpd` tool for ROCm 7.0 and 7.1 should be used with the default Python that was used for its installation (e.g., Python 3.6). This strict dependency was removed starting from ROCm 7.2.0. 
-
 **Required dependency:** `rocpd` requires pandas for its analysis operations. You may need to install it using a virtual environment if it's not already available in your Python environment (this is not needed on AAC6). Since analysis happens during post-processing, pandas only needs to be available on the system where you run `rocpd` commands, not necessarily on the system where you run `rocprofv3`.
 
-## `rocpd` commands
+### `rocpd` commands
 
-`rocpd` provides three main subcommands: `convert` (transform databases to CSV, PFTrace, or OTF2), `summary` (generate statistical reports and compare runs), and `query` (execute custom SQL queries). Helper scripts `rocpd2csv`, `rocpd2pftrace`, and `rocpd2summary` provide shortcuts for common operations.
+`rocpd` provides three main options: 
+- `convert` (transform databases to CSV, PFTrace, or OTF2), 
+- `summary` (generate statistical reports and compare runs), and 
+- `query` (execute custom SQL queries).
 
-## Workflow
+Helper scripts `rocpd2csv`, `rocpd2pftrace`, and `rocpd2summary` provide shortcuts for common operations. For a full list of `rocpd` options, check `rocpd --help` and the [rocpd documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/develop/how-to/using-rocpd-output-format.html).
+
+### The `rocpd` workflow
+
+The typical `rocpd` workflow is simple:
+
+1. **Profile once**: `rocprofv3 --runtime-trace --output-directory results -- ./your_app`
+2. **Analyze many times**: Use `rocpd` to convert, summarize, filter, and/or compare
+
+Let's look at how this differs from the traditional approach:
 
 **Traditional approach** (requires re-profiling for each analysis):
 
 ```bash
 # Profile to get CSV output
 rocprofv3 --kernel-trace --output-format csv -- ./app > kernel_trace.csv
-# Get Perfetto trace output
+# Profile to get Perfetto trace output
 rocprofv3 --kernel-trace --output-format pftrace  -- ./app > timeline.csv
-# Get hotspot list of kernels
+# Generate summary of top kernels
 rocprofv3 --kernel-trace --stats -- ./app > summary.txt
 # Re-profiling 3 times!
 ```
@@ -72,13 +67,15 @@ rocprofv3 --kernel-trace --stats -- ./app > summary.txt
 
 ```bash
 # Profile once
-rocprofv3 --kernel-trace --output-directory results -- ./app
-# Convert to CSV
+rocprofv3 --runtime-trace --output-directory results -- ./app
+# Convert to CSV format
 rocpd2csv -i results/app_results.db                           
 # Convert to Perfetto trace format
 rocpd2pftrace -i results/app_results.db                        
 # Generate summary of top kernels
 rocpd2summary --region-categories KERNEL -i results/app_results.db                       
+# Generate summary of top marker regions
+rocpd2summary --region-categories MARKER -i results/app_results.db                       
 # All from one profiling run!
 ```
 
@@ -450,6 +447,8 @@ The `KERNELS_SUMMARY_BY_RANK` section shows per-rank performance, making it easy
 ## Known issues
 
 1. **No kernel name truncation option**: `rocpd` does not currently have an equivalent option to `rocprofv3 --truncate-kernels` for truncating kernel arguments when showing kernel names in summary views. When using `rocpd summary`, kernel names will display with their full function signatures, which can make the output wider and harder to read for kernels with many parameters. If you need truncated kernel names, you may need to use `rocprofv3` with `--truncate-kernels` and `--output-format csv` instead, or post-process the `rocpd` summary output manually.
+
+2. **Python version mismatches**: `rocpd` in ROCm 7.0 and 7.1 should be used with the default Python that was used for its installation (e.g., Python 3.6). This strict dependency was removed starting from ROCm 7.2.0. 
 
 ---
 
