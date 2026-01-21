@@ -2,13 +2,13 @@
 
 When profiling GPU applications, you typically need multiple analysis views: CSV reports for spreadsheet analysis, Perfetto traces for timeline visualization, statistical summaries for bottleneck identification, and filtered views for specific execution phases. Traditionally, each view requires a separate profiling run, which is time-consuming and can produce inconsistent results.
 
-`rocpd` solves this by storing all profiling data in a SQLite3 database format. Profile your application once with `rocprofv3`, then use `rocpd` to generate any analysis view from the same database—without re-profiling. This approach also minimizes profiling stage dependencies: you only need `rocprofv3` during data collection, while analysis tools such as `rocpd` are only required during post-processing, which can be done on different systems or at different times.
+`rocpd` solves this by storing all profiling data in a SQLite3 database format. Profile your application once with `rocprofv3`, then use `rocpd` to generate any analysis view from the same database — without re-profiling. This approach also minimizes profiling stage dependencies: you only need `rocprofv3` during data collection, while analysis tools such as `rocpd` are only required during post-processing, which can be done on different systems or at different times.
 
 ## What is `rocpd`?
 
 `rocpd` refers to both a format (SQLite3 database) and a command-line tool for analyzing profiling data from `rocprofv3`. The database consolidates execution traces, performance counters, hardware metrics, and metadata in a single `.db` file, queryable via standard SQL interfaces.
 
-This tutorial demonstrates practical `rocpd` workflows through two case studies: converting databases to CSV and PFTrace formats, generating performance summaries, filtering by time windows, comparing multiple runs, and analyzing MPI applications. For advanced features (SQL queries, email reporting, custom analytics), see the [rocpd documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/develop/how-to/using-rocpd-output-format.html). 
+This tutorial demonstrates practical `rocpd` workflows: converting databases to CSV and PFTrace formats, generating performance summaries, filtering by time windows, comparing multiple runs, and analyzing MPI applications. For advanced features (SQL queries, email reporting, custom analytics), see the [rocpd documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/develop/how-to/using-rocpd-output-format.html). 
 
 The following are the two case studies we use to demonstrate the `rocprofv3` + `rocpd` profiling workflow:
 
@@ -233,7 +233,7 @@ KERNELS_SUMMARY:
 __omp_offloading_30_57b7d__QMboundary_modPboundary_conditions_l24   1000         28575181    28575.181000      13.065686       14560       34921 2319.276042
 ```
 
-The `PERCENT (INC)` column indicates which kernels consume the most time. Generate reports in CSV or HTML format:
+The `PERCENT (INC)` column indicates which kernels consume the most time (percentage is relative to the total GPU time, not to the total application execution time which might contain large CPU-only sections). Generate reports in CSV or HTML format:
 
 ```bash
 rocpd2summary -i omp_output/omp_results.db --format html --output-path reports/
@@ -257,7 +257,7 @@ rocpd convert -i omp_output/omp_results.db omp_output/omp2_results.db --output-f
 We can also generate a unified summary report:
 
 ```bash
-rocpd summary -i omp_output/omp_results.db -i omp_output/omp2_results.db --output-path combined_folder
+rocpd summary -i omp_output/omp_results.db omp_output/omp2_results.db --output-path combined_folder
 ```
 
 That generates an output similar to:
@@ -446,7 +446,7 @@ The `KERNELS_SUMMARY_BY_RANK` section shows per-rank performance, making it easy
 
 ## Known issues
 
-1. **No kernel name truncation option**: `rocpd` does not currently have an equivalent option to `rocprofv3 --truncate-kernels` for truncating kernel arguments when showing kernel names in summary views. When using `rocpd summary`, kernel names will display with their full function signatures, which can make the output wider and harder to read for kernels with many parameters. If you need truncated kernel names, you may need to use `rocprofv3` with `--truncate-kernels` and `--output-format csv` instead, or post-process the `rocpd` summary output manually.
+1. **No kernel name truncation option**: `rocpd` does not currently have an equivalent option to `rocprofv3 --truncate-kernels` for truncating kernel arguments when showing kernel names in summary views. When using `rocpd summary`, kernel names will display with their full function signatures, which can make the output wider and harder to read for kernels with many parameters. If you need truncated kernel names, you may need to use `rocprofv3` with `--truncate-kernels` and `--output-format csv` instead, or post-process the `rocpd` summary output manually. This is especially important for the C++ templated or other automatically generated GPU kernels, which might have very verbose names.
 
 2. **Python version mismatches**: `rocpd` in ROCm 7.0 and 7.1 should be used with the default Python that was used for its installation (e.g., Python 3.6). This strict dependency was removed starting from ROCm 7.2.0. 
 
