@@ -55,11 +55,11 @@ Let's look at how this differs from the traditional approach:
 
 ```bash
 # Profile to get CSV output
-rocprofv3 --kernel-trace --output-format csv -- ./app > kernel_trace.csv
+rocprofv3 --kernel-trace --output-format csv --output-file kernels -- ./app 
 # Profile to get Perfetto trace output
-rocprofv3 --kernel-trace --output-format pftrace  -- ./app > timeline.csv
+rocprofv3 --kernel-trace --output-format pftrace --output-file timelines -- ./app
 # Generate summary of top kernels
-rocprofv3 --kernel-trace --stats -- ./app > summary.txt
+rocprofv3 --kernel-trace --stats --output-file summary -- ./app
 # Re-profiling 3 times!
 ```
 
