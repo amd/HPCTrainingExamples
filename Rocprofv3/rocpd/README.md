@@ -446,7 +446,7 @@ The `KERNELS_SUMMARY_BY_RANK` section shows per-rank performance, making it easy
 
 ## Known issues
 
-1. **No kernel name truncation option**: `rocpd` does not currently have an equivalent option to `rocprofv3 --truncate-kernels` for truncating kernel arguments when showing kernel names in summary views. When using `rocpd summary`, kernel names will display with their full function signatures, which can make the output wider and harder to read for kernels with many parameters. If you need truncated kernel names, you may need to use `rocprofv3` with `--truncate-kernels` and `--output-format csv` instead, or post-process the `rocpd` summary output manually. This is especially important for the C++ templated or other automatically generated GPU kernels, which might have very verbose names.
+1. **No kernel name truncation option**: `rocpd` does not currently have an equivalent option to `rocprofv3 --truncate-kernels` for truncating kernel arguments when showing kernel names in summary views. When using `rocpd summary`, kernel names will display with their full function signatures, which can make the output wider and harder to read for kernels with many parameters. If you need truncated kernel names, you need to use `rocprofv3` with `--truncate-kernels` instead before running `rocpd summary`, or post-process the `rocpd` summary output manually. This is especially important for the C++ templated or other automatically generated GPU kernels, which might have very verbose names.
 
 2. **Python version mismatches**: `rocpd` in ROCm 7.0 and 7.1 should be used with the default Python that was used for its installation (e.g., Python 3.6). This strict dependency was removed starting from ROCm 7.2.0. 
 
@@ -456,13 +456,13 @@ The `KERNELS_SUMMARY_BY_RANK` section shows per-rank performance, making it easy
 
 The following are links to documentation and resources for quick reference:
 
-**`rocpd`:**
+**`rocpd` and `rocprofv3`:**
 - [rocpd documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/develop/how-to/using-rocpd-output-format.html)
-- [rocpd query documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-rocpd-output-format.html#query)
-
-**`rocprofv3`:**
 - [rocprofv3 documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-rocprofv3.html)
 - [ROCprofiler-SDK GitHub repository](https://github.com/ROCm/rocprofiler-sdk)
+
+**ROCm Systems Profiler:**
+- [rocprof-sys documentation](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/how-to/understanding-rocprof-sys-output.html#generating-rocpd-output)
 
 **Related profiling examples:**
 - [ROCprofv3 HIP examples](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/HIP)
@@ -472,9 +472,6 @@ The following are links to documentation and resources for quick reference:
 **Visualization tools:**
 - [Perfetto UI](https://ui.perfetto.dev/) - For viewing PFTrace files
 - [Perfetto documentation](https://perfetto.dev/docs/)
-
-**Systems profiling:**
-- [rocprof-sys documentation](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/how-to/understanding-rocprof-sys-output.html#generating-rocpd-output)
 
 ---
 
