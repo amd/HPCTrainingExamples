@@ -11,12 +11,14 @@ if [ ${XNACK_COUNT} -lt 1 ]; then
    echo "Skip"
 else
    if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+      module switch PrgEnv-cray PrgEnv-amd
       export CXX=${ROCM_PATH}/llvm/bin/amdclang++
    else
       module load amdclang
    fi
 
    PROB_NAME=programming_model_raja_code
+   rm -rf ${PROB_NAME}
    mkdir ${PROB_NAME} && cd ${PROB_NAME}
 
    PWDir=`pwd`

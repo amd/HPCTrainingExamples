@@ -6,7 +6,12 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load amdclang
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   module switch PrgEnv-cray PrgEnv-amd
+   export CXX=${ROCM_PATH}/llvm/bin/amdclang++
+else
+   module load amdclang
+fi
 module load kokkos
 
 rm -rf Chapter13

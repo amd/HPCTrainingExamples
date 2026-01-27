@@ -6,7 +6,12 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load amdclang
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   module switch PrgEnv-cray PrgEnv-amd
+   export CXX=${ROCM_PATH}/llvm/bin/amdclang++
+else
+   module load amdclang
+fi
 
 PROB_NAME=kokkos_openmp_stream_ver2
 mkdir ${PROB_NAME} && cd ${PROB_NAME}
