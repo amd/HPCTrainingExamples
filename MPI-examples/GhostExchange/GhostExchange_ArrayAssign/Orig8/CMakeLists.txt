@@ -65,6 +65,12 @@ set_target_properties(GhostExchange PROPERTIES COMPILE_FLAGS "${MPI_CXX_COMPILE_
 set_target_properties(GhostExchange PROPERTIES LINK_FLAGS "${MPI_CXX_LINK_FLAGS}")
 target_link_libraries(GhostExchange PRIVATE "${MPI_CXX_LIBRARIES}")
 
+if(USE_PNETCDF)
+   target_include_directories(GhostExchange PRIVATE ${PNETCDF_INCLUDEDIR})
+   target_link_directories(GhostExchange PRIVATE ${PNETCDF_LIBDIR})
+   target_link_libraries(GhostExchange PRIVATE pnetcdf)
+endif()
+
 # Add a test:
 enable_testing()
 add_test(SimpleTest ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS}

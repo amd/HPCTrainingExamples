@@ -76,7 +76,6 @@ set_target_properties(GhostExchange PROPERTIES INCLUDE_DIRECTORIES "${MPI_CXX_IN
 set_target_properties(GhostExchange PROPERTIES COMPILE_FLAGS "${MPI_CXX_COMPILE_FLAGS}")
 target_link_libraries(GhostExchange PRIVATE "${MPI_CXX_LIBRARIES}")
 
-
 if(USE_PNETCDF)
    target_include_directories(GhostExchange PRIVATE ${PNETCDF_INCLUDEDIR})
    target_link_directories(GhostExchange PRIVATE ${PNETCDF_LIBDIR})
