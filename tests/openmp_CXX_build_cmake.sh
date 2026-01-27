@@ -12,7 +12,11 @@ if [ ${XNACK_COUNT} -lt 1 ]; then
 else
    export HSA_XNACK=1
 
-   module load amdclang
+   if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+      export CXX=${ROCM_PATH}/llvm/bin/amdclang++
+   else
+      module load amdclang
+   fi
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    cd ${REPO_DIR}/Pragma_Examples/OpenMP/CXX/BuildExamples

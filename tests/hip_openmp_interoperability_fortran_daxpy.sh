@@ -13,7 +13,12 @@ else
    export HSA_XNACK=1
    module load amdflang-new >& /dev/null
    if [ "$?" == "1" ]; then
-      module load amdclang
+      if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+         export CXX=${ROCM_PATH}/llvm/bin/amdclang++
+         export FC=${ROCM_PATH}/llvm/bin/amdflang
+      else
+         module load amdclang
+      fi
    fi
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"

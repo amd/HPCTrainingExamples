@@ -17,7 +17,11 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load amdclang
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   export CXX=${ROCM_PATH}/llvm/bin/amdclang++
+else
+   module load amdclang
+fi
 export STDPAR_CXX=$CXX
 export ROCM_GPU=`rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'`
 export STDPAR_TARGET=${ROCM_GPU}

@@ -7,7 +7,11 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load amdclang
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   export CXX=${ROCM_PATH}/llvm/bin/amdclang++
+else
+   module load amdclang
+fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 pushd ${REPO_DIR}/HIPStdPar/CXX/MixAndMatch/omp_stdpar
