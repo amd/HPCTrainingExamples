@@ -15,6 +15,7 @@ else
    if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
       export CXX=`which CC`
       export FC=`which ftn`
+      export HIP_PLATFORM=amd
    else
       module load amdclang
    fi

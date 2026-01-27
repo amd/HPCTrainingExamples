@@ -11,11 +11,11 @@ OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
 CXXFLAGS = -g -O2 -fPIC -D__HOST_CODE__ ${OPENMP_FLAGS}
 HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include --offload-arch=${ROCM_GPU}
 
-ifeq ($(HIPCC), nvcc)
+ifeq ($(HIP_PLATFORM), nvidia)
    HIPCC_FLAGS += -x cu
    LDFLAGS = -lcudadevrt -lcudart_static -lrt -lpthread -ldl
 endif
-ifeq ($(HIPCC), hipcc)
+ifeq ($(HIP_PLATFORM), amd)
    HIPCC_FLAGS += -x hip -munsafe-fp-atomics -D__DEVICE_CODE__
    LDFLAGS = ${OPENMP_FLAGS} -L${ROCM_PATH}/lib -lamdhip64
 endif

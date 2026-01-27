@@ -8,6 +8,7 @@ if [ $? -eq 1 ]; then
 fi
 if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
    export CXX=`which CC`
+   export HIP_PLATFORM=amd
 else
    module load amdclang
 fi
