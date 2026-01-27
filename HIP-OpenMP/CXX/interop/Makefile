@@ -9,14 +9,12 @@ OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
 CXXFLAGS = -g -O2 -fPIC ${OPENMP_FLAGS} -D __HIP_PLATFORM_AMD__
 HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include 
 
-HIPCC ?= hipcc
-
 ifeq ($(HIPCC), nvcc)
    HIPCC_FLAGS += -x cu
    LDFLAGS = -lcudadevrt -lcudart_static -lrt -lpthread -ldl
 endif
 ifeq ($(HIPCC), hipcc)
-   HIPCC_FLAGS += -munsafe-fp-atomics 
+   HIPCC_FLAGS += -x hip -munsafe-fp-atomics 
    LDFLAGS = ${OPENMP_FLAGS} -L${ROCM_PATH}/lib -lamdhip64
 endif
 

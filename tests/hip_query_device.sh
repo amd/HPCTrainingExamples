@@ -7,7 +7,10 @@ if [ $? -eq 1 ]; then
   module load rocm
 fi
 
-export HIPCC="CC -x hip"
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   export HIPCC="`which CC`"
+   export HIPFLAGS="-x hip"
+fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIP/query_device

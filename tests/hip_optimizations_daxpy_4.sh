@@ -8,6 +8,10 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   export CXX="`which CC`"
+   export CXXFLAGS="-x hip"
+fi
 make daxpy_4
 ./daxpy_4 1000000
 

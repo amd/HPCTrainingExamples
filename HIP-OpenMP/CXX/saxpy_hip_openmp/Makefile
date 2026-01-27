@@ -18,12 +18,12 @@ ifeq ($(HIPCC), nvcc)
    LDFLAGS = -lcudadevrt -lcudart_static -lrt -lpthread -ldl
 endif
 ifeq ($(HIPCC), hipcc)
-   HIPCC_FLAGS += -munsafe-fp-atomics
+   HIPCC_FLAGS += -x hip -munsafe-fp-atomics
    LDFLAGS = ${OPENMP_FLAGS} -L${ROCM_PATH}/lib -lamdhip64
 endif
 
 saxpy_hip.o: saxpy_hip.hip
-	$(HIPCC) $(HIPCC_FLAGS) -c $^ -o $@
+	$(CXX) $(HIPCC_FLAGS) -c $^ -o $@
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(OBJECTS) $(LDFLAGS) -o $@

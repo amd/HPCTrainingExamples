@@ -11,7 +11,7 @@ HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include
 HIPCC ?= hipcc
 
 ifeq ($(HIPCC), hipcc)
-   HIPCC_FLAGS += -munsafe-fp-atomics -D__DEVICE_CODE__
+   HIPCC_FLAGS += -x hip -munsafe-fp-atomics -D__DEVICE_CODE__
    LDFLAGS = -L${ROCM_PATH}/lib -lamdhip64
 endif
 
