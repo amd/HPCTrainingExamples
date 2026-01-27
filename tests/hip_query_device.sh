@@ -7,6 +7,8 @@ if [ $? -eq 1 ]; then
   module load rocm
 fi
 
+export HIPCC="CC -x hip"
+
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIP/query_device
 
