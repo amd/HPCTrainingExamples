@@ -31,7 +31,7 @@ void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, 
 void Cartesian_print(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int jstride, int totcells);
 #ifdef USE_PNETCDF
 void create_netcdf_file(const char *fname, int jmax, int imax, MPI_Comm comm, int *ncid, int *varid, int *varid_xcoord, int *varid_ycoord);
-void write_netcdf_soln(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int tstep, int ncid, int varid);
+void write_netcdf_soln(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int tstep, int ncid, int varid, int jstride);
 void write_netcdf_coords(int imax, int jmax, int nprocx, int nprocy, double Lx, double Ly, int ncid, int varid_xcoord, int varid_ycoord);
 #endif
 void boundarycondition_update(double *x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop);
@@ -672,7 +672,7 @@ void write_netcdf_soln(double *x, int jmax, int imax, int nhalo, int nprocy, int
     free(buf);
 }
 
-void write_netcdf_coords(int imax, int jmax, int nprocx, int nprocy, double Lx, double Ly, int ncid, int varid_xcoord, int varid_ycoord)
+void write_netcdf_coords(int imax, int jmax, int nprocx, int nprocy, double Lx, double Ly, int ncid, int varid_xcoord, int varid_ycoord, int jstride)
 {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
