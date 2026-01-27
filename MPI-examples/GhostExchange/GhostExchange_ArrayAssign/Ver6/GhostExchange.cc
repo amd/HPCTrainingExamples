@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
       }
 #ifdef USE_PNETCDF
       if(iter == maxIter - 1){
-         write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, iter+1, ncid, varid);
+         write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, iter+1, ncid, varid, jstride);
       }
 #endif
    }
@@ -633,7 +633,7 @@ void create_netcdf_file(const char *fname, int jmax, int imax, MPI_Comm comm, in
 }
 
 
-void write_netcdf_soln(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int tstep, int ncid, int varid)
+void write_netcdf_soln(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int tstep, int ncid, int varid, int jstride)
 {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);

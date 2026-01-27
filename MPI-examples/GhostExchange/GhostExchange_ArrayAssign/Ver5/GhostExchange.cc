@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
 #ifdef USE_PNETCDF
    int ncid, varid, varid_xcoord, varid_ycoord;
      create_netcdf_file("solution.nc", jmax, imax, MPI_COMM_WORLD, &ncid, &varid, &varid_xcoord, &varid_ycoord);
-     write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, 0, ncid, varid);
+     write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, 0, ncid, varid, jstride);
      write_netcdf_coords(imax, jmax, nprocx, nprocy, Lx, Ly, ncid, varid_xcoord, varid_ycoord);
 #endif
 
