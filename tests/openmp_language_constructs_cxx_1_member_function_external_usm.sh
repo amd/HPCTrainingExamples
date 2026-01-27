@@ -6,7 +6,13 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load amdclang
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   export CXX=${ROCM_PATH}/llvm/bin/amdclang++
+   export CC=${ROCM_PATH}/llvm/bin/amdclang
+   export FC=${ROCM_PATH}/llvm/bin/amdflang
+else
+   module load amdclang
+fi
 export HSA_XNACK=1
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/Pragma_Examples/OpenMP/CXX/6_device_routines/2_member_function_external/1_member_function_external

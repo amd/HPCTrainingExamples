@@ -8,7 +8,13 @@ if [ $? -eq 1 ]; then
 fi
 module load amdflang-new >& /dev/null
 if [ "$?" == "1" ]; then
-   module load amdclang
+   if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+      export CXX=${ROCM_PATH}/llvm/bin/amdclang++
+      export CC=${ROCM_PATH}/llvm/bin/amdclang
+      export FC=${ROCM_PATH}/llvm/bin/amdflang
+   else
+      module load amdclang
+   fi
 fi
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/4_reduction_scalars/0_reduction_scalar_portyourself

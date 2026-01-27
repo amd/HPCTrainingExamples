@@ -8,7 +8,13 @@ if [ $? -eq 1 ]; then
 fi
 module load amdflang-new >& /dev/null
 if [ "$?" == "1" ]; then
-   module load amdclang
+   if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+      export CXX=${ROCM_PATH}/llvm/bin/amdclang++
+      export CC=${ROCM_PATH}/llvm/bin/amdclang
+      export FC=${ROCM_PATH}/llvm/bin/amdflang
+   else
+      module load amdclang
+   fi
 fi
 export HSA_XNACK=1
 
