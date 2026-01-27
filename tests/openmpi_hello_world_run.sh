@@ -6,7 +6,13 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load openmpi
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   module load libfabric
+   MPIRUN=srun
+else
+   module load openmpi
+   MPIRUN=mpirun
+fi
 
 mkdir openmpi_hello_world_run && cd openmpi_hello_world_run
 
@@ -41,7 +47,9 @@ cat <<-EOF > mpi_hello_world.c
 EOF
 
 mpicc -o mpi_hello_world mpi_hello_world.c
-mpirun -n 2 ./mpi_hello_world
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   ${MPIRUN} -n 2 ./mpi_hello_world
+fi
 
 cd ..
 rm -rf openmpi_hello_world_run
