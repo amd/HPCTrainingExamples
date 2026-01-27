@@ -7,9 +7,9 @@ if [ $? -eq 1 ]; then
   module load rocm
 fi
 if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
-   export CXX=${ROCM_PATH}/llvm/bin/amdclang++
-   export CC=${ROCM_PATH}/llvm/bin/amdclang
-   export FC=${ROCM_PATH}/llvm/bin/amdflang
+   export CXX=`which CC`
+   export CC=`which cc`
+   export FC=`which ftn`
 else
    module load amdclang
 fi
