@@ -227,7 +227,7 @@ int main(int argc, char *argv[])
       }
 #ifdef USE_PNETCDF
       if(iter == maxIter - 1){
-         write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, iter+1, ncid, varid);
+         write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, iter+1, ncid, varid, jstride);
       }
 #endif      
    }
