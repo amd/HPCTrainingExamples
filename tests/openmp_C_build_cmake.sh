@@ -12,7 +12,17 @@ if [ ${XNACK_COUNT} -lt 1 ]; then
 else
    export HSA_XNACK=1
 
-   module load amdclang
+   if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+      if [[ "`module list |& grep PrgEnv-cray | wc -l`" -ge 1 ]]; then
+         export CXX=`which CC`
+         export CC=`which cc`
+      elif [[ "`module list |& grep PrgEnv-amd | wc -l`" -ge 1 ]]; then
+         export CXX=${ROCM_PATH}/llvm/bin/amdclang++
+         export CC=${ROCM_PATH}/llvm/bin/amdclang
+      fi
+   else
+      module load amdclang
+   fi
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    cd ${REPO_DIR}/Pragma_Examples/OpenMP/C/BuildExamples
