@@ -9,15 +9,9 @@ fi
 module load amdflang-new >& /dev/null
 if [ "$?" == "1" ]; then
    if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
-      if [[ "`module list |& grep PrgEnv-cray | wc -l`" -ge 1 ]]; then
-         export CXX=`which CC`
-         export CC=`which cc`
-         export FC=`which FC`
-      elif [[ "`module list |& grep PrgEnv-amd | wc -l`" -ge 1 ]]; then
-         export CXX=${ROCM_PATH}/llvm/bin/amdclang++
-         export CC=${ROCM_PATH}/llvm/bin/amdclang
-         export FC=${ROCM_PATH}/llvm/bin/amdflang
-      fi
+      export CXX=`which CC`
+      export CC=`which cc`
+      export FC=`which ftn`
    else
       module load amdclang
    fi
