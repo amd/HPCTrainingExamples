@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
+cmake_minimum_required(VERSION 4.0) 
 project(GhostExchange C CXX)
 
 set (CMAKE_C_STANDARD 99)
@@ -27,6 +27,37 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${VECTOR_CXX_FLAGS}")
 # Require MPI for this project:
 find_package(MPI REQUIRED)
 
+option(USE_PNETCDF "Enable parallel NetCDF support" OFF)
+
+if(USE_PNETCDF)
+
+   add_compile_definitions(USE_PNETCDF)
+
+   find_program(PNETCDF_CONFIG pnetcdf-config REQUIRED)
+
+   execute_process(
+       COMMAND ${PNETCDF_CONFIG} --version
+       OUTPUT_VARIABLE PNETCDF_VERSION
+       OUTPUT_STRIP_TRAILING_WHITESPACE
+   )
+
+   execute_process(
+       COMMAND ${PNETCDF_CONFIG} --includedir
+       OUTPUT_VARIABLE PNETCDF_INCLUDEDIR
+       OUTPUT_STRIP_TRAILING_WHITESPACE
+   )
+
+   execute_process(
+       COMMAND ${PNETCDF_CONFIG} --libdir
+       OUTPUT_VARIABLE PNETCDF_LIBDIR
+       OUTPUT_STRIP_TRAILING_WHITESPACE
+   )
+
+   message(STATUS "Found PnetCDF ${PNETCDF_VERSION}")
+   message(STATUS "PnetCDF Include Dir: ${PNETCDF_INCLUDEDIR}")
+   message(STATUS "PnetCDF Lib Dir: ${PNETCDF_LIBDIR}")
+endif()
+
 execute_process(COMMAND rocminfo COMMAND grep -m 1 -E gfx[^0]{1} COMMAND sed -e "s/ *Name: *//" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE ROCM_GPU)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -45,6 +76,12 @@ add_executable(GhostExchange GhostExchange.cc timer.c timer.h)
 set_target_properties(GhostExchange PROPERTIES INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH};$ENV{ROCM_PATH}/include/roctracer")
 set_target_properties(GhostExchange PROPERTIES COMPILE_FLAGS "${MPI_CXX_COMPILE_FLAGS}")
 target_link_libraries(GhostExchange PRIVATE "${MPI_CXX_LIBRARIES};-L$ENV{ROCM_PATH}/lib -lroctx64")
+
+if(USE_PNETCDF)
+   target_include_directories(GhostExchange PRIVATE ${PNETCDF_INCLUDEDIR})
+   target_link_directories(GhostExchange PRIVATE ${PNETCDF_LIBDIR})
+   target_link_libraries(GhostExchange PRIVATE pnetcdf)
+endif()
 
 # Add a test:
 enable_testing()

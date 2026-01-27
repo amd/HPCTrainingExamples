@@ -3,9 +3,11 @@
 #include <unistd.h>
 #include <time.h>
 #include <mpi.h>
+#ifdef USE_PNETCDF
 #include <pnetcdf.h>
-#include <omp.h>
 #include <cmath>
+#endif
+#include <omp.h>
 
 #include "malloc2D.h"
 #include "timer.h"
