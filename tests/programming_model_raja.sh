@@ -10,7 +10,11 @@ XNACK_COUNT=`rocminfo | grep xnack | wc -l`
 if [ ${XNACK_COUNT} -lt 1 ]; then
    echo "Skip"
 else
-   module load amdclang
+   if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+      export CXX=${ROCM_PATH}/llvm/bin/amdclang++
+   else
+      module load amdclang
+   fi
 
    PROB_NAME=programming_model_raja_code
    mkdir ${PROB_NAME} && cd ${PROB_NAME}
