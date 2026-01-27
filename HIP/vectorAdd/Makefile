@@ -19,10 +19,10 @@ ifeq ($(HIP_PLATFORM), amd)
 endif
 
 %.o: %.hip
-	hipcc $(HIPCC_FLAGS) -c $^ -o $@
+	${CXX} $(HIPCC_FLAGS) -c $^ -o $@
 
 $(EXECUTABLE): $(OBJECTS)
-	hipcc $< $(LDFLAGS) -o $@
+	${CXX} $< $(LDFLAGS) -o $@
 
 test: $(EXECUTABLE)
 	$(EXECUTABLE)

@@ -9,6 +9,10 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   export CXX="`which CC`"
+   export HIP_PLATFORM=amd
+fi
 module load openmpi
 
 rm -rf build
