@@ -672,7 +672,7 @@ void write_netcdf_soln(double *x, int jmax, int imax, int nhalo, int nprocy, int
     free(buf);
 }
 
-void write_netcdf_coords(int imax, int jmax, int nprocx, int nprocy, double Lx, double Ly, int ncid, int varid_xcoord, int varid_ycoord, int jstride)
+void write_netcdf_coords(int imax, int jmax, int nprocx, int nprocy, double Lx, double Ly, int ncid, int varid_xcoord, int varid_ycoord)
 {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
