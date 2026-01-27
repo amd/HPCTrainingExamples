@@ -3,7 +3,9 @@
 #include <unistd.h>
 #include <time.h>
 #include <mpi.h>
+#include <pnetcdf.h>
 #include <omp.h>
+#include <cmath>
 
 #include "malloc2D.h"
 #include "timer.h"
@@ -13,6 +15,11 @@
 #define SWAP_PTR(xnew,xold,xtmp) (xtmp=xnew, xnew=xold, xold=xtmp)
 void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing, int &do_print);
 void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx);
+#ifdef USE_PNETCDF
+void create_netcdf_file(const char *fname, int jmax, int imax, MPI_Comm comm, int *ncid, int *varid, int *varid_xcoord, int *varid_ycoord);
+void write_netcdf_soln(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int tstep, int ncid, int varid);
+void write_netcdf_coords(int imax, int jmax, int nprocx, int nprocy, double Lx, double Ly, int ncid, int varid_xcoord, int varid_ycoord);
+#endif
 void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop);
 void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize,
       int nleft, int nrght, int nbot, int ntop, int do_timing);
@@ -93,6 +100,14 @@ int main(int argc, char *argv[])
    int jend   = jmax *(ycoord+1)/nprocy;
    int jsize  = jend - jbegin;
 
+   // physical domain dimensions (unit square)
+   double Lx = 1.0;
+   double Ly = 1.0;
+
+   // center of the Gaussian for initialization
+   double x0 = Lx / 2.0;
+   double y0 = Ly / 2.0;
+
    /* The halo update both updates the ghost cells and the boundary halo cells. To be precise with terminology,
     * the ghost cells only exist for multi-processor runs with MPI. The boundary halo cells are to set boundary
     * conditions. Halos refer to both the ghost cells and the boundary halo cells.
@@ -114,22 +129,18 @@ int main(int argc, char *argv[])
    }
 
    #pragma omp target teams distribute parallel for collapse(2)
-   for (int j = 0; j < jsize; j++){
-      for (int i = 0; i < isize; i++){
-         x[j][i] = static_cast<double>(rank) + 5.0;
-      }
-   }
+   for (int j = 0; j < jsize; j++) {
+       for (int i = 0; i < isize; i++) {
 
-   int ispan=5, jspan=5;
-   if (ispan > imax/2) ispan = imax/2;
-   if (jspan > jmax/2) jspan = jmax/2;
-   #pragma omp target teams distribute parallel for collapse(2)
-   for (int j = jmax/2 - jspan; j < jmax/2 + jspan; j++){
-      for (int i = imax/2 - ispan; i < imax/2 + ispan; i++){
-         if (j >= jbegin && j < jend && i >= ibegin && i < iend) {
-            x[j-jbegin][i-ibegin] = 400.0 + 0.1 * (double)(rank + j);
-         }
-      }
+	double sigma = 5.0;
+        double x_phys = i + ibegin;
+        double y_phys = j + jbegin;
+        double x_center = imax / 2.0;
+        double y_center = jmax / 2.0;
+        x[j][i] = exp(-0.5 * ( ((x_phys - x_center)*(x_phys - x_center)/(sigma*sigma)
+                               + (y_phys - y_center)*(y_phys - y_center)/(sigma*sigma)) ));
+
+       }
    }
 
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
@@ -141,6 +152,14 @@ int main(int argc, char *argv[])
    }
 
    if (rank == 0) printf("------> Advancing the Solution\n");
+
+#ifdef USE_PNETCDF
+   int ncid, varid, varid_xcoord, varid_ycoord;
+     create_netcdf_file("solution.nc", jmax, imax, MPI_COMM_WORLD, &ncid, &varid, &varid_xcoord, &varid_ycoord);
+     write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, 0, ncid, varid);
+     write_netcdf_coords(imax, jmax, nprocx, nprocy, Lx, Ly, ncid, varid_xcoord, varid_ycoord);
+#endif
+
    for (int iter = 0; iter < maxIter; iter++){
       cpu_timer_start(&tstart_stencil);
 
@@ -162,6 +181,11 @@ int main(int argc, char *argv[])
       if (do_print == 1) {
          Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
       }
+#ifdef USE_PNETCDF
+      if(iter == maxIter - 1){
+         write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, iter+1, ncid, varid);
+      }
+#endif
    }
    total_time = cpu_timer_stop(tstart_total);
 
@@ -449,7 +473,7 @@ void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int 
       printf("     ");
       for (int ii = 0; ii < nprocx; ii++){
          for (int i = -nhalo; i < isizes[ii]+nhalo; i++){
-            printf("%6d   ",i);
+            printf("%8d   ",i);
          }
          printf("   ");
       }
@@ -489,7 +513,7 @@ void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int 
             printf("%3d:",j);
             for (int ii = 0; ii < nprocx; ii++){
                for (int i = 0; i< isizes[ii]+2*nhalo; i++){
-                  printf("%8.1lf ",xrow[i+ii*(isizes[ii]+2*nhalo)]);
+                  printf("%12.6lf ",xrow[i+ii*(isizes[ii]+2*nhalo)]);
                }
                printf("   ");
             }
@@ -502,3 +526,124 @@ void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int 
    }
    free(xrow);
 }
+
+#ifdef USE_PNETCDF
+
+void create_netcdf_file(const char *fname, int jmax, int imax, MPI_Comm comm, int *ncid, int *varid, int *varid_xcoord, int *varid_ycoord)
+{
+    int dimid_t, dimid_y, dimid_x;
+    int dimids[3];
+
+    ncmpi_create(comm, fname, NC_CLOBBER | NC_64BIT_DATA, MPI_INFO_NULL, ncid);
+
+    ncmpi_def_dim(*ncid, "time", NC_UNLIMITED, &dimid_t);
+    ncmpi_def_dim(*ncid, "y", jmax, &dimid_y);
+    ncmpi_def_dim(*ncid, "x", imax, &dimid_x);
+
+    dimids[0] = dimid_t;
+    dimids[1] = dimid_y;
+    dimids[2] = dimid_x;
+
+    ncmpi_def_var(*ncid, "u", NC_DOUBLE, 3, dimids, varid);
+    ncmpi_def_var(*ncid, "xcoord", NC_DOUBLE, 1, &dimid_x, varid_xcoord);
+    ncmpi_def_var(*ncid, "ycoord", NC_DOUBLE, 1, &dimid_y, varid_ycoord);
+
+    ncmpi_put_att_text(*ncid, *varid, "u", 25, "solution field");
+    ncmpi_put_att_text(*ncid, *varid_xcoord, "x", 11, "x coordinate");
+    ncmpi_put_att_text(*ncid, *varid_ycoord, "y", 11, "y coordinate");
+
+    ncmpi_enddef(*ncid);
+}
+
+
+void write_netcdf_soln(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int tstep, int ncid, int varid)
+{
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int xcoord = rank % nprocx;
+    int ycoord = rank / nprocx;
+
+    int ibegin = imax *  xcoord      / nprocx;
+    int iend   = imax * (xcoord + 1) / nprocx;
+    int isize  = iend - ibegin;
+
+    int jbegin = jmax *  ycoord      / nprocy;
+    int jend   = jmax * (ycoord + 1) / nprocy;
+    int jsize  = jend - jbegin;
+
+    MPI_Offset start[3], count[3];
+
+    start[0] = tstep;
+    start[1] = jmax - jend;
+    start[2] = ibegin;
+
+    count[0] = 1;
+    count[1] = jsize;
+    count[2] = isize;
+
+    double *buf = (double *)malloc(jsize * isize * sizeof(double));
+
+    for (int j = 0; j < jsize; j++) {
+        for (int i = 0; i < isize; i++) {
+            buf[(jsize-1-j)*isize + i] = x[j][i];  // no halo cells included
+        }
+    }
+
+    ncmpi_put_vara_double_all(ncid, varid, start, count, buf);
+
+    free(buf);
+}
+
+void write_netcdf_coords(int imax, int jmax, int nprocx, int nprocy, double Lx, double Ly, int ncid, int varid_xcoord, int varid_ycoord)
+{
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int xcoord = rank % nprocx;
+    int ycoord = rank / nprocx;
+
+    int ibegin = imax *  xcoord      / nprocx;
+    int iend   = imax * (xcoord + 1) / nprocx;
+    int isize  = iend - ibegin;
+
+    int jbegin = jmax *  ycoord      / nprocy;
+    int jend   = jmax * (ycoord + 1) / nprocy;
+    int jsize  = jend - jbegin;
+
+    // x coordinates
+    double *xbuf = (double *)malloc(isize * sizeof(double));
+    for (int i = 0; i < isize; i++) {
+        int iglobal = ibegin + i;
+        xbuf[i] = (double)iglobal * Lx / imax;  // map to physical domain
+    }
+
+    MPI_Offset xstart = ibegin;
+    MPI_Offset xcount = isize;
+
+    ncmpi_put_vara_double_all(ncid, varid_xcoord, &xstart, &xcount, xbuf);
+
+    free(xbuf);
+
+    // y coordinates
+    double *ybuf = (double *)malloc(jsize * sizeof(double));
+    for (int j = 0; j < jsize; j++) {
+        int jglobal = jbegin + j;
+        ybuf[j] = (double)jglobal * Ly / jmax;  // map to physical domain
+    }
+
+    MPI_Offset ystart = jbegin;
+    MPI_Offset ycount = jsize;
+
+    ncmpi_put_vara_double_all(ncid, varid_ycoord, &ystart, &ycount, ybuf);
+
+    free(ybuf);
+}
+
+
+void close_netcdf(int ncid)
+{
+    ncmpi_close(ncid);
+}
+
+#endif
