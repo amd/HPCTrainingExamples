@@ -11,9 +11,7 @@ OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
 FC_FLAGS = -g -O2 -fPIC ${OPENMP_FLAGS}
 HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include
 
-HIPCC ?= hipcc
-
-HIPCC_FLAGS += -munsafe-fp-atomics -D__DEVICE_CODE__
+HIPCC_FLAGS += -x hip -munsafe-fp-atomics -D__DEVICE_CODE__
 LDFLAGS = ${OPENMP_FLAGS} -L${ROCM_PATH}/lib -lamdhip64 -lomptarget -lhiprtc
 
 
@@ -24,7 +22,7 @@ hip_interface.o: hip_interface.F90
 	$(FC) $(FC_FLAGS) -c $^ -o $@
 
 daxpy_kernel.o: daxpy_kernel.cpp
-	$(HIPCC) $(HIPCC_FLAGS) -c $^ -o $@
+	$(FC) $(HIPCC_FLAGS) -c $^ -o $@
 
 $(EXECUTABLE): $(OBJECTS)
 	$(FC) $(FC_FLAGS) $(OBJECTS) $(LDFLAGS) -o $@
