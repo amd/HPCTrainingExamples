@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
 project(GhostExchange C CXX)
 
 set (CMAKE_C_STANDARD 99)
