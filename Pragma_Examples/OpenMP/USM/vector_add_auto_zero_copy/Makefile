@@ -12,7 +12,7 @@ else ifneq ($(findstring clang,$(CXX1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
 else ifneq ($(findstring gcc,$(CXX1)),)
   OPENMP_FLAGS = -fopenmp -foffload=-march=$(ROCM_GPU)
-else ifneq ($(findstring cc,$(CXX1)),)
+else ifneq ($(findstring CC,$(CXX1)),)
   OPENMP_FLAGS = -fopenmp
 else
   OPENMP_FLAGS = -fopenmp --foffload=-march=$(ROCM_GPU) -fopt-info-optimized-omp
