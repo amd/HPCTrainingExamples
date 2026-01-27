@@ -13,7 +13,7 @@ all: ${EXECUTABLE}
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 $(EXECUTABLE): %: %.o
-	$(CXX) $(CXXFLAGS) $< -o $@ $(LDFLAGS) 
+	$(CXX) $< -o $@ $(LDFLAGS) 
 
 clean: 	
 	rm -f $(EXECUTABLE) 	
