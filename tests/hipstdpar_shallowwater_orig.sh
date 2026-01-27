@@ -3,7 +3,7 @@
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIPStdPar/CXX/ShallowWater_Orig
 
-if [[ "`module list |& grep PrgEnv-cray | wc -l`" -ge 1 ]]; then
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
    export CXX=`which CC`
 fi
 
