@@ -9,6 +9,8 @@ if [ $? -eq 1 ]; then
 fi
 if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
    export CXX=`which CC`
+   export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/opt/cray/pe/cdst-support/2.14.6/lib:${ROCM_PATH}/lib/rocprofiler-systems"
+   export LIBS="${LIBS} -L/opt/cray/pe/cdst-support/2.14.6/lib -L${ROCM_PATH}/lib/rocprofiler-systems"
 else
    module load amdclang
 fi

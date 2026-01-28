@@ -22,7 +22,7 @@ hip_interface.o: hip_interface.F90
 	$(FC) $(FC_FLAGS) -c $^ -o $@
 
 daxpy_kernel.o: daxpy_kernel.cpp
-	$(FC) $(HIPCC_FLAGS) -c $^ -o $@
+	hipp $(HIPCC_FLAGS) -c $^ -o $@
 
 $(EXECUTABLE): $(OBJECTS)
 	$(FC) $(FC_FLAGS) $(OBJECTS) $(LDFLAGS) -o $@
