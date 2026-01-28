@@ -16,7 +16,11 @@ if [ $? -eq 1 ]; then
   module load rocm
 fi
 
-module load openmpi
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   module load mpi/openmpi-x86_64
+else
+   module load openmpi
+fi
 
 rm -rf build
 

@@ -13,7 +13,13 @@ if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
    export CXX="`which CC`"
    export HIP_PLATFORM=amd
 fi
-module load openmpi
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   module load libfabric
+   MPIRUN=srun
+else
+   module load openmpi
+   MPIRUN=mpirun
+fi
 
 rm -rf build
 mkdir build && cd build
@@ -21,7 +27,7 @@ cmake ..
 make
 
 #salloc -p LocalQ --gpus=2 -n 2 -t 00:10:00
-mpirun -n 2 ./Jacobi_hip -g 2
+${MPIRUN} -n 2 ./Jacobi_hip -g 2
 
 cd ..
 rm -rf build
