@@ -6,7 +6,11 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load hdf5
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   module load cray-hdf5-parallel
+else
+   module load hdf5
+fi
 
 h5dump --version
 

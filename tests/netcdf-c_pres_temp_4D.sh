@@ -6,7 +6,11 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load netcdf-c
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   module load cray-netcdf-hdf5parallel
+else
+   module load netcdf-c
+fi
 
 # use the compiler used to build netcdf-c
 CC=`nc-config --cc`

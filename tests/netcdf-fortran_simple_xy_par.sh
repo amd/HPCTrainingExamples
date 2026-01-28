@@ -6,8 +6,12 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load netcdf-c
-module load netcdf-fortran
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   module load cray-netcdf-hdf5parallel
+else
+   module load netcdf-c
+   module load netcdf-fortran
+fi
 module load openmpi
 
 if [[ ${HDF5_ENABLE_PARALLEL} == "OFF" ]]; then

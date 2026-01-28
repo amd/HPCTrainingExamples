@@ -7,7 +7,11 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load hdf5
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   module load cray-hdf5-parallel
+else
+   module load hdf5
+fi
 module load openmpi
 
 if [[ `which mpicc | wc -l` -eq 0 ]]; then
@@ -29,12 +33,6 @@ mpirun -n 4 ./hdf5block2d
 
 h5dump -y example.hdf5
 
-
-
 popd
 
 rm -rf Chapter16
-
-
-
-
