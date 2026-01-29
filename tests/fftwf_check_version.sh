@@ -6,7 +6,11 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load fftw
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   module load cray-fftw
+else
+   module load fftw
+fi
 
 fftwf-wisdom -V
 
