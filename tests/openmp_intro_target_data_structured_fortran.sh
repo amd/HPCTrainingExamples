@@ -17,6 +17,7 @@ if [[ "`module list |grep -w PrgEnv-cray |wc -l`" -lt 1 ]]; then
    # For AMD compilers, allow override
    if [[ "`module avail |grep -w amdflang-new |wc -l`" -ge 1 ]]; then
       if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+         module unload rocm
          module switch amd amdflang-new
       else
          module load amdflang-new
