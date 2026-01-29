@@ -1196,79 +1196,79 @@ set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY SKIP_REGULAR_EXPRE
 # PyTorch tests
 add_test(NAME Pytorch_Check_Import COMMAND ../pytorch_check_import.sh )
 set_property(TEST Pytorch_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Pytorch_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 
 add_test(NAME Pytorch_Verify_ROCm_Enabled COMMAND ../pytorch_verify_rocm_enabled.sh )
 set_property(TEST Pytorch_Verify_ROCm_Enabled PROPERTY PASS_REGULAR_EXPRESSION 'CUDA device name: AMD')
-set_property(TEST Pytorch_Verify_ROCm_Enabled PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_Verify_ROCm_Enabled PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 
 add_test(NAME Pytorch_Torchvision_Check_Import COMMAND ../torchvision_check_import.sh )
 set_property(TEST Pytorch_Torchvision_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Pytorch_Torchvision_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_Torchvision_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 
 add_test(NAME Pytorch_Torchaudio_Check_Import COMMAND ../torchaudio_check_import.sh )
 set_property(TEST Pytorch_Torchaudio_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Pytorch_Torchaudio_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_Torchaudio_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 
 add_test(NAME Pytorch_Deepspeed_Check_Import COMMAND ../deepspeed_check_import.sh )
 set_property(TEST Pytorch_Deepspeed_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Pytorch_Deepspeed_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_Deepspeed_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 
 add_test(NAME Pytorch_Triton_Check_Import COMMAND ../triton_check_import.sh )
 set_property(TEST Pytorch_Triton_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Pytorch_Triton_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_Triton_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 
 add_test(NAME Pytorch_Transformers_Check_Import COMMAND ../transformers_check_import.sh )
 set_property(TEST Pytorch_Transformers_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Pytorch_Transformers_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_Transformers_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 
 add_test(NAME Pytorch_SageAttention_Check_Import COMMAND ../sageattention_check_import.sh )
 set_property(TEST Pytorch_SageAttention_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Pytorch_SageAttention_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_SageAttention_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 
 add_test(NAME Pytorch_FlashAttention_Check_Import COMMAND ../flashattention_check_import.sh )
 set_property(TEST Pytorch_FlashAttention_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Pytorch_FlashAttention_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_FlashAttention_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 
 add_test(NAME Pytorch_Check_Gpu_Access COMMAND ../pytorch_check_gpu_access.sh )
 set_property(TEST Pytorch_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "True")
-set_property(TEST Pytorch_Check_Gpu_Access PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_Check_Gpu_Access PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 
 add_test(NAME Pytorch_Check_Gpu_Name COMMAND ../pytorch_check_gpu_name.sh )
 set_property(TEST Pytorch_Check_Gpu_Name PROPERTY PASS_REGULAR_EXPRESSION "AMD")
-set_property(TEST Pytorch_Check_Gpu_Name PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_Check_Gpu_Name PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 
 add_test(NAME Pytorch_Check_ROCm_Dependency COMMAND ../pytorch_check_rocm_dependency.sh )
 set_property(TEST Pytorch_Check_ROCm_Dependency PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Pytorch_Check_ROCm_Dependency PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_Check_ROCm_Dependency PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 
 add_test(NAME Pytorch_Mnist COMMAND ../pytorch_mnist.sh )
 set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Train Epoch: 14")
-set_property(TEST Pytorch_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 
 add_test(NAME Pytorch_No_Profile COMMAND ../pytorch_noprofile.sh )
 set_property(TEST Pytorch_No_Profile PROPERTY PASS_REGULAR_EXPRESSION "10: loss")
-set_property(TEST Pytorch_No_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_No_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 set_tests_properties(Pytorch_No_Profile PROPERTIES TIMEOUT 800) 
 
 add_test(NAME Pytorch_Profile_Rocprof-compute_ROCm COMMAND ../pytorch_profiling_rocprof-compute.sh )
-set_property(TEST Pytorch_Profile_Rocprof-compute_ROCm PROPERTY PASS_REGULAR_EXPRESSION "2.1 System Speed-of-Light")
+set_property(TEST Pytorch_Profile_Rocprof-compute_ROCm PROPERTY PASS_REGULAR_EXPRESSION "2.1 System Speed-of-Light" "Unable to locate a modulefile for 'pytorch'")
 set_property(TEST Pytorch_Profile_Rocprof-compute_ROCm PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_tests_properties(Pytorch_Profile_Rocprof-compute_ROCm PROPERTIES TIMEOUT 1500) 
 
 add_test(NAME Pytorch_Profile_Rocprof-sys_ROCm COMMAND ../pytorch_profiling_rocprof-systems.sh )
 set_property(TEST Pytorch_Profile_Rocprof-sys_ROCm PROPERTY PASS_REGULAR_EXPRESSION "perfetto-trace-")
-set_property(TEST Pytorch_Profile_Rocprof-sys_ROCm PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_Profile_Rocprof-sys_ROCm PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 set_tests_properties(Pytorch_Profile_Rocprof-sys_ROCm PROPERTIES TIMEOUT 800) 
 
 add_test(NAME Pytorch_Profile_Rocprofv3 COMMAND ../pytorch_profiling_rocprofv3.sh )
 set_property(TEST Pytorch_Profile_Rocprofv3 PROPERTY PASS_REGULAR_EXPRESSION "kernel_stats.csv")
-set_property(TEST Pytorch_Profile_Rocprofv3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_Profile_Rocprofv3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 set_tests_properties(Pytorch_Profile_Rocprofv3 PROPERTIES TIMEOUT 300) 
 
 add_test(NAME Pytorch_Profile_TorchProfiler COMMAND ../pytorch_profiling_torch-profiler.sh )
 set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY PASS_REGULAR_EXPRESSION "aten::convolution_backward")
-set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 set_tests_properties(Pytorch_Profile_TorchProfiler PROPERTIES TIMEOUT 200) 
 
 # Python MPI tests
@@ -1341,19 +1341,19 @@ set_property(TEST HIP-Python_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "modu
 # CuPy tests
 add_test(NAME Cupy_Check_Import COMMAND ../cupy_check_import.sh )
 set_property(TEST Cupy_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Cupy_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Cupy_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'cupy'")
 
 add_test(NAME Cupy_Check_Array_Sum COMMAND ../cupy_check_array_sum.sh )
 set_property(TEST Cupy_Check_Array_Sum PROPERTY PASS_REGULAR_EXPRESSION "6  8 10 12 14")
-set_property(TEST Cupy_Check_Array_Sum PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Cupy_Check_Array_Sum PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'cupy'")
 
 add_test(NAME Cupy_Xarray_Check COMMAND ../cupy_xarray_check.sh )
 set_property(TEST Cupy_Xarray_Check PROPERTY PASS_REGULAR_EXPRESSION "CUDA Device 2")
-set_property(TEST Cupy_Xarray_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Cupy_Xarray_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'cupy'")
 
 add_test(NAME Cupy_Install_Tests COMMAND ../cupy_install_tests.sh )
 set_property(TEST Cupy_Install_Tests PROPERTY PASS_REGULAR_EXPRESSION "11 passed")
-set_property(TEST Cupy_Install_Tests PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Cupy_Install_Tests PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'cupy'")
 
 # Rocprof-sys tests
 #add_test(NAME Rocprof-sys_Source_Avail_Check COMMAND ../rocprof-sys-avail_check.sh --version develop)
