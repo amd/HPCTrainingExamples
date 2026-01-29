@@ -61,7 +61,10 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load openmpi $PETSC_MODULE
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   module load openmpi
+fi
+module load $PETSC_MODULE
 
 PETSC_VERSION=`$PETSC_DIR/lib/petsc/bin/petscversion`
 
