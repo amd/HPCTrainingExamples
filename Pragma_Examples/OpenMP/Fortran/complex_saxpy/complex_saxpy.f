@@ -6,7 +6,7 @@ complex,  dimension(n) :: x
 complex, dimension(n) :: y
 
 a=(0, 2)
-print*,a
+write (*,'("("f12.8,f12.8")")') a
 do i =1,n
     x(i) = CMPLX(i,i)
 end do
@@ -16,7 +16,7 @@ y=0.0d0
 call saxpy(a, x, y, n)
 
 do i =1,n
-    print*, x(i),y(i)
+    write (*,'(f12.8,f12.8)') x(i),y(i)
 end do
 
 
