@@ -30,18 +30,6 @@ else
          module load amdclang
       fi
    fi
-      
-
-   if [[ "`printenv |grep -w CRAY |wc -l`" -lt 1 ]]; then
-      # Not on a Cray system
-      module load amdflang-new >& /dev/null
-      if [ "$?" == "1" ]; then
-         module load amdclang
-      fi
-   else
-   fi
-
-      if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/BuildExamples
