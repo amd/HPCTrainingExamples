@@ -20,7 +20,6 @@ export HSA_XNACK=1
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran
 cd 7_derived_types
-export HSA_XNACK=1
 make dtype_derived_type_usm
 ./dtype_derived_type_usm
 
