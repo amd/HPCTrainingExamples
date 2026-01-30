@@ -12,12 +12,13 @@ CXXFLAGS = -g -O2 -fPIC ${OPENMP_FLAGS}
 HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include --offload-arch=${ROCM_GPU}
 
 HIPCC ?= hipcc
+HIPCC1=$(notdir $(HIPCC))
 
-ifeq ($(HIPCC), nvcc)
+ifneq ($(findstring hipcc,$(HIPCC1)),)
    HIPCC_FLAGS += -x cu
    LDFLAGS = -lcudadevrt -lcudart_static -lrt -lpthread -ldl
 endif
-ifeq ($(HIPCC), hipcc)
+ifneq ($(findstring hipcc,$(HIPCC1)),)
    HIPCC_FLAGS += -x hip -munsafe-fp-atomics
    LDFLAGS = ${OPENMP_FLAGS} -L${ROCM_PATH}/lib -lamdhip64
 endif
