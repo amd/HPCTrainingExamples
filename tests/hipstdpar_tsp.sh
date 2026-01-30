@@ -1,5 +1,28 @@
 #!/bin/bash
 
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+else
+   module list 2>&1 | grep -q -w "rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   module load amdflang-new >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load amdclang
+   fi
+fi
+
 mkdir tsp
 git clone https://github.com/pkestene/tsp
 cd tsp
@@ -11,17 +34,6 @@ patch -p1 < TSP.patch
 cd stdpar
 
 export HSA_XNACK=1
-module list 2>&1 | grep -q -w "rocm"
-if [ $? -eq 1 ]; then
-  echo "rocm module is not loaded"
-  echo "loading default rocm module"
-  module load rocm
-fi
-if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
-   export CXX=`which CC`
-else
-   module load amdclang
-fi
 export STDPAR_CXX=$CXX
 export ROCM_GPU=`rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'`
 export STDPAR_TARGET=${ROCM_GPU}
