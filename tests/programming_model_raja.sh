@@ -44,9 +44,9 @@ else
    mkdir build_hip && cd build_hip
 
    cmake -DCMAKE_INSTALL_PREFIX=${PWDir}/Raja_HIP \
-         -DROCM_ROOT_DIR=/opt/rocm \
-         -DHIP_ROOT_DIR=/opt/rocm \
-         -DHIP_PATH=/opt/rocm/bin \
+         -DROCM_ROOT_DIR=${ROCM_PATH} \
+         -DHIP_ROOT_DIR=${ROCM_PATH} \
+         -DHIP_PATH=${ROCM_PATH}/bin \
          -DENABLE_TESTS=Off \
          -DENABLE_EXAMPLES=Off \
          -DRAJA_ENABLE_EXERCISES=Off \
