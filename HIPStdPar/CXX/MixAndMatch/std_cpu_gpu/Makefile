@@ -7,7 +7,7 @@ ARCH_FLAGS   := --offload-arch=${ROCM_GPU}
 LIBS         ?=
 
 # If STDPAR_PATH is not specified on the command line, use this default.
-STDPAR_PATH ?= /opt/rocm/include/thrust/system/hip/hipstdpar
+STDPAR_PATH ?= ${ROCM_PATH}/include/thrust/system/hip/hipstdpar
 
 # Targets
 TARGET       := final
