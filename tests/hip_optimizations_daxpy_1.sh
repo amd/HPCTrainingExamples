@@ -13,6 +13,9 @@ if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
    if [ -z "$HIPCC" ]; then
       export HIPCC=`which hipcc`
    fi
+   if [[ ! -f -L${ROCM_PATH}/lib/libroctx64.so ]]; then
+      export LDFLAGS="-L/opt/rocm-6.4.1/lib -lroctx64"
+   fi
 else
    module list 2>&1 | grep -q -w "rocm"
    if [ $? -eq 1 ]; then
