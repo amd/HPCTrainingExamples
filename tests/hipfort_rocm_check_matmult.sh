@@ -10,6 +10,9 @@ if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
    if [ -z "$FC" ]; then
       export FC=`which ftn`
    fi
+   if [ -z "$HIPCC" ]; then
+      export HIPCC=`which hipcc`
+   fi
 else
    module list 2>&1 | grep -q -w "rocm"
    if [ $? -eq 1 ]; then
