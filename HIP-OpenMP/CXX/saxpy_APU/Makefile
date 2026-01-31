@@ -9,8 +9,9 @@ CXXFLAGS = -g -O2 -fPIC -D__HOST_CODE__
 HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include
 
 HIPCC ?= hipcc
+HIPCC1=$(notdir $(HIPCC))
 
-ifeq ($(HIPCC), hipcc)
+ifneq ($(findstring hipcc,$(HIPCC1)),)
    HIPCC_FLAGS += -x hip -munsafe-fp-atomics -D__DEVICE_CODE__
    LDFLAGS = -L${ROCM_PATH}/lib -lamdhip64
 endif

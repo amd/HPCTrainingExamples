@@ -11,7 +11,7 @@ if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
       export FC=`which ftn`
    fi
    if [ -z "$HIPCC" ]; then
-      export FC=`which hipcc`
+      export HIPCC=`which hipcc`
    fi
    export HIP_PLATFORM=amd
 else
