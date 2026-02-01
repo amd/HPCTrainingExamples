@@ -17,6 +17,12 @@ else ifneq ($(findstring gfortran,$(FC1)),)
   FREE_FORM_FLAG = -ffree-form
 else ifneq ($(findstring ftn,$(FC1)),)
   OPENMP_FLAGS = -fopenmp
+  CRAY_FORTRAN_COUNT=$(shell ftn --version | grep 'Cray Fortran' | wc -l)
+  ifneq ("${CRAY_FORTRAN_COUNT}", 0); then
+     FREE_FORM_FLAG = -f free
+  else
+     FREE_FORM_FLAG = -ffree-form
+  endif
 endif
 
 ifneq ($(findstring ftn,$(FC1)),)
