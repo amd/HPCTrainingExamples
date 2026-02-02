@@ -96,9 +96,9 @@ PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.v
 if [ -n "$PYTHON_VERSION" ]; then
     # Check if matching library exists (e.g., libpyrocprofsys.cpython-312-x86_64-linux-gnu.so for Python 3.12)
     PYTHON_MAJOR_MINOR=$(echo "$PYTHON_VERSION" | tr '.' '_')
-    if [ ! -f "/opt/rocm-7.1.1/lib/python${PYTHON_VERSION}/site-packages/rocprofsys/libpyrocprofsys.cpython-${PYTHON_MAJOR_MINOR}-x86_64-linux-gnu.so" ]; then
+    if [ ! -f "${ROCM_PATH}/lib/python${PYTHON_VERSION}/site-packages/rocprofsys/libpyrocprofsys.cpython-${PYTHON_MAJOR_MINOR}-x86_64-linux-gnu.so" ]; then
         log_info "Warning: Python ${PYTHON_VERSION} bindings may not be available."
-        log_info "Available bindings: $(find /opt/rocm-7.1.1/lib/python*/site-packages/rocprofsys -name 'libpyrocprofsys*.so' 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo 'Not found')"
+        log_info "Available bindings: $(find ${ROCM_PATH}/lib/python*/site-packages/rocprofsys -name 'libpyrocprofsys*.so' 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo 'Not found')"
         log_info "The Python version must match the version used to compile the bindings."
     fi
 fi
@@ -113,9 +113,9 @@ elif python3 -m rocprofsys --help &> /dev/null; then
     log_rocprof "Using python3 -m rocprofsys"
 else
     log_info "rocprof-sys-python not found. Please ensure ROCm Systems Profiler Python bindings are installed."
-    log_info "The Python package should be in: /opt/rocm-7.1.1/lib/python*/site-packages/rocprofsys"
+    log_info "The Python package should be in: ${ROCM_PATH}/lib/python*/site-packages/rocprofsys"
     log_info "Or ensure PYTHONPATH includes the rocprofsys package location."
-    log_info "You may need to source: /opt/rocm-7.1.1/share/rocprofiler-systems/setup-env.sh"
+    log_info "You may need to source: ${ROCM_PATH}/share/rocprofiler-systems/setup-env.sh"
     exit 1
 fi
 
@@ -150,8 +150,8 @@ echo ""
 
 # Source setup-env.sh if available (sets PYTHONPATH, PATH, LD_LIBRARY_PATH automatically)
 # See: https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/how-to/profiling-python-scripts.html
-if [ -f "/opt/rocm-7.1.1/share/rocprofiler-systems/setup-env.sh" ]; then
-    source /opt/rocm-7.1.1/share/rocprofiler-systems/setup-env.sh
+if [ -f "${ROCM_PATH}/share/rocprofiler-systems/setup-env.sh" ]; then
+    source ${ROCM_PATH}/share/rocprofiler-systems/setup-env.sh
     log_rocprof "Sourced setup-env.sh for environment configuration"
 fi
 
@@ -167,9 +167,9 @@ if command -v python3 &> /dev/null; then
     fi
     
     # Add ROCm lib directory (if not already in LD_LIBRARY_PATH)
-    if [[ "$LD_LIBRARY_PATH" != *"/opt/rocm-7.1.1/lib"* ]]; then
-        export LD_LIBRARY_PATH="/opt/rocm-7.1.1/lib:${LD_LIBRARY_PATH}"
-        log_rocprof "Added ROCm lib directory to LD_LIBRARY_PATH: /opt/rocm-7.1.1/lib"
+    if [[ "$LD_LIBRARY_PATH" != *"${ROCM_PATH}/lib"* ]]; then
+        export LD_LIBRARY_PATH="${ROCM_PATH}/lib:${LD_LIBRARY_PATH}"
+        log_rocprof "Added ROCm lib directory to LD_LIBRARY_PATH: ${ROCM_PATH}/lib"
     fi
     
     # Add system library paths (for libdrm.so.2, libatomic.so.1, etc.)
@@ -185,7 +185,7 @@ fi
 if [ -z "$PYTHONPATH" ] || [[ "$PYTHONPATH" != *"rocprofsys"* ]]; then
     # Try to find Python version and add appropriate path
     PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>/dev/null || echo "3.12")
-    ROCPROFSYS_PYTHON_PATH="/opt/rocm-7.1.1/lib/python${PYTHON_VERSION}/site-packages"
+    ROCPROFSYS_PYTHON_PATH="${ROCM_PATH}/lib/python${PYTHON_VERSION}/site-packages"
     if [ -d "$ROCPROFSYS_PYTHON_PATH" ]; then
         export PYTHONPATH="${ROCPROFSYS_PYTHON_PATH}:${PYTHONPATH}"
         log_rocprof "Added $ROCPROFSYS_PYTHON_PATH to PYTHONPATH"

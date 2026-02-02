@@ -84,11 +84,11 @@ source venvOFr711/bin/activate
 
 # Add PyTorch lib directory from venv to LD_LIBRARY_PATH
 # This ensures caffe2 libraries are found from the venv installation
-export LD_LIBRARY_PATH=$(python3 -c "import torch; import os; print(os.path.join(os.path.dirname(torch.__file__), 'lib'))"):/opt/rocm-7.1.1/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$(python3 -c "import torch; import os; print(os.path.join(os.path.dirname(torch.__file__), 'lib'))"):${ROCM_PATH}/lib:$LD_LIBRARY_PATH
 
 # Optional: Add to ~/.bashrc for persistence (use venv path)
 # VENV_PATH="/mnt/thera/data/incoming/asimishr/aiml_prof/HPCTrainingExamples/MLExamples/TinyOpenFold/venvOFr711"
-# echo "export LD_LIBRARY_PATH=\$(python3 -c \"import torch; import os; print(os.path.join(os.path.dirname(torch.__file__), 'lib'))\"):/opt/rocm-7.1.1/lib:\$LD_LIBRARY_PATH" >> ~/.bashrc
+# echo "export LD_LIBRARY_PATH=\$(python3 -c \"import torch; import os; print(os.path.join(os.path.dirname(torch.__file__), 'lib'))\"):\${ROCM_PATH}/lib:\$LD_LIBRARY_PATH" >> ~/.bashrc
 
 # Verify PyTorch installation
 python3 -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA Available: {torch.cuda.is_available()}'); print(f'GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"N/A\"}')"
