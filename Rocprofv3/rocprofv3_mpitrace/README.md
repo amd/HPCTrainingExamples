@@ -96,7 +96,7 @@ Open `ranks_all.pftrace` in [Perfetto UI](https://ui.perfetto.dev/). The timelin
 - **GPU kernels**: `LocalLaplacianKernel()`
 - **Overlap** between computation and communication
 
-![Jacobi trace showing MPI calls and GPU kernels](attachments/image_35377.png)
+![Jacobi trace showing MPI calls and GPU kernels](figs/image_35377.png)
 
 ### Additional output files
 
