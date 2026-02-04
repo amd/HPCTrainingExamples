@@ -44,10 +44,10 @@ $*
 ```bash
 #!/bin/bash
 if [[ -n ${OMPI_COMM_WORLD_RANK+z} ]]; then
-  # mpich
+  # ompi
   export MPI_RANK=${OMPI_COMM_WORLD_RANK}
 elif [[ -n ${MV2_COMM_WORLD_RANK+z} ]]; then
-  # ompi
+  # mvapich2
   export MPI_RANK=${MV2_COMM_WORLD_RANK}
 elif [[ -n ${SLURM_PROCID+z} ]]; then
     # mpich via srun
