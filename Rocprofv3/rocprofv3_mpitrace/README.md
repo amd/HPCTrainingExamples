@@ -4,6 +4,8 @@ When we profile multi-process applications, we often want to characterize whethe
 
 This guide demonstrates how to use [mpitrace](https://github.com/sfantao/mpitrace) with `rocprofv3` to profile MPI communication alongside GPU kernel execution. `mpitrace` allows us to look at MPI activity in all ranks and quickly spot load imbalance among ranks. This tool adds ROCTx range markers around the entry and exit of each MPI function for graphical display using Perfetto.
 
+This tutorial was tested on a system with ROCm 7.1.1 and MI355X GPUs on a HIP-C++ application, but `mpitrace` can be used on Fortran applications as well.
+
 ## Installation
 
 ### Prerequisites
