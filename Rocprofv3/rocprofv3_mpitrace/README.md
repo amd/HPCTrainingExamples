@@ -103,7 +103,6 @@ Open `ranks_all.pftrace` in [Perfetto UI](https://ui.perfetto.dev/). The timelin
 Figure 1: Jacobi trace showing MPI calls and GPU kernels.
 </p>
 
-
 ### Additional output files
 
 - `mpi_profile.<pid>.<rank>` - Summary files (rank 0 has main summary)
