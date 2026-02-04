@@ -1193,6 +1193,10 @@ set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY SKIP_REGULAR_EXPRE
 #set_property(TEST Rocprofv3_TraceDecoder PROPERTY PASS_REGULAR_EXPRESSION "Found json output")
 #set_property(TEST Rocprofv3_TraceDecoder PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+#add_test(NAME Rocprofv3_Rocpd COMMAND ../rocpd_check_version.sh )
+#set_property(TEST Rocprofv3_Rocpd PROPERTY PASS_REGULAR_EXPRESSION "Success")
+#set_property(TEST Rocprofv3_Rocpd PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # PyTorch tests
 add_test(NAME Pytorch_Check_Import COMMAND ../pytorch_check_import.sh )
 set_property(TEST Pytorch_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
