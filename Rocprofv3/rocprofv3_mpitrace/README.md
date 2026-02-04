@@ -53,7 +53,6 @@ elif [[ -n ${SLURM_PROCID+z} ]]; then
     # mpich via srun
     export MPI_RANK=${SLURM_PROCID}
 fi
-pid="$$"
 outdir="rank.${MPI_RANK}"
 outfile=${outdir}
 eval "rocprofv3 -d ${outdir} -o ${outfile} $*"
