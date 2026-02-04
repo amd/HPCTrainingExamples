@@ -97,7 +97,7 @@ Open `ranks_all.pftrace` in [Perfetto UI](https://ui.perfetto.dev/). The timelin
 - **Overlap** between computation and communication
 
 <div style="text-align: center;">
-<img src="./figs/image_35377.png" width="800px" class="img-center">
+<img src="figs/image_35377.png" width="800px" class="img-center">
 </div>
 <p style="text-align:center">
 Figure 1: Jacobi trace showing MPI calls and GPU kernels.
