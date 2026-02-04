@@ -7,5 +7,9 @@ if [ $? -eq 1 ]; then
   module load rocm
 fi
 
-rocpd --version
-
+ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
+if [ "$(printf '%s\n' "7.0" "$ROCM_VERSION" | sort -V | head -n1)" = "7.0" ]; then
+   rocpd --version
+else
+   echo "Skip"
+fi
