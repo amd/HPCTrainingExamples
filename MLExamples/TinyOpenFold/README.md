@@ -46,20 +46,16 @@ Set up your Python environment and install dependencies:
 
 ```bash
 # Load modules (choose one option)
-module load python/3.12 rocm/7.1.1        # Standard Python (recommended)
+module load python/3.12 rocm/7.2        # Standard Python (recommended)
 # OR
-module load cray-python rocm/7.1.1        # Cray environment
+module load cray-python rocm/7.2        # Cray environment
 
 # Navigate to TinyOpenFold directory
 cd HPCTrainingExamples/MLExamples/TinyOpenFold
 
 # Create and activate virtual environment
-# Option 1: Create new venv
-python3 -m venv venvOF
-source venvOF/bin/activate
-
-# Option 2: Use existing venvOFr711 (recommended for ROCm 7.1.1)
-source venvOFr711/bin/activate
+python3 -m venv venv
+source venv/bin/activate
 
 # Verify Python version
 python3 --version
@@ -67,27 +63,26 @@ python3 --version
 # Upgrade pip and install build tools
 pip3 install --upgrade pip setuptools wheel
 
-# Install PyTorch with ROCm support
+# Install PyTorch with ROCm support (using ROCm 7.1 nightly build)
 # For ROCm 6.4:
 # pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.4
 
-# For ROCm 7.1 (recommended):
+# For ROCm 7.1 nightly (recommended):
 pip3 uninstall -y torch torchvision triton torchaudio 2>/dev/null || true
-pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/rocm7.1
+pip3 install torch torchvision torchaudio triton --index-url https://download.pytorch.org/whl/nightly/rocm7.1
 
 # Fix libcaffe2_nvrtc.so library loading issue
 # Ensure ROCm and libffi modules are loaded (sets up library paths)
-module load rocm/7.1.1 libffi/3.3
+module load rocm/7.2 libffi/3.3
 
-# Activate venv (if using venvOFr711)
-source venvOFr711/bin/activate
+# Re-activate venv
+source venv/bin/activate
 
 # Add PyTorch lib directory from venv to LD_LIBRARY_PATH
 # This ensures caffe2 libraries are found from the venv installation
 export LD_LIBRARY_PATH=$(python3 -c "import torch; import os; print(os.path.join(os.path.dirname(torch.__file__), 'lib'))"):${ROCM_PATH}/lib:$LD_LIBRARY_PATH
 
-# Optional: Add to ~/.bashrc for persistence (use venv path)
-# VENV_PATH="/mnt/thera/data/incoming/asimishr/aiml_prof/HPCTrainingExamples/MLExamples/TinyOpenFold/venvOFr711"
+# Optional: Add to ~/.bashrc for persistence
 # echo "export LD_LIBRARY_PATH=\$(python3 -c \"import torch; import os; print(os.path.join(os.path.dirname(torch.__file__), 'lib'))\"):\${ROCM_PATH}/lib:\$LD_LIBRARY_PATH" >> ~/.bashrc
 
 # Verify PyTorch installation
@@ -103,7 +98,7 @@ python3 -c "from deepspeed.profiling.flops_profiler import FlopsProfiler; print(
 pip3 install -r setup/requirements.txt
 ```
 
-**Note**: Activate the virtual environment (`source venvOF/bin/activate`) each time you start a new session.
+**Note**: Activate the virtual environment (`source venv/bin/activate`) each time you start a new session.
 
 ### Basic Training
 

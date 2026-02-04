@@ -52,11 +52,27 @@ After completing this version, you will be able to:
 
 ## Quick Start
 
+### Environment Setup
+
+Before running V2, ensure your environment is set up correctly. See the [Environment Setup and Installation](../README.md#environment-setup-and-installation) section in the main README for detailed instructions.
+
+**Quick summary:**
+- Load modules: `module load python/3.12 rocm/7.2` (or `cray-python rocm/7.2`)
+- Create and activate venv: `python3 -m venv venv && source venv/bin/activate`
+- Install PyTorch (ROCm 7.1 nightly): `pip3 install torch torchvision torchaudio triton --index-url https://download.pytorch.org/whl/nightly/rocm7.1`
+- Install DeepSpeed: `pip3 install deepspeed`
+- Set up `LD_LIBRARY_PATH` for library loading
+
+See the main README for complete setup instructions.
+
 ### Basic Fused Training
 
 ```bash
+# Ensure you're in the version2_pytorch_fused directory
+cd version2_pytorch_fused
+
 # Default configuration with all fusions enabled
-python tiny_openfold_v2.py --batch-size 4 --seq-len 64
+python3 tiny_openfold_v2.py --batch-size 4 --seq-len 64
 
 # Expected output shows fusion statistics:
 #   MSA QKV Fusion: Enabled
@@ -93,14 +109,14 @@ python3 tiny_openfold_v2.py --compare-fusion --batch-size 4 --num-steps 50
 
 ```bash
 # Explicitly enable all fusion optimizations
-python tiny_openfold_v2.py --enable-all-fusion --batch-size 4
+python3 tiny_openfold_v2.py --enable-all-fusion --batch-size 4
 ```
 
 ### Baseline Comparison Mode
 
 ```bash
 # Run with all fusions disabled (equivalent to V1)
-python tiny_openfold_v2.py --disable-all-fusion --batch-size 4
+python3 tiny_openfold_v2.py --disable-all-fusion --batch-size 4
 ```
 
 ## Architecture Enhancements and Fusion Techniques
@@ -288,13 +304,13 @@ if fusion_config.enable_torch_compile:
 
 ```bash
 # Basic profiling with fusion analysis
-python run_pytorch_profiler.py --batch-size 4 --profile-dir ./fusion_analysis
+python3 run_pytorch_profiler.py --batch-size 4 --profile-dir ./fusion_analysis
 
 # View comprehensive report
 less fusion_analysis/comprehensive_profiling_report.md
 
 # Compare with baseline (all fusions disabled)
-python run_pytorch_profiler.py --disable-all-fusion --profile-dir ./baseline_analysis
+python3 run_pytorch_profiler.py --disable-all-fusion --profile-dir ./baseline_analysis
 ```
 
 **Provides:**
@@ -403,19 +419,19 @@ less complete_profiling_*/PROFILING_SUMMARY.md
 
 ```bash
 # Only MSA QKV fusion
-python tiny_openfold_v2.py \
+python3 tiny_openfold_v2.py \
     --disable-qkv-fusion-triangle \
     --disable-flash-attention \
     --disable-triangle-fusion
 
 # Only Flash Attention
-python tiny_openfold_v2.py \
+python3 tiny_openfold_v2.py \
     --disable-qkv-fusion-msa \
     --disable-qkv-fusion-triangle \
     --disable-triangle-fusion
 
 # Only Triangle fusion
-python tiny_openfold_v2.py \
+python3 tiny_openfold_v2.py \
     --disable-qkv-fusion-msa \
     --disable-qkv-fusion-triangle \
     --disable-flash-attention
@@ -456,12 +472,12 @@ cat performance_study_*/results_summary.json
 ```bash
 # Run V1 baseline
 cd ../version1_pytorch_baseline
-python tiny_openfold_v1.py --batch-size 4 --seq-len 64 --num-steps 50 \
+python3 tiny_openfold_v1.py --batch-size 4 --seq-len 64 --num-steps 50 \
     --profile-dir ./v1_comparison
 
 # Run V2 with comparison
 cd ../version2_pytorch_fused
-python tiny_openfold_v2.py --batch-size 4 --seq-len 64 --num-steps 50 \
+python3 tiny_openfold_v2.py --batch-size 4 --seq-len 64 --num-steps 50 \
     --compare-with-v1 ../version1_pytorch_baseline/v1_comparison/performance_summary.json
 ```
 
@@ -582,13 +598,13 @@ fusion_stats = model.get_fusion_statistics()
 
 ```bash
 # Check Flash Attention availability
-python -c "import torch.nn.functional as F; print(hasattr(F, 'scaled_dot_product_attention'))"
+python3 -c "import torch.nn.functional as F; print(hasattr(F, 'scaled_dot_product_attention'))"
 
 # Check torch.compile availability
-python -c "import torch; print(hasattr(torch, 'compile'))"
+python3 -c "import torch; print(hasattr(torch, 'compile'))"
 
 # Run with fusion disabled to compare
-python tiny_openfold_v2.py --disable-all-fusion
+python3 tiny_openfold_v2.py --disable-all-fusion
 ```
 
 ### Numerical Accuracy Verification
@@ -616,8 +632,8 @@ python3 tiny_openfold_v2.py --verify-accuracy --batch-size 4
 
 ```bash
 # Profile with different fusion combinations
-python tiny_openfold_v2.py --disable-flash-attention --enable-pytorch-profiler
-python tiny_openfold_v2.py --disable-qkv-fusion-msa --enable-pytorch-profiler
+python3 tiny_openfold_v2.py --disable-flash-attention --enable-pytorch-profiler
+python3 tiny_openfold_v2.py --disable-qkv-fusion-msa --enable-pytorch-profiler
 
 # Compare kernel counts
 grep "kernel" pytorch_profiles_v2/fusion_analysis.json
@@ -653,11 +669,11 @@ grep "kernel" pytorch_profiles_v2/fusion_analysis.json
 
 ```bash
 # Run baseline (V1 or V2 with fusions disabled)
-python tiny_openfold_v2.py --disable-all-fusion --batch-size 4 --num-steps 50 \
+python3 tiny_openfold_v2.py --disable-all-fusion --batch-size 4 --num-steps 50 \
     --profile-dir ./baseline
 
 # Run with all fusions
-python tiny_openfold_v2.py --enable-all-fusion --batch-size 4 --num-steps 50 \
+python3 tiny_openfold_v2.py --enable-all-fusion --batch-size 4 --num-steps 50 \
     --profile-dir ./fused
 
 # Compare results
@@ -675,11 +691,11 @@ diff baseline/performance_summary_v2.json fused/performance_summary_v2.json
 
 ```bash
 # Test with Flash Attention disabled
-python tiny_openfold_v2.py --disable-flash-attention --seq-len 128 \
+python3 tiny_openfold_v2.py --disable-flash-attention --seq-len 128 \
     --enable-memory-profiling --profile-dir ./no_flash
 
 # Test with Flash Attention enabled
-python tiny_openfold_v2.py --enable-flash-attention --seq-len 128 \
+python3 tiny_openfold_v2.py --enable-flash-attention --seq-len 128 \
     --enable-memory-profiling --profile-dir ./with_flash
 
 # Compare peak memory usage
