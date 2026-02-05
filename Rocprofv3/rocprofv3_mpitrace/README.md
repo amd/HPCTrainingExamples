@@ -1,10 +1,10 @@
-# Quick Start Guide: Using mpitrace with rocprofv3
+# Quick Start Guide: Using `mpitrace` with `rocprofv3`
 
-When we profile multi-process applications, we often want to characterize whether our bottleneck is GPU compute kernels or host activity such as MPI communication. We recommend the [ROCm Systems Profiler](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/index.html) for a holistic view of the application trace showing CPU, GPU, and system activity such as network communication. To get a quick start with `rocprof-sys`, refer to this [Jacobi-based tutorial](https://github.com/amd/HPCTrainingExamples/tree/main/rocprofiler-systems/Jacobi). 
+When we profile multi-process applications, we often want to characterize whether our bottleneck is GPU compute kernels or host activity such as MPI communication. We recommend the [ROCm Systems Profiler](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/index.html) to collect a holistic application trace showing CPU, GPU, and system activity such as network communication. To get a quick start with `rocprof-sys`, refer to this [Jacobi-based tutorial](https://github.com/amd/HPCTrainingExamples/tree/main/rocprofiler-systems/Jacobi). 
 
 Sometimes, we may just want insight into the timelines for MPI calls along with GPU kernel execution. `mpitrace` is a low overhead tool that can be used with `rocprofv3` for just this purpose.
 
-This guide demonstrates how to use [mpitrace](https://github.com/sfantao/mpitrace) with `rocprofv3` to profile MPI communication alongside GPU kernel execution. `mpitrace` allows us to look at MPI activity in all ranks and quickly spot load imbalance among ranks. This tool adds ROCTx range markers around the entry and exit of each MPI function for graphical display using Perfetto.
+This guide demonstrates how to use [`mpitrace`](https://github.com/sfantao/mpitrace) with `rocprofv3` to profile MPI communication alongside GPU kernel execution. `mpitrace` allows us to look at MPI activity in all ranks and quickly spot load imbalance among ranks. This tool adds ROCTx range markers around the entry and exit of each MPI function for graphical display using Perfetto.
 
 This tutorial was tested on a system with ROCm 7.1.1 and MI355X GPUs on a HIP-C++ application, but `mpitrace` can be used on Fortran applications as well.
 
@@ -24,7 +24,7 @@ export ROCM_PATH=/opt/rocm-<ver>
 export PATH=<path_to_mpi_installation>/bin:$PATH
 ```
 
-### Build mpitrace
+### Build `mpitrace`
 
 To build `mpitrace`, we use this helper repository and script as shown below:
 
@@ -34,7 +34,7 @@ cd mpitrace-install
 ./create-for-env-gcc-and-mpi
 ```
 
-This downloads and installs mpitrace and its dependencies. Important libraries:
+This downloads and installs `mpitrace` and its dependencies. Important libraries:
 - `mpitrace/src/libmpitrace.so`
 - `mpitrace/roctx/libmpitrace-legacy.so` (for legacy `rocprof` v1)
 - `mpitrace/roctx/libmpitrace.so` (for `rocprofv3` - **default**)
@@ -93,7 +93,7 @@ make clean
 make
 ```
 
-### Profile with mpitrace + rocprofv3
+### Profile with `mpitrace` + `rocprofv3`
 
 ```bash
 mpirun -np 2 ./helper_mpitrace.sh ./helper_rocprofv3.sh --runtime-trace --output-format pftrace -- ./Jacobi_hip -g 2 1
@@ -107,7 +107,7 @@ In addition, this example run does not set up CPU or GPU affinity for the proces
 ### View results
 
 Open `ranks_all.pftrace` in [Perfetto UI](https://ui.perfetto.dev/). The timeline will show:
-- **MPI calls** from mpitrace: `MPI_Isend`, `MPI_Irecv`, `MPI_Waitall`
+- **MPI calls** from `mpitrace`: `MPI_Isend`, `MPI_Irecv`, `MPI_Waitall`
 - **User-defined ROCTx markers**: `MPI Exchange::Halo Exchange`, `Halo H2D::Halo Exchange`
 - **GPU kernels**: `LocalLaplacianKernel()`
 - **Overlap** between computation and communication
@@ -135,7 +135,7 @@ The summary file for each process shows MPI calls, their durations, the message 
 Figure 2: Snapshot of mpi_profile.<pid>.0 file
 </p>
 
-To visualize the traces collected in `<pid>.trc`, you would need the `traceview` tool that is also distributed as part of the [mpitrace repo](https://github.com/sfantao/mpitrace). It is based on OpenGL. The README file in the traceview directory provides installation instructions that you may follow. Once installed, you can run the tool as shown below:
+To visualize the traces collected in `<pid>.trc`, you would need the `traceview` tool that is also distributed as part of the [`mpitrace` repo](https://github.com/sfantao/mpitrace). It is based on OpenGL. The README file in the traceview directory provides installation instructions that you may follow. Once installed, you can run the tool as shown below:
 
 ```
 traceview <pid>.trc
@@ -145,11 +145,11 @@ You will see all the MPI calls in the trace as colored boxes, with a legend for 
 
 ## Key points
 
-1. **mpitrace library**: Use `roctx/libmpitrace.so` for `rocprofv3` (default)
+1. **`mpitrace` library**: Use `roctx/libmpitrace.so` for `rocprofv3` (default)
 2. **Legacy support**: Use `roctx/libmpitrace-legacy.so` for legacy `rocprof` v1
 3. **Trace merging**: Combine per-rank traces with `cat rank*/*pftrace > ranks_all.pftrace`
 4. **Visualization**: View merged traces in [Perfetto UI](https://ui.perfetto.dev/)
 
 ## References
 
-- [mpitrace repository](https://github.com/sfantao/mpitrace-install)
+- [`mpitrace` repository](https://github.com/sfantao/mpitrace-install)
