@@ -3,9 +3,13 @@
 #include <unistd.h>
 #include <time.h>
 #include <mpi.h>
+#ifdef USE_PNETCDF
+#include <pnetcdf.h>
+#endif
+#include <cmath>
 #include <hip/hip_runtime.h>
 #include <roctx.h>
-
+#include <vector>
 #include "malloc2D.h"
 #include "timer.h"
 
@@ -18,13 +22,18 @@ __global__ void init_core (double **x, int nhalo, int jsize, int isize, double v
     }
 }
 
-__global__ void init_core2 (double **x, int jmax, int jspan, int jbegin, int jend, int imax, int ispan, int ibegin, int iend, int rank)
+__global__ void init_core2 (double **x, int jmax, int jspan, int jbegin, int jend, int imax, int ispan, int ibegin, int iend, double sigma)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x + imax/2 - ispan;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y + jmax/2 - jspan;
     if (tidy < jmax/2 + jspan && tidx < imax/2 + ispan) {
         if (tidy >= jbegin && tidy < jend && tidx >= ibegin && tidx < iend) {
-           x[tidy-jbegin][tidx-ibegin] = 400.0 + 0.1 * (double)(rank + tidy);
+           double x_phys = tidx + ibegin;
+           double y_phys = tidy + jbegin;
+           double x_center = imax / 2.0;
+           double y_center = jmax / 2.0;
+           x[tidy-jbegin][tidx-ibegin] = exp(-0.5 * ( ((x_phys - x_center)*(x_phys - x_center)/(sigma*sigma)
+                               + (y_phys - y_center)*(y_phys - y_center)/(sigma*sigma)) ));
         }
     }
 }
@@ -117,6 +126,11 @@ __global__ void ghost_left_recv (double *xbuf_left_recv, double **x, int jlow, i
 #define SWAP_PTR(xnew,xold,xtmp) (xtmp=xnew, xnew=xold, xold=xtmp)
 void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing, int &do_print);
 void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx);
+#ifdef USE_PNETCDF
+void create_netcdf_file(const char *fname, int jmax, int imax, MPI_Comm comm, int *ncid, int *varid, int *varid_xcoord, int *varid_ycoord);
+void write_netcdf_soln(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int tstep, int ncid, int varid);
+void write_netcdf_coords(int imax, int jmax, int nprocx, int nprocy, double Lx, double Ly, int ncid, int varid_xcoord, int varid_ycoord);
+#endif
 void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop);
 void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize,
       int nleft, int nrght, int nbot, int ntop, int do_timing);
@@ -163,6 +177,19 @@ int main(int argc, char *argv[])
    int jend   = jmax *(ycoord+1)/nprocy;
    int jsize  = jend - jbegin;
 
+   // physical domain dimensions (unit square)
+   double Lx = 1.0;
+   double Ly = 1.0;
+
+   // soln init params
+   double sigma = 5.0;
+   double x_center = imax / 2.0;
+   double y_center = jmax / 2.0;
+
+   // center of the Gaussian for initialization
+   double x0 = Lx / 2.0;
+   double y0 = Ly / 2.0;
+
    /* The halo update both updates the ghost cells and the boundary halo cells. To be precise with terminology,
     * the ghost cells only exist for multi-processor runs with MPI. The boundary halo cells are to set boundary
     * conditions. Halos refer to both the ghost cells and the boundary halo cells.
@@ -195,7 +222,7 @@ int main(int argc, char *argv[])
    
    dim3 grid2((2*ispan+63)/64, (2*jspan+3)/4, 1);
    dim3 block2(64, 4, 1);
-   init_core2 <<< grid2, block2 >>> (x, jmax, jspan, jbegin, jend, imax, ispan, ibegin, iend, rank);
+   init_core2 <<< grid2, block2 >>> (x, jmax, jspan, jbegin, jend, imax, ispan, ibegin, iend, sigma);
    hipDeviceSynchronize();
 
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
@@ -209,6 +236,14 @@ int main(int argc, char *argv[])
    roctxMark("Starting main iteration loop");
 
    if (rank == 0) printf("------> Advancing the Solution\n");
+
+#ifdef USE_PNETCDF
+   int ncid, varid, varid_xcoord, varid_ycoord;
+     create_netcdf_file("solution.nc", jmax, imax, MPI_COMM_WORLD, &ncid, &varid, &varid_xcoord, &varid_ycoord);
+     write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, 0, ncid, varid);
+     write_netcdf_coords(imax, jmax, nprocx, nprocy, Lx, Ly, ncid, varid_xcoord, varid_ycoord);
+#endif
+
    for (int iter = 0; iter < maxIter; iter++){
       roctxRangePush("Stencil");
       cpu_timer_start(&tstart_stencil);
@@ -232,6 +267,11 @@ int main(int argc, char *argv[])
       if (do_print == 1) {
          Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
       }
+#ifdef USE_PNETCDF
+      if(iter == maxIter - 1){
+         write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, iter+1, ncid, varid);
+      }
+#endif   
    }
    roctxMark("Stopping main iteration loop");
 
@@ -302,8 +342,8 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
    cpu_timer_start(&tstart_ghostcell);
 
    roctxRangePush("MPIRequest");
-   MPI_Request request[4*nhalo];
-   MPI_Status status[4*nhalo];
+   std::vector<MPI_Request> request(4*nhalo);
+   std::vector<MPI_Status> status(4*nhalo);
    roctxRangePop(); //MPIRequest
 
    int jlow=0, jhgh=jsize;
@@ -315,10 +355,10 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
    int bufcount = jnum*nhalo;
 
    roctxRangePush("BufAlloc");
-   double xbuf_left_send[bufcount];
-   double xbuf_rght_send[bufcount];
-   double xbuf_rght_recv[bufcount];
-   double xbuf_left_recv[bufcount];
+   std::vector<double> xbuf_left_send(bufcount);
+   std::vector<double> xbuf_rght_send(bufcount);
+   std::vector<double> xbuf_rght_recv(bufcount);
+   std::vector<double> xbuf_left_recv(bufcount);
    roctxRangePop(); //BufAlloc
 
    roctxRangePush("LoadLeftRight");
@@ -327,14 +367,14 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
 
    if (nleft != MPI_PROC_NULL){
 
-      ghost_left_send <<< gridGhst, blockGhst >>> (xbuf_left_send, x, jlow, jhgh, nhalo, bufcount);
+      ghost_left_send <<< gridGhst, blockGhst >>> (xbuf_left_send.data(), x, jlow, jhgh, nhalo, bufcount);
       hipDeviceSynchronize();
 
    }
 
    if (nrght != MPI_PROC_NULL){
 
-      ghost_rght_send <<< gridGhst, blockGhst >>> (xbuf_rght_send, x, jlow, jhgh, isize, nhalo, bufcount);
+      ghost_rght_send <<< gridGhst, blockGhst >>> (xbuf_rght_send.data(), x, jlow, jhgh, isize, nhalo, bufcount);
       hipDeviceSynchronize();
 
    }
@@ -350,20 +390,20 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
              MPI_COMM_WORLD, &request[2]);
    MPI_Isend(&xbuf_rght_send, bufcount, MPI_DOUBLE, nrght, 1002,
              MPI_COMM_WORLD, &request[3]);
-   MPI_Waitall(4, request, status);
+   MPI_Waitall(4, request.data(), status.data());
    roctxRangePop(); //MPILeftRightExchange
 
    roctxRangePush("UnpackLeftRight");
    if (nrght != MPI_PROC_NULL){
 
-      ghost_rght_recv <<< gridGhst, blockGhst >>> (xbuf_rght_recv, x, jlow, jhgh, isize, nhalo, bufcount);
+      ghost_rght_recv <<< gridGhst, blockGhst >>> (xbuf_rght_recv.data(), x, jlow, jhgh, isize, nhalo, bufcount);
       hipDeviceSynchronize();
 
    }
 
    if (nleft != MPI_PROC_NULL){
 
-      ghost_left_recv <<< gridGhst, blockGhst >>>  (xbuf_left_recv, x, jlow, jhgh, nhalo, bufcount);
+      ghost_left_recv <<< gridGhst, blockGhst >>>  (xbuf_left_recv.data(), x, jlow, jhgh, nhalo, bufcount);
       hipDeviceSynchronize();
 
    }
@@ -377,7 +417,7 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
 
       MPI_Irecv(&x[     -nhalo][-nhalo], bufcount, MPI_DOUBLE, nbot, 1002, MPI_COMM_WORLD, &request[2]);
       MPI_Isend(&x[jsize-nhalo][-nhalo], bufcount, MPI_DOUBLE, ntop, 1002, MPI_COMM_WORLD, &request[3]);
-      MPI_Waitall(4, request, status);
+      MPI_Waitall(4, request.data(), status.data());
    } else {
       for (int j = 0; j<nhalo; j++){
          MPI_Irecv(&x[jsize+j][0],   isize, MPI_DOUBLE, ntop, 1001+j*2, MPI_COMM_WORLD, &request[0+j*4]);
@@ -386,7 +426,7 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
          MPI_Irecv(&x[     -nhalo+j][0], isize, MPI_DOUBLE, nbot, 1002+j*2, MPI_COMM_WORLD, &request[2+j*4]);
          MPI_Isend(&x[jsize-nhalo+j][0], isize, MPI_DOUBLE, ntop, 1002+j*2, MPI_COMM_WORLD, &request[3+j*4]);
          }
-      MPI_Waitall(4*nhalo, request, status);
+      MPI_Waitall(4*nhalo, request.data(), status.data());
    }
    roctxRangePop(); //MPIUpDownExchange
 
@@ -506,7 +546,7 @@ void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int 
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
    int isize_total=0;
-   int isizes[nprocx];
+   std::vector<int> isizes(nprocx);
    for (int ii = 0; ii < nprocx; ii++){
       int xcoord = ii%nprocx;
       int ycoord = ii/nprocx;
@@ -522,7 +562,7 @@ void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int 
       printf("     ");
       for (int ii = 0; ii < nprocx; ii++){
          for (int i = -nhalo; i < isizes[ii]+nhalo; i++){
-            printf("%6d   ",i);
+            printf("%8d   ",i);
          }
          printf("   ");
       }
@@ -562,7 +602,7 @@ void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int 
             printf("%3d:",j);
             for (int ii = 0; ii < nprocx; ii++){
                for (int i = 0; i< isizes[ii]+2*nhalo; i++){
-                  printf("%8.1lf ",xrow[i+ii*(isizes[ii]+2*nhalo)]);
+                  printf("%12.6lf ",xrow[i+ii*(isizes[ii]+2*nhalo)]);
                }
                printf("   ");
             }
@@ -575,3 +615,124 @@ void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int 
    }
    free(xrow);
 }
+
+#ifdef USE_PNETCDF
+
+void create_netcdf_file(const char *fname, int jmax, int imax, MPI_Comm comm, int *ncid, int *varid, int *varid_xcoord, int *varid_ycoord)
+{
+    int dimid_t, dimid_y, dimid_x;
+    int dimids[3];
+
+    ncmpi_create(comm, fname, NC_CLOBBER | NC_64BIT_DATA, MPI_INFO_NULL, ncid);
+
+    ncmpi_def_dim(*ncid, "time", NC_UNLIMITED, &dimid_t);
+    ncmpi_def_dim(*ncid, "y", jmax, &dimid_y);
+    ncmpi_def_dim(*ncid, "x", imax, &dimid_x);
+
+    dimids[0] = dimid_t;
+    dimids[1] = dimid_y;
+    dimids[2] = dimid_x;
+
+    ncmpi_def_var(*ncid, "u", NC_DOUBLE, 3, dimids, varid);
+    ncmpi_def_var(*ncid, "xcoord", NC_DOUBLE, 1, &dimid_x, varid_xcoord);
+    ncmpi_def_var(*ncid, "ycoord", NC_DOUBLE, 1, &dimid_y, varid_ycoord);
+
+    ncmpi_put_att_text(*ncid, *varid, "u", 25, "solution field");
+    ncmpi_put_att_text(*ncid, *varid_xcoord, "x", 11, "x coordinate");
+    ncmpi_put_att_text(*ncid, *varid_ycoord, "y", 11, "y coordinate");
+
+    ncmpi_enddef(*ncid);
+}
+
+
+void write_netcdf_soln(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int tstep, int ncid, int varid)
+{
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int xcoord = rank % nprocx;
+    int ycoord = rank / nprocx;
+
+    int ibegin = imax *  xcoord      / nprocx;
+    int iend   = imax * (xcoord + 1) / nprocx;
+    int isize  = iend - ibegin;
+
+    int jbegin = jmax *  ycoord      / nprocy;
+    int jend   = jmax * (ycoord + 1) / nprocy;
+    int jsize  = jend - jbegin;
+
+    MPI_Offset start[3], count[3];
+
+    start[0] = tstep;
+    start[1] = jmax - jend;
+    start[2] = ibegin;
+
+    count[0] = 1;
+    count[1] = jsize;
+    count[2] = isize;
+
+    double *buf = (double *)malloc(jsize * isize * sizeof(double));
+
+    for (int j = 0; j < jsize; j++) {
+        for (int i = 0; i < isize; i++) {
+            buf[(jsize-1-j)*isize + i] = x[j][i];  // no halo cells included
+        }
+    }
+
+    ncmpi_put_vara_double_all(ncid, varid, start, count, buf);
+
+    free(buf);
+}
+
+void write_netcdf_coords(int imax, int jmax, int nprocx, int nprocy, double Lx, double Ly, int ncid, int varid_xcoord, int varid_ycoord)
+{
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int xcoord = rank % nprocx;
+    int ycoord = rank / nprocx;
+
+    int ibegin = imax *  xcoord      / nprocx;
+    int iend   = imax * (xcoord + 1) / nprocx;
+    int isize  = iend - ibegin;
+
+    int jbegin = jmax *  ycoord      / nprocy;
+    int jend   = jmax * (ycoord + 1) / nprocy;
+    int jsize  = jend - jbegin;
+
+    // x coordinates
+    double *xbuf = (double *)malloc(isize * sizeof(double));
+    for (int i = 0; i < isize; i++) {
+        int iglobal = ibegin + i;
+        xbuf[i] = (double)iglobal * Lx / imax;  // map to physical domain
+    }
+
+    MPI_Offset xstart = ibegin;
+    MPI_Offset xcount = isize;
+
+    ncmpi_put_vara_double_all(ncid, varid_xcoord, &xstart, &xcount, xbuf);
+
+    free(xbuf);
+
+    // y coordinates
+    double *ybuf = (double *)malloc(jsize * sizeof(double));
+    for (int j = 0; j < jsize; j++) {
+        int jglobal = jbegin + j;
+        ybuf[j] = (double)jglobal * Ly / jmax;  // map to physical domain
+    }
+
+    MPI_Offset ystart = jbegin;
+    MPI_Offset ycount = jsize;
+
+    ncmpi_put_vara_double_all(ncid, varid_ycoord, &ystart, &ycount, ybuf);
+
+    free(ybuf);
+}
+
+
+void close_netcdf(int ncid)
+{
+    ncmpi_close(ncid);
+}
+
+#endif

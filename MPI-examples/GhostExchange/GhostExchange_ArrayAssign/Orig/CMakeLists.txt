@@ -4,8 +4,8 @@ project(GhostExchange C CXX)
 set (CMAKE_C_STANDARD 99)
 set (CMAKE_CXX_STANDARD 98)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2")
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 

@@ -76,6 +76,11 @@ int main(int argc, char *argv[])
    double Lx = 1.0;
    double Ly = 1.0;
 
+   // soln init params
+   double sigma = 5.0;
+   double x_center = imax / 2.0;
+   double y_center = jmax / 2.0;
+
    // center of the Gaussian for initialization
    double x0 = Lx / 2.0;
    double y0 = Ly / 2.0;
@@ -102,11 +107,8 @@ int main(int argc, char *argv[])
    for (int j = 0; j < jsize; j++) {
       for (int i = 0; i < isize; i++) {
 
-        double sigma = 5.0;
         double x_phys = i + ibegin;
         double y_phys = j + jbegin;
-        double x_center = imax / 2.0;
-        double y_center = jmax / 2.0;
         x[j][i] = exp(-0.5 * ( ((x_phys - x_center)*(x_phys - x_center)/(sigma*sigma)
                                + (y_phys - y_center)*(y_phys - y_center)/(sigma*sigma)) ));
 

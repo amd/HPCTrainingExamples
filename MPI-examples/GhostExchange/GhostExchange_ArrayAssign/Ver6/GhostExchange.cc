@@ -120,6 +120,11 @@ int main(int argc, char *argv[])
    double Lx = 1.0;
    double Ly = 1.0;
 
+   // soln init params
+   double sigma = 5.0;
+   double x_center = imax / 2.0;
+   double y_center = jmax / 2.0;
+
    // center of the Gaussian for initialization
    double x0 = Lx / 2.0;
    double y0 = Ly / 2.0;
@@ -139,8 +144,8 @@ int main(int argc, char *argv[])
    xbuf_rght_send = (double *)malloc(bufcount*sizeof(double));
    xbuf_rght_recv = (double *)malloc(bufcount*sizeof(double));
    xbuf_left_recv = (double *)malloc(bufcount*sizeof(double));
-   #pragma omp target enter data map(alloc: xbuf_left_send[0:bufcount], xbuf_rght_send[0:bufcount]) 
-   #pragma omp target enter data map(alloc: xbuf_rght_recv[0:bufcount], xbuf_left_recv[0:bufcount])
+   #pragma omp target enter data map(alloc: xbuf_left_send[0:bufcount], xbuf_rght_send[0:bufcount])
+   #pragma omp target enter data map(alloc: xbuf_rght_recv[0:bufcount], xbuf_left_recv[0:bufcount])   
    roctxRangePop(); //BufAlloc
 
    /* The halo update both updates the ghost cells and the boundary halo cells. To be precise with terminology,
@@ -169,11 +174,8 @@ int main(int argc, char *argv[])
    for (int j = 0; j < jsize; j++) {
       for (int i = 0; i < isize; i++) {
 
-        double sigma = 5.0;
         double x_phys = i + ibegin;
         double y_phys = j + jbegin;
-        double x_center = imax / 2.0;
-        double y_center = jmax / 2.0;
         xv(j,i) = exp(-0.5 * ( ((x_phys - x_center)*(x_phys - x_center)/(sigma*sigma)
                                + (y_phys - y_center)*(y_phys - y_center)/(sigma*sigma)) ));
 
@@ -251,10 +253,6 @@ int main(int argc, char *argv[])
 
    #pragma omp target exit data map(release: xbuf_left_send, xbuf_rght_send) 
    #pragma omp target exit data map(release: xbuf_rght_recv, xbuf_left_recv)
-   free(xbuf_left_send);
-   free(xbuf_rght_send);
-   free(xbuf_rght_recv);
-   free(xbuf_left_recv);
 
    MPI_Finalize();
    exit(0);
@@ -352,7 +350,7 @@ void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize, i
    roctxRangePop(); //LoadLeftRight
 
    roctxRangePush("MPILeftRightExchange");
-   #pragma omp target data use_device_addr(xbuf_rght_recv,xbuf_left_send,xbuf_left_recv,xbuf_rght_send)
+   #pragma omp target data use_device_ptr(xbuf_rght_recv,xbuf_left_send,xbuf_left_recv,xbuf_rght_send)
    {
    MPI_Irecv(xbuf_rght_recv, bufcount, MPI_DOUBLE, nrght, 1001,
              MPI_COMM_WORLD, &request[0]);
@@ -550,7 +548,7 @@ void Cartesian_print(double *x, int jmax, int imax, int nhalo, int nprocy, int n
       printf("     ");
       for (int ii = 0; ii < nprocx; ii++){
          for (int i = -nhalo; i < isizes[ii]+nhalo; i++){
-            printf("%8d   ",i);
+            printf("%9d   ",i);
          }
          printf("   ");
       }

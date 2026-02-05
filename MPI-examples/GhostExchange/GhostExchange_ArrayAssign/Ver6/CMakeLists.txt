@@ -4,8 +4,8 @@ project(GhostExchange C CXX)
 set (CMAKE_C_STANDARD 99)
 set (CMAKE_CXX_STANDARD 11)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2")
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
@@ -68,12 +68,14 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
    # using GCC
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -foffload=-march=native -fstrict-aliasing -fopt-info-optimized-omp")
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp -foffload=-march=native -fstrict-aliasing -fopt-info-optimized-omp")
-elseif (CMAKE_CXX_COMPILER_ID MATCHES "Cray")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "CrayClang")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
 endif()
 
 add_executable(GhostExchange GhostExchange.cc timer.c timer.h)
 
-set_target_properties(GhostExchange PROPERTIES INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH};$ENV{ROCM_PATH}/include/roctracer")
+set_target_properties(GhostExchange PROPERTIES INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH};$ENV{ROCM_PATH}/include/rcotracer")
 set_target_properties(GhostExchange PROPERTIES COMPILE_FLAGS "${MPI_CXX_COMPILE_FLAGS}")
 target_link_libraries(GhostExchange PRIVATE "${MPI_CXX_LIBRARIES};-L$ENV{ROCM_PATH}/lib -lroctx64")
 
