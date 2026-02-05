@@ -21,19 +21,15 @@ __global__ void init_core (double **x, int nhalo, int jsize, int isize, double v
     }
 }
 
-__global__ void init_core2 (double **x, int jmax, int jspan, int jbegin, int jend, int imax, int ispan, int ibegin, int iend, double sigma)
+__global__ void init_core2 (double **x, int jsize, int isize, int jbegin, int ibegin, double sigma, double x_center, double y_center)
 {
-    int tidx = threadIdx.x + blockIdx.x * blockDim.x + imax/2 - ispan;
-    int tidy = threadIdx.y + blockIdx.y * blockDim.y + jmax/2 - jspan;
-    if (tidy < jmax/2 + jspan && tidx < imax/2 + ispan) {
-        if (tidy >= jbegin && tidy < jend && tidx >= ibegin && tidx < iend) {
+    int tidx = threadIdx.x + blockIdx.x * blockDim.x;
+    int tidy = threadIdx.y + blockIdx.y * blockDim.y;
+    if (tidy < jsize && tidx < isize) {
            double x_phys = tidx + ibegin;
            double y_phys = tidy + jbegin;
-           double x_center = imax / 2.0;
-           double y_center = jmax / 2.0;
-           x[tidy-jbegin][tidx-ibegin] = exp(-0.5 * ( ((x_phys - x_center)*(x_phys - x_center)/(sigma*sigma)
-                               + (y_phys - y_center)*(y_phys - y_center)/(sigma*sigma)) )); 
-        }
+           x[tidy][tidx] = exp(-0.5 * ( ((x_phys - x_center)*(x_phys - x_center)/(sigma*sigma)
+                           + (y_phys - y_center)*(y_phys - y_center)/(sigma*sigma)) )); 
     }
 }
 
@@ -242,6 +238,8 @@ int main(int argc, char *argv[])
 
    // soln init params
    double sigma = 5.0;
+   double x_center = imax / 2.0;
+   double y_center = jmax / 2.0;
 
    // center of the Gaussian for initialization
    double x0 = Lx / 2.0;
@@ -267,19 +265,13 @@ int main(int argc, char *argv[])
 
    }
 
-   dim3 grid((isize+63)/64, (jsize+3)/4, 1);
-   dim3 block(64, 4, 1);
-   double val = static_cast<double>(rank) + 5.0;
-   init_core <<< grid, block >>> (x, 0, jsize, isize, val);
-   hipDeviceSynchronize();
-
    int ispan=5, jspan=5;
    if (ispan > imax/2) ispan = imax/2;
    if (jspan > jmax/2) jspan = jmax/2;
    
    dim3 grid2((2*ispan+63)/64, (2*jspan+3)/4, 1);
    dim3 block2(64, 4, 1);
-   init_core2 <<< grid2, block2 >>> (x, jmax, jspan, jbegin, jend, imax, ispan, ibegin, iend, sigma);
+   init_core2 <<< grid2, block2 >>> (x, jsize, isize, jbegin, ibegin, sigma, x_center, y_center);
    hipDeviceSynchronize();
 
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
@@ -299,6 +291,8 @@ int main(int argc, char *argv[])
      write_netcdf_coords(imax, jmax, nprocx, nprocy, Lx, Ly, ncid, varid_xcoord, varid_ycoord);
 #endif
 
+   dim3 grid((isize+63)/64, (jsize+3)/4, 1);
+   dim3 block(64, 4, 1);
    for (int iter = 0; iter < maxIter; iter++){
       cpu_timer_start(&tstart_stencil);
 
@@ -401,24 +395,24 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
    int jnum = jhgh-jlow;
    int bufcount = jnum*nhalo;
 
-   std::vector<double> xbuf_left_send(bufcount);
-   std::vector<double> xbuf_rght_send(bufcount);
-   std::vector<double> xbuf_rght_recv(bufcount);
-   std::vector<double> xbuf_left_recv(bufcount);
+   double xbuf_left_send[bufcount];
+   double xbuf_rght_send[bufcount];
+   double xbuf_rght_recv[bufcount];
+   double xbuf_left_recv[bufcount];
 
    dim3 gridGhst((nhalo+3)/4, (jnum+63)/64, 1);
    dim3 blockGhst(4, 64, 1);
 
    if (nleft != MPI_PROC_NULL){
 
-      ghost_left_send <<< gridGhst, blockGhst >>> (xbuf_left_send.data(), x, jlow, jhgh, nhalo, bufcount);
+      ghost_left_send <<< gridGhst, blockGhst >>> (xbuf_left_send, x, jlow, jhgh, nhalo, bufcount);
       hipDeviceSynchronize();
 
    }
 
    if (nrght != MPI_PROC_NULL){
 
-      ghost_rght_send <<< gridGhst, blockGhst >>> (xbuf_rght_send.data(), x, jlow, jhgh, isize, nhalo, bufcount);
+      ghost_rght_send <<< gridGhst, blockGhst >>> (xbuf_rght_send, x, jlow, jhgh, isize, nhalo, bufcount);
       hipDeviceSynchronize();
 
    }
@@ -436,14 +430,14 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
 
    if (nrght != MPI_PROC_NULL){
 
-      ghost_rght_recv <<< gridGhst, blockGhst >>> (xbuf_rght_recv.data(), x, jlow, jhgh, isize, nhalo, bufcount);
+      ghost_rght_recv <<< gridGhst, blockGhst >>> (xbuf_rght_recv, x, jlow, jhgh, isize, nhalo, bufcount);
       hipDeviceSynchronize();
 
    }
 
    if (nleft != MPI_PROC_NULL){
 
-      ghost_left_recv <<< gridGhst, blockGhst >>>  (xbuf_left_recv.data(), x, jlow, jhgh, nhalo, bufcount);
+      ghost_left_recv <<< gridGhst, blockGhst >>>  (xbuf_left_recv, x, jlow, jhgh, nhalo, bufcount);
       hipDeviceSynchronize();
 
    }
