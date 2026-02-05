@@ -147,7 +147,7 @@ Setting the above environment variable to `yes` produces a breakdown in communic
 <img src="figs/comm_vs_sync.png" width="800px" class="img-center">
 </div>
 <p style="text-align:center">
-Figure 3: Snapshot of mpi_profile.<pid>.0 file collected with `COLLECTIVE_BARRIER=yes`.
+Figure 3: Snapshot of mpi_profile.<pid>.0 file collected with COLLECTIVE_BARRIER=yes.
 </p>
 
 To visualize the traces collected in `<pid>.trc`, you would need the `traceview` tool that is also distributed as part of the [`mpitrace` repo](https://github.com/sfantao/mpitrace). It is based on OpenGL. The README file in the traceview directory provides installation instructions that you may follow. Once installed, you can run the tool as shown below:
