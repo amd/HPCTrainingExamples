@@ -83,7 +83,7 @@ endif()
 add_executable(GhostExchange GhostExchange.hip timer.c timer.h malloc2D.c malloc2D.h)
 
 set_source_files_properties(GhostExchange.hip PROPERTIES LANGUAGE ${GPU_RUNTIME})
-set_target_properties(GhostExchange PROPERTIES INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH};/opt/cray/pe/mpich/8.1.33/ofi/cray/20.0/include/")
+set_target_properties(GhostExchange PROPERTIES INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH}")
 set_target_properties(GhostExchange PROPERTIES COMPILE_FLAGS "${MPI_CXX_COMPILE_FLAGS}")
 target_link_libraries(GhostExchange PRIVATE "${MPI_CXX_LIBRARIES}")
 
