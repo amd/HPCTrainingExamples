@@ -135,6 +135,21 @@ The summary file for each process shows MPI calls, their durations, the message 
 Figure 2: Snapshot of mpi_profile.<pid>.0 file
 </p>
 
+Using an environment variable, `mpitrace` can be configured to add barrier calls before all or select MPI collective routines:
+
+```
+export COLLECTIVE_BARRIER=[yes|MPI_Bcast,MPI_Allreduce]
+```
+
+Setting the above environment variable to `yes` produces a breakdown in communication timings with and without synchronization as shown in Figure 3 below.
+
+<div style="text-align: center;">
+<img src="figs/comm_vs_sync.png" width="800px" class="img-center">
+</div>
+<p style="text-align:center">
+Figure 3: Snapshot of mpi_profile.<pid>.0 file collected with `COLLECTIVE_BARRIER=yes`.
+</p>
+
 To visualize the traces collected in `<pid>.trc`, you would need the `traceview` tool that is also distributed as part of the [`mpitrace` repo](https://github.com/sfantao/mpitrace). It is based on OpenGL. The README file in the traceview directory provides installation instructions that you may follow. Once installed, you can run the tool as shown below:
 
 ```
