@@ -1,6 +1,8 @@
 # Quick Start Guide: Using mpitrace with rocprofv3
 
-When we profile multi-process applications, we often want to characterize whether our bottleneck is GPU compute kernels or host activity such as MPI communication. We recommend the ROCm Systems Profiler for a holistic view of the application trace showing CPU, GPU, and system activity such as network communication. Sometimes, we may just want insight into the timelines for MPI calls along with GPU kernel execution. `mpitrace` is a low overhead tool that can be used with `rocprofv3` to trace just GPU activity and MPI calls.
+When we profile multi-process applications, we often want to characterize whether our bottleneck is GPU compute kernels or host activity such as MPI communication. We recommend the [ROCm Systems Profiler](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/index.html) for a holistic view of the application trace showing CPU, GPU, and system activity such as network communication. To get a quick start with `rocprof-sys`, refer to this [Jacobi-based tutorial](https://github.com/amd/HPCTrainingExamples/tree/main/rocprofiler-systems/Jacobi). 
+
+Sometimes, we may just want insight into the timelines for MPI calls along with GPU kernel execution. `mpitrace` is a low overhead tool that can be used with `rocprofv3` for just this purpose.
 
 This guide demonstrates how to use [mpitrace](https://github.com/sfantao/mpitrace) with `rocprofv3` to profile MPI communication alongside GPU kernel execution. `mpitrace` allows us to look at MPI activity in all ranks and quickly spot load imbalance among ranks. This tool adds ROCTx range markers around the entry and exit of each MPI function for graphical display using Perfetto.
 
