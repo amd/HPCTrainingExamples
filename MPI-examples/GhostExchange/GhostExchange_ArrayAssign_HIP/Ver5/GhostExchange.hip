@@ -9,7 +9,7 @@
 #include <cmath>
 #include <hip/hip_runtime.h>
 #include <roctx.h>
-
+#include <vector>
 #include "timer.h"
 
 #define SWAP_PTR(xnew,xold,xtmp) (xtmp=xnew, xnew=xold, xold=xtmp)
@@ -26,19 +26,15 @@ __global__ void init_core (double *x, int nhalo, int jsize, int isize, double va
     }
 }
 
-__global__ void init_core2 (double *x, int jmax, int jspan, int jbegin, int jend, int imax, int ispan, int ibegin, int iend, double sigma, int jstride, int nhalo)
+__global__ void init_core2 (double *x, int nhalo, int jsize, int isize, int jbegin, int ibegin, double sigma, double x_center, double y_center, int jstride)
 {
-    int tidx = threadIdx.x + blockIdx.x * blockDim.x + imax/2 - ispan;
-    int tidy = threadIdx.y + blockIdx.y * blockDim.y + jmax/2 - jspan;
-    if (tidy < jmax/2 + jspan && tidx < imax/2 + ispan) {
-        if (tidy >= jbegin && tidy < jend && tidx >= ibegin && tidx < iend) {
+    int tidx = threadIdx.x + blockIdx.x * blockDim.x;
+    int tidy = threadIdx.y + blockIdx.y * blockDim.y;
+    if (tidy < jsize && tidx < isize) {
            double x_phys = tidx + ibegin;
            double y_phys = tidy + jbegin;
-           double x_center = imax / 2.0;
-           double y_center = jmax / 2.0;
-           xv(tidy-jbegin,tidx-ibegin) = exp(-0.5 * ( ((x_phys - x_center)*(x_phys - x_center)/(sigma*sigma)
-                               + (y_phys - y_center)*(y_phys - y_center)/(sigma*sigma)) ));
-        }
+           xv(tidy,tidx) = exp(-0.5 * ( ((x_phys - x_center)*(x_phys - x_center)/(sigma*sigma)
+                           + (y_phys - y_center)*(y_phys - y_center)/(sigma*sigma)) ));
     }
 }
 
@@ -142,6 +138,8 @@ void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, in
 
 double boundarycondition_time=0.0, ghostcell_time=0.0;
 
+double *xbuf_left_send, *xbuf_rght_send, *xbuf_rght_recv, *xbuf_left_recv;
+
 int main(int argc, char *argv[])
 {
    MPI_Init(&argc, &argv);
@@ -204,10 +202,10 @@ int main(int argc, char *argv[])
    int bufcount = jnum*nhalo;
 
    roctxRangePush("BufAlloc");
-   std::vector<double> xbuf_left_send(bufcount);
-   std::vector<double> xbuf_rght_send(bufcount);
-   std::vector<double> xbuf_rght_recv(bufcount);
-   std::vector<double> xbuf_left_recv(bufcount);
+   xbuf_left_send = (double *)malloc(bufcount*sizeof(double));
+   xbuf_rght_send = (double *)malloc(bufcount*sizeof(double));
+   xbuf_rght_recv = (double *)malloc(bufcount*sizeof(double));
+   xbuf_left_recv = (double *)malloc(bufcount*sizeof(double));
    roctxRangePop(); //BufAlloc
 
    /* The halo update both updates the ghost cells and the boundary halo cells. To be precise with terminology,
@@ -231,16 +229,7 @@ int main(int argc, char *argv[])
 
    dim3 grid((isize+63)/64, (jsize+3)/4, 1);
    dim3 block(64, 4, 1);
-   double val = static_cast<double>(rank) + 5.0;
-   init_core <<< grid, block >>> (x, nhalo, jsize, isize, val, jstride);
-   hipDeviceSynchronize();
-
-   int ispan=5, jspan=5;
-   if (ispan > imax/2) ispan = imax/2;
-   if (jspan > jmax/2) jspan = jmax/2;
-   dim3 grid2((2*ispan+63)/64, (2*jspan+3)/4, 1);
-   dim3 block2(64, 4, 1);
-   init_core2 <<< grid2, block2 >>> (x, jmax, jspan, jbegin, jend, imax, ispan, ibegin, iend, sigma, jstride, nhalo);
+   init_core2 <<< grid, block >>> (x, nhalo, jsize, isize, jbegin, ibegin, sigma, x_center, y_center, jstride);
    hipDeviceSynchronize();
 
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
@@ -306,6 +295,11 @@ int main(int argc, char *argv[])
 
    free(x);
    free(xnew);
+
+   free(xbuf_left_send);
+   free(xbuf_rght_send);
+   free(xbuf_rght_recv);
+   free(xbuf_left_recv);
 
    MPI_Finalize();
    exit(0);
@@ -563,7 +557,7 @@ void Cartesian_print(double *x, int jmax, int imax, int nhalo, int nprocy, int n
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
    int isize_total=0;
-   int isizes[nprocx];
+   std::vector<int> isizes(nprocx);
    for (int ii = 0; ii < nprocx; ii++){
       int xcoord = ii%nprocx;
       int ycoord = ii/nprocx;

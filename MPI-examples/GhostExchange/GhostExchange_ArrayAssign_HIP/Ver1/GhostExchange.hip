@@ -29,7 +29,7 @@ __global__ void init_core2 (double **x, int jsize, int isize, int jbegin, int ib
            double x_phys = tidx + ibegin;
            double y_phys = tidy + jbegin;
            x[tidy][tidx] = exp(-0.5 * ( ((x_phys - x_center)*(x_phys - x_center)/(sigma*sigma)
-                           + (y_phys - y_center)*(y_phys - y_center)/(sigma*sigma)) )); 
+                           + (y_phys - y_center)*(y_phys - y_center)/(sigma*sigma)) ));
     }
 }
 
@@ -265,13 +265,9 @@ int main(int argc, char *argv[])
 
    }
 
-   int ispan=5, jspan=5;
-   if (ispan > imax/2) ispan = imax/2;
-   if (jspan > jmax/2) jspan = jmax/2;
-   
-   dim3 grid2((2*ispan+63)/64, (2*jspan+3)/4, 1);
-   dim3 block2(64, 4, 1);
-   init_core2 <<< grid2, block2 >>> (x, jsize, isize, jbegin, ibegin, sigma, x_center, y_center);
+   dim3 grid((isize+63)/64, (jsize+3)/4, 1);
+   dim3 block(64, 4, 1);
+   init_core2 <<< grid, block >>> (x, jsize, isize, jbegin, ibegin, sigma, x_center, y_center);
    hipDeviceSynchronize();
 
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
@@ -291,8 +287,6 @@ int main(int argc, char *argv[])
      write_netcdf_coords(imax, jmax, nprocx, nprocy, Lx, Ly, ncid, varid_xcoord, varid_ycoord);
 #endif
 
-   dim3 grid((isize+63)/64, (jsize+3)/4, 1);
-   dim3 block(64, 4, 1);
    for (int iter = 0; iter < maxIter; iter++){
       cpu_timer_start(&tstart_stencil);
 
