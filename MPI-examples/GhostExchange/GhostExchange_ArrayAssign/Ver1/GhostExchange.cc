@@ -5,8 +5,8 @@
 #include <mpi.h>
 #ifdef USE_PNETCDF
 #include <pnetcdf.h>
-#include <cmath>
 #endif
+#include <cmath>
 #include <omp.h>
 
 #include "malloc2D.h"
