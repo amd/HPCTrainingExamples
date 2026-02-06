@@ -8,23 +8,76 @@ import sys
 boundarycondition_time = 0.0
 ghostcell_time=0.0
 
-def parse_input_args():
-
-    parser = argparse.ArgumentParser(description='Ghost Exchange Example in Python: CPU only version')
-    parser.add_argument('--jmax', type=int, default=2000, help='Cells in j direction')
-    parser.add_argument('--imax', type=int, default=2000, help='Cells in i direction')
-    parser.add_argument('--nprocy', type=int, default=0, help='Number of processes in y direction')
-    parser.add_argument('--nprocx', type=int, default=0, help='Number of processes in x direction')
-    parser.add_argument('--nhalo', type=int, default=2, help='Number of halo layers')
-    parser.add_argument('--corners', type=int, default=0, help='Include corner cells')
-    parser.add_argument('--maxiter', type=int, default=1000, help='Maximum number of iterations')
-    parser.add_argument('--timing', action='store_true', help='Enable timing')
-    parser.add_argument('--print', action='store_true', help='Enable printing (for debugging)')
+def parse_input_args(argv, jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, do_timing, do_print):
     
-    args = parser.parse_args()
-    return (args.jmax, args.imax, args.nprocy, args.nprocx, 
-            args.nhalo, args.corners, args.maxiter, args.timing, args.print)
-
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    
+    i = 1
+    while i < len(argv):
+        if argv[i] == '-c':
+            corners = 1
+            i += 1
+        elif argv[i] == '-t':
+            do_timing = 1
+            i += 1
+        elif argv[i] == '-p':
+            do_print = 1
+            i += 1
+        elif argv[i] == '-h':
+            if i + 1 < len(argv):
+                nhalo = int(argv[i + 1])
+                i += 2
+            else:
+                if rank == 0:
+                    print(f"Option -h requires an argument.", file=sys.stderr)
+                sys.exit(1)
+        elif argv[i] == '-I':
+            if i + 1 < len(argv):
+                maxIter = int(argv[i + 1])
+                i += 2
+            else:
+                if rank == 0:
+                    print(f"Option -I requires an argument.", file=sys.stderr)
+                sys.exit(1)
+        elif argv[i] == '-i':
+            if i + 1 < len(argv):
+                imax = int(argv[i + 1])
+                i += 2
+            else:
+                if rank == 0:
+                    print(f"Option -i requires an argument.", file=sys.stderr)
+                sys.exit(1)
+        elif argv[i] == '-j':
+            if i + 1 < len(argv):
+                jmax = int(argv[i + 1])
+                i += 2
+            else:
+                if rank == 0:
+                    print(f"Option -j requires an argument.", file=sys.stderr)
+                sys.exit(1)
+        elif argv[i] == '-x':
+            if i + 1 < len(argv):
+                nprocx = int(argv[i + 1])
+                i += 2
+            else:
+                if rank == 0:
+                    print(f"Option -x requires an argument.", file=sys.stderr)
+                sys.exit(1)
+        elif argv[i] == '-y':
+            if i + 1 < len(argv):
+                nprocy = int(argv[i + 1])
+                i += 2
+            else:
+                if rank == 0:
+                    print(f"Option -y requires an argument.", file=sys.stderr)
+                sys.exit(1)
+        else:
+            if rank == 0:
+                print(f"Unknown option {argv[i]}", file=sys.stderr)
+            sys.exit(1)
+    
+    return jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, do_timing, do_print
 
 
 def malloc2D(jmax, imax, joffset, ioffset):
@@ -251,8 +304,9 @@ def main():
     do_print = 0
     maxIter = 1000
     
-    jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, do_timing, do_print = parse_input_args()
-    
+    jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, do_timing, do_print = \
+        parse_input_args(sys.argv, jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, do_timing, do_print)
+
     stencil_time = 0.0
     tstart_total = time.time()
     
@@ -313,7 +367,7 @@ def main():
     if rank == 0:
          print("------> Advancing the Solution\n");
 
-    for iter < maxIter:
+    for iter in range(maxIter):
        tstart_stencil = time.time()
 
        xnew[0:jsize, 0:isize] = (x[0:jsize, 0:isize] +
