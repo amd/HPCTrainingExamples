@@ -1,8 +1,8 @@
 # Before running this script
 # make sure to run:
-# 1. mkdir python_deps
-# 2. pip3 install -r requirements.txt -t python_deps 
-# 3. export PYTHONPATH=path_to_python_deps:$PYTHONPATH
+# 1. python3 -m venv print_env 
+# 2. source print_env/bin/activate
+# 3. pip3 install -r requirements.txt 
 
 import netCDF4 as nc
 import numpy as np

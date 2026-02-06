@@ -6,6 +6,7 @@
 #ifdef USE_PNETCDF
 #include <pnetcdf.h>
 #endif
+#include <vector>
 #include <cmath>
 #include <hip/hip_runtime.h>
 #include <roctx.h>
@@ -409,8 +410,8 @@ void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize, i
    cpu_timer_start(&tstart_ghostcell);
 
    roctxRangePush("MPIRequest");
-   MPI_Request request[4*nhalo];
-   MPI_Status status[4*nhalo];
+   std::vector<MPI_Request> request(4*nhalo);
+   std::vector<MPI_Status> status(4*nhalo);
    roctxRangePop(); //MPIRequest
 
    int jlow=0, jhgh=jsize;
@@ -451,7 +452,7 @@ void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize, i
              MPI_COMM_WORLD, &request[2]);
    MPI_Isend(xbuf_rght_send, bufcount, MPI_DOUBLE, nrght, 1002,
              MPI_COMM_WORLD, &request[3]);
-   MPI_Waitall(4, request, status);
+   MPI_Waitall(4, request.data(), status.data());
    roctxRangePop(); //MPILeftRightExchange
                                                                                     
    roctxRangePush("UnpackLeftRight");
@@ -481,7 +482,7 @@ void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize, i
 
       MPI_Irecv(&xv(     -nhalo,-nhalo), bufcount, MPI_DOUBLE, nbot, 1002, MPI_COMM_WORLD, &request[2]);
       MPI_Isend(&xv(jsize-nhalo,-nhalo), bufcount, MPI_DOUBLE, ntop, 1002, MPI_COMM_WORLD, &request[3]);
-      MPI_Waitall(4, request, status);
+      MPI_Waitall(4, request.data(), status.data());
    } else {
       for (int j = 0; j<nhalo; j++){
          MPI_Irecv(&xv(jsize+j,0),   isize, MPI_DOUBLE, ntop, 1001+j*2, MPI_COMM_WORLD, &request[0+j*4]);
@@ -490,7 +491,7 @@ void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize, i
          MPI_Irecv(&xv(     -nhalo+j,0), isize, MPI_DOUBLE, nbot, 1002+j*2, MPI_COMM_WORLD, &request[2+j*4]);
          MPI_Isend(&xv(jsize-nhalo+j,0), isize, MPI_DOUBLE, ntop, 1002+j*2, MPI_COMM_WORLD, &request[3+j*4]);
          }
-      MPI_Waitall(4*nhalo, request, status);
+      MPI_Waitall(4*nhalo, request.data(), status.data());
    }
    roctxRangePop(); //MPIUpDownExchange
 
@@ -615,7 +616,7 @@ void Cartesian_print(double *x, int jmax, int imax, int nhalo, int nprocy, int n
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
    int isize_total=0;
-   int isizes[nprocx];
+   std::vector<int> isizes(nprocx);
    for (int ii = 0; ii < nprocx; ii++){
       int xcoord = ii%nprocx;
       int ycoord = ii/nprocx;
