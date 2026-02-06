@@ -278,8 +278,6 @@ int main(int argc, char *argv[])
       Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
    }
 
-   if (rank == 0) printf("------> Advancing the Solution\n");
-
 #ifdef USE_PNETCDF
    int ncid, varid, varid_xcoord, varid_ycoord;
      create_netcdf_file("solution.nc", jmax, imax, MPI_COMM_WORLD, &ncid, &varid, &varid_xcoord, &varid_ycoord);
@@ -287,6 +285,7 @@ int main(int argc, char *argv[])
      write_netcdf_coords(imax, jmax, nprocx, nprocy, Lx, Ly, ncid, varid_xcoord, varid_ycoord);
 #endif
 
+   if (rank == 0) printf("------> Advancing the Solution\n");
    for (int iter = 0; iter < maxIter; iter++){
       cpu_timer_start(&tstart_stencil);
 

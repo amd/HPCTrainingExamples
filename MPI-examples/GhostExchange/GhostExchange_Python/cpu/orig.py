@@ -1,0 +1,348 @@
+from mpi4py import MPI
+from netCDF4 import Dataset
+import numpy as np
+import time
+import argparse
+import sys
+
+boundarycondition_time = 0.0
+ghostcell_time=0.0
+
+def parse_input_args():
+
+    parser = argparse.ArgumentParser(description='Ghost Exchange Example in Python: CPU only version')
+    parser.add_argument('--jmax', type=int, default=2000, help='Cells in j direction')
+    parser.add_argument('--imax', type=int, default=2000, help='Cells in i direction')
+    parser.add_argument('--nprocy', type=int, default=0, help='Number of processes in y direction')
+    parser.add_argument('--nprocx', type=int, default=0, help='Number of processes in x direction')
+    parser.add_argument('--nhalo', type=int, default=2, help='Number of halo layers')
+    parser.add_argument('--corners', type=int, default=0, help='Include corner cells')
+    parser.add_argument('--maxiter', type=int, default=1000, help='Maximum number of iterations')
+    parser.add_argument('--timing', action='store_true', help='Enable timing')
+    parser.add_argument('--print', action='store_true', help='Enable printing (for debugging)')
+    
+    args = parser.parse_args()
+    return (args.jmax, args.imax, args.nprocy, args.nprocx, 
+            args.nhalo, args.corners, args.maxiter, args.timing, args.print)
+
+
+
+def malloc2D(jmax, imax, joffset, ioffset):
+
+    total_j = jmax + abs(joffset)
+    total_i = imax + abs(ioffset)
+    
+    full_array = np.zeros((total_j, total_i), dtype=np.float64)
+    
+    return full_array[joffset:, ioffset:]
+
+
+
+def boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop):
+    
+    global boundarycondition_time
+    
+    tstart_boundarycondition = time.time()
+    
+    if nleft == MPI.PROC_NULL:
+        x[0:jsize, -nhalo:0] = x[0:jsize, 0:1]
+    
+    if nrght == MPI.PROC_NULL:
+        x[0:jsize, isize:isize+nhalo] = x[0:jsize, isize-1:isize]
+    
+    if nbot == MPI.PROC_NULL:
+        x[-nhalo:0, -nhalo:isize+nhalo] = x[0:1, -nhalo:isize+nhalo]
+    
+    if ntop == MPI.PROC_NULL:
+        x[jsize:jsize+nhalo, -nhalo:isize+nhalo] = x[jsize-1:jsize, -nhalo:isize+nhalo]
+    
+    boundarycondition_time += time.time() - tstart_boundarycondition
+
+
+def ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing):
+    
+    global ghostcell_time
+    
+    tstart_ghostcell = time.time()
+    
+    jlow = 0
+    jhgh = jsize
+    if corners:
+        if nbot == MPI.PROC_NULL:
+            jlow = -nhalo
+        if ntop == MPI.PROC_NULL:
+            jhgh = jsize + nhalo
+    
+    jnum = jhgh - jlow
+    bufcount = jnum * nhalo
+    
+    xbuf_left_send = np.zeros(bufcount, dtype=np.float64)
+    xbuf_rght_send = np.zeros(bufcount, dtype=np.float64)
+    xbuf_rght_recv = np.zeros(bufcount, dtype=np.float64)
+    xbuf_left_recv = np.zeros(bufcount, dtype=np.float64)
+    
+    if nleft != MPI.PROC_NULL:
+        # extract left edge data and reshape for contiguous memory
+        xbuf_left_send = x[jlow:jhgh, 0:nhalo].flatten()
+    
+    if nrght != MPI.PROC_NULL:
+        # extract right edge data and reshape for contiguous memory
+        xbuf_rght_send = x[jlow:jhgh, isize-nhalo:isize].flatten()
+    
+    requests = []
+    
+    if nrght != MPI.PROC_NULL:
+        requests.append(MPI.COMM_WORLD.Irecv(xbuf_rght_recv, source=nrght, tag=1001))
+    if nleft != MPI.PROC_NULL:
+        requests.append(MPI.COMM_WORLD.Isend(xbuf_left_send, dest=nleft, tag=1001))
+    
+    if nleft != MPI.PROC_NULL:
+        requests.append(MPI.COMM_WORLD.Irecv(xbuf_left_recv, source=nleft, tag=1002))
+    if nrght != MPI.PROC_NULL:
+        requests.append(MPI.COMM_WORLD.Isend(xbuf_rght_send, dest=nrght, tag=1002))
+    
+    MPI.Request.Waitall(requests)
+    
+    if nrght != MPI.PROC_NULL:
+        # reshape and place in right ghost cells
+        x[jlow:jhgh, isize:isize+nhalo] = xbuf_rght_recv.reshape(jnum, nhalo)
+    
+    if nleft != MPI.PROC_NULL:
+        # reshape and place in left ghost cells
+        x[jlow:jhgh, -nhalo:0] = xbuf_left_recv.reshape(jnum, nhalo)
+    
+    requests = []
+    
+    if corners:
+        bufcount = nhalo * (isize + 2 * nhalo)
+        
+        if ntop != MPI.PROC_NULL:
+            # receive from top neighbor into top ghost cells
+            recv_buf = np.zeros((nhalo, isize + 2*nhalo), dtype=np.float64)
+            requests.append(MPI.COMM_WORLD.Irecv(recv_buf, source=ntop, tag=1001))
+        
+        if nbot != MPI.PROC_NULL:
+            send_buf = x[0:nhalo, -nhalo:isize+nhalo].copy()
+            requests.append(MPI.COMM_WORLD.Isend(send_buf, dest=nbot, tag=1001))
+        
+        if nbot != MPI.PROC_NULL:
+            # receive from bottom neighbor into bottom ghost cells
+            recv_buf = np.zeros((nhalo, isize + 2*nhalo), dtype=np.float64)
+            requests.append(MPI.COMM_WORLD.Irecv(recv_buf, source=nbot, tag=1002))
+        
+        if ntop != MPI.PROC_NULL:
+            send_buf = x[jsize-nhalo:jsize, -nhalo:isize+nhalo].copy()
+            requests.append(MPI.COMM_WORLD.Isend(send_buf, dest=ntop, tag=1002))
+        
+        MPI.Request.Waitall(requests)
+        
+        if ntop != MPI.PROC_NULL:
+            x[jsize:jsize+nhalo, -nhalo:isize+nhalo] = recv_buf
+        if nbot != MPI.PROC_NULL:
+            x[-nhalo:0, -nhalo:isize+nhalo] = recv_buf
+            
+    else:
+        for j in range(nhalo):
+            if ntop != MPI.PROC_NULL:
+                requests.append(MPI.COMM_WORLD.Irecv(x[jsize+j, 0:isize], source=ntop, tag=1001+j*2))
+            if nbot != MPI.PROC_NULL:
+                requests.append(MPI.COMM_WORLD.Isend(x[0+j, 0:isize].copy(), dest=nbot, tag=1001+j*2))
+            
+            if nbot != MPI.PROC_NULL:
+                requests.append(MPI.COMM_WORLD.Irecv(x[-nhalo+j, 0:isize], source=nbot, tag=1002+j*2))
+            if ntop != MPI.PROC_NULL:
+                requests.append(MPI.COMM_WORLD.Isend(x[jsize-nhalo+j, 0:isize].copy(), dest=ntop, tag=1002+j*2))
+        
+        MPI.Request.Waitall(requests)
+    
+    ghostcell_time += time.time() - tstart_ghostcell
+
+
+def create_netcdf_file(fname, jmax, imax, comm):
+    
+    ncid = Dataset(fname, 'w', format='NETCDF4', parallel=True, comm=comm)
+    
+    dimid_t = ncid.createDimension('time', None)  # None = unlimited dimension
+    dimid_y = ncid.createDimension('y', jmax)
+    dimid_x = ncid.createDimension('x', imax)
+    
+    varid = ncid.createVariable('u', 'f8', ('time', 'y', 'x'))  # f8 = double precision
+    varid_xcoord = ncid.createVariable('xcoord', 'f8', ('x',))
+    varid_ycoord = ncid.createVariable('ycoord', 'f8', ('y',))
+    
+    varid.description = "solution field"
+    varid_xcoord.description = "x coordinate"
+    varid_ycoord.description = "y coordinate"
+    
+    return ncid, varid, varid_xcoord, varid_ycoord
+
+
+def write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, tstep, ncid, varid):
+    
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    
+    xcoord = rank % nprocx
+    ycoord = rank // nprocx
+    
+    ibegin = imax * xcoord // nprocx
+    iend = imax * (xcoord + 1) // nprocx
+    isize = iend - ibegin
+    
+    jbegin = jmax * ycoord // nprocy
+    jend = jmax * (ycoord + 1) // nprocy
+    jsize = jend - jbegin
+    
+    buf = x[0:jsize, 0:isize][::-1, :]  
+    
+    varid[tstep, jmax-jend:jmax-jbegin, ibegin:iend] = buf
+    
+    comm.Barrier()
+
+
+def write_netcdf_coords(imax, jmax, nprocx, nprocy, Lx, Ly, ncid, varid_xcoord, varid_ycoord):
+   
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    
+    xcoord = rank % nprocx
+    ycoord = rank // nprocx
+    
+    ibegin = imax * xcoord // nprocx
+    iend = imax * (xcoord + 1) // nprocx
+    
+    jbegin = jmax * ycoord // nprocy
+    jend = jmax * (ycoord + 1) // nprocy
+    
+    varid_xcoord[ibegin:iend] = np.linspace(ibegin * Lx / imax, 
+                                            (iend - 1) * Lx / imax, 
+                                            iend - ibegin)
+    
+    varid_ycoord[jbegin:jend] = np.linspace(jbegin * Ly / jmax, 
+                                            (jend - 1) * Ly / jmax, 
+                                            jend - jbegin)
+    
+    comm.Barrier()
+
+
+def close_netcdf(ncid):
+    
+    ncid.close()
+
+
+def main():
+
+    # initialize MPI
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    nprocs = comm.Get_size()
+    
+    if rank == 0:
+        print("------> Initializing the Problem")
+    
+    # default values
+    imax = 2000
+    jmax = 2000
+    nprocx = 0
+    nprocy = 0
+    nhalo = 2
+    corners = 0
+    do_timing = 0
+    do_print = 0
+    maxIter = 1000
+    
+    jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, do_timing, do_print = parse_input_args()
+    
+    stencil_time = 0.0
+    tstart_total = time.time()
+    
+    xcoord = rank % nprocx
+    ycoord = rank // nprocx
+    
+    nleft = rank - 1 if xcoord > 0 else MPI.PROC_NULL
+    nrght = rank + 1 if xcoord < nprocx - 1 else MPI.PROC_NULL
+    nbot = rank - nprocx if ycoord > 0 else MPI.PROC_NULL
+    ntop = rank + nprocx if ycoord < nprocy - 1 else MPI.PROC_NULL
+    
+    ibegin = imax * xcoord // nprocx
+    iend = imax * (xcoord + 1) // nprocx
+    isize = iend - ibegin
+    jbegin = jmax * ycoord // nprocy
+    jend = jmax * (ycoord + 1) // nprocy
+    jsize = jend - jbegin
+    
+    # physical domain dimensions (unit square)
+    Lx = 1.0
+    Ly = 1.0
+    
+    # soln init params 
+    sigma = 0.01 / ((Lx / imax) * (Ly / jmax))
+    x_center = imax / 2.0
+    y_center = jmax / 2.0
+    
+    # center of the Gaussian for initialization
+    x0 = Lx / 2.0
+    y0 = Ly / 2.0
+
+    # allocate solution
+    x = malloc2D(jsize + 2*nhalo, isize + 2*nhalo, nhalo, nhalo)
+    xnew = malloc2D(jsize + 2*nhalo, isize + 2*nhalo, nhalo, nhalo)
+
+    if not corners:  
+       x[-nhalo:jsize+nhalo, -nhalo:isize+nhalo] = 0.0
+
+    # init soln
+    i_indices, j_indices = np.meshgrid(np.arange(isize), np.arange(jsize))
+
+    x_phys = i_indices + ibegin
+    y_phys = j_indices + jbegin
+
+    x[0:jsize, 0:isize] = np.exp(-0.5 * (((x_phys - x_center)**2 / (sigma**2)) +
+                                      ((y_phys - y_center)**2 / (sigma**2))))
+    
+
+    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
+    ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
+
+
+    if do_print:
+       create_netcdf_file("solution.nc", jmax, imax, MPI_COMM_WORLD)
+       write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, 0, ncid, varid);
+       write_netcdf_coords(imax, jmax, nprocx, nprocy, Lx, Ly, ncid, varid_xcoord, varid_ycoord);
+
+    if rank == 0:
+         print("------> Advancing the Solution\n");
+
+    for iter < maxIter:
+       tstart_stencil = time.time()
+
+       xnew[0:jsize, 0:isize] = (x[0:jsize, 0:isize] +
+                                 x[0:jsize, -1:isize-1] +
+                                 x[0:jsize, 1:isize+1] +
+                                 x[-1:jsize-1, 0:isize] +
+                                 x[1:jsize+1, 0:isize]) / 5.0
+
+       # swap pointers
+       x, xnew = xnew, x
+
+       stencil_time += time.time() - tstart_stencil
+
+       boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
+       ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
+
+       if do_print:
+           if iter == maxIter - 1:
+              write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, iter+1, ncid, varid);
+
+       total_time += time.time() - tstart_total
+
+    if rank == 0:
+       print("------> Printing Timings")
+       print(f"        Solution Advancement: {stencil_time:.6f}")
+       print(f"        Boundary Condition Enforcement: {boundarycondition_time:.6f}")
+       print(f"        Ghost Cell Update: {ghostcell_time:.6f}")
+       print(f"        Total: {total_time:.6f}")
+
+if __name__ == "__main__":
+    main()
+
