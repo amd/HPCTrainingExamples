@@ -96,6 +96,9 @@ python3 -c "from deepspeed.profiling.flops_profiler import FlopsProfiler; print(
 
 # Install additional dependencies (if needed)
 pip3 install -r setup/requirements.txt
+
+# Install rocprof-compute development dependencies (for rocprof-compute profiling)
+pip3 install -r setup/requirements_rocprof-compute-develop.txt
 ```
 
 **Note**: Activate the virtual environment (`source venv/bin/activate`) each time you start a new session.
