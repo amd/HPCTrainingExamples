@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
    double Ly = 1.0;
 
    // soln init params
-   double sigma = 5.0;
+   double sigma = 0.01 / ( (Lx / imax) * (Ly / jmax) );
    double x_center = imax / 2.0;
    double y_center = jmax / 2.0;
 
