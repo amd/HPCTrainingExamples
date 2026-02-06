@@ -300,8 +300,8 @@ int main(int argc, char *argv[])
       boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
       ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
+      if (iter%10 == 0 && rank == 0) printf("        Iter %d\n",iter);
       if (do_print == 1) {
-         if (iter%10 == 0 && rank == 0) printf("        Iter %d\n",iter);
          Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
       }
 
