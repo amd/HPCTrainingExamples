@@ -459,14 +459,14 @@ The following are links to documentation and resources for quick reference:
 **`rocpd` and `rocprofv3`:**
 - [rocpd documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/develop/how-to/using-rocpd-output-format.html)
 - [rocprofv3 documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-rocprofv3.html)
-- [ROCprofiler-SDK GitHub repository](https://github.com/ROCm/rocprofiler-sdk)
+- [ROCprofiler-SDK GitHub repository](https://github.com/ROCm/rocm-systems/tree/develop/projects/rocprofiler-sdk)
 
 **ROCm Systems Profiler:**
-- [rocprof-sys documentation](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/how-to/understanding-rocprof-sys-output.html#generating-rocpd-output)
+- [rocprof-sys documentation on rocpd output format](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/how-to/understanding-rocprof-sys-output.html#generating-rocpd-output)
 
 **Related profiling examples:**
 - [ROCprofv3 HIP examples](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/HIP)
-- [ROCprofv3 OpenMP examples](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/OpenMP)
+- [ROCprofv3 Fortran OpenMP examples](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/OpenMP)
 - [HPCTrainingExamples repository](https://github.com/amd/HPCTrainingExamples)
 
 **Visualization tools:**
