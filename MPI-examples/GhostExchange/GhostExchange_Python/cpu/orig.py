@@ -240,7 +240,9 @@ def write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, tstep, ncid, varid):
     jsize = jend - jbegin
     
     buf = x[nhalo:nhalo+jsize, nhalo:nhalo+isize][::-1, :]  
-    
+   
+    varid.set_collective(True)
+
     varid[tstep, jmax-jend:jmax-jbegin, ibegin:iend] = buf
     
     comm.Barrier()
@@ -353,7 +355,7 @@ def main():
 
 
     if do_print:
-       create_netcdf_file("solution.nc", jmax, imax, comm)
+       ncid, varid, varid_xcoord, varid_ycoord = create_netcdf_file("solution.nc", jmax, imax, comm)
        write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, 0, ncid, varid);
        write_netcdf_coords(imax, jmax, nprocx, nprocy, Lx, Ly, ncid, varid_xcoord, varid_ycoord);
 
