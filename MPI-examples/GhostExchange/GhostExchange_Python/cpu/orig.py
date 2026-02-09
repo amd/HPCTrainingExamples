@@ -80,17 +80,6 @@ def parse_input_args(argv, jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, 
     return jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, do_timing, do_print
 
 
-def malloc2D(jmax, imax, joffset, ioffset):
-
-    total_j = jmax + abs(joffset)
-    total_i = imax + abs(ioffset)
-    
-    full_array = np.zeros((total_j, total_i), dtype=np.float64)
-    
-    return full_array[joffset:, ioffset:]
-
-
-
 def boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop):
     
     global boundarycondition_time
@@ -98,16 +87,16 @@ def boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop):
     tstart_boundarycondition = time.time()
     
     if nleft == MPI.PROC_NULL:
-        x[0:jsize, -nhalo:0] = x[0:jsize, 0:1]
+        x[nhalo:jsize+nhalo, 0:nhalo] = x[nhalo:jsize+nhalo, nhalo:nhalo+1]
     
     if nrght == MPI.PROC_NULL:
-        x[0:jsize, isize:isize+nhalo] = x[0:jsize, isize-1:isize]
+        x[nhalo:jsize+nhalo, isize+nhalo:isize+nhalo+nhalo] = x[nhalo:jsize+nhalo, isize-1+nhalo:isize+nhalo]
     
     if nbot == MPI.PROC_NULL:
-        x[-nhalo:0, -nhalo:isize+nhalo] = x[0:1, -nhalo:isize+nhalo]
+        x[0:nhalo, 0:isize+nhalo+nhalo] = x[nhalo:nhalo+1, 0:isize+nhalo+nhalo]
     
     if ntop == MPI.PROC_NULL:
-        x[jsize:jsize+nhalo, -nhalo:isize+nhalo] = x[jsize-1:jsize, -nhalo:isize+nhalo]
+        x[jsize+nhalo:jsize+nhalo+nhalo, 0:isize+nhalo+nhalo] = x[jsize-1+nhalo:jsize+nhalo, 0:isize+nhalo+nhalo]
     
     boundarycondition_time += time.time() - tstart_boundarycondition
 
@@ -118,96 +107,100 @@ def ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, 
     
     tstart_ghostcell = time.time()
     
-    jlow = 0
-    jhgh = jsize
+    jlow = nhalo
+    jhgh = nhalo + jsize
     if corners:
         if nbot == MPI.PROC_NULL:
-            jlow = -nhalo
+            jlow = 0
         if ntop == MPI.PROC_NULL:
-            jhgh = jsize + nhalo
-    
+            jhgh = nhalo + jsize + nhalo
+
     jnum = jhgh - jlow
     bufcount = jnum * nhalo
-    
+
     xbuf_left_send = np.zeros(bufcount, dtype=np.float64)
     xbuf_rght_send = np.zeros(bufcount, dtype=np.float64)
     xbuf_rght_recv = np.zeros(bufcount, dtype=np.float64)
     xbuf_left_recv = np.zeros(bufcount, dtype=np.float64)
-    
+
     if nleft != MPI.PROC_NULL:
-        # extract left edge data and reshape for contiguous memory
         xbuf_left_send = x[jlow:jhgh, 0:nhalo].flatten()
-    
     if nrght != MPI.PROC_NULL:
-        # extract right edge data and reshape for contiguous memory
-        xbuf_rght_send = x[jlow:jhgh, isize-nhalo:isize].flatten()
-    
+        xbuf_rght_send = x[jlow:jhgh, nhalo+isize-nhalo:nhalo+isize].flatten()
+
     requests = []
-    
+
     if nrght != MPI.PROC_NULL:
         requests.append(MPI.COMM_WORLD.Irecv(xbuf_rght_recv, source=nrght, tag=1001))
     if nleft != MPI.PROC_NULL:
-        requests.append(MPI.COMM_WORLD.Isend(xbuf_left_send, dest=nleft, tag=1001))
-    
-    if nleft != MPI.PROC_NULL:
         requests.append(MPI.COMM_WORLD.Irecv(xbuf_left_recv, source=nleft, tag=1002))
+
+    if nleft != MPI.PROC_NULL:
+        requests.append(MPI.COMM_WORLD.Isend(xbuf_left_send, dest=nleft, tag=1001))
     if nrght != MPI.PROC_NULL:
         requests.append(MPI.COMM_WORLD.Isend(xbuf_rght_send, dest=nrght, tag=1002))
-    
+
     MPI.Request.Waitall(requests)
-    
+
     if nrght != MPI.PROC_NULL:
-        # reshape and place in right ghost cells
-        x[jlow:jhgh, isize:isize+nhalo] = xbuf_rght_recv.reshape(jnum, nhalo)
-    
+        x[jlow:jhgh, nhalo+isize:nhalo+isize+nhalo] = xbuf_rght_recv.reshape(jnum, nhalo)
     if nleft != MPI.PROC_NULL:
-        # reshape and place in left ghost cells
-        x[jlow:jhgh, -nhalo:0] = xbuf_left_recv.reshape(jnum, nhalo)
-    
+        x[jlow:jhgh, 0:nhalo] = xbuf_left_recv.reshape(jnum, nhalo)
+
     requests = []
-    
+
     if corners:
-        bufcount = nhalo * (isize + 2 * nhalo)
-        
+        bufcount = nhalo * (isize + 2*nhalo)
+
         if ntop != MPI.PROC_NULL:
-            # receive from top neighbor into top ghost cells
-            recv_buf = np.zeros((nhalo, isize + 2*nhalo), dtype=np.float64)
-            requests.append(MPI.COMM_WORLD.Irecv(recv_buf, source=ntop, tag=1001))
-        
+            recv_buf_top = np.zeros((nhalo, isize + 2*nhalo), dtype=np.float64)
+            requests.append(MPI.COMM_WORLD.Irecv(recv_buf_top, source=ntop, tag=2001))
         if nbot != MPI.PROC_NULL:
-            send_buf = x[0:nhalo, -nhalo:isize+nhalo].copy()
-            requests.append(MPI.COMM_WORLD.Isend(send_buf, dest=nbot, tag=1001))
-        
+            send_buf_bot = x[0:nhalo, 0:2*nhalo+isize].copy()
+            requests.append(MPI.COMM_WORLD.Isend(send_buf_bot, dest=nbot, tag=2001))
         if nbot != MPI.PROC_NULL:
-            # receive from bottom neighbor into bottom ghost cells
-            recv_buf = np.zeros((nhalo, isize + 2*nhalo), dtype=np.float64)
-            requests.append(MPI.COMM_WORLD.Irecv(recv_buf, source=nbot, tag=1002))
-        
+            recv_buf_bot = np.zeros((nhalo, isize + 2*nhalo), dtype=np.float64)
+            requests.append(MPI.COMM_WORLD.Irecv(recv_buf_bot, source=nbot, tag=2002))
         if ntop != MPI.PROC_NULL:
-            send_buf = x[jsize-nhalo:jsize, -nhalo:isize+nhalo].copy()
-            requests.append(MPI.COMM_WORLD.Isend(send_buf, dest=ntop, tag=1002))
-        
+            send_buf_top = x[nhalo+jsize-nhalo:nhalo+jsize, 0:2*nhalo+isize].copy()
+            requests.append(MPI.COMM_WORLD.Isend(send_buf_top, dest=ntop, tag=2002))
+
         MPI.Request.Waitall(requests)
-        
+
         if ntop != MPI.PROC_NULL:
-            x[jsize:jsize+nhalo, -nhalo:isize+nhalo] = recv_buf
+            x[nhalo+jsize:nhalo+jsize+nhalo, 0:2*nhalo+isize] = recv_buf_top
         if nbot != MPI.PROC_NULL:
-            x[-nhalo:0, -nhalo:isize+nhalo] = recv_buf
-            
+            x[0:nhalo, 0:2*nhalo+isize] = recv_buf_bot
+
     else:
         for j in range(nhalo):
             if ntop != MPI.PROC_NULL:
-                requests.append(MPI.COMM_WORLD.Irecv(x[jsize+j, 0:isize], source=ntop, tag=1001+j*2))
+                requests.append(MPI.COMM_WORLD.Irecv(
+                    x[nhalo+jsize+j, nhalo:nhalo+isize],
+                    source=ntop,
+                    tag=3000+j*2
+                ))
             if nbot != MPI.PROC_NULL:
-                requests.append(MPI.COMM_WORLD.Isend(x[0+j, 0:isize].copy(), dest=nbot, tag=1001+j*2))
-            
+                requests.append(MPI.COMM_WORLD.Isend(
+                    x[nhalo+j, nhalo:nhalo+isize].copy(),
+                    dest=nbot,
+                    tag=3000+j*2
+                ))
             if nbot != MPI.PROC_NULL:
-                requests.append(MPI.COMM_WORLD.Irecv(x[-nhalo+j, 0:isize], source=nbot, tag=1002+j*2))
+                requests.append(MPI.COMM_WORLD.Irecv(
+                    x[j, nhalo:nhalo+isize],
+                    source=nbot,
+                    tag=3001+j*2
+                ))
             if ntop != MPI.PROC_NULL:
-                requests.append(MPI.COMM_WORLD.Isend(x[jsize-nhalo+j, 0:isize].copy(), dest=ntop, tag=1002+j*2))
-        
-        MPI.Request.Waitall(requests)
-    
+                requests.append(MPI.COMM_WORLD.Isend(
+                    x[nhalo+jsize-nhalo+j, nhalo:nhalo+isize].copy(),
+                    dest=ntop,
+                    tag=3001+j*2
+                ))
+
+        MPI.Request.Waitall(requests)   
+
     ghostcell_time += time.time() - tstart_ghostcell
 
 
@@ -246,7 +239,7 @@ def write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, tstep, ncid, varid):
     jend = jmax * (ycoord + 1) // nprocy
     jsize = jend - jbegin
     
-    buf = x[0:jsize, 0:isize][::-1, :]  
+    buf = x[nhalo:nhalo+jsize, nhalo:nhalo+isize][::-1, :]  
     
     varid[tstep, jmax-jend:jmax-jbegin, ibegin:iend] = buf
     
@@ -289,6 +282,7 @@ def main():
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     nprocs = comm.Get_size()
+    total_time = 0.0
     
     if rank == 0:
         print("------> Initializing the Problem")
@@ -339,11 +333,10 @@ def main():
     y0 = Ly / 2.0
 
     # allocate solution
-    x = malloc2D(jsize + 2*nhalo, isize + 2*nhalo, nhalo, nhalo)
-    xnew = malloc2D(jsize + 2*nhalo, isize + 2*nhalo, nhalo, nhalo)
-
-    if not corners:  
-       x[-nhalo:jsize+nhalo, -nhalo:isize+nhalo] = 0.0
+    jsize_with_halos=jsize + 2*nhalo
+    isize_with_halos=isize + 2*nhalo
+    x = np.zeros((jsize_with_halos, isize_with_halos), dtype=np.float64)
+    xnew = np.zeros((jsize_with_halos, isize_with_halos), dtype=np.float64)
 
     # init soln
     i_indices, j_indices = np.meshgrid(np.arange(isize), np.arange(jsize))
@@ -351,7 +344,7 @@ def main():
     x_phys = i_indices + ibegin
     y_phys = j_indices + jbegin
 
-    x[0:jsize, 0:isize] = np.exp(-0.5 * (((x_phys - x_center)**2 / (sigma**2)) +
+    x[nhalo:jsize+nhalo, nhalo:isize+nhalo] = np.exp(-0.5 * (((x_phys - x_center)**2 / (sigma**2)) +
                                       ((y_phys - y_center)**2 / (sigma**2))))
     
 
@@ -360,7 +353,7 @@ def main():
 
 
     if do_print:
-       create_netcdf_file("solution.nc", jmax, imax, MPI_COMM_WORLD)
+       create_netcdf_file("solution.nc", jmax, imax, comm)
        write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, 0, ncid, varid);
        write_netcdf_coords(imax, jmax, nprocx, nprocy, Lx, Ly, ncid, varid_xcoord, varid_ycoord);
 
@@ -369,12 +362,14 @@ def main():
 
     for iter in range(maxIter):
        tstart_stencil = time.time()
+       xnew[nhalo:nhalo+jsize, nhalo:nhalo+isize] = (
+                                           x[nhalo:nhalo+jsize, nhalo:nhalo+isize] +
+                                           x[nhalo:nhalo+jsize, nhalo-1:nhalo+isize-1] +
+                                           x[nhalo:nhalo+jsize, nhalo+1:nhalo+isize+1] +
+                                           x[nhalo-1:nhalo+jsize-1, nhalo:nhalo+isize] +
+                                           x[nhalo+1:nhalo+jsize+1, nhalo:nhalo+isize]
+                                                    )/5.0
 
-       xnew[0:jsize, 0:isize] = (x[0:jsize, 0:isize] +
-                                 x[0:jsize, -1:isize-1] +
-                                 x[0:jsize, 1:isize+1] +
-                                 x[-1:jsize-1, 0:isize] +
-                                 x[1:jsize+1, 0:isize]) / 5.0
 
        # swap pointers
        x, xnew = xnew, x
