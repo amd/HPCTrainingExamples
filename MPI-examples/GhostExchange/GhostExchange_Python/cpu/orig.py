@@ -156,7 +156,7 @@ def ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, 
             recv_buf_top = np.zeros((nhalo, isize + 2*nhalo), dtype=np.float64)
             requests.append(MPI.COMM_WORLD.Irecv(recv_buf_top, source=ntop, tag=2001))
         if nbot != MPI.PROC_NULL:
-            send_buf_bot = x[0:nhalo, 0:2*nhalo+isize].copy()
+            send_buf_bot = x[nhalo:2*nhalo, 0:2*nhalo+isize].copy()
             requests.append(MPI.COMM_WORLD.Isend(send_buf_bot, dest=nbot, tag=2001))
         if nbot != MPI.PROC_NULL:
             recv_buf_bot = np.zeros((nhalo, isize + 2*nhalo), dtype=np.float64)
