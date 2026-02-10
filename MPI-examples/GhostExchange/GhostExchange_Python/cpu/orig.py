@@ -124,9 +124,9 @@ def ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, 
     xbuf_left_recv = np.zeros(bufcount, dtype=np.float64)
 
     if nleft != MPI.PROC_NULL:
-        xbuf_left_send = x[jlow:jhgh, 0:nhalo].flatten()
+        xbuf_left_send = x[jlow:jhgh, nhalo:2*nhalo].flatten()
     if nrght != MPI.PROC_NULL:
-        xbuf_rght_send = x[jlow:jhgh, nhalo+isize-nhalo:nhalo+isize].flatten()
+        xbuf_rght_send = x[jlow:jhgh, isize:nhalo+isize].flatten()
 
     requests = []
 
@@ -143,7 +143,7 @@ def ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, 
     MPI.Request.Waitall(requests)
 
     if nrght != MPI.PROC_NULL:
-        x[jlow:jhgh, nhalo+isize:nhalo+isize+nhalo] = xbuf_rght_recv.reshape(jnum, nhalo)
+        x[jlow:jhgh, nhalo+isize:isize+2*nhalo] = xbuf_rght_recv.reshape(jnum, nhalo)
     if nleft != MPI.PROC_NULL:
         x[jlow:jhgh, 0:nhalo] = xbuf_left_recv.reshape(jnum, nhalo)
 
@@ -162,13 +162,13 @@ def ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, 
             recv_buf_bot = np.zeros((nhalo, isize + 2*nhalo), dtype=np.float64)
             requests.append(MPI.COMM_WORLD.Irecv(recv_buf_bot, source=nbot, tag=2002))
         if ntop != MPI.PROC_NULL:
-            send_buf_top = x[nhalo+jsize-nhalo:nhalo+jsize, 0:2*nhalo+isize].copy()
+            send_buf_top = x[jsize:nhalo+jsize, 0:2*nhalo+isize].copy()
             requests.append(MPI.COMM_WORLD.Isend(send_buf_top, dest=ntop, tag=2002))
 
         MPI.Request.Waitall(requests)
 
         if ntop != MPI.PROC_NULL:
-            x[nhalo+jsize:nhalo+jsize+nhalo, 0:2*nhalo+isize] = recv_buf_top
+            x[nhalo+jsize:jsize+2*nhalo, 0:2*nhalo+isize] = recv_buf_top
         if nbot != MPI.PROC_NULL:
             x[0:nhalo, 0:2*nhalo+isize] = recv_buf_bot
 
@@ -194,7 +194,7 @@ def ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, 
                 ))
             if ntop != MPI.PROC_NULL:
                 requests.append(MPI.COMM_WORLD.Isend(
-                    x[nhalo+jsize-nhalo+j, nhalo:nhalo+isize].copy(),
+                    x[jsize+j, nhalo:nhalo+isize].copy(),
                     dest=ntop,
                     tag=3001+j*2
                 ))
