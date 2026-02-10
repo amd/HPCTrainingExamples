@@ -15,7 +15,7 @@ Then, create and activate a virtual environment, with a couple of dependencies f
 ```
 python3 -m venv ghost_exchange_env
 source ghost_exchange_env/bin/activate
-pip3 install cython setuptools
+pip3 install cython setuptools numpy
 ```
 
 Next, clone the `netcdf4-python` repo and install from source:
