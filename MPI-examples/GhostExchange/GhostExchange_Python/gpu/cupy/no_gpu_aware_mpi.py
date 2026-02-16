@@ -353,10 +353,12 @@ def main():
     x_phys = i_indices + ibegin
     y_phys = j_indices + jbegin
 
-    x[nhalo:jsize+nhalo, nhalo:isize+nhalo] = np.exp(-0.5 * (((x_phys - x_center)**2 / (sigma**2)) +
+    x[nhalo:jsize+nhalo, nhalo:isize+nhalo] = cp.exp(-0.5 * (((x_phys - x_center)**2 / (sigma**2)) +
                                       ((y_phys - y_center)**2 / (sigma**2))))
-    
 
+    # kernels launches are non-blocking for CuPy as in HIP
+    cp.cuda.Device().synchronize()
+    
     boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
     x_cpu=cp.asnumpy(x)
     ghostcell_update(x_cpu, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
@@ -381,7 +383,7 @@ def main():
                                            x[nhalo+1:nhalo+jsize+1, nhalo:nhalo+isize]
                                                     )/5.0
 
-
+       cp.cuda.Device().synchronize()
        # swap pointers
        x, xnew = xnew, x
 
@@ -397,7 +399,7 @@ def main():
               x_cpu=cp.asnumpy(x)
               write_netcdf_soln(x_cpu, jmax, imax, nhalo, nprocy, nprocx, iter+1, ncid, varid);
 
-       total_time += time.time() - tstart_total
+    total_time += time.time() - tstart_total
 
     if rank == 0:
        print("------> Printing Timings")

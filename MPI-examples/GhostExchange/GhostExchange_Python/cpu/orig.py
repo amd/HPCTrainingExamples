@@ -385,7 +385,8 @@ def main():
            if iter == maxIter - 1:
               write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, iter+1, ncid, varid);
 
-       total_time += time.time() - tstart_total
+
+    total_time += time.time() - tstart_total
 
     if rank == 0:
        print("------> Printing Timings")
