@@ -58,11 +58,6 @@ The LOBPCG implementation includes:
 - `lobpcg.cpp` - LOBPCG algorithm implementation
 - `driver_lobpcg.cpp` - Matrix Market driver
 
-## Performance
-
-Benchmarked on AMD Instinct MI300X with tmt_sym matrix (726K x 726K):
-- ~6.5 ms per iteration for 5 eigenvalues
-- ~3.9x faster than reference C implementation
 
 ## Version Compatibility
 
