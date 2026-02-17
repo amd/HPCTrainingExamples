@@ -1,50 +1,75 @@
-# Purpose of this code
-Assume you need to solve a linear system
+# Preconditioned Conjugate Gradient (PCG) with Incomplete Cholesky
 
-$$
-A x = b
-$$ 
+ROCm implementation of the Preconditioned Conjugate Gradient method with
+Incomplete Cholesky (IC0) preconditioner for solving symmetric positive
+definite linear systems.
 
-where $A$ is an $N \times N$ sparse, symmetric positive definite (SPD) matrix, $b$ is an $N\times 1$ right-hand side and $x$ is a vector of unknows. Such a system can be usually solved with a linear solver called Conjugate Gradient (CG) (https://en.wikipedia.org/wiki/Conjugate_gradient_method).  
+## Requirements
 
-CG is an iterative method that finds an approximate solution to the linear system above. CG implementation consists of sparse matrix-vector products, vector dot products, vector scaling and vector updates (AXPYs). It can be implemented using rocBLAS and rocSPARSE.
+- ROCm 6.4+ or ROCm 7.x
+- AMD GPU with ROCm support
 
-This example demonstrates how to:
-- use rocBLAS,
-- use rocSPARSE,
-- create an incomplete Cholesky preconditioner and use it in the code.
+## Building
 
-# Compiling
-
-The example is self-contained. Just do:
-
-```
-module load rocm
+```bash
+module load rocm/7.1.1   # or rocm/6.4.0
+make
 ```
 
-# Running
+This builds two executables:
+- `pcg_laplacian` - Test driver with generated 3D Laplacian matrix
+- `pcg_mtx` - Driver for Matrix Market format input files
 
+## Usage
+
+### Laplacian Test Driver
+
+```bash
+# Default 20x20x20 grid
+./pcg_laplacian
+
+# Custom grid size and solver parameters
+./pcg_laplacian <nx> <ny> <nz> [tol] [maxiter]
+
+# Example: 50x50x50 grid with tolerance 1e-10
+./pcg_laplacian 50 50 50 1e-10 1000
 ```
-./run_cg --matrix /path/to/matrix/in/matrix/market/format.mtx --maxit 10000 --tol 1e-8 --rhs /path/to/rhs/in/matrix/market/format.mtx
+
+### Matrix Market Driver
+
+```bash
+./pcg_mtx <matrix.mtx> [options]
+
+Options:
+  -tol <value>      Convergence tolerance (default: 1e-10)
+  -maxiter <value>  Maximum iterations (default: 10000)
+  -rhs <file.mtx>   Right-hand side vector in Matrix Market format
+                    (default: vector of all ones)
 ```
 
-The parameters `tol`, `maxit` and `rhs` are optional. An example matrix can be obtained as follows:
-
-```
-wget https://suitesparse-collection-website.herokuapp.com/MM/HB/1138_bus.tar.gz
-tar -xvf 1138_bus.tar.gz
-```
-
-Then run with:
-
-```
-./run_cg --matrix 1138_bus/1138_bus.mtx --maxit 10000
+Example:
+```bash
+./pcg_mtx thermal2.mtx -tol 1e-8 -maxiter 2000
+./pcg_mtx matrix.mtx -rhs rhs.mtx -tol 1e-10
 ```
 
-Things to remember:
+## Algorithm
 
-- Matrix must be in a proper matrix market (MTX) format,
-- The matrix MUST BE SPD in order for the code to work, 
-- Incomplete Cholesky does not work for all the problems (!).
+The implementation uses:
+- **Incomplete Cholesky IC(0)** factorization via `rocsparse_dcsric0`
+- **Sparse triangular solves** via `rocsparse_spsv` for preconditioning
+- **Sparse matrix-vector product** via `rocsparse_spmv`
+- **rocBLAS** for vector operations (dot products, scaling, axpy)
 
+## Files
 
+- `pcg_ic.h` - Header file with function declarations
+- `pcg_ic.cpp` - PCG algorithm implementation
+- `driver.cpp` - Laplacian test driver
+- `driver_mtx.cpp` - Matrix Market driver
+
+## Version Compatibility
+
+The code includes version detection macros to handle API differences
+between ROCm 6.4 and 7.x, suppressing deprecation warnings while
+maintaining backward compatibility.
