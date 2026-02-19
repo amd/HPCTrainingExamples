@@ -232,9 +232,8 @@ int main(int argc, char *argv[])
    double* xtmp;
    // Using 1D representation of a 2D array with nhalo offsets
    int totcells=(jsize+2*nhalo)*(isize+2*nhalo);
-   double *x=NULL, *xnew=NULL;
-   HIP_CHECK(hipMalloc(&x, totcells * sizeof(double)));
-   HIP_CHECK(hipMalloc(&xnew, totcells * sizeof(double)));
+   double *x    = (double *)malloc(totcells*sizeof(double));
+   double *xnew = (double *)malloc(totcells*sizeof(double));
 
    double *x_h=NULL;
    if (do_print) {
@@ -340,12 +339,12 @@ int main(int argc, char *argv[])
       printf("        Total: %f\n",total_time);
    }
 
-   HIP_CHECK(hipFree(x));
-   HIP_CHECK(hipFree(xnew));
-
    if (do_print) {
       free(x_h);
    }
+
+   free(x);
+   free(xnew);
 
    free(xbuf_left_send);
    free(xbuf_rght_send);
