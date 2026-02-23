@@ -171,6 +171,14 @@ add_test(NAME OpenMP_Fortran_Build_CMake COMMAND ../openmp_Fortran_build_cmake.s
 set_property(TEST OpenMP_Fortran_Build_CMake PROPERTY PASS_REGULAR_EXPRESSION "Result is 200000.000000")
 set_property(TEST OpenMP_Fortran_Build_CMake PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
+add_test(NAME OpenMP_Fortran_GPU_Aware_MPI_OpenMPI COMMAND ../openmp_fortran_with_gpu_aware_mpi.sh )
+set_property(TEST OpenMP_Fortran_GPU_Aware_MPI_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "All tests passed")
+set_property(TEST OpenMP_Fortran_GPU_Aware_MPI_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+
+add_test(NAME OpenMP_Fortran_GPU_Aware_MPI_MPICH_Wrappers COMMAND ../openmp_fortran_with_gpu_aware_mpi.sh --module mpich-wrappers --libfabric 1)
+set_property(TEST OpenMP_Fortran_GPU_Aware_MPI_MPICH_Wrappers PROPERTY PASS_REGULAR_EXPRESSION "All tests passed")
+set_property(TEST OpenMP_Fortran_GPU_Aware_MPI_MPICH_Wrappers PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+
 # OpenMP Examples
 # Duplicate of OpenMP_C_5_Saxpy_Map
 #add_test(NAME OpenMP_Saxpy_C_AMDClang COMMAND ../openmp_saxpy_c_amdclang.sh )
