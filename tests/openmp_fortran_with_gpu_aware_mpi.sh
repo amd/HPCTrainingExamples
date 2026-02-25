@@ -174,13 +174,11 @@ elif [[ ${MODULE_TO_LOAD} == *"openmpi"* ]]; then
      echo "     mpifort -O3 -g \
        -fopenmp --offload-arch=${AMDGPU_GFXMODEL} \
        -L$ROCM_PATH/llvm/lib -lomp \
-       -L$MPICH_DIR/lib \
        -o test_gpu_aware_mpi test_gpu_aware_mpi.f90"
 
      mpifort -O3 -g \
        -fopenmp --offload-arch=${AMDGPU_GFXMODEL} \
        -L$ROCM_PATH/llvm/lib -lomp \
-       -L$MPICH_DIR/lib \
        -o test_gpu_aware_mpi test_gpu_aware_mpi.f90
 else
    echo "mpi module not considered in this test"
