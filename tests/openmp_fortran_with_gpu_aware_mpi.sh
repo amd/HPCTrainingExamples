@@ -56,9 +56,18 @@ do
    shift
 done
 
-module load rocm
+module list 2>&1 | grep -q -w "rocm"
+if [ $? -eq 1 ]; then
+   echo "rocm module is not loaded"
+   echo "loading default rocm module"
+   module load rocm
+fi
+
 export AMDGPU_GFXMODEL=`rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *\(gfx[0-9,a-f]*\) *$/\1/'`
-module unload rocm
+
+if [[ ${MODULE_TO_LOAD} == *"mpich-wrappers"* ]]; then
+   module unload rocm
+fi
 
 module load ${MODULE_TO_LOAD}
 if [[ ${LIBFABRIC} == "1" ]]; then
