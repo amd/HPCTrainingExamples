@@ -47,9 +47,7 @@ cat <<-EOF > mpi_hello_world.c
 EOF
 
 mpicc -o mpi_hello_world mpi_hello_world.c
-if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
-   ${MPIRUN} -n 2 ./mpi_hello_world
-fi
+${MPIRUN} -n 2 ./mpi_hello_world
 
 cd ..
 rm -rf openmpi_hello_world_run
