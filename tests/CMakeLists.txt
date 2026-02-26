@@ -145,6 +145,9 @@ add_test(NAME Programming_Model_Kokkos COMMAND ../programming_model_kokkos.sh )
 set_property(TEST Programming_Model_Kokkos PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
 set_property(TEST Programming_Model_Kokkos PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip" "Unable to locate a modulefile for 'kokkos'")
 
+add_test(NAME Kokkos_Check_APU_Enabled COMMAND ../kokkos_check_apu_enabled.sh )
+set_property(TEST Kokkos_Check_APU_Enabled PROPERTY PASS_REGULAR_EXPRESSION "APU or dGPU: APU")
+set_property(TEST Kokkos_Check_APU_Enabled PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip" "Unable to locate a modulefile for 'kokkos'")
 
 # OpenMP Build System Examples
 add_test(NAME OpenMP_C_Build_Make COMMAND ../openmp_C_build_make.sh )

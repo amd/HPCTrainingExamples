@@ -12,6 +12,7 @@ module load fftw
 
 FFTW_INCLUDE=${FFTW_PATH}/include
 
+echo " "
 echo "=== FFTW MPI Fortran interface test ==="
 echo "FFTW_PATH: ${FFTW_PATH}"
 echo "Fortran compiler wrapped by mpifort:"
@@ -49,13 +50,10 @@ program test_fftw_mpi
 end program test_fftw_mpi
 EOF
 
-echo "=== Compiling test_fftw_mpi.f90 ==="
 mpifort test_fftw_mpi.f90 -o test_fftw_mpi \
   -I${FFTW_INCLUDE} \
   -L${FFTW_PATH}/lib -lfftw3_mpi -lfftw3 -lm
 
-echo "=== Running test ==="
 mpirun -n 2 ./test_fftw_mpi
 
-echo "=== Cleaning up ==="
 rm -f test_fftw_mpi.f90 test_fftw_mpi
