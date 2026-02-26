@@ -6,55 +6,6 @@
 # to the instructions available in the model installation repo:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/petsc_setup.sh
 
-PETSC_MODULE="petsc"
-
-usage()
-{
-    echo ""
-    echo "--help : prints this message"
-    echo "--petsc-module : specifies which petsc module to load"
-    echo ""
-    exit
-}
-
-send-error()
-{
-    usage
-    echo -e "\nError: ${@}"
-    exit 1
-}
-
-reset-last()
-{
-   last() { send-error "Unsupported argument :: ${1}"; }
-}
-
-n=0
-while [[ $# -gt 0 ]]
-do
-   case "${1}" in
-      "--petsc-module")
-          shift
-          PETSC_MODULE=${1}
-          reset-last
-          ;;
-     "--help")
-          usage
-          ;;
-      "--*")
-          send-error "Unsupported argument at position $((${n} + 1)) :: ${1}"
-          ;;
-      *)
-         last ${1}
-         ;;
-   esac
-   n=$((${n} + 1))
-   shift
-done
-
-
-
-
 module list 2>&1 | grep -q -w "rocm"
 if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
@@ -64,7 +15,11 @@ fi
 if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
    module load openmpi
 fi
-module load $PETSC_MODULE
+
+module load petsc_amdflang >& /dev/null
+if [ "$?" == "1" ]; then
+    module load petsc
+fi
 
 PETSC_VERSION=`$PETSC_DIR/lib/petsc/bin/petscversion`
 
