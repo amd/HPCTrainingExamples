@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# This test runs the install tests
-# suite from the Cupy repo:
-# https://github.com/ROCm/cupy/tree/master/tests/install_tests
+# This test imports the cupy package in Python to test
+# if Cupy is installed and accessible
 
 # NOTE: this test assumes CuPy has been installed according
 # to the instructions available in the model installation repo:
@@ -17,13 +16,5 @@ if [ $? -eq 1 ]; then
 fi
 module load cupy
 
-git clone -q --depth 1 --recursive https://github.com/ROCm/cupy.git
+python3 -c 'import cupy;print(cupy.cuda.runtime.getDeviceProperties(0))'
 
-export CUPY_INSTALL_USE_HIP=1
-
-cd cupy/tests/install_tests
-
-python3 -m pytest -vvv
-
-cd ../../../
-rm -rf cupy

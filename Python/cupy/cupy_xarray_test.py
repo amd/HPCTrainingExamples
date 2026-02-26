@@ -37,7 +37,7 @@ print("arr_cpu is on device:", arr_cpu.device)
 print("total number of available devices:", cp.cuda.runtime.getDeviceCount())
 
 # use the device context manager to create data on a different device
-with cp.cuda.Device(2):
+with cp.cuda.Device(0):
     arr_gpu2 = cp.array([1, 2, 3, 4, 5])
 print("arr_gpu2 is on device:", arr_gpu2.device)
 

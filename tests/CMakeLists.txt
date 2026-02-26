@@ -1355,6 +1355,10 @@ add_test(NAME Cupy_Check_Import COMMAND ../cupy_check_import.sh )
 set_property(TEST Cupy_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST Cupy_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'cupy'")
 
+add_test(NAME Cupy_Check_GPU_Access COMMAND ../cupy_check_gpu_access.sh )
+set_property(TEST Cupy_Check_GPU_Access PROPERTY PASS_REGULAR_EXPRESSION "AMD Instinct MI")
+set_property(TEST Cupy_Check_GPU_Access PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'cupy'")
+
 add_test(NAME Cupy_Check_Array_Sum COMMAND ../cupy_check_array_sum.sh )
 set_property(TEST Cupy_Check_Array_Sum PROPERTY PASS_REGULAR_EXPRESSION "6  8 10 12 14")
 set_property(TEST Cupy_Check_Array_Sum PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'cupy'")
