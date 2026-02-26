@@ -1364,7 +1364,7 @@ set_property(TEST Cupy_Check_Array_Sum PROPERTY PASS_REGULAR_EXPRESSION "6  8 10
 set_property(TEST Cupy_Check_Array_Sum PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'cupy'")
 
 add_test(NAME Cupy_Xarray_Check COMMAND ../cupy_xarray_check.sh )
-set_property(TEST Cupy_Xarray_Check PROPERTY PASS_REGULAR_EXPRESSION "CUDA Device 2")
+set_property(TEST Cupy_Xarray_Check PROPERTY PASS_REGULAR_EXPRESSION "CUDA Device 0")
 set_property(TEST Cupy_Xarray_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'cupy'")
 
 add_test(NAME Cupy_Install_Tests COMMAND ../cupy_install_tests.sh )
