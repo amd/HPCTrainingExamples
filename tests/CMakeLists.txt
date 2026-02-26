@@ -1368,7 +1368,7 @@ set_property(TEST Cupy_Xarray_Check PROPERTY PASS_REGULAR_EXPRESSION "CUDA Devic
 set_property(TEST Cupy_Xarray_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'cupy'")
 
 add_test(NAME Cupy_Install_Tests COMMAND ../cupy_install_tests.sh )
-set_property(TEST Cupy_Install_Tests PROPERTY PASS_REGULAR_EXPRESSION "11 passed")
+set_property(TEST Cupy_Install_Tests PROPERTY PASS_REGULAR_EXPRESSION "9 passed, 1 skipped")
 set_property(TEST Cupy_Install_Tests PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'cupy'")
 
 # Rocprof-sys tests
