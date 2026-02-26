@@ -8,6 +8,12 @@ if [ $? -eq 1 ]; then
    echo "loading default rocm module"
    module load rocm
 fi
+GPU_IS_MI300A=$(rocminfo 2>/dev/null | grep -q MI300A && echo 1 || echo 0)
+
+if [ "$GPU_IS_MI300A" != "1" ]; then
+	echo"Skip"
+	exit 1
+fi	
 module load kokkos
 module list
 
