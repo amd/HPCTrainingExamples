@@ -18,7 +18,7 @@ mkdir build_for_test; cd build_for_test
 cmake ../
 make -j
 
-hpcrun -e CPUTIME -e gpu=amd -t ./compute_comm_overlap 2
+hpcrun -e CPUTIME -e gpu=rocm -t ./compute_comm_overlap 2
 ls hpctoolkit-compute_comm_overlap-measurements*
 
 cd ..
