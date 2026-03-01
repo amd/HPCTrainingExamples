@@ -34,5 +34,5 @@ else
    make openmp_code
    ./openmp_code
 
-   make clean
+   rm -f openmp_code openmp_code.o
 fi

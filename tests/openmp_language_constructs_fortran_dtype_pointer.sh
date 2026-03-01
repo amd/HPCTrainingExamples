@@ -29,4 +29,4 @@ cd derived_types
 make dtype_pointer
 ./dtype_pointer
 
-make clean
+rm -f dtype_pointer dtype_pointer.o

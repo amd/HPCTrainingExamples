@@ -29,4 +29,4 @@ cd ${REPO_DIR}/HIPFort/matmult
 make
 ./matmult_hipfort
 
-make clean
+rm -f ./matmult_hipfort *.o *.mod

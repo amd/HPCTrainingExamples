@@ -29,4 +29,4 @@ cd complex_saxpy
 make
 ./complex_saxpy
 
-make clean
+rm -f complex_saxpy complex_saxpy.o

@@ -26,7 +26,7 @@ fi
 export HIPFORT_PATH=$AFAR_PATH 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIPFort/matmult
-make clean
+rm -f ./matmult_hipfort *.o *.mod
 make
 ./matmult_hipfort
-make clean
+rm -f ./matmult_hipfort *.o *.mod

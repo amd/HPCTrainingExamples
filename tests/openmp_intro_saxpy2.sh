@@ -28,4 +28,4 @@ cd ${REPO_DIR}/Pragma_Examples/OpenMP/Intro
 make saxpy2
 ./saxpy2
 
-make clean
+rm -f saxpy2 saxpy2.o

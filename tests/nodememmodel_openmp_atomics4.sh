@@ -32,5 +32,5 @@ cd ${REPO_DIR}/atomics_openmp
 make arraysum4
 ./arraysum4
 
-make clean
+rm -f arraysum4 arraysum4.o
 

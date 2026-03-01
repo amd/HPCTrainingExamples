@@ -28,4 +28,4 @@ cd ${REPO_DIR}/Pragma_Examples/OpenMP/Intro/Fortran_examples
 make target_data_update
 ./target_data_update
 
-make clean
+rm -f target_data_update target_data_update.o

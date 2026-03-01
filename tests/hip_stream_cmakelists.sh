@@ -30,10 +30,11 @@ fi
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIP/hip-stream
 
-rm -rf build
-mkdir build && cd build
+BUILD_DIR=build_$$
+rm -rf ${BUILD_DIR}
+mkdir ${BUILD_DIR} && cd ${BUILD_DIR}
 cmake ..
 make
 ./stream
 cd ..
-rm -rf build
+rm -rf ${BUILD_DIR}

@@ -39,5 +39,5 @@ else
 
    ./vectoradd_hip3.exe
 
-   make clean
+   rm -f vectoradd_hip3.exe vectoradd_hip3.o
 fi

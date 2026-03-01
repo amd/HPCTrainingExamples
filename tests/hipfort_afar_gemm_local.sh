@@ -26,7 +26,7 @@ fi
 export HIPFORT_PATH=$AFAR_PATH
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIPFort/hipgemm
-make clean
+rm -f gemm_local *.o *.mod
 make gemm_local
 ./gemm_local
-make clean
+rm -f gemm_local *.o *.mod

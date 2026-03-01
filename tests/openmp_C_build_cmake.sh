@@ -31,9 +31,11 @@ else
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    cd ${REPO_DIR}/Pragma_Examples/OpenMP/C/BuildExamples
-   mkdir build && cd build && cmake ..
+   BUILD_DIR=build_$$
+   mkdir ${BUILD_DIR} && cd ${BUILD_DIR} && cmake ..
    make openmp_code
    ./openmp_code
 
-   make clean
+   cd ..
+   rm -rf ${BUILD_DIR}
 fi

@@ -31,11 +31,11 @@ else
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/BuildExamples
-   mkdir build && cd build && cmake -DCMAKE_Fortran_COMPILER=`which amdflang` ..
+   BUILD_DIR=build_$$
+   mkdir ${BUILD_DIR} && cd ${BUILD_DIR} && cmake -DCMAKE_Fortran_COMPILER=`which amdflang` ..
    make openmp_code
    ./openmp_code
 
-   make clean
    cd ..
-   rm -rf build
+   rm -rf ${BUILD_DIR}
 fi

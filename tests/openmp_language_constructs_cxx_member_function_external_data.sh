@@ -28,4 +28,4 @@ cd ${REPO_DIR}/Pragma_Examples/OpenMP/CXX/6_device_routines/2_member_function_ex
 make
 ./bigscience
 
-make clean
+rm -f bigscience *.o

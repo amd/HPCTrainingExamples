@@ -30,4 +30,4 @@ export HSA_XNACK=1
 make dtype_derived_type_automap
 ./dtype_derived_type_automap
 
-make clean
+rm -f dtype_derived_type_automap dtype_derived_type_automap.o

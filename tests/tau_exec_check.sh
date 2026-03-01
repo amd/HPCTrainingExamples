@@ -72,7 +72,7 @@ export TAU_TRACE=${TAU_TRACE}
 
 rm -rf profile.0*
 rm -rf tautrace.0*
-make clean
+rm -f Jacobi_hip *.o
 make
 
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
@@ -86,7 +86,7 @@ fi
 ls
 pprof
 
-make clean
+rm -f Jacobi_hip *.o
 rm -rf profile.0*
 rm -rf tautrace.0*
 

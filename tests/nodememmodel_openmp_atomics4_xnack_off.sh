@@ -33,5 +33,5 @@ make arraysum4
 export HSA_XNACK=0
 ./arraysum4
 
-make clean
+rm -f arraysum4 arraysum4.o
 

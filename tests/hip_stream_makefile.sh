@@ -32,4 +32,4 @@ cd ${REPO_DIR}/HIP/hip-stream
 
 make stream
 ./stream
-make clean
+rm -f stream stream.o

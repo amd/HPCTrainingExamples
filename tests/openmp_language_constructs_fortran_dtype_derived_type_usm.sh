@@ -30,4 +30,4 @@ cd 7_derived_types
 make dtype_derived_type_usm
 ./dtype_derived_type_usm
 
-make clean
+rm -f dtype_derived_type_usm dtype_derived_type_usm.o

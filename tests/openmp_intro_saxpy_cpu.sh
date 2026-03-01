@@ -28,4 +28,4 @@ cd ${REPO_DIR}/Pragma_Examples/OpenMP/Intro
 make saxpy_cpu
 ./saxpy_cpu
 
-make clean
+rm -f saxpy_cpu saxpy_cpu.o

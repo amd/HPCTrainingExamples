@@ -32,4 +32,4 @@ cd ${REPO_DIR}/HIP/vectorAdd
 
 make vectoradd
 ./vectoradd
-make clean
+rm -f vectoradd vectoradd.o

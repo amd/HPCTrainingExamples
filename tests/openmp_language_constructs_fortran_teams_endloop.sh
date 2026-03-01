@@ -29,4 +29,4 @@ cd teams_endloop
 make
 ./teams_endloop
 
-make clean
+rm -f teams_endloop teams_endloop.o

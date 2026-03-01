@@ -35,8 +35,9 @@ else
    MPIRUN=mpirun
 fi
 
-rm -rf build
-mkdir build && cd build
+BUILD_DIR=build_$$
+rm -rf ${BUILD_DIR}
+mkdir ${BUILD_DIR} && cd ${BUILD_DIR}
 cmake ..
 make
 
@@ -44,4 +45,4 @@ make
 ${MPIRUN} -n 2 ./Jacobi_hip -g 2
 
 cd ..
-rm -rf build
+rm -rf ${BUILD_DIR}

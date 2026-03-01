@@ -28,4 +28,4 @@ cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/4_reduction_scalars/1_reduction_sc
 make
 ./reduction_scalar
 
-make clean
+rm -f reduction_scalar reduction_scalar.o

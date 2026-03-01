@@ -24,8 +24,9 @@ cd ${REPO_DIR}/MPI-examples/GhostExchange/GhostExchange_ArrayAssign
 
 cd Orig
 
-rm -rf build
-mkdir build && cd build
+BUILD_DIR=build_$$
+rm -rf ${BUILD_DIR}
+mkdir ${BUILD_DIR} && cd ${BUILD_DIR}
 cmake ..
 make
 
@@ -40,4 +41,4 @@ else
 fi
 
 cd ..
-rm -rf build
+rm -rf ${BUILD_DIR}

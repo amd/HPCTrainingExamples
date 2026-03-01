@@ -30,4 +30,4 @@ export HSA_XNACK=1
 make dtype_derived_type
 ./dtype_derived_type
 
-make clean
+rm -f dtype_derived_type dtype_derived_type.o

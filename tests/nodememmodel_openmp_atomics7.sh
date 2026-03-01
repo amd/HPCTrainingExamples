@@ -38,6 +38,6 @@ else
    export HSA_XNACK=1
    ./arraysum7
 
-   make clean
+   rm -f arraysum7 arraysum7.o
 fi
 

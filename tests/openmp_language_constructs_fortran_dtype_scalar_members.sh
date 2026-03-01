@@ -29,4 +29,4 @@ cd 7_derived_types
 make dtype_scalar_members
 ./dtype_scalar_members
 
-make clean
+rm -f dtype_scalar_members dtype_scalar_members.o

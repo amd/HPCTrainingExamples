@@ -32,4 +32,4 @@ cd ${REPO_DIR}/HIP/saxpy
 
 make saxpy
 ./saxpy
-make clean
+rm -f saxpy saxpy.o

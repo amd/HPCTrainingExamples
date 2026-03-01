@@ -35,4 +35,4 @@ make vectoradd_hip4.exe
 
 ./vectoradd_hip4.exe
 
-make clean
+rm -f vectoradd_hip4.exe vectoradd_hip4.o
