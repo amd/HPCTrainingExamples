@@ -1119,11 +1119,12 @@ set_property(TEST NodeMemModel_Managed_Memory_HIP1 PROPERTY RESOURCE_LOCK manage
 add_test(NAME NodeMemModel_Managed_Memory_HIP2_XNACK_OFF COMMAND ../nodememmodel_managed_memory_hip2_xnack_off.sh )
 set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_OFF PROPERTY PASS_REGULAR_EXPRESSION "Memory access fault")
 set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_OFF PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_OFF PROPERTY RESOURCE_LOCK managed_memory_vectoradd_dir)
 
 add_test(NAME NodeMemModel_Managed_Memory_HIP2_XNACK_ON COMMAND ../nodememmodel_managed_memory_hip2_xnack_on.sh )
 set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_ON PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_ON PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
-set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_OFF PROPERTY RESOURCE_LOCK managed_memory_vectoradd_dir)
+set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_ON PROPERTY RESOURCE_LOCK managed_memory_vectoradd_dir)
 
 # This test should fail since it initializes the memory on the CPU and it doesn't exist.
 # Why does it pass on MI200 series but fails on gfx1030?
