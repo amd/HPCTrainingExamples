@@ -78,27 +78,22 @@ set_property(TEST USM_Vector_Auto_Zero_Copy PROPERTY SKIP_REGULAR_EXPRESSION "mo
 add_test(NAME HIP_Optimizations_daxpy_1 COMMAND ../hip_optimizations_daxpy_1.sh )
 set_property(TEST HIP_Optimizations_daxpy_1 PROPERTY PASS_REGULAR_EXPRESSION "PASSED")
 set_property(TEST HIP_Optimizations_daxpy_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST HIP_Optimizations_daxpy_1 PROPERTY RESOURCE_LOCK hip_optimizations_daxpy_dir)
 
 add_test(NAME HIP_Optimizations_daxpy_2 COMMAND ../hip_optimizations_daxpy_2.sh )
 set_property(TEST HIP_Optimizations_daxpy_2 PROPERTY PASS_REGULAR_EXPRESSION "PASSED")
 set_property(TEST HIP_Optimizations_daxpy_2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST HIP_Optimizations_daxpy_2 PROPERTY RESOURCE_LOCK hip_optimizations_daxpy_dir)
 
 add_test(NAME HIP_Optimizations_daxpy_3 COMMAND ../hip_optimizations_daxpy_3.sh )
 set_property(TEST HIP_Optimizations_daxpy_3 PROPERTY PASS_REGULAR_EXPRESSION "PASSED")
 set_property(TEST HIP_Optimizations_daxpy_3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST HIP_Optimizations_daxpy_3 PROPERTY RESOURCE_LOCK hip_optimizations_daxpy_dir)
 
 add_test(NAME HIP_Optimizations_daxpy_4 COMMAND ../hip_optimizations_daxpy_4.sh )
 set_property(TEST HIP_Optimizations_daxpy_4 PROPERTY PASS_REGULAR_EXPRESSION "PASSED")
 set_property(TEST HIP_Optimizations_daxpy_4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST HIP_Optimizations_daxpy_4 PROPERTY RESOURCE_LOCK hip_optimizations_daxpy_dir)
 
 add_test(NAME HIP_Optimizations_daxpy_5 COMMAND ../hip_optimizations_daxpy_5.sh )
 set_property(TEST HIP_Optimizations_daxpy_5 PROPERTY PASS_REGULAR_EXPRESSION "PASSED")
 set_property(TEST HIP_Optimizations_daxpy_5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST HIP_Optimizations_daxpy_5 PROPERTY RESOURCE_LOCK hip_optimizations_daxpy_dir)
 
 # HIP-OpenMP Interoperability Examples
 add_test(NAME HIP_OpenMP_Interoperability_CXX_daxpy COMMAND ../hip_openmp_interoperability_cxx_daxpy.sh )
@@ -877,12 +872,10 @@ set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY SKIP_REGULAR_EXPRESSION "modu
 add_test(NAME HIP_Vectoradd_Makefile COMMAND ../hip_vectoradd_makefile.sh )
 set_property(TEST HIP_Vectoradd_Makefile PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST HIP_Vectoradd_Makefile PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST HIP_Vectoradd_Makefile PROPERTY RESOURCE_LOCK hip_vectoradd_dir)
 
 add_test(NAME HIP_Vectoradd_CMakeLists COMMAND ../hip_vectoradd_cmakelists.sh )
 set_property(TEST HIP_Vectoradd_CMakeLists PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST HIP_Vectoradd_CMakeLists PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST HIP_Vectoradd_CMakeLists PROPERTY RESOURCE_LOCK hip_vectoradd_dir)
 
 #add_test(NAME HIP_Vectoradd_Makefile_Batch COMMAND ../hip_vectoradd_makefile_batch.sh )
 #set_property(TEST HIP_Vectoradd_Makefile_Batch PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
@@ -903,22 +896,18 @@ set_property(TEST HIP_Vectoradd_CMakeLists PROPERTY RESOURCE_LOCK hip_vectoradd_
 add_test(NAME HIP_Stream_Makefile COMMAND ../hip_stream_makefile.sh )
 set_property(TEST HIP_Stream_Makefile PROPERTY PASS_REGULAR_EXPRESSION "Triad:")
 set_property(TEST HIP_Stream_Makefile PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST HIP_Stream_Makefile PROPERTY RESOURCE_LOCK hip_stream_dir)
 
 add_test(NAME HIP_Stream_CMakeLists COMMAND ../hip_stream_cmakelists.sh )
 set_property(TEST HIP_Stream_CMakeLists PROPERTY PASS_REGULAR_EXPRESSION "Triad:")
 set_property(TEST HIP_Stream_CMakeLists PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST HIP_Stream_CMakeLists PROPERTY RESOURCE_LOCK hip_stream_dir)
 
 add_test(NAME HIP_Saxpy_Makefile COMMAND ../hip_saxpy_makefile.sh )
 set_property(TEST HIP_Saxpy_Makefile PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST HIP_Saxpy_Makefile PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST HIP_Saxpy_Makefile PROPERTY RESOURCE_LOCK hip_saxpy_dir)
 
 add_test(NAME HIP_Saxpy_CMakeLists COMMAND ../hip_saxpy_cmakelists.sh )
 set_property(TEST HIP_Saxpy_CMakeLists PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST HIP_Saxpy_CMakeLists PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST HIP_Saxpy_CMakeLists PROPERTY RESOURCE_LOCK hip_saxpy_dir)
 
 add_test(NAME HIP_Jacobi_CMakeLists COMMAND ../hip_jacobi_cmakelists.sh )
 set_property(TEST HIP_Jacobi_CMakeLists PROPERTY PASS_REGULAR_EXPRESSION "Measured FLOPS")
@@ -1109,34 +1098,28 @@ set_property(TEST Kokkos_ShallowWater_HIP_Par5 PROPERTY RESOURCE_LOCK kokkos_cha
 add_test(NAME NodeMemModel_Managed_Memory_HIP_Orig COMMAND ../nodememmodel_managed_memory_hip_orig.sh )
 set_property(TEST NodeMemModel_Managed_Memory_HIP_Orig PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST NodeMemModel_Managed_Memory_HIP_Orig PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST NodeMemModel_Managed_Memory_HIP_Orig PROPERTY RESOURCE_LOCK managed_memory_vectoradd_dir)
 
 add_test(NAME NodeMemModel_Managed_Memory_HIP1 COMMAND ../nodememmodel_managed_memory_hip1.sh )
 set_property(TEST NodeMemModel_Managed_Memory_HIP1 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST NodeMemModel_Managed_Memory_HIP1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST NodeMemModel_Managed_Memory_HIP1 PROPERTY RESOURCE_LOCK managed_memory_vectoradd_dir)
 
 add_test(NAME NodeMemModel_Managed_Memory_HIP2_XNACK_OFF COMMAND ../nodememmodel_managed_memory_hip2_xnack_off.sh )
 set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_OFF PROPERTY PASS_REGULAR_EXPRESSION "Memory access fault")
 set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_OFF PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_OFF PROPERTY RESOURCE_LOCK managed_memory_vectoradd_dir)
 
 add_test(NAME NodeMemModel_Managed_Memory_HIP2_XNACK_ON COMMAND ../nodememmodel_managed_memory_hip2_xnack_on.sh )
 set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_ON PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_ON PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
-set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_ON PROPERTY RESOURCE_LOCK managed_memory_vectoradd_dir)
 
 # This test should fail since it initializes the memory on the CPU and it doesn't exist.
 # Why does it pass on MI200 series but fails on gfx1030?
 add_test(NAME NodeMemModel_Managed_Memory_HIP3 COMMAND ../nodememmodel_managed_memory_hip3.sh )
 set_property(TEST NodeMemModel_Managed_Memory_HIP3 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST NodeMemModel_Managed_Memory_HIP3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
-set_property(TEST NodeMemModel_Managed_Memory_HIP3 PROPERTY RESOURCE_LOCK managed_memory_vectoradd_dir)
 
 add_test(NAME NodeMemModel_Managed_Memory_HIP4 COMMAND ../nodememmodel_managed_memory_hip4.sh )
 set_property(TEST NodeMemModel_Managed_Memory_HIP4 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST NodeMemModel_Managed_Memory_HIP4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST NodeMemModel_Managed_Memory_HIP4 PROPERTY RESOURCE_LOCK managed_memory_vectoradd_dir)
 
 #Node Memory Model OpenMP Atomics
 add_test(NAME NodeMemModel_OpenMP_Atomics1 COMMAND ../nodememmodel_openmp_atomics1.sh )
