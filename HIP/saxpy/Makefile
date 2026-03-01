@@ -5,6 +5,7 @@ all: $(EXECUTABLE)
 
 OBJECTS = saxpy.o
 
+HIPCC ?= hipcc
 CXXFLAGS = -g -O2 -DNDEBUG -fPIC
 HIPCC_FLAGS = -g -O2 -DNDEBUG
 

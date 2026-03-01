@@ -15,4 +15,4 @@ if [ $? -eq 1 ]; then
 fi
 module load hip-python
 
-python3 -c 'import hip, hiprtc' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'from hip import hiprtc' 2> /dev/null && echo 'Success' || echo 'Failure'
