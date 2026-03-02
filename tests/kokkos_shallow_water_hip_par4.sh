@@ -2,7 +2,7 @@
 
 export HSA_XNACK=1
 module load gcc
-module list 2>&1 | grep -q -w "rocm"
+module -t list 2>&1 | grep -q "^rocm"
 if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"

@@ -4,7 +4,7 @@
 # (formerly omnitrace-run)
 # binary exists and it is able to run and complete
 
-module list 2>&1 | grep -q -w "rocm"
+module -t list 2>&1 | grep -q "^rocm"
 if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"

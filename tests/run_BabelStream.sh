@@ -16,7 +16,7 @@ if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
       export HIPCC=`which hipcc`
    fi
 else
-   module list 2>&1 | grep -q -w "rocm"
+   module -t list 2>&1 | grep -q "^rocm"
    if [ $? -eq 1 ]; then
      echo "rocm module is not loaded"
      echo "loading default rocm module"

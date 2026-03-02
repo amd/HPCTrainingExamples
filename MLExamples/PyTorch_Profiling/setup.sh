@@ -2,8 +2,8 @@
 
 # Replace the contents of this script with your software setup!
 
-module list 2>&1 | grep -q -w "rocm"
-if [ $? -eq 1 ]; then
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -ne 0 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
   module load rocm
