@@ -25,8 +25,12 @@ fi
 
 module load hipfort
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/HIPFort/hipgemm
-rm -f gemm_local *.o *.mod
+SRC_DIR=${REPO_DIR}/HIPFort/hipgemm
+
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp ${SRC_DIR}/Makefile ${SRC_DIR}/*.f90 ${BUILD_DIR}/
+cd ${BUILD_DIR}
+
 make gemm_local
 ./gemm_local
-rm -f gemm_local *.o *.mod

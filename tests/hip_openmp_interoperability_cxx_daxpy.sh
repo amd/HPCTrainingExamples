@@ -31,7 +31,13 @@ else
    export HSA_XNACK=1
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-   cd ${REPO_DIR}/HIP-OpenMP/CXX/daxpy
+   SRC_DIR=${REPO_DIR}/HIP-OpenMP/CXX/daxpy
+
+   BUILD_DIR=$(mktemp -d)
+   trap "rm -rf ${BUILD_DIR}" EXIT
+   cp ${SRC_DIR}/* ${BUILD_DIR}/
+   cd ${BUILD_DIR}
+
    make
    ./daxpy
 

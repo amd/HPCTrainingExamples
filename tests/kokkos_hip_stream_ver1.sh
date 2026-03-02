@@ -14,9 +14,10 @@ else
 fi
 module load kokkos
 
-rm -rf Chapter13
-git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 Chapter13
-pushd Chapter13/Kokkos/StreamTriad/Ver1
+CLONE_DIR=$(mktemp -d -p . Chapter13_XXXXXX)
+trap "rm -rf ${CLONE_DIR}" EXIT
+git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 ${CLONE_DIR}
+pushd ${CLONE_DIR}/Kokkos/StreamTriad/Ver1
 sed -i -e 's/80000000/100000/' StreamTriad.cc
 
 rm -rf build
@@ -26,4 +27,3 @@ make
 ./StreamTriad
 
 popd
-rm -rf Chapter13

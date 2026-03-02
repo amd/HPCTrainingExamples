@@ -10,6 +10,14 @@ set(LIBOMPTARGET_INFO_SUPPORT 1)
 set(SLURM_BATCH_WAIT 1)
 unset(ENV{AMDGPU_GFXMODEL})
 
+set(CTEST_PARALLEL_LEVEL "4" CACHE STRING "Number of tests to run in parallel")
+# COMMAND ${CMAKE_CTEST_COMMAND} -j${CTEST_PARALLEL_LEVEL} --output-on-failure --timeout 120
+add_custom_target(ptest
+  COMMAND ${CMAKE_CTEST_COMMAND} -j${CTEST_PARALLEL_LEVEL} --timeout 240
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+  COMMENT "Running tests in parallel (CTEST_PARALLEL_LEVEL=${CTEST_PARALLEL_LEVEL})"
+)
+
 # HIP basic functionalities
 add_test(NAME HIP_Query_Device COMMAND ../hip_query_device.sh )
 set_property(TEST HIP_Query_Device PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")

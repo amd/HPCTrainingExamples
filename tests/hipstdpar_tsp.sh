@@ -23,9 +23,10 @@ else
    fi
 fi
 
-mkdir tsp
-git clone https://github.com/pkestene/tsp
-cd tsp
+CLONE_DIR=$(mktemp -d -p . tsp_XXXXXX)
+trap "rm -rf ${CLONE_DIR}" EXIT
+git clone https://github.com/pkestene/tsp ${CLONE_DIR}
+cd ${CLONE_DIR}
 git checkout 51587
 wget -q https://raw.githubusercontent.com/ROCm/roc-stdpar/main/data/patches/tsp/TSP.patch
 
@@ -50,5 +51,3 @@ make tsp_clang_stdpar_gpu
 ./tsp_clang_stdpar_gpu
 
 make clean
-cd ../..
-rm -rf tsp

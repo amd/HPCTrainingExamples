@@ -29,7 +29,7 @@ else
 fi
 
 rm -rf ${BABELSTREAM_ROOT}
-git clone https://github.com/UoB-HPC/BabelStream.git ${BABELSTREAM_ROOT}
+git clone --branch v5.0 https://github.com/UoB-HPC/BabelStream.git ${BABELSTREAM_ROOT}
 cd ${BABELSTREAM_ROOT}
 # -DDEFAULT -- good performance
 # -DMANAGED -- poor performance

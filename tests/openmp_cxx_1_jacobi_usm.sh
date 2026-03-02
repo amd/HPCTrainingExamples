@@ -24,7 +24,12 @@ else
 fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/CXX/8_jacobi/1_jacobi_usm
+SRC_DIR=${REPO_DIR}/Pragma_Examples/OpenMP/CXX/8_jacobi/1_jacobi_usm
+
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp ${SRC_DIR}/* ${BUILD_DIR}/
+cd ${BUILD_DIR}
 
 export HSA_XNACK=1
 make CC=$CXX
