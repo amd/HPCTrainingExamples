@@ -1,7 +1,12 @@
 #!/bin/bash
 
 # Call the software set up script:
-source setup.sh
+
+module list 2>&1 | grep -q -w "rocm"
+if [ $? -eq 1 ]; then
+  echo "modules are not loaded, loading them"
+  source setup.sh
+fi
 
 # to be updated:
 export MASTER_ADDR=`hostname`
