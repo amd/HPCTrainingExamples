@@ -22,6 +22,7 @@ else
    if [ "$?" == "1" ]; then
       module load amdclang
    fi
+   export HIP_PLATFORM=amd
 fi
 
 XNACK_COUNT=`rocminfo | grep xnack | wc -l`
