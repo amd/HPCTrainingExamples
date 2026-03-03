@@ -26,6 +26,8 @@ else
    fi
 fi
 
+module load kokkos
+
 XNACK_COUNT=`rocminfo | grep xnack | wc -l`
 if [ ${XNACK_COUNT} -lt 1 ]; then
    echo "Skip"
