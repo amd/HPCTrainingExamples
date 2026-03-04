@@ -23,9 +23,12 @@ fi
 
 PETSC_VERSION=`$PETSC_DIR/lib/petsc/bin/petscversion`
 
-git clone --branch v$PETSC_VERSION https://gitlab.com/petsc/petsc.git petsc_for_test
+WORKDIR=$(mktemp -d -t petsc_test_XXXXXXXXXX)
+trap "rm -rf $WORKDIR" EXIT
 
-pushd petsc_for_test/src/ksp/ksp/tutorials
+git clone --branch v$PETSC_VERSION https://gitlab.com/petsc/petsc.git "$WORKDIR/petsc_for_test"
+
+pushd "$WORKDIR/petsc_for_test/src/ksp/ksp/tutorials"
 
 sed -i '/PetscCheck(norm/d' bench_kspsolve.c
 
@@ -34,8 +37,6 @@ mpicc bench_kspsolve.c -o bench_kspsolve -I$PETSC_PATH/include -L$PETSC_PATH/lib
 ./bench_kspsolve -mat_type aijhipsparse
 
 popd
-
-rm -rf petsc_for_test
 
 
 
