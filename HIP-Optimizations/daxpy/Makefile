@@ -18,5 +18,5 @@ $(EXECUTABLE): %: %.o
 clean: 	
 	rm -f $(EXECUTABLE) 	
 	rm -f $(OBJECTS) *.o
-	rm -f *amdgcn* *x86_64* results*
+	rm -f *amdgcn* *x86_64* *.hipfb *.tmp* results*
 

@@ -19,5 +19,5 @@ else
 
    mpirun -n 2 ./pt2pt
 
-   make clean
+   rm -f pt2pt
 fi

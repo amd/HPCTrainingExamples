@@ -52,3 +52,28 @@ Mkfile.old
 dkms.conf
 __pycache__/
 *.pyc
+
+# CTest/CDash build directories
+tests/build-rocm-*/
+tests/build*/
+
+# ML training data
+MLExamples/PyTorch_Profiling/data/
+
+# HIP compiler temporaries (--save-temps)
+*.bc
+*.hipi
+*.hipfb
+*.out.resolution.txt
+*.tmp[0-9]*
+
+# TAU profiling artifacts
+profile.*
+tautrace.*.trc
+events.*.edf
+
+# Downloaded archives
+*.tar.gz
+
+# Build directories
+build/

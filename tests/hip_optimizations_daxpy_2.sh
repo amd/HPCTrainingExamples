@@ -34,4 +34,4 @@ cd ${REPO_DIR}/HIP-Optimizations/daxpy
 make daxpy_2
 ./daxpy_2 1000000
 
-rm -f daxpy_2 daxpy_2.o
+make clean

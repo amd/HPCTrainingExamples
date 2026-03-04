@@ -70,8 +70,8 @@ module load tau
 export TAU_PROFILE=${TAU_PROFILE}
 export TAU_TRACE=${TAU_TRACE}
 
-rm -rf profile.0*
-rm -rf tautrace.0*
+rm -rf profile.* events.*.edf
+rm -rf tautrace.*
 rm -f Jacobi_hip *.o
 make
 
@@ -87,6 +87,6 @@ ls
 pprof
 
 rm -f Jacobi_hip *.o
-rm -rf profile.0*
-rm -rf tautrace.0*
+rm -rf profile.* events.*.edf
+rm -rf tautrace.*
 

@@ -31,3 +31,5 @@ hipify-perl nbody-orig.cu > nbody-orig.cpp
 hipcc -DSHMOO -I../ nbody-orig.cpp -o nbody-orig
 
 ./nbody-orig
+
+rm -f nbody-orig nbody-orig.cpp
