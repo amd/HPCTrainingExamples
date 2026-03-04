@@ -4,16 +4,16 @@
 
 module load miniforge3
 
-mamba create -y -n env_for_test numpy pandas
+mamba create -y -n env_for_install_test numpy pandas
 
-mamba activate env_for_test
+mamba activate env_for_install_test
 
 mamba install -y jax
 
-mamba list -n env_for_test
+mamba list -n env_for_install_test
 
 mamba deactivate
 
-mamba remove -y -n env_for_test --all
+mamba remove -y -n env_for_install_test --all
 
 module unload miniforge3
