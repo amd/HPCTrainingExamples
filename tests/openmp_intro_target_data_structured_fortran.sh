@@ -24,8 +24,10 @@ else
 fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/Intro/Fortran_examples
+SRCDIR=${REPO_DIR}/Pragma_Examples/OpenMP/Intro/Fortran_examples
+BUILDDIR=$(mktemp -d)
+trap 'rm -rf ${BUILDDIR}' EXIT
+cp ${SRCDIR}/Makefile ${SRCDIR}/*.F90 ${BUILDDIR}/
+cd ${BUILDDIR}
 make target_data_structured
 ./target_data_structured
-
-rm -f target_data_structured target_data_structured.o

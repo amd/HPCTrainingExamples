@@ -24,8 +24,10 @@ else
 fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/Intro
+SRCDIR=${REPO_DIR}/Pragma_Examples/OpenMP/Intro
+BUILDDIR=$(mktemp -d)
+trap 'rm -rf ${BUILDDIR}' EXIT
+cp ${SRCDIR}/Makefile ${SRCDIR}/*.cpp ${SRCDIR}/*.F90 ${BUILDDIR}/
+cd ${BUILDDIR}
 make saxpy5
 ./saxpy5
-
-rm -f saxpy5 saxpy5.o
