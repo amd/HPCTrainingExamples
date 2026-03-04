@@ -1505,10 +1505,12 @@ set_property(TEST Miniconda3_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "mod
 add_test(NAME Miniconda3_Env_Create COMMAND ../miniconda3_env_create.sh)
 set_property(TEST Miniconda3_Env_Create PROPERTY PASS_REGULAR_EXPRESSION "env_for_test          *")
 set_property(TEST Miniconda3_Env_Create PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniconda3'")
+set_property(TEST Miniconda3_Env_Create PROPERTY RESOURCE_LOCK miniconda3_cache)
 
 add_test(NAME Miniconda3_Env_Install COMMAND ../miniconda3_env_install.sh)
 set_property(TEST Miniconda3_Env_Install PROPERTY PASS_REGULAR_EXPRESSION "jaxlib")
 set_property(TEST Miniconda3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniconda3'")
+set_property(TEST Miniconda3_Env_Install PROPERTY RESOURCE_LOCK miniconda3_cache)
 
 # Miniforge3 Tests
 add_test(NAME Miniforge3_Check_Conda_Version COMMAND ../miniforge3_check_version.sh)
@@ -1522,10 +1524,12 @@ set_property(TEST Miniforge3_Check_Mamba_Version PROPERTY SKIP_REGULAR_EXPRESSIO
 add_test(NAME Miniforge3_Env_Create COMMAND ../miniforge3_env_create.sh)
 set_property(TEST Miniforge3_Env_Create PROPERTY PASS_REGULAR_EXPRESSION "env_for_test          *")
 set_property(TEST Miniforge3_Env_Create PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
+set_property(TEST Miniforge3_Env_Create PROPERTY RESOURCE_LOCK miniforge3_cache)
 
 add_test(NAME Miniforge3_Env_Install COMMAND ../miniforge3_env_install.sh)
 set_property(TEST Miniforge3_Env_Install PROPERTY PASS_REGULAR_EXPRESSION "jaxlib")
 set_property(TEST Miniforge3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
+set_property(TEST Miniforge3_Env_Install PROPERTY RESOURCE_LOCK miniforge3_cache)
 
 #HDF5 Tests
 add_test(NAME HDF5_Check_Version COMMAND ../hdf5_check_version.sh)
