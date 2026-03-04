@@ -1350,15 +1350,19 @@ set_property(TEST FTorch_MultiGPU_Test PROPERTY SKIP_REGULAR_EXPRESSION "module 
 # Julia tests
 add_test(NAME Julia_Check_Install COMMAND ../julia_check_install.sh )
 set_property(TEST Julia_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "Configured Default Julia version set to '1.12'.")
+set_property(TEST Julia_Check_Install PROPERTY RESOURCE_LOCK juliaup_install)
 
 add_test(NAME Julia_Check_GPU_Access COMMAND ../julia_check_gpu_access.sh )
 set_property(TEST Julia_Check_GPU_Access PROPERTY PASS_REGULAR_EXPRESSION "gfx")
+set_property(TEST Julia_Check_GPU_Access PROPERTY RESOURCE_LOCK juliaup_install)
 
 add_test(NAME Julia_GPU_Vec_Add COMMAND ../julia_gpu_vec_add.sh )
 set_property(TEST Julia_GPU_Vec_Add PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
+set_property(TEST Julia_GPU_Vec_Add PROPERTY RESOURCE_LOCK juliaup_install)
 
 add_test(NAME Julia_GPU_Oceananigans COMMAND ../julia_gpu_oceananigans.sh )
 set_property(TEST Julia_GPU_Oceananigans PROPERTY PASS_REGULAR_EXPRESSION "AMDGPU extension |   20 ")
+set_property(TEST Julia_GPU_Oceananigans PROPERTY RESOURCE_LOCK juliaup_install)
 
 # HIP-Python tests
 add_test(NAME HIP-Python_Check_Import COMMAND ../hip-python_check_import.sh )
