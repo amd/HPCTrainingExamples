@@ -8,10 +8,13 @@
 
 
 export CUR_DIR=$(mktemp -d)
+ORIG_HOME="${HOME}"
+export HOME="${CUR_DIR}"
 export TMPDIR="${CUR_DIR}"
 export JULIA_DEPOT_PATH="${CUR_DIR}/julia_depot"
 curl -fsSL https://install.julialang.org | sh -s -- --yes --add-to-path=no -p=${CUR_DIR}/juliaup_install
 export PATH=$PATH:"${CUR_DIR}/juliaup_install/bin"
+
 juliaup add 1.12
 juliaup default 1.12
 julia -e 'using Pkg; Pkg.add("AMDGPU")'
@@ -31,4 +34,6 @@ pushd Oceananigans.jl/test
 julia test_amdgpu.jl
 popd
 rm -rf Oceananigans.jl
+
+export HOME="${ORIG_HOME}"
 rm -rf ${CUR_DIR}
