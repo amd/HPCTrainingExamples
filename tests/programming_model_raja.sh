@@ -35,6 +35,7 @@ else
    rm -rf ${PROB_NAME}
    mkdir ${PROB_NAME} && cd ${PROB_NAME}
 
+   REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    PWDir=`pwd`
 
    git clone --recursive https://github.com/LLNL/RAJA.git Raja_build
@@ -62,8 +63,7 @@ else
 
    export Raja_DIR=${PWDir}/Raja_HIP
 
-   REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-   cd ${REPO_DIR}/ManagedMemory/Raja_Code
+   cd ${REPO_DIR}/../ManagedMemory/Raja_Code
 
    # To run with managed memory
    export HSA_XNACK=1
