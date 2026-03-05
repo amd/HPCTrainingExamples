@@ -1439,6 +1439,16 @@ add_test(NAME Score-P_Check_Version COMMAND ../scorep_check_version.sh)
 set_property(TEST Score-P_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "Score-P 9.4")
 set_property(TEST Score-P_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'scorep'")
 
+add_test(NAME Score-P_CPU_Profile COMMAND ../scorep_cpu_profile.sh)
+set_property(TEST Score-P_CPU_Profile PROPERTY PASS_REGULAR_EXPRESSION "PASS: Score-P CPU profiling test completed successfully")
+set_property(TEST Score-P_CPU_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'scorep'")
+
+add_test(NAME Score-P_GPU_Profile COMMAND ../scorep_gpu_profile.sh)
+set_property(TEST Score-P_GPU_Profile PROPERTY PASS_REGULAR_EXPRESSION "PASS: Score-P GPU profiling test completed successfully")
+set_property(TEST Score-P_GPU_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'scorep'")
+
+# Miniconda3 Tests
+# Miniconda3 Tests
 # Miniconda3 Tests
 add_test(NAME Miniconda3_Check_Version COMMAND ../miniconda3_check_version.sh)
 set_property(TEST Miniconda3_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 25.3.1")
