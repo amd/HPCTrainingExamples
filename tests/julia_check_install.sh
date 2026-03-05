@@ -5,7 +5,6 @@
 # NOTE: this test uses the instructions located at 
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/julia_setup.sh
 
-
 export CUR_DIR=$(mktemp -d)
 ORIG_HOME="${HOME}"
 export HOME="${CUR_DIR}"
