@@ -1,6 +1,8 @@
 #!/bin/bash
 
-
+export CONDA_TMPDIR=$(mktemp -d)
+export CONDA_PKGS_DIRS="${CONDA_TMPDIR}/pkgs"
+export CONDA_ENVS_DIRS="${CONDA_TMPDIR}/envs"
 
 module load miniforge3
 
@@ -17,3 +19,5 @@ mamba deactivate
 mamba remove -y -n env_for_install_test --all
 
 module unload miniforge3
+
+rm -rf ${CONDA_TMPDIR}

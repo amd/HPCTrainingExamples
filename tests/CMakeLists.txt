@@ -1349,7 +1349,7 @@ set_property(TEST FTorch_MultiGPU_Test PROPERTY SKIP_REGULAR_EXPRESSION "module 
 
 # Julia tests
 add_test(NAME Julia_Check_Install COMMAND ../julia_check_install.sh )
-set_property(TEST Julia_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "Configured Default Julia version set to '1.12'.")
+set_property(TEST Julia_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "Configure Default Julia version set to '1.12'.")
 
 add_test(NAME Julia_Check_GPU_Access COMMAND ../julia_check_gpu_access.sh )
 set_property(TEST Julia_Check_GPU_Access PROPERTY PASS_REGULAR_EXPRESSION "gfx")
@@ -1499,7 +1499,7 @@ set_property(TEST Miniconda3_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "con
 set_property(TEST Miniconda3_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniconda3'")
 
 add_test(NAME Miniconda3_Env_Create COMMAND ../miniconda3_env_create.sh)
-set_property(TEST Miniconda3_Env_Create PROPERTY PASS_REGULAR_EXPRESSION "env_for_test          *")
+set_property(TEST Miniconda3_Env_Create PROPERTY PASS_REGULAR_EXPRESSION "env_for_conda_create_test")
 set_property(TEST Miniconda3_Env_Create PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniconda3'")
 set_property(TEST Miniconda3_Env_Create PROPERTY RESOURCE_LOCK miniconda3_cache)
 
@@ -1518,7 +1518,7 @@ set_property(TEST Miniforge3_Check_Mamba_Version PROPERTY PASS_REGULAR_EXPRESSIO
 set_property(TEST Miniforge3_Check_Mamba_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
 
 add_test(NAME Miniforge3_Env_Create COMMAND ../miniforge3_env_create.sh)
-set_property(TEST Miniforge3_Env_Create PROPERTY PASS_REGULAR_EXPRESSION "env_for_test          *")
+set_property(TEST Miniforge3_Env_Create PROPERTY PASS_REGULAR_EXPRESSION "env_for_create_test")
 set_property(TEST Miniforge3_Env_Create PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
 set_property(TEST Miniforge3_Env_Create PROPERTY RESOURCE_LOCK miniforge3_cache)
 

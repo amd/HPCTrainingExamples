@@ -19,9 +19,8 @@ fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 pushd ${REPO_DIR}/HIP/saxpy
-rm -rf build_for_test
-mkdir build_for_test
-cd build_for_test
+BUILD_DIR=$(mktemp -d build_XXXXXX)
+cd ${BUILD_DIR}
 cmake ..
 make
 
@@ -29,5 +28,5 @@ export HSA_XNACK=1
 rocprof-compute profile -n v1 --no-roof -- ./saxpy
 
 cd ..
-rm -rf build_for_test
+rm -rf ${BUILD_DIR}
 popd

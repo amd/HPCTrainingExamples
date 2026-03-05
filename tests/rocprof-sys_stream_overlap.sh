@@ -68,8 +68,8 @@ fi
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 pushd ${REPO_DIR}/HIP/Stream_Overlap/0-Orig/
-rm -rf build_for_test
-mkdir build_for_test; cd build_for_test
+BUILD_DIR=$(mktemp -d build_XXXXXX)
+cd ${BUILD_DIR}
 cmake ../
 make -j
 
@@ -122,7 +122,7 @@ cd ${TOOL_OUTPUT}-compute_comm_overlap.inst-output/
 ls *
 
 cd ..
-rm -rf build_for_test
+rm -rf ${BUILD_DIR}
 
 popd
 

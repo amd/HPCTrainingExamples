@@ -275,7 +275,9 @@ if __name__ == "__main__":
 
     train_data, val_data = build_dataset(args, rank, download)
 
-    if download: exit(0)
+    if download:
+        dist.destroy_process_group()
+        exit(0)
 
     model, opt = init_model(args, rank)
 
