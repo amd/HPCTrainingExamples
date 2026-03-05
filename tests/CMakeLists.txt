@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
+cmake_policy(SET CMP0074 NEW)
+cmake_policy(SET CMP0074 NEW)
 project(Vectoradd LANGUAGES CXX)
 include(CTest)
 
@@ -984,115 +986,59 @@ add_test(NAME Kokkos_Test_Install COMMAND ../kokkos_test_install.sh )
 set_property( TEST Kokkos_Test_Install PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
 set_property(TEST Kokkos_Test_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
 
-add_test(NAME Kokkos_OpenMP_Stream_Orig COMMAND ../kokkos_openmp_stream_orig.sh )
-set_property(TEST Kokkos_OpenMP_Stream_Orig PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
-set_property(TEST Kokkos_OpenMP_Stream_Orig PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Kokkos_CPU_OpenMP_Stream_Ver3 COMMAND ../kokkos_cpu_openmp_stream_ver3.sh )
+set_property(TEST Kokkos_CPU_OpenMP_Stream_Ver3 PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
+set_property(TEST Kokkos_CPU_OpenMP_Stream_Ver3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Kokkos_OpenMP_Stream_Ver1 COMMAND ../kokkos_openmp_stream_ver1.sh )
-set_property(TEST Kokkos_OpenMP_Stream_Ver1 PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
-set_property(TEST Kokkos_OpenMP_Stream_Ver1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Kokkos_CPU_OpenMP_Stream_Ver4 COMMAND ../kokkos_cpu_openmp_stream_ver4.sh )
+set_property(TEST Kokkos_CPU_OpenMP_Stream_Ver4 PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
+set_property(TEST Kokkos_CPU_OpenMP_Stream_Ver4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Kokkos_OpenMP_Stream_Ver2 COMMAND ../kokkos_openmp_stream_ver2.sh )
-set_property(TEST Kokkos_OpenMP_Stream_Ver2 PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
-set_property(TEST Kokkos_OpenMP_Stream_Ver2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME CPU_Stream COMMAND ../cpu_stream.sh )
+set_property(TEST CPU_Stream PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
+set_property(TEST CPU_Stream PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Kokkos_OpenMP_Stream_Ver3 COMMAND ../kokkos_openmp_stream_ver3.sh )
-set_property(TEST Kokkos_OpenMP_Stream_Ver3 PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
-set_property(TEST Kokkos_OpenMP_Stream_Ver3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Kokkos_GPU_HIP_Stream_Ver3 COMMAND ../kokkos_gpu_hip_stream_ver3.sh )
+set_property(TEST Kokkos_GPU_HIP_Stream_Ver3 PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
+set_property(TEST Kokkos_GPU_HIP_Stream_Ver3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
 
-add_test(NAME Kokkos_OpenMP_Stream_Ver4 COMMAND ../kokkos_openmp_stream_ver4.sh )
-set_property(TEST Kokkos_OpenMP_Stream_Ver4 PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
-set_property(TEST Kokkos_OpenMP_Stream_Ver4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Kokkos_GPU_HIP_Stream_Ver4 COMMAND ../kokkos_gpu_hip_stream_ver4.sh )
+set_property(TEST Kokkos_GPU_HIP_Stream_Ver4 PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
+set_property(TEST Kokkos_GPU_HIP_Stream_Ver4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
 
-add_test(NAME Kokkos_HIP_Stream_Orig COMMAND ../kokkos_hip_stream_orig.sh )
-set_property(TEST Kokkos_HIP_Stream_Orig PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
-set_property(TEST Kokkos_HIP_Stream_Orig PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME Kokkos_HIP_Stream_Ver1 COMMAND ../kokkos_hip_stream_ver1.sh )
-set_property(TEST Kokkos_HIP_Stream_Ver1 PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
-set_property(TEST Kokkos_HIP_Stream_Ver1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
-
-add_test(NAME Kokkos_HIP_Stream_Ver2 COMMAND ../kokkos_hip_stream_ver2.sh )
-set_property(TEST Kokkos_HIP_Stream_Ver2 PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
-set_property(TEST Kokkos_HIP_Stream_Ver2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME Kokkos_HIP_Stream_Ver3 COMMAND ../kokkos_hip_stream_ver3.sh )
-set_property(TEST Kokkos_HIP_Stream_Ver3 PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
-set_property(TEST Kokkos_HIP_Stream_Ver3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
-
-add_test(NAME Kokkos_HIP_Stream_Ver4 COMMAND ../kokkos_hip_stream_ver4.sh )
-set_property(TEST Kokkos_HIP_Stream_Ver4 PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
-set_property(TEST Kokkos_HIP_Stream_Ver4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
-
-add_test(NAME Kokkos_ShallowWater_Serial_Orig COMMAND ../kokkos_shallow_water_serial_orig.sh )
-set_property(TEST Kokkos_ShallowWater_Serial_Orig PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_Serial_Orig PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME Kokkos_ShallowWater_Serial_Par1 COMMAND ../kokkos_shallow_water_serial_par1.sh )
-set_property(TEST Kokkos_ShallowWater_Serial_Par1 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_Serial_Par1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME Kokkos_ShallowWater_Serial_Par2 COMMAND ../kokkos_shallow_water_serial_par2.sh )
-set_property(TEST Kokkos_ShallowWater_Serial_Par2 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_Serial_Par2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME Kokkos_ShallowWater_Serial_Par3 COMMAND ../kokkos_shallow_water_serial_par3.sh )
-set_property(TEST Kokkos_ShallowWater_Serial_Par3 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_Serial_Par3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME Kokkos_ShallowWater_Serial_Par4 COMMAND ../kokkos_shallow_water_serial_par4.sh )
-set_property(TEST Kokkos_ShallowWater_Serial_Par4 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_Serial_Par4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME Kokkos_ShallowWater_Serial_Par5 COMMAND ../kokkos_shallow_water_serial_par5.sh )
-set_property(TEST Kokkos_ShallowWater_Serial_Par5 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_Serial_Par5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME Kokkos_ShallowWater_OpenMP_Orig COMMAND ../kokkos_shallow_water_openmp_orig.sh )
-set_property(TEST Kokkos_ShallowWater_OpenMP_Orig PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_OpenMP_Orig PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME Kokkos_ShallowWater_OpenMP_Par1 COMMAND ../kokkos_shallow_water_openmp_par1.sh )
-set_property(TEST Kokkos_ShallowWater_OpenMP_Par1 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_OpenMP_Par1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME Kokkos_ShallowWater_OpenMP_Par2 COMMAND ../kokkos_shallow_water_openmp_par2.sh )
+add_test(NAME Kokkos_ShallowWater_OpenMP_Par2 COMMAND ../kokkos_cpu_openmp_shallow_water_par2.sh )
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par2 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Kokkos_ShallowWater_OpenMP_Par3 COMMAND ../kokkos_shallow_water_openmp_par3.sh )
+add_test(NAME Kokkos_ShallowWater_OpenMP_Par3 COMMAND ../kokkos_cpu_openmp_shallow_water_par3.sh )
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par3 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Kokkos_ShallowWater_OpenMP_Par4 COMMAND ../kokkos_shallow_water_openmp_par4.sh )
+add_test(NAME Kokkos_ShallowWater_OpenMP_Par4 COMMAND ../kokkos_cpu_openmp_shallow_water_par4.sh )
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par4 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Kokkos_ShallowWater_OpenMP_Par5 COMMAND ../kokkos_shallow_water_openmp_par5.sh )
+add_test(NAME Kokkos_ShallowWater_OpenMP_Par5 COMMAND ../kokkos_cpu_openmp_shallow_water_par5.sh )
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par5 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Kokkos_ShallowWater_HIP_Orig COMMAND ../kokkos_shallow_water_hip_orig.sh )
-set_property(TEST Kokkos_ShallowWater_HIP_Orig PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_HIP_Orig PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME CPU_Shallow_Water COMMAND ../cpu_shallow_water.sh )
+set_property(TEST CPU_Shallow_Water PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
+set_property(TEST CPU_Shallow_Water PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Kokkos_ShallowWater_HIP_Par1 COMMAND ../kokkos_shallow_water_hip_par1.sh )
-set_property(TEST Kokkos_ShallowWater_HIP_Par1 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_HIP_Par1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-add_test(NAME Kokkos_ShallowWater_HIP_Par2 COMMAND ../kokkos_shallow_water_hip_par2.sh )
+add_test(NAME Kokkos_ShallowWater_HIP_Par2 COMMAND ../kokkos_gpu_hip_shallow_water_par2.sh )
 set_property(TEST Kokkos_ShallowWater_HIP_Par2 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 set_property(TEST Kokkos_ShallowWater_HIP_Par2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Kokkos_ShallowWater_HIP_Par3 COMMAND ../kokkos_shallow_water_hip_par3.sh )
+add_test(NAME Kokkos_ShallowWater_HIP_Par3 COMMAND ../kokkos_gpu_hip_shallow_water_par3.sh )
 set_property(TEST Kokkos_ShallowWater_HIP_Par3 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 set_property(TEST Kokkos_ShallowWater_HIP_Par3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Kokkos_ShallowWater_HIP_Par4 COMMAND ../kokkos_shallow_water_hip_par4.sh )
+add_test(NAME Kokkos_ShallowWater_HIP_Par4 COMMAND ../kokkos_gpu_hip_shallow_water_par4.sh )
 set_property(TEST Kokkos_ShallowWater_HIP_Par4 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 set_property(TEST Kokkos_ShallowWater_HIP_Par4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME Kokkos_ShallowWater_HIP_Par5 COMMAND ../kokkos_shallow_water_hip_par5.sh )
+add_test(NAME Kokkos_ShallowWater_HIP_Par5 COMMAND ../kokkos_gpu_hip_shallow_water_par5.sh )
 set_property(TEST Kokkos_ShallowWater_HIP_Par5 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 set_property(TEST Kokkos_ShallowWater_HIP_Par5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 

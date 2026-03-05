@@ -13,14 +13,11 @@ else
    module load amdclang
 fi
 
-PROB_NAME=kokkos_openmp_stream_orig
-mkdir ${PROB_NAME} && cd ${PROB_NAME}
+CLONE_DIR=$(mktemp -d -p "$(pwd)" Chapter13_XXXXXX)
+trap "rm -rf ${CLONE_DIR}" EXIT
+git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 ${CLONE_DIR}
+pushd ${CLONE_DIR}/Kokkos/StreamTriad/Orig
 
-PWDir=`pwd`
-
-rm -rf Chapter13
-git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 Chapter13
-cd Chapter13/Kokkos/StreamTriad/Orig
 sed -i -e 's/80000000/100000/' StreamTriad.cc
 
 rm -rf build
@@ -29,8 +26,4 @@ cmake ..
 make
 ./StreamTriad
 
-cd ${PWDir}
-rm -rf Chapter13
-
-cd ..
-rm -rf ${PROB_NAME}
+popd
