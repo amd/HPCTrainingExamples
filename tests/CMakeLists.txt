@@ -1153,11 +1153,11 @@ set_property(TEST NodeMemModel_OpenMP_Atomics4_XNACK_On PROPERTY PASS_REGULAR_EX
 set_property(TEST NodeMemModel_OpenMP_Atomics4_XNACK_On PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 add_test(NAME NodeMemModel_OpenMP_Atomics5 COMMAND ../nodememmodel_openmp_atomics5.sh )
-set_property(TEST NodeMemModel_OpenMP_Atomics5 PROPERTY PASS_REGULAR_EXPRESSION "FAILED")
+set_property(TEST NodeMemModel_OpenMP_Atomics5 PROPERTY PASS_REGULAR_EXPRESSION "PASSED")
 set_property(TEST NodeMemModel_OpenMP_Atomics5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 add_test(NAME NodeMemModel_OpenMP_Atomics6 COMMAND ../nodememmodel_openmp_atomics6.sh )
-set_property(TEST NodeMemModel_OpenMP_Atomics6 PROPERTY PASS_REGULAR_EXPRESSION "FAILED")
+set_property(TEST NodeMemModel_OpenMP_Atomics6 PROPERTY PASS_REGULAR_EXPRESSION "PASSED")
 set_property(TEST NodeMemModel_OpenMP_Atomics6 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 add_test(NAME NodeMemModel_OpenMP_Atomics7 COMMAND ../nodememmodel_openmp_atomics7.sh )
@@ -1165,7 +1165,7 @@ set_property(TEST NodeMemModel_OpenMP_Atomics7 PROPERTY PASS_REGULAR_EXPRESSION 
 set_property(TEST NodeMemModel_OpenMP_Atomics7 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 add_test(NAME NodeMemModel_OpenMP_Atomics8 COMMAND ../nodememmodel_openmp_atomics8.sh )
-set_property(TEST NodeMemModel_OpenMP_Atomics8 PROPERTY PASS_REGULAR_EXPRESSION "FAILED")
+set_property(TEST NodeMemModel_OpenMP_Atomics8 PROPERTY PASS_REGULAR_EXPRESSION "PASSED")
 set_property(TEST NodeMemModel_OpenMP_Atomics8 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 # Expected failure -- passes if we remove hint(AMD_fast_fp_atomics)
