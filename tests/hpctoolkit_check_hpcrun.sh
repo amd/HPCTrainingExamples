@@ -13,8 +13,9 @@ fi
 module load hpctoolkit
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 pushd ${REPO_DIR}/HIP/Stream_Overlap/0-Orig/
-rm -rf build_for_test
-mkdir build_for_test; cd build_for_test
+WORKDIR=build_for_test_$$
+rm -rf ${WORKDIR}
+mkdir ${WORKDIR}; cd ${WORKDIR}
 cmake ../
 make -j
 
@@ -22,7 +23,7 @@ hpcrun -e CPUTIME -e gpu=rocm -t ./compute_comm_overlap 2
 ls hpctoolkit-compute_comm_overlap-measurements*
 
 cd ..
-rm -rf build_for_test
+rm -rf ${WORKDIR}
 
 popd
 

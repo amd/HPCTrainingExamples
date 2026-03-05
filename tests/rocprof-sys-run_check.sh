@@ -20,15 +20,15 @@ fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 pushd ${REPO_DIR}/HIP/Stream_Overlap/0-Orig/
-rm -rf build_for_test
-mkdir build_for_test; cd build_for_test
+BUILD_DIR=$(mktemp -d build_XXXXXX)
+cd ${BUILD_DIR}
 cmake ../
 make -j
 
 rocprof-sys-run -- ./compute_comm_overlap 2
 
 cd ..
-rm -rf build_for_test
+rm -rf ${BUILD_DIR}
 
 popd
 

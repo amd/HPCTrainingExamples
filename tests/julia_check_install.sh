@@ -7,6 +7,7 @@
 
 
 export CUR_DIR=$(mktemp -d)
+export HOME="${CUR_DIR}"
 export JULIA_DEPOT_PATH="${CUR_DIR}/julia_depot"
 curl -fsSL https://install.julialang.org | sh -s -- --yes --add-to-path=no -p=${CUR_DIR}/juliaup_install || true
 export PATH=$PATH:"${CUR_DIR}/juliaup_install/bin"

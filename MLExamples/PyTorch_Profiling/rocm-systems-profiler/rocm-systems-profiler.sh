@@ -31,7 +31,7 @@ fi
 popd
 
 # Create the configuration for the system profiler:
-export RSP_CFG=${PROFILER_TOP_DIR}/rocm-system-profiler/rocprofiler-systems.cfg
+export RSP_CFG=${PROFILER_TOP_DIR}/rocm-system-profiler/rocprofiler-systems_$$.cfg
 rocprof-sys-avail -G $RSP_CFG
 
 # Execute the python script:
