@@ -1299,12 +1299,15 @@ set_property(TEST Julia_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "Configur
 
 add_test(NAME Julia_Check_GPU_Access COMMAND ../julia_check_gpu_access.sh )
 set_property(TEST Julia_Check_GPU_Access PROPERTY PASS_REGULAR_EXPRESSION "gfx")
+set_tests_properties(Julia_Check_GPU_Access PROPERTIES TIMEOUT 400)
 
 add_test(NAME Julia_GPU_Vec_Add COMMAND ../julia_gpu_vec_add.sh )
 set_property(TEST Julia_GPU_Vec_Add PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
+set_tests_properties(Julia_GPU_Vec_Add PROPERTIES TIMEOUT 400)
 
 add_test(NAME Julia_GPU_Oceananigans COMMAND ../julia_gpu_oceananigans.sh )
 set_property(TEST Julia_GPU_Oceananigans PROPERTY PASS_REGULAR_EXPRESSION "AMDGPU on LatitudeLongitudeGrid with HydrostaticFreeSurfaceModel |   34     34")
+set_tests_properties(Julia_GPU_Oceananigans PROPERTIES TIMEOUT 1000)
 
 # HIP-Python tests
 add_test(NAME HIP-Python_Check_Import COMMAND ../hip-python_check_import.sh )
