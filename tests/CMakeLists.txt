@@ -1240,7 +1240,7 @@ set_property(TEST Pytorch_Profile_Rocprofv3 PROPERTY SKIP_REGULAR_EXPRESSION "mo
 set_tests_properties(Pytorch_Profile_Rocprofv3 PROPERTIES TIMEOUT 300) 
 
 add_test(NAME Pytorch_Profile_TorchProfiler COMMAND ../pytorch_profiling_torch-profiler.sh )
-set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY PASS_REGULAR_EXPRESSION "aten::convolution_backward")
+set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY PASS_REGULAR_EXPRESSION "Memcpy HtoD")
 set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 set_tests_properties(Pytorch_Profile_TorchProfiler PROPERTIES TIMEOUT 200) 
 
