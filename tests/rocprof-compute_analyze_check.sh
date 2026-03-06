@@ -19,9 +19,8 @@ fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 pushd ${REPO_DIR}/HIP/saxpy
-rm -rf build_for_test
-mkdir build_for_test
-cd build_for_test
+BUILD_DIR=$(mktemp -d build_XXXXXX)
+cd ${BUILD_DIR}
 cmake ..
 make
 
@@ -30,5 +29,5 @@ rocprof-compute profile -n v1 --no-roof -- ./saxpy
 rocprof-compute analyze -p workloads/v1/* --block 7.1.0 7.1.1 7.1.2 7.1.0: Grid size 7.1.1: Workgroup size 7.1.2: Total Wavefronts
 
 cd ..
-rm -rf build_for_test
+rm -rf ${BUILD_DIR}
 popd
