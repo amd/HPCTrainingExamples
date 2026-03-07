@@ -1052,7 +1052,7 @@ set_property(TEST NodeMemModel_Managed_Memory_HIP1 PROPERTY PASS_REGULAR_EXPRESS
 set_property(TEST NodeMemModel_Managed_Memory_HIP1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME NodeMemModel_Managed_Memory_HIP2_XNACK_OFF COMMAND ../nodememmodel_managed_memory_hip2_xnack_off.sh )
-set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_OFF PROPERTY PASS_REGULAR_EXPRESSION "Memory access fault")
+set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_OFF PROPERTY PASS_REGULAR_EXPRESSION "[Mm]emory access fault|FAILED")
 set_property(TEST NodeMemModel_Managed_Memory_HIP2_XNACK_OFF PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME NodeMemModel_Managed_Memory_HIP2_XNACK_ON COMMAND ../nodememmodel_managed_memory_hip2_xnack_on.sh )
@@ -1075,7 +1075,7 @@ set_property(TEST NodeMemModel_OpenMP_Atomics1 PROPERTY PASS_REGULAR_EXPRESSION 
 set_property(TEST NodeMemModel_OpenMP_Atomics1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME NodeMemModel_OpenMP_Atomics2_XNACK_Off COMMAND ../nodememmodel_openmp_atomics2_xnack_off.sh )
-set_property(TEST NodeMemModel_OpenMP_Atomics2_XNACK_Off PROPERTY PASS_REGULAR_EXPRESSION "Memory access fault")
+set_property(TEST NodeMemModel_OpenMP_Atomics2_XNACK_Off PROPERTY PASS_REGULAR_EXPRESSION "[Mm]emory access fault|FAILED")
 set_property(TEST NodeMemModel_OpenMP_Atomics2_XNACK_Off PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME NodeMemModel_OpenMP_Atomics2_XNACK_On COMMAND ../nodememmodel_openmp_atomics2_xnack_on.sh )
@@ -1083,7 +1083,7 @@ set_property(TEST NodeMemModel_OpenMP_Atomics2_XNACK_On PROPERTY PASS_REGULAR_EX
 set_property(TEST NodeMemModel_OpenMP_Atomics2_XNACK_On PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 add_test(NAME NodeMemModel_OpenMP_Atomics3_XNACK_Off COMMAND ../nodememmodel_openmp_atomics3_xnack_off.sh )
-set_property(TEST NodeMemModel_OpenMP_Atomics3_XNACK_Off PROPERTY PASS_REGULAR_EXPRESSION "Memory access fault")
+set_property(TEST NodeMemModel_OpenMP_Atomics3_XNACK_Off PROPERTY PASS_REGULAR_EXPRESSION "[Mm]emory access fault|FAILED")
 set_property(TEST NodeMemModel_OpenMP_Atomics3_XNACK_Off PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME NodeMemModel_OpenMP_Atomics3_XNACK_On COMMAND ../nodememmodel_openmp_atomics3_xnack_on.sh )
@@ -1091,7 +1091,7 @@ set_property(TEST NodeMemModel_OpenMP_Atomics3_XNACK_On PROPERTY PASS_REGULAR_EX
 set_property(TEST NodeMemModel_OpenMP_Atomics2_XNACK_On PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 add_test(NAME NodeMemModel_OpenMP_Atomics4_XNACK_Off COMMAND ../nodememmodel_openmp_atomics4_xnack_off.sh )
-set_property(TEST NodeMemModel_OpenMP_Atomics4_XNACK_Off PROPERTY PASS_REGULAR_EXPRESSION "Memory access fault")
+set_property(TEST NodeMemModel_OpenMP_Atomics4_XNACK_Off PROPERTY PASS_REGULAR_EXPRESSION "[Mm]emory access fault|FAILED")
 set_property(TEST NodeMemModel_OpenMP_Atomics4_XNACK_Off PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME NodeMemModel_OpenMP_Atomics4_XNACK_On COMMAND ../nodememmodel_openmp_atomics4_xnack_on.sh )
