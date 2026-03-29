@@ -8,7 +8,7 @@ HIPFORT_PATH ?= ${ROCM_PATH}
 
 OBJECTS = matmult_prog.o matmult_interface.o matmult_hip.o matmult_mod.o
 
-FC_FLAGS = -g -O2 -fopenmp --offload-arch=${ROCM_GPU} -I${HIPFORT_PATH}/include/hipfort/amdgcn
+FC_FLAGS = -g -O2 -fopenmp --offload-arch=${ROCM_GPU} -I${HIPFORT_INC}
 HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include
 
 HIPCC ?= hipcc
