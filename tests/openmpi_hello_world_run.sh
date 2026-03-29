@@ -1,6 +1,6 @@
 #!/bin/bash
  
-module list 2>&1 | grep -q -w "rocm"
+module -t list 2>&1 | grep -q "^rocm"
 if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
@@ -14,7 +14,9 @@ else
    MPIRUN=mpirun
 fi
 
-mkdir openmpi_hello_world_run && cd openmpi_hello_world_run
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cd ${BUILD_DIR}
 
 cat <<-EOF > mpi_hello_world.c
         #include <mpi.h>
@@ -48,6 +50,3 @@ EOF
 
 mpicc -o mpi_hello_world mpi_hello_world.c
 ${MPIRUN} -n 2 ./mpi_hello_world
-
-cd ..
-rm -rf openmpi_hello_world_run

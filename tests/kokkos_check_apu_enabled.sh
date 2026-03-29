@@ -2,7 +2,7 @@
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
-module list 2>&1 | grep -q -w "rocm"
+module -t list 2>&1 | grep -q "^rocm"
 if [ $? -eq 1 ]; then
    echo "rocm module is not loaded"
    echo "loading default rocm module"
@@ -18,11 +18,11 @@ module load kokkos
 module list
 
 echo "=== Kokkos APU Capability Test ==="
-echo "Kokkos install: ${Kokkos_DIR}"
+echo "Kokkos install: ${Kokkos_ROOT}"
 echo ""
 
 # --- Quick pre-flight check on the config header ---
-CONFIG_H="${Kokkos_DIR}/include/KokkosCore_config.h"
+CONFIG_H="${Kokkos_ROOT}/include/KokkosCore_config.h"
 if [ ! -f "${CONFIG_H}" ]; then
   echo "ERROR: ${CONFIG_H} not found"
   exit 1
@@ -41,7 +41,7 @@ rm -rf $BUILD_DIR
 mkdir -p $BUILD_DIR
 
 cmake -S "${SCRIPT_DIR}" -B "${BUILD_DIR}" \
-  -DKokkos_ROOT="${Kokkos_DIR}" \
+  -DKokkos_ROOT="${Kokkos_ROOT}" \
   -DCMAKE_CXX_COMPILER=hipcc
 
 cmake --build "${BUILD_DIR}" --verbose

@@ -14,7 +14,7 @@ if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
       export HIPCC=`which hipcc`
    fi
 else
-   module list 2>&1 | grep -q -w "rocm"
+   module -t list 2>&1 | grep -q "^rocm"
    if [ $? -eq 1 ]; then
      echo "rocm module is not loaded"
      echo "loading default rocm module"
@@ -35,6 +35,7 @@ else
    rm -rf ${PROB_NAME}
    mkdir ${PROB_NAME} && cd ${PROB_NAME}
 
+   REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    PWDir=`pwd`
 
    git clone --recursive https://github.com/LLNL/RAJA.git Raja_build
@@ -62,7 +63,6 @@ else
 
    export Raja_DIR=${PWDir}/Raja_HIP
 
-   REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    cd ${REPO_DIR}/ManagedMemory/Raja_Code
 
    # To run with managed memory

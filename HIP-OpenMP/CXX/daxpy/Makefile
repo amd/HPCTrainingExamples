@@ -6,6 +6,7 @@ all: $(EXECUTABLE) test
 OBJECTS = daxpy.o daxpy_hip.o
 
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
+HIP_PLATFORM ?= amd
 OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
 
 CXXFLAGS = -g -O2 -fPIC -D__HOST_CODE__ ${OPENMP_FLAGS}

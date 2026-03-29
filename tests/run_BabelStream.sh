@@ -16,7 +16,7 @@ if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
       export HIPCC=`which hipcc`
    fi
 else
-   module list 2>&1 | grep -q -w "rocm"
+   module -t list 2>&1 | grep -q "^rocm"
    if [ $? -eq 1 ]; then
      echo "rocm module is not loaded"
      echo "loading default rocm module"
@@ -29,7 +29,7 @@ else
 fi
 
 rm -rf ${BABELSTREAM_ROOT}
-git clone https://github.com/UoB-HPC/BabelStream.git ${BABELSTREAM_ROOT}
+git clone --branch v5.0 https://github.com/UoB-HPC/BabelStream.git ${BABELSTREAM_ROOT}
 cd ${BABELSTREAM_ROOT}
 # -DDEFAULT -- good performance
 # -DMANAGED -- poor performance

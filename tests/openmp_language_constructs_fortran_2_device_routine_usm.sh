@@ -11,7 +11,7 @@ if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
       export FC=`which ftn`
    fi
 else
-   module list 2>&1 | grep -q -w "rocm"
+   module -t list 2>&1 | grep -q "^rocm"
    if [ $? -eq 1 ]; then
      echo "rocm module is not loaded"
      echo "loading default rocm module"
@@ -26,8 +26,10 @@ fi
 export HSA_XNACK=1
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/6_device_routines/device_routine_with_interface/2_device_routine_usm
+SRCDIR=${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/6_device_routines/device_routine_with_interface/2_device_routine_usm
+BUILDDIR=$(mktemp -d)
+trap 'rm -rf ${BUILDDIR}' EXIT
+cp ${SRCDIR}/Makefile ${SRCDIR}/*.f90 ${BUILDDIR}/
+cd ${BUILDDIR}
 make
 ./device_routine
-
-make clean

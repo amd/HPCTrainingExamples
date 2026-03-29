@@ -8,7 +8,7 @@ REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
 #salloc -N 1 -p LocalQ --gpus=1 -t 10:00
 
-module list 2>&1 | grep -q -w "rocm"
+module -t list 2>&1 | grep -q "^rocm"
 if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
@@ -57,7 +57,7 @@ cd
 
 cd ${REPO_DIR}/HIP/jacobi
 
-module list 2>&1 | grep -q -w "rocm"
+module -t list 2>&1 | grep -q "^rocm"
 if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
@@ -127,7 +127,7 @@ cp ~/Makefile .
 cp ~/CMakeLists.txt .
 
 cd ${REPO_DIR}/Pragma_Examples/OpenMP/C/1_saxpy/6_saxpy_targetdata
-module list 2>&1 | grep -q -w "rocm"
+module -t list 2>&1 | grep -q "^rocm"
 if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
@@ -141,7 +141,7 @@ make clean
 cd
 
 cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/2_reduction/1_reduction_solution
-module list 2>&1 | grep -q -w "rocm"
+module -t list 2>&1 | grep -q "^rocm"
 if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"

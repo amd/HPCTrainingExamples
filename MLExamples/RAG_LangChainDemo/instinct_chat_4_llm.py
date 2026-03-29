@@ -3,16 +3,14 @@ import requests
 import logging
 from langchain_community.document_loaders import PDFPlumberLoader
 from langchain_experimental.text_splitter import SemanticChunker
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.llms import Ollama
-from langchain.prompts import PromptTemplate
-from langchain.chains.llm import LLMChain
-from langchain.chains.combine_documents.stuff import StuffDocumentsChain
-from langchain.chains import RetrievalQA
-from langchain_community.vectorstores import Chroma
-#from langchain_huggingface import HuggingFaceEmbeddings
-from langchain.schema import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_ollama import OllamaLLM
+from langchain_core.prompts import PromptTemplate
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains.retrieval import create_retrieval_chain
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
 from bs4 import BeautifulSoup
 import gradio as gr
 from urllib.parse import urljoin
@@ -76,66 +74,36 @@ vectorstore = Chroma.from_documents(texts, embeddings)
 # Create a retriever
 retriever = vectorstore.as_retriever()
 
-# Define four LLMs
-llm1 = Ollama(model="llama3.3:70b")
-llm2 = Ollama(model="gemma2:27b")
-llm3 = Ollama(model="mistral-large")  # Add a third model
-llm4 = Ollama(model="phi3:14b")    # Add a fourth model
+llm1 = OllamaLLM(model="llama3.3:70b")
+llm2 = OllamaLLM(model="gemma2:27b")
+llm3 = OllamaLLM(model="mistral-large")
+llm4 = OllamaLLM(model="phi3:14b")
 
-# Define the prompt
-prompt = """
+prompt = PromptTemplate.from_template("""
 1. Use the following pieces of context to answer the question related to AMD's ROCm product.
-2. If you don't know the answer, just say that "I don't know" but don't make up an answer on your own.\n
+2. If you don't know the answer, just say that "I don't know" but don't make up an answer on your own.
 3. Keep the answer crisp and limited to 3,4 sentences, and try to only use the context provided when answering.
 
 Context: {context}
 
-Question: {question}
+Question: {input}
 
-Helpful Answer:"""
+Helpful Answer:""")
 
-QA_CHAIN_PROMPT = PromptTemplate.from_template(prompt) 
-
-document_prompt = PromptTemplate(
-    input_variables=["page_content", "source"],
-    template="Context:\ncontent:{page_content}\nsource:{source}",
-)
-
-# Function to create QA chain
 def create_qa_chain(llm):
-    llm_chain = LLMChain(
-        llm=llm, 
-        prompt=QA_CHAIN_PROMPT, 
-        callbacks=None, 
-        verbose=True
-    )
-    
-    combine_documents_chain = StuffDocumentsChain(
-        llm_chain=llm_chain,
-        document_variable_name="context",
-        document_prompt=document_prompt,
-        callbacks=None
-    )
-    
-    return RetrievalQA(
-        combine_documents_chain=combine_documents_chain,
-        verbose=True,
-        retriever=retriever,
-        return_source_documents=True
-    )
+    combine_docs_chain = create_stuff_documents_chain(llm, prompt)
+    return create_retrieval_chain(retriever, combine_docs_chain)
 
-# Create four QA chains
 qa1 = create_qa_chain(llm1)
 qa2 = create_qa_chain(llm2)
 qa3 = create_qa_chain(llm3)
 qa4 = create_qa_chain(llm4)
 
-# Function to get responses from all four LLMs
 def respond(question, history):
-    response1 = qa1(question)["result"]
-    response2 = qa2(question)["result"]
-    response3 = qa3(question)["result"]
-    response4 = qa4(question)["result"]
+    response1 = qa1.invoke({"input": question})["answer"]
+    response2 = qa2.invoke({"input": question})["answer"]
+    response3 = qa3.invoke({"input": question})["answer"]
+    response4 = qa4.invoke({"input": question})["answer"]
     return response1, response2, response3, response4
 
 # Create Gradio interface
@@ -156,10 +124,14 @@ def create_interface():
 
         def user(user_message, history1, history2, history3, history4):
             response1, response2, response3, response4 = respond(user_message, None)
-            history1.append((user_message, response1))
-            history2.append((user_message, response2))
-            history3.append((user_message, response3))
-            history4.append((user_message, response4))
+            history1.append({"role": "user", "content": user_message})
+            history1.append({"role": "assistant", "content": response1})
+            history2.append({"role": "user", "content": user_message})
+            history2.append({"role": "assistant", "content": response2})
+            history3.append({"role": "user", "content": user_message})
+            history3.append({"role": "assistant", "content": response3})
+            history4.append({"role": "user", "content": user_message})
+            history4.append({"role": "assistant", "content": response4})
             return "", history1, history2, history3, history4
 
         msg.submit(user, [msg, chatbot1, chatbot2, chatbot3, chatbot4], [msg, chatbot1, chatbot2, chatbot3, chatbot4])

@@ -17,7 +17,7 @@ if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
       export LDFLAGS="-L/opt/rocm-6.4.1/lib -lroctx64"
    fi
 else
-   module list 2>&1 | grep -q -w "rocm"
+   module -t list 2>&1 | grep -q "^rocm"
    if [ $? -eq 1 ]; then
      echo "rocm module is not loaded"
      echo "loading default rocm module"
@@ -34,4 +34,4 @@ cd ${REPO_DIR}/HIP-Optimizations/daxpy
 make daxpy_1
 ./daxpy_1 1000000
 
-rm -f daxpy_1 daxpy_1.o
+make clean

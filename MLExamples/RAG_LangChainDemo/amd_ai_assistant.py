@@ -11,15 +11,14 @@ import sys
 import pickle
 
 from langchain_community.document_loaders import PDFPlumberLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.llms import Ollama
-from langchain.prompts import PromptTemplate
-from langchain.chains.llm import LLMChain
-from langchain.chains.combine_documents.stuff import StuffDocumentsChain
-from langchain.chains import RetrievalQA
-from langchain_community.vectorstores import Chroma
-from langchain.schema import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_ollama import OllamaLLM
+from langchain_core.prompts import PromptTemplate
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains.retrieval import create_retrieval_chain
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
 
 # =========================
 # Configurable variables
@@ -283,25 +282,21 @@ async def main():
            batch = texts[i:i+BATCH_SIZE]
            vectorstore.add_documents(batch)
 
-        vectorstore.persist()
-
     retriever = vectorstore.as_retriever()
 
-    prompt = """
+    prompt = PromptTemplate.from_template("""
     1. Use the following pieces of context to answer the question related to AMD's products and software.
     2. If you don't know the answer, just say that "I don't know" but don't make up an answer on your own.
     3. Keep the answer crisp and limited to 5,6 sentences, and try to only use the context provided when answering.
 
     Context: {context}
 
-    Question: {question}
+    Question: {input}
 
     Helpful Answer:
-    """
+    """)
 
-    QA_CHAIN_PROMPT = PromptTemplate.from_template(prompt)
-
-    ollama_host = os.getenv("OLLAMA_HOST", "127.0.0.1:11434")  # default just in case
+    ollama_host = os.getenv("OLLAMA_HOST", "127.0.0.1:11434")
 
     # Split host and port
     host, port = ollama_host.split(":")
@@ -309,37 +304,13 @@ async def main():
     # Construct base_url using only host and port
     base_url = f"http://{host}:{port}"
 
-    # Create Ollama instance
-    llm = Ollama(model="llama3.3:70b", base_url=base_url)
+    llm = OllamaLLM(model="llama3.3:70b", base_url=base_url)
 
-    llm_chain = LLMChain(
-        llm=llm,
-        prompt=QA_CHAIN_PROMPT,
-        callbacks=None,
-        verbose=True
-    )
-
-    document_prompt = PromptTemplate(
-        input_variables=["page_content", "source"],
-        template="Context:\ncontent:{page_content}\nsource:{source}",
-    )
-
-    combine_documents_chain = StuffDocumentsChain(
-        llm_chain=llm_chain,
-        document_variable_name="context",
-        document_prompt=document_prompt,
-        callbacks=None
-    )
-
-    qa = RetrievalQA(
-        combine_documents_chain=combine_documents_chain,
-        verbose=True,
-        retriever=retriever,
-        return_source_documents=True
-    )
+    combine_docs_chain = create_stuff_documents_chain(llm, prompt)
+    qa = create_retrieval_chain(retriever, combine_docs_chain)
 
     def respond(question, history=None):
-        return qa(question)["result"]
+        return qa.invoke({"input": question})["answer"]
 
     print("\nAMD AI Assistant Ready! Type your questions. Type 'exit', 'quit' or 'bye' to stop.\n")
 

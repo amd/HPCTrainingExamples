@@ -11,7 +11,7 @@ if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
       export FC=`which ftn`
    fi
 else
-   module list 2>&1 | grep -q -w "rocm"
+   module -t list 2>&1 | grep -q "^rocm"
    if [ $? -eq 1 ]; then
      echo "rocm module is not loaded"
      echo "loading default rocm module"
@@ -23,9 +23,10 @@ else
    fi
 fi
 
-mkdir tsp
-git clone https://github.com/pkestene/tsp
-cd tsp
+CLONE_DIR=$(mktemp -d -p "$(pwd)" tsp_XXXXXX)
+trap "rm -rf ${CLONE_DIR}" EXIT
+git clone https://github.com/pkestene/tsp ${CLONE_DIR}
+pushd ${CLONE_DIR}
 git checkout 51587
 wget -q https://raw.githubusercontent.com/ROCm/roc-stdpar/main/data/patches/tsp/TSP.patch
 
@@ -38,7 +39,7 @@ export STDPAR_CXX=$CXX
 export ROCM_GPU=`rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'`
 export STDPAR_TARGET=${ROCM_GPU}
 
-export AMD_LOG_LEVEL=3
+#export AMD_LOG_LEVEL=3
 
 if [[ ${ROCM_GPU} =~ "gfx9" ]]; then
    sed -i -e '/--hipstdpar/s/--hipstdpar /--hipstdpar -lstdc++ /' Makefile
@@ -50,5 +51,5 @@ make tsp_clang_stdpar_gpu
 ./tsp_clang_stdpar_gpu
 
 make clean
-cd ../..
-rm -rf tsp
+
+popd

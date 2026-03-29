@@ -11,7 +11,7 @@ if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
       export FC=`which ftn`
    fi
 else
-   module list 2>&1 | grep -q -w "rocm"
+   module -t list 2>&1 | grep -q "^rocm"
    if [ $? -eq 1 ]; then
      echo "rocm module is not loaded"
      echo "loading default rocm module"
@@ -31,3 +31,5 @@ hipify-perl nbody-orig.cu > nbody-orig.cpp
 hipcc -DSHMOO -I../ nbody-orig.cpp -o nbody-orig
 
 ./nbody-orig
+
+rm -f nbody-orig nbody-orig.cpp

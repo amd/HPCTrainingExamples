@@ -7,7 +7,7 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/petsc_setup.sh
 
 
-module list 2>&1 | grep -q -w "rocm"
+module -t list 2>&1 | grep -q "^rocm"
 if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
@@ -24,17 +24,18 @@ fi
 
 PETSC_VERSION=`$PETSC_DIR/lib/petsc/bin/petscversion`
 
-git clone --branch v$PETSC_VERSION https://gitlab.com/petsc/petsc.git petsc_for_test
+WORKDIR=$(mktemp -d -t petsc_test_XXXXXXXXXX)
+trap "rm -rf $WORKDIR" EXIT
 
-pushd petsc_for_test/src/snes/tests
+git clone --branch v$PETSC_VERSION https://gitlab.com/petsc/petsc.git "$WORKDIR/petsc_for_test"
+
+pushd "$WORKDIR/petsc_for_test/src/snes/tests"
 
 mpifort ex21f.F90 -o ex21f -I$PETSC_PATH/include -L$PETSC_PATH/lib -lpetsc
 
 ./ex21f ksp_gmres_cgs_refinement_type refine_always   -snes_monitor -snes_converged_reason -snes_view -pc_type lu
 
 popd
-
-rm -rf petsc_for_test
 
 
 

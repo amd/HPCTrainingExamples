@@ -11,7 +11,7 @@ if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
       export FC=`which ftn`
    fi
 else
-   module list 2>&1 | grep -q -w "rocm"
+   module -t list 2>&1 | grep -q "^rocm"
    if [ $? -eq 1 ]; then
      echo "rocm module is not loaded"
      echo "loading default rocm module"
@@ -24,7 +24,12 @@ else
 fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/C/1_saxpy/5_saxpy_map
+SRC_DIR=${REPO_DIR}/Pragma_Examples/OpenMP/C/1_saxpy/5_saxpy_map
+
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp ${SRC_DIR}/Makefile ${SRC_DIR}/saxpy.c ${BUILD_DIR}/
+cd ${BUILD_DIR}
 
 make
 ./saxpy

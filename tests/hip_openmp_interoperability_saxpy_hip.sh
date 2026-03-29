@@ -15,7 +15,7 @@ if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
    fi
    export HIP_PLATFORM=amd
 else
-   module list 2>&1 | grep -q -w "rocm"
+   module -t list 2>&1 | grep -q "^rocm"
    if [ $? -eq 1 ]; then
      echo "rocm module is not loaded"
      echo "loading default rocm module"

@@ -29,4 +29,4 @@ ${EXEC}: ${EXEC}.o
 
 # Cleanup
 clean:
-	rm -f *.o ${EXEC}
+	rm -f *.o *.o.tmp ${EXEC}

@@ -12,7 +12,7 @@ if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
    fi
    export HIP_PLATFORM=amd
 else
-   module list 2>&1 | grep -q -w "rocm"
+   module -t list 2>&1 | grep -q "^rocm"
    if [ $? -eq 1 ]; then
      echo "rocm module is not loaded"
      echo "loading default rocm module"
@@ -22,6 +22,7 @@ else
    if [ "$?" == "1" ]; then
       module load amdclang
    fi
+   export HIP_PLATFORM=amd
 fi
 
 XNACK_COUNT=`rocminfo | grep xnack | wc -l`
@@ -31,7 +32,13 @@ else
    export HSA_XNACK=1
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-   cd ${REPO_DIR}/HIP-OpenMP/CXX/daxpy
+   SRC_DIR=${REPO_DIR}/HIP-OpenMP/CXX/daxpy
+
+   BUILD_DIR=$(mktemp -d)
+   trap "rm -rf ${BUILD_DIR}" EXIT
+   cp ${SRC_DIR}/* ${BUILD_DIR}/
+   cd ${BUILD_DIR}
+
    make
    ./daxpy
 
