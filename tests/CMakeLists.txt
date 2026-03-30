@@ -1365,7 +1365,7 @@ set_property(TEST Rocprof-sys_ROCm_Stream_Overlap PROPERTY PASS_REGULAR_EXPRESSI
 set_property(TEST Rocprof-sys_ROCm_Stream_Overlap PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Rocprof-compute_ROCm_Roofline_Check COMMAND ../rocprof-compute_roofline_check.sh)
-set_property(TEST Rocprof-compute_ROCm_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "Empirical Roofline PDFs saved!")
+set_property(TEST Rocprof-compute_ROCm_Roofline_Check PROPERTY PASS_REGULAR_EXPRESSION "Empirical Roofline .* saved!")
 set_property(TEST Rocprof-compute_ROCm_Roofline_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "disabled on MI300")
 set_tests_properties(Rocprof-compute_ROCm_Roofline_Check PROPERTIES TIMEOUT 600)
 

@@ -11,12 +11,7 @@ if [ $? -eq 1 ]; then
 fi
 module load openmpi
 
-if command -v rocprof-compute &> /dev/null; then
-    echo "rocprof-compute found at: $(which rocprof-compute)"
-else
-    echo "loading rocprofiler-compute module"
-    module load rocprofiler-compute
-fi
+module load rocprofiler-compute &> /dev/null
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 pushd ${REPO_DIR}/MPI-examples/GhostExchange/GhostExchange_ArrayAssign_HIP/Ver1
