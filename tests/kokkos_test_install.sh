@@ -23,7 +23,7 @@ sed -i -e 's/80000000/100000/' StreamTriad.cc
 
 rm -rf build
 mkdir build && cd build
-CXX=hipcc cmake ..
+cmake ..
 make
 HSA_XNACK=1 ./StreamTriad
 

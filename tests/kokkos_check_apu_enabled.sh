@@ -41,8 +41,7 @@ rm -rf $BUILD_DIR
 mkdir -p $BUILD_DIR
 
 cmake -S "${SCRIPT_DIR}" -B "${BUILD_DIR}" \
-  -DKokkos_ROOT="${Kokkos_ROOT}" \
-  -DCMAKE_CXX_COMPILER=hipcc
+  -DKokkos_ROOT="${Kokkos_ROOT}"
 
 cmake --build "${BUILD_DIR}" --verbose
 

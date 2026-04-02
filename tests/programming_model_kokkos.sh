@@ -45,7 +45,7 @@ else
 
    cd ${BUILD_DIR}
    mkdir build && cd build
-   CXX=hipcc cmake ..
+   cmake ..
    make
    ./kokkos_code
 
