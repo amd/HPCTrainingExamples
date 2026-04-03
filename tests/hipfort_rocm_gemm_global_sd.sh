@@ -21,6 +21,7 @@ else
    if [ "$?" == "1" ]; then
       module load amdclang
    fi
+   module load hipfort
 fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
