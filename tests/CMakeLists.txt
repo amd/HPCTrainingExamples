@@ -1275,6 +1275,11 @@ add_test(NAME HYPRE_IJ COMMAND ../hypre_ij.sh )
 set_property(TEST HYPRE_IJ PROPERTY PASS_REGULAR_EXPRESSION "Iterations = 18")
 set_property(TEST HYPRE_IJ PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hypre'")
 
+# MAGMA tests
+add_test(NAME MAGMA_Install COMMAND ../magma_install_test.sh )
+set_property(TEST MAGMA_Install PROPERTY PASS_REGULAR_EXPRESSION "All tests PASSED")
+set_property(TEST MAGMA_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'magma'")
+
 # TensorFlow tests
 add_test(NAME TensorFlow_Check_Import COMMAND ../tensorflow_check_import.sh )
 set_property(TEST TensorFlow_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
