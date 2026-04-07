@@ -1,7 +1,7 @@
 
 ## Porting exercise: reduction
 
-README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/2_reduction` from the Training Examples repository.
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/3_reduction` from the Training Examples repository.
 
 This exercise focuses on two things:
 - Part 1: how to port a reduction to the GPU
@@ -50,6 +50,6 @@ The third folder contains an exercise to explore the behavior with and without U
 cd 3_reduction_wrongmapping
 vi freduce.F
 ```
-This example intentionally does the mapping wrong (```from``` instead of ```to```). You can see how the result changes (output 1000 instead of 1010) when you use export ```export XSA_XNACK=0```. No error is shown, but the result is wrong. 
+This example intentionally does the mapping wrong (```from``` instead of ```to```). You can see how the result changes (output 1000 instead of 1010) when you use ```export HSA_XNACK=0```. No error is shown, but the result is wrong.
 Test the same wrong code with ```export HSA_XNACK=1```, then the result is correct again as mapping clauses are ignored.
 Take home message: if you develop for both APUs and discrete GPUs on MI300A, check if the results are the same for ```HSA_XNACK=0``` and ```=1``` as map clauses will be ignored with ```HSA_XNACK=1```! Ignoring memory copies is great for code portability and performance without code changes, but be careful to include proper validation checks during development for both discrete GPUs and APUs.
