@@ -68,7 +68,7 @@ fi
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 pushd ${REPO_DIR}/HIP/Stream_Overlap/0-Orig/
-BUILD_DIR=$(mktemp -d build_XXXXXX)
+BUILD_DIR=$(mktemp -d $PWD/build_XXXXXX)
 cd ${BUILD_DIR}
 cmake ../
 make -j
