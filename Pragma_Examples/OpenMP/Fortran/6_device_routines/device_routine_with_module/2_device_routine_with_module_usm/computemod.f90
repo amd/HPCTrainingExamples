@@ -4,9 +4,11 @@
 
 
        module computemod
-          !$omp requires unified_shared_memory
+          implicit none
           !--- device routine made public
           public :: compute
+
+          !$omp requires unified_shared_memory
 
          contains
           !--- device routine

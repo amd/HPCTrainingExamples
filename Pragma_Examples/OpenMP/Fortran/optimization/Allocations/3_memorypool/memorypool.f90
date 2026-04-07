@@ -12,11 +12,11 @@ program main
 
     implicit none
 
+    !$omp requires unified_shared_memory
+
     type(UmpireAllocator) base_allocator
     type(UmpireAllocator) mem_pool
     type(UmpireResourceManager) res_manager
-
-    !$omp requires unified_shared_memory
 
     ! Size of vectors
     integer :: n = 10000000

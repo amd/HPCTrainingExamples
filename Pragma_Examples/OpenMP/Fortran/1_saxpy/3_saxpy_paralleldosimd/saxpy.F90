@@ -6,9 +6,9 @@ module saxpymod
    implicit none
    private
 
-   !$omp requires unified_shared_memory
-   
    public :: saxpy,initialize
+
+   !$omp requires unified_shared_memory
 
 contains
         
