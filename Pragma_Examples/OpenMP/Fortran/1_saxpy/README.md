@@ -19,23 +19,23 @@ to make use of the APU programming model (unified memory).
 
 Load a Fortran compiler module <hr>
 **either**
-The Next Generation AMD Fortran Compiler
+We recommend to use the new LLVM-based `amdflang` Fortran compiler for these exercises. The new LLVM-based `amdflang` compiler is the default Fortran compiler in ROCm since `rocm/7.X` and also in all of the `rocm-afar` or `therock` modules. Depending on the system you are on, you can simply load either
 ```
-module load amdflang-new
+module unload rocm
+module load rocm/7.2.0      # on AAC6
+module load rocm-new/7.2.0  # on AAC7
 ```
-Note: the module sets ```FC``` for you.<hr>
+Note: These modules set ```FC``` for you.<hr>
 
-**or** (only available on systems with CPE installed)
+**or** you can use the Cray Fortran compiler with (only available on systems with CPE installed)
 ```
 module load PrgEnv-cray
 module load rocm
 module load cce
-export FC = ftn
+export FC=ftn
 ```
  <hr>
  
-Note: starting from rocm 7.0, you also can use an older version of the Next Generation AMD Fortran Compiler from ```module load rocm``` and ```export FC=amdflang``` or in environments with CPE installed through ```module load PrgEnv-amd``` ```module load rocm``` ```module load amd``` ```export FC=ftn```. 
-
 Check with 
 ```
 $FC --version
@@ -81,7 +81,7 @@ add ```!$omp target``` to move the loop in the saxpy subroutine to the device.
 Compile this first GPU version.<hr>
 **either**
 Make sure you add ```--offload-arch=gfx942``` (on MI300A, find out what your system's gfx... is with ```rocminfo```)
-on systems with amdflang-new module or rocm 7.x:
+with the `amdflang` compiler.
 ```
 amdflang -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 ```

@@ -1,7 +1,7 @@
 
 ## Porting exercise reduction of multiple scalars in one kernel
 
-README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/9_reduction_array` from the Training Examples repository.
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/5_reduction_array` from the Training Examples repository.
 
 This folder has two code versions:
 

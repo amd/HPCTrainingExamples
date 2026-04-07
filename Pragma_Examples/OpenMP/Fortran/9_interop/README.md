@@ -1,19 +1,16 @@
 # Running a Fortran to HIP interop example
 
-README.md `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/8_interop` from the Training Examples repository
+README: `Pragma_Examples/OpenMP/Fortran/9_interop`
 
-This is a simple example to demonstrate fortran to HIP interoperability
-
+This is a simple example to demonstrate Fortran to HIP interoperability.
+Load a current ROCm version (at least rocm/7.0) and build with
 ```
-module load rocm
-module load amdflang-new
+module load rocm/7.2.0      # AAC6
+module load rocm-new/7.2.0  # AAC7
 make
 ```
-
-run the code:
-
+Make sure to choose the correct module for the system you are on and run it with
 ```
 ./interop
 ```
-
-Code will run to completion if it passes verification
+The code will run to completion if it passes verification
