@@ -387,6 +387,11 @@ set_property(TEST OpenMP_Fortran_3_Reduction_WrongMapping PROPERTY SKIP_REGULAR_
 #set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
 #set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME OpenMP_Fortran_Common_Blocks_On_Device COMMAND ../openmp_fortran_common_blocks_on_device.sh )
+# Cray ftn list-directed I/O may print "4."; other compilers may print more digits.
+set_property(TEST OpenMP_Fortran_Common_Blocks_On_Device PROPERTY PASS_REGULAR_EXPRESSION "Last element:.*4")
+set_property(TEST OpenMP_Fortran_Common_Blocks_On_Device PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # OpenMP C++ Classes Examples
 add_test(NAME OpenMP_Cpp_Classes_Explicit_Daxpy COMMAND ../openmp_cpp_classes_explicit_daxpy.sh )
 set_property(TEST OpenMP_Cpp_Classes_Explicit_Daxpy PROPERTY PASS_REGULAR_EXPRESSION "PASS")
