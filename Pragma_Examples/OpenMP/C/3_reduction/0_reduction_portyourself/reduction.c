@@ -1,5 +1,6 @@
 /*
 Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+This software is distributed under the MIT License
 */
 #include <stdio.h>
 #include <omp.h>
