@@ -81,9 +81,9 @@ Exercise 8 is a small app with a Jacobi solver that you can find in the CXX sect
 Choose one of the exercises in the sub-directories and use the README there for instructions:
 ```
 cd 1_saxpy
-cd 2_vecadd  
-cd 3_reduction 
+cd 2_reduction  
+cd 3_vecadd 
 cd 4_reduction_scalars  
 cd 5_reduction_array
-cd 6_device_routine
+cd 6_device_routines
 ```

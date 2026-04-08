@@ -1,7 +1,7 @@
 
 ## Porting exercise: vecadd
 
-This exercise combines what you learned in the exercises 1_saxpy and 3_reduction (recommended to do those first): porting simple kernels without and with reduction.
+This exercise combines what you learned in the exercises 1_saxpy and 2_reduction (recommended to do those first): porting simple kernels without and with reduction.
 
 #### 0) serial CPU version
 The CPU code to port yourself can be found in
@@ -52,7 +52,7 @@ cd 3_vecadd_targetdata
 ## Part 3: asynchronous offload
 This section presents a solution for asynchronous offload both with USM
 ```
-cd 4_vecadd_usm_async
+cd 4_vecadd_async_usm
 ```
 and without USM
 ```

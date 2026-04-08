@@ -15,7 +15,7 @@ make
 ````
 Run:
 ```
-./reduction_scalar
+./reduction_array
 ```
 
 ### 1 an openmp offload ported solution. 

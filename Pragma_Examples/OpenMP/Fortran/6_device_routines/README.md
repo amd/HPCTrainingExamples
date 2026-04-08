@@ -102,10 +102,10 @@ make
 ./device_routine
 ```
 
-For the case where we want to do explicit memory movement, we use maps as show in `03_device_routine_map`.
+For the case where we want to do explicit memory movement, we use maps as show in `3_device_routine_map`.
 
 ```
-cd ../03_device_routine_map
+cd ../3_device_routine_map
 ```
 
 We take out the `!$omp requires unified_shared_memory` and add `map(tofrom:x)` and `map(to:x)` clauses. We can run this

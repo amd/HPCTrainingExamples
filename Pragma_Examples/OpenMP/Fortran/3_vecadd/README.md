@@ -1,7 +1,7 @@
 
 ## Porting exercise: vecadd
 
-This exercise combines what you learned in the exercises 1_saxpy and 3_reduction (recommended to do those first): porting simple kernels without and with reduction.
+This exercise combines what you learned in the exercises 1_saxpy and 2_reduction (recommended to do those first): porting simple kernels without and with reduction.
 
 ## Serial CPU code to port
 The CPU code to port yourself can be found in
