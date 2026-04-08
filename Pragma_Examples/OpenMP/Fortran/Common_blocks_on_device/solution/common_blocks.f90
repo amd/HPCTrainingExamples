@@ -1,6 +1,6 @@
-! Copyright (c) 2025-2026 Advanced Micro Devices, Inc. All rights reserved.
+! Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
 ! This software is distributed under the MIT License
-
+!
 ! Acknoledgement:
 ! Thanks to Simon Clifford for the original reproducer at the hackathon
 ! in Birmingham, March 2026.

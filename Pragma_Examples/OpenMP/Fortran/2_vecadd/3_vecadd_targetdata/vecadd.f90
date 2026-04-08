@@ -1,4 +1,6 @@
-! Copyright (c) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
+! Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+! This software is distributed under the MIT License
+!
 program main
 
     use omp_lib 
