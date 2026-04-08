@@ -32,7 +32,7 @@ cd 1_vecadd_usm
 ```
 contains the unified shared memory solution. 
 
-Note: if you set ```HSA_XNACK=0``` you will get an error message. This is the intended behaviour for USM, if XNACK is disabled. This is not yet always the case for the beta release of amdflang-new and will be fixed in a future release. To enforce that unified shared memory is properly recognized, or if you don't want to add it in every module by hand, you can use the compiler flag ```-fopenmp-force-usm```. With this the Next Generation Fortran Compiler beta release behaves as intended by the OpenMP standard.
+Note: if you set ```HSA_XNACK=0``` you will get an error message. This is the intended behaviour for USM, if XNACK is disabled. If you don't want to add ```!$omp requires unified_shared_memory``` in every module by hand, you can use the compiler flag ```-fopenmp-force-usm```.
 
 ## Part 2: with map clauses
 Port first with map clauses and later optimize the data movement:

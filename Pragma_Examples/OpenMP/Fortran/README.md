@@ -7,11 +7,10 @@ cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran
 #### on aac6:
 
 Follow the message of the day how to allocate a gpu interactively.
-Load the amdflang-new compiler to set up the environment 
+Load ROCm to set up the environment:
 ```
-module load amdflang-new
+module load rocm
 ```
-The naming of the versions changed from drop 7.x to drop <llvm-version>.<drop_revision> e.g. afar-drop-22.2.0 to avoid confusion with rocm version numbers.
 
 This module sets ```FC=amdflang``` for you.
 
@@ -35,10 +34,10 @@ scancel <JobID>
 ```
 to terminate a job.
 
-You can choose the Cray Fortran compiler (ftn) or the amdflang-new compiler.
-##### amdflang-new compiler on aac7:
+You can choose the Cray Fortran compiler (ftn) or the LLVM-based amdflang compiler from ```rocm-new```.
+##### LLVM-based amdflang (rocm-new) on aac7:
 ```
-module load amdflang-new
+module load rocm-new
 ```
 This module sets ```FC=amdflang``` for you, check with ```echo $FC```.
 
@@ -70,7 +69,7 @@ rocminfo
 ```
 if ```xnack+``` (unified memory enabled) or ```xnack-``` (with memory copies) is set.
 
-Note: In the beta release of the amdflang-new compiler ```HSA_XNACK=0``` with a code with ```!$omp requires unified_shared_memory``` can be compiled in some cases as if no ```unified_shared_memory``` is required. This is a behavior not according to the standard and will lead to an error message in future releases! Use the compiler flag ```-fopenmp-force-usm``` to enforce the correct behavior. This flag can also be used to enforce unified_shared_memory everywhere in the code compiled with it.
+Note: If you don't want to add ```!$omp requires unified_shared_memory``` in every module by hand, you can use the compiler flag ```-fopenmp-force-usm```.
 
 The exercises in the folders numbered 1 to 6 are small examples of what one may encounter when porting a real world code. 
 Each exercise has its own README with instructions.

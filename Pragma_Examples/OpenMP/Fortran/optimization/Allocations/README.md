@@ -6,10 +6,11 @@ well as some possible problems.
 ## version 1: Allocation Problem
 The first version is an OpenMP offload example with three kernels in an iterative loop as an example of a "dwarf" of an application with an iterative solution or multiple time steps.
 
-Set up the environment
+Set up the environment (use the module line for your system; on AAC6 load ```rocm```, on AAC7 load ```rocm-new```):
 
 ```
-module load amdflang-new
+module load rocm        # on AAC6
+module load rocm-new  # on AAC7
 export HSA_XNACK=1
 ```
 
