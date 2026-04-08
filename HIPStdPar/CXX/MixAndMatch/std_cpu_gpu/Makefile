@@ -5,6 +5,9 @@ STDPAR_FLAGS := --hipstdpar
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 ARCH_FLAGS   := --offload-arch=${ROCM_GPU}
 LIBS         ?=
+# std::execution (CPU parallel) pulls in TBB; ROCm ships libtbb under rocprofiler-systems.
+# If your OS has tbb-devel in the default linker path, you can leave TBB_LIBDIR empty.
+TBB_LIBDIR   ?= $(ROCM_PATH)/lib/rocprofiler-systems
 
 # If STDPAR_PATH is not specified on the command line, use this default.
 STDPAR_PATH ?= ${ROCM_PATH}/include/thrust/system/hip/hipstdpar
@@ -25,7 +28,7 @@ stdpar_gpu_executor.o: stdpar_gpu_executor.cpp
 
 # Link all object files and main.cpp into final
 $(TARGET): $(OBJS) main.cpp
-	$(HIPCC) $(CXXFLAGS) $(OPENMP_FLAGS) $(OBJS) main.cpp -o $@ ${LIBS} -ltbb
+	$(HIPCC) $(CXXFLAGS) $(OPENMP_FLAGS) $(OBJS) main.cpp -o $@ -L$(TBB_LIBDIR) ${LIBS} -ltbb
 
 clean:
 	rm -f $(OBJS) $(TARGET)
