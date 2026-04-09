@@ -23,24 +23,17 @@ We go to that directory and set up for our run.
 cd mnist
 ```
 
-The key file in this directory is main.py. This script will run on either CPUs or GPUs,
-depending on what is available. For a GPU, the data and
-the model need to be transferred to the GPU device. This
-is done with the "to.device" commands. The device will
-be defined as a CPU on a CPU and a GPU on a system with
-a GPU that is available and can be used.
+The key file in this directory is `main.py`. This script will run on either CPUs or GPUs,
+depending on what is available. In order to run on the GPU, the model and tensors need to
+be moved to device using `.to(device)` after `device` is chosen to be either CPU or GPU.
 
-To enhance the example, we'll modify a line to confirm
-that we are running on our AMD GPU and not the CPU.
-Just after line 101, add a line to print out the device
-being used. The line to be added to main.py is:
+To print which `device` was selected, wee add this line to line 101 of `main.py`:
 
 ```
-   print(f"Using device: {device}")' main.py`
+    print(f"Using device: {device}")
 ```
 
-For our scripts, we'll use a stream editor, sed, to add the
-line on the fly.
+For our scripts, we use `sed` to insert that line on the fly:
 
 ```
 sed -i -e '/device = torch.device("cpu")/a\    print(f"Using device: {device}")' main.py
@@ -97,7 +90,8 @@ should modify it for your version.
 Before we jump into running our project, lets confirm that
 the environment is set up and running properly. We'll first 
 confirm that we can import the torch module in our python
-environment. Then we'll check that we can access a GPU.
+environment. Then we'll check that we can access a GPU (on ROCm,
+PyTorch still uses the `torch.cuda` API for this):
 
 ```
 python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
@@ -110,9 +104,10 @@ Now let's run the MNIST example. We time it for later analysis.
 time python3 main.py
 ```
 
-You should see a line at the start that says `Using device: cuda`. It
-confirms that you are running on the GPU. It is the AMD GPU even
-though it says cuda.
+You should see the line `Using device: cuda` that we added before. On ROCm GPU builds,
+the label may still say **cuda** even though it runs on an AMD GPU. If
+`torch.cuda.is_available()` is `False` but you requested GPUs in Slurm, verify that the
+GPUs are actually visible using `amd-smi`.
 
 Cleaning up after our run, we deactivate the virtual environment
 and remove our directory. With the amount of disk space that these
@@ -142,7 +137,7 @@ git clone https://github.com/AMD/HPCTrainingExamples
 cd HPCTrainingExamples/MLExamples/Pytorch/mnist
 ```
 
-Here are the contents of the batch script.
+Here are the contents of the batch script:
 
 ```
 #!/bin/bash
@@ -152,17 +147,24 @@ Here are the contents of the batch script.
 #SBATCH --output=pytorch_mnist_venv.out
 #SBATCH --error=pytorch_mnist_venv.out
 
-cd ~/pytorch_examples/mnist
 python3 -m venv rocm-pytorch
-source rocm-pytorch/bin/activate
+cd rocm-pytorch
+source bin/activate
 echo "Starting pytorch install"
 time pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
 
 python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
 python3 -c 'import torch; print(torch.cuda.is_available())'
 
+git clone --depth=1 https://github.com/pytorch/examples.git pytorch_examples
+cd pytorch_examples/mnist
+sed -i -e '/device = torch.device("cpu")/a\    print(f"Using device: {device}")' main.py
+
+pip3 install -r requirements.txt
+
 echo "Starting mnist"
 time python3 main.py
+cd ../../..
 
 deactivate
 rm -rf rocm-pytorch
@@ -229,7 +231,7 @@ python3 -c 'import torch; print(torch.cuda.is_available())'
 We are ready to run the example problem. We go to the directory with the example files.
 
 ```
-cd pytorch_examples/mnist
+cd ~/pytorch_examples/mnist
 ```
 
 We need to install the python library requirements.
@@ -265,18 +267,18 @@ like the following. We'll name the file `pytorch_mnist_apptainer.batch`.
 # Pre-pull rocm-pytorch image on a login/front-end node
 #  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
 
-mkdir -p .torch
-
 cd $HOME/pytorch_examples/mnist
+mkdir -p .torch
 
 apptainer exec --rocm \
    --bind "$PWD:/workspace" -W /workspace \
    --env TORCH_HOME=/workspace/.torch \
-   ~/rocm-pytorch.sif  \
-pwd
-python3 - << EOF
+   "$HOME/rocm-pytorch.sif" \
+   bash -s <<'EOS'
+pip3 install --user -r requirements.txt
+python3 <<'EOF'
 import torch, platform
-print("Torch module location: ",torch)
+print("Torch module location: ", torch)
 print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
 print("Platform:", platform.platform())
 print("torch.cuda.is_available:", torch.cuda.is_available())
@@ -284,9 +286,8 @@ print("Device count:", torch.cuda.device_count())
 if torch.cuda.is_available():
     print("Device 0:", torch.cuda.get_device_name(0))
 EOF
-
-pip3 install --user -r requirements.txt
 time python3 main.py
+EOS
 ```
 
 We submit the job with 
@@ -488,8 +489,8 @@ at the top. First without the virtual environment
 ```
 #!/bin/bash
 #SBATCH --gpus=1
-#SBATCH --time=01:00:0
-#SBATCH --ntasks=48
+#SBATCH --time=01:00:00
+#SBATCH --ntasks=1
 #SBATCH --output=pytorch_mnist_module.out
 #SBATCH --error=pytorch_mnist_module.out
 
@@ -521,8 +522,8 @@ With a virtual environment in the `pytorch_mnist_module_venv.batch` file
 ```
 #!/bin/bash
 #SBATCH --gpus=1
-#SBATCH --time=01:00:0
-#SBATCH --ntasks=48
+#SBATCH --time=01:00:00
+#SBATCH --ntasks=1
 #SBATCH --output=pytorch_mnist_module_venv.out
 #SBATCH --error=pytorch_mnist_module_venv.out
 
@@ -609,27 +610,40 @@ directives to get more GPUs.
 ```
 #!/bin/bash
 #SBATCH --gpus=2
-#SBATCH --time=01:00:0
+#SBATCH --time=01:00:00
 #SBATCH --ntasks=2
 #SBATCH --output=pytorch_mnist_venv_2gpus.out
 #SBATCH --error=pytorch_mnist_venv_2gpus.out
 
-module load rocm pytorch
-
-cd ~/pytorch_examples/mnist
 python3 -m venv rocm-pytorch-2gpus
-source rocm-pytorch-2gpus/bin/activate
+cd rocm-pytorch-2gpus
+source bin/activate
 echo "Starting pytorch install"
-pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
+time pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
 
 python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
 python3 -c 'import torch; print(torch.cuda.is_available())'
 
+git clone --depth=1 https://github.com/pytorch/examples.git pytorch_examples
+cd pytorch_examples/mnist
+
+sed -i -e '/device = torch.device("cpu")/a\    print(f"Using device: {device}")' main.py
+sed -i -e '/model = Net().to(device)/s/.to(device)//' main.py
+sed -i -e '/model = Net()/a\    if torch.cuda.device_count() > 1:\
+        print(f"Using {torch.cuda.device_count()} GPUs!")\
+        model = nn.DataParallel(model)\
+    model.to(device)' main.py
+
+pip3 install -r requirements.txt
+
 echo "Starting mnist"
 time python3 main.py
+cd ../../..
 
 deactivate
 rm -rf rocm-pytorch-2gpus
+
+echo "Finished"
 ```
 All that is left to do is submit the job.
 

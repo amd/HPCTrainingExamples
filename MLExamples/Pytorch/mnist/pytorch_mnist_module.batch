@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --gpus=1
-#SBATCH --time=01:00:0
+#SBATCH --time=01:00:00
 #SBATCH --ntasks=1
 #SBATCH --output=pytorch_mnist_module.out
 #SBATCH --error=pytorch_mnist_module.out
