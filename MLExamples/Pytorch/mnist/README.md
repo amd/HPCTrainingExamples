@@ -27,7 +27,7 @@ The key file in this directory is `main.py`. This script will run on either CPUs
 depending on what is available. In order to run on the GPU, the model and tensors need to
 be moved to device using `.to(device)` after `device` is chosen to be either CPU or GPU.
 
-To print which `device` was selected, wee add this line to line 101 of `main.py`:
+To print which `device` was selected, we add this line to line 101 of `main.py`:
 
 ```
     print(f"Using device: {device}")
@@ -74,18 +74,18 @@ python3 -m venv rocm-pytorch
 source rocm-pytorch/bin/activate
 ```
 
-This will create a directory rocm-pytorch.
-
-This is an empty environment. We have to populate it with the 
-software that we need. There is a python package containing 
-ROCm and pytorch that we will use. We time the install for comparison.
+This will create a directory `rocm-pytorch`, which is empty at first.
+We have to populate it with the software that we need. First, we will
+install the correct version of PyTorch.
 
 ```
 time pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
 ```
 
-This is for ROCm 6.4.x releases. If you have a different ROCm release, you
-should modify it for your version.
+> [!NOTE]
+> This is for a ROCm 6.4.x release. Make sure that you have a ROCm module loaded
+> and adapt the url for your ROCm version. Otherwise PyTorch might not run on
+> the GPU.
 
 Before we jump into running our project, lets confirm that
 the environment is set up and running properly. We'll first 
@@ -196,18 +196,25 @@ what they recommend.
 ### Apptainer
 
 With Apptainer, we first need to download the container to the local system. Most container
-images are in docker format, so we download it and convert it to the "sif" format. We can do this 
+images are in docker format, so we download it and convert it to the `sif` format. We can do this 
 in advance and keep the converted image local for future runs. Check with your local system
-on whether they recommend that this is done on the front-end or as a batch job. On this
-system, we use the SH5 nodes with the single GPU so that we don't tie up the nodes
-with more GPUs.
+on whether they recommend that this is done on the front-end or as a batch job.
+
+> [!TIP]
+> On AAC6 and AAC7, the converted image is already available at:
+> ```
+> /shareddata/containers/pytorch/pytorch_rocm.sif
+> ```
+> Please use this image to save yourself time and disk space.
 
 The container image will have a self-contained operating system, python and ROCm version.
 We try to get the closest matches to our current system versions. Squashfs needs a lot of
-memory, soe we'll get an exclusive allocation on one of the SH5 nodes.
+memory, so on AAC6 we'll get an exclusive allocation on one of the SH5 nodes, which only
+have a single GPU so that we don't tie up the nodes with more GPUs. For other systems,
+adapt the partition accordingly.
 
 ```
-salloc --exclusive  -p 1CN48C1G1H_MI300A_Ubuntu22
+salloc --exclusive -p 1CN48C1G1H_MI300A_Ubuntu22
 apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu24.04_py3.12_pytorch_release_2.6.0
 exit
 ```
@@ -265,7 +272,7 @@ like the following. We'll name the file `pytorch_mnist_apptainer.batch`.
 #SBATCH --error=pytorch_mnist_apptainer.out
 
 # Pre-pull rocm-pytorch image on a login/front-end node
-#  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.5.1
+#  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu24.04_py3.12_pytorch_release_2.6.0
 
 cd $HOME/pytorch_examples/mnist
 mkdir -p .torch
@@ -308,7 +315,7 @@ based on a single read-only base container. Create an overlay before submitting 
 
 ```
 mkdir -p ~/apptainer_mnist_overlay
-apptainer overlay create --size 1024 ~/apptainer_mnist_overlay/mnist_overlay.img
+apptainer overlay create --size 2048 ~/apptainer_mnist_overlay/mnist_overlay.img
 ```
 
 This overlay can be applied like this when launching the container:
@@ -333,18 +340,18 @@ apptainer exec \
   ~/rocm-pytorch.sif \
   bash -s <<'EOF'
 cd /opt
-python3 -m venv mnist_venv
+python3 -m venv --system-site-packages mnist_venv
 source mnist_venv/bin/activate
 git clone --depth=1 https://github.com/pytorch/examples.git pytorch_examples
 cd pytorch_examples/mnist
-pip3 install -r /workspace/requirements.txt
+pip3 install -r requirements.txt
 EOF
 ```
 Now you can submit `pytorch_mnist_apptainer_overlay.batch` to test if the environment is correctly setup
 and the example runs.
 
-Tip: The container image has **not been changed**. You can test this by launching a container without the overlay
-and checking if `/opt` exists.
+> [!NOTE]
+> The container image has **not been changed**. You can test this by launching a container without the overlay and checking if `/opt` exists.
 
 ### Podman
 
@@ -360,16 +367,22 @@ salloc --ntasks 1 --gpus=1 --time=01:00:00
 Now start up an interactive shell in Podman
 
 ```
-podman run -it --device=/dev/dri --device=/dev/kfd --network=host --ipc=host --userns=keep-id --group-add=keep-groups --cgroupns=host --cap-add=SYS_PTRACE --security-o
-pt seccomp=unconfined -v $HOME:/workdir -w /workdir docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.6.0 bash
+podman run -it --device=/dev/dri --device=/dev/kfd --network=host --ipc=host \
+  --userns=keep-id --group-add=keep-groups --cgroupns=host \
+  --cap-add=SYS_PTRACE --security-opt seccomp=unconfined \
+  -v "$HOME:/workdir" -w /workdir \
+  docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.6.0 bash
 ```
 
+Inside that container shell:
+
+```
 cd pytorch_examples/mnist
 pip3 install -r requirements.txt
 
 python3 - << EOF
 import torch, platform
-print("Torch module location: ",torch)
+print("Torch module location: ", torch)
 print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
 print("Platform:", platform.platform())
 print("torch.cuda.is_available:", torch.cuda.is_available())
@@ -379,9 +392,6 @@ if torch.cuda.is_available():
 EOF
 
 time python3 main.py
-
-```
-podman pull docker://rocm/pytorch:latest
 ```
 
 Then the Slurm batch file for the podman job is
@@ -394,19 +404,20 @@ Then the Slurm batch file for the podman job is
 #SBATCH --output=pytorch_mnist_podman.out
 #SBATCH --error=pytorch_mnist_podman.out
 
-cd $HOME/pytorch_examples/mnist
+cd "$HOME/pytorch_examples/mnist" || exit 1
 
 podman run --rm \
   --device=/dev/dri --device=/dev/kfd --network=host --ipc=host \
   --userns=keep-id --group-add=keep-groups --cgroupns=host \
   --cap-add=SYS_PTRACE --security-opt seccomp=unconfined \
-  -v $PWD:/workdir -w /workdir \
+  -v "$PWD:/workdir" -w /workdir \
   docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.6.0 \
-pip3 install --user -r requirements.txt
-
-python3 - << EOF
+  bash -s <<'EOS'
+set -e
+pip3 install -r requirements.txt
+python3 <<'EOF'
 import torch, platform
-print("Torch module location: ",torch)
+print("Torch module location: ", torch)
 print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
 print("Platform:", platform.platform())
 print("torch.cuda.is_available:", torch.cuda.is_available())
@@ -414,8 +425,8 @@ print("Device count:", torch.cuda.device_count())
 if torch.cuda.is_available():
     print("Device 0:", torch.cuda.get_device_name(0))
 EOF
-
 time python3 main.py
+EOS
 ```
 
 ## Modules with local rocm and pytorch software

@@ -23,22 +23,11 @@ apptainer exec --rocm \
   "${SIF}" \
   bash -s <<'EOS'
 cd /opt
-if [ ! -x /opt/bin/python ]; then
-  python3 -m venv mnist_venv
-fi
 source mnist_venv/bin/activate
 
-EXAMPLES=/opt/pytorch_examples
-if [ ! -f "${EXAMPLES}/mnist/main.py" ]; then
-  if [ -d "${EXAMPLES}" ]; then rm -rf "${EXAMPLES}"; fi
-  git clone --depth=1 https://github.com/pytorch/examples.git "${EXAMPLES}"
-fi
-
-cd "${EXAMPLES}/mnist"
+cd pytorch_examples/mnist
 mkdir -p .torch
 export TORCH_HOME=/opt/pytorch_examples/mnist/.torch
-
-pip3 install -r requirements.txt
 
 python3 <<'EOF'
 import torch, platform
