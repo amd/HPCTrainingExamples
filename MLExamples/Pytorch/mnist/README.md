@@ -298,6 +298,53 @@ sbatch pytorch_mnist_apptainer.batch
 
 Output will be in `pytorch_mnist_apptainer.out`
 
+#### Extending the container with a writable overlay
+
+By default, the container image is read-only and changes to the image are lost once the the container is teared down.
+One way to keep persistent changes in Apptainer is using a **writable overlay**. An overlay is a writeable disk file
+that Apptainer layers on the read-only `.sif` such that all changes within the container (e.g. installing a venv)
+persist. This avoids having to rebuild the container for each minor change and allows to build multiple setups
+based on a single read-only base container. Create an overlay before submitting (`--size` is MiB) with:
+
+```
+mkdir -p ~/apptainer_mnist_overlay
+apptainer overlay create --size 1024 ~/apptainer_mnist_overlay/mnist_overlay.img
+```
+
+This overlay can be applied like this when launching the container:
+
+```
+apptainer exec \
+  --rocm \
+  --overlay ~/apptainer_mnist_overlay/mnist_overlay.img \
+  --bind "$PWD:/workspace" -W /workspace \
+  ~/rocm-pytorch.sif python3 -c 'import sys; print(sys.version)'
+```
+
+Instead of installing the additional dependencies for this example into the Python environment of the
+host, we can now create a persistent virtual environment with all the dependencies into this overlay.
+Once we are inside the container launched with the overlay option, all changes we make in the container
+are automatically captured in the overlay. To setup the example and its dependencies, we just run
+
+```
+apptainer exec \
+  --rocm \
+  --overlay ~/apptainer_mnist_overlay/mnist_overlay.img \
+  ~/rocm-pytorch.sif \
+  bash -s <<'EOF'
+cd /opt
+python3 -m venv mnist_venv
+source mnist_venv/bin/activate
+git clone --depth=1 https://github.com/pytorch/examples.git pytorch_examples
+cd pytorch_examples/mnist
+pip3 install -r /workspace/requirements.txt
+EOF
+```
+Now you can submit `pytorch_mnist_apptainer_overlay.batch` to test if the environment is correctly setup
+and the example runs.
+
+Tip: The container image has **not been changed**. You can test this by launching a container without the overlay
+and checking if `/opt` exists.
 
 ### Podman
 
