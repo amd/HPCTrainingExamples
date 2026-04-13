@@ -13,10 +13,11 @@ To run the example in this directory:
 ```
 module load rocm
 module load amdclang
+module load hipfort
 make
 ```
 
-Note: to build these examples with a version of hipfort installed by the user, make sure to set the `HIPFORT_PATH` variable in your environment to the local installation of hipfort.
+Note: loading the `hipfort` module sets the `HIPFORT_INC` environment variable that is used in the Makefile.  
 
 The make process will create four executables: `gemm_global`, `gemm_local`, `gemm_global_sd`, `gemm_local_sd`.
 The `gemm_global` has the matrices allocated outside of the matrix multiply function, and they are then supplied to the function as arguments, whereas `gemm_local` performs the allocation within the function call for the matrix multiplication. 

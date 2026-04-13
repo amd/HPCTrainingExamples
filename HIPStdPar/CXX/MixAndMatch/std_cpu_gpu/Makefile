@@ -7,7 +7,14 @@ ARCH_FLAGS   := --offload-arch=${ROCM_GPU}
 LIBS         ?=
 # std::execution (CPU parallel) pulls in TBB; ROCm ships libtbb under rocprofiler-systems.
 # If your OS has tbb-devel in the default linker path, you can leave TBB_LIBDIR empty.
-TBB_LIBDIR   ?= $(ROCM_PATH)/lib/rocprofiler-systems
+TBB_LIBDIR ?= $(shell \
+    if [ -f /usr/lib/x86_64-linux-gnu/libtbb.so ]; then echo /usr/lib/x86_64-linux-gnu; \
+    elif [ -f $(ROCM_PATH)/lib/rocprofiler-systems/libtbb.so ]; then echo $(ROCM_PATH)/lib/rocprofiler-systems; \
+    else echo ""; fi)
+ifeq ($(TBB_LIBDIR),)
+$(error TBB not found. Install libtbb-dev or set TBB_LIBDIR=<path>)
+endif
+
 
 # If STDPAR_PATH is not specified on the command line, use this default.
 STDPAR_PATH ?= ${ROCM_PATH}/include/thrust/system/hip/hipstdpar
