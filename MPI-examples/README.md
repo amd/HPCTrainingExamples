@@ -3,6 +3,14 @@
 
 README.md from `HPCTrainingExamples/MPI-examples` from the Training Examples repository.
 
+> [!NOTE]
+> If you are on **AAC7**, replace the generic `module load openmpi rocm amdclang` steps with these modules to follow the rest of the exercise:
+> ```
+> module unload openmpi rocm
+> module load rocm-therock/23.1.0 openmpi/5.0.10-ucc1.6.0-ucx1.19.1-xpmem-2.7.4-rocm-therock-23.1.0
+> export CC=$(which amdclang); export CXX=$(which amdclang++); export FC=$(which amdflang)
+> ```
+
 ## Point-to-point and collective
 
 **NOTE**: these exercises have been tested on MI210 and MI300A accelerators using a container environment.
@@ -11,7 +19,7 @@ To see details on the container environment (such as operating system and module
 Allocate at least two GPUs and set up your environment
 
 ```
-module load openmpi rocm
+module load rocm openmpi  # For modules on AAC7, see note at beginning
 export OMPI_CXX=hipcc
 ```
 
@@ -27,47 +35,41 @@ mpirun -n 2 -mca pml ucx ./pt2pt
 
 ## OSU Benchmark
 
-Get the OSU micro-benchmark tarball and extract it
+Setup your module environment
+```
+module load rocm openmpi  # For modules on AAC7, see note at beginning
+```
+Then, get the OSU micro-benchmark tarball and extract it
 ```
 mkdir OMB
 cd OMB
-wget https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.3.tar.gz
-tar -xvf osu-micro-benchmarks-7.3.tar.gz
-```
-
-Create a build directory and cd to osu-micro-benchmarks-7.3
-```
-mkdir build
+wget https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.5.tar.gz
+tar -xvf osu-micro-benchmarks-7.5.tar.gz
 cd osu-micro-benchmarks-7.3
-module load rocm openmpi
 ```
 
-Build and install OSU micro-benchmarks
+Build and install the OSU micro-benchmarks
 ```
+mkdir -p ../build
+# Fix teardown race: hipDeviceReset() after MPI_Finalize()
+sed -i 's/hipDeviceReset/hipDeviceSynchronize/g' c/util/osu_util_mpi.c
 ./configure --prefix=`pwd`/../build/ \
                 CC=`which mpicc` \
                 CXX=`which mpicxx` \
                 CPPFLAGS=-D__HIP_PLATFORM_AMD__=1 \
                 --enable-rocm \
                 --with-rocm=${ROCM_PATH}
-make -j12
+make
 make install
 ```
-If you get the error "cannot include hip/hip_runtime_api.h", grep for __HIP_PLATFORM_HCC__ and replace it with __HIP_PLATFORM_AMD__ in configure.ac and configure files.
 
-Check if osu microbenchmark is actually built
+Check if the OSU micro-benchmarks are actually built
 ```
 ls -l ../build/libexec/osu-micro-benchmarks/mpi/
-
 ```
-if you see files collective, one-sided, pt2pt, and startup, your build is successful.
+if you see folders `collective/`, `one-sided/`, `pt2pt/`, and `startup/`, your build is successful.
 
-Allocate 2 GPUs, and make those visible
-```
-export HIP_VISIBLE_DEVICES=0,1
-```
-
-Make sure GPU-Aware communication is enabled and run the benchmark
+Allocate 2 GPUs, make sure GPU-Aware communication is enabled and run the benchmark
 ```
 mpirun -n 2 -mca pml ucx ../build/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bw \
 				-m $((16*1024*1024)) D D
@@ -85,12 +87,12 @@ The Ghost Exchange example is a simplified instance of what we believe a real sc
 
 For what follows, we focus on the 2D [OpenMP version set](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange/GhostExchange_ArrayAssign), which begins with a CPU only version that can be compiled and run as below:
 ```
-module load amdclang openmpi
+module load rocm openmpi amdclang  # For modules on AAC7, see note at beginning
 git clone https://github.com/amd/HPCTrainingExamples.git
 cd HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig
 mkdir build && cd build
 cmake ..
-make -j
+make
 mpirun -n 8 --mca pml ucx ./GhostExchange -x 4  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 1000
 ```
 We can improve this performance by using process placement so that we are using all the memory
@@ -174,8 +176,7 @@ Two more versions are available in the dedicated [directory](https://github.com/
 To run RCCL test, follow these steps:
 
 ```
-module load rocm
-module load openmpi
+module load rocm openmpi  # For modules on AAC7, see note at beginning
 git clone https://github.com/ROCm/rccl-tests.git
 cd rccl-tests/
 make MPI=1 MPI_HOME=$MPI_PATH HIP_HOME=$ROCM_PATH
