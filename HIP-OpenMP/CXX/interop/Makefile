@@ -6,7 +6,7 @@ OBJECTS = interop.o interop_hip.o
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
 
-CXXFLAGS = -g -O2 -fPIC ${OPENMP_FLAGS} -D __HIP_PLATFORM_AMD__
+CXXFLAGS = -g -O2 -fPIC ${OPENMP_FLAGS} -D __HIP_PLATFORM_AMD__ -I${ROCM_PATH}/include
 HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include 
 
 ifeq ($(HIPCC), nvcc)
