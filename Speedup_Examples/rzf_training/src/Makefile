@@ -1,4 +1,4 @@
-ROCMVER=5.7.0
+ROCM_PATH ?= /opt/rocm
 BASIC  	= -O0
 OPT    	= -O3 -mtune=native -march=native
 OMP 	= -fopenmp
@@ -36,10 +36,10 @@ rzf_fortran_openmp.x: rzf_openmp.f
 
 
 rzf_ROCM.x: rzf_ROCM.hip
-	hipcc -O3 -march=native -mtune=native -I/opt/rocm-${ROCMVER}/rocprim rzf_ROCM.hip -o rzf_ROCM.x -lm
+	hipcc -O3 -march=native -mtune=native -I${ROCM_PATH}/rocprim rzf_ROCM.hip -o rzf_ROCM.x -lm
 
 rzf_ROCM_shard.x: rzf_ROCM_shard.hip
-	hipcc -O3 -march=native -mtune=native -I/opt/rocm-${ROCMVER}/rocprim rzf_ROCM_shard.hip -o rzf_ROCM_shard.x -lm
+	hipcc -O3 -march=native -mtune=native -I${ROCM_PATH}/rocprim rzf_ROCM_shard.hip -o rzf_ROCM_shard.x -lm
 
 
 

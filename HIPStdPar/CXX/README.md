@@ -235,10 +235,14 @@ All examples require the user to specify the path to the StdPar header in the Ma
 
 ```
 module load rocm
-export STDPAR_PATH=${ROCM_PATH}/include/thrust/system/hip/hipstdpar
+module load amdclang
 export HSA_XNACK=1
 ```
 
+If the `amdclang` module is not available, then do:
+```
+export STDPAR_PATH=${ROCM_PATH}/include/thrust/system/hip/hipstdpar
+```
 Note HIPSTDPAR assumes the device is HMM enabled and setting `HSA_XNACK=1` to one is required. In devices where HMM is not enabled, the additional compilation flag `--hipstdpar-interpose-alloc` needs to be included. This will instruct the compiler to replace all dynamic memory allocations with compatible `hipManagedMemory` allocations.
 
 

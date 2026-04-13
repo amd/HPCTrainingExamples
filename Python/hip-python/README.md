@@ -27,7 +27,7 @@ hipDeviceGetAttribute.
 ## Obtaining Device Properties
 
 We'll take a look at the higGetDeviceProperties function first. Copy the following 
-code into a file named `hipGetDevicePropeties_example.py` or pull the example down
+code into a file named `hipGetDeviceProperties_example.py` or pull the example down
 with 
 
 ```
@@ -481,7 +481,7 @@ Running this example:
 
 ```
 module load rocm hip-python
-python3 rcc_example.py
+python3 rccl_example.py
 ```
 
 ## Unified Shared Memory with RCCL using HIP-Python
@@ -550,7 +550,7 @@ Running this version requires setting `HSA_XNACK` to one as in the previous unif
 ```
 module load rocm hip-python
 export HSA_XNACK=1
-python3 rcc_USM_example.py
+python3 rccl_USM_example.py
 ```
 
 ## Cython example
@@ -856,7 +856,7 @@ Run this example with:
 
 ```
 module load rocm hip-python
-python3 kernel_with_args.py
+python3 kernel_with_arguments.py
 ```
 
 
