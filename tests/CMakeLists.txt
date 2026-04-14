@@ -29,18 +29,22 @@ set_property(TEST HIP_Query_Device PROPERTY SKIP_REGULAR_EXPRESSION "module spid
 add_test(NAME HIPStdPar_Saxpy_Foreach COMMAND ../hipstdpar_saxpy_foreach.sh )
 set_property(TEST HIPStdPar_Saxpy_Foreach PROPERTY PASS_REGULAR_EXPRESSION "Finished Run")
 set_property(TEST HIPStdPar_Saxpy_Foreach PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(HIPStdPar_Saxpy_Foreach PROPERTIES TIMEOUT 400)
 
 add_test(NAME HIPStdPar_Saxpy_Transform COMMAND ../hipstdpar_saxpy_transform.sh )
 set_property(TEST HIPStdPar_Saxpy_Transform PROPERTY PASS_REGULAR_EXPRESSION "Finished Run")
 set_property(TEST HIPStdPar_Saxpy_Transform PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(HIPStdPar_Saxpy_Transform PROPERTIES TIMEOUT 400)
 
 add_test(NAME HIPStdPar_Saxpy_Transform_Reduce COMMAND ../hipstdpar_saxpy_transform_reduce.sh )
 set_property(TEST HIPStdPar_Saxpy_Transform_Reduce PROPERTY PASS_REGULAR_EXPRESSION "Finished Run: Result 5120.000000")
 set_property(TEST HIPStdPar_Saxpy_Transform_Reduce PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(HIPStdPar_Saxpy_Transform_Reduce PROPERTIES TIMEOUT 400)
 
 add_test(NAME HIPStdPar_TSP COMMAND ../hipstdpar_tsp.sh )
 set_property(TEST HIPStdPar_TSP PROPERTY PASS_REGULAR_EXPRESSION "Solution route is")
 set_property(TEST HIPStdPar_TSP PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(HIPStdPar_TSP PROPERTIES TIMEOUT 500)
 
 add_test(NAME HIPStdPar_ShallowWater_Orig COMMAND ../hipstdpar_shallowwater_orig.sh )
 set_property(TEST HIPStdPar_ShallowWater_Orig PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
@@ -53,6 +57,7 @@ set_property(TEST HIPStdPar_ShallowWater_Ver1 PROPERTY SKIP_REGULAR_EXPRESSION "
 add_test(NAME HIPStdPar_ShallowWater_Ver2 COMMAND ../hipstdpar_shallowwater_ver2.sh )
 set_property(TEST HIPStdPar_ShallowWater_Ver2 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 set_property(TEST HIPStdPar_ShallowWater_Ver2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(HIPStdPar_ShallowWater_Ver2 PROPERTIES TIMEOUT 500)
 
 add_test(NAME HIPStdPar_ShallowWater_StdPar COMMAND ../hipstdpar_shallowwater_stdpar.sh )
 set_property(TEST HIPStdPar_ShallowWater_StdPar PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
