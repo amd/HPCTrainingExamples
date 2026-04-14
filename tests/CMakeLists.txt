@@ -75,6 +75,22 @@ add_test(NAME HIPStdPar_MixAndMatch_CpuGpu COMMAND ../hipstdpar_mixandmatch_std_
 set_property(TEST HIPStdPar_MixAndMatch_CpuGpu PROPERTY PASS_REGULAR_EXPRESSION "StdParGpu Executor took")
 set_property(TEST HIPStdPar_MixAndMatch_CpuGpu PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# more than one HIPStdPar build at a time is causing timeouts on tests
+set_tests_properties(
+  HIPStdPar_Saxpy_Foreach
+  HIPStdPar_Saxpy_Transform
+  HIPStdPar_Saxpy_Transform_Reduce
+  HIPStdPar_TSP
+  HIPStdPar_ShallowWater_Orig
+  HIPStdPar_ShallowWater_Ver1
+  HIPStdPar_ShallowWater_Ver2
+  HIPStdPar_ShallowWater_StdPar
+  HIPStdPar_MixAndMatch_Atomic
+  HIPStdPar_MixAndMatch_Hip
+  HIPStdPar_MixAndMatch_Omp
+  HIPStdPar_MixAndMatch_CpuGpu
+  PROPERTIES RESOURCE_LOCK hipstdpar_compile)
+
 # Unified Shared Memory Examples (MI300A programming)
 add_test(NAME USM_Vector_Add COMMAND ../usm_vector_add.sh )
 set_property(TEST USM_Vector_Add PROPERTY PASS_REGULAR_EXPRESSION "Success")
