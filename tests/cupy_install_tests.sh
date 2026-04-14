@@ -17,11 +17,12 @@ if [ $? -eq 1 ]; then
 fi
 module load cupy
 
+rm -rf cupy
 git clone -q --depth 1 --recursive https://github.com/ROCm/cupy.git
 
 export CUPY_INSTALL_USE_HIP=1
 
-cd cupy/tests/install_tests
+cd cupy/tests/install_tests || exit 1
 
 python3 -m pytest -vvv
 
