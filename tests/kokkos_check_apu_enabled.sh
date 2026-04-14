@@ -14,8 +14,8 @@ if [ "$GPU_IS_MI300A" != "1" ]; then
 	echo"Skip"
 	exit 1
 fi	
+module load amdclang
 module load kokkos
-module list
 
 echo "=== Kokkos APU Capability Test ==="
 echo "Kokkos install: ${Kokkos_ROOT}"

@@ -6,6 +6,7 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
+module load amdclang
 module load kokkos
 
 GFX_MODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`
