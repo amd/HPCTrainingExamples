@@ -63,21 +63,18 @@ else
 
    export Raja_DIR=${PWDir}/Raja_HIP
 
-   cd ${REPO_DIR}/ManagedMemory/Raja_Code
-
    # To run with managed memory
    export HSA_XNACK=1
 
-   rm -rf build || true
-   mkdir -p build && cd build
-   CXX=hipcc Raja_DIR=${PWDir}/Raja_HIP cmake ..
+   cd ${PWDir}
+   rm -rf raja_example_build || true
+   mkdir -p raja_example_build && cd raja_example_build
+   CXX=hipcc Raja_DIR=${PWDir}/Raja_HIP cmake ${REPO_DIR}/ManagedMemory/Raja_Code`
    make
    ./raja_code
 
-   cd ..
-   rm -rf build || true
-
    cd ${PWDir}
+   rm -rf raja_example_build || true
    rm -rf Raja_HIP
 
    cd ..
