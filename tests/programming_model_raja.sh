@@ -69,7 +69,7 @@ else
    cd ${PWDir}
    rm -rf raja_example_build || true
    mkdir -p raja_example_build && cd raja_example_build
-   CXX=hipcc Raja_DIR=${PWDir}/Raja_HIP cmake ${REPO_DIR}/ManagedMemory/Raja_Code`
+   CXX=hipcc Raja_DIR=${PWDir}/Raja_HIP cmake ${REPO_DIR}/ManagedMemory/Raja_Code
    make
    ./raja_code
 
