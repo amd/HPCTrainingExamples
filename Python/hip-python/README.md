@@ -5,7 +5,7 @@ README.md from `HPCTrainingExamples/Python/hip-python` in the Training Examples 
 
 For these examples, get a GPU with salloc or srun.
 
-```
+```bash
 salloc -N 1 --ntasks 16 --gpus=1 --time=01:00:00
 or
 srun -N 1 --ntasks 16 --gpus=1 --time=01:00:00 --pty /bin/bash
@@ -15,7 +15,7 @@ Be sure and free up the GPU when you are done with the exercises.
 
 The first test is to check that the hip-python environment is set up correctly.
 
-```
+```bash
 module load rocm hip-python
 python -c 'from hip import hip, hiprtc' 2> /dev/null && echo 'Success' || echo 'Failure'
 ```
@@ -30,14 +30,14 @@ We'll take a look at the higGetDeviceProperties function first. Copy the followi
 code into a file named `hipGetDeviceProperties_example.py` or pull the example down
 with 
 
-```
+```bash
 git clone https://github.com/AMD/HPCTrainingExamples
 cd HPCTrainingExamples/Python/hip-python
 ```
 
 The `hipGetDeviceProperties_example.py` file
 
-```
+```python
 from hip import hip
 
 def hip_check(call_result):
@@ -59,14 +59,14 @@ print("ok")
 
 Try it by loading the proper modules and running it with python3.
 
-```
+```bash
 module load rocm hip-python
 python3 hipGetDeviceProperties_example.py
 ```
 
 Some of the useful properties that can be obtained are:
 
-```
+```text
 props.managedMemory=1
 props.name=b'AMD Instinct MI210'
 props.warpSize=64
@@ -78,7 +78,7 @@ The second function to get device information is hipDeviceGetAttribute.
 Copy the following into `hipDeviceGetAttribute_example.py` or use the
 file in the hip-python examples.
 
-```
+```python
 from hip import hip
 
 def hip_check(call_result):
@@ -108,14 +108,14 @@ print("ok")
 
 Run this file.
 
-```
+```bash
 module load rocm hip-python
 python3 hipDeviceGetAttribute_example.py
 ```
 
 Output 
 
-```
+```text
 hipDeviceAttributeMaxBlockDimX: 1024
 hipDeviceAttributeMaxBlockDimY: 1024
 hipDeviceAttributeMaxBlockDimZ: 1024
@@ -133,7 +133,7 @@ and pass array data to the stream routines from Python arrays.
 
 The code in the file hipstreams_example.py.
 
-```
+```python
 import ctypes
 import random
 import array
@@ -173,7 +173,7 @@ print("ok")
 
 Now run this example.
 
-```
+```bash
 module load rocm hip-python
 python3 hipstreams_example.py
 ```
@@ -184,7 +184,7 @@ In the file hipblas_numpy_example.py, the hipBLAS library
 Saxpy routine is called. It operates on a numpy data
 array.
 
-```
+```python
 import ctypes
 import math
 import numpy as np
@@ -251,7 +251,7 @@ the other AMD Instinct GPUs. It simplifies the code because the memory
 does not have to be duplicated on the CPU and GPU. The code is in the
 file hipblas_numpy_USM_example.py.
 
-```
+```python
 import ctypes
 import math
 import numpy as np
@@ -297,7 +297,7 @@ else:
 To run this unified shared memory example, we also
 need the environment variable `HSA_XNACK` set to one.
 
-```
+```bash
 module load rocm hip-python
 export HSA_XNACK=1
 python3 hipblas_numpy_USM_example.py
@@ -308,7 +308,7 @@ python3 hipblas_numpy_USM_example.py
 The HIP FFT library can also be called from Python. We create a plan, perform
 the FFT, and then destroy the plan. This file is `hipfft_numpy_example.py`.
 
-```
+```python
 import numpy as np
 from hip import hip, hipfft
 
@@ -355,7 +355,7 @@ print("ok")
 
 Run this examples with:
 
-```
+```bash
 module load rocm hip-python
 python3 hipfft_numpy_example.py
 ```
@@ -366,7 +366,7 @@ The code is much simplier if we take advantage of the unified shared memory
 or managed memory. We can just use the host versions of the data directly.
 The simpler code is in hipfft_numpy_USM_example.py
 
-```
+```python
 import numpy as np
 from hip import hip, hipfft
 
@@ -405,7 +405,7 @@ print("ok")
 
 Run this with:
 
-```
+```bash
 module load rocm hip-python
 export HSA_XNACK=1
 python3 hipfft_numpy_USM_example.py
@@ -416,7 +416,7 @@ python3 hipfft_numpy_USM_example.py
 We can also call the RCCL communication library from Python using
 HIP-Python. An example of this is shown in rccl_example.py.
 
-```
+```python
 import numpy as np
 from hip import hip, rccl
 
@@ -479,7 +479,7 @@ print("ok")
 
 Running this example:
 
-```
+```bash
 module load rocm hip-python
 python3 rccl_example.py
 ```
@@ -490,7 +490,7 @@ We can also use the host data directly by relying on the unified shared memory
 or the managed memory on the AMD Instinct GPUs. The code for this is shown
 in rccl_USM_example.py
 
-```
+```python
 import numpy as np
 from hip import hip, rccl
 
@@ -547,7 +547,7 @@ print("ok")
 
 Running this version requires setting `HSA_XNACK` to one as in the previous unified shared memory examples.
 
-```
+```bash
 module load rocm hip-python
 export HSA_XNACK=1
 python3 rccl_USM_example.py
@@ -558,7 +558,7 @@ python3 rccl_USM_example.py
 We can also speed up Python code by compiling it using the Cython package. To demonstrate
 this, we create a simple array sum routine. The source code is in the file array_sum.pyx.
 
-```
+```cython
 from hip import hip, hiprtc
 
 def array_sum(double[:, ::1] A):
@@ -576,7 +576,7 @@ def array_sum(double[:, ::1] A):
 
 And define the interface to the array sum routine in `array_sum.pyx`.
 
-```
+```cython
 from hip cimport chip, chiprtc
 
 def array_sum(double[:, ::1] A):
@@ -586,7 +586,7 @@ To compile the python routine, we need a setup.py file that gives the
 directions to compile a routine with the project compiler. We'll define
 the compiler, the paths, libraries, and compiler flags.
 
-```
+```python
 import os, sys
 
 array_sum = "array_sum"
@@ -630,27 +630,27 @@ setup(
 
 We will need to bring in the Cython package, so we create a virtual environment.
 
-```
+```bash
 python3 –m venv cython_example
 source cython_example/bin/activate
 ```
 
 Then we set up the environment by loading the rocm and hip-python module and installing cython.
 
-```
+```bash
 module load rocm hip-python
 pip3 import cython
 ```
 
 Compile the array_sum python code with setup.py build
 
-```
+```bash
 python3 setup.py build
 ```
 
 Finally we clean up afterwards.
 
-```
+```bash
 deactivate
 rm –rf cython_example
 ```
@@ -665,7 +665,7 @@ compiled. We use the ability to query the device parameters to
 get the GPU architecture to compile for.
 
 
-```
+```python
 from hip import hip, hiprtc
 
 def hip_check(call_result):
@@ -731,7 +731,7 @@ print("ok")
 
 To run the example of creating a kernel and launching it:
 
-```
+```bash
 module load rocm hip-python
 python3 create_launch_C_kernel.py
 ```
@@ -742,7 +742,7 @@ It is a little more complicated to launch a kernel with arguments. The program
 is `scale_vector()` and it has six arguments. We add an "extra" field with the
 six arguments as part of the launch kernel call. This example is in `kernel_with_arguments.py`.
 
-```
+```python
 import ctypes
 import array
 import random
@@ -854,7 +854,7 @@ print("ok")
 
 Run this example with:
 
-```
+```bash
 module load rocm hip-python
 python3 kernel_with_arguments.py
 ```
@@ -864,7 +864,7 @@ python3 kernel_with_arguments.py
 
 A simple numba-HIP vector addition example
 
-```
+```python
 from numba import hip
 
 @hip.jit
@@ -881,7 +881,7 @@ print("Ok")
 
 To run the example
 
-```
+```bash
 module load rocm hip-python
 python3 numba-hip.py
 ```
@@ -889,11 +889,12 @@ python3 numba-hip.py
 An alternative approach to changing all the `@cuda.jit` to `@hip.jit` is to have 
 numba-hip pose as CUDA. We do this with the addition of the following two lines:
 
-```
+```python
 hip.pose_as_cuda()
 from numba import cuda
 ```
-```
+
+```python
 from numba import hip
 
 hip.pose_as_cuda()
@@ -913,7 +914,7 @@ print("Ok")
 
 Running this example
 
-```
+```bash
 module load rocm hip-python
 python3 numba-hip-cuda-posing.py
 ```
