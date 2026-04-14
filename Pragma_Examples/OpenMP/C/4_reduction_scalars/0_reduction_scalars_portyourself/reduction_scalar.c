@@ -1,7 +1,8 @@
+// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+// This software is distributed under the MIT License
+//
 // C version of reduction scalar reproducer created by Mahdieh Ghazimirsaeed
 // Converted by Bob Robey
-// Copyright (c) 2025 AMD HPC Application Performance Team
-// MIT License
 
 #include <stdio.h>
 int main(int argc, char *argv[]){

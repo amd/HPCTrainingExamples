@@ -1,3 +1,6 @@
+! Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+! This software is distributed under the MIT License
+!
 module kind_mod
   use, intrinsic :: ISO_Fortran_env, only: int32, real32, real64
   implicit none

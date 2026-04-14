@@ -64,8 +64,13 @@ int main( int argc, char* argv[] )
 
     omp_interop_t iobj = omp_interop_none;
     #pragma omp interop init(targetsync: iobj)
-    hipStream_t stream = (hipStream_t) omp_get_interop_ptr(iobj, omp_ipr_targetsync, NULL);
-    hipCheck( hipStreamCreate(&stream) );
+    hipStream_t stream;
+    if (iobj != omp_interop_none) {
+        stream = (hipStream_t) omp_get_interop_ptr(iobj, omp_ipr_targetsync, NULL);
+    } else {
+        printf("Interop not supported on this device, creating HIP stream directly\n");
+        hipCheck( hipStreamCreate(&stream) );
+    }
 
     hipCheck( hipEventRecord(start) );
 
@@ -76,7 +81,7 @@ int main( int argc, char* argv[] )
     hipCheck( hipStreamSynchronize(stream) );
     // interop use does not seem to work
     // #pragma omp interop use(iobj)
-    #pragma omp target teams loop 
+    #pragma omp target teams loop
     for( i = 0; i < elements; i++ ) {
        double tmp;
        // Just to make the kernel take longer

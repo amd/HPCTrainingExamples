@@ -19,16 +19,30 @@ to make use of the APU programming model (unified memory).
 
 Load a C compiler module <hr>
 **either**
-The AMD Compiler
+The AMD Compiler from the latest rocm 
+```
+module load rocm       #on AAC6
+
+```
+or
+```
+module load rocm-new   #on AAC7
+```
+then set
+```
+export C_COMPILER=amdclang
+
+```
+**or**
+The AMD Compiler with the Cray programming environment (only available on systems with CPE installed, e.g. AAC7)
 ```
 module load PrgEnv-amd
 module load rocm
 module load amd
 export C_COMPILER = amdclang
 ```
-Note: to correctly use the cray wrappers one should export C_COMPILER = cc, as the cray wrappers are broken in combination with rocm 6.3.0 we reccomend using amdclang directly in this training. This is not a good advise in general if you e.g. want to link Cray MPICH in your application!
 
-**or** (only available on systems with CPE installed)
+**or** (only available on systems with CPE installed, e.g. AAC7)
 ```
 module load PrgEnv-cray
 module load rocm
@@ -58,7 +72,7 @@ amdclang -fopenmp saxpy.c -o saxpy
 ```
  <hr>
  
-**or**
+**or** (CPE with cray wrappers only)
 ```
 cc -fopenmp saxpy.c -o saxpy
 ```

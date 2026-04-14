@@ -1,3 +1,6 @@
+! Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+! This software is distributed under the MIT License
+!
 ! Original Author: Arjen Tamerus at DiRAC Hackathon Feb 2024
 ! Released to AMD as sample code
 ! Modified by Bob Robey, AMD

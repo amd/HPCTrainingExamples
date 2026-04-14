@@ -75,7 +75,7 @@ endif()
 
 add_executable(GhostExchange GhostExchange.cc timer.c timer.h)
 
-set_target_properties(GhostExchange PROPERTIES INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH};$ENV{ROCM_PATH}/include/rcotracer")
+set_target_properties(GhostExchange PROPERTIES INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH};$ENV{ROCM_PATH}/include/roctracer")
 set_target_properties(GhostExchange PROPERTIES COMPILE_FLAGS "${MPI_CXX_COMPILE_FLAGS}")
 target_link_libraries(GhostExchange PRIVATE "${MPI_CXX_LIBRARIES};-L$ENV{ROCM_PATH}/lib -lroctx64")
 

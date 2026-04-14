@@ -1,3 +1,6 @@
+! Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+! This software is distributed under the MIT License
+!
 module boundary_mod
   use kind_mod
   use mesh_mod, only: mesh_t

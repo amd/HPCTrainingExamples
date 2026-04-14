@@ -42,12 +42,11 @@ set(JACOBI_HIP_SRCS HaloExchange.hip Input.hip JacobiIteration.hip JacobiMain.hi
 add_executable(Jacobi_hip ${JACOBI_CXX_SRCS} ${JACOBI_HIP_SRCS} )
 
 set(CXXFLAGS "")
-set(ROCMCC_FLAGS "${ROCMCC_FLAGS} -munsafe-fp-atomics -I$ENV{ROCM_PATH}/include/roctracer -I${MPI_INCLUDE_PATH}")
-set(CUDACC_FLAGS "${CUDACC_FLAGS} ${MPI_INCLUDE_PATH}")
+set(ROCMCC_FLAGS "${ROCMCC_FLAGS} -munsafe-fp-atomics")
+set(CUDACC_FLAGS "${CUDACC_FLAGS}")
 
 if (${GPU_RUNTIME} MATCHES "HIP")
-   set(HIPCC_FLAGS "${ROCMCC_FLAGS} -D__HIP_PLATFORM_AMD__")
-   set(HIPCC_FLAGS "${ROCMCC_FLAGS} -D__HIP_PLATFORM_HCC__")
+   set(HIPCC_FLAGS "${ROCMCC_FLAGS} -D__HIP_PLATFORM_AMD__ -D__HIP_PLATFORM_HCC__")
    set(HIPCC_LIBS "-lroctracer64 -lroctx64")
 else (${GPU_RUNTIME} MATCHES "HIP")
    set(HIPCC_FLAGS "${CUDACC_FLAGS} -D__HIP_PLATFORM_NVIDIA__")
@@ -55,7 +54,8 @@ else (${GPU_RUNTIME} MATCHES "HIP")
 endif (${GPU_RUNTIME} MATCHES "HIP")
 
 set_source_files_properties(${JACOBI_HIP_SRCS} PROPERTIES LANGUAGE ${GPU_RUNTIME})
-set_source_files_properties(${JACOBI_HIP_SRCS} PROPERTIES COMPILE_FLAGS ${HIPCC_FLAGS})
+set_source_files_properties(${JACOBI_HIP_SRCS} PROPERTIES COMPILE_FLAGS "${HIPCC_FLAGS}")
+target_include_directories(Jacobi_hip PRIVATE $ENV{ROCM_PATH}/include/roctracer ${MPI_INCLUDE_PATH})
 target_link_libraries(Jacobi_hip PRIVATE ${MPI_LIBRARIES} ${HIPCC_LIBS})
 
 install(TARGETS Jacobi_hip)

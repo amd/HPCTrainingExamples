@@ -18,7 +18,7 @@ git clone https://github.com/amd/HPCTrainingExamples.git
 For this training, one requires recent ROCm (>=6.3) which contains `rocprof-sys`, as well as an MPI installation.
 
 ```
-module load rocm/6.3.2
+module load rocm
 module load openmpi
 
 ```

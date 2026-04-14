@@ -22,8 +22,8 @@ Load a Fortran compiler module <hr>
 We recommend to use the new LLVM-based `amdflang` Fortran compiler for these exercises. The new LLVM-based `amdflang` compiler is the default Fortran compiler in ROCm since `rocm/7.X` and also in all of the `rocm-afar` or `therock` modules. Depending on the system you are on, you can simply load either
 ```
 module unload rocm
-module load rocm/7.2.0      # on AAC6
-module load rocm-new/7.2.0  # on AAC7
+module load rocm        # on AAC6
+module load rocm-new  # on AAC7
 ```
 Note: These modules set ```FC``` for you.<hr>
 
@@ -154,7 +154,7 @@ export HSA_XNACK=0
 to get similar behaviour like on discrete GPUs (with memory copies). You can repeat exercise 1.4 with both versions and compare: You will see additional data movement.
 Compiling and running this version without any map clauses but with memory copies will result in much worse performance than with unified shared memory and ```HSA_XNACK=1``` (no memory copies on MI300A).
 
-Note: instead of adding ```!$omp requires unified_shared_memory``` everywhere by hand you can also use the compiler flag ```-fopenmp-force-usm```. This flag is understood by both the Next Generation Fortran Compiler and the Cray Fortran compiler.
+Note: If you don't want to add ```!$omp requires unified_shared_memory``` in every module by hand, you can use the compiler flag ```-fopenmp-force-usm```. This flag is also understood by the Cray Fortran compiler.
 
 ## Part 3: with map clauses
 Set

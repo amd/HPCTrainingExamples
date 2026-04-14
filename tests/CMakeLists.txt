@@ -223,51 +223,84 @@ set_property(TEST OpenMP_Fortran_GPU_Aware_MPI_MPICH_Wrappers PROPERTY SKIP_REGU
 #set_property(TEST OpenMP_Saxpy_C_GCC PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 #set_property(TEST OpenMP_Saxpy_C_GCC PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# HSA_XNACK policy (MI300A): USM lesson steps use HSA_XNACK=1; map/target-data/async-with-maps
+# exercises run twice (HSA_XNACK=0 and 1) via cmake -E env. Wrong-mapping uses 0 only (in script + below).
+
 add_test(NAME OpenMP_C_0_Saxpy_PortYourself COMMAND ../openmp_c_0_saxpy_portyourself.sh )
 set_property(TEST OpenMP_C_0_Saxpy_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_C_0_Saxpy_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_1_Saxpy_OMPTarget COMMAND ../openmp_c_1_saxpy_omptarget.sh )
+add_test(NAME OpenMP_C_1_Saxpy_OMPTarget
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_1_saxpy_omptarget.sh" )
 set_property(TEST OpenMP_C_1_Saxpy_OMPTarget PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_C_1_Saxpy_OMPTarget PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_2_Saxpy_TeamsDistribute COMMAND ../openmp_c_2_saxpy_teamsdistribute.sh )
+add_test(NAME OpenMP_C_2_Saxpy_TeamsDistribute
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_2_saxpy_teamsdistribute.sh" )
 set_property(TEST OpenMP_C_2_Saxpy_TeamsDistribute PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_C_2_Saxpy_TeamsDistribute PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_3_Saxpy_ParallelForSimd COMMAND ../openmp_c_3_saxpy_parallelforsimd.sh )
+add_test(NAME OpenMP_C_3_Saxpy_ParallelForSimd
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_3_saxpy_parallelforsimd.sh" )
 set_property(TEST OpenMP_C_3_Saxpy_ParallelForSimd PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_C_3_Saxpy_ParallelForSimd PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_4_Saxpy_NoUSM COMMAND ../openmp_c_4_saxpy_nousm.sh )
-set_property(TEST OpenMP_C_4_Saxpy_NoUSM PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_C_4_Saxpy_NoUSM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_4_Saxpy_NoUSM_HSA_XNACK_0
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_4_saxpy_nousm.sh" )
+set_property(TEST OpenMP_C_4_Saxpy_NoUSM_HSA_XNACK_0 PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_4_Saxpy_NoUSM_HSA_XNACK_0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_4_Saxpy_NoUSM_HSA_XNACK_1
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_4_saxpy_nousm.sh" )
+set_property(TEST OpenMP_C_4_Saxpy_NoUSM_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_4_Saxpy_NoUSM_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_5_Saxpy_Map COMMAND ../openmp_c_5_saxpy_map.sh )
-set_property(TEST OpenMP_C_5_Saxpy_Map PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_C_5_Saxpy_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_5_Saxpy_Map_HSA_XNACK_0
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_5_saxpy_map.sh" )
+set_property(TEST OpenMP_C_5_Saxpy_Map_HSA_XNACK_0 PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_5_Saxpy_Map_HSA_XNACK_0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_5_Saxpy_Map_HSA_XNACK_1
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_5_saxpy_map.sh" )
+set_property(TEST OpenMP_C_5_Saxpy_Map_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_5_Saxpy_Map_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_6_Saxpy_TargetData COMMAND ../openmp_c_6_saxpy_targetdata.sh )
-set_property(TEST OpenMP_C_6_Saxpy_TargetData PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_C_6_Saxpy_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_6_Saxpy_TargetData_HSA_XNACK_0
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_6_saxpy_targetdata.sh" )
+set_property(TEST OpenMP_C_6_Saxpy_TargetData_HSA_XNACK_0 PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_6_Saxpy_TargetData_HSA_XNACK_0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_6_Saxpy_TargetData_HSA_XNACK_1
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_6_saxpy_targetdata.sh" )
+set_property(TEST OpenMP_C_6_Saxpy_TargetData_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_6_Saxpy_TargetData_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_7_Saxpy_NumTeams COMMAND ../openmp_c_7_saxpy_numteams.sh )
-set_property(TEST OpenMP_C_7_Saxpy_NumTeams PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_C_7_Saxpy_NumTeams PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_7_Saxpy_NumTeams_HSA_XNACK_0
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_7_saxpy_numteams.sh" )
+set_property(TEST OpenMP_C_7_Saxpy_NumTeams_HSA_XNACK_0 PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_7_Saxpy_NumTeams_HSA_XNACK_0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_7_Saxpy_NumTeams_HSA_XNACK_1
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_7_saxpy_numteams.sh" )
+set_property(TEST OpenMP_C_7_Saxpy_NumTeams_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_7_Saxpy_NumTeams_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_0_Reduction_PortYourself COMMAND ../openmp_c_0_reduction_portyourself.sh )
 set_property(TEST OpenMP_C_0_Reduction_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "200000.000000")
 set_property(TEST OpenMP_C_0_Reduction_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_1_Reduction_USM COMMAND ../openmp_c_1_reduction_usm.sh )
+add_test(NAME OpenMP_C_1_Reduction_USM
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_1_reduction_usm.sh" )
 set_property(TEST OpenMP_C_1_Reduction_USM PROPERTY PASS_REGULAR_EXPRESSION "200000.000000")
 set_property(TEST OpenMP_C_1_Reduction_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_2_Reduction_Map COMMAND ../openmp_c_2_reduction_map.sh )
-set_property(TEST OpenMP_C_2_Reduction_Map PROPERTY PASS_REGULAR_EXPRESSION "200000.000000")
-set_property(TEST OpenMP_C_2_Reduction_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_2_Reduction_Map_HSA_XNACK_0
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_2_reduction_map.sh" )
+set_property(TEST OpenMP_C_2_Reduction_Map_HSA_XNACK_0 PROPERTY PASS_REGULAR_EXPRESSION "200000.000000")
+set_property(TEST OpenMP_C_2_Reduction_Map_HSA_XNACK_0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_2_Reduction_Map_HSA_XNACK_1
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_2_reduction_map.sh" )
+set_property(TEST OpenMP_C_2_Reduction_Map_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "200000.000000")
+set_property(TEST OpenMP_C_2_Reduction_Map_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_3_Reduction_WrongMapping COMMAND ../openmp_c_3_reduction_wrongmapping.sh )
+add_test(NAME OpenMP_C_3_Reduction_WrongMapping
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_3_reduction_wrongmapping.sh" )
 set_property(TEST OpenMP_C_3_Reduction_WrongMapping PROPERTY PASS_REGULAR_EXPRESSION "0.000000")
 set_property(TEST OpenMP_C_3_Reduction_WrongMapping PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
@@ -275,101 +308,166 @@ add_test(NAME OpenMP_C_0_Vecadd_PortYourself COMMAND ../openmp_c_0_vecadd_portyo
 set_property(TEST OpenMP_C_0_Vecadd_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 set_property(TEST OpenMP_C_0_Vecadd_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_1_Vecadd_USM COMMAND ../openmp_c_1_vecadd_usm.sh )
+add_test(NAME OpenMP_C_1_Vecadd_USM
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_1_vecadd_usm.sh" )
 set_property(TEST OpenMP_C_1_Vecadd_USM PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 set_property(TEST OpenMP_C_1_Vecadd_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_2_Vecadd_Map COMMAND ../openmp_c_2_vecadd_map.sh )
-set_property(TEST OpenMP_C_2_Vecadd_Map PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
-set_property(TEST OpenMP_C_2_Vecadd_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_2_Vecadd_Map_HSA_XNACK_0
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_2_vecadd_map.sh" )
+set_property(TEST OpenMP_C_2_Vecadd_Map_HSA_XNACK_0 PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_C_2_Vecadd_Map_HSA_XNACK_0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_2_Vecadd_Map_HSA_XNACK_1
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_2_vecadd_map.sh" )
+set_property(TEST OpenMP_C_2_Vecadd_Map_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_C_2_Vecadd_Map_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_3_Vecadd_TargetData COMMAND ../openmp_c_3_vecadd_targetdata.sh )
-set_property(TEST OpenMP_C_3_Vecadd_TargetData PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
-set_property(TEST OpenMP_C_3_Vecadd_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_3_Vecadd_TargetData_HSA_XNACK_0
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_3_vecadd_targetdata.sh" )
+set_property(TEST OpenMP_C_3_Vecadd_TargetData_HSA_XNACK_0 PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_C_3_Vecadd_TargetData_HSA_XNACK_0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_3_Vecadd_TargetData_HSA_XNACK_1
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_3_vecadd_targetdata.sh" )
+set_property(TEST OpenMP_C_3_Vecadd_TargetData_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_C_3_Vecadd_TargetData_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_4_Vecadd_Async_USM COMMAND ../openmp_c_4_vecadd_async_usm.sh )
+add_test(NAME OpenMP_C_4_Vecadd_Async_USM
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_4_vecadd_async_usm.sh" )
 set_property(TEST OpenMP_C_4_Vecadd_Async_USM PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 set_property(TEST OpenMP_C_4_Vecadd_Async_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_5_Vecadd_Async COMMAND ../openmp_c_5_vecadd_async.sh )
-set_property(TEST OpenMP_C_5_Vecadd_Async PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
-set_property(TEST OpenMP_C_5_Vecadd_Async PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_5_Vecadd_Async_HSA_XNACK_0
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_5_vecadd_async.sh" )
+set_property(TEST OpenMP_C_5_Vecadd_Async_HSA_XNACK_0 PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_C_5_Vecadd_Async_HSA_XNACK_0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_5_Vecadd_Async_HSA_XNACK_1
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_5_vecadd_async.sh" )
+set_property(TEST OpenMP_C_5_Vecadd_Async_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
+set_property(TEST OpenMP_C_5_Vecadd_Async_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # OpenMP Fortran tests
 add_test(NAME OpenMP_Fortran_0_Saxpy_PortYourself COMMAND ../openmp_fortran_0_saxpy_portyourself.sh )
 set_property(TEST OpenMP_Fortran_0_Saxpy_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_Fortran_0_Saxpy_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_1_Saxpy_OMPTarget COMMAND ../openmp_fortran_1_saxpy_omptarget.sh )
+add_test(NAME OpenMP_Fortran_1_Saxpy_OMPTarget
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_1_saxpy_omptarget.sh" )
 set_property(TEST OpenMP_Fortran_1_Saxpy_OMPTarget PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_Fortran_1_Saxpy_OMPTarget PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Expected failure due to the -g option
-add_test(NAME OpenMP_Fortran_2_Saxpy_TeamsDistribute COMMAND ../openmp_fortran_2_saxpy_teamsdistribute.sh )
+add_test(NAME OpenMP_Fortran_2_Saxpy_TeamsDistribute
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_2_saxpy_teamsdistribute.sh" )
 set_property(TEST OpenMP_Fortran_2_Saxpy_TeamsDistribute PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_Fortran_2_Saxpy_TeamsDistribute PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_3_Saxpy_ParallelDoSIMD COMMAND ../openmp_fortran_3_saxpy_paralleldosimd.sh )
+add_test(NAME OpenMP_Fortran_3_Saxpy_ParallelDoSIMD
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_3_saxpy_paralleldosimd.sh" )
 set_property(TEST OpenMP_Fortran_3_Saxpy_ParallelDoSIMD PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_Fortran_3_Saxpy_ParallelDoSIMD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_4_Saxpy_NoUSM COMMAND ../openmp_fortran_4_saxpy_nousm.sh )
-set_property(TEST OpenMP_Fortran_4_Saxpy_NoUSM PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_Fortran_4_Saxpy_NoUSM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_4_Saxpy_NoUSM_HSA_XNACK_0
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_4_saxpy_nousm.sh" )
+set_property(TEST OpenMP_Fortran_4_Saxpy_NoUSM_HSA_XNACK_0 PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_4_Saxpy_NoUSM_HSA_XNACK_0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_4_Saxpy_NoUSM_HSA_XNACK_1
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_4_saxpy_nousm.sh" )
+set_property(TEST OpenMP_Fortran_4_Saxpy_NoUSM_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_4_Saxpy_NoUSM_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_5_Saxpy_Map COMMAND ../openmp_fortran_5_saxpy_map.sh )
-set_property(TEST OpenMP_Fortran_5_Saxpy_Map PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_Fortran_5_Saxpy_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_5_Saxpy_Map_HSA_XNACK_0
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_5_saxpy_map.sh" )
+set_property(TEST OpenMP_Fortran_5_Saxpy_Map_HSA_XNACK_0 PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_5_Saxpy_Map_HSA_XNACK_0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_5_Saxpy_Map_HSA_XNACK_1
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_5_saxpy_map.sh" )
+set_property(TEST OpenMP_Fortran_5_Saxpy_Map_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_5_Saxpy_Map_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_6_Saxpy_TargetData COMMAND ../openmp_fortran_6_saxpy_targetdata.sh )
-set_property(TEST OpenMP_Fortran_6_Saxpy_TargetData PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_Fortran_6_Saxpy_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_6_Saxpy_TargetData_HSA_XNACK_0
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_6_saxpy_targetdata.sh" )
+set_property(TEST OpenMP_Fortran_6_Saxpy_TargetData_HSA_XNACK_0 PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_6_Saxpy_TargetData_HSA_XNACK_0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_6_Saxpy_TargetData_HSA_XNACK_1
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_6_saxpy_targetdata.sh" )
+set_property(TEST OpenMP_Fortran_6_Saxpy_TargetData_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_6_Saxpy_TargetData_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_7_Saxpy_NumTeams COMMAND ../openmp_fortran_7_saxpy_numteams.sh )
-set_property(TEST OpenMP_Fortran_7_Saxpy_NumTeams PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_Fortran_7_Saxpy_NumTeams PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_7_Saxpy_NumTeams_HSA_XNACK_0
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_7_saxpy_numteams.sh" )
+set_property(TEST OpenMP_Fortran_7_Saxpy_NumTeams_HSA_XNACK_0 PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_7_Saxpy_NumTeams_HSA_XNACK_0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_7_Saxpy_NumTeams_HSA_XNACK_1
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_7_saxpy_numteams.sh" )
+set_property(TEST OpenMP_Fortran_7_Saxpy_NumTeams_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_7_Saxpy_NumTeams_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Fortran_0_Vecadd_PortYourself COMMAND ../openmp_fortran_0_vecadd_portyourself.sh )
 set_property(TEST OpenMP_Fortran_0_Vecadd_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
 set_property(TEST OpenMP_Fortran_0_Vecadd_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_1_Vecadd_USM COMMAND ../openmp_fortran_1_vecadd_usm.sh )
+add_test(NAME OpenMP_Fortran_1_Vecadd_USM
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_1_vecadd_usm.sh" )
 set_property(TEST OpenMP_Fortran_1_Vecadd_USM PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
 set_property(TEST OpenMP_Fortran_1_Vecadd_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_2_Vecadd_Map COMMAND ../openmp_fortran_2_vecadd_map.sh )
-set_property(TEST OpenMP_Fortran_2_Vecadd_Map PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
-set_property(TEST OpenMP_Fortran_2_Vecadd_Map PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_2_Vecadd_Map_HSA_XNACK_0
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_2_vecadd_map.sh" )
+set_property(TEST OpenMP_Fortran_2_Vecadd_Map_HSA_XNACK_0 PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
+set_property(TEST OpenMP_Fortran_2_Vecadd_Map_HSA_XNACK_0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_2_Vecadd_Map_HSA_XNACK_1
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_2_vecadd_map.sh" )
+set_property(TEST OpenMP_Fortran_2_Vecadd_Map_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
+set_property(TEST OpenMP_Fortran_2_Vecadd_Map_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_3_Vecadd_TargetData COMMAND ../openmp_fortran_3_vecadd_targetdata.sh )
-set_property(TEST OpenMP_Fortran_3_Vecadd_TargetData PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
-set_property(TEST OpenMP_Fortran_3_Vecadd_TargetData PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_3_Vecadd_TargetData_HSA_XNACK_0
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_3_vecadd_targetdata.sh" )
+set_property(TEST OpenMP_Fortran_3_Vecadd_TargetData_HSA_XNACK_0 PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
+set_property(TEST OpenMP_Fortran_3_Vecadd_TargetData_HSA_XNACK_0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_3_Vecadd_TargetData_HSA_XNACK_1
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_3_vecadd_targetdata.sh" )
+set_property(TEST OpenMP_Fortran_3_Vecadd_TargetData_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
+set_property(TEST OpenMP_Fortran_3_Vecadd_TargetData_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_4_Vecadd_USM_Async COMMAND ../openmp_fortran_4_vecadd_usm_async.sh )
+add_test(NAME OpenMP_Fortran_4_Vecadd_USM_Async
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_4_vecadd_usm_async.sh" )
 set_property(TEST OpenMP_Fortran_4_Vecadd_USM_Async PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
 set_property(TEST OpenMP_Fortran_4_Vecadd_USM_Async PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_5_Vecadd_Async COMMAND ../openmp_fortran_5_vecadd_async.sh )
-set_property(TEST OpenMP_Fortran_5_Vecadd_Async PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
-set_property(TEST OpenMP_Fortran_5_Vecadd_Async PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_5_Vecadd_Async_HSA_XNACK_0
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_5_vecadd_async.sh" )
+set_property(TEST OpenMP_Fortran_5_Vecadd_Async_HSA_XNACK_0 PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
+set_property(TEST OpenMP_Fortran_5_Vecadd_Async_HSA_XNACK_0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_5_Vecadd_Async_HSA_XNACK_1
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_5_vecadd_async.sh" )
+set_property(TEST OpenMP_Fortran_5_Vecadd_Async_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
+set_property(TEST OpenMP_Fortran_5_Vecadd_Async_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Fortran_0_Reduction_PortYourself COMMAND ../openmp_fortran_0_reduction_portyourself.sh )
 set_property(TEST OpenMP_Fortran_0_Reduction_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "1010")
 set_property(TEST OpenMP_Fortran_0_Reduction_PortYourself PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_1_Reduction_Solution COMMAND ../openmp_fortran_1_reduction_solution.sh )
-set_property(TEST OpenMP_Fortran_1_Reduction_Solution PROPERTY PASS_REGULAR_EXPRESSION "1010")
-set_property(TEST OpenMP_Fortran_1_Reduction_Solution PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_1_Reduction_Solution_HSA_XNACK_0
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_1_reduction_solution.sh" )
+set_property(TEST OpenMP_Fortran_1_Reduction_Solution_HSA_XNACK_0 PROPERTY PASS_REGULAR_EXPRESSION "1010")
+set_property(TEST OpenMP_Fortran_1_Reduction_Solution_HSA_XNACK_0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_1_Reduction_Solution_HSA_XNACK_1
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_1_reduction_solution.sh" )
+set_property(TEST OpenMP_Fortran_1_Reduction_Solution_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "1010")
+set_property(TEST OpenMP_Fortran_1_Reduction_Solution_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_2_Reduction_Solution_USM COMMAND ../openmp_fortran_2_reduction_solution_usm.sh )
+add_test(NAME OpenMP_Fortran_2_Reduction_Solution_USM
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_2_reduction_solution_usm.sh" )
 set_property(TEST OpenMP_Fortran_2_Reduction_Solution_USM PROPERTY PASS_REGULAR_EXPRESSION "1010")
 set_property(TEST OpenMP_Fortran_2_Reduction_Solution_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_Atomic_USM COMMAND ../openmp_fortran_atomic_usm.sh )
+add_test(NAME OpenMP_Fortran_Atomic_USM
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_atomic_usm.sh" )
 set_property(TEST OpenMP_Fortran_Atomic_USM PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
 set_property(TEST OpenMP_Fortran_Atomic_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_3_Reduction_WrongMapping COMMAND ../openmp_fortran_3_reduction_wrongmapping.sh )
+add_test(NAME OpenMP_Fortran_3_Reduction_WrongMapping
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_3_reduction_wrongmapping.sh" )
 set_property(TEST OpenMP_Fortran_3_Reduction_WrongMapping PROPERTY PASS_REGULAR_EXPRESSION "1000")
 set_property(TEST OpenMP_Fortran_3_Reduction_WrongMapping PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
@@ -386,6 +484,11 @@ set_property(TEST OpenMP_Fortran_3_Reduction_WrongMapping PROPERTY SKIP_REGULAR_
 #add_test(NAME OpenMP_Vecadd_F_GFortran COMMAND ../openmp_vecadd_f_gfortran.sh )
 #set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
 #set_property(TEST OpenMP_Vecadd_F_GFortran PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Fortran_Common_Blocks_On_Device COMMAND ../openmp_fortran_common_blocks_on_device.sh )
+# Cray ftn list-directed I/O may print "4."; other compilers may print more digits.
+set_property(TEST OpenMP_Fortran_Common_Blocks_On_Device PROPERTY PASS_REGULAR_EXPRESSION "Last element:.*4")
+set_property(TEST OpenMP_Fortran_Common_Blocks_On_Device PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # OpenMP C++ Classes Examples
 add_test(NAME OpenMP_Cpp_Classes_Explicit_Daxpy COMMAND ../openmp_cpp_classes_explicit_daxpy.sh )

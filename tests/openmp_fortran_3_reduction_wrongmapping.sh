@@ -23,8 +23,12 @@ else
    fi
 fi
 
+# Wrong mapping must be observable: with HSA_XNACK=1 on MI300A, map clauses are ignored
+# and the result matches the correct case; this exercise is intended for xnack- (discrete-GPU-like copies).
+export HSA_XNACK=0
+
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/3_reduction/3_reduction_wrongmapping
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/2_reduction/3_reduction_wrongmapping
 
 make
 ./freduce

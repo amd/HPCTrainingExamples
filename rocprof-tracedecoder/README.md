@@ -11,11 +11,11 @@ into a separate directory and then prepend those paths before the ROCm paths.
 
 ## Setting up environment
 
-If the ROCProf trace decoder is installed with a module, load the appropriate module. With the ROCm
-7.0 version, the ROCProf trace decoder will be integrated into ROCm software.
+With ROCm 7.0 and later, the ROCProf trace decoder is integrated into the ROCm software stack.
+Load the ROCm module to access `rocprofv3`:
 
 ```
-module load rocprofiler-sdk
+module load rocm
 ```
 
 All of these exercises are from the AMD HPC Training Examples which can be retrieved with the following:
@@ -124,15 +124,14 @@ cd HPCTrainingExamples/rocprof-tracedecoder
 
 ```
 make
-rocprofv3 --att -att-perfcounters "SQ_INSTS_LDS SQ_INSTS_VMEM SQ_INSTS_VMEM_WR SQ_INSTS_VMEM_RD" -d tracedecoder_dgemm_library -- ./dgemm`
-
+rocprofv3 --att -att-perfcounters "SQ_INSTS_LDS SQ_INSTS_VMEM SQ_INSTS_VMEM_WR SQ_INSTS_VMEM_RD" -d tracedecoder_dgemm_library -- ./dgemm
 ```
 
 Transfer files in `tracedecoder_dgemm_library` to your local system
 
 Cleaning up afterwards
 
-``
+```
 make clean
 rm -rf tracedecoder_dgemm_library
 ```

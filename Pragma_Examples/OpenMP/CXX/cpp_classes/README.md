@@ -12,6 +12,8 @@ In the present directory, you will find two subdirectories, one called `usm` and
 In this context, `usm` stands for unified shared memory, which is what we are requiring for the code samples in this directory. 
 To compile the code in the `usm` directory, do:
 
+On **AAC7** without the Cray programming environment, use ```module load rocm-new``` instead of ```module load rocm``` (see ```../README.md```).
+
 ```
 module load rocm
 module load amdclang
@@ -53,7 +55,7 @@ The code in the `operations` directory adds one layer of complexity and performs
 
 ### The `explicit` Sub-directory
 
-This sub-directory contains example code that is meant to work even without enabling unified shared memory, meaning that it will compile and run regardless of whether `HSA_XNACK=1`. This is achieved by creating an appropriate data environment with the use of maps, as it will explained next. To compile:
+This sub-directory contains example code that is meant to work even without enabling unified shared memory, meaning that it will compile and run regardless of whether `HSA_XNACK=1`. This is achieved by creating an appropriate data environment with the use of maps, as it will explained next. To compile (on **AAC7** without Cray, prefer ```rocm-new``` as above):
 
 ```
 module load rocm

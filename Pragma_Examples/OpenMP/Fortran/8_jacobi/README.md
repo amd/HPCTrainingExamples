@@ -1,7 +1,7 @@
 
 ## Porting a small app: jacobi
 
-Note: This exercise code and solutions were tested with amdflang-new. Using cray ftn is also possible. Setup the environment accordingly.
+Note: This exercise code and solutions were tested with the LLVM-based amdflang from ```rocm-new``` on AAC7 (or ```rocm``` on AAC6). Using cray ftn is also possible. Setup the environment accordingly.
 
 The C++ version of this code is described in detail https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html
 

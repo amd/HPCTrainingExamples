@@ -1,4 +1,6 @@
-
+! Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
+! This software is distributed under the MIT License
+!
 module saxpymod
    use iso_fortran_env
    use omp_lib
