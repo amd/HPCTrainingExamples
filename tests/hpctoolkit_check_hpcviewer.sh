@@ -11,4 +11,8 @@ if [ $? -eq 1 ]; then
 fi
 
 module load hpctoolkit
-hpcviewer --version
+
+HPCVIEWER_CONFIG=$(mktemp -d)
+trap "rm -rf ${HPCVIEWER_CONFIG}" EXIT
+
+xvfb-run hpcviewer -configuration "${HPCVIEWER_CONFIG}" --version
