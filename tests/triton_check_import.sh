@@ -16,6 +16,6 @@ if [ $? -eq 1 ]; then
 fi
 module load pytorch
 
-python3 -c 'import triton' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import triton' && echo 'Success' || echo 'Failure'
 
 
