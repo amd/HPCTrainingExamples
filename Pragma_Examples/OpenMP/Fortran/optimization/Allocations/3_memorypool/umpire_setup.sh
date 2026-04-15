@@ -1,23 +1,32 @@
 #!/bin/bash
+set -e
 
 UMPIRE_PATH=${PWD}/Umpire_install
 rm -rf Umpire_source
-git clone --recursive https://github.com/LLNL/Umpire.git Umpire_source
+for attempt in 1 2 3; do
+  if git clone --recursive --depth 1 --shallow-submodules \
+       https://github.com/LLNL/Umpire.git Umpire_source; then
+    break
+  fi
+  echo "git clone attempt $attempt failed, retrying in 5s..."
+  rm -rf Umpire_source
+  sleep 5
+done
 cd Umpire_source
-sed -i 's/memoryType/type/g' src/umpire/tpl/camp/include/camp/resource/hip.hpp
-sed -i 's/Mfree/ffree-form/g' examples/cookbook/CMakeLists.txt
-sed -i 's/Mfree/ffree-form/g' examples/tutorial/fortran/CMakeLists.txt
-sed -i 's/Mfree/ffree-form/g' src/umpire/interface/c_fortran/CMakeLists.txt
-sed -i 's/Mfree/ffree-form/g' tests/integration/interface/fortran/CMakeLists.txt
+sed -i 's/memoryType/type/g' src/tpl/umpire/camp/include/camp/resource/hip.hpp 2>/dev/null || true
+sed -i 's/Mfree/ffree-form/g' examples/cookbook/CMakeLists.txt 2>/dev/null || true
+sed -i 's/Mfree/ffree-form/g' examples/tutorial/fortran/CMakeLists.txt 2>/dev/null || true
+sed -i 's/Mfree/ffree-form/g' src/umpire/interface/c_fortran/CMakeLists.txt 2>/dev/null || true
+sed -i 's/Mfree/ffree-form/g' tests/integration/interface/fortran/CMakeLists.txt 2>/dev/null || true
 mkdir -p build && cd build
-mkdir $UMPIRE_PATH
+mkdir -p $UMPIRE_PATH
 
 if ! module is-loaded "rocm"; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
   module load rocm
 fi
-module load rocm >& /dev/null
+module load amdflang-new >& /dev/null
 if [ "$?" == "1" ]; then
    module load amdclang
 fi
@@ -38,7 +47,7 @@ cmake -DCMAKE_INSTALL_PREFIX=${UMPIRE_PATH} \
       -DCMAKE_HIP_ARCHITECTURES=$AMDGPU_GFXMODEL \
       -DAMDGPU_TARGETS=$AMDGPU_GFXMODEL \
       -DGPU_TARGETS=$AMDGPU_GFXMODEL \
-      -DBLT_CXX_STD=c++17 \
+      -DBLT_CXX_STD=c++20 \
       -DUMPIRE_ENABLE_IPC_SHARED_MEMORY=On \
       -DENABLE_FORTRAN=On \
       ../
