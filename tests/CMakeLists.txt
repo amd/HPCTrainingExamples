@@ -257,15 +257,15 @@ add_test(NAME OpenMP_C_1_Saxpy_OMPTarget
 set_property(TEST OpenMP_C_1_Saxpy_OMPTarget PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_C_1_Saxpy_OMPTarget PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_2_Saxpy_TeamsDistribute
-  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_2_saxpy_teamsdistribute.sh" )
-set_property(TEST OpenMP_C_2_Saxpy_TeamsDistribute PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_C_2_Saxpy_TeamsDistribute PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_2_Saxpy_OMPTargetParallelFor
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_2_saxpy_omptargetparallelfor.sh" )
+set_property(TEST OpenMP_C_2_Saxpy_OMPTargetParallelFor PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_2_Saxpy_OMPTargetParallelFor PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_3_Saxpy_ParallelForSimd
-  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_3_saxpy_parallelforsimd.sh" )
-set_property(TEST OpenMP_C_3_Saxpy_ParallelForSimd PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_C_3_Saxpy_ParallelForSimd PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_3_Saxpy_TargetTeamsDistributeParallelFor
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_3_saxpy_targetteamsdistributeparallelfor.sh" )
+set_property(TEST OpenMP_C_3_Saxpy_TargetTeamsDistributeParallelFor PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_3_Saxpy_TargetTeamsDistributeParallelFor PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_4_Saxpy_NoUSM_HSA_XNACK_0
   COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_4_saxpy_nousm.sh" )
@@ -378,15 +378,15 @@ set_property(TEST OpenMP_Fortran_1_Saxpy_OMPTarget PROPERTY PASS_REGULAR_EXPRESS
 set_property(TEST OpenMP_Fortran_1_Saxpy_OMPTarget PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Expected failure due to the -g option
-add_test(NAME OpenMP_Fortran_2_Saxpy_TeamsDistribute
-  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_2_saxpy_teamsdistribute.sh" )
-set_property(TEST OpenMP_Fortran_2_Saxpy_TeamsDistribute PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_Fortran_2_Saxpy_TeamsDistribute PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_2_Saxpy_OMPTargetParallelDo
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_2_saxpy_omptargetparalleldo.sh" )
+set_property(TEST OpenMP_Fortran_2_Saxpy_OMPTargetParallelDo PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_2_Saxpy_OMPTargetParallelDo PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_3_Saxpy_ParallelDoSIMD
-  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_3_saxpy_paralleldosimd.sh" )
-set_property(TEST OpenMP_Fortran_3_Saxpy_ParallelDoSIMD PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_Fortran_3_Saxpy_ParallelDoSIMD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_3_Saxpy_TargetTeamsDistributeParallelDo
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_3_saxpy_targetteamsdistributeparalleldo.sh" )
+set_property(TEST OpenMP_Fortran_3_Saxpy_TargetTeamsDistributeParallelDo PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_3_Saxpy_TargetTeamsDistributeParallelDo PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Fortran_4_Saxpy_NoUSM_HSA_XNACK_0
   COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_4_saxpy_nousm.sh" )

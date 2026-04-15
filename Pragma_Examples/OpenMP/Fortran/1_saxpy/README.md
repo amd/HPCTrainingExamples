@@ -67,16 +67,17 @@ Run the serial version.
 ./saxpy
 ```
 You can now try to port the serial CPU version to the GPU or follow the
-step by step solution and ideas:
+step by step sample solution and ideas in the following. 
+Suggestion: Use ```vimdiff``` to compare the different versions.
 
-### 1.1) Move the computation to the device
+### 1.1) Partial insufficient solution: Move the computation to the device
 ```
 cd ../1_saxpy_omptarget
 ```
 ```
 vi saxpy.f90
 ```
-add ```!$omp target``` to move the loop in the saxpy subroutine to the device.
+adds ```!$omp target``` to move the loop in the saxpy subroutine to the device.
 
 Compile this first GPU version.<hr>
 **either**
@@ -103,22 +104,25 @@ Run
 
 The observed time is much larger than for the CPU version which shows: More parallelism is required to make use of the GPU!
 
-### 1.2) Add parallelism
+### 1.2) Partial insufficient solution: Add parallelism
 ```
-cd ../2_saxpy_teamsdistribute
+cd ../2_saxpy_omptargetparalleldo
 vi saxpy.f90
 ```
-add ```teams distribute```
+add ```parallel do```
 - Compile again
 - run again
 The observed time is a bit better than in case 1.1 but still not the full parallelism is used.
 
-### 1.3) Add multi-level parallelism
+### 1.3) Solution: Add multi-level parallelism
 ```
-cd ../3_saxpy_paralleldosimd
+cd ../3_saxpy_omptargetteamsdistributeparalleldo
+```
+and inspect
+```
 vi saxpy.f90
 ``` 
-Add "parallel do" for more parellelism.
+Adds "parallel do" for more parellelism.
 - Compile again
 - run again
 The observed time is much better than all previous versions.
