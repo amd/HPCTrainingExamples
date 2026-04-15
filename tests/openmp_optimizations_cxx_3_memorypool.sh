@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
    if [ -z "$CXX" ]; then

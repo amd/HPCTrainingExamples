@@ -1,7 +1,9 @@
 #!/bin/bash
+set -e
 
 UMPIRE_PATH=${PWD}/Umpire_install
-git clone --recursive https://github.com/LLNL/Umpire.git Umpire_source
+rm -rf Umpire_source
+git clone --recursive --depth 1 --shallow-submodules https://github.com/LLNL/Umpire.git Umpire_source
 cd Umpire_source
 sed -i 's/memoryType/type/g' src/umpire/tpl/camp/include/camp/resource/hip.hpp
 sed -i 's/Mfree/ffree-form/g' examples/cookbook/CMakeLists.txt
@@ -9,14 +11,14 @@ sed -i 's/Mfree/ffree-form/g' examples/tutorial/fortran/CMakeLists.txt
 sed -i 's/Mfree/ffree-form/g' src/umpire/interface/c_fortran/CMakeLists.txt
 sed -i 's/Mfree/ffree-form/g' tests/integration/interface/fortran/CMakeLists.txt
 mkdir -p build && cd build
-mkdir $UMPIRE_PATH
+mkdir -p $UMPIRE_PATH
 
 if ! module is-loaded "rocm"; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
   module load rocm
 fi
-module load rocm >& /dev/null
+module load amdflang-new >& /dev/null
 if [ "$?" == "1" ]; then
    module load amdclang
 fi
