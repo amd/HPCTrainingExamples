@@ -16,7 +16,8 @@ fi
 popd
 
 # Execute the python script:
-rocprof-compute profile --no-roof -b 2.1.2 2.1.3 2.1.4 2.1.5 --name cifar_100_single_proc -- \
+rm -rf workloads/cifar_100_single_proc
+rocprof-compute profile --no-roof --set compute_thruput_flops --name cifar_100_single_proc -- \
 ${PROFILER_TOP_DIR}/no-profiling/single_process.sh
 
 rocprof-compute analyze -p workloads/cifar_100_single_proc/MI* -b 2.1.2 2.1.3 2.1.4 2.1.5
