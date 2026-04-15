@@ -171,6 +171,7 @@ set_property(TEST Programming_Model_OpenMP PROPERTY SKIP_REGULAR_EXPRESSION "mod
 add_test(NAME Programming_Model_Raja COMMAND ../programming_model_raja.sh )
 set_property(TEST Programming_Model_Raja PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")
 set_property(TEST Programming_Model_Raja PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_tests_properties(Programming_Model_Raja PROPERTIES TIMEOUT 900)
 
 add_test(NAME Programming_Model_Kokkos COMMAND ../programming_model_kokkos.sh )
 set_property(TEST Programming_Model_Kokkos PROPERTY PASS_REGULAR_EXPRESSION "Result is 2000.000000")

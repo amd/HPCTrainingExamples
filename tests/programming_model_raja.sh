@@ -38,7 +38,7 @@ else
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    PWDir=`pwd`
 
-   git clone --recursive https://github.com/LLNL/RAJA.git Raja_build
+   git clone --recursive --depth 1 --shallow-submodules https://github.com/LLNL/RAJA.git Raja_build
    cd Raja_build
 
    rm -rf build_hip
