@@ -12,14 +12,12 @@ if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
       export FC=`which ftn`
    fi
 else
-   module -t list 2>&1 | grep -q "^rocm"
-   if [ $? -eq 1 ]; then
+   if ! module -t list 2>&1 | grep -q "^rocm"; then
      echo "rocm module is not loaded"
      echo "loading default rocm module"
      module load rocm
    fi
-   module load amdflang-new >& /dev/null
-   if [ "$?" == "1" ]; then
+   if ! module load amdflang-new >& /dev/null; then
       module load amdclang
    fi
 fi
