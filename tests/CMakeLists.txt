@@ -262,10 +262,10 @@ add_test(NAME OpenMP_C_2_Saxpy_OMPTargetParallelFor
 set_property(TEST OpenMP_C_2_Saxpy_OMPTargetParallelFor PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_C_2_Saxpy_OMPTargetParallelFor PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_C_3_Saxpy_TargetTeamsDistributeParallelFor
-  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_3_saxpy_targetteamsdistributeparallelfor.sh" )
-set_property(TEST OpenMP_C_3_Saxpy_TargetTeamsDistributeParallelFor PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_C_3_Saxpy_TargetTeamsDistributeParallelFor PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_C_3_Saxpy_FullPragma
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_3_saxpy_fullpragma.sh" )
+set_property(TEST OpenMP_C_3_Saxpy_FullPragma PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_C_3_Saxpy_FullPragma PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_4_Saxpy_NoUSM_HSA_XNACK_0
   COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_c_4_saxpy_nousm.sh" )
@@ -383,10 +383,10 @@ add_test(NAME OpenMP_Fortran_2_Saxpy_OMPTargetParallelDo
 set_property(TEST OpenMP_Fortran_2_Saxpy_OMPTargetParallelDo PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
 set_property(TEST OpenMP_Fortran_2_Saxpy_OMPTargetParallelDo PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME OpenMP_Fortran_3_Saxpy_TargetTeamsDistributeParallelDo
-  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_3_saxpy_targetteamsdistributeparalleldo.sh" )
-set_property(TEST OpenMP_Fortran_3_Saxpy_TargetTeamsDistributeParallelDo PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
-set_property(TEST OpenMP_Fortran_3_Saxpy_TargetTeamsDistributeParallelDo PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME OpenMP_Fortran_3_Saxpy_FullPragma
+  COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_3_saxpy_fullpragma.sh" )
+set_property(TEST OpenMP_Fortran_3_Saxpy_FullPragma PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
+set_property(TEST OpenMP_Fortran_3_Saxpy_FullPragma PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Fortran_4_Saxpy_NoUSM_HSA_XNACK_0
   COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_4_saxpy_nousm.sh" )

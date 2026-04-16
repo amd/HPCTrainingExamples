@@ -116,7 +116,7 @@ The observed time is a bit better than in case 1.1 but still not the full parall
 
 ### 1.3) Solution: Add multi-level parallelism
 ```
-cd ../3_saxpy_omptargetteamsdistributeparalleldo
+cd ../3_saxpy_fullpragma
 ```
 and inspect
 ```
