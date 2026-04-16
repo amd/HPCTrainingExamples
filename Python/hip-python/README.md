@@ -860,13 +860,36 @@ python3 kernel_with_arguments.py
 ```
 
 
-## numba-HIP
+## Numba-HIP
 
-A simple numba-HIP vector addition example
+Numba-HIP allows to write GPU kernels for AMD GPUs and Just-in-Time (JIT) compilation using native Python code.
+
+### Installation
+
+Numba-HIP is already installed on AAC6 as part of the `hip-python` module and can be loaded with
+```
+module load rocm hip-python
+```
+On other systems such as your own, you can install HIP-Python and Numba-HIP with
+```bash
+python3 -m venv hip-python-build
+source hip-python-build/bin/activate
+python3 -m pip install -i https://test.pypi.org/simple hip-python~=6.4.1
+python3 -m pip config set global.extra-index-url https://test.pypi.org/simple
+python3 -m pip install "numba-hip[rocm-6-4-1] @ git+https://github.com/ROCm/numba-hip.git"
+```
+Replace the `module load` commands in the following by sourcing this virtual environment.
+
+> [!NOTE]
+> Make sure to install the correct version that matches the ROCm installed on your system.
+> For this, replace `6.4.1` and `rocm-6-4-1` accordingly (e.g., `7.0.0` and `rocm-7-0-0`).
+
+
+### Kernel Definition
+
+The kernel uses the `@hip.jit` decorator and follows the standard GPU programming model:
 
 ```python
-from numba import hip
-
 @hip.jit
 def f(a, b, c):
    # like threadIdx.x + (blockIdx.x * blockDim.x)
@@ -875,28 +898,39 @@ def f(a, b, c):
 
    if tid < size:
        c[tid] = a[tid] + b[tid]
-
-print("Ok")
 ```
 
-To run the example
+### Memory Management with `to_device`
+
+Numba-HIP provides the `to_device` API to transfer NumPy arrays (such as `{a,b,c}_host`) to GPU memory:
+
+```python
+# Transfer to GPU memory via Numba-HIP API
+a_dev = hip.to_device(a_host)
+b_dev = hip.to_device(b_host)
+c_dev = hip.to_device(c_host)
+```
+
+After kernel execution, copy results back with `copy_to_host()`:
+
+```python
+c_host = c_dev.copy_to_host()
+```
+
+### Running the Example
 
 ```bash
 module load rocm hip-python
 python3 numba-hip.py
 ```
 
-An alternative approach to changing all the `@cuda.jit` to `@hip.jit` is to have 
-numba-hip pose as CUDA. We do this with the addition of the following two lines:
+### CUDA-Posing Mode
 
-```python
-hip.pose_as_cuda()
-from numba import cuda
-```
+An alternative approach for porting existing CUDA code is to have numba-hip pose as CUDA.
+This allows using `@cuda.jit` syntax on AMD GPUs:
 
 ```python
 from numba import hip
-
 hip.pose_as_cuda()
 from numba import cuda
 
@@ -908,11 +942,9 @@ def f(a, b, c):
 
    if tid < size:
        c[tid] = a[tid] + b[tid]
-
-print("Ok")
 ```
 
-Running this example
+Running this example:
 
 ```bash
 module load rocm hip-python
