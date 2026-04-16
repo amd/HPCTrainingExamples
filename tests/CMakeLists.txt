@@ -1451,6 +1451,30 @@ add_test(NAME Numba-HIP-CUDA-Posing_Check COMMAND ../numba-hip-cuda-posing_check
 set_property(TEST Numba-HIP-CUDA-Posing_Check PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST Numba-HIP-CUDA-Posing_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
 
+add_test(NAME HIP-Python_Device_Properties COMMAND ../hip-python_device_properties.sh )
+set_property(TEST HIP-Python_Device_Properties PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIP-Python_Device_Properties PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+
+add_test(NAME HIP-Python_Streams COMMAND ../hip-python_streams.sh )
+set_property(TEST HIP-Python_Streams PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIP-Python_Streams PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+
+add_test(NAME HIP-Python_HipBLAS COMMAND ../hip-python_hipblas.sh )
+set_property(TEST HIP-Python_HipBLAS PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIP-Python_HipBLAS PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+
+add_test(NAME HIP-Python_HipFFT COMMAND ../hip-python_hipfft.sh )
+set_property(TEST HIP-Python_HipFFT PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIP-Python_HipFFT PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+
+add_test(NAME HIP-Python_RTC_Kernel COMMAND ../hip-python_rtc_kernel.sh )
+set_property(TEST HIP-Python_RTC_Kernel PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIP-Python_RTC_Kernel PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+
+add_test(NAME HIP-Python_RCCL COMMAND ../hip-python_rccl.sh )
+set_property(TEST HIP-Python_RCCL PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIP-Python_RCCL PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+
 # CuPy tests
 add_test(NAME Cupy_Check_Import COMMAND ../cupy_check_import.sh )
 set_property(TEST Cupy_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
