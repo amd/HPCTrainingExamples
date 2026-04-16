@@ -67,6 +67,9 @@ elif [[ -n ${MV2_COMM_WORLD_RANK+z} ]]; then
 elif [[ -n ${SLURM_PROCID+z} ]]; then
     # mpich via srun
     export MPI_RANK=${SLURM_PROCID}
+elif [[ -n ${PMI_RANK+z} ]]; then
+    # cray-mpich
+    export MPI_RANK=${PMI_RANK}
 fi
 outdir="rank.${MPI_RANK}"
 outfile=${outdir}
