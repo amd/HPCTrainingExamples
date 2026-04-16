@@ -12,6 +12,11 @@ fi
 
 module load hpctoolkit
 
+if ! command -v xvfb-run &> /dev/null; then
+  echo "Skip -- xvfb-run not found"
+  exit 0
+fi
+
 HPCVIEWER_CONFIG=$(mktemp -d)
 trap "rm -rf ${HPCVIEWER_CONFIG}" EXIT
 

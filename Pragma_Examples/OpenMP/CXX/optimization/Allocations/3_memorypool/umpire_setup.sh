@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 UMPIRE_PATH=${PWD}/Umpire_install
 rm -rf Umpire_source

@@ -687,6 +687,7 @@ set_property(TEST OpenMP_Optimizations_Fortran_2_Opt_Allocation PROPERTY SKIP_RE
 add_test(NAME OpenMP_Optimizations_Fortran_3_MemoryPool COMMAND ../openmp_optimizations_fortran_3_memorypool.sh )
 set_property(TEST OpenMP_Optimizations_Fortran_3_MemoryPool PROPERTY PASS_REGULAR_EXPRESSION "Final result:   1.000000")
 set_property(TEST OpenMP_Optimizations_Fortran_3_MemoryPool PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(OpenMP_Optimizations_Fortran_3_MemoryPool PROPERTIES TIMEOUT 600)
 
 ### C reduction scalars
 add_test(NAME OpenMP_Language_Constructs_C_0_Reduction_Scalars_PortYourself COMMAND ../openmp_language_constructs_c_0_reduction_scalars_portyourself.sh )
@@ -822,6 +823,7 @@ set_property(TEST OpenMP_Optimizations_CXX_2_Opt_Allocation PROPERTY SKIP_REGULA
 add_test(NAME OpenMP_Optimizations_CXX_3_MemoryPool COMMAND ../openmp_optimizations_cxx_3_memorypool.sh )
 set_property(TEST OpenMP_Optimizations_CXX_3_MemoryPool PROPERTY PASS_REGULAR_EXPRESSION "Final result: 1.000000")
 set_property(TEST OpenMP_Optimizations_CXX_3_MemoryPool PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(OpenMP_Optimizations_CXX_3_MemoryPool PROPERTIES TIMEOUT 600)
 
 # HIPFort Examples
 #add_test(NAME HIPFort_Module_Check_hipfc_2003 COMMAND ../hipfort_module_check_hipfc_2003.sh )
@@ -977,6 +979,7 @@ set_property(TEST MPI_Ghost_Exchange_Orig_Affinity_OpenMPI PROPERTY SKIP_REGULAR
 add_test(NAME MPI_Ghost_Exchange_Ver1 COMMAND ../mpi_ghost_exchange_ver1.sh )
 set_property(TEST MPI_Ghost_Exchange_Ver1 PROPERTY PASS_REGULAR_EXPRESSION "Printing Timings")
 set_property(TEST MPI_Ghost_Exchange_Ver1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(MPI_Ghost_Exchange_Ver1 PROPERTIES TIMEOUT 600)
 
 add_test(NAME MPI_Ghost_Exchange_Ver2 COMMAND ../mpi_ghost_exchange_ver2.sh )
 set_property(TEST MPI_Ghost_Exchange_Ver2 PROPERTY PASS_REGULAR_EXPRESSION "perfetto")
@@ -1528,7 +1531,7 @@ set_property(TEST HPCToolkit_HPCProf_Check PROPERTY SKIP_REGULAR_EXPRESSION "mod
 
 add_test(NAME HPCToolkit_HPCViewer_Check COMMAND ../hpctoolkit_check_hpcviewer.sh)
 set_property(TEST HPCToolkit_HPCViewer_Check PROPERTY PASS_REGULAR_EXPRESSION "HPCViewer 2026.0.0")
-set_property(TEST HPCToolkit_HPCViewer_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hpctoolkit'")
+set_property(TEST HPCToolkit_HPCViewer_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hpctoolkit'" "Skip")
 
 # JAX Tests
 add_test(NAME JAX_Check_Import COMMAND ../jax_check_import.sh )
