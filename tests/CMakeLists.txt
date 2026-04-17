@@ -96,15 +96,6 @@ set_tests_properties(
   HIPStdPar_MixAndMatch_CpuGpu
   PROPERTIES RESOURCE_LOCK hipstdpar_compile)
 
-set_tests_properties(
-  Julia_GPU_Oceananigans
-  JAX_Mnist
-  Pytorch_Profile_Rocprof-sys_ROCm
-  MPI_Ghost_Exchange_Ver2
-  TAU_Trace_Check
-  TAU_Check_HIP_Profile
-  TAU_Profile_Check
-  PROPERTIES RESOURCE_LOCK gpu_heavy)
 
 # Unified Shared Memory Examples (MI300A programming)
 add_test(NAME USM_Vector_Add COMMAND ../usm_vector_add.sh )
@@ -1709,3 +1700,13 @@ set_property(TEST Apptainer_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider
 add_test(NAME Podman_Test COMMAND ../podman_test.sh)
 set_property(TEST Podman_Test PROPERTY PASS_REGULAR_EXPRESSION "HSA System Attributes")
 set_property(TEST Podman_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+set_tests_properties(
+  Julia_GPU_Oceananigans
+  JAX_Mnist
+  Pytorch_Profile_Rocprof-sys_ROCm
+  MPI_Ghost_Exchange_Ver2
+  TAU_Trace_Check
+  TAU_Check_HIP_Profile
+  TAU_Profile_Check
+  PROPERTIES RESOURCE_LOCK gpu_heavy)
