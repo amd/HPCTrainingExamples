@@ -31,6 +31,12 @@ fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIP-Optimizations/daxpy
+
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp ${SRC_DIR}/* ${BUILD_DIR}/
+cd ${BUILD_DIR}
+
 make daxpy_5
 ./daxpy_5 1000000
 
