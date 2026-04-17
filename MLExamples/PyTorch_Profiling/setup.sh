@@ -26,15 +26,6 @@ fi
 module load pytorch
 module list
 
-# Install TraceLens - automated trace analysis library for PyTorch, JAX, and rocprofv3 profiles
-# https://github.com/AMD-AGI/TraceLens
-if python -c "import TraceLens" &> /dev/null; then
-    echo "TraceLens is already installed"
-else
-    echo "Installing TraceLens..."
-    pip install git+https://github.com/AMD-AGI/TraceLens.git
-fi
-
 if [[ `which mpicc | wc -l` -eq 0 ]]; then
    echo " "
    echo " "
