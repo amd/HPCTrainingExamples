@@ -39,6 +39,14 @@ This downloads and installs `mpitrace` and its dependencies. Important libraries
 - `mpitrace/roctx/libmpitrace-legacy.so` (for legacy `rocprof` v1)
 - `mpitrace/roctx/libmpitrace.so` (for `rocprofv3` - **default**)
 
+> [!TIP]
+> The script requires the GNU compiler with a fitting MPI installation to work.
+> On systems with the **Cray Programming Environment (CPE)** this can be achieved
+> by switching to `PrgEnv-gnu` before running the script with
+> ```
+> module load PrgEnv-gnu
+>```
+
 ## Helper scripts
 
 To use `mpitrace` and `rocprofv3` for a multi-process job, create the following helper scripts in your working directory:
