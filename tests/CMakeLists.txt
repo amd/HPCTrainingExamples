@@ -1257,6 +1257,7 @@ set_property(TEST NodeMemModel_OpenMP_Atomics10 PROPERTY SKIP_REGULAR_EXPRESSION
 add_test(NAME Affinity_MPI4_OpenMP2_OpenMPI COMMAND ../affinity_mpi4_openmp2.sh )
 set_property(TEST Affinity_MPI4_OpenMP2_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "MPI 003 - OMP 001")
 set_property(TEST Affinity_MPI4_OpenMP2_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(Affinity_MPI4_OpenMP2_OpenMPI PROPERTIES TIMEOUT 600)
 
 add_test(NAME Affinity_MPI2_OpenMP2_OpenMPI COMMAND ../affinity_mpi2_openmp2.sh )
 set_property(TEST Affinity_MPI2_OpenMP2_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "MPI 001 - OMP 001")
@@ -1700,13 +1701,3 @@ set_property(TEST Apptainer_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider
 add_test(NAME Podman_Test COMMAND ../podman_test.sh)
 set_property(TEST Podman_Test PROPERTY PASS_REGULAR_EXPRESSION "HSA System Attributes")
 set_property(TEST Podman_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-
-set_tests_properties(
-  Julia_GPU_Oceananigans
-  JAX_Mnist
-  Pytorch_Profile_Rocprof-sys_ROCm
-  MPI_Ghost_Exchange_Ver2
-  TAU_Trace_Check
-  TAU_Check_HIP_Profile
-  TAU_Profile_Check
-  PROPERTIES RESOURCE_LOCK gpu_heavy)
