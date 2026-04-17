@@ -1,12 +1,12 @@
 # Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved This software is distributed under the MIT License, Contact: Peter Cross
 langchain==1.2.10
 langchain-community==0.4.1
-langchain-core==1.2.28
+langchain-core==1.2.31
 langchain-experimental==0.4.1
 langchain-ollama==1.0.1
 langchain-huggingface==1.2.0
 langchain-chroma==1.1.0
-langchain-text-splitters==1.1.1
+langchain-text-splitters==1.1.2
 pdfplumber==0.11.9
 gradio==6.8.0
 sentence-transformers==5.2.3
