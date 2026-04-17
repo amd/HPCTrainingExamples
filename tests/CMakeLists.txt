@@ -845,22 +845,18 @@ set_property(TEST HIPFort_ROCm_Check_hipfc_2008 PROPERTY SKIP_REGULAR_EXPRESSION
 add_test(NAME HIPFort_ROCm_GEMM_Global COMMAND ../hipfort_rocm_gemm_global.sh )
 set_property(TEST HIPFort_ROCm_GEMM_Global PROPERTY PASS_REGULAR_EXPRESSION "2048")
 set_property(TEST HIPFort_ROCm_GEMM_Global PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST HIPFort_ROCm_GEMM_Global PROPERTY RESOURCE_LOCK hipfort_hipgemm_dir)
 
 add_test(NAME HIPFort_ROCm_GEMM_Local COMMAND ../hipfort_rocm_gemm_local.sh )
 set_property(TEST HIPFort_ROCm_GEMM_Local PROPERTY PASS_REGULAR_EXPRESSION "2048")
 set_property(TEST HIPFort_ROCm_GEMM_Local PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST HIPFort_ROCm_GEMM_Local PROPERTY RESOURCE_LOCK hipfort_hipgemm_dir)
 
 add_test(NAME HIPFort_ROCm_GEMM_Global_SD COMMAND ../hipfort_rocm_gemm_global_sd.sh )
 set_property(TEST HIPFort_ROCm_GEMM_Global_SD PROPERTY PASS_REGULAR_EXPRESSION "2048")
 set_property(TEST HIPFort_ROCm_GEMM_Global_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST HIPFort_ROCm_GEMM_Global_SD PROPERTY RESOURCE_LOCK hipfort_hipgemm_dir)
 
 add_test(NAME HIPFort_ROCm_GEMM_Local_SD COMMAND ../hipfort_rocm_gemm_local_sd.sh )
 set_property(TEST HIPFort_ROCm_GEMM_Local_SD PROPERTY PASS_REGULAR_EXPRESSION "2048")
 set_property(TEST HIPFort_ROCm_GEMM_Local_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
-set_property(TEST HIPFort_ROCm_GEMM_Local_SD PROPERTY RESOURCE_LOCK hipfort_hipgemm_dir)
 
 #add_test(NAME HIPFort_AFAR_GEMM_Global COMMAND ../hipfort_afar_gemm_global.sh )
 #set_property(TEST HIPFort_AFAR_GEMM_Global PROPERTY PASS_REGULAR_EXPRESSION "2048")

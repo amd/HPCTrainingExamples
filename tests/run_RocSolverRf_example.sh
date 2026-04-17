@@ -1,10 +1,7 @@
 #!/bin/bash
 
-export REMOVE_AFTER=1
-
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-pushd $REPO_DIR
-cd Libraries/RocSolverRf
+cd $REPO_DIR/Libraries/RocSolverRf
 
 SRC_DIR=$(pwd)
 BUILD_DIR=$(mktemp -d)
