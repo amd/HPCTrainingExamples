@@ -27,7 +27,13 @@ REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran
 cd 7_derived_types
 export HSA_XNACK=1
+
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp * ${BUILD_DIR}
+
+cd ${BUILD_DIR}
+
 make dtype_derived_type_automap
 ./dtype_derived_type_automap
-
-rm -f dtype_derived_type_automap dtype_derived_type_automap.o

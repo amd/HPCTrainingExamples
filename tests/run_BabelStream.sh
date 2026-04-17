@@ -28,7 +28,13 @@ else
    fi
 fi
 
-rm -rf ${BABELSTREAM_ROOT}
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp * ${BUILD_DIR}
+
+cd ${BUILD_DIR}
+
 git clone --branch v5.0 https://github.com/UoB-HPC/BabelStream.git ${BABELSTREAM_ROOT}
 cd ${BABELSTREAM_ROOT}
 # -DDEFAULT -- good performance
@@ -80,4 +86,3 @@ echo "MCLK: ${MCLK_LIST}"
 PWR_LIST=`rocm-smi | grep -v "Junction" | grep '[0-9]' | awk '{print $14}' | head -1`
 echo "PWR: ${PWR_LIST}"
 
-rm -rf ${BABELSTREAM_ROOT}

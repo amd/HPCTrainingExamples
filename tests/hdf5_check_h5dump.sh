@@ -35,6 +35,10 @@ if [[ `which mpicc | wc -l` -eq 0 ]]; then
    echo "Skip"
 fi
 
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cd ${BUILD_DIR}
 
 git clone https://github.com/essentialsofparallelcomputing/Chapter16.git
 
@@ -48,7 +52,3 @@ mkdir build && cd build && cmake -DHDF5_IS_PARALLEL=ON .. && make
 mpirun -n 4 ./hdf5block2d
 
 h5dump -y example.hdf5
-
-popd
-
-rm -rf Chapter16

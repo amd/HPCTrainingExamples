@@ -17,7 +17,13 @@ if [ $? -eq 1 ]; then
 fi
 module load cupy
 
-rm -rf cupy
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp * ${BUILD_DIR}
+
+cd ${BUILD_DIR}
+
 git clone -q --depth 1 --recursive https://github.com/ROCm/cupy.git
 
 export CUPY_INSTALL_USE_HIP=1
@@ -25,6 +31,3 @@ export CUPY_INSTALL_USE_HIP=1
 cd cupy/tests/install_tests || exit 1
 
 python3 -m pytest -vvv
-
-cd ../../../
-rm -rf cupy

@@ -35,4 +35,3 @@ cd ${BUILD_DIR}
 
 make
 ./vecadd
-make clean

@@ -33,4 +33,3 @@ cd ${BUILD_DIR}
 
 make
 ./saxpy
-make clean

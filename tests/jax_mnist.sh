@@ -16,9 +16,12 @@ if [ $? -eq 1 ]; then
 fi
 module load jax
 
-rm -rf jax_mnist_test_dir
-mkdir jax_mnist_test_dir
-cd jax_mnist_test_dir
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp * ${BUILD_DIR}
+
+cd ${BUILD_DIR}
 
 git clone https://github.com/google/jax.git jax
 cp jax/examples/datasets.py .
@@ -26,6 +29,3 @@ cp jax/examples/mnist_classifier.py .
 sed -i -e 's/from examples //' mnist_classifier.py
 export PYTHONPATH=.:$PYTHONPATH
 python3 mnist_classifier.py
-
-cd ..
-rm -rf jax_mnist_test_dir
