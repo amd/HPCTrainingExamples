@@ -4,12 +4,13 @@ langchain-community==0.4.1
 langchain-core==1.2.31
 langchain-experimental==0.4.1
 langchain-ollama==1.0.1
-langchain-huggingface==1.2.0
+langchain-huggingface==1.2.2
 langchain-chroma==1.1.0
 langchain-text-splitters==1.1.2
 pdfplumber==0.11.9
 gradio==6.8.0
 sentence-transformers==5.2.3
+transformers==5.5.4
 bs4==0.0.2
 discord.py==2.7.0
 chromadb==1.5.2
