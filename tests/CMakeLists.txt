@@ -1261,6 +1261,10 @@ add_test(NAME Affinity_MPI4_OpenMP2_Bind_OpenMPI COMMAND ../affinity_mpi4_openmp
 set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "ank 3 bound to")
 set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+set_property(TEST Affinity_MPI4_OpenMP2_OpenMPI      PROPERTY RESOURCE_LOCK affinity_tests)
+set_property(TEST Affinity_MPI2_OpenMP2_OpenMPI      PROPERTY RESOURCE_LOCK affinity_tests)
+set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY RESOURCE_LOCK affinity_tests)
+
 # Rocprofv3 tests
 #add_test(NAME Rocprofv3_Mini_Nbody_Kernel_Stats COMMAND ../rocprofv3_mini_nbody_stats_sys_trace.sh )
 #set_property(TEST Rocprofv3_Mini_Nbody_Kernel_Stats PROPERTY PASS_REGULAR_EXPRESSION "bodyForce")
