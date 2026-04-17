@@ -25,14 +25,14 @@ fi
 
 export HSA_XNACK=1
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-pushd ${REPO_DIR}/Pragma_Examples/OpenMP/CXX/cpp_classes/usm/operations
+pushd ${REPO_DIR}/Pragma_Examples/OpenMP/CXX/cpp_classes/usm
 
 SRC_DIR=$(pwd)
 BUILD_DIR=$(mktemp -d)
 trap "rm -rf ${BUILD_DIR}" EXIT
-cp * ${BUILD_DIR}
+cp -r operations daxpy ${BUILD_DIR}/
 
-cd ${BUILD_DIR}
+cd ${BUILD_DIR}/operations
 
 make
 ./example

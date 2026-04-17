@@ -96,6 +96,16 @@ set_tests_properties(
   HIPStdPar_MixAndMatch_CpuGpu
   PROPERTIES RESOURCE_LOCK hipstdpar_compile)
 
+set_tests_properties(
+  Julia_GPU_Oceananigans
+  JAX_Mnist
+  Pytorch_Profile_Rocprof-sys_ROCm
+  MPI_Ghost_Exchange_Ver2
+  TAU_Trace_Check
+  TAU_Check_HIP_Profile
+  TAU_Profile_Check
+  PROPERTIES RESOURCE_LOCK gpu_heavy)
+
 # Unified Shared Memory Examples (MI300A programming)
 add_test(NAME USM_Vector_Add COMMAND ../usm_vector_add.sh )
 set_property(TEST USM_Vector_Add PROPERTY PASS_REGULAR_EXPRESSION "Success")
@@ -980,22 +990,27 @@ set_tests_properties(MPI_Ghost_Exchange_Ver1 PROPERTIES TIMEOUT 600)
 add_test(NAME MPI_Ghost_Exchange_Ver2 COMMAND ../mpi_ghost_exchange_ver2.sh )
 set_property(TEST MPI_Ghost_Exchange_Ver2 PROPERTY PASS_REGULAR_EXPRESSION "perfetto")
 set_property(TEST MPI_Ghost_Exchange_Ver2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_tests_properties(MPI_Ghost_Exchange_Ver2 PROPERTIES TIMEOUT 600)
 
 add_test(NAME MPI_Ghost_Exchange_Ver3 COMMAND ../mpi_ghost_exchange_ver3.sh )
 set_property(TEST MPI_Ghost_Exchange_Ver3 PROPERTY PASS_REGULAR_EXPRESSION "Printing Timings")
 set_property(TEST MPI_Ghost_Exchange_Ver3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_tests_properties(MPI_Ghost_Exchange_Ver3 PROPERTIES TIMEOUT 600)
 
 add_test(NAME MPI_Ghost_Exchange_Ver4 COMMAND ../mpi_ghost_exchange_ver4.sh )
 set_property(TEST MPI_Ghost_Exchange_Ver4 PROPERTY PASS_REGULAR_EXPRESSION "Printing Timings")
 set_property(TEST MPI_Ghost_Exchange_Ver4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_tests_properties(MPI_Ghost_Exchange_Ver4 PROPERTIES TIMEOUT 600)
 
 add_test(NAME MPI_Ghost_Exchange_Ver5 COMMAND ../mpi_ghost_exchange_ver5.sh )
 set_property(TEST MPI_Ghost_Exchange_Ver5 PROPERTY PASS_REGULAR_EXPRESSION "Printing Timings")
 set_property(TEST MPI_Ghost_Exchange_Ver5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_tests_properties(MPI_Ghost_Exchange_Ver5 PROPERTIES TIMEOUT 600)
 
 add_test(NAME MPI_Ghost_Exchange_Ver6 COMMAND ../mpi_ghost_exchange_ver6.sh )
 set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY PASS_REGULAR_EXPRESSION "Printing Timings")
 set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(MPI_Ghost_Exchange_Ver6 PROPERTIES TIMEOUT 600)
 
 # Ver7 has been removed
 #add_test(NAME MPI_Ghost_Exchange_Ver7 COMMAND ../mpi_ghost_exchange_ver7.sh )
