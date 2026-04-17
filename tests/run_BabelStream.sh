@@ -34,8 +34,8 @@ cp * ${BUILD_DIR}
 
 cd ${BUILD_DIR}
 
-git clone --branch v5.0 https://github.com/UoB-HPC/BabelStream.git ${BABELSTREAM_ROOT}
-cd BabelStream}
+git clone --branch v5.0 https://github.com/UoB-HPC/BabelStream.git
+cd BabelStream
 # -DDEFAULT -- good performance
 # -DMANAGED -- poor performance
 # -DPAGEFAULT -- good performance

@@ -31,12 +31,17 @@ if [ ${XNACK_COUNT} -lt 1 ]; then
    echo "Skip"
 else
 
-   PROB_NAME=programming_model_raja_code
-   rm -rf ${PROB_NAME}
-   mkdir ${PROB_NAME} && cd ${PROB_NAME}
-
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    PWDir=`pwd`
+
+   SRC_DIR=$(pwd)
+   BUILD_DIR=$(mktemp -d)
+   trap "rm -rf ${BUILD_DIR}" EXIT
+
+   cd ${BUILD_DIR}
+
+   PROB_NAME=programming_model_raja_code
+   mkdir ${PROB_NAME} && cd ${PROB_NAME}
 
    git clone --recursive --depth 1 --shallow-submodules https://github.com/LLNL/RAJA.git Raja_build
    cd Raja_build
@@ -44,7 +49,9 @@ else
    rm -rf build_hip
    mkdir build_hip && cd build_hip
 
-   cmake -DCMAKE_INSTALL_PREFIX=${PWDir}/Raja_HIP \
+   export Raja_DIR=${BUILD_DIR}/Raja_HIP
+
+   cmake -DCMAKE_INSTALL_PREFIX=${Raja_DIR}/Raja_HIP \
          -DROCM_ROOT_DIR=${ROCM_PATH} \
          -DHIP_ROOT_DIR=${ROCM_PATH} \
          -DHIP_PATH=${ROCM_PATH}/bin \
@@ -61,22 +68,13 @@ else
 
    rm -rf Raja_build || true
 
-   export Raja_DIR=${PWDir}/Raja_HIP
-
    # To run with managed memory
    export HSA_XNACK=1
 
-   cd ${PWDir}
+   cd ${BUILD_DIR}
    rm -rf raja_example_build || true
    mkdir -p raja_example_build && cd raja_example_build
-   CXX=hipcc Raja_DIR=${PWDir}/Raja_HIP cmake ${REPO_DIR}/ManagedMemory/Raja_Code
+   CXX=hipcc Raja_DIR=${Raja_DIR}/Raja_HIP cmake ${REPO_DIR}/ManagedMemory/Raja_Code
    make
    ./raja_code
-
-   cd ${PWDir}
-   rm -rf raja_example_build || true
-   rm -rf Raja_HIP
-
-   cd ..
-   rm -rf ${PROB_NAME}
 fi
