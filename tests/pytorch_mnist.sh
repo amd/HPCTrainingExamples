@@ -18,7 +18,12 @@ if [ $? -eq 1 ]; then
 fi
 module load pytorch
 
-rm -rf pytorch_mnist
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp * ${BUILD_DIR}
+
+cd ${BUILD_DIR}
 
 git clone https://github.com/pytorch/examples.git pytorch_mnist 2>/dev/null
 
@@ -43,10 +48,3 @@ cd pytorch_mnist/mnist
 sed -i 's/train=True, download=True/train=True, download=False/' ./main.py
 
 python3 main.py
-
-
-
-cd ../..
-
-rm -rf pytorch_mnist
-

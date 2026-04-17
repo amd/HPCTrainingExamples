@@ -31,18 +31,19 @@ else
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/memory_pragmas
 
+   SRC_DIR=$(pwd)
+   BUILD_DIR=$(mktemp -d)
+   trap "rm -rf ${BUILD_DIR}" EXIT
+   cp * ${BUILD_DIR}
+
+   cd ${BUILD_DIR}
+
    export LIBOMPTARGET_INFO=-1
    export LIBOMPTARGET_INFO_SUPPORT=0
    export SLURM_BATCH_WAIT=0
    export OMP_TARGET_OFFLOAD=MANDATORY
 
-   BUILD_DIR=build_$$
-   rm -rf ${BUILD_DIR}
-   mkdir ${BUILD_DIR} && cd ${BUILD_DIR}
-   cmake ..
+   cmake ${SRC_DIR}
    make mem2
    ./mem2
-
-   cd ..
-   rm -rf ${BUILD_DIR}
 fi

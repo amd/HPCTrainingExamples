@@ -1,6 +1,5 @@
 #!/bin/bash
 NY=1024 ; NZ=1024 ; NX=256 ; TBSIZE=256; NUMTIMES=1000
-BABELSTREAM_ROOT=${PWD}/BabelStream
 
 if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
    if [ -z "$CXX" ]; then
@@ -36,7 +35,7 @@ cp * ${BUILD_DIR}
 cd ${BUILD_DIR}
 
 git clone --branch v5.0 https://github.com/UoB-HPC/BabelStream.git ${BABELSTREAM_ROOT}
-cd ${BABELSTREAM_ROOT}
+cd BabelStream}
 # -DDEFAULT -- good performance
 # -DMANAGED -- poor performance
 # -DPAGEFAULT -- good performance

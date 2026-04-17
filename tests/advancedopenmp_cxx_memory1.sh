@@ -35,13 +35,13 @@ else
    export SLURM_BATCH_WAIT=0
    export OMP_TARGET_OFFLOAD=MANDATORY
 
-   BUILD_DIR=build_$$
-   rm -rf ${BUILD_DIR}
-   mkdir ${BUILD_DIR} && cd ${BUILD_DIR}
-   cmake ..
+   SRC_DIR=$(pwd)
+   BUILD_DIR=$(mktemp -d)
+   trap "rm -rf ${BUILD_DIR}" EXIT
+
+   cd ${BUILD_DIR}
+
+   cmake ${SRC_DIR}
    make mem1
    ./mem1
-
-   cd ..
-   rm -rf ${BUILD_DIR}
 fi
