@@ -25,9 +25,12 @@ cd ${REPO_DIR}/MPI-examples/GhostExchange/GhostExchange_ArrayAssign
 
 cd Ver6
 
-rm -rf build
-mkdir build && cd build
-cmake ..
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cd ${BUILD_DIR}
+
+cmake ${SRC_DIR}
 make
 
 NUMCPUS=`lscpu | grep '^CPU(s):' |cut -d':' -f2 | tr -d ' '`
@@ -39,6 +42,3 @@ else
    mpirun ${MPI_RUN_OPTIONS} -n 4 --bind-to core --report-bindings ./GhostExchange \
        -x 2  -y 2  -i 2000 -j 2000 -h 2 -t -c -I 1000
 fi
-
-cd ..
-rm -rf build

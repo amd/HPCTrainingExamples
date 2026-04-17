@@ -30,9 +30,12 @@ else
 
    cd Ver2
 
-   rm -rf build
-   mkdir build && cd build
-   cmake ..
+   SRC_DIR=$(pwd)
+   BUILD_DIR=$(mktemp -d)
+   trap "rm -rf ${BUILD_DIR}" EXIT
+   cd ${BUILD_DIR}
+
+   cmake ${SRC_DIR}
    make
 
    export ROCPROFSYS_USE_PROCESS_SAMPLING=false
@@ -40,7 +43,4 @@ else
    mpirun -n 4 rocprof-sys-run -- ./GhostExchange.inst
 
    ls -Rl rocprofsys-* |grep perfetto
-
-   cd ..
-   rm -rf build
 fi

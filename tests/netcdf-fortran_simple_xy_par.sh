@@ -42,16 +42,12 @@ fi
 # use the compiler used to build netcdf-fortran
 FC=`nf-config --fc`
 
-WORKDIR=netcdf-fortran_test_$$
-rm -rf ${WORKDIR}
-mkdir ${WORKDIR}
-cd ${WORKDIR}
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cd ${BUILD_DIR}
+
 git clone https://github.com/Unidata/netcdf-fortran.git
 $FC  ./netcdf-fortran/examples/F90/simple_xy_par_wr.F90 -o simple_xy_par_wf  -I${NETCDF_F_ROOT}/include -L${NETCDF_F_ROOT}/lib -lnetcdff -L${PNETCDF_ROOT}/lib -lpnetcdf
 mpirun -n 4 --oversubscribe ./simple_xy_par_wf
 ncdump simple_xy_par.nc
-cd ..
-rm -rf ${WORKDIR}
-
-
-

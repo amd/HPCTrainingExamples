@@ -35,17 +35,13 @@ fi
 # use the compiler used to build netcdf-fortran
 FC=`nf-config --fc`
 
-WORKDIR=netcdf-fortran_test_$$
-rm -rf ${WORKDIR}
-mkdir ${WORKDIR}
-cd ${WORKDIR}
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cd ${BUILD_DIR}
+
 git clone https://github.com/Unidata/netcdf-fortran.git
 $FC ./netcdf-fortran/examples/F90/pres_temp_4D_wr.F90 -I${NETCDF_F_ROOT}/include -L${NETCDF_F_ROOT}/lib -lnetcdff -L${NETCDF_C_ROOT}/lib -lnetcdf -o pres_temp_4D_wr
 $FC ./netcdf-fortran/examples/F90/pres_temp_4D_rd.F90 -I${NETCDF_F_ROOT}/include -L${NETCDF_F_ROOT}/lib -lnetcdff -L${NETCDF_C_ROOT}/lib -lnetcdf -o pres_temp_4D_rd
 ./pres_temp_4D_wr
 ./pres_temp_4D_rd
-cd ..
-rm -rf ${WORKDIR}
-
-
-

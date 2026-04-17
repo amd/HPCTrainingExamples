@@ -33,5 +33,3 @@ else
 fi
 
 nf-config --version
-
-

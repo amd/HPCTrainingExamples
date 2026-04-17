@@ -26,7 +26,13 @@ fi
 module load hipfort_from_source
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIPFort/hipgemm
-rm -f gemm_global *.o *.mod
+
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp * ${BUILD_DIR}
+
+cd ${BUILD_DIR}
+
 make gemm_global
 ./gemm_global
-rm -f gemm_global *.o *.mod

@@ -29,7 +29,13 @@ fi
 module load hipfort
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIPFort/matmult
-rm -f ./matmult_hipfort *.o *.mod
+
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp * ${BUILD_DIR}
+
+cd ${BUILD_DIR}
+
 make
 ./matmult_hipfort
-rm -f ./matmult_hipfort *.o *.mod

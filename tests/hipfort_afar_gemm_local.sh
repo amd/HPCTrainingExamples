@@ -26,7 +26,13 @@ fi
 export HIPFORT_PATH=$AFAR_PATH
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIPFort/hipgemm
-rm -f gemm_local *.o *.mod
+
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp * ${BUILD_DIR}
+
+cd ${BUILD_DIR}
+
 make gemm_local
 ./gemm_local
-rm -f gemm_local *.o *.mod

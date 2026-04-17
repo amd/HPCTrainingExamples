@@ -35,16 +35,13 @@ fi
 # use the compiler used to build netcdf-c
 CC=`nc-config --cc`
 
-rm -rf netcdf-c_pres_temp_4D_test
-mkdir netcdf-c_pres_temp_4D_test
-cd netcdf-c_pres_temp_4D_test
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cd ${BUILD_DIR}
+
 git clone https://github.com/Unidata/netcdf-c.git
 $CC ./netcdf-c/examples/C/pres_temp_4D_wr.c -lnetcdf -L${NETCDF_C_ROOT}/lib -o pres_temp_4D_wr
 $CC ./netcdf-c/examples/C/pres_temp_4D_rd.c -lnetcdf -L${NETCDF_C_ROOT}/lib -o pres_temp_4D_rd
 ./pres_temp_4D_wr
 ./pres_temp_4D_rd
-cd ..
-rm -rf netcdf-c_pres_temp_4D_test
-
-
-

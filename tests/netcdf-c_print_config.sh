@@ -38,4 +38,3 @@ if [[ ${HDF5_ENABLE_PARALLEL} == "OFF" ]]; then
 fi
 
 nc-config --all
-
