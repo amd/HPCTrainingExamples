@@ -35,14 +35,12 @@ else
    MPIRUN=mpirun
 fi
 
-BUILD_DIR=build_$$
-rm -rf ${BUILD_DIR}
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
 mkdir ${BUILD_DIR} && cd ${BUILD_DIR}
 cmake ..
 make
 
 #salloc -p LocalQ --gpus=2 -n 2 -t 00:10:00
 ${MPIRUN} -n 2 ./Jacobi_hip -g 2
-
-cd ..
-rm -rf ${BUILD_DIR}

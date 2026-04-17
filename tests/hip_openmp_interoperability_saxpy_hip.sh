@@ -35,7 +35,11 @@ else
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    cd ${REPO_DIR}/HIP-OpenMP/CXX/saxpy_openmp_hip
-   make
+   SRC_DIR=$(pwd)
+   BUILD_DIR=$(mktemp -d)
+   trap "rm -rf ${BUILD_DIR}" EXIT
+   cp * ${BUILD_DIR}
 
-   make clean
+   cd ${BUILD_DIR}
+   make
 fi

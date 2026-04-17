@@ -26,6 +26,12 @@ fi
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/hipifly/vector_add
 
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp * ${BUILD_DIR}
+
+cd ${BUILD_DIR}
+
 make DFLAGS="-DENABLE_HIP -fPIE"
 ./vector_add
-make clean

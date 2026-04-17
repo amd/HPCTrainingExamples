@@ -30,11 +30,12 @@ fi
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIP/vectorAdd
 
-BUILD_DIR=build_$$
-rm -rf ${BUILD_DIR}
-mkdir ${BUILD_DIR} && cd ${BUILD_DIR}
-cmake ..
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+
+cd ${BUILD_DIR}
+
+cmake ${SRC_DIR}
 make
 ./vectoradd
-cd ..
-rm -rf ${BUILD_DIR}
