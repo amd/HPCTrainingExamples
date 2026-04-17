@@ -47,8 +47,16 @@ done
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 pushd $REPO_DIR
-
 cd Libraries/RocSolverRf
+
+if [[ "${REMOVE_AFTER}" == "1" ]]; then
+   SRC_DIR=$(pwd)
+   BUILD_DIR=$(mktemp -d)
+   trap "rm -rf ${BUILD_DIR}" EXIT
+   cp * ${BUILD_DIR}
+
+   cd ${BUILD_DIR}
+fi
 
 mkdir dependencies && cd dependencies
 
@@ -105,6 +113,3 @@ if [[ "${REMOVE_AFTER}" == "1" ]]; then
    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
    popd
 fi
-
-
-

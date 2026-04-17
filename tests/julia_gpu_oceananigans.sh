@@ -13,14 +13,16 @@ if [ $? -eq 1 ]; then
   module load rocm
 fi
 
-export CUR_DIR=$(mktemp -d)
 ORIG_HOME="${HOME}"
-export HOME="${CUR_DIR}"
-export TMPDIR="${CUR_DIR}"
-export JULIA_DEPOT_PATH="${CUR_DIR}/julia_depot"
+
+export WORK_DIR=$(mktemp -d)
+trap "rm -rf ${WORK_DIR}" EXIT
+cd ${WORK_DIR}
+export HOME="${WORK_DIR}"
+export JULIA_DEPOT_PATH="${WORK_DIR}/julia_depot"
 export JULIA_NUM_PRECOMPILE_TASKS=8
-curl -fsSL https://install.julialang.org | sh -s -- --yes --add-to-path=no -p=${CUR_DIR}/juliaup_install
-export PATH=$PATH:"${CUR_DIR}/juliaup_install/bin"
+curl -fsSL https://install.julialang.org | sh -s -- --yes --add-to-path=no -p=${WORK_DIR}/juliaup_install
+export PATH=$PATH:"${WORK_DIR}/juliaup_install/bin"
 
 juliaup add 1.12
 juliaup default 1.12
@@ -37,4 +39,3 @@ popd
 rm -rf Oceananigans.jl
 
 export HOME="${ORIG_HOME}"
-rm -rf ${CUR_DIR}

@@ -14,6 +14,11 @@ if [ $? -eq 1 ]; then
 fi
 module load ftorch
 
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+
+cd ${BUILD_DIR}
+
 git clone https://github.com/Cambridge-ICCS/FTorch.git ftorch_test
 cd ftorch_test/examples/
 python3 -m venv ftorch_test
@@ -26,6 +31,3 @@ cmake ..
 make -j
 ./multigpu_infer_fortran hip ../saved_multigpu_model_hip.pt
 deactivate
-cd ../../../../
-rm -rf ftorch_test
-
