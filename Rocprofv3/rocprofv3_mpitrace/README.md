@@ -39,6 +39,14 @@ This downloads and installs `mpitrace` and its dependencies. Important libraries
 - `mpitrace/roctx/libmpitrace-legacy.so` (for legacy `rocprof` v1)
 - `mpitrace/roctx/libmpitrace.so` (for `rocprofv3` - **default**)
 
+> [!TIP]
+> The script requires the GNU compiler with a fitting MPI installation to work.
+> On systems with the **Cray Programming Environment (CPE)** this can be achieved
+> by switching to `PrgEnv-gnu` before running the script with
+> ```
+> module load PrgEnv-gnu
+>```
+
 ## Helper scripts
 
 To use `mpitrace` and `rocprofv3` for a multi-process job, create the following helper scripts in your working directory:
@@ -67,6 +75,9 @@ elif [[ -n ${MV2_COMM_WORLD_RANK+z} ]]; then
 elif [[ -n ${SLURM_PROCID+z} ]]; then
     # mpich via srun
     export MPI_RANK=${SLURM_PROCID}
+elif [[ -n ${PMI_RANK+z} ]]; then
+    # cray-mpich
+    export MPI_RANK=${PMI_RANK}
 fi
 outdir="rank.${MPI_RANK}"
 outfile=${outdir}
