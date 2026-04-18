@@ -1458,6 +1458,47 @@ add_test(NAME HIP-Python_Check_Import COMMAND ../hip-python_check_import.sh )
 set_property(TEST HIP-Python_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST HIP-Python_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
 
+add_test(NAME Numba-HIP_Check COMMAND ../numba-hip_check.sh )
+set_property(TEST Numba-HIP_Check PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST Numba-HIP_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+
+add_test(NAME Numba-HIP-CUDA-Posing_Check COMMAND ../numba-hip-cuda-posing_check.sh )
+set_property(TEST Numba-HIP-CUDA-Posing_Check PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST Numba-HIP-CUDA-Posing_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+
+add_test(NAME HIP-Python_Device_Properties COMMAND ../hip-python_device_properties.sh )
+set_property(TEST HIP-Python_Device_Properties PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIP-Python_Device_Properties PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+
+add_test(NAME HIP-Python_Streams COMMAND ../hip-python_streams.sh )
+set_property(TEST HIP-Python_Streams PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIP-Python_Streams PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+
+add_test(NAME HIP-Python_HipBLAS COMMAND ../hip-python_hipblas.sh )
+set_property(TEST HIP-Python_HipBLAS PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIP-Python_HipBLAS PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+
+add_test(NAME HIP-Python_HipFFT COMMAND ../hip-python_hipfft.sh )
+set_property(TEST HIP-Python_HipFFT PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIP-Python_HipFFT PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+
+add_test(NAME HIP-Python_RTC_Kernel COMMAND ../hip-python_rtc_kernel.sh )
+set_property(TEST HIP-Python_RTC_Kernel PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIP-Python_RTC_Kernel PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+
+add_test(NAME HIP-Python_RCCL COMMAND ../hip-python_rccl.sh )
+set_property(TEST HIP-Python_RCCL PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIP-Python_RCCL PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+
+add_test(NAME HIP-Python_Cython_Basic COMMAND ../hip-python_cython_basic.sh )
+set_property(TEST HIP-Python_Cython_Basic PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_tests_properties(HIP-Python_Cython_Basic PROPERTIES TIMEOUT 300)
+
+add_test(NAME HIP-Python_Cython_HIP COMMAND ../hip-python_cython_hip.sh )
+set_property(TEST HIP-Python_Cython_HIP PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIP-Python_Cython_HIP PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+set_tests_properties(HIP-Python_Cython_HIP PROPERTIES TIMEOUT 300)
+
 # CuPy tests
 add_test(NAME Cupy_Check_Import COMMAND ../cupy_check_import.sh )
 set_property(TEST Cupy_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")

@@ -11,7 +11,7 @@ To see details on the container environment (such as operating system and module
 
 First set up the environment
 
-```
+```bash
 module load mpi4py cupy
 ```
 
@@ -19,13 +19,13 @@ Add `print("Rank is:", rank)` right after the rank is set at line 10.
 
 Then run the python program
 
-```
+```bash
 mpirun -n 4 python mpi4py_cupy.py
 ```
 
 You should see the following output, but it might be in a different order
 
-```
+```text
 Rank is: 3
 Rank is: 1
 Rank is: 2
@@ -38,7 +38,7 @@ Success
 
 To verify if the program is running on the GPU
 
-```
+```bash
 export AMD_LOG_LEVEL=3
 mpirun -n 4 python mpi4py_cupy.py
 ```

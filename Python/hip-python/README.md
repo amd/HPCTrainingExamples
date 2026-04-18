@@ -5,7 +5,7 @@ README.md from `HPCTrainingExamples/Python/hip-python` in the Training Examples 
 
 For these examples, get a GPU with salloc or srun.
 
-```
+```bash
 salloc -N 1 --ntasks 16 --gpus=1 --time=01:00:00
 or
 srun -N 1 --ntasks 16 --gpus=1 --time=01:00:00 --pty /bin/bash
@@ -15,10 +15,22 @@ Be sure and free up the GPU when you are done with the exercises.
 
 The first test is to check that the hip-python environment is set up correctly.
 
-```
+```bash
 module load rocm hip-python
 python -c 'from hip import hip, hiprtc' 2> /dev/null && echo 'Success' || echo 'Failure'
 ```
+
+> [!NOTE]
+> These examples assume you are working on AAC6, where a `hip-python` module is already
+> installed. On your own or other training systems such as AAC7, you can install it yourself with
+> ```bash
+> python3 -m venv hip-python-venv
+> source hip-python-venv/bin/activate
+> python3 -m pip install -i https://test.pypi.org/simple hip-python~=7.2.0
+> python3 -m pip install -i https://test.pypi.org/simple hip-python-as-cuda~=7.2.0
+> ```
+> Make sure to specify the **correct version** string that matches your **local ROCm installation**.
+> This example installs `hip-python` for `rocm/7.2.0`.
 
 HIP-Python has an extensive capability for retrieving device properties and 
 attributes. We'll take a look at the two main functions -- higGetDeviceProperties and
@@ -30,14 +42,14 @@ We'll take a look at the higGetDeviceProperties function first. Copy the followi
 code into a file named `hipGetDeviceProperties_example.py` or pull the example down
 with 
 
-```
+```bash
 git clone https://github.com/AMD/HPCTrainingExamples
 cd HPCTrainingExamples/Python/hip-python
 ```
 
 The `hipGetDeviceProperties_example.py` file
 
-```
+```python
 from hip import hip
 
 def hip_check(call_result):
@@ -59,14 +71,14 @@ print("ok")
 
 Try it by loading the proper modules and running it with python3.
 
-```
+```bash
 module load rocm hip-python
 python3 hipGetDeviceProperties_example.py
 ```
 
 Some of the useful properties that can be obtained are:
 
-```
+```text
 props.managedMemory=1
 props.name=b'AMD Instinct MI210'
 props.warpSize=64
@@ -78,7 +90,7 @@ The second function to get device information is hipDeviceGetAttribute.
 Copy the following into `hipDeviceGetAttribute_example.py` or use the
 file in the hip-python examples.
 
-```
+```python
 from hip import hip
 
 def hip_check(call_result):
@@ -108,14 +120,14 @@ print("ok")
 
 Run this file.
 
-```
+```bash
 module load rocm hip-python
 python3 hipDeviceGetAttribute_example.py
 ```
 
 Output 
 
-```
+```text
 hipDeviceAttributeMaxBlockDimX: 1024
 hipDeviceAttributeMaxBlockDimY: 1024
 hipDeviceAttributeMaxBlockDimZ: 1024
@@ -133,7 +145,7 @@ and pass array data to the stream routines from Python arrays.
 
 The code in the file hipstreams_example.py.
 
-```
+```python
 import ctypes
 import random
 import array
@@ -173,7 +185,7 @@ print("ok")
 
 Now run this example.
 
-```
+```bash
 module load rocm hip-python
 python3 hipstreams_example.py
 ```
@@ -184,7 +196,7 @@ In the file hipblas_numpy_example.py, the hipBLAS library
 Saxpy routine is called. It operates on a numpy data
 array.
 
-```
+```python
 import ctypes
 import math
 import numpy as np
@@ -251,7 +263,7 @@ the other AMD Instinct GPUs. It simplifies the code because the memory
 does not have to be duplicated on the CPU and GPU. The code is in the
 file hipblas_numpy_USM_example.py.
 
-```
+```python
 import ctypes
 import math
 import numpy as np
@@ -297,7 +309,7 @@ else:
 To run this unified shared memory example, we also
 need the environment variable `HSA_XNACK` set to one.
 
-```
+```bash
 module load rocm hip-python
 export HSA_XNACK=1
 python3 hipblas_numpy_USM_example.py
@@ -308,7 +320,7 @@ python3 hipblas_numpy_USM_example.py
 The HIP FFT library can also be called from Python. We create a plan, perform
 the FFT, and then destroy the plan. This file is `hipfft_numpy_example.py`.
 
-```
+```python
 import numpy as np
 from hip import hip, hipfft
 
@@ -355,7 +367,7 @@ print("ok")
 
 Run this examples with:
 
-```
+```bash
 module load rocm hip-python
 python3 hipfft_numpy_example.py
 ```
@@ -366,7 +378,7 @@ The code is much simplier if we take advantage of the unified shared memory
 or managed memory. We can just use the host versions of the data directly.
 The simpler code is in hipfft_numpy_USM_example.py
 
-```
+```python
 import numpy as np
 from hip import hip, hipfft
 
@@ -405,7 +417,7 @@ print("ok")
 
 Run this with:
 
-```
+```bash
 module load rocm hip-python
 export HSA_XNACK=1
 python3 hipfft_numpy_USM_example.py
@@ -416,7 +428,7 @@ python3 hipfft_numpy_USM_example.py
 We can also call the RCCL communication library from Python using
 HIP-Python. An example of this is shown in rccl_example.py.
 
-```
+```python
 import numpy as np
 from hip import hip, rccl
 
@@ -479,7 +491,7 @@ print("ok")
 
 Running this example:
 
-```
+```bash
 module load rocm hip-python
 python3 rccl_example.py
 ```
@@ -490,7 +502,7 @@ We can also use the host data directly by relying on the unified shared memory
 or the managed memory on the AMD Instinct GPUs. The code for this is shown
 in rccl_USM_example.py
 
-```
+```python
 import numpy as np
 from hip import hip, rccl
 
@@ -547,125 +559,254 @@ print("ok")
 
 Running this version requires setting `HSA_XNACK` to one as in the previous unified shared memory examples.
 
-```
+```bash
 module load rocm hip-python
 export HSA_XNACK=1
 python3 rccl_USM_example.py
 ```
 
-## Cython example
+## Cython Basics
 
-We can also speed up Python code by compiling it using the Cython package. To demonstrate
-this, we create a simple array sum routine. The source code is in the file array_sum.pyx.
+Cython compiles Python-like code to C for significant performance gains on CPU-bound operations.
+This section demonstrates basic Cython usage with a simple array sum example.
 
-```
-from hip import hip, hiprtc
+The example is in the `cython_basic/` directory.
 
+### Simple Array Sum Example
+
+The file `array_sum.pyx` contains the function that we like
+to pre-precompile. It is written in Cython syntax, which adds a few
+additional features to standard Python such as `cdef` to define types.
+
+```cython
 def array_sum(double[:, ::1] A):
+    """Compute the sum of all elements in a 2D array."""
     cdef int m = A.shape[0]
     cdef int n = A.shape[1]
     cdef int i, j
     cdef double result = 0
 
     for i in range(m):
-        for k in range(n):
-            result += A[i, k]
+        for j in range(n):
+            result += A[i, j]
 
     return result
 ```
 
-And define the interface to the array sum routine in `array_sum.pyx`.
+The `setup.py` file defines how to build the extension:
 
-```
-from hip cimport chip, chiprtc
-
-def array_sum(double[:, ::1] A):
-```
-
-To compile the python routine, we need a setup.py file that gives the
-directions to compile a routine with the project compiler. We'll define
-the compiler, the paths, libraries, and compiler flags.
-
-```
-import os, sys
-
-array_sum = "array_sum"
-
+```python
 from setuptools import Extension, setup
 from Cython.Build import cythonize
 
-ROCM_PATH=os.environ.get("ROCM_PATH", "/opt/rocm")
-HIP_PLATFORM = os.environ.get("HIP_PLATFORM", "amd")
+setup(
+    ext_modules=cythonize(
+        [Extension("array_sum", ["array_sum.pyx"])],
+        compiler_directives={"language_level": 3},
+    )
+)
+```
+The key routine `setup()` is the entry point for the compilation.
+The `cythonize` utility takes care of translating the `*.pyx` file to
+C code, while the other commands provide details on how the translated
+files should be compiled, i.e. compiler flags, linked libraries,
+the list of source files to compile (in this case only `array_sum.pyx`),
+and the name of compiled module (in this case `array_sum`).
 
-if HIP_PLATFORM not in ("amd", "hcc"):
-   raise RuntimeError("Currently only HIP_PLATFORM=amd is supported")
+Once the extension has been compiled, it can be used in other
+Python files like a regular Python module:
+```python
+import array_sum                 # Importing our compiled extension
+result = array_sum.array_sum(A)  # Calling the precompiled function
+```
 
-def create_extension(name, sources):
-   global ROCM_PATH
-   global HIP_PLATFORM
-   rocm_inc = os.path.join(ROCM_PATH,"include")
-   rocm_lib_dir = os.path.join(ROCM_PATH,"lib")
-   rocm_libs = ["amdhip64"]
-   platform = HIP_PLATFORM.upper()
-   cflags = ["-D", f"__HIP_PLATFORM_{platform}__"]
+### Build and Run
 
-   return Extension(
-      name,
-      sources=sources,
-      include_dirs=[rocm_inc],
-      library_dirs=[rocm_lib_dir],
-      libraries=rocm_libs,
-      language="c",
-      extra_compile_args=cflags,
-   )
+First, install `cython` in your environment with
+```bash
+python3 -m venv cython_venv
+source cython_venv/bin/activate
+python3 -m pip install cython numpy
+```
+
+Then, build the extension and run the demo
+```bash
+python3 setup.py build_ext --inplace
+python3 cython_basic.py
+```
+
+Finally, clean up with
+```bash
+deactivate
+rm -rf cython_venv build array_sum*.so array_sum.c
+```
+
+The output should look like something like this (speedup varies by system):
+
+```text
+Matrix size: 1000x1000
+Pure Python: 113.0 ms (result: 500591.090701)
+Cython:      0.8 ms (result: 500591.090701)
+Speedup:     138.4x
+Correctness verified!
+ok
+```
+
+You can see the significant speedup we achieved by pre-compiling the
+`array_sum` function with Cython.
+
+## Cython with HIP-Python
+
+This example demonstrates how Cython can be used together with HIP to accelerate
+the data preparation on the host before we launch a kernel. This pattern can
+be applied if the host side orchestration and preparation work becomes the
+bottleneck in Python code with GPU acceleration.
+
+The example is in the `cython_hip_example/` directory.
+
+### Source Files
+
+First, we again prepare a Cython module with the code we want to speedup in `matrix_prep.pyx`
+In this case, it includes scaling a matrix by a scalar and copying the data to the GPU and back
+by calling the HIP API via `hip-python`. The code adds decorators which allow Cython to produce
+more optimized code.
+
+```cython
+# cython: language_level=3
+cimport cython
+import numpy as np
+from hip import hip
+
+def hip_check(call_result):
+    err = call_result[0]
+    result = call_result[1:]
+    if len(result) == 1:
+        result = result[0]
+    if isinstance(err, hip.hipError_t) and err != hip.hipError_t.hipSuccess:
+        raise RuntimeError(str(err))
+    return result
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def scale_only_cython(double[:, ::1] A, double scale):
+    """Cython-optimized matrix scaling (CPU only)."""
+    cdef int m = A.shape[0], n = A.shape[1]
+    cdef int i, j
+
+    for i in range(m):
+        for j in range(n):
+            A[i, j] *= scale
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def prepare_and_transfer(double[:, ::1] A, double scale):
+    """
+    Cython-optimized: scale matrix on CPU, then transfer to GPU.
+    The nested loop is what Cython accelerates vs pure Python.
+    """
+    cdef int m = A.shape[0], n = A.shape[1]
+    cdef int i, j
+
+    # CPU work: scale the matrix (Cython makes this fast)
+    for i in range(m):
+        for j in range(n):
+            A[i, j] *= scale
+
+    # GPU work: transfer to device
+    num_bytes = A.shape[0] * A.shape[1] * sizeof(double)
+    d_ptr = hip_check(hip.hipMalloc(num_bytes))
+    hip_check(hip.hipMemcpy(d_ptr, A, num_bytes, 
+                            hip.hipMemcpyKind.hipMemcpyHostToDevice))
+
+    return d_ptr, num_bytes
+
+def transfer_back_and_free(d_ptr, double[:, ::1] A, size_t num_bytes):
+    """Copy results from GPU and free device memory."""
+    hip_check(hip.hipMemcpy(A, d_ptr, num_bytes,
+                            hip.hipMemcpyKind.hipMemcpyDeviceToHost))
+    hip_check(hip.hipFree(d_ptr))
+```
+
+Next, we need a `setup.py` script to compile the Cython module.
+In this case, the script gets more complex, since it has to
+be compiled and linked against the base ROCm installation similar
+to what we would expect for "normal" C-code.
+
+```python
+import os
+import numpy as np
+from setuptools import Extension, setup
+from Cython.Build import cythonize
+
+ROCM_PATH = os.environ.get("ROCM_PATH", "/opt/rocm")
 
 setup(
-   ext_modules = cythonize(
-      [create_extension(array_sum, [f"{array_sum}.pyx"]),],
-      compiler_directives=dict(language_level=3),
-      compile_time_env=dict(HIP_PYTHON=True),
-   )
+    ext_modules=cythonize([
+        Extension(
+            "matrix_prep",
+            sources=["matrix_prep.pyx"],
+            include_dirs=[np.get_include()],
+            library_dirs=[os.path.join(ROCM_PATH, "lib")],
+            libraries=["amdhip64"],
+            extra_compile_args=["-D__HIP_PLATFORM_AMD__"],
+        )
+    ], compiler_directives={"language_level": 3})
 )
 ```
 
-We will need to bring in the Cython package, so we create a virtual environment.
+### Build and Run (requires GPU)
 
-```
-python3 –m venv cython_example
-source cython_example/bin/activate
-```
-
-Then we set up the environment by loading the rocm and hip-python module and installing cython.
-
-```
+First, make sure that your environment is setup
+correctly. Now, we also need a ROCm installation:
+```bash
+python3 -m venv venv_cython
+source venv_cython/bin/activate
 module load rocm hip-python
-pip3 import cython
+python3 -m pip install cython numpy
+```
+Then, we can build the Cython module and run it:
+
+```bash
+python3 setup.py build_ext --inplace
+python3 demo.py
 ```
 
-Compile the array_sum python code with setup.py build
+You will see some output like this (performance will
+vary depending on your system):
 
-```
-python3 setup.py build
-```
+```text
+1. CPU Computation Only (1000x1000 matrix scaling):
+   Pure Python: 156.2 ms
+   Cython:      0.7 ms
+   Speedup:     239.0x
 
-Finally we clean up afterwards.
+2. Full Pipeline (Cython prep + HIP transfer):
+   Cython + HIP transfer: 210.1 ms
 
+3. Correctness Check:
+   Results match - verified!
+
+ok
 ```
+Again, we see significant speedup if we precompile the host code!
+
+Don't forget to clean up afterwards:
+```bash
 deactivate
-rm –rf cython_example
+rm -rf venv_cython build matrix_prep*.so matrix_prep.c
 ```
 
 ## Compiling and Launching Kernels
 
 We can also create our own C programs and compile them with the
-hiprtc module for a Just-In_Time (JIT) compile capability. This
+hiprtc module for a Just-In-Time (JIT) compile capability. This
 example shows a C routine called `print_tid()` that is encoded
 as a string. The string is then converted into program source and
 compiled. We use the ability to query the device parameters to
 get the GPU architecture to compile for.
 
 
-```
+```python
 from hip import hip, hiprtc
 
 def hip_check(call_result):
@@ -731,7 +872,7 @@ print("ok")
 
 To run the example of creating a kernel and launching it:
 
-```
+```bash
 module load rocm hip-python
 python3 create_launch_C_kernel.py
 ```
@@ -742,7 +883,7 @@ It is a little more complicated to launch a kernel with arguments. The program
 is `scale_vector()` and it has six arguments. We add an "extra" field with the
 six arguments as part of the launch kernel call. This example is in `kernel_with_arguments.py`.
 
-```
+```python
 import ctypes
 import array
 import random
@@ -854,19 +995,42 @@ print("ok")
 
 Run this example with:
 
-```
+```bash
 module load rocm hip-python
 python3 kernel_with_arguments.py
 ```
 
 
-## numba-HIP
+## Numba-HIP
 
-A simple numba-HIP vector addition example
+Numba-HIP allows to write GPU kernels for AMD GPUs and Just-in-Time (JIT) compilation using native Python code.
 
+### Installation
+
+Numba-HIP is already installed on AAC6 as part of the `hip-python` module and can be loaded with
 ```
-from numba import hip
+module load rocm hip-python
+```
+On other systems such as your own, you can install HIP-Python and Numba-HIP with
+```bash
+python3 -m venv hip-python-build
+source hip-python-build/bin/activate
+python3 -m pip install -i https://test.pypi.org/simple hip-python~=6.4.1
+python3 -m pip config set global.extra-index-url https://test.pypi.org/simple
+python3 -m pip install "numba-hip[rocm-6-4-1] @ git+https://github.com/ROCm/numba-hip.git"
+```
+Replace the `module load` commands in the following by sourcing this virtual environment.
 
+> [!NOTE]
+> Make sure to install the correct version that matches the ROCm installed on your system.
+> For this, replace `6.4.1` and `rocm-6-4-1` accordingly (e.g., `7.0.0` and `rocm-7-0-0`).
+
+
+### Kernel Definition
+
+The kernel uses the `@hip.jit` decorator and follows the standard GPU programming model:
+
+```python
 @hip.jit
 def f(a, b, c):
    # like threadIdx.x + (blockIdx.x * blockDim.x)
@@ -875,27 +1039,39 @@ def f(a, b, c):
 
    if tid < size:
        c[tid] = a[tid] + b[tid]
-
-print("Ok")
 ```
 
-To run the example
+### Memory Management with `to_device`
 
+Numba-HIP provides the `to_device` API to transfer NumPy arrays (such as `{a,b,c}_host`) to GPU memory:
+
+```python
+# Transfer to GPU memory via Numba-HIP API
+a_dev = hip.to_device(a_host)
+b_dev = hip.to_device(b_host)
+c_dev = hip.to_device(c_host)
 ```
+
+After kernel execution, copy results back with `copy_to_host()`:
+
+```python
+c_host = c_dev.copy_to_host()
+```
+
+### Running the Example
+
+```bash
 module load rocm hip-python
 python3 numba-hip.py
 ```
 
-An alternative approach to changing all the `@cuda.jit` to `@hip.jit` is to have 
-numba-hip pose as CUDA. We do this with the addition of the following two lines:
+### CUDA-Posing Mode
 
-```
-hip.pose_as_cuda()
-from numba import cuda
-```
-```
+An alternative approach for porting existing CUDA code is to have numba-hip pose as CUDA.
+This allows using `@cuda.jit` syntax on AMD GPUs:
+
+```python
 from numba import hip
-
 hip.pose_as_cuda()
 from numba import cuda
 
@@ -907,13 +1083,11 @@ def f(a, b, c):
 
    if tid < size:
        c[tid] = a[tid] + b[tid]
-
-print("Ok")
 ```
 
-Running this example
+Running this example:
 
-```
+```bash
 module load rocm hip-python
 python3 numba-hip-cuda-posing.py
 ```
