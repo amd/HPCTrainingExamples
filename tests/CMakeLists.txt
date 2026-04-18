@@ -981,7 +981,8 @@ set_tests_properties(MPI_Ghost_Exchange_Ver1 PROPERTIES TIMEOUT 600)
 add_test(NAME MPI_Ghost_Exchange_Ver2 COMMAND ../mpi_ghost_exchange_ver2.sh )
 set_property(TEST MPI_Ghost_Exchange_Ver2 PROPERTY PASS_REGULAR_EXPRESSION "perfetto")
 set_property(TEST MPI_Ghost_Exchange_Ver2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
-set_tests_properties(MPI_Ghost_Exchange_Ver2 PROPERTIES TIMEOUT 600)
+# Short timeout while rocprof-sys is broken (SIGSEGV in rocprofiler_configure()); restore to 600 once fixed.
+set_tests_properties(MPI_Ghost_Exchange_Ver2 PROPERTIES TIMEOUT 120)
 
 add_test(NAME MPI_Ghost_Exchange_Ver3 COMMAND ../mpi_ghost_exchange_ver3.sh )
 set_property(TEST MPI_Ghost_Exchange_Ver3 PROPERTY PASS_REGULAR_EXPRESSION "Printing Timings")
@@ -1262,11 +1263,13 @@ set_tests_properties(Affinity_MPI4_OpenMP2_OpenMPI PROPERTIES TIMEOUT 600)
 add_test(NAME Affinity_MPI2_OpenMP2_OpenMPI COMMAND ../affinity_mpi2_openmp2.sh )
 set_property(TEST Affinity_MPI2_OpenMP2_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "MPI 001 - OMP 001")
 set_property(TEST Affinity_MPI2_OpenMP2_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(Affinity_MPI2_OpenMP2_OpenMPI PROPERTIES TIMEOUT 600)
 
 # bound onto socket 1 for MI300A
 add_test(NAME Affinity_MPI4_OpenMP2_Bind_OpenMPI COMMAND ../affinity_mpi4_openmp2_bind.sh )
 set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "ank 3 bound to")
 set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTIES TIMEOUT 600)
 
 set_property(TEST Affinity_MPI4_OpenMP2_OpenMPI      PROPERTY RESOURCE_LOCK affinity_tests)
 set_property(TEST Affinity_MPI2_OpenMP2_OpenMPI      PROPERTY RESOURCE_LOCK affinity_tests)
@@ -1367,7 +1370,8 @@ set_tests_properties(Pytorch_Profile_Rocprof-compute_ROCm PROPERTIES TIMEOUT 150
 add_test(NAME Pytorch_Profile_Rocprof-sys_ROCm COMMAND ../pytorch_profiling_rocprof-systems.sh )
 set_property(TEST Pytorch_Profile_Rocprof-sys_ROCm PROPERTY PASS_REGULAR_EXPRESSION "perfetto-trace-")
 set_property(TEST Pytorch_Profile_Rocprof-sys_ROCm PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
-set_tests_properties(Pytorch_Profile_Rocprof-sys_ROCm PROPERTIES TIMEOUT 800) 
+# Short timeout while rocprof-sys is broken (stalls in PyTorch training under sampling); restore to 800+ once fixed.
+set_tests_properties(Pytorch_Profile_Rocprof-sys_ROCm PROPERTIES TIMEOUT 600)
 
 add_test(NAME Pytorch_Profile_Rocprofv3 COMMAND ../pytorch_profiling_rocprofv3.sh )
 set_property(TEST Pytorch_Profile_Rocprofv3 PROPERTY PASS_REGULAR_EXPRESSION "kernel_stats.csv")
@@ -1701,3 +1705,16 @@ set_property(TEST Apptainer_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider
 add_test(NAME Podman_Test COMMAND ../podman_test.sh)
 set_property(TEST Podman_Test PROPERTY PASS_REGULAR_EXPRESSION "HSA System Attributes")
 set_property(TEST Podman_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+# AMD flang 22.0.0 known compiler/linker bugs; remove WILL_FAIL once upstream ships a fix.
+#   - _4_Vecadd_USM_Async / _5_Vecadd_Async_*: "not yet implemented: Unhandled clause
+#     privatization for deferred target tasks in omp.target operation"
+#   - Reduction_Array: "'omp.wsloop' op accumulator variable used more than once"
+#   - Complex_Saxpy_AMDflang: "ld.lld: error: undefined symbol: __divsc3"
+#set_tests_properties(
+#    OpenMP_Fortran_4_Vecadd_USM_Async
+#    OpenMP_Fortran_5_Vecadd_Async_HSA_XNACK_0
+#    OpenMP_Fortran_5_Vecadd_Async_HSA_XNACK_1
+#    OpenMP_Language_Constructs_Fortran_Reduction_Array
+#    OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang
+#  PROPERTIES WILL_FAIL TRUE)

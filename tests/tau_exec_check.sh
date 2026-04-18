@@ -77,10 +77,12 @@ make
 
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
 result=`echo ${ROCM_VERSION} | awk '$1>6.1.9'` && echo $result
+# Use a 1024x1024 local mesh so the TAU trace buffer fits in GPU memory
+# (default 4096x4096 caused "HIP failure: 'out of memory'" during trace finalization).
 if [[ "${result}" ]]; then
-   mpirun -n 2 --oversubscribe tau_exec -rocm -T rocm,rocprofsdk ./Jacobi_hip -g 2 1
+   mpirun -n 2 --oversubscribe tau_exec -rocm -T rocm,rocprofsdk ./Jacobi_hip -g 2 1 -m 1024 1024
 else
-   mpirun -n 2 --oversubscribe tau_exec -T rocm,roctracer,rocprofiler ./Jacobi_hip -g 2 1
+   mpirun -n 2 --oversubscribe tau_exec -T rocm,roctracer,rocprofiler ./Jacobi_hip -g 2 1 -m 1024 1024
 fi
 
 ls
