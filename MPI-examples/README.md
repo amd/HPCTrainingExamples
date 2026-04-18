@@ -45,7 +45,7 @@ mkdir OMB
 cd OMB
 wget https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.5.tar.gz
 tar -xvf osu-micro-benchmarks-7.5.tar.gz
-cd osu-micro-benchmarks-7.3
+cd osu-micro-benchmarks-7.5
 ```
 
 Build and install the OSU micro-benchmarks
