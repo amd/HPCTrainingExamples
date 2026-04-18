@@ -23,7 +23,10 @@ else
     module load rocprofiler-systems
 fi
 
-module load pytorch
+module -t list 2>&1 | grep -q "^pytorch"
+if [ $? -ne 0 ]; then
+  module load pytorch
+fi
 module list
 
 if [[ `which mpicc | wc -l` -eq 0 ]]; then
