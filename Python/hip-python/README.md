@@ -20,6 +20,18 @@ module load rocm hip-python
 python -c 'from hip import hip, hiprtc' 2> /dev/null && echo 'Success' || echo 'Failure'
 ```
 
+> [!NOTE]
+> These examples assume you are working on AAC6, where a `hip-python` module is already
+> installed. On your own or other training systems such as AAC7, you can install it yourself with
+> ```bash
+> python3 -m venv hip-python-venv
+> source hip-python-venv/bin/activate
+> python3 -m pip install -i https://test.pypi.org/simple hip-python~=7.2.0
+> python3 -m pip install -i https://test.pypi.org/simple hip-python-as-cuda~=7.2.0
+> ```
+> Make sure to specify the **correct version** string that matches your **local ROCm installation**.
+> This example installs `hip-python` for `rocm/7.2.0`.
+
 HIP-Python has an extensive capability for retrieving device properties and 
 attributes. We'll take a look at the two main functions -- higGetDeviceProperties and
 hipDeviceGetAttribute.
@@ -553,112 +565,241 @@ export HSA_XNACK=1
 python3 rccl_USM_example.py
 ```
 
-## Cython example
+## Cython Basics
 
-We can also speed up Python code by compiling it using the Cython package. To demonstrate
-this, we create a simple array sum routine. The source code is in the file array_sum.pyx.
+Cython compiles Python-like code to C for significant performance gains on CPU-bound operations.
+This section demonstrates basic Cython usage with a simple array sum example.
+
+The example is in the `cython_basic/` directory.
+
+### Simple Array Sum Example
+
+The file `array_sum.pyx` contains the function that we like
+to pre-precompile. It is written in Cython syntax, which adds a few
+additional features to standard Python such as `cdef` to define types.
 
 ```cython
-from hip import hip, hiprtc
-
 def array_sum(double[:, ::1] A):
+    """Compute the sum of all elements in a 2D array."""
     cdef int m = A.shape[0]
     cdef int n = A.shape[1]
     cdef int i, j
     cdef double result = 0
 
     for i in range(m):
-        for k in range(n):
-            result += A[i, k]
+        for j in range(n):
+            result += A[i, j]
 
     return result
 ```
 
-And define the interface to the array sum routine in `array_sum.pyx`.
-
-```cython
-from hip cimport chip, chiprtc
-
-def array_sum(double[:, ::1] A):
-```
-
-To compile the python routine, we need a setup.py file that gives the
-directions to compile a routine with the project compiler. We'll define
-the compiler, the paths, libraries, and compiler flags.
+The `setup.py` file defines how to build the extension:
 
 ```python
-import os, sys
-
-array_sum = "array_sum"
-
 from setuptools import Extension, setup
 from Cython.Build import cythonize
 
-ROCM_PATH=os.environ.get("ROCM_PATH", "/opt/rocm")
-HIP_PLATFORM = os.environ.get("HIP_PLATFORM", "amd")
+setup(
+    ext_modules=cythonize(
+        [Extension("array_sum", ["array_sum.pyx"])],
+        compiler_directives={"language_level": 3},
+    )
+)
+```
+The key routine `setup()` is the entry point for the compilation.
+The `cythonize` utility takes care of translating the `*.pyx` file to
+C code, while the other commands provide details on how the translated
+files should be compiled, i.e. compiler flags, linked libraries,
+the list of source files to compile (in this case only `array_sum.pyx`),
+and the name of compiled module (in this case `array_sum`).
 
-if HIP_PLATFORM not in ("amd", "hcc"):
-   raise RuntimeError("Currently only HIP_PLATFORM=amd is supported")
+Once the extension has been compiled, it can be used in other
+Python files like a regular Python module:
+```python
+import array_sum                 # Importing our compiled extension
+result = array_sum.array_sum(A)  # Calling the precompiled function
+```
 
-def create_extension(name, sources):
-   global ROCM_PATH
-   global HIP_PLATFORM
-   rocm_inc = os.path.join(ROCM_PATH,"include")
-   rocm_lib_dir = os.path.join(ROCM_PATH,"lib")
-   rocm_libs = ["amdhip64"]
-   platform = HIP_PLATFORM.upper()
-   cflags = ["-D", f"__HIP_PLATFORM_{platform}__"]
+### Build and Run
 
-   return Extension(
-      name,
-      sources=sources,
-      include_dirs=[rocm_inc],
-      library_dirs=[rocm_lib_dir],
-      libraries=rocm_libs,
-      language="c",
-      extra_compile_args=cflags,
-   )
+First, install `cython` in your environment with
+```bash
+python3 -m venv cython_venv
+source cython_venv/bin/activate
+python3 -m pip install cython numpy
+```
+
+Then, build the extension and run the demo
+```bash
+python3 setup.py build_ext --inplace
+python3 cython_basic.py
+```
+
+Finally, clean up with
+```bash
+deactivate
+rm -rf cython_venv build array_sum*.so array_sum.c
+```
+
+The output should look like something like this (speedup varies by system):
+
+```text
+Matrix size: 1000x1000
+Pure Python: 113.0 ms (result: 500591.090701)
+Cython:      0.8 ms (result: 500591.090701)
+Speedup:     138.4x
+Correctness verified!
+ok
+```
+
+You can see the significant speedup we achieved by pre-compiling the
+`array_sum` function with Cython.
+
+## Cython with HIP-Python
+
+This example demonstrates how Cython can be used together with HIP to accelerate
+the data preparation on the host before we launch a kernel. This pattern can
+be applied if the host side orchestration and preparation work becomes the
+bottleneck in Python code with GPU acceleration.
+
+The example is in the `cython_hip_example/` directory.
+
+### Source Files
+
+First, we again prepare a Cython module with the code we want to speedup in `matrix_prep.pyx`
+In this case, it includes scaling a matrix by a scalar and copying the data to the GPU and back
+by calling the HIP API via `hip-python`. The code adds decorators which allow Cython to produce
+more optimized code.
+
+```cython
+# cython: language_level=3
+cimport cython
+import numpy as np
+from hip import hip
+
+def hip_check(call_result):
+    err = call_result[0]
+    result = call_result[1:]
+    if len(result) == 1:
+        result = result[0]
+    if isinstance(err, hip.hipError_t) and err != hip.hipError_t.hipSuccess:
+        raise RuntimeError(str(err))
+    return result
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def scale_only_cython(double[:, ::1] A, double scale):
+    """Cython-optimized matrix scaling (CPU only)."""
+    cdef int m = A.shape[0], n = A.shape[1]
+    cdef int i, j
+
+    for i in range(m):
+        for j in range(n):
+            A[i, j] *= scale
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def prepare_and_transfer(double[:, ::1] A, double scale):
+    """
+    Cython-optimized: scale matrix on CPU, then transfer to GPU.
+    The nested loop is what Cython accelerates vs pure Python.
+    """
+    cdef int m = A.shape[0], n = A.shape[1]
+    cdef int i, j
+
+    # CPU work: scale the matrix (Cython makes this fast)
+    for i in range(m):
+        for j in range(n):
+            A[i, j] *= scale
+
+    # GPU work: transfer to device
+    num_bytes = A.shape[0] * A.shape[1] * sizeof(double)
+    d_ptr = hip_check(hip.hipMalloc(num_bytes))
+    hip_check(hip.hipMemcpy(d_ptr, A, num_bytes, 
+                            hip.hipMemcpyKind.hipMemcpyHostToDevice))
+
+    return d_ptr, num_bytes
+
+def transfer_back_and_free(d_ptr, double[:, ::1] A, size_t num_bytes):
+    """Copy results from GPU and free device memory."""
+    hip_check(hip.hipMemcpy(A, d_ptr, num_bytes,
+                            hip.hipMemcpyKind.hipMemcpyDeviceToHost))
+    hip_check(hip.hipFree(d_ptr))
+```
+
+Next, we need a `setup.py` script to compile the Cython module.
+In this case, the script gets more complex, since it has to
+be compiled and linked against the base ROCm installation similar
+to what we would expect for "normal" C-code.
+
+```python
+import os
+import numpy as np
+from setuptools import Extension, setup
+from Cython.Build import cythonize
+
+ROCM_PATH = os.environ.get("ROCM_PATH", "/opt/rocm")
 
 setup(
-   ext_modules = cythonize(
-      [create_extension(array_sum, [f"{array_sum}.pyx"]),],
-      compiler_directives=dict(language_level=3),
-      compile_time_env=dict(HIP_PYTHON=True),
-   )
+    ext_modules=cythonize([
+        Extension(
+            "matrix_prep",
+            sources=["matrix_prep.pyx"],
+            include_dirs=[np.get_include()],
+            library_dirs=[os.path.join(ROCM_PATH, "lib")],
+            libraries=["amdhip64"],
+            extra_compile_args=["-D__HIP_PLATFORM_AMD__"],
+        )
+    ], compiler_directives={"language_level": 3})
 )
 ```
 
-We will need to bring in the Cython package, so we create a virtual environment.
+### Build and Run (requires GPU)
 
+First, make sure that your environment is setup
+correctly. Now, we also need a ROCm installation:
 ```bash
-python3 –m venv cython_example
-source cython_example/bin/activate
-```
-
-Then we set up the environment by loading the rocm and hip-python module and installing cython.
-
-```bash
+python3 -m venv venv_cython
+source venv_cython/bin/activate
 module load rocm hip-python
-pip3 import cython
+python3 -m pip install cython numpy
 ```
-
-Compile the array_sum python code with setup.py build
+Then, we can build the Cython module and run it:
 
 ```bash
-python3 setup.py build
+python3 setup.py build_ext --inplace
+python3 demo.py
 ```
 
-Finally we clean up afterwards.
+You will see some output like this (performance will
+vary depending on your system):
 
+```text
+1. CPU Computation Only (1000x1000 matrix scaling):
+   Pure Python: 156.2 ms
+   Cython:      0.7 ms
+   Speedup:     239.0x
+
+2. Full Pipeline (Cython prep + HIP transfer):
+   Cython + HIP transfer: 210.1 ms
+
+3. Correctness Check:
+   Results match - verified!
+
+ok
+```
+Again, we see significant speedup if we precompile the host code!
+
+Don't forget to clean up afterwards:
 ```bash
 deactivate
-rm –rf cython_example
+rm -rf venv_cython build matrix_prep*.so matrix_prep.c
 ```
 
 ## Compiling and Launching Kernels
 
 We can also create our own C programs and compile them with the
-hiprtc module for a Just-In_Time (JIT) compile capability. This
+hiprtc module for a Just-In-Time (JIT) compile capability. This
 example shows a C routine called `print_tid()` that is encoded
 as a string. The string is then converted into program source and
 compiled. We use the ability to query the device parameters to

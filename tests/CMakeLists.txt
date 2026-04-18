@@ -1475,6 +1475,15 @@ add_test(NAME HIP-Python_RCCL COMMAND ../hip-python_rccl.sh )
 set_property(TEST HIP-Python_RCCL PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST HIP-Python_RCCL PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
 
+add_test(NAME HIP-Python_Cython_Basic COMMAND ../hip-python_cython_basic.sh )
+set_property(TEST HIP-Python_Cython_Basic PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_tests_properties(HIP-Python_Cython_Basic PROPERTIES TIMEOUT 300)
+
+add_test(NAME HIP-Python_Cython_HIP COMMAND ../hip-python_cython_hip.sh )
+set_property(TEST HIP-Python_Cython_HIP PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST HIP-Python_Cython_HIP PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+set_tests_properties(HIP-Python_Cython_HIP PROPERTIES TIMEOUT 300)
+
 # CuPy tests
 add_test(NAME Cupy_Check_Import COMMAND ../cupy_check_import.sh )
 set_property(TEST Cupy_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
