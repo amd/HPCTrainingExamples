@@ -254,7 +254,7 @@ if __name__ == "__main__":
     parser.add_argument("--max-steps", "-ms", type=int, default=20,
                         help="Maximum number of steps to run for profiling")
 
-    parser.add_argument("--num-workers", "-nw", type=int, default=4,
+    parser.add_argument("--num-workers", "-nw", type=int, default=2,
                         help="Number of DataLoader worker processes. "
                              "Set to 0 when running under profilers (e.g. rocprof-sys) "
                              "that do not handle PyTorch's forked data-loader workers.")
