@@ -161,14 +161,14 @@ def build_dataset(args, rank, download):
         batch_size=args.batch_size, 
         pin_memory=True,
         shuffle=False, 
-        num_workers=4,
+        num_workers=args.num_workers,
         sampler=DistributedSampler(training_data))
 
     val_dataloader = torch.utils.data.DataLoader(validation_data, 
         batch_size=args.batch_size, 
         pin_memory=True,
         shuffle=False, 
-        num_workers=4,
+        num_workers=args.num_workers,
         sampler=DistributedSampler(val_data))
 
     # Preprocess the images:
@@ -253,6 +253,11 @@ if __name__ == "__main__":
 
     parser.add_argument("--max-steps", "-ms", type=int, default=20,
                         help="Maximum number of steps to run for profiling")
+
+    parser.add_argument("--num-workers", "-nw", type=int, default=4,
+                        help="Number of DataLoader worker processes. "
+                             "Set to 0 when running under profilers (e.g. rocprof-sys) "
+                             "that do not handle PyTorch's forked data-loader workers.")
 
     parser.add_argument("--torch-profile", action="store_true",
                         help="Activate the pytorch profiler")

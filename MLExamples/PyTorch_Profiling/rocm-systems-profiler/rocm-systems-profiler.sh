@@ -30,17 +30,37 @@ if [ ! -f data/cifar-100-python ]; then
 fi
 popd
 
+# Remove any stale rocprofsys-python3-output directories from previous runs so
+# that the glob in the final cd below (and any CTest pass regex that looks for
+# "perfetto-trace-") cannot match leftovers from earlier invocations.
+rm -rf ./rocprofsys-python3-output
+
 # Create the configuration for the system profiler:
 export RSP_CFG=${PROFILER_TOP_DIR}/rocm-system-profiler/rocprofiler-systems_$$.cfg
 rocprof-sys-avail -G $RSP_CFG
 
-# Execute the python script:
+# Execute the python script.
+# NOTE: rocprof-sys v1.3.0 deadlocks when instrumenting PyTorch's forked
+# DataLoader workers, so force --num-workers 0 for this profiled run.
+# Other pytorch_profiling_*.sh tests are unaffected; the default in
+# train_cifar_100.py is still 4.
 rocprof-sys-sample -c $RSP_CFG -- \
 python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 10 \
+--num-workers 0 \
 --data-path ${PROFILER_TOP_DIR}/data
+rc=$?
 
-rm $RSP_CFG
+rm -f $RSP_CFG
 
-cd rocprofsys-python3-output/*
+# Surface the perfetto trace from the newest output dir so that the
+# CTest PASS_REGULAR_EXPRESSION "perfetto-trace-" can match.
+latest="$(ls -1dt rocprofsys-python3-output/*/ 2>/dev/null | head -1)"
+if [[ -n "$latest" ]]; then
+    cd "$latest"
+    ls
+else
+    echo "ERROR: rocprof-sys produced no rocprofsys-python3-output/<ts>/ directory" >&2
+fi
 
-ls
+exit $rc
+

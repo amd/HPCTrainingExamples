@@ -1370,8 +1370,13 @@ set_tests_properties(Pytorch_Profile_Rocprof-compute_ROCm PROPERTIES TIMEOUT 150
 add_test(NAME Pytorch_Profile_Rocprof-sys_ROCm COMMAND ../pytorch_profiling_rocprof-systems.sh )
 set_property(TEST Pytorch_Profile_Rocprof-sys_ROCm PROPERTY PASS_REGULAR_EXPRESSION "perfetto-trace-")
 set_property(TEST Pytorch_Profile_Rocprof-sys_ROCm PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
-# Short timeout while rocprof-sys is broken (stalls in PyTorch training under sampling); restore to 800+ once fixed.
-set_tests_properties(Pytorch_Profile_Rocprof-sys_ROCm PROPERTIES TIMEOUT 600)
+# Targeted at rocm/therock-23.1.0, where this test passes in ~65-75 s with
+# a working rocprof-sys. Older rocprof-sys builds shipped in rocm/7.1.x and
+# rocm/7.2.x instrument PyTorch pathologically slowly (>20 min for 10 steps
+# that run in 65 s natively); those builds are expected to TIMEOUT here,
+# which is what we want the CDash dashboard to show as the cross-version
+# variation.
+set_tests_properties(Pytorch_Profile_Rocprof-sys_ROCm PROPERTIES TIMEOUT 200)
 
 add_test(NAME Pytorch_Profile_Rocprofv3 COMMAND ../pytorch_profiling_rocprofv3.sh )
 set_property(TEST Pytorch_Profile_Rocprofv3 PROPERTY PASS_REGULAR_EXPRESSION "kernel_stats.csv")
