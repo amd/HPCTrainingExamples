@@ -41,12 +41,17 @@ rocprof-sys-avail -G $RSP_CFG
 
 # Execute the python script.
 # NOTE: rocprof-sys v1.3.0 deadlocks when instrumenting PyTorch's forked
-# DataLoader workers, so force --num-workers 0 for this profiled run.
+
+# DataLoader workers, which historically forced --num-workers 0 here.
+# v1.5.0 (shipped in rocm/therock-23.1.0) handles forked workers, and using
+# 2 workers runs substantially faster than 0 by overlapping CIFAR-100
+# preprocessing with the GPU steps. Keep this low (<= 2) to stay well below
+# the threshold that used to hit the v1.3.0 deadlock path on older stacks.
 # Other pytorch_profiling_*.sh tests are unaffected; the default in
 # train_cifar_100.py is still 4.
 rocprof-sys-sample -c $RSP_CFG -- \
 python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 10 \
---num-workers 0 \
+--num-workers 2 \
 --data-path ${PROFILER_TOP_DIR}/data
 rc=$?
 
