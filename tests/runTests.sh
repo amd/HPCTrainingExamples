@@ -8,6 +8,8 @@ TENSORFLOW=0
 ROCPROFV3=0
 PYTORCH=0
 FTORCH=0
+HIPPYTHON=0
+NUMBAHIP=0
 JULIA=0
 JAX=0
 PETSC=0
@@ -68,6 +70,8 @@ usage()
     echo "--mpi : runs all the mpi tests (same as including --opempi --mpi4py --mvapich2 --gpu-aware-mpi)"
     echo "--openmpi : runs the openmpi tests"
     echo "--fftw: runts the fftw tests"
+    echo "--hip-python: runs the hip-python tests"
+    echo "--numba-hip: runs the numba-hip tests"
     echo "--mpi4py : runs the mpi4py tests"
     echo "--jax : runs the jax tests"
     echo "--openmp : runs the openmp tests"
@@ -150,6 +154,16 @@ do
       "--rocprof-compute")
           shift
           ROCPROF_COMPUTE=1
+          reset-last
+          ;;
+      "--hip-python")
+          shift
+          HIPPYTHON=1
+          reset-last
+          ;;
+      "--numba-hip")
+          shift
+          NUMBAHIP=1
           reset-last
           ;;
       "--hip")
@@ -361,6 +375,10 @@ elif [ ${TAU} -eq 1 ]; then
    ctest -R TAU
 elif [ ${FTORCH} -eq 1 ]; then
    ctest -R FTorch
+elif [ ${HIPPYTHON} -eq 1 ]; then
+   ctest -R HIP-Python
+elif [ ${NUMBAHIP} -eq 1 ]; then
+   ctest -R Numba-HIP
 elif [ ${JULIA} -eq 1 ]; then
    ctest -R Julia
 elif [ ${PETSC} -eq 1 ]; then

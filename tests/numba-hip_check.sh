@@ -15,4 +15,18 @@ if [ $? -eq 1 ]; then
 fi
 module load hip-python
 
-python3 ../Python/hip-python/numba-hip.py 2>/dev/null | grep -q 'PASSED' && echo 'Success' || echo 'Failure'
+REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
+EXAMPLE_DIR="$REPO_DIR/Python/hip-python"
+WORK_DIR=$(mktemp -d)
+
+cleanup() {
+    rm -rf "$WORK_DIR"
+}
+trap cleanup EXIT
+
+# Copy files to work directory
+cp "$EXAMPLE_DIR/numba-hip.py" "$WORK_DIR/"
+
+cd "$WORK_DIR"
+
+python3 ./numba-hip.py 2>/dev/null | grep -q 'PASSED' && echo 'Success' || echo 'Failure'
