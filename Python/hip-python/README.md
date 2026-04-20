@@ -26,8 +26,9 @@ python -c 'from hip import hip, hiprtc' 2> /dev/null && echo 'Success' || echo '
 > ```bash
 > python3 -m venv hip-python-venv
 > source hip-python-venv/bin/activate
-> python3 -m pip install -i https://test.pypi.org/simple hip-python~=7.2.0
-> python3 -m pip install -i https://test.pypi.org/simple hip-python-as-cuda~=7.2.0
+> export ROCM_VERSION=`cat $ROCM_PATH/.info/version`
+> python3 -m pip install -i https://test.pypi.org/simple "hip-python==${ROCM_VERSION}.*" --force-reinstall --no-cache
+> python3 -m pip install -i https://test.pypi.org/simple "hip-python-as-cuda==${ROCM_VERSION}.*" --force-reinstall --no-cache
 > ```
 > Make sure to specify the **correct version** string that matches your **local ROCm installation**.
 > This example installs `hip-python` for `rocm/7.2.0`.
