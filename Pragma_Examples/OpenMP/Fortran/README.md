@@ -61,6 +61,8 @@ Currently Loaded Modulefiles:
   5) cce/21.0.0               11) craype-accel-amd-gfx942
   6) craype/2.7.36
 ```
+then set
+```
 export FC=ftn
 ```
 #### On all systems independent of the compiler:
