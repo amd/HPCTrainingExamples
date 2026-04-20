@@ -45,11 +45,23 @@ This module sets ```FC=amdflang``` for you, check with ```echo $FC```.
 Prepare the environment (those modules should be default, check with ```module list```):
 ```
 module load PrgEnv-cray
-module load craype-x86-genoa
 module load craype-accel-amd-gfx942
-module load cce
-module load rocm
+module swap rocm rocm-new/7.1.1
+module load craype-accel-amd-gfx942
 ```
+make sure to load the right rocm version (non-default!).
+```
+module list
+```
+should show you this list of modules:
+```
+Currently Loaded Modulefiles:
+  1) craype-x86-genoa          7) cray-mpich/9.1.0
+  2) libfabric/2.2.0rc1        8) cray-libsci/26.03.0
+  3) craype-network-ofi        9) PrgEnv-cray/8.7.0
+  4) perftools-base/26.03.0   10) rocm-new/7.1.1
+  5) cce/21.0.0               11) craype-accel-amd-gfx942
+  6) craype/2.7.36```
 ```
 export FC=ftn
 ```
