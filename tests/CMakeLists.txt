@@ -981,8 +981,7 @@ set_tests_properties(MPI_Ghost_Exchange_Ver1 PROPERTIES TIMEOUT 600)
 add_test(NAME MPI_Ghost_Exchange_Ver2 COMMAND ../mpi_ghost_exchange_ver2.sh )
 set_property(TEST MPI_Ghost_Exchange_Ver2 PROPERTY PASS_REGULAR_EXPRESSION "perfetto")
 set_property(TEST MPI_Ghost_Exchange_Ver2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
-# Short timeout while rocprof-sys is broken (SIGSEGV in rocprofiler_configure()); restore to 600 once fixed.
-set_tests_properties(MPI_Ghost_Exchange_Ver2 PROPERTIES TIMEOUT 120)
+set_tests_properties(MPI_Ghost_Exchange_Ver2 PROPERTIES TIMEOUT 600)
 
 add_test(NAME MPI_Ghost_Exchange_Ver3 COMMAND ../mpi_ghost_exchange_ver3.sh )
 set_property(TEST MPI_Ghost_Exchange_Ver3 PROPERTY PASS_REGULAR_EXPRESSION "Printing Timings")
@@ -1004,10 +1003,13 @@ set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY PASS_REGULAR_EXPRESSION "Prin
 set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_tests_properties(MPI_Ghost_Exchange_Ver6 PROPERTIES TIMEOUT 600)
 
-# Ver7 has been removed
+# Ver7 is disabled: no Ver7/ source directory exists yet. The script is kept
+# in sync with ver2 (ver1 + rocprof-sys) so it is ready to enable once a
+# Ver7/ variant is added.
 #add_test(NAME MPI_Ghost_Exchange_Ver7 COMMAND ../mpi_ghost_exchange_ver7.sh )
 #set_property(TEST MPI_Ghost_Exchange_Ver7 PROPERTY PASS_REGULAR_EXPRESSION "perfetto")
-#set_property(TEST MPI_Ghost_Exchange_Ver7 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#set_property(TEST MPI_Ghost_Exchange_Ver7 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+#set_tests_properties(MPI_Ghost_Exchange_Ver7 PROPERTIES TIMEOUT 600)``
 
 # HIP Examples
 add_test(NAME HIP_Vectoradd_Makefile COMMAND ../hip_vectoradd_makefile.sh )

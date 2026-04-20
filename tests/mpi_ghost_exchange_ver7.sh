@@ -1,6 +1,6 @@
 #!/bin/bash
 
-unset HSA_XNACK
+export HSA_XNACK=1
 module -t list 2>&1 | grep -q "^rocm"
 if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
@@ -8,17 +8,6 @@ if [ $? -eq 1 ]; then
   module load rocm
 fi
 module load amdclang openmpi
-
-# OpenIB is removed as of OpenMPI 5.0.0, so only needed for older versions
-CurrentVersion=`mpirun --version |head -1 | tr -d '[:alpha:] ) (' `
-RequiredVersion="4.9.9"
-if [ "$(printf '%s\n' "$RequiredVersion" "$CurrentVersion" | sort -Vr | head -n1)" = "$RequiredVersion" ]; then
-   echo "Setting MPIRUN options to exclude openib transport layer for mpi version ${CurrentVersion}"
-   echo "OpenMPI versions starting with 5.0.0 have the legacy openib transport layer removed"
-   MPI_RUN_OPTIONS="--mca pml ob1 --mca btl ^openib"
-else
-   MPI_RUN_OPTIONS="--mca coll ^hcoll"
-fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/MPI-examples/GhostExchange/GhostExchange_ArrayAssign
@@ -34,8 +23,23 @@ cmake ${SRC_DIR}
 
 make
 
+NUMCPUS=`lscpu | grep '^CPU(s):' |cut -d':' -f2 | tr -d ' '`
+NUM_GPUS=`rocminfo |grep GPU |grep "Device Type" |wc -l`
+NUM_PER_RESOURCE_MPI4=`expr 4 / ${NUM_GPUS}`
+NUM_PER_RESOURCE_MPI16=`expr 16 / ${NUM_GPUS}`
 export ROCPROFSYS_USE_PROCESS_SAMPLING=false
 rocprof-sys-instrument -o GhostExchange.inst -- ./GhostExchange
-mpirun -n 4 rocprof-sys-run -- ./GhostExchange.inst
 
-ls -Rl rocprofsys-* |grep perfetto
+# Problem sizes are reduced vs. ver1 to stay under the CTest timeout given
+# rocprof-sys instrumentation overhead. -x/-y must be non-zero or the
+# example divides by zero while computing rank coordinates.
+mpirun -n 4 --bind-to core --map-by ppr:${NUM_PER_RESOURCE_MPI4}:numa  --report-bindings \
+       rocprof-sys-run -- ./GhostExchange.inst \
+       -x 2  -y 2  -i 200 -j 200 -h 2 -t -c -I 100
+if [[ ${NUM_PER_RESOUCE_MPI16} -le 4 ]]; then
+   mpirun -n 16 --bind-to core --map-by ppr:${NUM_PER_RESOURCE_MPI16}:numa  --report-bindings \
+          rocprof-sys-run -- ./GhostExchange.inst \
+          -x 4  -y 4  -i 400 -j 400 -h 2 -t -c -I 100
+fi
+
+ls -Rl rocprofsys-* |grep perfetto`
