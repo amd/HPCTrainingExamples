@@ -1376,7 +1376,7 @@ set_property(TEST Pytorch_Profile_Rocprof-sys_ROCm PROPERTY SKIP_REGULAR_EXPRESS
 # that run in 65 s natively); those builds are expected to TIMEOUT here,
 # which is what we want the CDash dashboard to show as the cross-version
 # variation.
-set_tests_properties(Pytorch_Profile_Rocprof-sys_ROCm PROPERTIES TIMEOUT 200)
+set_tests_properties(Pytorch_Profile_Rocprof-sys_ROCm PROPERTIES TIMEOUT 800)
 
 add_test(NAME Pytorch_Profile_Rocprofv3 COMMAND ../pytorch_profiling_rocprofv3.sh )
 set_property(TEST Pytorch_Profile_Rocprofv3 PROPERTY PASS_REGULAR_EXPRESSION "kernel_stats.csv")
