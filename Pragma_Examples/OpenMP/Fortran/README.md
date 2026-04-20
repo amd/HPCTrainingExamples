@@ -44,8 +44,6 @@ This module sets ```FC=amdflang``` for you, check with ```echo $FC```.
 ##### ftn compiler on aac7:
 Prepare the environment (those modules should be default, check with ```module list```):
 ```
-module load PrgEnv-cray
-module load craype-accel-amd-gfx942
 module swap rocm rocm-new/7.1.1
 module load craype-accel-amd-gfx942
 ```
