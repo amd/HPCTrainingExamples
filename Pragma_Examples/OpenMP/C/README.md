@@ -44,13 +44,31 @@ export C_COMPILER=amdclang
 Note that in CPE/25.03 the cc compiler wrapper leads to a segfault at program finalization. Therefore we decided to not reccomend to use the compiler wrappers for now on aac7 with amdclang. If you have rocm 6.3.3 or greater in that or following versions of CPE you should not encounter any issues with PrgEnv-amd and the wrappers.
 ##### Cray C compiler on aac7:
 Prepare the environment (those are default, check with ```module list```):
+##### LLVM-based amdflang (rocm-new) on aac7:
 ```
-module load PrgEnv-cray
-module load craype-x86-genoa
+module load rocm-new
+```
+This module sets ```FC=amdflang``` for you, check with ```echo $FC```.
+
+##### ftn compiler on aac7:
+Prepare the environment:
+```
+module swap rocm rocm-new/7.1.1
 module load craype-accel-amd-gfx942
-module load cce
-module load rocm
 ```
+make sure to load the right rocm version (non-default!).
+```
+module list
+```
+should show you this list of modules:
+```
+Currently Loaded Modulefiles:
+  1) craype-x86-genoa          7) cray-mpich/9.1.0
+  2) libfabric/2.2.0rc1        8) cray-libsci/26.03.0
+  3) craype-network-ofi        9) PrgEnv-cray/8.7.0
+  4) perftools-base/26.03.0   10) rocm-new/7.1.1
+  5) cce/21.0.0               11) craype-accel-amd-gfx942
+  6) craype/2.7.36```
 ```
 export C_COMPILER=cc
 ```
