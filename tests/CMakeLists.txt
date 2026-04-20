@@ -1009,7 +1009,7 @@ set_tests_properties(MPI_Ghost_Exchange_Ver6 PROPERTIES TIMEOUT 600)
 #add_test(NAME MPI_Ghost_Exchange_Ver7 COMMAND ../mpi_ghost_exchange_ver7.sh )
 #set_property(TEST MPI_Ghost_Exchange_Ver7 PROPERTY PASS_REGULAR_EXPRESSION "perfetto")
 #set_property(TEST MPI_Ghost_Exchange_Ver7 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
-#set_tests_properties(MPI_Ghost_Exchange_Ver7 PROPERTIES TIMEOUT 600)``
+#set_tests_properties(MPI_Ghost_Exchange_Ver7 PROPERTIES TIMEOUT 600)
 
 # HIP Examples
 add_test(NAME HIP_Vectoradd_Makefile COMMAND ../hip_vectoradd_makefile.sh )

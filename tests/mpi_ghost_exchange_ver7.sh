@@ -27,7 +27,6 @@ NUMCPUS=`lscpu | grep '^CPU(s):' |cut -d':' -f2 | tr -d ' '`
 NUM_GPUS=`rocminfo |grep GPU |grep "Device Type" |wc -l`
 NUM_PER_RESOURCE_MPI4=`expr 4 / ${NUM_GPUS}`
 NUM_PER_RESOURCE_MPI16=`expr 16 / ${NUM_GPUS}`
-export ROCPROFSYS_USE_PROCESS_SAMPLING=false
 rocprof-sys-instrument -o GhostExchange.inst -- ./GhostExchange
 
 # Problem sizes are reduced vs. ver1 to stay under the CTest timeout given

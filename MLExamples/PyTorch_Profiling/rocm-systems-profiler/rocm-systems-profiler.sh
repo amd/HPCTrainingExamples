@@ -40,7 +40,6 @@ export RSP_CFG=${PROFILER_TOP_DIR}/rocm-system-profiler/rocprofiler-systems_$$.c
 rocprof-sys-avail -G $RSP_CFG
 
 # Execute the python script.
-# NOTE: rocprof-sys v1.3.0 deadlocks when instrumenting PyTorch's forked
 
 # NOTE on --num-workers: on the reference rocm/therock-23.1.0 stack (rocprof-sys
 # v1.5.0) using 2 DataLoader workers completes in ~90s versus ~112s with 0
