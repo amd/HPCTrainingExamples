@@ -61,7 +61,7 @@ Currently Loaded Modulefiles:
   3) craype-network-ofi        9) PrgEnv-cray/8.7.0
   4) perftools-base/26.03.0   10) rocm-new/7.1.1
   5) cce/21.0.0               11) craype-accel-amd-gfx942
-  6) craype/2.7.36```
+  6) craype/2.7.36
 ```
 export FC=ftn
 ```
