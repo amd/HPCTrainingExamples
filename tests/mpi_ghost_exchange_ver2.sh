@@ -9,6 +9,11 @@ if [ $? -eq 1 ]; then
 fi
 module load amdclang openmpi
 
+if ! command -v rocprof-sys-instrument >/dev/null 2>&1; then
+   echo "rocprof-sys-instrument not found in PATH; Skip"
+   exit 0
+fi
+
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/MPI-examples/GhostExchange/GhostExchange_ArrayAssign
 
