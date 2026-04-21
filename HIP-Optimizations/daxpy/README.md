@@ -62,7 +62,7 @@ Question: What happens if `BLOCK_SIZE` is `1024`? Why?
 #### `daxpy_5`
 In this experiment, we will use double2 type in the kernel to see if the compiler can generate `global_load_dwordx4` instructions instead of `global_load_dwordx2` instructions. So, with same number of load and store instructions, we are able to read/write two elements from each array in each thread. This should help amortize on the cost of index calculations.
 
-To show this difference, we need to generate the assembly for these two kernels. To generate the assembly code for these kernels, ensure that the `-g --save-temps` flags are passed to `hipcc`. Then you can find the assembly code in `daxpy_*-host-x86_64-unknown-linux-gnu.s` files. Examining `daxpy_3` and `daxpy_5`, we see the two cases (edited here for clarity):
+To show this difference, we need to generate the assembly for these two kernels. To generate the assembly code for these kernels, ensure that the `-g --save-temps` flags are passed to `hipcc`. Then you can find the assembly code in `daxpy_*-hip-amdgcn-amd-amdhsa-gfx*.s` files. Examining `daxpy_3` and `daxpy_5`, we see the two cases (edited here for clarity, exact assembly may differ based on hardware and compiler version, important is to note the differences in dwordx*):
 
 `daxpy_3`:
 ```
