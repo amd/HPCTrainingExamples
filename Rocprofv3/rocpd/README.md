@@ -27,7 +27,7 @@ The following are the two case studies we use to demonstrate the `rocprofv3` + `
 
 ### `rocpd` database format for `rocprofv3` and `rocprof-sys`
 
-In the rest of this example, we focus on `rocprofv3`, but similar things apply for `rocprof-sys`. `rocprof-sys` also supports `rocpd` database output with the `ROCPROFSYS_USE_ROCPD` configuration setting. For more info check [Understanding the Systems Profiler output — ROCm Systems Profiler 1.2.1 documentation](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/how-to/understanding-rocprof-sys-output.html#generating-rocpd-output).
+In the rest of this example, we focus on `rocprofv3`, but similar things apply for `rocprof-sys`. `rocprof-sys` also supports `rocpd` database output with the `ROCPROFSYS_USE_ROCPD` configuration setting. For more info check [Understanding the Systems Profiler output — ROCm Systems Profiler documentation](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/how-to/understanding-rocprof-sys-output.html#generating-rocpd-output).
 
 ### `rocpd` dependencies
 
@@ -93,11 +93,10 @@ git clone https://github.com/amd/HPCTrainingExamples.git
 cd HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/8_jacobi/1_jacobi_usm
 ```
 
-Load the necessary modules, including `amdflang` (a.k.a. `flang-new`) compiler. Note that the module name for the `amdflang` compiler on your system might differ, check for `rocm-afar-drop`, `amd-llvm`, `amdflang-new` or something similar.
+Load the necessary modules.
 
 ```bash
 module load rocm
-module load amdflang-new
 ```
 
 For now, unset the `HSA_XNACK` environment variable:
