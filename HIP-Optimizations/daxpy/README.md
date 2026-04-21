@@ -3,6 +3,14 @@
 
 README.md from `HPCTrainingExamples/HIP-Optimizations/daxpy` from the Training Examples repository.
 
+Setup your environment such that you have rocm compilers available.
+```
+module load rocm #or rocm-new, depending on the system you are on
+```
+The exercises here were tested for systems with an AMD software stack, loading a rocm version is sufficient as hipcc is used for the compiler.
+
+Note: in CPE environment you can use CC -x hip instead of hipcc. This can be important for MPI applications that you link the correct libraries for MPI. This is not relevant for this excercise here, but something to keep in mind depending on the system you work on.
+
 ## Optimizing DAXPY HIP
 
 In this exercise, we will progressively make changes to optimize the DAXPY kernel on GPU. Any AMD GPU can be used to test this.
@@ -34,9 +42,9 @@ make
 ./daxpy_4 10000000
 ./daxpy_5 10000000
 ```
-
+Note: Depending on your allocated node configuration you may get better/more consistent performance number if you set affinity for example as ```ROCR_VISIBLE_DEVICES=0 numactl -C 0 -m 0 ./daxpy_<num>```
 ### Things to ponder about
-
+Note: comparing the code versions using ```vimdiff daxpy_<ver1>.hip daxpy_<ver2>.hip``` may help you to understand the differences in each implementation.
 #### `daxpy_1`
 This shows a naive implementation of the daxpy problem on the GPU where only 1 wavefront is launched and the 64 work-items in that wavefront loop over the entire array and process 64 elements at a time. We expect this kernel to perform very poorly because it simply utilizes a part of 1 CU, and leaves the rest of the GPU unutilized.
 
