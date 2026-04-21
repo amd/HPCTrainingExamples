@@ -1,4 +1,4 @@
-# Cython Shared Library — HPCTrainingExamples Kernels
+# Cython Shared Library - HPCTrainingExamples Kernels
 
 This example wraps **actual C computation kernels from the HPCTrainingExamples repo** into a Python-callable shared library (`.so` / `.pyd`) using Cython.
 
@@ -22,10 +22,10 @@ pip install cython numpy
 ## Build
 
 ```bash
-# Option 1 – Makefile
+# Option 1 - Makefile
 make build
 
-# Option 2 – setup.py directly
+# Option 2 - setup.py directly
 python setup.py build_ext --inplace
 ```
 

@@ -21,10 +21,8 @@ void cpu_func(double *in, double *out, int M);
 /* SAXPY: y[i] = a * x[i] + y[i] */
 void saxpy(float a, float *x, float *y, int N);
 
-/* Vector add: c[i] = a[i] + b[i] */
 void vecadd(double *a, double *b, double *c, int N);
 
-/* Sum-reduction: returns sum of x[0..n-1] */
 double reduction(double *x, int n);
 
 #endif /* HPC_KERNELS_H */
