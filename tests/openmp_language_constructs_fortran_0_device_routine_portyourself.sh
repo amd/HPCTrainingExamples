@@ -25,9 +25,11 @@ fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 SRCDIR=${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/6_device_routines/device_routine_with_interface/0_device_routine_portyourself
+
 BUILDDIR=$(mktemp -d)
 trap 'rm -rf ${BUILDDIR}' EXIT
 cp ${SRCDIR}/Makefile ${SRCDIR}/*.f90 ${BUILDDIR}/
 cd ${BUILDDIR}
+
 make
 ./device_routine

@@ -33,5 +33,3 @@ cd ${BUILD_DIR}
 
 make
 ./complex_saxpy
-
-rm -f complex_saxpy complex_saxpy.o
