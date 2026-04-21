@@ -14,28 +14,37 @@ git clone https://github.com/kokkos/kokkos Kokkos_build
 cd Kokkos_build
 ```
 
+Load a ROCm module if needed
+
+```
+module load rocm/7.2.1
+```
+
+Set CC and CXX in environment (bash shown)
+
+```
+export CC=amdclang
+export CXX=amdclang++
+```
+
 Build Kokkos with OpenMP backend
 
 ```
-mkdir build_openmp && cd build_openmp
-cmake -DCMAKE_INSTALL_PREFIX=${HOME}/Kokkos_OpenMP -DKokkos_ENABLE_SERIAL=On \
+cmake -B build_openmp -S . \
+      -DCMAKE_INSTALL_PREFIX=${HOME}/Kokkos_OpenMP -DKokkos_ENABLE_SERIAL=On \
       -DKokkos_ENABLE_OPENMP=On ..
 
-make -j 8
-make install
-
-cd ..
-```
-Build Kokkos with HIP backend
+cmake --build build_openmp --target install --parallel 8
 
 ```
-mkdir build_hip && cd build_hip
-cmake -DCMAKE_INSTALL_PREFIX=${HOME}/Kokkos_HIP -DKokkos_ENABLE_SERIAL=ON \
-      -DKokkos_ENABLE_HIP=ON -DKokkos_ARCH_ZEN=ON -DKokkos_ARCH_VEGA90A=ON \
-      -DCMAKE_CXX_COMPILER=hipcc ..
+Build Kokkos with HIP backend (change CPU and GPU arch as necessary, see https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html#cpu-architectures and https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html#amd-gpus) *Note: OpenMP and HIP support can be configured in the same build if desired.*
 
-make -j 8; make install
-cd ..
+```
+cmake -B build_hip -S . \
+      -DCMAKE_INSTALL_PREFIX=${HOME}/Kokkos_HIP -DKokkos_ENABLE_SERIAL=ON \
+      -DKokkos_ENABLE_HIP=ON -DKokkos_ARCH_ZEN=ON -DKokkos_ARCH_AMD_GFX90A=ON
+
+cmake --build build_hip --target install --parallel 8
 ```
 
 Set Kokkos_DIR to point to external Kokkos package to use
@@ -57,7 +66,7 @@ cd Orig
 Test serial version with 
 
 ```
-mkdir build && cd build; cmake ..; make; ./StreamTriad
+cmake -B build ; cmake --build build ; ./build/StreamTriad
 ```
 
 If the run fails (SEGV), try reducing the size of the arrays, by reducing the value of the nsize variable in StreamTriad.cc.
@@ -73,7 +82,7 @@ add_executables(StreamTriad ....)
 Retest with 
 
 ```
-cmake ..; make
+cmake -B build; cmake --build build
 ```
 and run ./StreamTriad again
 
@@ -109,9 +118,7 @@ Kokkos::View<double *> c( "c", nsize);
 Rebuild and run
 
 ```
-CXX=hipcc cmake ..
-make
-./StreamTriad
+cmake -B build ; cmake --build build ; ./build/StreamTriad
 ```
 
 #### Step 4: Add Kokkos execution pattern - parallel_for
@@ -135,7 +142,7 @@ Rebuild and run. Add environment variables as Kokkos message suggests:
 ```
  export OMP_PROC_BIND=spread
  export OMP_PLACES=threads
- export OMP_PROC_BIND=true
+ export OMP_NUM_THREADS=8
 ```
 
 How much speedup do you observe?
@@ -183,8 +190,8 @@ Set Kokkos_DIR to point to external Kokkos build with HIP
 
 ```
 export Kokkos_DIR=${HOME}/Kokkos_HIP/lib/cmake/Kokkos_HIP
-cmake ..
-make
+cmake -B build
+cmake --build build
 ```
 
 2. Run and measure performance with AMD Radeon GPUs
