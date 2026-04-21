@@ -8,30 +8,34 @@ In this set of examples, we explore
 * Occupancy
 
 ### Register Pressure - ROCm Blogs
+For further reading on the details of the code versions explored here see: https://rocm.blogs.amd.com/software-tools-optimization/register-pressure/README.html
+Note: Not all optimizations will work equally on all hardware and compiler versions and all types of code, but this exercise will show you different paths to reducing register pressure.
 
 For these exercises, retrieve them with 
 
 ```
 git clone https://github.com/AMD/HPCTrainingExamples
-cd HPCTrainingExamples/rocm-blogs-codes/registerpressure
+cd HPCTrainingExamples/rocm-blogs-codes/register-pressure
 ```
 
 Set up your environment
 
 ```
-module load rocm
+module load rocm #or rocm-new depending on your system
 ```
+Note: in CPE environment you can use```CC -x hip``` instead of ```hipcc```. This can be important for MPI applications that you link the correct libraries for MPI. This is not relevant for this excercise here, but something to keep in mind depending on the system you work on.
 
-The exercises were tested on an MI210 with ROCm version 6.4.1.
+The exercises were tested on an MI210 with ROCm version 6.4.1 and MI300A with rocm 7.2.0.
 
 Get the compiler resource report for the lbm.cpp kernel. Use the 
-proper gfx model code in the compile command.
+proper gfx model code in the compile command for <gfx-arch>.
 
 ```
-hipcc -c --offload-arch=gfx90a -Rpass-analysis=kernel-resource-usage lbm.cpp
+hipcc -c --offload-arch=<gfx-arch> -Rpass-analysis=kernel-resource-usage lbm.cpp
 ```
 
 Output should be something like
+MI210 example:
 
 ```
 lbm.cpp:16:1: remark:     SGPRs: 100 [-Rpass-analysis=kernel-resource-usage]
@@ -44,6 +48,21 @@ lbm.cpp:16:1: remark:     SGPRs Spill: 0 [-Rpass-analysis=kernel-resource-usage]
 lbm.cpp:16:1: remark:     VGPRs Spill: 0 [-Rpass-analysis=kernel-resource-usage]
 lbm.cpp:16:1: remark:     LDS Size [bytes/block]: 0 [-Rpass-analysis=kernel-resource-usage
 ```
+MI300A example:
+```
+lbm.cpp:16:1: remark: Function Name: _Z6kernelPdS_S_S_S_S_S_S_S_S_S_S_S_S_S_S_S_S_S_S_S_S_S_S_S_S_S_S_S_S_S_iiiiiiiddddddddddddddd [-Rpass-analysis=kernel-resource-usage]
+   16 | {
+      | ^
+lbm.cpp:16:1: remark:     TotalSGPRs: 102 [-Rpass-analysis=kernel-resource-usage]
+lbm.cpp:16:1: remark:     VGPRs: 102 [-Rpass-analysis=kernel-resource-usage]
+lbm.cpp:16:1: remark:     AGPRs: 0 [-Rpass-analysis=kernel-resource-usage]
+lbm.cpp:16:1: remark:     ScratchSize [bytes/lane]: 0 [-Rpass-analysis=kernel-resource-usage]
+lbm.cpp:16:1: remark:     Dynamic Stack: False [-Rpass-analysis=kernel-resource-usage]
+lbm.cpp:16:1: remark:     Occupancy [waves/SIMD]: 4 [-Rpass-analysis=kernel-resource-usage]
+lbm.cpp:16:1: remark:     SGPRs Spill: 0 [-Rpass-analysis=kernel-resource-usage]
+lbm.cpp:16:1: remark:     VGPRs Spill: 0 [-Rpass-analysis=kernel-resource-usage]
+lbm.cpp:16:1: remark:     LDS Size [bytes/block]: 0 [-Rpass-analysis=kernel-resource-usage]
+```
 
 Repeat for the other cases
 
@@ -55,19 +74,19 @@ This C function raises the argument to a floating point power in software. It is
 operation and also consumes a lot of registers.
 
 ```
-hipcc -c --offload-arch=gfx90a -Rpass-analysis=kernel-resource-usage lbm_1_nopow.cpp
+hipcc -c --offload-arch=<gfx-arch> -Rpass-analysis=kernel-resource-usage lbm_1_nopow.cpp
 ```
 
 #### Rearrange code so variables are declared close to use
 
 ```
-hipcc -c --offload-arch=gfx90a -Rpass-analysis=kernel-resource-usage lbm_2_rearrange.cpp
+hipcc -c --offload-arch=<gfx-arch> -Rpass-analysis=kernel-resource-usage lbm_2_rearrange.cpp
 ```
 
 #### Add restrict attribute to function arguments
 
 ```
-hipcc -c --offload-arch=gfx90a -Rpass-analysis=kernel-resource-usage lbm_3_restrict.cpp
+hipcc -c --offload-arch=<gfx-arch> -Rpass-analysis=kernel-resource-usage lbm_3_restrict.cpp
 ```
 
 Try exploring other ways of reducing the number of VGPRs.
