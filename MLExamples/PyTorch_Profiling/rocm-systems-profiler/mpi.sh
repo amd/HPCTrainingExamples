@@ -20,7 +20,7 @@ fi
 source ${PROFILER_TOP_DIR}/setup.sh
 
 pushd ${PROFILER_TOP_DIR}
-if [ ! -f data/cifar-100-python ]; then
+if [ ! -d data/cifar-100-python ]; then
    ./download-data.sh
 fi
 popd
@@ -30,7 +30,7 @@ export RSP_CFG=${PROFILER_TOP_DIR}/rocm-system-profiler/rocprofiler-systems.cfg
 rocprof-sys-avail -G $RSP_CFG
 
 # Execute the python script:
-srun --ntasks 4 \
+mpirun -n 4 \
 rocprof-sys-sample -c ${RSP_CFG} -- \
 python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 20 \
 --data-path ${PROFILER_TOP_DIR}/data
