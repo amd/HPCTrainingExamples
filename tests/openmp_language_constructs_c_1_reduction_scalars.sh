@@ -32,6 +32,6 @@ trap "rm -rf ${BUILD_DIR}" EXIT
 cp * ${BUILD_DIR}
 
 cd ${BUILD_DIR}
-`
+
 make
 ./reduction_scalar
