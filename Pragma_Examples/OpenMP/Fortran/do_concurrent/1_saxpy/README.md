@@ -1,7 +1,7 @@
 
 ## Fortran `do concurrent` on the GPU
 
-README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/do_concurrent` in the HPC Training Examples repository.
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/do_concurrent/1_saxpy` in the HPC Training Examples repository.
 
 **Note:** Fortran do concurrent enabled by flag `-fdo-concurrent-to-openmp` requires at least ROCm 7.2.
 
