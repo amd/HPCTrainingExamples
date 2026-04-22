@@ -42,7 +42,7 @@ Build Kokkos with HIP backend (change CPU and GPU arch as necessary, see https:/
 ```
 cmake -B build_hip -S . \
       -DCMAKE_INSTALL_PREFIX=${HOME}/Kokkos_HIP -DKokkos_ENABLE_SERIAL=ON \
-      -DKokkos_ENABLE_HIP=ON -DKokkos_ARCH_ZEN=ON -DKokkos_ARCH_AMD_GFX90A=ON \
+      -DKokkos_ENABLE_HIP=ON -DKokkos_ARCH_ZEN=ON -DKokkos_ARCH_AMD_GFX942_APU=ON \
       -DGPU_TARGETS="gfx942"
 
 cmake --build build_hip --target install --parallel 8
