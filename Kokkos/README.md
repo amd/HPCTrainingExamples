@@ -37,12 +37,13 @@ cmake -B build_openmp -S . \
 cmake --build build_openmp --target install --parallel 8
 
 ```
-Build Kokkos with HIP backend (change CPU and GPU arch as necessary, see https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html#cpu-architectures and https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html#amd-gpus) *Note: OpenMP and HIP support can be configured in the same build if desired.*
+Build Kokkos with HIP backend (change CPU and GPU arch as necessary, see https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html#cpu-architectures and https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html#amd-gpus) *Note: OpenMP and HIP support can be configured in the same build if desired. Note2: modern CMake will possibly auto-detect a different GPU_TARGET, to avoid problems explicitly set the `-DGPU_TARGETS` to your architecture _without_ the `:sramecc+:xnack-` properties.*
 
 ```
 cmake -B build_hip -S . \
       -DCMAKE_INSTALL_PREFIX=${HOME}/Kokkos_HIP -DKokkos_ENABLE_SERIAL=ON \
-      -DKokkos_ENABLE_HIP=ON -DKokkos_ARCH_ZEN=ON -DKokkos_ARCH_AMD_GFX90A=ON
+      -DKokkos_ENABLE_HIP=ON -DKokkos_ARCH_ZEN=ON -DKokkos_ARCH_AMD_GFX942_APU=ON \
+      -DGPU_TARGETS="gfx942"
 
 cmake --build build_hip --target install --parallel 8
 ```
