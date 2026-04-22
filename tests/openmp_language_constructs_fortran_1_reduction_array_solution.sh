@@ -31,7 +31,5 @@ trap "rm -rf ${BUILD_DIR}" EXIT
 cp ${SRC_DIR}/* ${BUILD_DIR}/
 cd ${BUILD_DIR}
 
-rm -rf ${BUILD_DIR}
-
 make
 ./reduction_array
