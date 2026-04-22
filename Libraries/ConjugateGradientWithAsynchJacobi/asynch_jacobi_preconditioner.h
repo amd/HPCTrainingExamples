@@ -1,6 +1,6 @@
 #ifndef ASYNCH_JACOBI_PRECONDITIONER_H
 #define ASYNCH_JACOBI_PRECONDITIONER_H
-
+#define SUBWF_SIZE 32 // size of sub-wavefront
 #include "preconditioner.h"
 
 int setup_asynch_jacobi_preconditioner(const CSRMatrix& A,

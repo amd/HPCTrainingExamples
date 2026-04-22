@@ -12,6 +12,9 @@ int main(int argc, char *argv[])
   int maxit = 10;
   double tol = 1e-10;
   std::string preconditioner_name = "ic";
+  int jacobi_iter = 3;
+  double jacobi_omega = 0.67;
+  int asynch_jacobi_version = 0;
 
   int* h_A_coo_rows;
   int* h_A_coo_cols;
@@ -32,6 +35,12 @@ int main(int argc, char *argv[])
       maxit = atoi(argv[++i]);
     } else if (strcmp(argv[i], "--precond") == 0 && argc > i + 1) {
       preconditioner_name = argv[++i];
+    } else if (strcmp(argv[i], "--jacobi_iter") == 0 && argc > i + 1) {
+      jacobi_iter = atoi(argv[++i]);
+    } else if (strcmp(argv[i], "--jacobi_omega") == 0 && argc > i + 1) {
+      jacobi_omega = atof(argv[++i]);
+    } else if (strcmp(argv[i], "--asynch_jacobi_version") == 0 && argc > i + 1) {
+      asynch_jacobi_version = atoi(argv[++i]);
     }
   }
 
@@ -68,9 +77,12 @@ int main(int argc, char *argv[])
     printf("Reading RHS file ... \n\n");
     read_rhs_file(rhsFileName, h_b);
   } else {
-    printf("Creating RHS ...\n\n");
+    printf("Creating RHS as b = A * ones ...\n\n");
     for (i = 0; i < nn; ++i) {
-      h_b[i] = 1.0;
+      h_b[i] = 0.0;
+      for (int j = h_A_csr_row_ptr[i]; j < h_A_csr_row_ptr[i + 1]; ++j) {
+        h_b[i] += h_A_csr_vals[j];
+      }
     }
   }
 
@@ -88,7 +100,15 @@ int main(int argc, char *argv[])
   printf("CG setup: \n");
   printf("\t Maxit:                                %d\n", maxit);
   printf("\t Tolerance:                            %2.2e\n", tol);
-  printf("\t Preconditioner:                       %s\n\n", preconditioner_name.c_str());
+  printf("\t Preconditioner:                       %s\n", preconditioner_name.c_str());
+  if (preconditioner_name == "jacobi" || preconditioner_name == "asynch_jacobi") {
+    printf("\t Jacobi iterations:                    %d\n", jacobi_iter);
+    printf("\t Jacobi omega:                         %g\n", jacobi_omega);
+  }
+  if (preconditioner_name == "asynch_jacobi") {
+    printf("\t Asynch Jacobi version:                %d\n", asynch_jacobi_version);
+  }
+  printf("\n");
 
   CSRMatrix A;
   A.n = nn;
@@ -127,6 +147,9 @@ int main(int argc, char *argv[])
   printf("Initializing %s preconditioner ...\n\n", preconditioner_name.c_str());
 
   PreconditionerData precond_data;
+  precond_data.jacobi_iter = jacobi_iter;
+  precond_data.jacobi_omega = jacobi_omega;
+  precond_data.asynch_jacobi_version = asynch_jacobi_version;
   int setup_status = setup_preconditioner(preconditioner_name, A, precond_data, handle_rocsparse);
   if (setup_status != 0) {
     printf("Preconditioner setup failed. Exiting.\n");
@@ -144,9 +167,24 @@ int main(int argc, char *argv[])
   HIP_CHECK(hipMemset(d_x, 0, nn * sizeof(double)));
   HIP_CHECK(hipMemcpy(d_b, h_b, sizeof(double) * nn, hipMemcpyHostToDevice));
 
+  hipEvent_t start, stop;
+  HIP_CHECK(hipEventCreate(&start));
+  HIP_CHECK(hipEventCreate(&stop));
+
+  HIP_CHECK(hipEventRecord(start));
+
   PCGResult result = pcg_solve(A, d_x, d_b, maxit, tol,
                                preconditioner_name, precond_data,
                                handle_rocblas, handle_rocsparse);
+
+  HIP_CHECK(hipEventRecord(stop));
+  HIP_CHECK(hipEventSynchronize(stop));
+
+  float elapsed_ms = 0.0f;
+  HIP_CHECK(hipEventElapsedTime(&elapsed_ms, start, stop));
+
+  HIP_CHECK(hipEventDestroy(start));
+  HIP_CHECK(hipEventDestroy(stop));
 
   printf("\nCG summary results \n");
   printf("\t Iters              : %d  \n", result.iterations);
@@ -158,6 +196,7 @@ int main(int argc, char *argv[])
   } else {
     printf("\t Reason for exiting : CG failed\n");
   }
+  printf("\t Time (ms)          : %.3f\n", elapsed_ms);
   printf("\n");
 
   free(h_A_coo_rows);

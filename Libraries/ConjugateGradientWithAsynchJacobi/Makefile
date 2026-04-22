@@ -1,17 +1,24 @@
-HIPCC=hipcc
-LIBS=-lrocsparse -lrocblas -lrocsolver
+HIPCC = hipcc
+CXXFLAGS = -O3 -Wall
+LIBS = -lrocsparse -lrocblas -lrocsolver
 
-OBJS = cg_driver.o matrix_utils.o preconditioner.o ic_preconditioner.o jacobi_preconditioner.o asynch_jacobi_preconditioner.o pcg.o
-all: run_cg 
+HEADERS = hip_utils.h matrix_utils.h preconditioner.h ic_preconditioner.h \
+          jacobi_preconditioner.h asynch_jacobi_preconditioner.h pcg.h
 
-%.o: %.cpp
-	$(HIPCC) -c -o $@ $< $(CFLAGS)
+OBJS = cg_driver.o matrix_utils.o preconditioner.o ic_preconditioner.o \
+       jacobi_preconditioner.o asynch_jacobi_preconditioner.o pcg.o
 
-run_cg: $(OBJS)
-	$(HIPCC) -o $@ $^ $(LIBS)
+TARGET = run_cg
 
+all: $(TARGET)
+
+%.o: %.cpp $(HEADERS)
+	$(HIPCC) $(CXXFLAGS) -c -o $@ $<
+
+$(TARGET): $(OBJS)
+	$(HIPCC) $(CXXFLAGS) -o $@ $^ $(LIBS)
 
 .PHONY: clean
 
 clean:
-	rm -rf *.o run_cg
+	rm -f *.o $(TARGET)

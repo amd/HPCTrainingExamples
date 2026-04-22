@@ -19,6 +19,7 @@ struct PreconditionerData {
   
   rocsparse_handle handle_rocsparse;
   
+  // IC preconditioner data
   double* d_M_vals;
   rocsparse_mat_descr descrM;
   rocsparse_mat_descr descrL;
@@ -32,6 +33,16 @@ struct PreconditionerData {
   int nnz;
   int* d_row_ptr;
   int* d_col_idx;
+
+  // Jacobi preconditioner data
+  double* d_D;              // inverted diagonal: D[i] = 1.0 / A[i,i]
+  const CSRMatrix* A_ptr;   // pointer to the matrix
+  int jacobi_iter;          // number of Jacobi iterations (must be >= 1)
+  double jacobi_omega;      // relaxation parameter (0 < omega <= 1)
+  rocblas_handle handle_rocblas;
+
+  // Asynch Jacobi specific
+  int asynch_jacobi_version;  // version of asynch jacobi kernel (default 0)
 };
 
 int setup_preconditioner(const std::string& name,

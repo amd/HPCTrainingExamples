@@ -2,6 +2,7 @@
 #include <rocsparse/rocsparse.h>
 #include <rocblas/rocblas.h>
 #include <rocsolver/rocsolver.h>
+#include <iostream>
 
 #define HIP_CHECK(command)                                    \
 {                                                             \
