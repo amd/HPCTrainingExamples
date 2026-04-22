@@ -1059,6 +1059,7 @@ set_property(TEST HIP_Jacobi_CMakeLists PROPERTY SKIP_REGULAR_EXPRESSION "module
 add_test(NAME HIP_Babel_Stream COMMAND ../run_BabelStream.sh )
 set_property(TEST HIP_Babel_Stream PROPERTY PASS_REGULAR_EXPRESSION "Function")
 set_property(TEST HIP_Babel_Stream PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HIP_Babel_Stream PROPERTY RESOURCE_LOCK gpu_memory)
 
 # HIPIFY Examples
 add_test(NAME Hipify_Nbody COMMAND ../hipify_nbody.sh )

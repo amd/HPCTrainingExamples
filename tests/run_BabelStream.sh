@@ -27,10 +27,8 @@ else
    fi
 fi
 
-SRC_DIR=$(pwd)
 BUILD_DIR=$(mktemp -d)
 trap "rm -rf ${BUILD_DIR}" EXIT
-cp * ${BUILD_DIR}
 
 cd ${BUILD_DIR}
 
@@ -45,11 +43,20 @@ cd BabelStream
 
 ROCM_GPU=`rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//' | tr -d '[:blank:]'`
 
+# MI300A is an APU with unified host/device memory: DEFAULT mode double-counts
+# the allocation (host+device). Use PAGEFAULT (host-only pointers, accessed
+# from the GPU via page-fault/XNACK) to halve the footprint and avoid OOM
+# when other GPU tests run concurrently.
+MEM_FLAG=""
+if rocminfo 2>/dev/null | grep -q "MI300A"; then
+   MEM_FLAG="-DMEM=PAGEFAULT"
+fi
+
 #hipcc -DTBSIZE=${TBSIZE} -DDOT_READ_DWORDS_PER_LANE=4 \
 #   --offload-arch=${ROCM_GPU} -std=c++17 -O3 -DHIP \
 #   src/main.cpp src/hip/HIPStream.cpp -o hip-stream -I src/hip -I src
 
-cmake -Bbuild -H. -DMODEL=hip \
+cmake -Bbuild -H. -DMODEL=hip ${MEM_FLAG} \
       -DCXX_EXTRA_FLAGS="-D__HIP_PLATFORM_AMD__ --offload-arch=${ROCM_GPU} -DTBSIZE=${TBSIZE} -DDOT_READ_DWORDS_PER_LANE=4" \
       -DCMAKE_CXX_COMPILER=${ROCM_PATH}/bin/hipcc
 cmake --build build
