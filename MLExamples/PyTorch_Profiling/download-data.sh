@@ -17,5 +17,7 @@ if [[ -z "${MASTER_PORT}" ]]; then
     export MASTER_PORT=1234
 fi
 
-# Run the workload only downloading the data:
-python3 train_cifar_100.py --download-only
+# Run the workload only downloading the data.
+# Force single-process init so SLURM_NPROCS from an enclosing allocation
+# doesn't make this lone python think it is rank 0 of a 4-rank world.
+NPROCS=1 python3 train_cifar_100.py --download-only

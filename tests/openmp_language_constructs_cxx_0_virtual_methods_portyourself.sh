@@ -25,7 +25,13 @@ fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/Pragma_Examples/OpenMP/CXX/6_device_routines/3_virtual_methods/0_virtual_methods_portyourself
+
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp * ${BUILD_DIR}
+
+cd ${BUILD_DIR}
+
 make
 ./bigscience
-
-make clean
