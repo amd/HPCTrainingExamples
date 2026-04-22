@@ -103,8 +103,8 @@ You will see kernel launch traces from the OpenMP offload runtime, proving that 
 `do concurrent` loops were lowered to OpenMP target regions by the compiler:
 
 ```
-DEVID:  0 SGN:2 ConstWGSize:256  args: 7 teamsXthrds:( 912X 256) ... n:__omp_offloading_...__QQmain_l48
-DEVID:  0 SGN:2 ConstWGSize:256  args: 8 teamsXthrds:( 912X 256) ... n:__omp_offloading_...__QMsaxpymodPsaxpy_l22
+DEVID:  0 SGN:2 ConstWGSize:256  args: 7 teamsXthrds:( 152X 256) reqd:(   0X   0) lds_usage:0B scratch:0B sgpr_count:34 vgpr_count:20 agpr_count:0 sgpr_spill_count:0 vgpr_spill_count:0 tripcount:10000000 rpc:0 md:0 md_LB:-1 md_UB:-1 Max Occupancy: 8 Achieved Occupancy: 50% n:__omp_offloading_34_5e243c__QQmain_l48
+DEVID:  0 SGN:2 ConstWGSize:256  args: 8 teamsXthrds:( 152X 256) reqd:(   0X   0) lds_usage:2048B scratch:0B sgpr_count:45 vgpr_count:19 agpr_count:0 sgpr_spill_count:0 vgpr_spill_count:0 tripcount:10000000 rpc:0 md:0 md_LB:-1 md_UB:-1 Max Occupancy: 8 Achieved Occupancy: 50% n:__omp_offloading_34_5e243c__QMsaxpymodPsaxpy_l22
 Time of kernel: 0.000410
  plausibility check:
 y(1) 4.000000
