@@ -220,7 +220,7 @@ Run the instrumented binary with multiple MPI ranks. Note separate output files 
 mpirun -np 2 rocprof-sys-run -- ./Jacobi_hip.inst -g 2 1
 ```
 
-Inspect output text files. Then visualize `perfetto-trace-*.proto` files in `Perfetto`. Note that one can merge multiple trace files into a single one using simple concatenation:
+Inspect output text files. Then visualize `perfetto-trace-*.proto` files in `Perfetto`. Note that one can merge multiple trace files into a single one using simple concatenation (this is done automatically with more recent ROCm):
 
 ```
 cat perfetto-trace-*.proto > merged.proto

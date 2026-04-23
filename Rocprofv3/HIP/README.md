@@ -7,7 +7,7 @@
 ### Setup environment
 ```
 module load rocm
-module load amdclang
+module load amdclang # Not needed on all systems
 module load openmpi
 ```
 
@@ -25,6 +25,8 @@ mpirun -np 2 ./Jacobi_hip -g 2 1
 ```
 
 ### Let's profile HIP
+
+Note that starting from ROCm 7.0, the default output format changed from csv to rocpd database, so if you want to obtain output in csv please add `--output-format csv` option.
 
 ```
 mpirun -np 2 rocprofv3 --hip-trace -- ./Jacobi_hip -g 2 1
@@ -129,8 +131,7 @@ _Size_X","Workgroup_Size_Y","Workgroup_Size_Z","Grid_Size_X","Grid_Size_Y","Grid
 ...
 ```
 
-
-In order to have information for each Kernel call, remove the `--stats`
+In order to have information for each Kernel call, remove the `--stats`.
 
 ### Create pftrace file for Perfetto and Visualize
 
@@ -140,7 +141,7 @@ In order to have information for each Kernel call, remove the `--stats`
  
  * Merge the pftraces, if you want: `cat *_results.pftrace > jacobi.pftrace`
  * Download the trace on your laptop and load the file on Perfetto.
- `scp -P 7002 aac6.amd.com:<path_to_file>/jacobi.pftrace jacobi.pftrace`
+ `scp aac6.amd.com:<path_to_file>/jacobi.pftrace jacobi.pftrace`
 
 1. Open a browser and go to [https://ui.perfetto.dev/](https://ui.perfetto.dev/).
 2. Click on `Open trace file` in the top left corner.
@@ -180,9 +181,3 @@ Now the data are in two different folders, one for each MPI process, pmc_1 and p
 Explore the content of the pmc_* directories. 
 
 Try to use the `--hsa-trace` option also.
-
-
-### Tips
-
-Do not forget for OMP Offloading information to declare the `--kernel-trace`
-

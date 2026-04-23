@@ -163,7 +163,7 @@ main(int argc, char *argv[]){
    }
 
    matrixd A = pseudo_random_matrix(arg_list.m, arg_list.n, 0);
-   matrixd B = pseudo_random_matrix(arg_list.m, arg_list.n, 1);
+   matrixd B = pseudo_random_matrix(arg_list.n, arg_list.k, 1);
 
    std::vector<std::future<dgemm_results>> tasks;
    for (auto it=arg_list.device_ids.begin(); it!=arg_list.device_ids.end(); ++it){

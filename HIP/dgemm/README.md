@@ -14,8 +14,8 @@ The simpler interface makes it easier to be used in training modules as opposed 
 
 ## Requirements
 
-- cmake > 2.8
-- ROCm > 3.9
+- cmake >= 3.16
+- ROCm >= 6.0
 
 ## Build
 Follow the instructions below to configure and build the `dgemm` binary using the commands:

@@ -33,5 +33,3 @@ cd ${BUILD_DIR}
 
 make
 ./reduction_array
-
-make clean

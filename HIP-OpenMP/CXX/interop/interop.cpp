@@ -63,7 +63,7 @@ int main( int argc, char* argv[] )
     }
 
     omp_interop_t iobj = omp_interop_none;
-    #pragma omp interop init(targetsync: iobj)
+    #pragma omp interop init(target: iobj)
     hipStream_t stream;
     if (iobj != omp_interop_none) {
         stream = (hipStream_t) omp_get_interop_ptr(iobj, omp_ipr_targetsync, NULL);

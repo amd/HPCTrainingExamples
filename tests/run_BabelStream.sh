@@ -27,15 +27,28 @@ else
    fi
 fi
 
-SRC_DIR=$(pwd)
 BUILD_DIR=$(mktemp -d)
 trap "rm -rf ${BUILD_DIR}" EXIT
-cp * ${BUILD_DIR}
 
 cd ${BUILD_DIR}
 
 git clone --branch v5.0 https://github.com/UoB-HPC/BabelStream.git
 cd BabelStream
+
+# Patch BabelStream v5.0 HIP destructor: when MEM=PAGEFAULT the d_a/d_b/d_c
+# arrays are malloc()'d but the destructor unconditionally calls hipFree() on
+# them, which returns hipErrorInvalidValue and makes the process exit 1
+# (prints "Error: invalid argument" after the benchmark results).  Guard the
+# hipFree block so PAGEFAULT uses plain free().  Harmless for MEM=DEFAULT.
+sed -i '/^HIPStream<T>::~HIPStream()$/,/^}$/{
+  s|^  hipFree(d_a);$|#if defined(PAGEFAULT)\
+  free(d_a); free(d_b); free(d_c);\
+#else\
+  hipFree(d_a);|
+  /^}$/i\
+#endif
+}' src/hip/HIPStream.cpp
+
 # -DDEFAULT -- good performance
 # -DMANAGED -- poor performance
 # -DPAGEFAULT -- good performance
@@ -45,12 +58,26 @@ cd BabelStream
 
 ROCM_GPU=`rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//' | tr -d '[:blank:]'`
 
+# MI300A is an APU with unified host/device memory: DEFAULT mode double-counts
+# the allocation (host+device ~= 12.8 GB at this problem size).  Use PAGEFAULT
+# (host-only pointers, accessed from the GPU via XNACK/page-fault) to halve
+# the footprint and avoid OOM when other GPU tests run concurrently.  Leave
+# DEFAULT on discrete GPUs (e.g. MI300X) so we still measure device bandwidth.
+MEM_FLAG=""
+OFFLOAD_ARCH="${ROCM_GPU}"
+export HSA_XNACK=0
+if rocminfo 2>/dev/null | grep -q "MI300A"; then
+   MEM_FLAG="-DMEM=PAGEFAULT"
+   OFFLOAD_ARCH="${ROCM_GPU}:xnack+"
+   export HSA_XNACK=1
+fi
+
 #hipcc -DTBSIZE=${TBSIZE} -DDOT_READ_DWORDS_PER_LANE=4 \
 #   --offload-arch=${ROCM_GPU} -std=c++17 -O3 -DHIP \
 #   src/main.cpp src/hip/HIPStream.cpp -o hip-stream -I src/hip -I src
 
-cmake -Bbuild -H. -DMODEL=hip \
-      -DCXX_EXTRA_FLAGS="-D__HIP_PLATFORM_AMD__ --offload-arch=${ROCM_GPU} -DTBSIZE=${TBSIZE} -DDOT_READ_DWORDS_PER_LANE=4" \
++cmake -Bbuild -H. -DMODEL=hip ${MEM_FLAG} \
++      -DCXX_EXTRA_FLAGS="-D__HIP_PLATFORM_AMD__ --offload-arch=${OFFLOAD_ARCH} -DTBSIZE=${TBSIZE} -DDOT_READ_DWORDS_PER_LANE=4" \
       -DCMAKE_CXX_COMPILER=${ROCM_PATH}/bin/hipcc
 cmake --build build
 
