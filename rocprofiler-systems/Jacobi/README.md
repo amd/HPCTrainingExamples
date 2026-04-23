@@ -68,7 +68,7 @@ rocprof-sys-avail -G ~/.rocprofsys.cfg
 export ROCPROFSYS_CONFIG_FILE=~/.rocprofsys.cfg
 ```
 
-Second, inspect configuration file, possibly changing some variables. For example, one can modify the following lines:
+Second, inspect configuration file, possibly changing some variables. For example, one can modify the following lines (note that options depend on the `rocprof-sys` version, e.g., ROCPROFSYS_USE_ROCTX was replaced in more recent versions):
 
 ```
 ROCPROFSYS_PROFILE                                  = true
