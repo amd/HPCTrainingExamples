@@ -34,8 +34,7 @@ There are three folders:
 cd 0_port_yourself
 ```
 
-This is a plain serial saxpy. The task is to replace the `do` loops with `do concurrent` loops, you may also want to replace the initialization with such loops.
-and compile with the appropriate `-fdo-concurrent-to-openmp=` flag.
+This is a plain serial saxpy. The task is to replace the `do` loops with `do concurrent` loops. You may also want to replace the initialization with such loops and compile with the appropriate `-fdo-concurrent-to-openmp=` flag.
 
 Build and run the serial version (only `-fopenmp` is needed for `omp_get_wtime`):
 
@@ -63,7 +62,7 @@ Build and run:
 make
 ./saxpy
 ```
-It is recommended to set `OMP_NUM_THREADS=24` (or other number, 24 makes sense for 1 MI300A) is needed to run in parallel. For best performance affinity should be set (system dependent) for example `OMP_PROC_BIND=close numactl -C 0-23 -m 0 ./saxpy`.
+It is recommended to set `OMP_NUM_THREADS=24` (or another number; 24 makes sense for 1 MI300A) to run in parallel. For best performance, affinity should be set (system dependent), for example `OMP_PROC_BIND=close numactl -C 0-23 -m 0 ./saxpy`.
 
 
 
@@ -115,7 +114,8 @@ The kernel names contain `__omp_offloading`, confirming the compiler transformat
 Two kernels are launched: one for the initialization `do concurrent` loop (`_QQmain_l48`)
 and one for the saxpy computation `do concurrent` loop (`_QMsaxpymodPsaxpy_l22`).
 
-Note: For best performance setting affinity is important (and system dependent!) for example  ROCR_VISIBLE_DEVICES=0 OMP_PROC_BIND=close numactl -C 0 -m 0 ./saxpy
+Note: For best performance, setting affinity is important (and system dependent!), for example: `ROCR_VISIBLE_DEVICES=0 OMP_PROC_BIND=close numactl -C 0 -m 0 ./saxpy`
+
 ### Running with `HSA_XNACK=0` and `HSA_XNACK=1`
 
 `HSA_XNACK` controls whether the GPU uses page migration (unified shared memory) or
@@ -147,7 +147,7 @@ LIBOMPTARGET_KERNEL_TRACE=1 ./saxpy
 
 On MI300A you should see both runs succeed. Compare the kernel times — with `HSA_XNACK=1`
 the runtime only needs to map pointers rather than copy entire arrays, which can result in
-faster execution after the first touch of the data. For the  `HSA_XNACK=0` case you will see that data migration relies on the default implict mapping in OpenMP.
+faster execution after the first touch of the data. For the `HSA_XNACK=0` case you will see that data migration relies on the default implicit mapping in OpenMP.
 
 This makes `do concurrent` a portable, pragma-free way to express parallelism in
 standard Fortran while still leveraging GPU hardware through the OpenMP offload infrastructure.
