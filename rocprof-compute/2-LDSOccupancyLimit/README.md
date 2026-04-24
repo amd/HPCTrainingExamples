@@ -4,6 +4,8 @@
 Simple kernel implementing a version of yAx, to demonstrate the downside of allocating a large 
 amount of LDS, and the benefit of using a smaller amount of LDS due to occupancy limits.
 
+Note that depending on the Rocprof-compute version, some commands or blocks may have slightly changed (e.g., in ROCm 7.2 Wavefront Occupancy is in block 2.1.16 and not 2.1.15).
+
 <details>
 <summary><h3>Background: Acronyms and terms used in this exercise</h3></summary>
      <ul>
