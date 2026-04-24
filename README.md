@@ -2,8 +2,6 @@
 
 Welcome to AMD's HPC Training Examples Repo!
 
-(Last revision of this README: **April 2nd, 2025**).
-
 (Last review of this README: **April 19, 2026**).
 
 Here you will find a variety of examples to showcase the capabilities of AMD's GPU software stack.
