@@ -20,4 +20,4 @@ fi
 HPCVIEWER_CONFIG=$(mktemp -d)
 trap "rm -rf ${HPCVIEWER_CONFIG}" EXIT
 
-xvfb-run hpcviewer -configuration "${HPCVIEWER_CONFIG}" --version
+xvfb-run -a hpcviewer -configuration "${HPCVIEWER_CONFIG}" --version
