@@ -26,10 +26,17 @@ fi
 export HSA_XNACK=1
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-pushd ${REPO_DIR}/HIPStdPar/CXX/MixAndMatch/hip_stdpar
+SRC_DIR=${REPO_DIR}/HIPStdPar/CXX/MixAndMatch/hip_stdpar
+
+# Build/run in a per-invocation scratch dir so concurrent invocations
+# (e.g. parallel cdash array tasks on the same node) do not race in the
+# shared in-tree build of ${SRC_DIR}.
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp ${SRC_DIR}/Makefile ${SRC_DIR}/hip_stdpar_timer.cpp ${BUILD_DIR}/
+pushd ${BUILD_DIR}
 
 make
 ./final_timed
-make clean
 
 popd

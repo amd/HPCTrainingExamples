@@ -27,13 +27,15 @@ else
 fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/HIPStdPar/CXX/ShallowWater_Orig
+SRC_DIR=${REPO_DIR}/HIPStdPar/CXX/ShallowWater_Orig
 
-rm -rf build
-mkdir build && cd build
-cmake ..
+# Build/run in a per-invocation scratch dir so concurrent invocations
+# (e.g. parallel cdash array tasks on the same node) do not race on the
+# shared <src>/build path.
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cd ${BUILD_DIR}
+
+cmake ${SRC_DIR}
 make
 ./ShallowWater
-
-cd ..
-rm -rf build

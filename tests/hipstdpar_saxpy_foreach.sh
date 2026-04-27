@@ -29,10 +29,16 @@ fi
 export HSA_XNACK=1
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/HIPStdPar/CXX/saxpy_foreach
+SRC_DIR=${REPO_DIR}/HIPStdPar/CXX/saxpy_foreach
+
+# Build/run in a per-invocation scratch dir so concurrent invocations
+# (e.g. parallel cdash array tasks on the same node) do not race in the
+# shared in-tree build of ${SRC_DIR}.
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp ${SRC_DIR}/Makefile ${SRC_DIR}/saxpy.cpp ${BUILD_DIR}/
+cd ${BUILD_DIR}
 
 make
 export AMD_LOG_LEVEL=3
 ./saxpy
-
-make clean
