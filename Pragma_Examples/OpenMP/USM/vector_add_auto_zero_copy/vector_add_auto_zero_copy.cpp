@@ -8,15 +8,18 @@
  * Author: Carlo Bertolli
  * */
 #include <cstdio>
+#include <memory>
 
 int main()
 {
   const size_t n = 1024*100;
 
-  double *a = new double[n];
-  double *b = new double[n];
-  double *c = new double[n];
-
+  std::unique_ptr<double[]> a_unique_ptr(new double[n]);
+  std::unique_ptr<double[]> b_unique_ptr(new double[n]);
+  std::unique_ptr<double[]> c_unique_ptr(new double[n]);
+  double *a = a_unique_ptr.get();
+  double *b = b_unique_ptr.get();
+  double *c = c_unique_ptr.get();
   // initialize
   for(size_t i = 0; i < n; i++) {
     b[i] = (double)i;
