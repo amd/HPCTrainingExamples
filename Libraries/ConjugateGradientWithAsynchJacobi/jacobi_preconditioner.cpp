@@ -1,6 +1,44 @@
 #include "jacobi_preconditioner.h"
 #include <cstdio>
 
+// Kernel 1: Compute r = b - A*x using CSR format
+__global__ void spmv_residual_kernel(int n,
+                                     const int* __restrict__ row_ptr,
+                                     const int* __restrict__ col_idx,
+                                     const double* __restrict__ vals,
+                                     const double* __restrict__ x,
+                                     const double* __restrict__ b,
+                                     double* __restrict__ r)
+{
+  int row = blockIdx.x * blockDim.x + threadIdx.x;
+  
+  if (row < n) {
+    double sum = 0.0;
+    int row_start = row_ptr[row];
+    int row_end = row_ptr[row + 1];
+    
+    for (int j = row_start; j < row_end; ++j) {
+      sum += vals[j] * x[col_idx[j]];
+    }
+    
+    r[row] = b[row] - sum;
+  }
+}
+
+// Kernel 2: Compute x = x + omega * D^{-1} * r
+__global__ void jacobi_update_kernel(int n,
+                                     double omega,
+                                     const double* __restrict__ D_inv,
+                                     const double* __restrict__ r,
+                                     double* __restrict__ x)
+{
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  
+  if (i < n) {
+    x[i] += omega * D_inv[i] * r[i];
+  }
+}
+
 __global__ void extract_inverted_diagonal_kernel(int n,
                                                   const int* row_ptr,
                                                   const int* col_idx,
@@ -94,6 +132,7 @@ int apply_jacobi_preconditioner(double* d_x,
 {
   int n = precond_data.n;
   double* d_r = precond_data.d_aux;
+  double omega = precond_data.jacobi_omega;
 
   int block_size = 256;
   int num_blocks = (n + block_size - 1) / block_size;
@@ -114,9 +153,10 @@ int apply_jacobi_preconditioner(double* d_x,
   rocsparse_error spmv_error;
 
   for (int iter = 0; iter < precond_data.jacobi_iter; ++iter) {
-    // r = b - A*x
+    // r = b (copy)
     HIP_CHECK(hipMemcpy(d_r, d_b, sizeof(double) * n, hipMemcpyDeviceToDevice));
 
+    // r = -A*x + r = b - A*x
     ROCSPARSE_CHECK(rocsparse_v2_spmv(precond_data.handle_rocsparse,
                                       A.spmv_descr,
                                       precond_data.d_minusone,
@@ -128,26 +168,21 @@ int apply_jacobi_preconditioner(double* d_x,
                                       A.spmv_buffer_size,
                                       A.spmv_buffer,
                                       &spmv_error));
-
-    // r = D * r (element-wise)
-    elementwise_multiply_kernel<<<num_blocks, block_size>>>(n, precond_data.d_D, d_r);
     HIP_CHECK(hipDeviceSynchronize());
 
-    // x = x + omega * r (d_zero stores omega)
-    ROCBLAS_CHECK(rocblas_daxpy(precond_data.handle_rocblas,
-                                n,
-                                precond_data.d_zero,
-                                d_r,
-                                1,
-                                d_x,
-                                1));
+    // Kernel 2: x = x + omega * D^{-1} * r
+    jacobi_update_kernel<<<num_blocks, block_size>>>(
+      n,
+      omega,
+      precond_data.d_D,
+      d_r,
+      d_x
+    );
     HIP_CHECK(hipDeviceSynchronize());
   }
 
   ROCSPARSE_CHECK(rocsparse_destroy_dnvec_descr(vec_x));
   ROCSPARSE_CHECK(rocsparse_destroy_dnvec_descr(vec_r));
-
-  HIP_CHECK(hipDeviceSynchronize());
 
   return 0;
 }
