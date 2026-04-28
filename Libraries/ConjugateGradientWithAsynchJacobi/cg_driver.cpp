@@ -15,6 +15,8 @@ int main(int argc, char *argv[])
   int jacobi_iter = 3;
   double jacobi_omega = 0.67;
   int asynch_jacobi_version = 0;
+  int gs_inner_iter = 3;
+  int gs_outer_iter = 1;
 
   int* h_A_coo_rows;
   int* h_A_coo_cols;
@@ -41,6 +43,10 @@ int main(int argc, char *argv[])
       jacobi_omega = atof(argv[++i]);
     } else if (strcmp(argv[i], "--asynch_jacobi_version") == 0 && argc > i + 1) {
       asynch_jacobi_version = atoi(argv[++i]);
+    } else if (strcmp(argv[i], "--gs_inner_iter") == 0 && argc > i + 1) {
+      gs_inner_iter = atoi(argv[++i]);
+    } else if (strcmp(argv[i], "--gs_outer_iter") == 0 && argc > i + 1) {
+      gs_outer_iter = atoi(argv[++i]);
     }
   }
 
@@ -108,9 +114,13 @@ int main(int argc, char *argv[])
   if (preconditioner_name == "asynch_jacobi") {
     printf("\t Asynch Jacobi version:                %d\n", asynch_jacobi_version);
   }
+  if (preconditioner_name == "gs_it" || preconditioner_name == "gs_it2") {
+    printf("\t GS inner iterations (k):              %d\n", gs_inner_iter);
+    printf("\t GS outer iterations (m):              %d\n", gs_outer_iter);
+  }
   printf("\n");
 
-  CSRMatrix A;
+  CSRMatrix A = {};  // Zero-initialize all members
   A.n = nn;
   A.nnz = nnnz;
 
@@ -128,28 +138,117 @@ int main(int argc, char *argv[])
   ROCBLAS_CHECK(rocblas_create_handle(&handle_rocblas));
   ROCSPARSE_CHECK(rocsparse_create_handle(&handle_rocsparse));
 
+  // Set device pointer mode for both handles
+  ROCBLAS_CHECK(rocblas_set_pointer_mode(handle_rocblas, rocblas_pointer_mode_device));
+  ROCSPARSE_CHECK(rocsparse_set_pointer_mode(handle_rocsparse, rocsparse_pointer_mode_device));
+
+  // Legacy descriptors (for IC preconditioner)
   ROCSPARSE_CHECK(rocsparse_create_mat_descr(&A.descr));
   ROCSPARSE_CHECK(rocsparse_set_mat_index_base(A.descr, rocsparse_index_base_zero));
   ROCSPARSE_CHECK(rocsparse_set_mat_type(A.descr, rocsparse_matrix_type_general));
-
   ROCSPARSE_CHECK(rocsparse_create_mat_info(&A.info));
-  ROCSPARSE_CHECK(rocsparse_dcsrmv_analysis(handle_rocsparse,
-                                            rocsparse_operation_none,
-                                            nn,
-                                            nn,
-                                            nnnz,
-                                            A.descr,
-                                            A.d_vals,
-                                            A.d_row_ptr,
-                                            A.d_col_idx,
-                                            A.info));
+
+  // Modern rocsparse_v2_spmv setup
+  ROCSPARSE_CHECK(rocsparse_create_csr_descr(&A.spmat,
+                                             nn,
+                                             nn,
+                                             nnnz,
+                                             A.d_row_ptr,
+                                             A.d_col_idx,
+                                             A.d_vals,
+                                             rocsparse_indextype_i32,
+                                             rocsparse_indextype_i32,
+                                             rocsparse_index_base_zero,
+                                             rocsparse_datatype_f64_r));
+
+  // Create spmv descriptor and set all required inputs
+  ROCSPARSE_CHECK(rocsparse_create_spmv_descr(&A.spmv_descr));
+  rocsparse_operation op = rocsparse_operation_none;
+  rocsparse_spmv_alg alg = rocsparse_spmv_alg_default;
+  rocsparse_datatype scalar_type = rocsparse_datatype_f64_r;
+  rocsparse_datatype compute_type = rocsparse_datatype_f64_r;
+  rocsparse_error set_input_error;
+  ROCSPARSE_CHECK(rocsparse_spmv_set_input(handle_rocsparse,
+                                           A.spmv_descr,
+                                           rocsparse_spmv_input_operation,
+                                           &op,
+                                           sizeof(op),
+                                           &set_input_error));
+  ROCSPARSE_CHECK(rocsparse_spmv_set_input(handle_rocsparse,
+                                           A.spmv_descr,
+                                           rocsparse_spmv_input_alg,
+                                           &alg,
+                                           sizeof(alg),
+                                           &set_input_error));
+  ROCSPARSE_CHECK(rocsparse_spmv_set_input(handle_rocsparse,
+                                           A.spmv_descr,
+                                           rocsparse_spmv_input_scalar_datatype,
+                                           &scalar_type,
+                                           sizeof(scalar_type),
+                                           &set_input_error));
+  ROCSPARSE_CHECK(rocsparse_spmv_set_input(handle_rocsparse,
+                                           A.spmv_descr,
+                                           rocsparse_spmv_input_compute_datatype,
+                                           &compute_type,
+                                           sizeof(compute_type),
+                                           &set_input_error));
+
+  // Create temporary vectors for buffer size query
+  rocsparse_dnvec_descr tmp_x, tmp_y;
+  double* d_tmp;
+  HIP_CHECK(hipMalloc(&d_tmp, sizeof(double) * nn));
+  ROCSPARSE_CHECK(rocsparse_create_dnvec_descr(&tmp_x,
+                                               nn,
+                                               d_tmp,
+                                               rocsparse_datatype_f64_r));
+  ROCSPARSE_CHECK(rocsparse_create_dnvec_descr(&tmp_y,
+                                               nn,
+                                               d_tmp,
+                                               rocsparse_datatype_f64_r));
+
+  // Get buffer size for analysis stage
+  rocsparse_error spmv_error;
+  ROCSPARSE_CHECK(rocsparse_v2_spmv_buffer_size(handle_rocsparse,
+                                                A.spmv_descr,
+                                                A.spmat,
+                                                tmp_x,
+                                                tmp_y,
+                                                rocsparse_v2_spmv_stage_analysis,
+                                                &A.spmv_buffer_size,
+                                                &spmv_error));
+
+  if (A.spmv_buffer_size == 0) {
+    A.spmv_buffer = nullptr;
+  } else {
+    HIP_CHECK(hipMalloc(&A.spmv_buffer, A.spmv_buffer_size));
+  }
+
+  // Perform analysis
+  double h_alpha = 1.0, h_beta = 0.0;
+  ROCSPARSE_CHECK(rocsparse_v2_spmv(handle_rocsparse,
+                                    A.spmv_descr,
+                                    &h_alpha,
+                                    A.spmat,
+                                    tmp_x,
+                                    &h_beta,
+                                    tmp_y,
+                                    rocsparse_v2_spmv_stage_analysis,
+                                    A.spmv_buffer_size,
+                                    A.spmv_buffer,
+                                    &spmv_error));
+
+  ROCSPARSE_CHECK(rocsparse_destroy_dnvec_descr(tmp_x));
+  ROCSPARSE_CHECK(rocsparse_destroy_dnvec_descr(tmp_y));
+  HIP_CHECK(hipFree(d_tmp));
 
   printf("Initializing %s preconditioner ...\n\n", preconditioner_name.c_str());
 
-  PreconditionerData precond_data;
+  PreconditionerData precond_data = {};  // Zero-initialize all POD members
   precond_data.jacobi_iter = jacobi_iter;
   precond_data.jacobi_omega = jacobi_omega;
   precond_data.asynch_jacobi_version = asynch_jacobi_version;
+  precond_data.gs_inner_iter = gs_inner_iter;
+  precond_data.gs_outer_iter = gs_outer_iter;
   int setup_status = setup_preconditioner(preconditioner_name, A, precond_data, handle_rocsparse);
   if (setup_status != 0) {
     printf("Preconditioner setup failed. Exiting.\n");
@@ -210,6 +309,9 @@ int main(int argc, char *argv[])
 
   ROCSPARSE_CHECK(rocsparse_destroy_mat_descr(A.descr));
   ROCSPARSE_CHECK(rocsparse_destroy_mat_info(A.info));
+  ROCSPARSE_CHECK(rocsparse_destroy_spmat_descr(A.spmat));
+  ROCSPARSE_CHECK(rocsparse_destroy_spmv_descr(A.spmv_descr));
+  HIP_CHECK(hipFree(A.spmv_buffer));
 
   cleanup_preconditioner(precond_data);
 

@@ -2,6 +2,7 @@
 #include "ic_preconditioner.h"
 #include "jacobi_preconditioner.h"
 #include "asynch_jacobi_preconditioner.h"
+#include "iterative_gauss_seidel.h"
 #include <cstdio>
 
 int setup_preconditioner(const std::string& name,
@@ -15,6 +16,9 @@ int setup_preconditioner(const std::string& name,
     return setup_jacobi_preconditioner(A, precond_data, handle_rocsparse);
   } else if (name == "asynch_jacobi") {
     return setup_asynch_jacobi_preconditioner(A, precond_data, handle_rocsparse);
+  } else if (name == "gs_it" || name == "gs_it2") {
+    precond_data.name = name;
+    return setup_gs_preconditioner(A, precond_data, handle_rocsparse);
   } else if (name == "none" || name == "NONE") {
     precond_data.name = "none";
     precond_data.n = A.n;
@@ -37,6 +41,10 @@ int apply_preconditioner(const std::string& name,
     return apply_jacobi_preconditioner(d_x, d_r, A, precond_data);
   } else if (name == "asynch_jacobi") {
     return apply_asynch_jacobi_preconditioner(d_x, d_r, A, precond_data);
+  } else if (name == "gs_it") {
+    return apply_gs_it_preconditioner(d_x, d_r, A, precond_data);
+  } else if (name == "gs_it2") {
+    return apply_gs_it2_preconditioner(d_x, d_r, A, precond_data);
   } else if (name == "none" || name == "NONE") {
     HIP_CHECK(hipMemcpy(d_x, d_r, sizeof(double) * precond_data.n, hipMemcpyDeviceToDevice));
     return 0;
@@ -54,5 +62,7 @@ void cleanup_preconditioner(PreconditionerData& precond_data)
     cleanup_jacobi_preconditioner(precond_data);
   } else if (precond_data.name == "asynch_jacobi") {
     cleanup_asynch_jacobi_preconditioner(precond_data);
+  } else if (precond_data.name == "gs_it" || precond_data.name == "gs_it2") {
+    cleanup_gs_preconditioner(precond_data);
   }
 }

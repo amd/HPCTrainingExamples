@@ -18,6 +18,11 @@ int setup_ic_preconditioner(const CSRMatrix& A,
 
   HIP_CHECK(hipMalloc(&precond_data.d_aux, sizeof(double) * A.n));
 
+  // Allocate device scalar for apply
+  double h_one = 1.0;
+  HIP_CHECK(hipMalloc(&precond_data.d_one, sizeof(double)));
+  HIP_CHECK(hipMemcpy(precond_data.d_one, &h_one, sizeof(double), hipMemcpyHostToDevice));
+
   ROCSPARSE_CHECK(rocsparse_create_mat_descr(&precond_data.descrM));
   ROCSPARSE_CHECK(rocsparse_set_mat_type(precond_data.descrM, rocsparse_matrix_type_general));
 
@@ -139,15 +144,13 @@ int apply_ic_preconditioner(double* d_x,
                             const CSRMatrix& A,
                             PreconditionerData& precond_data)
 {
-  const double one = 1.0;
-
   HIP_CHECK(hipMemset(d_x, 0, precond_data.n * sizeof(double)));
 
   ROCSPARSE_CHECK(rocsparse_dcsrsv_solve(precond_data.handle_rocsparse,
                                          rocsparse_operation_none,
                                          precond_data.n,
                                          precond_data.nnz,
-                                         &one,
+                                         precond_data.d_one,
                                          precond_data.descrL,
                                          precond_data.d_M_vals,
                                          precond_data.d_row_ptr,
@@ -162,7 +165,7 @@ int apply_ic_preconditioner(double* d_x,
                                          rocsparse_operation_transpose,
                                          precond_data.n,
                                          precond_data.nnz,
-                                         &one,
+                                         precond_data.d_one,
                                          precond_data.descrL,
                                          precond_data.d_M_vals,
                                          precond_data.d_row_ptr,
@@ -185,4 +188,5 @@ void cleanup_ic_preconditioner(PreconditionerData& precond_data)
   HIP_CHECK(hipFree(precond_data.buffer));
   HIP_CHECK(hipFree(precond_data.d_M_vals));
   HIP_CHECK(hipFree(precond_data.d_aux));
+  HIP_CHECK(hipFree(precond_data.d_one));
 }

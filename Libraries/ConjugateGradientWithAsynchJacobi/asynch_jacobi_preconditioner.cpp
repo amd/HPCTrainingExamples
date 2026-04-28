@@ -37,7 +37,7 @@ __global__ void apply_asynch_jacobi_preconditioner_static_kernel(int n,
       if (!tid_in_subwf) {
 	x[row] += omega * Drow * (brow - sum);
       }
-      //__threadfence();
+  //    __threadfence();
       iter++;
     }
   }
@@ -75,7 +75,7 @@ __global__ void apply_asynch_jacobi_preconditioner_dynamic_kernel(int n,
     if (!tid_in_subwf) {
       x[row] += omega * D[row] * (b[row] - sum);
     }
-    //__threadfence();
+//    __threadfence();
     row += num_subwf;
     if (row >=n) {
       row -= n;

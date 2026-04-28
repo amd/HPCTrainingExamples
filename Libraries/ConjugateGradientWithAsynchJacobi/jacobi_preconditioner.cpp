@@ -59,7 +59,17 @@ int setup_jacobi_preconditioner(const CSRMatrix& A,
   HIP_CHECK(hipMalloc(&precond_data.d_D, sizeof(double) * A.n));
   HIP_CHECK(hipMalloc(&precond_data.d_aux, sizeof(double) * A.n));
 
+  // Allocate device scalars
+  double h_one = 1.0, h_minusone = -1.0;
+  HIP_CHECK(hipMalloc(&precond_data.d_one, sizeof(double)));
+  HIP_CHECK(hipMalloc(&precond_data.d_minusone, sizeof(double)));
+  HIP_CHECK(hipMalloc(&precond_data.d_zero, sizeof(double)));  // for omega
+  HIP_CHECK(hipMemcpy(precond_data.d_one, &h_one, sizeof(double), hipMemcpyHostToDevice));
+  HIP_CHECK(hipMemcpy(precond_data.d_minusone, &h_minusone, sizeof(double), hipMemcpyHostToDevice));
+  HIP_CHECK(hipMemcpy(precond_data.d_zero, &precond_data.jacobi_omega, sizeof(double), hipMemcpyHostToDevice));
+
   ROCBLAS_CHECK(rocblas_create_handle(&precond_data.handle_rocblas));
+  ROCBLAS_CHECK(rocblas_set_pointer_mode(precond_data.handle_rocblas, rocblas_pointer_mode_device));
 
   int block_size = 256;
   int num_blocks = (A.n + block_size - 1) / block_size;
@@ -84,44 +94,58 @@ int apply_jacobi_preconditioner(double* d_x,
 {
   int n = precond_data.n;
   double* d_r = precond_data.d_aux;
-  
-  const double one = 1.0;
-  const double minusone = -1.0;
-  const double omega = precond_data.jacobi_omega;
 
   int block_size = 256;
   int num_blocks = (n + block_size - 1) / block_size;
 
+  // Create dense vector descriptors for spmv
+  rocsparse_dnvec_descr vec_x, vec_r;
+  ROCSPARSE_CHECK(rocsparse_create_dnvec_descr(&vec_x,
+                                               n,
+                                               d_x,
+                                               rocsparse_datatype_f64_r));
+  ROCSPARSE_CHECK(rocsparse_create_dnvec_descr(&vec_r,
+                                               n,
+                                               d_r,
+                                               rocsparse_datatype_f64_r));
+
   // Initialize x = 0
   HIP_CHECK(hipMemset(d_x, 0, n * sizeof(double)));
+  rocsparse_error spmv_error;
 
   for (int iter = 0; iter < precond_data.jacobi_iter; ++iter) {
     // r = b - A*x
     HIP_CHECK(hipMemcpy(d_r, d_b, sizeof(double) * n, hipMemcpyDeviceToDevice));
-    
-    ROCSPARSE_CHECK(rocsparse_dcsrmv(precond_data.handle_rocsparse,
-                                     rocsparse_operation_none,
-                                     n,
-                                     n,
-                                     precond_data.nnz,
-                                     &minusone,
-                                     A.descr,
-                                     A.d_vals,
-                                     A.d_row_ptr,
-                                     A.d_col_idx,
-                                     A.info,
-                                     d_x,
-                                     &one,
-                                     d_r));
+
+    ROCSPARSE_CHECK(rocsparse_v2_spmv(precond_data.handle_rocsparse,
+                                      A.spmv_descr,
+                                      precond_data.d_minusone,
+                                      A.spmat,
+                                      vec_x,
+                                      precond_data.d_one,
+                                      vec_r,
+                                      rocsparse_v2_spmv_stage_compute,
+                                      A.spmv_buffer_size,
+                                      A.spmv_buffer,
+                                      &spmv_error));
 
     // r = D * r (element-wise)
     elementwise_multiply_kernel<<<num_blocks, block_size>>>(n, precond_data.d_D, d_r);
     HIP_CHECK(hipDeviceSynchronize());
 
-    // x = x + omega * r
-    ROCBLAS_CHECK(rocblas_daxpy(precond_data.handle_rocblas, n, &omega, d_r, 1, d_x, 1));
+    // x = x + omega * r (d_zero stores omega)
+    ROCBLAS_CHECK(rocblas_daxpy(precond_data.handle_rocblas,
+                                n,
+                                precond_data.d_zero,
+                                d_r,
+                                1,
+                                d_x,
+                                1));
     HIP_CHECK(hipDeviceSynchronize());
   }
+
+  ROCSPARSE_CHECK(rocsparse_destroy_dnvec_descr(vec_x));
+  ROCSPARSE_CHECK(rocsparse_destroy_dnvec_descr(vec_r));
 
   HIP_CHECK(hipDeviceSynchronize());
 
@@ -132,5 +156,8 @@ void cleanup_jacobi_preconditioner(PreconditionerData& precond_data)
 {
   HIP_CHECK(hipFree(precond_data.d_D));
   HIP_CHECK(hipFree(precond_data.d_aux));
+  HIP_CHECK(hipFree(precond_data.d_one));
+  HIP_CHECK(hipFree(precond_data.d_minusone));
+  HIP_CHECK(hipFree(precond_data.d_zero));
   ROCBLAS_CHECK(rocblas_destroy_handle(precond_data.handle_rocblas));
 }

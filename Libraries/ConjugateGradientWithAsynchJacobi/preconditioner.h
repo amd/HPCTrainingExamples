@@ -10,6 +10,14 @@ struct CSRMatrix {
   double* d_vals;
   int* d_row_ptr;
   int* d_col_idx;
+  
+  // Modern rocsparse_v2_spmv API
+  rocsparse_spmat_descr spmat;
+  rocsparse_spmv_descr spmv_descr;
+  void* spmv_buffer;
+  size_t spmv_buffer_size;
+  
+  // Legacy (for IC preconditioner which still uses csrsv)
   rocsparse_mat_descr descr;
   rocsparse_mat_info info;
 };
@@ -43,6 +51,41 @@ struct PreconditionerData {
 
   // Asynch Jacobi specific
   int asynch_jacobi_version;  // version of asynch jacobi kernel (default 0)
+
+  // Gauss-Seidel preconditioner data
+  // Lower triangular L (strictly lower)
+  double* d_L_vals;
+  int* d_L_row_ptr;
+  int* d_L_col_idx;
+  int L_nnz;
+  rocsparse_spmat_descr spmatL;
+  rocsparse_spmv_descr spmv_descr_L;
+  void* spmv_buffer_L;
+  size_t spmv_buffer_size_L;
+
+  // Upper triangular U (strictly upper)
+  double* d_U_vals;
+  int* d_U_row_ptr;
+  int* d_U_col_idx;
+  int U_nnz;
+  rocsparse_spmat_descr spmatU;
+  rocsparse_spmv_descr spmv_descr_U;
+  void* spmv_buffer_U;
+  size_t spmv_buffer_size_U;
+
+  // Auxiliary vectors for GS
+  double* d_aux_vec1;
+  double* d_aux_vec2;
+  double* d_aux_vec3;
+
+  // GS iteration parameters
+  int gs_inner_iter;  // k - inner iterations
+  int gs_outer_iter;  // m - outer iterations
+
+  // Device scalars for fully async operations
+  double* d_one;
+  double* d_zero;
+  double* d_minusone;
 };
 
 int setup_preconditioner(const std::string& name,
