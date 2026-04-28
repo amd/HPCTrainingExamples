@@ -17,9 +17,9 @@ else
 fi
 module load kokkos
 
-CLONE_DIR=$(mktemp -d -p "$(pwd)" Chapter13_XXXXXX)
+CLONE_DIR=$(mktemp -d -p /tmp Chapter13_XXXXXX)
 trap "rm -rf ${CLONE_DIR}" EXIT
-git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 ${CLONE_DIR}
+git clone --depth=1 --recurse-submodules --shallow-submodules https://github.com/EssentialsOfParallelComputing/Chapter13 ${CLONE_DIR}
 pushd ${CLONE_DIR}/Kokkos/StreamTriad/Ver3
 sed -i '/cmake_minimum_required/a\
 cmake_policy(SET CMP0074 NEW)' CMakeLists.txt

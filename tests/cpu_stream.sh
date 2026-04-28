@@ -13,9 +13,9 @@ else
    module load amdclang
 fi
 
-CLONE_DIR=$(mktemp -d -p "$(pwd)" Chapter13_XXXXXX)
+CLONE_DIR=$(mktemp -d -p /tmp Chapter13_XXXXXX)
 trap "rm -rf ${CLONE_DIR}" EXIT
-git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 ${CLONE_DIR}
+git clone --depth=1 --recurse-submodules --shallow-submodules https://github.com/EssentialsOfParallelComputing/Chapter13 ${CLONE_DIR}
 pushd ${CLONE_DIR}/Kokkos/StreamTriad/Orig
 
 sed -i -e 's/80000000/100000/' StreamTriad.cc

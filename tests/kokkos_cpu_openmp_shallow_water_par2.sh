@@ -18,9 +18,9 @@ module load kokkos
 
 GFX_MODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`
 
-CLONE_DIR=$(mktemp -d -p "$(pwd)" Chapter13_XXXXXX)
+CLONE_DIR=$(mktemp -d -p /tmp Chapter13_XXXXXX)
 trap "rm -rf ${CLONE_DIR}" EXIT
-git clone --recursive https://github.com/EssentialsOfParallelComputing/Chapter13 ${CLONE_DIR}
+git clone --depth=1 --recurse-submodules --shallow-submodules https://github.com/EssentialsOfParallelComputing/Chapter13 ${CLONE_DIR}
 pushd ${CLONE_DIR}/Kokkos/ShallowWater
 
 sed -i 's/Kokkos::View<double \*\*>/Kokkos::View<double **, Kokkos::OpenMP>/g' ShallowWater_par2.cc
