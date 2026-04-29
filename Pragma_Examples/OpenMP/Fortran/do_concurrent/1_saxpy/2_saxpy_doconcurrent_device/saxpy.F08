@@ -12,8 +12,8 @@ subroutine saxpy(a, x, y, n)
    implicit none
    integer,intent(in) :: n
    real(kind=real32),intent(in) :: a
-   real(kind=real32), dimension(:),intent(in) :: x
-   real(kind=real32), dimension(:),intent(inout) :: y
+   real(kind=real32), allocatable, dimension(:),intent(in) :: x
+   real(kind=real32), allocatable, dimension(:),intent(inout) :: y
    integer :: i, j
    real(kind=real64) :: start, finish
 
