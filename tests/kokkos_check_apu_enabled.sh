@@ -11,7 +11,7 @@ fi
 GPU_IS_MI300A=$(rocminfo 2>/dev/null | grep -q MI300A && echo 1 || echo 0)
 
 if [ "$GPU_IS_MI300A" != "1" ]; then
-	echo"Skip"
+	echo "Skip"
 	exit 1
 fi	
 module load amdclang
@@ -36,9 +36,13 @@ else
 fi
 
 SCRIPT_DIR=$REPO_DIR/Kokkos/kokkos_check_apu_enabled
-BUILD_DIR=${SCRIPT_DIR}/kokkos_check_apu_enabled_build
-rm -rf $BUILD_DIR
-mkdir -p $BUILD_DIR
+
+# Build/run in a per-invocation /tmp scratch dir to avoid NFS metadata
+# contention on the shared source tree when concurrent regression tests
+# race against each other (CMake 3.31 try_compile scratch files would
+# otherwise vanish mid-configure and break FindOpenMP).
+BUILD_DIR=$(mktemp -d -p /tmp kokkos_check_apu_enabled_XXXXXX)
+trap "rm -rf ${BUILD_DIR}" EXIT
 
 cmake -S "${SCRIPT_DIR}" -B "${BUILD_DIR}" \
   -DKokkos_ROOT="${Kokkos_ROOT}"
@@ -51,5 +55,3 @@ else
   echo ""
   echo "ERROR: no executable produced" 
 fi
-
-rm -rf ${BUILD_DIR}
