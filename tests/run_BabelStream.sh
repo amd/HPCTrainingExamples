@@ -76,8 +76,8 @@ fi
 #   --offload-arch=${ROCM_GPU} -std=c++17 -O3 -DHIP \
 #   src/main.cpp src/hip/HIPStream.cpp -o hip-stream -I src/hip -I src
 
-+cmake -Bbuild -H. -DMODEL=hip ${MEM_FLAG} \
-+      -DCXX_EXTRA_FLAGS="-D__HIP_PLATFORM_AMD__ --offload-arch=${OFFLOAD_ARCH} -DTBSIZE=${TBSIZE} -DDOT_READ_DWORDS_PER_LANE=4" \
+cmake -Bbuild -H. -DMODEL=hip ${MEM_FLAG} \
+      -DCXX_EXTRA_FLAGS="-D__HIP_PLATFORM_AMD__ --offload-arch=${OFFLOAD_ARCH} -DTBSIZE=${TBSIZE} -DDOT_READ_DWORDS_PER_LANE=4" \
       -DCMAKE_CXX_COMPILER=${ROCM_PATH}/bin/hipcc
 cmake --build build
 
