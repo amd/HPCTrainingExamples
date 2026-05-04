@@ -13,7 +13,7 @@ module load rocm
 Next, install the third-party `AMDGPU.jl package` and verify your GPU is detected:
 
 ```bash
-julia -e 'using Pkg; Pkg.add("AMDGPU")
+julia -e 'using Pkg; Pkg.add("AMDGPU")'
 julia -e 'using AMDGPU; AMDGPU.versioninfo()'
 ```
 
