@@ -34,17 +34,12 @@ what makes the asynchronous behavior of `nowait` visible in
 wall-clock time. A long serial `sin()` loop on the CPU is obviously
 not how you would write a real host code.
 
-The companion regression test (`tests/openmp_fortran_nowait.sh`) is
-sized even more aggressively: each GPU thread does an inner serial
-chain of many `sin()/cos()` ops. That makes the GPU kernel slow
-enough that the host return time can be compared to it cleanly. It
-is **NOT** a model of how to write performant GPU code -- the inner
-serial chain deliberately under-uses the available parallelism so
-that the *timing* property we want to test (host returns
-immediately) is observable.
+A companion regression test (`tests/openmp_fortran_nowait.sh`) builds
+and runs this same source. It checks the correctness output
+(`c(i) = 1.0` everywhere) but does not measure timing.
 
-In short: this example and its regression test are about the
-synchronization semantics of `nowait`, not about throughput. 
+In short: this example is about the synchronization semantics of
+`nowait`, not about throughput.
 
 ## Reference
 

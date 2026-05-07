@@ -369,7 +369,7 @@ set_property(TEST OpenMP_C_5_Vecadd_Async_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPR
 set_property(TEST OpenMP_C_5_Vecadd_Async_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_C_Nowait COMMAND ../openmp_c_nowait.sh )
-set_property(TEST OpenMP_C_Nowait PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
+set_property(TEST OpenMP_C_Nowait PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 set_property(TEST OpenMP_C_Nowait PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # OpenMP Fortran tests
@@ -494,7 +494,7 @@ set_property(TEST OpenMP_Fortran_Atomic_USM PROPERTY PASS_REGULAR_EXPRESSION "PA
 set_property(TEST OpenMP_Fortran_Atomic_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Fortran_Nowait COMMAND ../openmp_fortran_nowait.sh )
-set_property(TEST OpenMP_Fortran_Nowait PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
+set_property(TEST OpenMP_Fortran_Nowait PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 set_property(TEST OpenMP_Fortran_Nowait PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Fortran_3_Reduction_WrongMapping
