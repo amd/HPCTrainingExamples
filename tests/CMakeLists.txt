@@ -1454,6 +1454,10 @@ set_property(TEST TensorFlow_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Test accura
 set_property(TEST TensorFlow_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'tensorflow'")
 
 # FTorch tests
+add_test(NAME FTorch_MultiGPU_Test_AMDFlang COMMAND ../ftorch_multigpu_test_amdflang.sh )
+set_property(TEST FTorch_MultiGPU_Test_AMDFlang PROPERTY PASS_REGULAR_EXPRESSION "MultiGPU example ran successfully")
+set_property(TEST FTorch_MultiGPU_Test_AMDFlang PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'ftorch'")
+
 add_test(NAME FTorch_MultiGPU_Test COMMAND ../ftorch_multigpu_test.sh )
 set_property(TEST FTorch_MultiGPU_Test PROPERTY PASS_REGULAR_EXPRESSION "MultiGPU example ran successfully")
 set_property(TEST FTorch_MultiGPU_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'ftorch'")
