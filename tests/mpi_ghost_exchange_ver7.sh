@@ -40,7 +40,7 @@ rocprof-sys-instrument -o GhostExchange.inst -- ./GhostExchange
 mpirun -n 4 --bind-to core --map-by ppr:${NUM_PER_RESOURCE_MPI4}:numa  --report-bindings \
        rocprof-sys-run -- ./GhostExchange.inst \
        -x 2  -y 2  -i 200 -j 200 -h 2 -t -c -I 100
-if [[ ${NUM_PER_RESOUCE_MPI16} -le 4 ]]; then
+if [[ ${NUM_PER_RESOURCE_MPI16} -le 4 ]]; then
    mpirun -n 16 --bind-to core --map-by ppr:${NUM_PER_RESOURCE_MPI16}:numa  --report-bindings \
           rocprof-sys-run -- ./GhostExchange.inst \
           -x 4  -y 4  -i 400 -j 400 -h 2 -t -c -I 100

@@ -1770,5 +1770,6 @@ set_property(TEST Podman_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 #    OpenMP_Fortran_5_Vecadd_Async_HSA_XNACK_0
 #    OpenMP_Fortran_5_Vecadd_Async_HSA_XNACK_1
 #    OpenMP_Language_Constructs_Fortran_Reduction_Array
+#    OpenMP_Language_Constructs_Fortran_Reduction_Array_Min_Max_Sum
 #    OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang
 #  PROPERTIES WILL_FAIL TRUE)

@@ -86,12 +86,19 @@ fi
 
 module list
 
+# Collapse repeated slashes to make path comparisons robust against
+# modulefiles whose MPI_PATH contains an embedded "//" (canonical
+# `which mpifort` output uses single slashes; literal $INSTALL_PATH
+# from the modulefile may not).
+norm_path() { echo "$1" | tr -s '/'; }
+
 echo ""
 echo "=== Step 1: Verify mpifort points to our build ==="
 MPIFORT_PATH=$(which mpifort)
 echo "mpifort found at: $MPIFORT_PATH"
-if [[ "$MPIFORT_PATH" != "$INSTALL_PATH/bin/mpifort" ]]; then
-    echo "FAIL: mpifort is not from our install ($INSTALL_PATH/bin/mpifort)"
+EXPECTED_MPIFORT=$(norm_path "$INSTALL_PATH/bin/mpifort")
+if [[ "$(norm_path "$MPIFORT_PATH")" != "$EXPECTED_MPIFORT" ]]; then
+    echo "FAIL: mpifort is not from our install ($EXPECTED_MPIFORT)"
     exit 1
 fi
 echo "PASS: mpifort is from our install"
@@ -100,21 +107,22 @@ echo ""
 echo "=== Step 2: Verify wrapper calls amdflang with our lib/include ==="
 SHOW_OUTPUT=$(mpifort -show)
 echo "$SHOW_OUTPUT"
+NORM_SHOW=$(norm_path "$SHOW_OUTPUT")
 
-if ! echo "$SHOW_OUTPUT" | grep -q "amdflang"; then
+if ! echo "$NORM_SHOW" | grep -q "amdflang"; then
     echo "FAIL: mpifort does not wrap amdflang"
     exit 1
 fi
 echo "PASS: mpifort wraps amdflang"
 
-if ! echo "$SHOW_OUTPUT" | grep -q "$INSTALL_PATH/lib"; then
-    echo "FAIL: mpifort does not link against $INSTALL_PATH/lib"
+if ! echo "$NORM_SHOW" | grep -qF "$(norm_path "$INSTALL_PATH/lib")"; then
+    echo "FAIL: mpifort does not link against $(norm_path "$INSTALL_PATH/lib")"
     exit 1
 fi
 echo "PASS: mpifort links against our lib directory"
 
-if ! echo "$SHOW_OUTPUT" | grep -q "$INSTALL_PATH/include"; then
-    echo "FAIL: mpifort does not include $INSTALL_PATH/include"
+if ! echo "$NORM_SHOW" | grep -qF "$(norm_path "$INSTALL_PATH/include")"; then
+    echo "FAIL: mpifort does not include $(norm_path "$INSTALL_PATH/include")"
     exit 1
 fi
 echo "PASS: mpifort includes our include directory"
