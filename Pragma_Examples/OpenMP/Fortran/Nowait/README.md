@@ -1,53 +1,53 @@
-# OpenMP `target ... nowait` test (Fortran)
+# OpenMP `target ... nowait` + `depend` example (Fortran)
 
-This test exercises the OpenMP `nowait` clause on a
-`!$omp target teams distribute parallel do` construct, i.e. it checks
-that when `nowait` is specified the host does NOT wait for the GPU
-kernel to finish before continuing.
-
-The pattern follows the OpenMP 6.0 specification example for the
-`nowait` clause: the kernel is launched from inside a `!$omp parallel`
-region by the masked thread, while the rest of the team (and
-eventually the masked thread itself) executes a CPU `!$omp do` in
-parallel with the still-running GPU kernel.
-
-The program first times the same kernel run synchronously to obtain
-`t_kernel`, then runs the spec-style pattern and measures
-`t_target_return` -- the elapsed time between the masked thread
-encountering the `target ... nowait` line and getting control back.
-PASS iff (a) the kernel results match the synchronous run AND (b)
-`t_target_return` is much smaller than `t_kernel`. If `nowait` is not
-honored, `t_target_return` ~= `t_kernel` and the test prints `FAIL!`.
+> **Scope of this example.** This example is here only to show that
+> `target ... nowait` lets the **host** continue past a kernel launch
+> instead of blocking until the GPU is done. It does **not** attempt
+> to demonstrate kernel-to-kernel concurrency on the GPU. For kernel-to-kernel concurrency
+> see:
+>
+> ```
+> Pragma_Examples/OpenMP/Fortran/3_vecadd/5_vecadd_async        (explicit map)
+> Pragma_Examples/OpenMP/Fortran/3_vecadd/4_vecadd_usm_async    (USM variant)
+> ```
 
 ## Build & run
 
 ```bash
 export FC=amdflang   # or flang / gfortran / ftn
 make
-OMP_NUM_THREADS=8 ./nowait
+./nowait
 make clean
 ```
 
 The Makefile follows the same compiler-detection style as the other
-`Pragma_Examples/OpenMP/Fortran` tests and picks up `$FC`. The test
-does not require `HSA_XNACK=1`: data is moved with explicit `map(to:)`
-/ `map(from:)` clauses rather than unified shared memory.
+`Pragma_Examples/OpenMP/Fortran` tests and picks up `$FC`. Data is
+moved with explicit `map(to:)` / `map(from:)`, so `HSA_XNACK=1` should not be exported. 
 
-## Pitfall: do not use `target ... nowait` outside a parallel region
+## Note on kernel sizing
 
-`!$omp target ... nowait` generates a *target task*. The OpenMP
-standard allows the runtime to execute that task either as a deferred
-task picked up by another thread or as an *included* task that runs
-synchronously in the encountering thread. With no surrounding
-`!$omp parallel` region there is no other thread available, and
-current AMD ROCm runtimes take the included path -- meaning the host
-silently waits for the kernel to finish even though `nowait` was
-written. The `parallel` + `masked` wrapping in this test is what
-gives the runtime a team to defer the target task on, and is the
-required idiom for actually obtaining host/GPU overlap.
+The arrays in this example are sized at `N = 2**20`, and the host
+loop that runs alongside the kernels is a deliberately long serial
+`sin()` accumulation. Both numbers are picked so that the GPU work
+and the host work each take long enough to be measurable, which is
+what makes the asynchronous behavior of `nowait` visible in
+wall-clock time. A long serial `sin()` loop on the CPU is obviously
+not how you would write a real host code.
+
+The companion regression test (`tests/openmp_fortran_nowait.sh`) is
+sized even more aggressively: each GPU thread does an inner serial
+chain of many `sin()/cos()` ops. That makes the GPU kernel slow
+enough that the host return time can be compared to it cleanly. It
+is **NOT** a model of how to write performant GPU code -- the inner
+serial chain deliberately under-uses the available parallelism so
+that the *timing* property we want to test (host returns
+immediately) is observable.
+
+In short: this example and its regression test are about the
+synchronization semantics of `nowait`, not about throughput. 
 
 ## Reference
 
-The pattern used in this test is taken from the OpenMP 6.0 examples
-document, "nowait clause" example:
+The pattern used in this example is taken from the OpenMP 6.0
+examples document, "nowait clause" example:
 <https://www.openmp.org/wp-content/uploads/openmp-examples-6.0.pdf>.

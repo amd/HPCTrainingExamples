@@ -1,139 +1,113 @@
 ! Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
 ! This software is distributed under the MIT License
 !
-! Test that the OpenMP `nowait` clause on a
-! `target teams distribute parallel do` construct actually allows the
-! encountering thread to continue past the kernel launch BEFORE the GPU
-! kernel completes, so that the host can do other work while the GPU is
-! still running.
+! Multi-kernel `target ... nowait` + `depend` example.
 !
-! Pattern (from the OpenMP 6.0 spec, "nowait clause" example):
+! This follows the pattern from the OpenMP 6.0 examples document
+! (https://www.openmp.org/wp-content/uploads/openmp-examples-6.0.pdf):
 !
 !    !$omp parallel
-!       !$omp masked
-!          !$omp target teams distribute parallel do nowait &
-!          !$omp&    map(to:...) map(from:...)
-!          do i = ...
-!             ! GPU work
-!          end do
-!          !$omp end target teams distribute parallel do
-!       !$omp end masked
+!    !$omp single
+!       ! independent producers
+!       !$omp target ... nowait depend(out: a) ...
+!       do i = ...; a(i) = ...; end do
 !
-!       !$omp do schedule(dynamic, chunk)
-!       do i = ...
-!          ! CPU work, masked thread joins here after the async launch
-!       end do
-!       !$omp end do
+!       !$omp target ... nowait depend(out: b) ...
+!       do i = ...; b(i) = ...; end do
+!
+!       ! consumer -- waits for both producers via depend(in: a, b)
+!       !$omp target ... nowait depend(in: a, b) depend(out: c) ...
+!       do i = ...; c(i) = a(i) + b(i); end do
+!
+!       ! host work -- runs concurrently with the GPU kernels
+!       ...
+!
+!       !$omp taskwait
+!    !$omp end single
 !    !$omp end parallel
 !
-! Strategy
-! --------
-! 1. Time the same GPU kernel run synchronously (no nowait) to obtain
-!    t_kernel.
-! 2. Run the spec-style pattern above and measure how long the masked
-!    thread is held at the `target ... nowait` line, t_target_return.
-! 3. PASS iff the GPU kernel produced the same output as the sync run
-!    AND t_target_return is much smaller than t_kernel (the masked
-!    thread came back well before the kernel completed).
+! This example is here to demonstrate that, with `nowait`, the host
+! thread does not block at the end of a `target` construct: it returns
+! immediately and is free to issue more kernels and run host code
+! the GPU is still busy. NOTE: this example does not show kernel-to-kernel 
+! concurrency and makes the GPU kernels heavy to facilitate seeing the nowait on the CPU side.
 !
-program nowait_target_test
+program nowait_multi
    use omp_lib
    use, intrinsic :: iso_fortran_env, only: real64
    implicit none
 
-   integer, parameter :: N     = 2**20
-   integer, parameter :: K_GPU = 20000
-   real(real64), allocatable :: a(:), b(:), c_sync(:), c_async(:), cpu_out(:)
-   real(real64) :: t0, tA, tB, t_kernel, t_target_return, t_total
-   real(real64) :: v
-   integer :: i, k
-   logical :: passed
+   integer, parameter :: N = 2**20
+   real(real64), allocatable :: a(:), b(:), c(:)
+   real(real64) :: host_sum, t0, t_total
+   real(real64) :: cmin, cmax, s
+   integer :: i
+   integer(kind=8) :: n_iter
 
-   allocate(a(N), b(N), c_sync(N), c_async(N), cpu_out(N))
-   do i = 1, N
-      a(i) = real(i, real64) * 1.0e-6_real64
-      b(i) = 2.0_real64
-   end do
+   allocate(a(N), b(N), c(N))
 
-   ! Warm-up to absorb device-init cost
-   !$omp target teams distribute parallel do map(to: a) map(from: c_sync)
-   do i = 1, N
-      c_sync(i) = a(i)
-   end do
-   !$omp end target teams distribute parallel do
-
-   ! ---- 1. Calibrate: time the kernel alone (synchronous) ----
    t0 = omp_get_wtime()
-   !$omp target teams distribute parallel do private(v, k) &
-   !$omp&  map(to: a, b) map(from: c_sync)
-   do i = 1, N
-      v = a(i)
-      do k = 1, K_GPU
-         v = sin(v) + cos(v)
-      end do
-      c_sync(i) = v * b(i)
-   end do
-   !$omp end target teams distribute parallel do
-   t_kernel = omp_get_wtime() - t0
 
-   ! ---- 2. Spec-style pattern: parallel + masked + target nowait ----
-   t_target_return = 0.0_real64
-   t0 = omp_get_wtime()
-   !$omp parallel private(i, v, k)
-      !$omp masked
-         tA = omp_get_wtime()
-         !$omp target teams distribute parallel do nowait private(v, k) &
-         !$omp&  map(to: a, b) map(from: c_async)
-         do i = 1, N
-            v = a(i)
-            do k = 1, K_GPU
-               v = sin(v) + cos(v)
-            end do
-            c_async(i) = v * b(i)
-         end do
-         !$omp end target teams distribute parallel do
-         tB = omp_get_wtime()
-         ! If `nowait` is honored, tB-tA is microseconds, not the full
-         ! kernel time.
-         t_target_return = tB - tA
-      !$omp end masked
-
-      ! All threads (including the masked one, after it falls through)
-      ! participate in this CPU loop while the GPU kernel is in flight.
-      !$omp do schedule(dynamic, 1024)
+   !$omp parallel
+   !$omp single
+      ! Kernel 1: produce a(i) = sin(i)**2.
+      ! depend(out: a) declares this task as a producer of a.
+      !$omp target teams distribute parallel do nowait &
+      !$omp&   depend(out: a) map(from: a)
       do i = 1, N
-         v = a(i)
-         do k = 1, K_GPU/100
-            v = sin(v) + cos(v)
-         end do
-         cpu_out(i) = v
+         a(i) = sin(real(i, real64))**2
       end do
-      !$omp end do
+      !$omp end target teams distribute parallel do
+
+      ! Kernel 2: produce b(i) = cos(i)**2.
+      ! No depend ordering with kernel 1, so the runtime is free to run
+      ! them concurrently on the GPU if it can.
+      !$omp target teams distribute parallel do nowait &
+      !$omp&   depend(out: b) map(from: b)
+      do i = 1, N
+         b(i) = cos(real(i, real64))**2
+      end do
+      !$omp end target teams distribute parallel do
+
+      ! Kernel 3: consume a and b, produce c.
+      ! depend(in: a, b) makes this task wait for kernels 1 and 2.
+      !$omp target teams distribute parallel do nowait &
+      !$omp&   depend(in: a, b) depend(out: c) &
+      !$omp&   map(to: a, b) map(from: c)
+      do i = 1, N
+         c(i) = a(i) + b(i)
+      end do
+      !$omp end target teams distribute parallel do
+
+      ! Host work: independent of a, b, c, so the depend graph allows
+      ! it to overlap with the GPU kernels.
+      s = 0.0_real64
+      do n_iter = 0_8, 5000000_8 - 1_8
+         s = s + sin(real(n_iter, real64))
+      end do
+      host_sum = s
+
+      ! Wait for all deferred target tasks to complete before reading
+      ! c(:) outside the single block.
+      !$omp taskwait
+   !$omp end single
    !$omp end parallel
-   ! implicit barrier above also waits for the deferred target task
+
    t_total = omp_get_wtime() - t0
 
-   ! ---- 3. Correctness: same kernel, same inputs => identical output ----
-   passed = .true.
+   cmin = c(1); cmax = c(1)
    do i = 1, N
-      if (abs(c_sync(i) - c_async(i)) > 1.0e-12_real64) then
-         passed = .false.
-         exit
-      end if
+      if (c(i) < cmin) cmin = c(i)
+      if (c(i) > cmax) cmax = c(i)
    end do
 
-   print '(a, f10.4, a)', "Calibrated kernel time alone         : ", t_kernel,         " s"
-   print '(a, f10.4, a)', "masked thread held at target nowait  : ", t_target_return,  " s"
-   print '(a, f10.4, a)', "Total parallel region time           : ", t_total,          " s"
+   print '(a, f10.6)',   "c(1)    = ", c(1)
+   print '(a, f10.6)',   "c(N)    = ", c(N)
+   print '(a, f10.6)',   "min(c)  = ", cmin
+   print '(a, f10.6)',   "max(c)  = ", cmax
+   print '(a)',          "(every c(i) should be 1.0: sin^2 + cos^2 = 1)"
+   print '(a, es12.4)',  "host_sum (concurrent CPU work)  = ", host_sum
+   print '(a, f10.4, a)', "total elapsed time              = ", t_total, " s"
 
-   if (passed .and. t_target_return < 0.5_real64 * t_kernel) then
-      print *, "PASS!"
-   else if (.not. passed) then
-      print *, "FAIL! (kernel results differ between sync and nowait variants)"
-   else
-      print '(a, f10.4, a, f10.4, a)', " FAIL! (masked thread held ", &
-            t_target_return, " s on a ", t_kernel, " s kernel; nowait not honored)"
-   end if
-
-   deallocate(a, b, c_sync, c_async, cpu_out)
-end program nowait_target_test
+   deallocate(a, b, c)
+end program nowait_multi
