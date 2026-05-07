@@ -1,10 +1,9 @@
-# OpenMP `target ... nowait` + `depend` example (C)
+# OpenMP nowait clause example 
 
-> **Scope of this example.** This example is here only to show that
+> This example is here to show that
 > `target ... nowait` lets the **host** continue past a kernel launch
-> instead of blocking until the GPU is done. It does **not** attempt
-> to demonstrate kernel-to-kernel concurrency on the GPU. For kernel-to-kernel concurrency 
-> see:
+> instead of blocking until the GPU is done.
+> For other relevant examples see:
 >
 > ```
 > Pragma_Examples/OpenMP/C/3_vecadd/5_vecadd_async        (explicit map)
@@ -29,15 +28,7 @@ loop that runs alongside the kernels is a deliberately long serial
 `sin()` accumulation. Both numbers are picked so that the GPU work
 and the host work each take long enough to be measurable, which is
 what makes the asynchronous behavior of `nowait` visible in
-wall-clock time. A long serial `sin()` loop on the CPU is **NOT** 
-how you would write a real host code.
-
-A companion regression test (`tests/openmp_c_nowait.sh`) builds and
-runs this same source. It checks the correctness output (`c[i] = 1.0`
-everywhere) but does not measure timing.
-
-In short: this example is about the synchronization semantics of
-`nowait`, not about throughput.
+wall-clock time. 
 
 ## Reference
 

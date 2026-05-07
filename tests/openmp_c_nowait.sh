@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# NOTE: this is only a correctness check
+# it does not actually measure any CPU-GPU overlap
+
 if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
    if [ -z "$CXX" ]; then
       export CXX=`which CC`
@@ -25,6 +28,8 @@ fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 SRC_DIR=${REPO_DIR}/Pragma_Examples/OpenMP/C/Nowait
+
+export OMP_NUM_THREADS=4
 
 BUILD_DIR=$(mktemp -d)
 trap "rm -rf ${BUILD_DIR}" EXIT

@@ -2,9 +2,8 @@
 Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
 This software is distributed under the MIT License
 
-Multi-kernel `target ... nowait` + `depend` example.
-
 This follows the pattern from the OpenMP 6.0 examples document
+regardin the nowait clause examples
 (https://www.openmp.org/wp-content/uploads/openmp-examples-6.0.pdf):
 
    #pragma omp parallel
@@ -30,8 +29,7 @@ This follows the pattern from the OpenMP 6.0 examples document
 This example is here to demonstrate that, with `nowait`, the host
 thread does not block at the end of a `target` construct: it returns
 immediately and is free to issue more kernels and run host code while
-the GPU is still busy. NOTE: this example does not show kernel-to-kernel 
-concurrency and makes the GPU kernels heavy to facilitate seeing the nowait on the CPU side.
+the GPU is still busy. 
 */
 
 #include <stdio.h>
