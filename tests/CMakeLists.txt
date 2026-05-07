@@ -368,6 +368,10 @@ add_test(NAME OpenMP_C_5_Vecadd_Async_HSA_XNACK_1
 set_property(TEST OpenMP_C_5_Vecadd_Async_HSA_XNACK_1 PROPERTY PASS_REGULAR_EXPRESSION "1.000000")
 set_property(TEST OpenMP_C_5_Vecadd_Async_HSA_XNACK_1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME OpenMP_C_Nowait COMMAND ../openmp_c_nowait.sh )
+set_property(TEST OpenMP_C_Nowait PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
+set_property(TEST OpenMP_C_Nowait PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 # OpenMP Fortran tests
 add_test(NAME OpenMP_Fortran_0_Saxpy_PortYourself COMMAND ../openmp_fortran_0_saxpy_portyourself.sh )
 set_property(TEST OpenMP_Fortran_0_Saxpy_PortYourself PROPERTY PASS_REGULAR_EXPRESSION "4.000000")
@@ -488,6 +492,10 @@ add_test(NAME OpenMP_Fortran_Atomic_USM
   COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=1" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_atomic_usm.sh" )
 set_property(TEST OpenMP_Fortran_Atomic_USM PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
 set_property(TEST OpenMP_Fortran_Atomic_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME OpenMP_Fortran_Nowait COMMAND ../openmp_fortran_nowait.sh )
+set_property(TEST OpenMP_Fortran_Nowait PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
+set_property(TEST OpenMP_Fortran_Nowait PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Fortran_3_Reduction_WrongMapping
   COMMAND ${CMAKE_COMMAND} -E env "HSA_XNACK=0" "${CMAKE_CURRENT_SOURCE_DIR}/openmp_fortran_3_reduction_wrongmapping.sh" )
@@ -1770,6 +1778,5 @@ set_property(TEST Podman_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 #    OpenMP_Fortran_5_Vecadd_Async_HSA_XNACK_0
 #    OpenMP_Fortran_5_Vecadd_Async_HSA_XNACK_1
 #    OpenMP_Language_Constructs_Fortran_Reduction_Array
-#    OpenMP_Language_Constructs_Fortran_Reduction_Array_Min_Max_Sum
 #    OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang
 #  PROPERTIES WILL_FAIL TRUE)
