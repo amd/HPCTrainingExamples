@@ -11,7 +11,7 @@ Author: Gina Sitaraman
 #include <stdio.h>
 #include <hip/hip_runtime.h>
 #include <sys/time.h>
-#include <roctx.h>
+#include <rocprofiler-sdk-roctx/roctx.h>
 
 #define ELAPSED(t1,t2) (t2.tv_sec-t1.tv_sec + (t2.tv_usec-t1.tv_usec)*1E-6)
 #define NITER 25
