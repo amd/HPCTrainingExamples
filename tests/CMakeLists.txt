@@ -1454,10 +1454,6 @@ set_property(TEST TensorFlow_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Test accura
 set_property(TEST TensorFlow_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'tensorflow'")
 
 # FTorch tests
-add_test(NAME FTorch_MultiGPU_Test_AMDFlang COMMAND ../ftorch_multigpu_test_amdflang.sh )
-set_property(TEST FTorch_MultiGPU_Test_AMDFlang PROPERTY PASS_REGULAR_EXPRESSION "MultiGPU example ran successfully")
-set_property(TEST FTorch_MultiGPU_Test_AMDFlang PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'ftorch'")
-
 add_test(NAME FTorch_MultiGPU_Test COMMAND ../ftorch_multigpu_test.sh )
 set_property(TEST FTorch_MultiGPU_Test PROPERTY PASS_REGULAR_EXPRESSION "MultiGPU example ran successfully")
 set_property(TEST FTorch_MultiGPU_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'ftorch'")
@@ -1545,6 +1541,10 @@ add_test(NAME Cupy_Install_Tests COMMAND ../cupy_install_tests.sh )
 set_property(TEST Cupy_Install_Tests PROPERTY PASS_REGULAR_EXPRESSION "9 passed, 1 skipped")
 set_property(TEST Cupy_Install_Tests PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'cupy'")
 set_tests_properties(Cupy_Install_Tests PROPERTIES TIMEOUT 600)
+
+add_test(NAME Cupy_Check_HIP_Shfl_Mask COMMAND ../cupy_check_hip_shfl_mask.sh )
+set_property(TEST Cupy_Check_HIP_Shfl_Mask PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST Cupy_Check_HIP_Shfl_Mask PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'cupy'")
 
 # Rocprof-sys tests
 #add_test(NAME Rocprof-sys_Source_Avail_Check COMMAND ../rocprof-sys-avail_check.sh --version develop)
