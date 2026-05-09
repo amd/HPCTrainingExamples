@@ -15,6 +15,7 @@ JAX=0
 PETSC=0
 HYPRE=0
 MAGMA=0
+ELPA=0
 TAU=0
 ROCPROF_SYS=0
 ROCPROF_COMPUTE=0
@@ -144,6 +145,11 @@ do
       "--magma")
           shift
           MAGMA=1
+          reset-last
+          ;;
+      "--elpa")
+          shift
+          ELPA=1
           reset-last
           ;;
       "--rocprof-sys")
@@ -387,6 +393,8 @@ elif [ ${HYPRE} -eq 1 ]; then
    ctest -R HYPRE
 elif [ ${MAGMA} -eq 1 ]; then
    ctest -R MAGMA
+elif [ ${ELPA} -eq 1 ]; then
+   ctest -R ELPA
 elif [ ${FFTW} -eq 1 ]; then
    ctest -R FFTW
 elif [ ${SCOREP} -eq 1 ]; then
