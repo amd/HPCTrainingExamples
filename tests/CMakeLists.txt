@@ -1372,6 +1372,7 @@ set_property(TEST Pytorch_Check_ROCm_Dependency PROPERTY SKIP_REGULAR_EXPRESSION
 add_test(NAME Pytorch_Mnist COMMAND ../pytorch_mnist.sh )
 set_property(TEST Pytorch_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Train Epoch: 14")
 set_property(TEST Pytorch_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
+set_tests_properties(Pytorch_Mnist PROPERTIES TIMEOUT 500)
 
 add_test(NAME Pytorch_No_Profile COMMAND ../pytorch_noprofile.sh )
 set_property(TEST Pytorch_No_Profile PROPERTY PASS_REGULAR_EXPRESSION "10: loss")
