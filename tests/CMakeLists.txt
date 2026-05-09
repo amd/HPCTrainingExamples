@@ -1435,6 +1435,11 @@ add_test(NAME HYPRE_IJ COMMAND ../hypre_ij.sh )
 set_property(TEST HYPRE_IJ PROPERTY PASS_REGULAR_EXPRESSION "Iterations = 18")
 set_property(TEST HYPRE_IJ PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hypre'")
 
+# ELPA tests
+add_test(NAME ELPA_Install COMMAND ../elpa_install_test.sh )
+set_property(TEST ELPA_Install PROPERTY PASS_REGULAR_EXPRESSION "last  eigenvalue")
+set_property(TEST ELPA_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'elpa'")
+
 # MAGMA tests
 add_test(NAME MAGMA_Install COMMAND ../magma_install_test.sh )
 set_property(TEST MAGMA_Install PROPERTY PASS_REGULAR_EXPRESSION "All tests PASSED")

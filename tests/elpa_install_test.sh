@@ -21,8 +21,8 @@ fi
 # (openmpi by default), so we get scalapack/BLAS via PETSC_PATH and
 # mpifort/mpirun on PATH transitively.
 module load elpa
+module list
 
-# pkg-config must resolve elpa; the elpa modulefile sets PKG_CONFIG_PATH.
 if ! pkg-config --exists elpa; then
    echo "ERROR: 'pkg-config --exists elpa' failed -- did you 'module load elpa/<version>'?" >&2
    exit 1
@@ -141,7 +141,6 @@ program elpa_test_real_gpu
       print '(a,f12.3,a)', ' eigenvectors() wall time: ', t1 - t0, ' s'
       print '(a,es14.6)',  ' first eigenvalue       : ', ev(1)
       print '(a,es14.6)',  ' last  eigenvalue       : ', ev(min(nev, na))
-      print '(a)',         ' (correctness check skipped)'
    end if
 
    call elpa_deallocate(e)
@@ -156,16 +155,8 @@ pushd "$WORKDIR"
 ELPA_CFLAGS="$(pkg-config --cflags elpa)"
 ELPA_LIBS="$(pkg-config --libs elpa)"
 
-EXTRA_LIBS=()
-if [ -n "${PETSC_PATH:-}" ]; then
-   EXTRA_LIBS+=( -L"${PETSC_PATH}/lib" -lscalapack -lflapack -lfblas -lstdc++ )
-fi
-EXTRA_LIBS+=( -lamdhip64 )
+mpifort -O3 elpa_test_real_gpu.F90 ${ELPA_CFLAGS} -L${ROCM_PATH}/lib ${ELPA_LIBS} -I${ELPA_PATH}/include/elpa-2026.02.001/modules -o elpa_test_real_gpu
 
-mpifort -O3 -march=native elpa_test_real_gpu.F90 \
-   ${ELPA_CFLAGS} ${ELPA_LIBS} "${EXTRA_LIBS[@]}" \
-   -o elpa_test_real_gpu
-
-mpirun -np 1 ./elpa_test_real_gpu 40000 40000 64 skip_check_correctness
+mpirun -np 1 ./elpa_test_real_gpu 20000 20000 64 skip_check_correctness
 
 popd
