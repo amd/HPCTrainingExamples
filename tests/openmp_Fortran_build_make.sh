@@ -37,9 +37,7 @@ else
    trap "rm -rf ${BUILD_DIR}" EXIT
    cp * ${BUILD_DIR}
 
-   cd ${BUILDDIR}
+   cd ${BUILD_DIR}
    FC=`which amdflang` make openmp_code
    ./openmp_code
-
-   rm -f openmp_code openmp_code.o
 fi
