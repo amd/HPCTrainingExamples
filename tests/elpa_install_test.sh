@@ -23,6 +23,8 @@ fi
 module load elpa
 module list
 
+ulimit -s unlimited
+
 if ! pkg-config --exists elpa; then
    echo "ERROR: 'pkg-config --exists elpa' failed -- did you 'module load elpa/<version>'?" >&2
    exit 1
