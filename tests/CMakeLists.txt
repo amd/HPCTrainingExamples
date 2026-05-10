@@ -991,10 +991,10 @@ set_property(TEST MPI_Ghost_Exchange_Ver1 PROPERTY PASS_REGULAR_EXPRESSION "Prin
 set_property(TEST MPI_Ghost_Exchange_Ver1 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_tests_properties(MPI_Ghost_Exchange_Ver1 PROPERTIES TIMEOUT 600)
 
-add_test(NAME MPI_Ghost_Exchange_Ver2 COMMAND ../mpi_ghost_exchange_ver2.sh )
-set_property(TEST MPI_Ghost_Exchange_Ver2 PROPERTY PASS_REGULAR_EXPRESSION "perfetto")
-set_property(TEST MPI_Ghost_Exchange_Ver2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
-set_tests_properties(MPI_Ghost_Exchange_Ver2 PROPERTIES TIMEOUT 600)
+add_test(NAME MPI_Ghost_Exchange_Ver2_Rocprof-Sys COMMAND ../mpi_ghost_exchange_ver2.sh )
+set_property(TEST MPI_Ghost_Exchange_Ver2_Rocprof-Sys PROPERTY PASS_REGULAR_EXPRESSION "perfetto")
+set_property(TEST MPI_Ghost_Exchange_Ver2_Rocprof-Sys PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_tests_properties(MPI_Ghost_Exchange_Ver2_Rocprof-Sys PROPERTIES TIMEOUT 600)
 
 add_test(NAME MPI_Ghost_Exchange_Ver3 COMMAND ../mpi_ghost_exchange_ver3.sh )
 set_property(TEST MPI_Ghost_Exchange_Ver3 PROPERTY PASS_REGULAR_EXPRESSION "Printing Timings")
