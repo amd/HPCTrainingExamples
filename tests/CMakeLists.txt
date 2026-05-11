@@ -1442,7 +1442,7 @@ set_property(TEST HYPRE_IJ PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Una
 
 # ELPA tests
 add_test(NAME ELPA_Install COMMAND ../elpa_install_test.sh )
-set_property(TEST ELPA_Install PROPERTY PASS_REGULAR_EXPRESSION "last  eigenvalue")
+set_property(TEST ELPA_Install PROPERTY PASS_REGULAR_EXPRESSION "PASS")
 set_property(TEST ELPA_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'elpa'")
 
 # MAGMA tests
