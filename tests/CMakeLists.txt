@@ -848,6 +848,10 @@ set_tests_properties(OpenMP_Optimizations_CXX_3_MemoryPool PROPERTIES TIMEOUT 60
 #set_property(TEST HIPFort_Module_Check_hipfc_2008 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 #set_property(TEST HIPFort_Module_Check_hipfc_2008 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+add_test(NAME ROCm_rocBLAS_GEMM_Check COMMAND ../rocblas_gemm_check.sh )
+set_property(TEST ROCm_rocBLAS_GEMM_Check PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
+set_property(TEST ROCm_rocBLAS_GEMM_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
 add_test(NAME HIPFort_ROCm_Check_hipfc_2003 COMMAND ../hipfort_rocm_check_hipfc_2003.sh )
 set_property(TEST HIPFort_ROCm_Check_hipfc_2003 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST HIPFort_ROCm_Check_hipfc_2003 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
