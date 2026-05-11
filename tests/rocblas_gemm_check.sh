@@ -1,26 +1,6 @@
 #!/bin/bash
 
-# Minimal rocBLAS DGEMM smoke test.
-#
-# Builds and runs a small HIP/rocBLAS program (one DGEMM, 64x64x64,
-# NN, double) against the currently loaded rocm module. Its purpose
-# is to exercise the rocBLAS kernel-loading path -- which is where
-# the "hipErrorInvalidImage/InvalidKernelFile" failures surface when
-# Tensile kernels for the host GPU arch are missing from
-# $ROCM_PATH/lib/rocblas/library/ -- without depending on optional
-# ROCm packages.
-#
-# Why not rocblas-bench? It is not shipped by every distro-packaged
-# ROCm release (e.g. on this cluster it is present in
-# rocm-therock-23.{1,2}.0 and rocm-6.3.{0,1,2}, but absent in
-# rocm-6.3.3+, all rocm-6.4.x, and all rocm-7.x). This script
-# therefore avoids it and links to librocblas directly so the test
-# runs on every rocm/* module.
-#
-# Why not hipblas? hipBLAS on AMD is a thin wrapper that ultimately
-# dispatches to rocBLAS, so it would surface the same failure, but
-# rocBLAS-direct keeps the dependency chain minimal and the failure
-# attribution unambiguous.
+# minimal rocBLAS DGEMM smoke test.
 
 module -t list 2>&1 | grep -q "^rocm"
 if [ $? -eq 1 ]; then
