@@ -102,7 +102,7 @@ int main (int argc, char *argv[])
     HIP_CHECK(hipMalloc (&d_y, szbytes));
     HIP_CHECK(hipMalloc (&d_z, szbytes));
 
-    roctxRangePush("warmup");
+    roctx_range_id_t warmup_id = roctxRangeStartA("warmup");
     // copy input arrays to GPU memory
     HIP_CHECK(hipMemcpy (d_x, h_x, szbytes, hipMemcpyHostToDevice));
     HIP_CHECK(hipMemcpy (d_y, h_y, szbytes, hipMemcpyHostToDevice));
@@ -120,17 +120,17 @@ int main (int argc, char *argv[])
     // copy result back to host buffer
     HIP_CHECK(hipMemcpy (h_z, d_z, szbytes, hipMemcpyDeviceToHost));
     check_results (h_ref, h_z, N);
-    roctxRangePop();
+    roctxRangeStop(warmup_id);
 
     // Now measure bandwidth achieved
-    roctxRangePush("timing loop");
+    roctx_range_id_t timing_id = roctxRangeStartA("timing loop");
     gettimeofday (&t1, NULL);
     for (int iter=0; iter<NITER; iter++) {
         kernel_5 <<< grid_5, block_5 >>> ((double2 *)d_x, (double2 *)d_y, (double2 *)d_z, a, N/2);
     }
     hipDeviceSynchronize ();
     gettimeofday (&t2, NULL);
-    roctxRangePop();
+    roctxRangeStop(timing_id);
     printf ("daxpy_5: Bandwidth achieved = %.2f GB/s\n", gbs/ELAPSED(t1,t2));
 
     return 0;
