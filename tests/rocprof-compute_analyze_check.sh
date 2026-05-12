@@ -13,16 +13,16 @@ fi
 module load rocprofiler-compute &> /dev/null
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-pushd ${REPO_DIR}/HIP/saxpy
-BUILD_DIR=$(mktemp -d build_XXXXXX)
+SRC_DIR=${REPO_DIR}/HIP/saxpy
+BUILD_DIR=$(mktemp -d)
+trap 'rm -rf ${BUILD_DIR}' EXIT
+cp ${SRC_DIR}/* ${BUILD_DIR}/
 cd ${BUILD_DIR}
+
+mkdir build_test && cd build_test
 cmake ..
 make
 
 export HSA_XNACK=1
 rocprof-compute profile -n v1 --no-roof -- ./saxpy
 rocprof-compute analyze -p workloads/v1/* --block 7.1.0 7.1.1 7.1.2 7.1.0: Grid size 7.1.1: Workgroup size 7.1.2: Total Wavefronts
-
-cd ..
-rm -rf ${BUILD_DIR}
-popd

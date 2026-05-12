@@ -13,15 +13,16 @@ fi
 module load rocprofiler-compute &> /dev/null
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-pushd ${REPO_DIR}/HIP/saxpy
-BUILD_DIR=$(mktemp -d build_XXXXXX)
+SRC_DIR=${REPO_DIR}/HIP/saxpy
+BUILD_DIR=$(mktemp -d)
+trap 'rm -rf ${BUILD_DIR}' EXIT
+cp ${SRC_DIR}/* ${BUILD_DIR}/
 cd ${BUILD_DIR}
+
+mkdir build_test && cd build_test
+
 cmake ..
 make
 
 export HSA_XNACK=1
 rocprof-compute profile -n rooflines_PDF --roof-only  -- ./saxpy
-
-cd ..
-rm -rf ${BUILD_DIR}
-popd
