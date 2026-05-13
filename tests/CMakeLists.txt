@@ -642,9 +642,10 @@ add_test(NAME OpenMP_Language_Constructs_Fortran_2_Device_Routine_With_Module_US
 set_property(TEST OpenMP_Language_Constructs_Fortran_2_Device_Routine_With_Module_USM PROPERTY PASS_REGULAR_EXPRESSION "Result: sum of x is 1000.000000000000")
 set_property(TEST OpenMP_Language_Constructs_Fortran_2_Device_Routine_With_Module_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-# Expected failure -- not implemented in amdflang-new yet
+# Default build uses whole-array reduction(+:ce); the array-section and
+# array-element list forms live under -DFUTURE in the source.
 add_test(NAME OpenMP_Language_Constructs_Fortran_Reduction_Array COMMAND ../openmp_language_constructs_fortran_1_reduction_array_solution.sh )
-set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array PROPERTY PASS_REGULAR_EXPRESSION "ce1=     1000.000000000000      ce2=     1000.000000000000")
+set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array PROPERTY PASS_REGULAR_EXPRESSION "Form 1 \\(whole array\\)   : ce\\(1\\) = 1000.000000000000  ce\\(2\\) = 1000.000000000000")
 set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Expected failure -- not implemented in amdflang-new yet
@@ -1785,12 +1786,14 @@ set_property(TEST Podman_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 # AMD flang 22.0.0 known compiler/linker bugs; remove WILL_FAIL once upstream ships a fix.
 #   - _4_Vecadd_USM_Async / _5_Vecadd_Async_*: "not yet implemented: Unhandled clause
 #     privatization for deferred target tasks in omp.target operation"
-#   - Reduction_Array: "'omp.wsloop' op accumulator variable used more than once"
 #   - Complex_Saxpy_AMDflang: "ld.lld: error: undefined symbol: __divsc3"
+# Reduction_Array no longer belongs here: the default build now uses the
+# portable reduction(+:ce) whole-array form; the array-section and
+# array-element forms that hit "'omp.wsloop' op accumulator variable used
+# more than once" live under -DFUTURE in the source.
 #set_tests_properties(
 #    OpenMP_Fortran_4_Vecadd_USM_Async
 #    OpenMP_Fortran_5_Vecadd_Async_HSA_XNACK_0
 #    OpenMP_Fortran_5_Vecadd_Async_HSA_XNACK_1
-#    OpenMP_Language_Constructs_Fortran_Reduction_Array
 #    OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang
 #  PROPERTIES WILL_FAIL TRUE)
