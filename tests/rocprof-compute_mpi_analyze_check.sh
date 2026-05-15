@@ -11,8 +11,6 @@ if [ $? -eq 1 ]; then
 fi
 module load openmpi
 
-module load rocprofiler-compute &> /dev/null
-
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 SRC_DIR=${REPO_DIR}/MPI-examples/GhostExchange/GhostExchange_ArrayAssign_HIP/Ver1
 BUILD_DIR=$(mktemp -d)

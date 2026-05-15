@@ -10,8 +10,6 @@ if [ $? -eq 1 ]; then
   module load rocm
 fi
 
-module load rocprofiler-compute &> /dev/null
-
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 SRC_DIR=${REPO_DIR}/HIP/saxpy
 BUILD_DIR=$(mktemp -d)

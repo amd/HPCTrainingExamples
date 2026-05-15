@@ -1,8 +1,8 @@
 # Exercise 1: 
 
 ```
-module load  amdflang-new
-module load rocprofiler-compute
+module load amdflang-new
+module load rocm
 export HSA_XNACK=1
 ```
 
