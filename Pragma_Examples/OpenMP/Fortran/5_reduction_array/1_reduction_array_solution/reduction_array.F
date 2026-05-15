@@ -52,7 +52,19 @@
     ! ------------------------------------------------------------------
     ce = 0.0_real8
 
-    !$omp target teams distribute parallel do reduction(+:ce)
+    ! NOTE: map(tofrom:ce) is REDUNDANT per the OpenMP 5.2 standard.
+    ! - Non-scalars referenced in a target region are implicitly map(tofrom)
+    !   by the default data-mapping rules (OpenMP 5.2 sec. 5.8.3).
+    ! - A reduction list item on a target construct is also implicitly mapped
+    !   so the final reduced value is returned to the original variable
+    !   (OpenMP 5.2 sec. 5.5.10 / sec. 13.8).
+    ! It is kept here as a workaround for an amdflang-new gap (ROCm 7.2.x):
+    ! the implicit map for a whole-array reduction(+:ce) on a combined
+    ! target teams distribute parallel do is not synthesised, so ce is
+    ! captured by host-pointer reference and the device page-faults
+    ! ("Memory access fault ... Reason: Page not present") on a non-USM
+    ! (xnack-off) build. Remove once amdflang-new emits the implicit map.
+    !$omp target teams distribute parallel do reduction(+:ce) map(tofrom:ce)
     do j = 1, 1000
         ce(1) = ce(1) + 1.0_real8
         ce(2) = ce(2) + 1.0_real8

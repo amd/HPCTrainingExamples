@@ -31,6 +31,5 @@ trap "rm -rf ${BUILD_DIR}" EXIT
 cp ${SRC_DIR}/* ${BUILD_DIR}/
 cd ${BUILD_DIR}
 
-export HSA_XNACK=1
 make
 ./reduction_array
