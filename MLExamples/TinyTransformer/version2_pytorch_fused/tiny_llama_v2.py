@@ -223,10 +223,16 @@ class PerformanceMonitor:
 
             fusion_summary = {}
             for key, values in total_fusion_stats.items():
-                if isinstance(values[0], (int, float)):
-                    fusion_summary[f'avg_{key}'] = np.mean(values)
+                sample = values[0]
+                # bool subclasses int — must branch on bool first so flags keep canonical keys
+                if isinstance(sample, bool):
+                    fusion_summary[key] = bool(sample)
+                elif isinstance(sample, int):
+                    fusion_summary[key] = int(round(np.mean(values)))
+                elif isinstance(sample, float):
+                    fusion_summary[key] = float(np.mean(values))
                 else:
-                    fusion_summary[key] = values[-1]  # Keep latest non-numeric value
+                    fusion_summary[key] = values[-1]
 
             summary['fusion_statistics'] = fusion_summary
 

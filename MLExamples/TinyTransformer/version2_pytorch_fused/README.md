@@ -494,8 +494,9 @@ python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30 > fused_perf
 # PyTorch profiler comparison
 python run_pytorch_profiler.py --batch-size 8 --profile-dir ./fusion_analysis --generate-report
 
-# Compare kernel counts between versions
-python analyze_kernel_reduction.py --baseline ../version1_pytorch_baseline/pytorch_profiles --fused ./fusion_analysis
+# Compare kernel counts between versions:
+# use TensorBoard / Chrome trace on each profile directory, or diff kernel name lists
+# exported from rocprofv3 / profiler output — no separate helper script ships with this tree.
 ```
 
 **Expected Results:**

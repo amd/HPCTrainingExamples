@@ -398,7 +398,7 @@ python tiny_llama_v1.py \
     --batch-size 8 \
     --seq-len 128 \
     --enable-pytorch-profiler \
-    --profile-memory \
+    --enable-memory-profiling \
     --profile-dir ./memory_analysis
 
 # Generate memory timeline visualization

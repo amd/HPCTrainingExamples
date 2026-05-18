@@ -8,7 +8,7 @@ Establish baseline performance metrics for Tiny LLaMA V1 and understand the prof
 
 ### Prerequisites
 
-- Completed environment setup from `../setup/`
+- Environment ready for PyTorch + ROCm (see workshop `README.md` [Quick Start](../../README.md#quick-start))
 - Verified environment with validation scripts
 
 ### Duration

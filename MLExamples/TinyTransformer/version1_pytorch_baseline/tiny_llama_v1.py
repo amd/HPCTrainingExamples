@@ -22,7 +22,7 @@ Usage:
     python tiny_llama_v1.py --enable-pytorch-profiler --profile-dir ./profiles
 
     # With memory profiling
-    python tiny_llama_v1.py --enable-pytorch-profiler --profile-memory
+    python tiny_llama_v1.py --enable-pytorch-profiler --enable-memory-profiling
 
     # Complete profiling suite
     python tiny_llama_v1.py --enable-all-profiling --profile-dir ./complete_analysis
