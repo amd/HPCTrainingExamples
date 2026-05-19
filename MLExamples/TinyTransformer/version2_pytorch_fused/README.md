@@ -474,74 +474,116 @@ def calculate_arithmetic_intensity(operation_type, batch_size, seq_len, hidden_d
 
 ## Workshop Exercises
 
+**Host–GPU affinity:** On multi-NUMA systems, it is crucial to pin the CPU cores, local memory, and GPU correctly. Poor affinity increases cross-socket traffic significantly causing misleading timings.
+A quick way to pin the Python process to the first CPU and GPU is:
+```bash
+ROCR_VISIBLE_DEVICES=0 numactl -C 0 -m 0
+```
+See the [Affinity exercises](https://github.com/amd/HPCTrainingExamples/tree/main/Affinity) for how to discover your topology and set the affinity accordingly.
+
+
 ### Exercise 1: Kernel Fusion Analysis
 
-**Objective**: Compare baseline vs. fused implementations to quantify fusion benefits.
+**Objective**: Compare the unfused, fused, and compiled configurations on the same `tiny_llama_v2.py` code path to quantify the benefits of fusion.
 
-#### Step 1: Baseline Comparison
+
+#### Step 1: Three-way throughput comparison
+
+From `version2_pytorch_fused/`, run the same batch size, sequence length, and step count three times. Save each run to its own `--profile-dir` so JSON summaries do not overwrite each other.
+
 ```bash
-# Run Version 1 baseline for comparison
-cd ../version1_pytorch_baseline
-python tiny_llama_v1.py --batch-size 8 --seq-len 128 --num-steps 30 > ../version2_baseline_comparison.log
+cd version2_pytorch_fused
 
-# Run Version 2 fused implementation
-cd ../version2_pytorch_fused
-python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30 > fused_performance.log
+# 1. Unfused baseline (equivalent to Version 1)
+python tiny_llama_v2.py \
+  --batch-size 8 --seq-len 128 --num-steps 30 --disable-all-fusion \
+  --profile-dir ./bench_no_fusion
+
+# 2. Fused QKV + Flash Attention + SwiGLU
+python tiny_llama_v2.py \
+  --batch-size 8 --seq-len 128 --num-steps 30 \
+  --profile-dir ./bench_fused
+
+# 3. Fused + torch.compile
+python tiny_llama_v2.py \
+  --batch-size 8 --seq-len 128 --num-steps 30 --enable-torch-compile \
+  --profile-dir ./bench_torch_compile
 ```
 
-#### Step 2: Kernel Count Analysis
+Compare the performance you see for the different models. What are the differences?
+
+#### Step 2: Optional operator-level profiling
+
+Compare the kernel launch patterns between the three cases with the built-in PyTorch profiler:
+
 ```bash
-# PyTorch profiler comparison
-python run_pytorch_profiler.py --batch-size 8 --profile-dir ./fusion_analysis --generate-report
-
-# Compare kernel counts between versions:
-# use TensorBoard / Chrome trace on each profile directory, or diff kernel name lists
-# exported from rocprofv3 / profiler output — no separate helper script ships with this tree.
+python tiny_llama_v2.py \
+  --batch-size 8 --seq-len 128 --num-steps 10 --enable-pytorch-profiler \
+  --profile-dir ./fusion_analysis
 ```
+Open the Chrome trace or TensorBoard timeline and compare the unfused and fused versions. Do you see the ~43% fewer attention-related kernels per layer reported by the Python script?
 
-**Expected Results:**
-- 40-60% reduction in kernel launch count
-- 1.4-1.8x speedup in overall training
-- Improved GPU utilization metrics
+#### Reference results
+
+The following reference results have been obtained on an MI300A with PyTorch 2.9.1 and ROCm 7.2.0 with the same model setup as described above.
+
+| Configuration | Throughput (samples/s) | Avg batch time (ms) | Peak device memory (MB) |
+|-----------------|------------------------|---------------------|-------------------------|
+| `--disable-all-fusion` (V1-equivalent) | 293 | 27.3 | 998 |
+| Default fused | 437 | 18.3 | 967 |
+| `--enable-torch-compile` | 794 | 10.1 | 875 |
+
+On this setup, fusion yields ~**1.5×** throughput over the unfused path; adding `torch.compile` reaches ~**2.7×** vs. unfused and ~**1.8×** vs. fused alone.
+With the short sequence length of `seq=128` because with this short sequence length, the majority of the memory is consumed by the weights and gradients.
+Continue to exercise 2 to learn more about the impact of kernel fusion and Flash Attention on the memory consumption.
 
 ### Exercise 2: Flash Attention Memory Analysis
 
-**Objective**: Analyze memory efficiency improvements from Flash Attention.
+**Objective**: Show how peak device memory scales with sequence length for naive attention vs. Flash Attention.
 
-#### Step 1: Memory Scaling Test
+#### Memory scaling of unfused and fused attention
+
+Next, investigate how the memory consumption scales if we increase the sequence length with both naive unfused attention and the fused Flash Attention kernel.
+For this, enable `--enable-memory-profiling` so the summary reports **peak device memory** per run. Keep `batch-size 4` and `num-steps 20` fixed while sweeping sequence length.
+Run this for both variants and compare the scaling. Below, you can find some reference results to compare to.
+
 ```bash
-# Test memory scaling with sequence length
 for seq_len in 128 256 512 1024; do
     python tiny_llama_v2.py \
         --seq-len $seq_len \
         --batch-size 4 \
+        --num-steps 20 \
         --enable-memory-profiling \
         --profile-dir ./flash_attention_seq${seq_len}
 done
 ```
 
-#### Step 2: Memory Bandwidth Analysis
-```bash
-# Analyze memory bandwidth utilization
-python run_deepspeed_flops.py \
-    --batch-size 8 \
-    --seq-len 256 \
-    --computational-intensity \
-    --generate-roofline
-```
+#### Reference results
 
-**Expected Results:**
+The following reference results have been obtained on an MI300A with PyTorch 2.9.1 and ROCm 7.2.0 with the same model setup as described above.
 
-- Linear memory scaling vs. quadratic for baseline
-- 2-4x memory reduction for longer sequences
-- Improved arithmetic intensity metrics
+| Configuration | seq=128 | seq=256 | seq=512 | seq=1024 |
+|---------------|---------|---------|---------|----------|
+| `--disable-all-fusion` | 764 | 1031 | 1669 | 3471 |
+| Default fused (Flash Attention) | 764 | 967 | 1414 | 2302 |
+|---------------|---------|---------|---------|----------|
+| Ratio | 1.00x | 1.06x | 1.18x | 1.51x |
 
-### Exercise 3: ROCm Tools Deep Dive
+Clearly, the fused attention kernel reduces the required memory significantly. Why is that?
+Unfused attention materializes an \(S \times S\) attention matrix, so the peak memory rises close to **quadratically** in sequence length once that tensor dominates. Flash Attention avoids storing the full matrix as it computes the local attention scores on-the-fly resulting in a roughly **linear** scaling in \(S\). At `seq=128`, all both models report the same peak because weights and activations dominate.
 
-**Objective**: Master ROCm profiling tools for hardware-level optimization.
+Does the further fusion with `torch.compile` lower the peak even more? Try it out!
+
+### Exercise 3: Using ROCm Tools
+
+**Objective**: Explore ROCm profiling tools for hardware-level optimization.
 
 AMD offers three performance profiling tools for ROCm based applications:
-`rocprofv3`, `rocprof-sys`, and `rocprof-compute`. For more details about these tools, see 
+ - `rocprofv3` (hotspot analysis and timeline traces)
+ - `rocprof-sys` (hotspot and timeline profiling including CPU and MPI)
+ - `rocprof-compute` (in-depth profiling of kernel)
+
+For more details about these tools, see 
 [Appendix C of the TECHNICAL_APPENDICES.md](https://github.com/amd/HPCTrainingExamples/blob/main/MLExamples/TinyTransformer/TECHNICAL_APPENDICES.md#appendix-c-rocm-profiling-tools-reference).
 about each tool. 
 
@@ -575,7 +617,7 @@ rocprof-compute profile -n roof --kernel-names --roof-only --device 0 -- python 
 
 This generates three PDF files: two roofline plots and a legend.
 
-To collect a profile, then analyze a particular dispatch, run the following commands:
+To collect a profile, then analyze a particular kernel dispatch, run the following commands:
 
 ```bash
 rocprof-compute profile -n ver2 --no-roof -- python3 tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
