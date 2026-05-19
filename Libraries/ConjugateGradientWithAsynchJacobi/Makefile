@@ -1,5 +1,6 @@
 HIPCC = hipcc
-CXXFLAGS = -O3 -Wall --offload-arch=gfx942
+CXX = $(HIPCC)
+CXXFLAGS = -O3 -Wall --offload-arch=gfx950
 LIBS = -lrocsparse -lrocblas -lrocsolver
 
 HEADERS = hip_utils.h matrix_utils.h preconditioner.h ic_preconditioner.h \

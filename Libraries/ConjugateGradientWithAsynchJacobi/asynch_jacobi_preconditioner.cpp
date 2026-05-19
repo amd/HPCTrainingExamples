@@ -119,8 +119,8 @@ int apply_asynch_jacobi_preconditioner(double* d_x,
   HIP_CHECK(hipMemset(d_x, 0, n * sizeof(double)));
 
   if (version == 0) {
-    int block_size = 512;
-    int num_blocks = 608;
+    int block_size = 1024;
+    int num_blocks = 512;
     apply_asynch_jacobi_preconditioner_dynamic_kernel<<<num_blocks, block_size>>>(
 										  n,
 										  precond_data.jacobi_iter,
