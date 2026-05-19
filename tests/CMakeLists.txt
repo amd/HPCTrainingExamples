@@ -1390,6 +1390,12 @@ set_property(TEST Pytorch_HIPBLASLt_Regression_Check PROPERTY FAIL_REGULAR_EXPRE
 set_property(TEST Pytorch_HIPBLASLt_Regression_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'" "REGRESSION CHECK: SKIPPED")
 set_tests_properties(Pytorch_HIPBLASLt_Regression_Check PROPERTIES TIMEOUT 300)
 
+add_test(NAME Pytorch_HIPBLASLt_Origami_Regression_Check COMMAND ../hipblaslt_origami_regression_check.sh )
+set_property(TEST Pytorch_HIPBLASLt_Origami_Regression_Check PROPERTY PASS_REGULAR_EXPRESSION "ORIGAMI CHECK: PASSED")
+set_property(TEST Pytorch_HIPBLASLt_Origami_Regression_Check PROPERTY FAIL_REGULAR_EXPRESSION "ORIGAMI CHECK: FAILED")
+set_property(TEST Pytorch_HIPBLASLt_Origami_Regression_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'" "ORIGAMI CHECK: SKIPPED")
+set_tests_properties(Pytorch_HIPBLASLt_Origami_Regression_Check PROPERTIES TIMEOUT 300)
+
 add_test(NAME Pytorch_Profile_Rocprof-compute_ROCm COMMAND ../pytorch_profiling_rocprof-compute.sh )
 set_property(TEST Pytorch_Profile_Rocprof-compute_ROCm PROPERTY PASS_REGULAR_EXPRESSION "2.1 System Speed-of-Light")
 set_property(TEST Pytorch_Profile_Rocprof-compute_ROCm PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")

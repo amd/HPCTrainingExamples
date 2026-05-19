@@ -25,21 +25,48 @@
 #   full               120 configs / 360 GEMM tuples, ~80 s.
 #
 # Datatypes (HIPBLASLT_REGRESS_DTYPES env var, comma-separated):
-#   fp16,fp32   (default)  exercise both half- and single-precision
-#                          nn.Linear paths. The two paths consult
-#                          DIFFERENT .dat libraries on disk
-#                          (TensileLibrary_HH_HH_..._gfx942.dat for
-#                          fp16, TensileLibrary_SS_SS_..._gfx942.dat
-#                          for fp32) and DIFFERENT solution catalogues,
-#                          so a regression in one says nothing about
-#                          the other. Both need to be on the
-#                          regression sweep for the test to claim
-#                          coverage of typical mixed-precision
-#                          fine-tuning workloads.
-#   fp16        legacy single-dtype run (matches pre-2026-05-18
-#               behaviour of this script).
-#   fp32        fp32-only run (useful when debugging just the
-#               SS_SS_HA_Bias_SAV_UA path).
+#   fp16,fp32,bf16   (default)
+#
+# Each dtype consults a DIFFERENT Tensile .dat library on disk and a
+# DIFFERENT solution catalogue:
+#   fp16  -> TensileLibrary_HH_HH_..._gfx942.dat
+#   fp32  -> TensileLibrary_SS_SS_..._gfx942.dat
+#   bf16  -> TensileLibrary_BB_BB_..._gfx942.dat
+# so a regression in one dtype says nothing about another -- every
+# dtype the user cares about needs its own sweep for the test to
+# claim coverage. Common workload mix on MI300A: fp16/bf16 for ML
+# training, fp32 for mixed-precision accumulators.
+#
+# fp64 is INTENTIONALLY EXCLUDED from the default sweep.
+# Reason (verified on rocm/7.2.0 + PyTorch 2.9.1, 2026-05):
+#   - No `_HA_Bias_*_DD_*_Contraction_*_gfx942.dat` ships in any rocm
+#     7.x release. The only DD_DD files are plain
+#     `_UA_Type_DD_Contraction_*` (no bias, no SAV epilogue).
+#   - SLURM probe of nn.Linear(fp64) shows `algo_get_heuristic calls
+#     captured = 0` -- hipBLASLt's algorithm selector is never asked
+#     about fp64 work; PyTorch dispatches fp64 nn.Linear through
+#     rocBLAS dgemm + a separate ATen bias-add kernel.
+#   - Consequence: `returnAlgoCount=0` cannot occur for fp64, so the
+#     test would report `[dtype=fp64]: PASSED` for the wrong reason
+#     (nothing to fail rather than nothing failing). That's noise,
+#     not signal. fp64 needs a separate rocBLAS-side regression test.
+# Users who explicitly opt in (e.g. HIPBLASLT_REGRESS_DTYPES=fp64) can
+# still run the sweep; the harness accepts it but the result is not
+# meaningful for hipBLASLt overlay-coverage purposes.
+#
+# Single-dtype runs are still supported, e.g.:
+#   HIPBLASLT_REGRESS_DTYPES=fp16  -- legacy single-dtype run.
+#   HIPBLASLT_REGRESS_DTYPES=fp32  -- fp32-only run (useful when
+#                                     debugging only the SS_SS path).
+# Multi-dtype runs report per-dtype PASS/FAIL plus an OR'd summary.
+#
+# Coverage note: the deployed `.dat` overlay (hpctd repo, rocm/scripts/
+# hipblaslt_patch_setup.sh) currently adds exact-match rows for fp16
+# and fp32 only -- bf16 is expected to FAIL this test against the
+# upstream .dat files until the overlay is extended (separate question
+# whether the patcher should be extended -- the bf16 catalogue ships
+# zero `WGMXCC=1` SPX-tuned kernels, so any overlay candidate is
+# `WGMXCC=8` -- MI300X-tuned).
 #
 # Detection is architecture-agnostic: any (M, N, K, tA, tB) tuple for
 # which hipBLASLt's heuristic returns zero solutions counts as a
@@ -207,11 +234,19 @@ export HIPBLASLT_LOG_LEVEL=5
 #   full    120 configs. Same intent as `quick`, maximum coverage.
 SWEEP=${HIPBLASLT_REGRESS_SWEEP:-full}
 
-# Datatypes to sweep. fp16 and fp32 each consult an INDEPENDENT
-# Tensile .dat library on disk, so they need INDEPENDENT regression
-# coverage: a passing fp16 run says nothing about whether the fp32
-# equality table has the same shape family populated.
-DTYPES_RAW=${HIPBLASLT_REGRESS_DTYPES:-fp16,fp32}
+# Datatypes to sweep. Each dtype consults an INDEPENDENT Tensile .dat
+# library on disk, so each needs INDEPENDENT regression coverage:
+# a passing fp16 run says nothing about whether the fp32 or bf16
+# equality tables have the same shape family populated. Default covers
+# the three dtypes that actually dispatch through hipBLASLt for
+# nn.Linear(bias=True) on gfx942 / rocm-7.x.
+#
+# fp64 is excluded by default: empirically (SLURM job 10089, 2026-05)
+# nn.Linear(fp64) on PyTorch 2.9.1 + rocm/7.2.0 produces 0 algorithm-
+# heuristic queries -- the call path goes around hipBLASLt entirely
+# (rocBLAS dgemm + ATen bias-add). Including fp64 in the default
+# sweep would report PASS for the wrong reason and is therefore noise.
+DTYPES_RAW=${HIPBLASLT_REGRESS_DTYPES:-fp16,fp32,bf16}
 
 # Per-dtype state collected across the for-loop below. We can't just
 # exit on the first FAIL: a user running both dtypes wants to see
@@ -256,13 +291,20 @@ import torch.nn as nn
 sweep = sys.argv[1] if len(sys.argv) > 1 else "quick"
 arch  = sys.argv[2] if len(sys.argv) > 2 else "unknown"
 dtype_label = sys.argv[3] if len(sys.argv) > 3 else "fp16"
-if dtype_label == "fp16":
-    torch_dtype = torch.float16
-elif dtype_label == "fp32":
-    torch_dtype = torch.float32
-else:
-    print(f"HIPBLASLT_REGRESSION_CHECK: unknown dtype '{dtype_label}'", file=sys.stderr)
+_DTYPE_MAP = {
+    "fp16": torch.float16,
+    "fp32": torch.float32,
+    "bf16": torch.bfloat16,
+    "fp64": torch.float64,
+}
+if dtype_label not in _DTYPE_MAP:
+    print(
+        f"HIPBLASLT_REGRESSION_CHECK: unknown dtype '{dtype_label}' "
+        f"(expected one of: {', '.join(sorted(_DTYPE_MAP))})",
+        file=sys.stderr,
+    )
     sys.exit(2)
+torch_dtype = _DTYPE_MAP[dtype_label]
 if not torch.cuda.is_available():
     print("HIPBLASLT_REGRESSION_CHECK: no GPU available, skipping", file=sys.stderr)
     sys.exit(77)  # CTest "skip" convention
@@ -489,8 +531,8 @@ ALL_SKIP=1
 for DT in "${DTYPES_ARR[@]}"; do
    DT_TRIM=$(echo "${DT}" | tr -d '[:space:]')
    case "${DT_TRIM}" in
-      fp16|fp32) ;;
-      *) echo "REGRESSION CHECK: unknown dtype '${DT_TRIM}' (expected fp16 or fp32)"
+      fp16|fp32|bf16|fp64) ;;
+      *) echo "REGRESSION CHECK: unknown dtype '${DT_TRIM}' (expected one of: fp16, fp32, bf16, fp64)"
          OVERALL_FAIL=1
          PER_DTYPE_RESULT="${PER_DTYPE_RESULT}  ${DT_TRIM}: BAD_DTYPE\n"
          continue;;
