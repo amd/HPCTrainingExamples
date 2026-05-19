@@ -1,50 +1,98 @@
-# Purpose of this code
-Assume you need to solve a linear system
+# Conjugate Gradient with Preconditioners
 
-$$
-A x = b
-$$ 
+Solves sparse symmetric positive definite (SPD) linear systems using the Conjugate Gradient method with various preconditioners. Implemented using HIP, rocBLAS, rocSPARSE, and rocSOLVER.
 
-where $A$ is an $N \times N$ sparse, symmetric positive definite (SPD) matrix, $b$ is an $N\times 1$ right-hand side and $x$ is a vector of unknows. Such a system can be usually solved with a linear solver called Conjugate Gradient (CG) (https://en.wikipedia.org/wiki/Conjugate_gradient_method).  
+## Executables
 
-CG is an iterative method that finds an approximate solution to the linear system above. CG implementation consists of sparse matrix-vector products, vector dot products, vector scaling and vector updates (AXPYs). It can be implemented using rocBLAS and rocSPARSE.
+- `run_cg` - Standard Preconditioned Conjugate Gradient (PCG)
+- `run_cg_cg` - CG-CG variant with optional low-synchronization mode
 
-This example demonstrates how to:
-- use rocBLAS,
-- use rocSPARSE,
-- create an incomplete Cholesky preconditioner and use it in the code.
+## Available Preconditioners
 
-# Compiling
+| Name | Description |
+|------|-------------|
+| `none` | No preconditioning |
+| `ic` / `ichol` | Incomplete Cholesky |
+| `jacobi` | Jacobi (damped Richardson) |
+| `asynch_jacobi` | Asynchronous Jacobi |
+| `gs_it` | Iterative Gauss-Seidel |
+| `gs_it2` | Iterative Gauss-Seidel (variant 2) |
 
-The example is self-contained. Just do:
+## Compiling
 
-```
+```bash
 module load rocm
+make
 ```
 
-# Running
+To clean and rebuild:
 
-```
-./run_cg --matrix /path/to/matrix/in/matrix/market/format.mtx --maxit 10000 --tol 1e-8 --rhs /path/to/rhs/in/matrix/market/format.mtx
+```bash
+make clean
+make
 ```
 
-The parameters `tol`, `maxit` and `rhs` are optional. An example matrix can be obtained as follows:
+Note: The Makefile uses `--offload-arch=gfx950` by default. Modify `CXXFLAGS` in `Makefile` if targeting a different GPU architecture.
 
+## Usage
+
+### run_cg
+
+```bash
+./run_cg --matrix <path.mtx> [options]
 ```
+
+### run_cg_cg
+
+```bash
+./run_cg_cg --matrix <path.mtx> [options]
+```
+
+### Command-Line Options
+
+| Option | Description |
+|--------|-------------|
+| `--matrix <file>` | Path to matrix in Matrix Market (.mtx) format (required) |
+| `--rhs <file>` | Path to right-hand side vector in Matrix Market format |
+| `--tol <value>` | Convergence tolerance (default: 1e-8) |
+| `--maxit <n>` | Maximum iterations (default: 100000) |
+| `--precond <name>` | Preconditioner name (see table above) |
+| `--jacobi_iter <n>` | Number of Jacobi iterations |
+| `--jacobi_omega <value>` | Jacobi relaxation parameter (0 < omega <= 1) |
+| `--asynch_jacobi_version <n>` | Asynchronous Jacobi kernel version |
+| `--gs_inner_iter <n>` | Gauss-Seidel inner iterations |
+| `--gs_outer_iter <n>` | Gauss-Seidel outer iterations |
+| `--low-synch <0\|1>` | Enable low-synchronization mode (`run_cg_cg` only) |
+
+## Example
+
+Download a test matrix:
+
+```bash
 wget https://suitesparse-collection-website.herokuapp.com/MM/HB/1138_bus.tar.gz
 tar -xvf 1138_bus.tar.gz
 ```
 
-Then run with:
+Run with Jacobi preconditioner:
 
+```bash
+./run_cg --matrix 1138_bus/1138_bus.mtx --precond jacobi --jacobi_iter 5 --maxit 10000
 ```
-./run_cg --matrix 1138_bus/1138_bus.mtx --maxit 10000
+
+Run with asynchronous Jacobi:
+
+```bash
+./run_cg --matrix 1138_bus/1138_bus.mtx --precond asynch_jacobi --jacobi_iter 3
 ```
 
-Things to remember:
+Run CG-CG with low-synch mode:
 
-- Matrix must be in a proper matrix market (MTX) format,
-- The matrix MUST BE SPD in order for the code to work, 
-- Incomplete Cholesky does not work for all the problems (!).
+```bash
+./run_cg_cg --matrix 1138_bus/1138_bus.mtx --precond jacobi --low-synch 1
+```
 
+## Notes
 
+- Matrix must be in Matrix Market (.mtx) format
+- Matrix must be symmetric positive definite (SPD)
+- Incomplete Cholesky may fail for some matrices
