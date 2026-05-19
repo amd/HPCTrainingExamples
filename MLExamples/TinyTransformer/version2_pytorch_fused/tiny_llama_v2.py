@@ -141,6 +141,7 @@ class PerformanceMonitor:
         self.metrics = {
             'training_speed': [],
             'memory_usage': [],
+            'gpu_peak_memory_mb': [],
             'gpu_utilization': [],
             'loss_values': [],
             'batch_times': [],
@@ -168,8 +169,14 @@ class PerformanceMonitor:
         self.start_time = None
         return elapsed
 
-    def record_batch_metrics(self, batch_size: int, loss: float, timings: Dict[str, float], fusion_stats: Dict[str, Any] = None):
-        """Record metrics for a training batch with fusion statistics."""
+    def record_batch_metrics(self, batch_size: int, loss: float, timings: Dict[str, float], fusion_stats: Dict[str, Any] = None,
+                             gpu_peak_memory_mb: Optional[float] = None):
+        """Record metrics for a training batch with fusion statistics.
+
+        gpu_peak_memory_mb: per-step peak device memory (bytes->MB) from
+        torch.cuda.max_memory_allocated() after reset_peak_memory_stats() at
+        step start; captures transient activations during backward.
+        """
         self.total_samples += batch_size
         self.metrics['loss_values'].append(loss)
         self.metrics['batch_times'].append(timings.get('total', 0))
@@ -181,6 +188,8 @@ class PerformanceMonitor:
         if torch.cuda.is_available():
             memory_mb = torch.cuda.memory_allocated() / (1024**2)
             self.metrics['memory_usage'].append(memory_mb)
+            if gpu_peak_memory_mb is not None:
+                self.metrics['gpu_peak_memory_mb'].append(gpu_peak_memory_mb)
 
         # Training speed
         if timings.get('total', 0) > 0:
@@ -206,7 +215,13 @@ class PerformanceMonitor:
             'avg_optimizer_time': np.mean(self.metrics['optimizer_times']),
         }
 
-        if self.metrics['memory_usage']:
+        if self.metrics['gpu_peak_memory_mb']:
+            summary.update({
+                'peak_memory_mb': max(self.metrics['gpu_peak_memory_mb']),
+                'avg_peak_memory_mb': np.mean(self.metrics['gpu_peak_memory_mb']),
+                'avg_memory_mb': np.mean(self.metrics['memory_usage']) if self.metrics['memory_usage'] else 0.0,
+            })
+        elif self.metrics['memory_usage']:
             summary.update({
                 'peak_memory_mb': max(self.metrics['memory_usage']),
                 'avg_memory_mb': np.mean(self.metrics['memory_usage'])
@@ -223,10 +238,16 @@ class PerformanceMonitor:
 
             fusion_summary = {}
             for key, values in total_fusion_stats.items():
-                if isinstance(values[0], (int, float)):
-                    fusion_summary[f'avg_{key}'] = np.mean(values)
+                sample = values[0]
+                # bool subclasses int — must branch on bool first so flags keep canonical keys
+                if isinstance(sample, bool):
+                    fusion_summary[key] = bool(sample)
+                elif isinstance(sample, int):
+                    fusion_summary[key] = int(round(np.mean(values)))
+                elif isinstance(sample, float):
+                    fusion_summary[key] = float(np.mean(values))
                 else:
-                    fusion_summary[key] = values[-1]  # Keep latest non-numeric value
+                    fusion_summary[key] = values[-1]
 
             summary['fusion_statistics'] = fusion_summary
 
@@ -818,6 +839,9 @@ def train_tiny_llama_v2(
     print("=" * 70)
 
     for step in range(num_steps):
+        if torch.cuda.is_available():
+            torch.cuda.reset_peak_memory_stats()
+
         # Start batch timing
         batch_timings = {}
         monitor.start_timing()
@@ -863,12 +887,18 @@ def train_tiny_llama_v2(
         # Total batch time
         batch_timings['total'] = sum(batch_timings.values())
 
+        peak_mb: Optional[float] = None
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+            peak_mb = torch.cuda.max_memory_allocated() / (1024**2)
+
         # Record metrics with fusion statistics
         monitor.record_batch_metrics(
             batch_size,
             loss.item(),
             batch_timings,
-            fusion_stats
+            fusion_stats,
+            gpu_peak_memory_mb=peak_mb,
         )
 
         # PyTorch profiler step
@@ -878,12 +908,13 @@ def train_tiny_llama_v2(
         # Progress logging
         if step % 10 == 0:
             speed = batch_size / batch_timings['total'] if batch_timings['total'] > 0 else 0
-            memory_mb = torch.cuda.memory_allocated() / (1024**2) if torch.cuda.is_available() else 0
+            live_mb = torch.cuda.memory_allocated() / (1024**2) if torch.cuda.is_available() else 0
+            peak_log = f"{peak_mb:6.1f}" if peak_mb is not None else "  n/a"
 
             print(f"Step {step:3d}/{num_steps} | "
                   f"Loss: {loss.item():.4f} | "
                   f"Speed: {speed:5.1f} samples/sec | "
-                  f"Memory: {memory_mb:6.1f} MB | "
+                  f"Peak: {peak_log} MB | Live: {live_mb:6.1f} MB | "
                   f"Time: {batch_timings['total']*1000:5.1f}ms")
 
     print("=" * 70)
@@ -919,7 +950,11 @@ def train_tiny_llama_v2(
     print(f"   Final loss: {summary.get('avg_loss', 0):.4f}")
 
     if 'peak_memory_mb' in summary:
-        print(f"   Peak memory usage: {summary['peak_memory_mb']:.1f} MB")
+        print(f"   Peak device memory (high-water per step): {summary['peak_memory_mb']:.1f} MB")
+        if 'avg_peak_memory_mb' in summary:
+            print(f"   Avg peak per step: {summary['avg_peak_memory_mb']:.1f} MB")
+        if 'avg_memory_mb' in summary:
+            print(f"   Avg live allocations after step: {summary['avg_memory_mb']:.1f} MB")
 
     # Fusion efficiency summary
     if 'fusion_statistics' in summary:
