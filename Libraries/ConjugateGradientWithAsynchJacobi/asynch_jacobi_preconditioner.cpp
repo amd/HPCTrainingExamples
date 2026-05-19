@@ -2,6 +2,8 @@
 #include "jacobi_preconditioner.h"
 #include <cstdio>
 
+/* based on Tsai, Yu-Hsiang Mike, et al. Implementing Asynchronous Jacobi Iteration on GPUs. 2022 IEEE/ACM Workshop on Latest Advances in Scalable Algorithms for Large-Scale Heterogeneous Systems (ScalAH). IEEE, 2022.*/
+
 __global__ void apply_asynch_jacobi_preconditioner_static_kernel(int n,
 								 int jacobi_iter,
 								 double omega,
@@ -102,7 +104,6 @@ int setup_asynch_jacobi_preconditioner(const CSRMatrix& A,
 
   precond_data.name = "asynch_jacobi";
 
-  // TODO: add asynch-specific setup here
 
   return 0;
 }
@@ -158,5 +159,4 @@ void cleanup_asynch_jacobi_preconditioner(PreconditionerData& precond_data)
 {
   cleanup_jacobi_preconditioner(precond_data);
 
-  // TODO: add asynch-specific cleanup here
 }

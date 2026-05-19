@@ -4,7 +4,8 @@
 
 #define BLOCK_SIZE 1024
 #define WARP_SIZE 64
-
+/* Chronopoulos and Gear CG */
+/* Based on Pieter Ghysels and Wim Vanroose paper */
 __global__ void fused_dot_products_kernel(int n,
                                           const double* d_r,
                                           const double* d_w,
