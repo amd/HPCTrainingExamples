@@ -44,6 +44,10 @@ The plots will appear as PDF files in the `./workloads/problem_roof_only/MI200` 
 We see that the kernel's performance is not near the achievable bandwidth possible on the hardware, which makes it a good candidate to consider
 optimizing.
 
+**Note**: on most recent rocm versions the roofline will be produced after the analyze step (ascii art and html).
+
+**Note on MPI**: if you run an MPI application, make sure to create a folder per MPI rank by using the `%rank%` in the output directory name. Example: `srun -n 2 rocprof-compute profile --output-directory test_mpi_profiling-rank%rank% -- ./my_favorite_exe_with_mpi`
+
 ### Exercise instructions:
 From the roofline we were able to see that there is room for improvement in this kernel. One of the
 first things to check is whether or not we have reasonable launch parameters for this kernel.
