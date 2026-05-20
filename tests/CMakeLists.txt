@@ -1722,7 +1722,8 @@ set_property(TEST Miniforge3_Env_Install PROPERTY RESOURCE_LOCK miniforge3_cache
 
 #HDF5 Tests
 add_test(NAME HDF5_Check_Version COMMAND ../hdf5_check_version.sh)
-set_property(TEST HDF5_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "h5dump: Version 1.14.6" "h5dump: Version 1.12.1")
+set_property(TEST HDF5_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "\\[MODULE_VERSION_(MATCH|CHECK_SKIPPED_CRAY)\\]")
+set_property(TEST HDF5_Check_Version PROPERTY FAIL_REGULAR_EXPRESSION "\\[MODULE_VERSION_MISMATCH\\]")
 set_property(TEST HDF5_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME HDF5_Check_H5Dump COMMAND ../hdf5_check_h5dump.sh)
@@ -1731,7 +1732,8 @@ set_property(TEST HDF5_Check_H5Dump PROPERTY SKIP_REGULAR_EXPRESSION "module spi
 
 #NETCDF Tests
 add_test(NAME Netcdf_C_Check_Version COMMAND ../netcdf-c_check_version.sh)
-set_property(TEST Netcdf_C_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "netcdf library version 4.9.3" "netcdf library version 4.9.2")
+set_property(TEST Netcdf_C_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "\\[MODULE_VERSION_(MATCH|CHECK_SKIPPED_CRAY)\\]")
+set_property(TEST Netcdf_C_Check_Version PROPERTY FAIL_REGULAR_EXPRESSION "\\[MODULE_VERSION_MISMATCH\\]")
 set_property(TEST Netcdf_C_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Netcdf_C_Check_Parallel_On COMMAND ../netcdf-c_print_config.sh)
@@ -1755,7 +1757,8 @@ set_property(TEST Netcdf_C_Check_Parallel_IO PROPERTY PASS_REGULAR_EXPRESSION "0
 set_property(TEST Netcdf_C_Check_Parallel_IO PROPERTY SKIP_REGULAR_EXPRESSION "module spider netcdf-c" "Skip")
 
 add_test(NAME Netcdf_Fortran_Check_Version COMMAND ../netcdf-fortran_check_version.sh)
-set_property(TEST Netcdf_Fortran_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "4.6.2")
+set_property(TEST Netcdf_Fortran_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "\\[MODULE_VERSION_(MATCH|CHECK_SKIPPED_CRAY)\\]")
+set_property(TEST Netcdf_Fortran_Check_Version PROPERTY FAIL_REGULAR_EXPRESSION "\\[MODULE_VERSION_MISMATCH\\]")
 set_property(TEST Netcdf_Fortran_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Netcdf_Fortran_Check_Pres_Temp_4D_WR COMMAND ../netcdf-fortran_pres_temp_4D.sh)
