@@ -1,24 +1,17 @@
 #!/bin/bash
 
-# Fast regression check for hipBLASLt heuristic-fall-through bugs on
-# AMD CDNA accelerators. Exercises the three GEMM families (forward + 2
+# Note, this test is checking the default track
+# which for MI300A is the case when TENSILE_SOLUTION_SELECTION_METHOD=0
+# NOTE that on MI350, the TENSILE_SOLUTION_SELECTION_METHOD flag has no effect
+# and StreamK is always the track that is picked
+# For details: https://rocm.docs.amd.com/projects/hipBLASLt/en/develop/reference/env-variables.html#origami-with-stream-k-configuration
+
+# Fast regression check for hipBLASLt heuristic-fall-through bugs.
+# Exercises the three GEMM families (forward + 2
 # backward variants) of `nn.Linear(hidden, num_classes)` over a small
 # (batch_size, num_classes, hidden) sweep, captures the hipBLASLt API
 # log, and flags any `returnAlgoCount=0` event.
 #
-# The sweep is intentionally WIDER than the current overlay's
-# coverage. A FAIL on this test answers two questions at once:
-#   (a) "did the existing patched shapes regress?" -- if a previously
-#       patched cell starts missing, that's an overlay deployment or
-#       library-load problem.
-#   (b) "are there other broken shapes in the family that the overlay
-#       doesn't yet cover?" -- the original upstream gfx942 7.x bug
-#       is a family of small-num_classes forward GEMMs, not 3 point
-#       shapes. The test surfaces those without needing them to be
-#       known in advance.
-# Don't be tempted to narrow the sweep just to make CTest go green:
-# the failures are real and useful signal that the overlay should
-# be extended (see hipblaslt_patch_setup.sh shape tables).
 #
 # Modes (HIPBLASLT_REGRESS_SWEEP env var):
 #   quick   (default)  12 configs / 36 GEMM tuples, ~10 s.
@@ -32,47 +25,22 @@
 #   fp16  -> TensileLibrary_HH_HH_..._gfx942.dat
 #   fp32  -> TensileLibrary_SS_SS_..._gfx942.dat
 #   bf16  -> TensileLibrary_BB_BB_..._gfx942.dat
-# so a regression in one dtype says nothing about another -- every
-# dtype the user cares about needs its own sweep for the test to
-# claim coverage. Common workload mix on MI300A: fp16/bf16 for ML
-# training, fp32 for mixed-precision accumulators.
 #
-# fp64 is INTENTIONALLY EXCLUDED from the default sweep.
-# Reason (verified on rocm/7.2.0 + PyTorch 2.9.1, 2026-05):
-#   - No `_HA_Bias_*_DD_*_Contraction_*_gfx942.dat` ships in any rocm
-#     7.x release. The only DD_DD files are plain
-#     `_UA_Type_DD_Contraction_*` (no bias, no SAV epilogue).
-#   - SLURM probe of nn.Linear(fp64) shows `algo_get_heuristic calls
-#     captured = 0` -- hipBLASLt's algorithm selector is never asked
-#     about fp64 work; PyTorch dispatches fp64 nn.Linear through
-#     rocBLAS dgemm + a separate ATen bias-add kernel.
-#   - Consequence: `returnAlgoCount=0` cannot occur for fp64, so the
-#     test would report `[dtype=fp64]: PASSED` for the wrong reason
-#     (nothing to fail rather than nothing failing). That's noise,
-#     not signal. fp64 needs a separate rocBLAS-side regression test.
-# Users who explicitly opt in (e.g. HIPBLASLT_REGRESS_DTYPES=fp64) can
-# still run the sweep; the harness accepts it but the result is not
-# meaningful for hipBLASLt overlay-coverage purposes.
-#
-# Single-dtype runs are still supported, e.g.:
-#   HIPBLASLT_REGRESS_DTYPES=fp16  -- legacy single-dtype run.
-#   HIPBLASLT_REGRESS_DTYPES=fp32  -- fp32-only run (useful when
-#                                     debugging only the SS_SS path).
-# Multi-dtype runs report per-dtype PASS/FAIL plus an OR'd summary.
-#
-# Coverage note: the deployed `.dat` overlay (hpctd repo, rocm/scripts/
-# hipblaslt_patch_setup.sh) currently adds exact-match rows for fp16
-# and fp32 only -- bf16 is expected to FAIL this test against the
-# upstream .dat files until the overlay is extended (separate question
-# whether the patcher should be extended -- the bf16 catalogue ships
-# zero `WGMXCC=1` SPX-tuned kernels, so any overlay candidate is
-# `WGMXCC=8` -- MI300X-tuned).
+# fp64 is INTENTIONALLY EXCLUDED: it is not normally dispatched
+# through hipBLASLt (parser sees zero rocblaslt_matmul_algo_get_heuristic
+# events), and every shipped TensileLibrary_DD_DD_..._gfx942.dat is a
+# single TruePred->Matching catch-all row that cannot return zero
+# solutions anyway. Either reason alone makes returnAlgoCount=0
+# unreachable, so fp64 would PASS vacuously.
+# fp32 stays: the API IS exercised, and some SS_SS placeholders ship
+# with EqualityMatching-only rows (no catch-all) where a real miss
+# is structurally possible.
 #
 # Detection is architecture-agnostic: any (M, N, K, tA, tB) tuple for
 # which hipBLASLt's heuristic returns zero solutions counts as a
-# regression on whatever arch the run is on. The SHAPE SWEEP, however,
+# regression on whatever arch the run is on. The shape sweep (i.e. what shapes are checked)
 # is arch-aware -- the script reads `rocminfo` and picks the (bs, nc,
-# hidden) ranges that match the production workload pattern of the
+# hidden) ranges that match what could be a production workload pattern of the
 # target arch:
 #     gfx942 (CDNA3, MI300A/X)  : ResNet-style FC shapes
 #                                 -- centered on (256, 100, 2048),
@@ -103,38 +71,15 @@
 # pipelines. So the patched + probed shapes are the bread-and-butter
 # of CV transfer learning, not an esoteric corner.
 #
-# On a patched system all 3 are heuristic-hit (returnAlgoCount>0) and
-# the call returns in <1 ms. On an unpatched system the heuristic
-# misses, falls through to runtime compile, and stalls ~6 s per shape.
-# Sweeping `bs`, `num_classes`, and `hidden` widens the net so a future
-# kernel-update regression that breaks a NEW shape is caught early.
-#
 # Runtime: ~10 s on a healthy / patched system, regardless of partition
 # (SPX or CPX). On a regressed system each broken shape adds ~6 s of
 # Tensile dynamic-compile stall, which makes the test slower and is
 # itself a signal to inspect the failing-shapes list it prints.
 #
-# Exit code: 0 PASS (zero heuristic misses), 1 FAIL, 77 SKIP. With
-# multiple dtypes, the overall exit is the OR of per-dtype results
-# (any FAIL -> overall FAIL); per-dtype PASS/FAIL is printed
-# individually so partial regressions are visible.
-# Greppable output: "REGRESSION CHECK [dtype=fp16]: PASSED" / "FAILED",
-# plus a final "REGRESSION CHECK: PASSED / FAILED" summary line.
-#
 # NOTE: this test assumes PyTorch has been installed according
 # to the instructions available in the model installation repo:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/pytorch_setup.sh
-# and that any ROCm version known to need the gfx942 hipBLASLt overlay
-# (7.1.0, 7.1.1, 7.2.0, 7.2.2, 7.2.3 as of 2026-05) auto-loads
-# `hipblaslt/patched` from its rocm/<v> modulefile. The overlay only
-# patches gfx942 .dat files; on gfx950 the overlay is inert and a FAIL
-# from this test would indicate an unpatched upstream gfx950 .dat gap.
 
-# Make the script robust to being invoked via `bash <path>` (a fresh
-# non-interactive subshell where Lmod's `module` shell function may not
-# be imported even when exported with `export -f module`). Sourcing
-# Lmod's bash init re-defines `module` in this shell. Same idiom as
-# ftorch_multigpu_test.sh in this directory.
 if ! type module >/dev/null 2>&1; then
    [ -r /etc/profile.d/lmod.sh ]         && . /etc/profile.d/lmod.sh
    [ -r /usr/share/lmod/lmod/init/bash ] && . /usr/share/lmod/lmod/init/bash
@@ -148,23 +93,12 @@ if [ $? -eq 1 ]; then
 fi
 module load pytorch 2>/dev/null
 
-# CTest-friendly SKIP: if pytorch isn't installed for this ROCm version
-# (e.g. base rocm module without `pytorch_setup.sh` having been run),
-# don't surface a FAIL -- emit the SKIP token and exit 77.
 if ! python3 -c "import torch" 2>/dev/null; then
    echo "REGRESSION CHECK: SKIPPED (pytorch module not available or torch import failed)"
    exit 77
 fi
 
-# Self-diagnostic header: print exactly which hipBLASLt library tree
-# will be consulted, which patch env vars are set, and which modules
-# are loaded. Makes "I unloaded the patch but the test still passes"
-# scenarios traceable to: (a) HIPBLASLT_TENSILE_LIBPATH still exported
-# from a previous shell state (Lmod sometimes leaves env vars set after
-# unload when modulefiles weren't perfectly symmetric), or (b) the
-# library tree the binary is actually reading from. The default tree
-# is `<rocm>/lib/hipblaslt/library/` when HIPBLASLT_TENSILE_LIBPATH is
-# unset; the patched overlay points at `/opt/rocm-patches-<v>/...`.
+# Self-diagnostic header
 echo
 echo "--- hipBLASLt regression-check environment ---"
 echo "  HIPBLASLT_TENSILE_LIBPATH = ${HIPBLASLT_TENSILE_LIBPATH:-<unset, will use default <rocm>/lib/hipblaslt/library>}"
@@ -176,12 +110,6 @@ fi
 echo "----------------------------------------------"
 echo
 
-# Detect GPU arch via rocminfo so the shape sweep can adapt: gfx942
-# (CDNA3, MI300A/X) is exercised with the ResNet/CV shapes that the
-# original heuristic regression covered; gfx950 (CDNA4, MI355X) is
-# exercised with LLM-style FFN/attention shapes since the production
-# workload mix differs.
-#
 # HIPBLASLT_REGRESS_ARCH override: changes which SHAPE FAMILY is
 # probed, NOT which .dat library hipBLASLt opens. The .dat library is
 # selected by the actual hardware at runtime -- setting
@@ -189,9 +117,7 @@ echo
 # shapes against the gfx942 heuristic library (a useful but distinct
 # question), not against a gfx950 library that doesn't exist on that
 # node. To actually test a gfx950 .dat library, you need gfx950
-# hardware. Override is therefore for: (a) smoke-testing the dispatch
-# logic, (b) asking "how does THIS hardware's heuristic handle the
-# OTHER arch's typical shapes".
+# hardware.
 if [ -n "${HIPBLASLT_REGRESS_ARCH:-}" ]; then
    GFX_ARCH="${HIPBLASLT_REGRESS_ARCH}"
 elif command -v rocminfo >/dev/null 2>&1; then
@@ -213,10 +139,7 @@ echo "detected GPU arch: ${GFX_ARCH}"
 #                                returnAlgoCount=N lines live here
 # We need BOTH the API channel (to see heuristic misses) and the INFO
 # channel (to confirm which .dat library was opened), so LEVEL=5 is
-# the minimum that gives the parser anything to work with. Setting
-# anything lower would make the test pass vacuously: parser sees no
-# `returnAlgoCount=...` lines, reports zero misses, PASS. Same level
-# as the offline mining the parser was developed against.
+# the minimum that gives the parser anything to work with. 
 export HIPBLASLT_LOG_LEVEL=5
 
 # Sweep selector:
@@ -241,18 +164,8 @@ SWEEP=${HIPBLASLT_REGRESS_SWEEP:-full}
 # the three dtypes that actually dispatch through hipBLASLt for
 # nn.Linear(bias=True) on gfx942 / rocm-7.x.
 #
-# fp64 is excluded by default: empirically (SLURM job 10089, 2026-05)
-# nn.Linear(fp64) on PyTorch 2.9.1 + rocm/7.2.0 produces 0 algorithm-
-# heuristic queries -- the call path goes around hipBLASLt entirely
-# (rocBLAS dgemm + ATen bias-add). Including fp64 in the default
-# sweep would report PASS for the wrong reason and is therefore noise.
 DTYPES_RAW=${HIPBLASLT_REGRESS_DTYPES:-fp16,fp32,bf16}
 
-# Per-dtype state collected across the for-loop below. We can't just
-# exit on the first FAIL: a user running both dtypes wants to see
-# BOTH miss lists so they can prioritise which overlay extension to
-# build first. So accumulate into PER_DTYPE_RESULT (greppable) and a
-# scalar OVERALL_FAIL counter (drives the final exit code).
 OVERALL_FAIL=0
 PER_DTYPE_RESULT=""
 LOGS_TO_CLEAN=""
@@ -407,11 +320,6 @@ PY
    fi
 
    # Sanity-check the log file is non-empty BEFORE running the parser.
-   # A silent empty-log -> zero-misses -> false PASS was a real bug in
-   # earlier versions of this script (LOG_LEVEL was set too low to
-   # capture the API events the parser keys on). Print log size, line
-   # count, and unique tags seen so a future regression in log-capture
-   # is loud rather than silent.
    echo
    echo "--- hipBLASLt log sanity check [dtype=${DTYPE}] ---"
    echo "  log file       = ${LOG}"
@@ -434,11 +342,6 @@ PY
    fi
 
    # Extract the authoritative library path from the hipBLASLt init line.
-   # Shape: [...][Info][initialize] HIPBLASLT_TENSILE_LIBPATH not set:
-   # Using "<path>"  --  or, when the env var IS set, the second form
-   # usually reads: [...][Info][initialize] Using HIPBLASLT_TENSILE_LIBPATH=
-   # "<path>". Either way the quoted trailing path is the .dat directory
-   # hipBLASLt actually opened.
    echo
    echo "--- hipBLASLt library path actually used (from log) [dtype=${DTYPE}] ---"
    local INIT_LINE
@@ -468,11 +371,7 @@ PY
 
    # Parse the log: every `returnAlgoCount=0` is a heuristic miss.  For
    # each miss, reconstruct (M, N, K) from the 3 layout_create lines that
-   # immediately precede it. Note: parsing is dtype-agnostic (the
-   # log itself only has M/N/K/transpose info, not the input type
-   # constant), and that's intentional -- the per-dtype LOG file gives
-   # us the dtype context implicitly, and the miss list is printed
-   # under its dtype banner.
+   # immediately precede it. 
    local MISSES RC_PARSE
    MISSES=$(python3 - "${LOG}" <<'PY'
 import re, sys, os

@@ -1,43 +1,18 @@
 #!/bin/bash
 
 # Regression check for the Origami analytical kernel-selection layer in
-# hipBLASLt 7.x on AMD CDNA accelerators. Companion test to
+# hipBLASLt 7.x. Companion test to
 # hipblaslt_regression_check.sh, which probes returnAlgoCount=0 events
 # on the DEFAULT (TENSILE_SOLUTION_SELECTION_METHOD=0) dispatch path.
-# This script probes the analytical (TSSM=2) path specifically.
+# This script probes the analytical (TENSILE_SOLUTION_SELECTION_METHOD=2) path specifically.
 #
 # Background. Starting in ROCm 7.0 hipBLASLt ships an analytical kernel
 # selector ("Origami"). The latency table (origami::hardware_t::
-# INSTRUCTION_MAP) lives in libhipblaslt.so itself as a compiled-in
-# static initialiser, NOT in any .dat file -- verified by
-# `nm -C libhipblaslt.so | grep origami::hardware_t::INSTRUCTION_MAP`.
+# INSTRUCTION_MAP) lives in libhipblaslt.so
 #
-# Two on-host call paths reach origami::select_best_macro_tile_size
-# (which is what emits the "Latency not found" warning via
-# origami::compute_total_latency -> origami::hardware_t::get_mi_latency):
-#
-#   (a) Tensile path: ExactLogicLibrary walks the rows of a loaded .dat
-#       file; the ExperimentalStreamK row, when enabled, hands the
-#       problem to a PredictionLibrary, which calls origami directly
-#       (tensilelite/include/Tensile/PredictionLibrary.hpp ~L165). This
-#       row is gated by Debug::useExperimentalSelection()==2, i.e.
-#       enabled when TENSILE_SOLUTION_SELECTION_METHOD=2.
-#   (b) rocroller path: handle->useRocRoller branch in tensile_host.cpp.
-#       Dormant in our environment (useRocRoller defaults to -1; the
-#       useRocRoller(handle, prob) check returns false unless the user
-#       opts in via HIPBLASLT_USE_ROCROLLER=1 AND the problem matches a
-#       narrow shape filter). We have NEVER observed origami warnings
-#       come through this path on this cluster.
-#
-# Path (a) is the one this test exercises. Empirically (2026-05-20,
-# rocm/7.2.0, unpatched .dat) the warnings on Linear(2048, 100) fp16
-# come 100% from the BACKWARD call, which lands on the
-# _ExperimentalStreamK_..._Ailk_Bljk_..._gfx942.dat file (the only .dat
-# whose sole inner row is `FreeSizeMatching -> Prediction`); the
-# winning kernel is Cijk_Ailk_Bljk_..._SK3_..., confirming the
-# Prediction-library / Origami selection actually shipped a kernel.
-#
-# The hipblaslt/patched overlay DOES affect the warning count -- not
+# NOTE the hipblaslt/patched overlay done with
+# https://github.com/amd/HPCTrainingDock/blob/main/rocm/scripts/hipblaslt_patch_setup.sh
+# DOES affect the warning count -- not
 # by editing INSTRUCTION_MAP (it can't), but by inserting equality
 # rows in the bias-fused .dat that short-circuit ExactLogicLibrary
 # BEFORE the ExperimentalStreamK / Prediction row is reached. Verified
@@ -45,8 +20,8 @@
 # warnings, same shape, same env. So this probe MUST unload the
 # overlay or it will report a false PASS.
 #
-# Origami is opt-in via TENSILE_SOLUTION_SELECTION_METHOD=2. Once
-# engaged, Origami scores every candidate kernel handed to it by the
+# Origami is opt-in via TENSILE_SOLUTION_SELECTION_METHOD=2 and TENSILE_STREAMK_DYNAMIC_GRID=5
+# For details: https://rocm.docs.amd.com/projects/hipBLASLt/en/develop/reference/env-variables.html
 # Prediction library using a compiled-in cost model that consults
 # INSTRUCTION_MAP per (MI_M, MI_N, MI_K, dtype). When that table is
 # missing the entry for a tuple actually used by a candidate, Origami
@@ -62,65 +37,14 @@
 # missing entries are NOT a benign warning -- they actively degrade
 # kernel selection.
 #
-# This script engages Origami, sweeps a small workload across the
-# requested datatypes, captures stderr per-dtype, and reports any
-# datatype whose stderr contains the warning. Distinct (MI_M, MI_N,
-# MI_K, dtype) tuples that fired the warning are deduplicated and
-# printed under the dtype banner -- that list is exactly what an AMD-
-# side fix needs to populate INSTRUCTION_MAP with.
 #
 # Datatypes (HIPBLASLT_ORIGAMI_DTYPES env var, comma-separated):
 #   fp16,fp32,bf16   (default)
 #
-#     fp16  -- known to FAIL on ROCm 7.2.x on gfx942: INSTRUCTION_MAP
-#              is missing (MI_M=16, MI_N=16, MI_K=32, mi_input_type=Half)
-#              (the v_mfma_f32_16x16x32_f16 MFMA -- canonical fp16 MFMA
-#              on CDNA3). PASS once AMD adds this entry.
-#     fp32  -- known to PASS on ROCm 7.2.x on gfx942: all Float entries
-#              for the MI shapes actually used by gfx942 kernels are
-#              present.
-#     bf16  -- known to PASS on ROCm 7.2.x on gfx942: the BFloat16 MI
-#              entries the loaded kernels actually use (notably
-#              (16,16,16) and (32,32,8)) are populated. No warnings on
-#              a dedicated bf16 probe at the same shape (2026-05-20).
-#
-# fp64 is INTENTIONALLY EXCLUDED from the default sweep. Reason
-# (verified on rocm/7.2.0 + PyTorch 2.9.1, 2026-05):
-#   - No `_HA_Bias_*_DD_*_Contraction_*_gfx942.dat` ships in any rocm
-#     7.x release; Tensile has no fp64 bias-fused kernels on gfx942.
-#   - SLURM probe of nn.Linear(fp64) shows 0 hipBLASLt algorithm-
-#     heuristic calls -- PyTorch dispatches fp64 GEMMs through rocBLAS
-#     dgemm + ATen bias-add, never through hipBLASLt.
-#   - Origami is a layer INSIDE hipBLASLt's algorithm selector; if
-#     hipBLASLt is not called, Origami is not engaged, and any
-#     Origami INSTRUCTION_MAP latency-entry deficit for the Double
-#     dtype is irrelevant to nn.Linear(fp64) performance on this
-#     stack.
-# Users who explicitly opt in (HIPBLASLT_ORIGAMI_DTYPES=fp64) can
-# still run the sweep; the harness accepts it but the result is not
-# meaningful for nn.Linear's actual fp64 dispatch path.
-#
-# Exit code: 0 PASS (zero datatypes triggered the warning), 1 FAIL
-# (one or more datatypes triggered the warning), 77 SKIP (no GPU).
-# Greppable output:
-#   "ORIGAMI CHECK [dtype=fp16]: PASSED" / "FAILED",
-#   "ORIGAMI CHECK: PASSED / FAILED" summary.
-#
-# NOTE: like its companion test, this script assumes PyTorch has been
-# installed per:
+# This test assumes PyTorch has been
+# installed with:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/pytorch_setup.sh
-# and that the relevant ROCm modulefile auto-loads any deployed
-# hipblaslt/patched overlay. The overlay is NOT independent of this
-# test: it suppresses the warning storm by short-circuiting
-# ExactLogicLibrary at the EqualityMatching row before the
-# ExperimentalStreamK Prediction row (which is what calls origami)
-# gets a chance to run. The overlay can't and doesn't edit
-# INSTRUCTION_MAP -- it just makes the test's repro shape not visit
-# the broken Prediction path. So this test must unload the overlay
-# to observe the upstream gap.
 
-# Robust against `bash <path>` invocation (Lmod's `module` shell
-# function may not be present in a fresh non-interactive subshell).
 if ! type module >/dev/null 2>&1; then
    [ -r /etc/profile.d/lmod.sh ]         && . /etc/profile.d/lmod.sh
    [ -r /usr/share/lmod/lmod/init/bash ] && . /usr/share/lmod/lmod/init/bash
@@ -140,78 +64,11 @@ if ! python3 -c "import torch" 2>/dev/null; then
    exit 77
 fi
 
-# Engage Origami unconditionally for the lifetime of this script.
-# These env vars are read once at first call into the relevant code
-# path (static-local cache via __cxa_guard_acquire), so they MUST be
-# set before the python subprocess starts.
-#
-# Rationale per env var, grounded in:
-#   docs : https://rocm.docs.amd.com/projects/hipBLASLt/en/develop/reference/env-variables.html#origami-with-stream-k-configuration
-#   bin  : `strings libhipblaslt.so.1 | grep -cx <ENV>` (gfx942, rocm/7.2.0)
-#
-#   TENSILE_SOLUTION_SELECTION_METHOD=2
-#     docs: "Origami with Stream-K (enables Origami solution selection
-#            for consistent performance)".
-#     bin : 1 occurrence in libhipblaslt.so.1.
-#     Without this Origami is not engaged at all; the test would
-#     probe the default tuned-library path.
-#
-#   ANALYTICAL_GEMM_HEURISTICS=1
-#     bin : 1 occurrence in libhipblaslt.so.1 (read by
-#           origami::hardware_t::read_heuristics_env_var, per nm -C).
-#     Gates Origami's analytical heuristics on. Default behaviour
-#     when unset is observed to be enabled; set explicitly so the
-#     test does not depend on default state.
-#
-#   TENSILE_STREAMK_DYNAMIC_GRID=5
-#     docs: "The Stream-K algorithm uses the Origami
-#            select_best_grid_size function".
-#     bin : 1 occurrence in libhipblaslt.so.1.
-#     src : tensilelite/include/Tensile/AMDGPU.hpp:256-260 reads this
-#           env var; default when unset is 6. ContractionSolution::
-#           getSKGrid switches on the value at kernel launch.
-#     LOAD-BEARING EMPIRICALLY: only with TSDG=5 does the warning
-#     storm fire on the unpatched library; with =6 or unset, no
-#     warning -- the test would report PASS even on a stack with the
-#     known (MI_M=16, MI_N=16, MI_K=32, Half) gap. Verified 2026-05
-#     on rocm/7.2.0 gfx942. The branch that decides whether the
-#     launch-time origami call reaches get_mi_latency lives inside
-#     the closed `origami::streamk::select_grid` -- we observe the
-#     effect, not the mechanism.
-#
-# NOTE on scope: this test detects a LATENT bug. The default
-# selector (TSSM=0) does not engage Origami, so real PyTorch
-# workloads on rocm/7.2.x are not hitting the missing-entry path
-# unless the user explicitly opts into TSSM=2. The test is still
-# worth keeping because AMD documents TSSM=2 as the "consistent
-# performance" mode and recommends users adopt it; the bug will
-# bite once users follow that recommendation. A FAILED verdict
-# here is "an upstream gap exists", not "your workload is slow
-# because of this".
 export TENSILE_SOLUTION_SELECTION_METHOD=2
 export ANALYTICAL_GEMM_HEURISTICS=1
 export TENSILE_STREAMK_DYNAMIC_GRID=5
-# Required overlay-unload. The patched overlay inserts equality rows
-# that match the probe shape (Linear(2048, 100), batch 256) directly
-# in the forward-direction bias-fused .dat AND carries 2 backward
-# equality rows for this exact shape, so with the overlay loaded
-# ExactLogicLibrary short-circuits at EqualityMatching and never
-# reaches the ExperimentalStreamK / Prediction row that calls
-# origami -- 0 warnings = false PASS. Verified 2026-05-20: overlay
-# loaded -> 0 warnings; overlay unloaded -> 81460 warnings on the
-# same shape, same env.
-#
-# We do NOT silence the unload's error. If the unload fails (e.g. a
-# downstream module like pytorch depends on hipblaslt/patched), the
-# script must SAY SO -- a silently-failed unload caused us to misread
-# an earlier test run.
-#
-# After the unload we also unset the env vars the modulefile set
-# (HIPBLASLT_TENSILE_LIBPATH, HIPBLASLT_OVERLAY) and post-run we
-# report what's still in module list / what the env vars are now, so
-# the operator can see whether the unload actually took.
 
-# Enable light hipBLASLt logging so we can post-hoc see WHICH .so /
+# Enable light hipBLASLt logging so we can post-hoc see which .so /
 # .dat was loaded (line "[initialize] Using ..." or
 # "[initialize] HIPBLASLT_TENSILE_LIBPATH not set: Using ...").
 ORIGAMI_HIPBLASLT_LOG=$(mktemp -t hipblaslt_origami.XXXXXX.log)
@@ -241,10 +98,6 @@ fi
 echo "------------------------------------------------------"
 echo
 
-# Detect GPU arch for diagnostic context. The Origami INSTRUCTION_MAP is
-# per-arch, so a future regression that lands a gfx950 entry but skips
-# gfx942 (or vice versa) wants a clear "this is the arch we tested"
-# label in the output.
 if [ -n "${HIPBLASLT_ORIGAMI_ARCH:-}" ]; then
    GFX_ARCH="${HIPBLASLT_ORIGAMI_ARCH}"
 elif command -v rocminfo >/dev/null 2>&1; then
@@ -353,17 +206,6 @@ PY
    echo "--- Origami stderr summary [dtype=${DTYPE}] ---"
    echo "  total 'Latency not found' warnings : ${NUM_WARN}"
 
-   # Resolved-library diagnostic. The PASS verdict is ambiguous
-   # between "no Origami gap exists" and "Origami wasn't engaged at
-   # all" unless we can also show WHICH library was loaded and that
-   # hipBLASLt actually did some work. We print three things:
-   #   1. The [initialize] line, if found (names the library loaded).
-   #   2. The current value of HIPBLASLT_TENSILE_LIBPATH (which the
-   #      patched modulefile sets and our `unset` may have failed to
-   #      clear).
-   #   3. The first 5 lines of the log unconditionally, so even when
-   #      hipBLASLt logs at a different level / with different tags
-   #      the operator can see what was captured.
    echo
    echo "--- hipBLASLt library actually used [dtype=${DTYPE}] ---"
    echo "  HIPBLASLT_TENSILE_LIBPATH (at probe time) = ${HIPBLASLT_TENSILE_LIBPATH:-<unset>}"
