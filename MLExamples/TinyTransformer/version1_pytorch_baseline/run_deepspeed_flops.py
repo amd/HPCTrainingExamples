@@ -95,13 +95,35 @@ class FLOPSAnalyzer:
         print(f"   Trainable parameters: {trainable_params:,}")
         print(f"   Model size (FP32): {total_params * 4 / 1e6:.1f} MB")
 
-        # Run profiling
+        # Run profiling.
+        #
+        # Important caveats addressed in this loop:
+        #   * DeepSpeed's `FlopsProfiler` instruments forward hooks only --
+        #     `loss.backward()` is NOT counted. We therefore label these as
+        #     "forward FLOPS" and separately estimate fwd+bwd as ~3x forward
+        #     (the conventional 1 fwd + 2 bwd transformer-training factor).
+        #   * `prof.get_total_flops()` returns a CUMULATIVE counter since the
+        #     last `start_profile()`. To get a true per-step value we restart
+        #     the profile each step (start_profile / stop_profile / end_profile),
+        #     read the per-step total, then start again for the next step.
+        #   * We also track a separate "steady-state" average that drops the
+        #     first step (lazy CUDA init / kernel JIT dominates step 0).
         model.train()
-        prof.start_profile()
 
-        total_flops = 0
+        total_fwd_flops = 0
         total_time = 0
         step_results = []
+        detailed_profile_text = None
+
+        # We can call print_model_profile only between start_profile and
+        # end_profile. Capture it from the second step (steady-state, after
+        # warm-up) to avoid lazy-init artefacts.
+        capture_breakdown_at_step = 1 if num_steps > 1 else 0
+
+        # `end_profile()` (if present) tears down hooks; `stop_profile()` only
+        # freezes counters. We use start_profile + (optional print) +
+        # end_profile each step so per-step FLOPS = the value read this step.
+        has_end_profile = hasattr(prof, 'end_profile')
 
         for step in range(num_steps):
             # Get batch
@@ -109,113 +131,219 @@ class FLOPSAnalyzer:
             input_ids = input_ids.to(device)
             labels = labels.to(device)
 
-            # Time the forward pass
-            start_time = time.time()
+            # Fresh profiling window for this step.
+            prof.start_profile()
+
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
+            start_time = time.time()
 
-            # Forward pass
+            # Forward pass (this is what DeepSpeed counts).
             outputs = model(input_ids, labels)
             loss = outputs['loss']
 
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
-            step_time = time.time() - start_time
+            forward_time = time.time() - start_time
 
-            # Backward pass (for training scenario)
-            loss.backward()
-
-            # Get step FLOPS
+            # Read per-step forward FLOPS while the profile is still active.
             if hasattr(prof, 'get_total_flops'):
-                step_flops = prof.get_total_flops()
+                try:
+                    step_fwd_flops = float(prof.get_total_flops())
+                except Exception as e:
+                    print(f"   Warning: get_total_flops failed at step {step}: {e}")
+                    step_fwd_flops = float(self._estimate_transformer_flops(config, batch_size))
             else:
-                # Fallback estimation
-                step_flops = self._estimate_transformer_flops(config, batch_size)
+                step_fwd_flops = float(self._estimate_transformer_flops(config, batch_size))
 
-            total_flops += step_flops
+            # Capture the per-module breakdown once, on a steady-state step,
+            # while the profile is still active.
+            if (
+                detailed_analysis
+                and detailed_profile_text is None
+                and step == capture_breakdown_at_step
+                and hasattr(prof, 'print_model_profile')
+            ):
+                try:
+                    import io, contextlib
+                    buf = io.StringIO()
+                    with contextlib.redirect_stdout(buf):
+                        # `profile_step` is just a label DeepSpeed prints in
+                        # the report header; depth=-1 means show full tree.
+                        prof.print_model_profile(
+                            profile_step=step,
+                            module_depth=-1,
+                            top_modules=50,
+                        )
+                    detailed_profile_text = buf.getvalue()
+                    # Persist the human-readable breakdown next to the JSON.
+                    breakdown_path = self.output_dir / "model_profile.txt"
+                    with open(breakdown_path, 'w') as f:
+                        f.write(detailed_profile_text)
+                    print(f"   Per-module FLOPS breakdown written to: {breakdown_path}")
+                except Exception as e:
+                    print(f"   Warning: print_model_profile failed: {e}")
+                    detailed_profile_text = f"Profile generation failed: {e}"
+
+            # Tear the profile down for this step so the next start_profile()
+            # gives us a fresh, non-cumulative counter.
+            if has_end_profile:
+                try:
+                    prof.end_profile()
+                except Exception:
+                    # Older DeepSpeed: stop_profile() is the only option.
+                    prof.stop_profile()
+            else:
+                prof.stop_profile()
+
+            # Backward pass: NOT counted by DeepSpeed FlopsProfiler.
+            # Time it separately so the user can see fwd vs bwd cost.
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+            bwd_start = time.time()
+            loss.backward()
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+            backward_time = time.time() - bwd_start
+            step_time = forward_time + backward_time
+
+            total_fwd_flops += step_fwd_flops
             total_time += step_time
 
             step_results.append({
                 'step': step,
                 'loss': loss.item(),
-                'flops': step_flops,
-                'time': step_time,
-                'flops_per_sec': step_flops / step_time if step_time > 0 else 0
+                'forward_flops': step_fwd_flops,
+                'forward_time': forward_time,
+                'backward_time': backward_time,
+                'step_time': step_time,
+                'forward_flops_per_sec':
+                    step_fwd_flops / forward_time if forward_time > 0 else 0,
             })
 
             if step % 2 == 0:
                 print(f"   Step {step}: Loss {loss.item():.4f}, "
-                      f"FLOPS {step_flops:.2e}, Time {step_time*1000:.1f}ms")
+                      f"fwd FLOPS {step_fwd_flops:.2e}, "
+                      f"fwd {forward_time*1000:.1f}ms, "
+                      f"bwd {backward_time*1000:.1f}ms")
 
             # Clear gradients for next step
             model.zero_grad()
 
-        # Stop profiling and get results
-        prof.stop_profile()
-
-        # Get detailed profile information
-        try:
-            flops_summary = prof.get_total_flops()
-            params_summary = prof.get_total_params()
-
-            if detailed_analysis and hasattr(prof, 'print_model_profile'):
-                # Capture detailed profile output
-                import io
-                import contextlib
-
-                profile_output = io.StringIO()
-                with contextlib.redirect_stdout(profile_output):
-                    prof.print_model_profile(profile_step=1, module_depth=-1, top_modules=50)
-
-                detailed_profile = profile_output.getvalue()
-            else:
-                detailed_profile = "Detailed profile not available"
-
-        except Exception as e:
-            print(f"   Warning: Could not get detailed FLOPS data: {e}")
-            flops_summary = total_flops / num_steps if num_steps > 0 else 0
-            params_summary = total_params
-            detailed_profile = f"Profile generation failed: {e}"
-
-        # Calculate efficiency metrics
+        # Aggregate.
         avg_time_per_step = total_time / num_steps if num_steps > 0 else 0
-        avg_flops_per_step = total_flops / num_steps if num_steps > 0 else 0
+        avg_fwd_flops_per_step = total_fwd_flops / num_steps if num_steps > 0 else 0
+        # Conventional transformer-training rule of thumb: backward ~ 2x forward.
+        BWD_FACTOR = 2.0
+        avg_total_flops_per_step_estimate = avg_fwd_flops_per_step * (1.0 + BWD_FACTOR)
         throughput = batch_size / avg_time_per_step if avg_time_per_step > 0 else 0
 
-        # Calculate Model FLOPS Utilization (MFU)
-        mfu_metrics = self._calculate_mfu(
-            model_flops=avg_flops_per_step,
-            time_per_step=avg_time_per_step,
-            device_peak_flops=self._get_device_peak_flops()
+        # Steady-state numbers: drop the first step to remove lazy-init outlier.
+        steady = step_results[1:] if len(step_results) > 1 else step_results
+        steady_avg_step_time = (
+            sum(r['step_time'] for r in steady) / len(steady) if steady else 0.0
         )
+        steady_avg_fwd_flops = (
+            sum(r['forward_flops'] for r in steady) / len(steady) if steady else 0.0
+        )
+        steady_throughput = (
+            batch_size / steady_avg_step_time if steady_avg_step_time > 0 else 0.0
+        )
+
+        # MFU: forward-only and a fwd+bwd-estimate variant. Use steady-state
+        # timings so the lazy-init step doesn't poison the result.
+        peak_flops = self._get_device_peak_flops()
+        mfu_fwd = self._calculate_mfu(
+            model_flops=steady_avg_fwd_flops,
+            # Forward only: use forward time, not full step time.
+            time_per_step=(
+                sum(r['forward_time'] for r in steady) / len(steady)
+                if steady else 0.0
+            ),
+            device_peak_flops=peak_flops,
+        )
+        mfu_total_estimate = self._calculate_mfu(
+            model_flops=steady_avg_fwd_flops * (1.0 + BWD_FACTOR),
+            time_per_step=steady_avg_step_time,
+            device_peak_flops=peak_flops,
+        )
+
+        flops_summary_total = total_fwd_flops
+        try:
+            params_summary = prof.get_total_params() if hasattr(prof, 'get_total_params') else total_params
+        except Exception:
+            params_summary = total_params
 
         results = {
             'model_info': {
                 'total_params': total_params,
                 'trainable_params': trainable_params,
-                'config': config.to_dict()
+                'deepspeed_total_params': params_summary,
+                'config': config.to_dict(),
             },
             'profiling_config': {
                 'batch_size': batch_size,
                 'sequence_length': config.max_seq_len,
                 'num_steps': num_steps,
-                'device': str(device)
+                'device': str(device),
             },
             'flops_analysis': {
-                'total_flops': flops_summary,
-                'avg_flops_per_step': avg_flops_per_step,
-                'flops_per_parameter': avg_flops_per_step / max(1, total_params),
-                'detailed_profile': detailed_profile
+                'note': (
+                    "DeepSpeed's FlopsProfiler counts FORWARD-only FLOPS via "
+                    "module forward hooks. 'avg_total_flops_per_step_estimate' "
+                    "applies the conventional ~3x (1 fwd + 2 bwd) transformer "
+                    "training factor and is therefore an estimate, not a "
+                    "measurement. Per-step values are true per-step deltas "
+                    "(start_profile / end_profile each step), not cumulative."
+                ),
+                'total_forward_flops_summed': flops_summary_total,
+                'avg_forward_flops_per_step': avg_fwd_flops_per_step,
+                'avg_total_flops_per_step_estimate':
+                    avg_total_flops_per_step_estimate,
+                'fwd_plus_bwd_estimation_factor': 1.0 + BWD_FACTOR,
+                'forward_flops_per_parameter':
+                    avg_fwd_flops_per_step / max(1, total_params),
+                'detailed_profile':
+                    detailed_profile_text or "Detailed profile not available",
             },
             'performance_metrics': {
                 'avg_time_per_step': avg_time_per_step,
+                'avg_forward_time_per_step':
+                    sum(r['forward_time'] for r in step_results) / num_steps
+                    if num_steps else 0.0,
+                'avg_backward_time_per_step':
+                    sum(r['backward_time'] for r in step_results) / num_steps
+                    if num_steps else 0.0,
                 'throughput_samples_per_sec': throughput,
-                'avg_loss': np.mean([r['loss'] for r in step_results]),
-                'flops_per_sec': avg_flops_per_step / avg_time_per_step if avg_time_per_step > 0 else 0
+                'avg_loss': float(np.mean([r['loss'] for r in step_results])) if step_results else 0.0,
+                'forward_flops_per_sec':
+                    avg_fwd_flops_per_step / avg_time_per_step
+                    if avg_time_per_step > 0 else 0,
             },
-            'efficiency_metrics': mfu_metrics,
+            'steady_state_metrics': {
+                'note': (
+                    "Steady-state metrics exclude step 0 to drop the lazy CUDA "
+                    "init / kernel JIT outlier."
+                ),
+                'num_steady_steps': len(steady),
+                'avg_step_time': steady_avg_step_time,
+                'avg_forward_flops_per_step': steady_avg_fwd_flops,
+                'throughput_samples_per_sec': steady_throughput,
+            },
+            'efficiency_metrics': {
+                'note': (
+                    "mfu_forward = forward FLOPS / forward time vs peak "
+                    "(measurement-based, but ignores backward). "
+                    "mfu_total_estimate = (1+2)*forward FLOPS / step time vs "
+                    "peak (uses the 3x rule of thumb for backward; estimate). "
+                    "Both use steady-state timings (step 0 excluded)."
+                ),
+                'device_peak_flops_fp32': peak_flops,
+                'mfu_forward_steady_state': mfu_fwd,
+                'mfu_total_estimate_steady_state': mfu_total_estimate,
+            },
             'step_by_step_results': step_results,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now().isoformat(),
         }
 
         # Save results
@@ -223,11 +351,20 @@ class FLOPSAnalyzer:
         with open(results_path, 'w') as f:
             json.dump(results, f, indent=2)
 
-        print(f"\nFLOPS Analysis Summary:")
-        print(f"   Total FLOPS per step: {avg_flops_per_step:.2e}")
-        print(f"   FLOPS per parameter: {results['flops_analysis']['flops_per_parameter']:.2f}")
-        print(f"   Throughput: {throughput:.1f} samples/sec")
-        print(f"   Model FLOPS Utilization: {mfu_metrics['mfu_percent']:.1f}%")
+        print(f"\nFLOPS Analysis Summary (forward-only FLOPS unless stated):")
+        print(f"   Avg forward FLOPS / step:        {avg_fwd_flops_per_step:.3e}")
+        print(f"   Estimated fwd+bwd FLOPS / step:  "
+              f"{avg_total_flops_per_step_estimate:.3e} (= 3x forward)")
+        print(f"   Avg fwd time / step:             "
+              f"{results['performance_metrics']['avg_forward_time_per_step']*1000:.2f} ms")
+        print(f"   Avg bwd time / step:             "
+              f"{results['performance_metrics']['avg_backward_time_per_step']*1000:.2f} ms")
+        print(f"   Throughput (all steps):          {throughput:.1f} samples/sec")
+        print(f"   Throughput (steady state):       {steady_throughput:.1f} samples/sec")
+        print(f"   MFU forward (steady, measured):  "
+              f"{mfu_fwd['mfu_percent']:.3f}%")
+        print(f"   MFU fwd+bwd (steady, ~3x est.):  "
+              f"{mfu_total_estimate['mfu_percent']:.3f}%")
         print(f"   Results saved to: {results_path}")
 
         return results
@@ -373,8 +510,10 @@ class FLOPSAnalyzer:
         avg_time = perf_metrics.get('avg_time_per_step', 1.0)
         memory_bandwidth_used = memory_bytes_per_step / avg_time if avg_time > 0 else 0
 
-        # Arithmetic intensity (FLOPS per byte)
-        avg_flops = flops_data['flops_analysis']['avg_flops_per_step']
+        # Arithmetic intensity (FLOPS per byte). Uses the fwd+bwd ~3x estimate
+        # so the figure represents a full training step.
+        flops_block = flops_data['flops_analysis']
+        avg_flops = flops_block['avg_total_flops_per_step_estimate']
         arithmetic_intensity = avg_flops / memory_bytes_per_step if memory_bytes_per_step > 0 else 0
 
         # Get device memory bandwidth (rough estimates)
@@ -387,11 +526,17 @@ class FLOPSAnalyzer:
             'device_memory_bandwidth_gb_per_sec': device_memory_bandwidth / 1e9,
             'memory_bound_vs_compute_bound': 'memory_bound' if arithmetic_intensity < 10 else 'compute_bound',
             'roofline_metrics': {
-                'peak_flops': flops_data['efficiency_metrics']['device_peak_flops'],
+                'peak_flops': flops_data['efficiency_metrics']['device_peak_flops_fp32'],
                 'peak_memory_bandwidth': device_memory_bandwidth,
-                'achieved_flops': perf_metrics.get('flops_per_sec', 0),
-                'achieved_bandwidth': memory_bandwidth_used
-            }
+                'achieved_flops': perf_metrics['forward_flops_per_sec'],
+                'achieved_bandwidth': memory_bandwidth_used,
+            },
+            'note': (
+                "Arithmetic intensity / bandwidth here are ANALYTICAL "
+                "estimates: bytes = params*4 + 3*activations (rough), and "
+                "FLOPS uses the fwd+bwd ~3x estimate. Real values require "
+                "rocprof/omniperf HW counters."
+            ),
         }
 
         # Save intensity analysis
@@ -474,13 +619,14 @@ class FLOPSAnalyzer:
             'timestamp': datetime.now().isoformat(),
             'device_info': {
                 'name': torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU',
-                'peak_flops': flops_data['efficiency_metrics']['device_peak_flops'],
+                'peak_flops': flops_data['efficiency_metrics']['device_peak_flops_fp32'],
                 'peak_memory_bandwidth': intensity_data.get('device_memory_bandwidth_gb_per_sec', 0) * 1e9
             },
             'performance_point': {
                 'arithmetic_intensity': intensity_data.get('arithmetic_intensity_flops_per_byte', 0),
-                'achieved_performance': flops_data['performance_metrics']['flops_per_sec'],
-                'mfu_percent': flops_data['efficiency_metrics']['mfu_percent']
+                'achieved_performance': flops_data['performance_metrics']['forward_flops_per_sec'],
+                'mfu_percent':
+                    flops_data['efficiency_metrics']['mfu_forward_steady_state']['mfu_percent'],
             },
             'optimization_targets': self._generate_optimization_targets(flops_data, intensity_data)
         }
@@ -498,7 +644,7 @@ class FLOPSAnalyzer:
         targets = []
 
         # MFU-based recommendations
-        mfu = flops_data['efficiency_metrics']['mfu_percent']
+        mfu = flops_data['efficiency_metrics']['mfu_forward_steady_state']['mfu_percent']
         if mfu < 30:
             targets.append({
                 'target': 'Kernel Fusion',
@@ -568,10 +714,108 @@ def main():
     try:
         # Analyze existing results
         if args.analyze_results:
-            with open(args.analyze_results, 'r') as f:
+            results_path = Path(args.analyze_results)
+            # If the user passed a bare filename, also look inside --output-dir.
+            if not results_path.exists():
+                fallback = Path(args.output_dir) / results_path.name
+                if fallback.exists():
+                    print(f"Note: '{results_path}' not found, using '{fallback}' instead.")
+                    results_path = fallback
+                else:
+                    print(f"Results file not found: {args.analyze_results}")
+                    print(f"   Also looked in: {fallback}")
+                    return
+
+            with open(results_path, 'r') as f:
                 flops_data = json.load(f)
-            print(f"📁 Analyzing existing results: {args.analyze_results}")
-            # Analysis logic here
+            print(f"Analyzing existing results: {results_path}")
+
+            model_info = flops_data.get('model_info', {})
+            cfg = model_info.get('config', {})
+            pcfg = flops_data.get('profiling_config', {})
+            flops = flops_data.get('flops_analysis', {})
+            perf = flops_data.get('performance_metrics', {})
+            eff = flops_data.get('efficiency_metrics', {})
+            steps = flops_data.get('step_by_step_results', [])
+
+            print("\nModel:")
+            print(f"   Params: {model_info.get('total_params', 0):,}")
+            print(f"   hidden_dim={cfg.get('hidden_dim')}, n_layers={cfg.get('n_layers')}, "
+                  f"n_heads={cfg.get('n_heads')}, max_seq_len={cfg.get('max_seq_len')}")
+            print(f"   Profiling: batch_size={pcfg.get('batch_size')}, "
+                  f"seq_len={pcfg.get('sequence_length')}, "
+                  f"num_steps={pcfg.get('num_steps')}, device={pcfg.get('device')}")
+
+            steady_block = flops_data['steady_state_metrics']
+
+            print("\nFLOPS:")
+            print(f"   Avg forward FLOPS / step:        "
+                  f"{flops['avg_forward_flops_per_step']:.3e}")
+            print(f"   Estimated fwd+bwd FLOPS / step:  "
+                  f"{flops['avg_total_flops_per_step_estimate']:.3e}  "
+                  f"(factor = {flops['fwd_plus_bwd_estimation_factor']:.1f}x forward; "
+                  f"backward is NOT measured by DeepSpeed)")
+            print(f"   Forward FLOPS / parameter:       "
+                  f"{flops['forward_flops_per_parameter']:.2f}")
+
+            print("\nPerformance:")
+            print(f"   Avg step time:        {perf['avg_time_per_step']*1000:.2f} ms")
+            print(f"   Avg forward time:     "
+                  f"{perf['avg_forward_time_per_step']*1000:.2f} ms")
+            print(f"   Avg backward time:    "
+                  f"{perf['avg_backward_time_per_step']*1000:.2f} ms")
+            print(f"   Throughput (all):     {perf['throughput_samples_per_sec']:.2f} samples/sec")
+            print(f"   Throughput (steady):  "
+                  f"{steady_block['throughput_samples_per_sec']:.2f} samples/sec "
+                  f"(over {steady_block['num_steady_steps']} steady-state steps)")
+            print(f"   Achieved fwd FLOPS/s: {perf['forward_flops_per_sec']:.3e}")
+            print(f"   Avg loss:             {perf['avg_loss']:.4f}")
+
+            print("\nEfficiency:")
+            peak = eff['device_peak_flops_fp32']
+            print(f"   Device peak FLOPS/s (FP32): {peak:.3e}")
+            print(f"   MFU forward (steady, measured):  "
+                  f"{eff['mfu_forward_steady_state']['mfu_percent']:.3f}%")
+            print(f"   MFU fwd+bwd (steady, ~3x est.):  "
+                  f"{eff['mfu_total_estimate_steady_state']['mfu_percent']:.3f}%")
+
+            print("\nPer-step (true per-step FLOPS, fwd-only):")
+            for i, s in enumerate(steps):
+                print(f"   step {s.get('step', i):>2}: "
+                      f"fwd {s['forward_flops']:.3e} FLOPS, "
+                      f"fwd {s['forward_time']*1000:>7.2f} ms, "
+                      f"bwd {s['backward_time']*1000:>7.2f} ms, "
+                      f"loss {s['loss']:.4f}")
+
+            # Persist a compact summary next to the input file.
+            summary_path = results_path.with_name(results_path.stem + ".analysis.json")
+            summary = {
+                'source': str(results_path),
+                'model_params': model_info.get('total_params', 0),
+                'config': cfg,
+                'profiling_config': pcfg,
+                'reported': {
+                    'avg_forward_flops_per_step':
+                        flops['avg_forward_flops_per_step'],
+                    'avg_total_flops_per_step_estimate':
+                        flops['avg_total_flops_per_step_estimate'],
+                    'avg_forward_time_per_step_ms':
+                        perf['avg_forward_time_per_step'] * 1000,
+                    'avg_backward_time_per_step_ms':
+                        perf['avg_backward_time_per_step'] * 1000,
+                    'throughput_samples_per_sec':
+                        perf['throughput_samples_per_sec'],
+                    'steady_state': steady_block,
+                    'mfu_forward_steady_state':
+                        eff['mfu_forward_steady_state']['mfu_percent'],
+                    'mfu_total_estimate_steady_state':
+                        eff['mfu_total_estimate_steady_state']['mfu_percent'],
+                },
+            }
+
+            with open(summary_path, 'w') as f:
+                json.dump(summary, f, indent=2)
+            print(f"\nSummary written to: {summary_path}")
             return
 
         # Run new FLOPS profiling
@@ -605,11 +849,19 @@ def main():
             print(f"Roofline data generated: {roofline_path}")
 
         print(f"\nFLOPS analysis completed successfully!")
-        print(f"📁 Results saved to: {args.output_dir}")
-        print(f"\nKey Metrics:")
-        print(f"   Model FLOPS Utilization: {flops_results['efficiency_metrics']['mfu_percent']:.1f}%")
-        print(f"   Throughput: {flops_results['performance_metrics']['throughput_samples_per_sec']:.1f} samples/sec")
-        print(f"   FLOPS per parameter: {flops_results['flops_analysis']['flops_per_parameter']:.2f}")
+        print(f"Results saved to: {args.output_dir}")
+        print(f"\nKey Metrics (forward-only unless stated):")
+        eff = flops_results['efficiency_metrics']
+        flops_block = flops_results['flops_analysis']
+        steady = flops_results.get('steady_state_metrics', {})
+        fwd_mfu = eff.get('mfu_forward_steady_state', {}).get('mfu_percent', 0)
+        tot_mfu = eff.get('mfu_total_estimate_steady_state', {}).get('mfu_percent', 0)
+        print(f"   MFU forward (steady, measured):       {fwd_mfu:.3f}%")
+        print(f"   MFU fwd+bwd (steady, ~3x estimate):   {tot_mfu:.3f}%")
+        print(f"   Throughput (steady):                  "
+              f"{steady.get('throughput_samples_per_sec', 0):.1f} samples/sec")
+        print(f"   Forward FLOPS per parameter:          "
+              f"{flops_block.get('forward_flops_per_parameter', 0):.2f}")
 
     except Exception as e:
         print(f"FAIL Analysis failed: {e}")
