@@ -750,6 +750,57 @@ def train_tiny_llama(
     if pytorch_profiler:
         pytorch_profiler.stop()
 
+        # If `--profile-operators` was requested, print and save an
+        # operator-level summary table sorted by `--sort-by`. This is the
+        # canonical "operator analysis" output of `torch.profiler` and is
+        # what Exercise 3 / Step 1 of the workshop README expects.
+        if profiler_config.profile_operators:
+            valid_sort_keys = {
+                "cpu_time", "cuda_time", "cpu_time_total", "cuda_time_total",
+                "self_cpu_time_total", "self_cuda_time_total",
+                "self_device_time_total", "device_time_total",
+                "cpu_memory_usage", "cuda_memory_usage",
+                "self_cpu_memory_usage", "self_cuda_memory_usage",
+                "count",
+            }
+            sort_by = profiler_config.sort_by
+            if sort_by not in valid_sort_keys:
+                print(
+                    f"\n[--profile-operators] Warning: '{sort_by}' is not a "
+                    f"recognized sort key. Falling back to 'self_cuda_time_total'. "
+                    f"Valid keys: {sorted(valid_sort_keys)}"
+                )
+                sort_by = "self_cuda_time_total"
+
+            try:
+                key_avgs = pytorch_profiler.key_averages(group_by_input_shape=True)
+                op_table = key_avgs.table(sort_by=sort_by, row_limit=50)
+            except (RuntimeError, AssertionError) as e:
+                # Some sort keys require CUDA events; retry with a CPU key
+                # if the requested one is unavailable in this build.
+                print(
+                    f"\n[--profile-operators] {sort_by!r} unavailable ({e}); "
+                    f"retrying with 'self_cpu_time_total'."
+                )
+                sort_by = "self_cpu_time_total"
+                key_avgs = pytorch_profiler.key_averages(group_by_input_shape=True)
+                op_table = key_avgs.table(sort_by=sort_by, row_limit=50)
+
+            print("\n" + "=" * 70)
+            print(f"Operator-level summary (sort_by={sort_by})")
+            print("=" * 70)
+            print(op_table)
+
+            if profiler_config.profile_dir:
+                from pathlib import Path as _Path
+                table_path = _Path(profiler_config.profile_dir) / "operator_table.txt"
+                table_path.parent.mkdir(parents=True, exist_ok=True)
+                table_path.write_text(
+                    f"Operator-level summary (sort_by={sort_by})\n"
+                    f"{'=' * 70}\n{op_table}\n"
+                )
+                print(f"Operator table saved to: {table_path}")
+
     # Stop FLOPS profiler and get results
     if deepspeed_profiler:
         deepspeed_profiler.stop_profile()
