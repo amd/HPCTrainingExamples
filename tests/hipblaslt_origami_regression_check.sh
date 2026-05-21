@@ -210,16 +210,7 @@ export TENSILE_STREAMK_DYNAMIC_GRID=5
 # (HIPBLASLT_TENSILE_LIBPATH, HIPBLASLT_OVERLAY) and post-run we
 # report what's still in module list / what the env vars are now, so
 # the operator can see whether the unload actually took.
-echo "  attempting to unload hipblaslt/patched (was the overlay loaded?)"
-if module list 2>&1 | grep -q hipblaslt/patched; then
-   if ! module unload hipblaslt/patched 2>&1; then
-      echo "  WARNING: 'module unload hipblaslt/patched' returned non-zero."
-      echo "           Probable cause: a downstream module (e.g. pytorch)"
-      echo "           depends on it, and lmod refuses partial unloads."
-      echo "           This probe will run against the PATCHED overlay."
-   fi
-fi
-unset HIPBLASLT_TENSILE_LIBPATH HIPBLASLT_OVERLAY 2>/dev/null || true
+
 # Enable light hipBLASLt logging so we can post-hoc see WHICH .so /
 # .dat was loaded (line "[initialize] Using ..." or
 # "[initialize] HIPBLASLT_TENSILE_LIBPATH not set: Using ...").
