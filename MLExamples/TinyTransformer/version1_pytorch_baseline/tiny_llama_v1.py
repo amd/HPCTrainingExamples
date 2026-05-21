@@ -659,6 +659,14 @@ def train_tiny_llama(
     if deepspeed_profiler:
         deepspeed_profiler.start_profile()
 
+    # Start the PyTorch profiler. The `profile(...)` object only collects data
+    # while active; without an explicit start/stop (or `with` block) the
+    # `on_trace_ready` callback is never invoked (no trace files produced),
+    # `step()` triggers a "Requested callback is not found" warning, and the
+    # destructor segfaults at process exit because of inconsistent state.
+    if pytorch_profiler:
+        pytorch_profiler.start()
+
     print("=" * 70)
 
     for step in range(num_steps):
@@ -736,6 +744,11 @@ def train_tiny_llama(
                   f"Time: {batch_timings['total']*1000:5.1f}ms")
 
     print("=" * 70)
+
+    # Stop the PyTorch profiler before tearing anything else down so that
+    # `on_trace_ready` runs and the Chrome trace is flushed to disk.
+    if pytorch_profiler:
+        pytorch_profiler.stop()
 
     # Stop FLOPS profiler and get results
     if deepspeed_profiler:
