@@ -464,29 +464,203 @@ To visualize the profiling results:
 
         return formatted
 
+    @staticmethod
+    def _prettify_kernel_name(name: str) -> str:
+        """Decode common ROCm library kernel names into a human-readable label.
+
+        rocBLAS GEMMs are emitted by the Tensile code generator with names like:
+          Cijk_Ailk_Bljk_S_B_Bias_HA_S_SAV_..._MT16x448x32_MI16x16x1_..._WG16_16_1
+        The naming convention encodes everything the kernel does:
+          * `Cijk_A???_B???` -> index pattern of A and B, which determines the
+            transpose layout (NN/NT/TN/TT).
+          * The first letter token after the index group is the data type
+            (S=FP32, H=FP16, B=bf16, D=FP64, I=INT8, C/Z=complex).
+          * `Bias_HA` and friends mark fused bias/activation epilogues.
+          * `MT<M>x<N>x<K>` is the per-work-group macro tile.
+          * `MI<m>x<n>x<k>` is the underlying MFMA instruction tile (CDNA).
+          * `WG<x>_<y>_<z>` is the work-group shape.
+
+        We also recognize a few common non-Tensile ROCm symbols (hipBLASLt,
+        MIOpen, hipfft, rocprim, …) so the top-ops list is readable at a glance.
+        """
+        import re
+
+        # rocBLAS / hipBLASLt Tensile GEMM kernels: start with `Cijk_A`.
+        m = re.match(r"^Cijk_A(?P<a>[a-z]{3,4})_B(?P<b>[a-z]{3,4})_(?P<dtype>[A-Z])(?:_|$)", name)
+        if m:
+            a_idx = m.group("a")  # e.g. "ilk" or "lik"
+            b_idx = m.group("b")  # e.g. "ljk" or "jlk"
+            # In Tensile, M=i, N=j, K=l. A's K-position determines A's transpose,
+            # B's K-position determines B's transpose.
+            a_trans = "T" if a_idx[0] == "l" else "N"
+            b_trans = "T" if b_idx[1] == "l" else "N"
+            layout = f"{a_trans}{b_trans}"
+            dtype_map = {
+                "S": "FP32", "H": "FP16", "B": "BF16", "D": "FP64",
+                "I": "INT8", "C": "CFP32", "Z": "CFP64",
+            }
+            dtype = dtype_map.get(m.group("dtype"), m.group("dtype"))
+            mt = re.search(r"_MT(\d+)x(\d+)x(\d+)", name)
+            mi = re.search(r"_MI(\d+)x(\d+)x(\d+)", name)
+            wg = re.search(r"_WG(\d+)_(\d+)_(\d+)", name)
+            extras = []
+            if mt:
+                extras.append(f"MT={mt.group(1)}x{mt.group(2)}x{mt.group(3)}")
+            if mi:
+                extras.append(f"MI={mi.group(1)}x{mi.group(2)}x{mi.group(3)}")
+            if wg:
+                extras.append(f"WG={wg.group(1)}x{wg.group(2)}x{wg.group(3)}")
+            epilogue = []
+            if "_Bias" in name:
+                epilogue.append("bias")
+            if "_HA_" in name or name.endswith("_HA"):
+                epilogue.append("hipBLASLt-args")
+            if "_SAV_" in name:
+                epilogue.append("scale-AB")
+            tag = f"rocBLAS GEMM {dtype} {layout}"
+            if epilogue:
+                tag += f" +{'+'.join(epilogue)}"
+            if extras:
+                tag += f" [{', '.join(extras)}]"
+            return tag
+
+        # hipBLASLt direct kernels.
+        if name.startswith("Cijk_") or "hipblaslt" in name.lower():
+            return f"hipBLASLt kernel ({name[:40]}…)"
+
+        # MIOpen convolutions / norm kernels often prefixed with `mlir_` or `miopen`.
+        low = name.lower()
+        if low.startswith("miopen") or "miopen" in low:
+            return f"MIOpen kernel ({name[:40]}…)"
+
+        # Common PyTorch/ATen elementwise / reduction kernel name patterns.
+        if name.startswith("at::native::"):
+            return f"ATen native kernel: {name[len('at::native::'):]}"
+        if name.startswith("void at::native::"):
+            return f"ATen native kernel: {name[len('void at::native::'):]}"
+
+        # rocprim / hipcub primitives.
+        if low.startswith("rocprim") or low.startswith("hipcub"):
+            return f"rocPRIM/hipCUB primitive ({name[:40]}…)"
+
+        return name
+
     def analyze_existing_profiles(self, profile_dir: str):
-        """Analyze existing profiling results from a directory."""
+        """Analyze existing profiling results from a directory or a single trace file."""
         profile_path = Path(profile_dir)
 
         if not profile_path.exists():
-            print(f"Profile directory not found: {profile_dir}")
+            print(f"Profile path not found: {profile_dir}")
             return
 
-        # Look for JSON trace files
-        trace_files = list(profile_path.glob("trace_step_*.json"))
+        # Accept either a single trace file or a directory containing trace files.
+        if profile_path.is_file():
+            trace_files = [profile_path]
+        else:
+            # Match both the custom trace_handler naming (`trace_step_*.json`) and
+            # the default `tensorboard_trace_handler` naming (`*.pt.trace.json`).
+            trace_files = sorted(
+                set(profile_path.glob("trace_step_*.json"))
+                | set(profile_path.glob("*.pt.trace.json"))
+            )
 
         if not trace_files:
             print(f"No trace files found in: {profile_dir}")
+            print("   Looked for 'trace_step_*.json' and '*.pt.trace.json'.")
             return
 
         print(f"Analyzing existing profiles from: {profile_dir}")
-        print(f"   Found {len(trace_files)} trace files")
+        print(f"   Found {len(trace_files)} trace file(s)")
 
-        # Analyze each trace file
         for trace_file in trace_files:
             print(f"   Analyzing: {trace_file.name}")
-            # Note: Full trace analysis would require parsing the Chrome trace format
-            # For now, we'll provide summary information
+            try:
+                with open(trace_file, "r") as f:
+                    trace = json.load(f)
+            except json.JSONDecodeError as e:
+                print(f"      Skipping (invalid JSON): {e}")
+                continue
+
+            events = trace.get("traceEvents", trace) if isinstance(trace, dict) else trace
+            if not isinstance(events, list):
+                print("      Skipping (unexpected trace structure)")
+                continue
+
+            # Aggregate self-time per operator name from complete ('X') events.
+            op_totals: Dict[str, Dict[str, float]] = {}
+            for ev in events:
+                if not isinstance(ev, dict):
+                    continue
+                if ev.get("ph") != "X":
+                    continue
+                name = ev.get("name", "<unknown>")
+                dur = float(ev.get("dur", 0.0))
+                stats = op_totals.setdefault(name, {"total_us": 0.0, "count": 0})
+                stats["total_us"] += dur
+                stats["count"] += 1
+
+            top_ops = sorted(
+                op_totals.items(), key=lambda kv: kv[1]["total_us"], reverse=True
+            )[:15]
+
+            print(f"      Total events: {len(events)}; unique ops: {len(op_totals)}")
+            print(f"      Top ops by total duration (us):")
+            for name, stats in top_ops:
+                pretty = self._prettify_kernel_name(name)
+                if pretty != name:
+                    print(
+                        f"        {stats['total_us']:>12.1f} us  "
+                        f"x{stats['count']:<6d}  {pretty}"
+                    )
+                    print(f"                                       (symbol: {name[:90]}{'…' if len(name) > 90 else ''})")
+                else:
+                    print(
+                        f"        {stats['total_us']:>12.1f} us  "
+                        f"x{stats['count']:<6d}  {name}"
+                    )
+
+            # Re-aggregate strictly across GPU kernel events using the decoded
+            # label so multiple Tensile variants of the same logical GEMM merge.
+            kernel_totals: Dict[str, Dict[str, float]] = {}
+            for ev in events:
+                if not isinstance(ev, dict) or ev.get("ph") != "X":
+                    continue
+                if ev.get("cat") != "kernel":
+                    continue
+                pretty = self._prettify_kernel_name(ev.get("name", "<unknown>"))
+                stats = kernel_totals.setdefault(pretty, {"total_us": 0.0, "count": 0})
+                stats["total_us"] += float(ev.get("dur", 0.0))
+                stats["count"] += 1
+            if kernel_totals:
+                print("      Top GPU kernels by total device time (decoded):")
+                top_kernels = sorted(
+                    kernel_totals.items(), key=lambda kv: kv[1]["total_us"], reverse=True
+                )[:10]
+                total_kernel_us = sum(s["total_us"] for s in kernel_totals.values())
+                for label, stats in top_kernels:
+                    pct = stats["total_us"] / total_kernel_us * 100 if total_kernel_us else 0
+                    print(
+                        f"        {stats['total_us']:>12.1f} us  "
+                        f"x{stats['count']:<6d}  {pct:>5.1f}%  {label}"
+                    )
+
+            # Persist the per-trace summary next to the trace file.
+            summary_path = trace_file.with_suffix(".summary.json")
+            with open(summary_path, "w") as f:
+                json.dump(
+                    {
+                        "trace_file": str(trace_file),
+                        "total_events": len(events),
+                        "unique_ops": len(op_totals),
+                        "top_ops": [
+                            {"name": n, **s} for n, s in top_ops
+                        ],
+                        "timestamp": datetime.now().isoformat(),
+                    },
+                    f,
+                    indent=2,
+                )
+            print(f"      Summary written to: {summary_path.name}")
 
         print("Analysis of existing profiles completed")
 
