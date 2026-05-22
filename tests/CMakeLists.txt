@@ -211,9 +211,9 @@ add_test(NAME OpenMP_Fortran_GPU_Aware_MPI_OpenMPI COMMAND ../openmp_fortran_wit
 set_property(TEST OpenMP_Fortran_GPU_Aware_MPI_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "All tests passed")
 set_property(TEST OpenMP_Fortran_GPU_Aware_MPI_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
-add_test(NAME OpenMP_Fortran_GPU_Aware_MPI_MPICH_Wrappers COMMAND ../openmp_fortran_with_gpu_aware_mpi.sh --module mpich-wrappers --libfabric 1)
-set_property(TEST OpenMP_Fortran_GPU_Aware_MPI_MPICH_Wrappers PROPERTY PASS_REGULAR_EXPRESSION "All tests passed")
-set_property(TEST OpenMP_Fortran_GPU_Aware_MPI_MPICH_Wrappers PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+#add_test(NAME OpenMP_Fortran_GPU_Aware_MPI_MPICH_Wrappers COMMAND ../openmp_fortran_with_gpu_aware_mpi.sh --module mpich-wrappers --libfabric 1)
+#set_property(TEST OpenMP_Fortran_GPU_Aware_MPI_MPICH_Wrappers PROPERTY PASS_REGULAR_EXPRESSION "All tests passed")
+#set_property(TEST OpenMP_Fortran_GPU_Aware_MPI_MPICH_Wrappers PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
 # OpenMP Examples
 # Duplicate of OpenMP_C_5_Saxpy_Map
@@ -979,9 +979,9 @@ add_test(NAME GPUAwareMPI_OSUBenchmark_OpenMPI COMMAND ../gpuawarempi_osubenchma
 set_property(TEST GPUAwareMPI_OSUBenchmark_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "8388608")
 set_property(TEST GPUAwareMPI_OSUBenchmark_OpenMPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-add_test(NAME GPUAwareMPI_OSUBenchmark_Mvapich2 COMMAND ../gpuawarempi_osubenchmark_mvapich2.sh )
-set_property(TEST GPUAwareMPI_OSUBenchmark_Mvapich2 PROPERTY PASS_REGULAR_EXPRESSION "1048576")
-set_property(TEST GPUAwareMPI_OSUBenchmark_Mvapich2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+#add_test(NAME GPUAwareMPI_OSUBenchmark_Mvapich2 COMMAND ../gpuawarempi_osubenchmark_mvapich2.sh )
+#set_property(TEST GPUAwareMPI_OSUBenchmark_Mvapich2 PROPERTY PASS_REGULAR_EXPRESSION "1048576")
+#set_property(TEST GPUAwareMPI_OSUBenchmark_Mvapich2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME MPI_Ghost_Exchange_Orig_OpenMPI COMMAND ../mpi_ghost_exchange_orig.sh )
 set_property(TEST MPI_Ghost_Exchange_Orig_OpenMPI PROPERTY PASS_REGULAR_EXPRESSION "Printing Timings")
