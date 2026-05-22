@@ -163,9 +163,9 @@ module load umpire/<version-matching-the-compiler>
 ```
 This module sets the ```UMPIRE_PATH``` for you. 
 
-<hr>
+
 Note: Some installations need also the ```FMT_PATH``` and/or ```CAMP_PATH``` e.g. if installation was performed through Spack.
-<\hr>
+
   
 Have a look how the memory pool is set up in the code by looking at version 4.
 Compile and run with roctx markers and umpire:
