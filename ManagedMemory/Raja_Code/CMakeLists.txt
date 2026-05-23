@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 3.0)
 project (Raja_code)
 
+set(CMAKE_CXX_STANDARD 20)
+
 find_package(Raja REQUIRED)
 
 add_executable(raja_code raja_code.cc)
