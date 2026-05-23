@@ -24,7 +24,12 @@ else
 fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/HIPIFY/mini-nbody/cuda
+SRCDIR=${REPO_DIR}/HIPIFY/mini-nbody/cuda
+BUILDDIR=$(mktemp -d)
+trap 'rm -rf ${BUILDDIR}' EXIT
+cp ${SRCDIR}/Makefile ${SRCDIR}/*.cpp ${SRCDIR}/*.F90 ${BUILDDIR}/
+cd ${BUILDDIR}
+
 hipify-perl -examine nbody-orig.cu
 
 hipify-perl nbody-orig.cu > nbody-orig.cpp
