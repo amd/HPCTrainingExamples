@@ -19,7 +19,12 @@ then
     export NPROCS=1
 fi
 
-PROFILER_TOP_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
+SRCDIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
+BUILDDIR=$(mktemp -d)
+trap 'rm -rf ${BUILDDIR}' EXIT
+cp -r ${SRCDIR}/* ${BUILDDIR}/
+cd ${BUILDDIR}
+PROFILER_TOP_DIR=$PWD
 
 # Call the software set up script:
 source ${PROFILER_TOP_DIR}/setup.sh
