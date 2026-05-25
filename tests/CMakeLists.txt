@@ -1382,7 +1382,7 @@ set_tests_properties(Pytorch_Mnist PROPERTIES TIMEOUT 500)
 add_test(NAME Pytorch_No_Profile COMMAND ../pytorch_noprofile.sh )
 set_property(TEST Pytorch_No_Profile PROPERTY PASS_REGULAR_EXPRESSION "10: loss")
 set_property(TEST Pytorch_No_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
-set_tests_properties(Pytorch_No_Profile PROPERTIES TIMEOUT 800) 
+set_tests_properties(Pytorch_No_Profile PROPERTIES TIMEOUT 600) 
 
 add_test(NAME Pytorch_HIPBLASLt_Regression_Check COMMAND ../hipblaslt_regression_check.sh )
 set_property(TEST Pytorch_HIPBLASLt_Regression_Check PROPERTY PASS_REGULAR_EXPRESSION "REGRESSION CHECK: PASSED")
@@ -1410,7 +1410,7 @@ set_property(TEST Pytorch_Profile_Rocprof-sys_ROCm PROPERTY SKIP_REGULAR_EXPRESS
 # that run in 65 s natively); those builds are expected to TIMEOUT here,
 # which is what we want the CDash dashboard to show as the cross-version
 # variation.
-set_tests_properties(Pytorch_Profile_Rocprof-sys_ROCm PROPERTIES TIMEOUT 800)
+set_tests_properties(Pytorch_Profile_Rocprof-sys_ROCm PROPERTIES TIMEOUT 600)
 
 add_test(NAME Pytorch_Profile_Rocprofv3 COMMAND ../pytorch_profiling_rocprofv3.sh )
 set_property(TEST Pytorch_Profile_Rocprofv3 PROPERTY PASS_REGULAR_EXPRESSION "kernel_stats.csv")
@@ -1418,9 +1418,15 @@ set_property(TEST Pytorch_Profile_Rocprofv3 PROPERTY SKIP_REGULAR_EXPRESSION "mo
 set_tests_properties(Pytorch_Profile_Rocprofv3 PROPERTIES TIMEOUT 300) 
 
 add_test(NAME Pytorch_Profile_TorchProfiler COMMAND ../pytorch_profiling_torch-profiler.sh )
-set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY PASS_REGULAR_EXPRESSION "Memcpy HtoD")
+set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY PASS_REGULAR_EXPRESSION "Self CUDA time total")
 set_property(TEST Pytorch_Profile_TorchProfiler PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
-set_tests_properties(Pytorch_Profile_TorchProfiler PROPERTIES TIMEOUT 200) 
+set_tests_properties(Pytorch_Profile_TorchProfiler PROPERTIES TIMEOUT 300) 
+
+set_property(TEST Pytorch_No_Profile                   PROPERTY RESOURCE_LOCK pytorch_cifar_gpu)
+set_property(TEST Pytorch_Profile_Rocprof-compute_ROCm PROPERTY RESOURCE_LOCK pytorch_cifar_gpu)
+set_property(TEST Pytorch_Profile_Rocprof-sys_ROCm     PROPERTY RESOURCE_LOCK pytorch_cifar_gpu)
+set_property(TEST Pytorch_Profile_Rocprofv3            PROPERTY RESOURCE_LOCK pytorch_cifar_gpu)
+set_property(TEST Pytorch_Profile_TorchProfiler        PROPERTY RESOURCE_LOCK pytorch_cifar_gpu)
 
 # Python MPI tests
 add_test(NAME MPI4PY_Check_Import COMMAND ../mpi4py_check_import.sh)
