@@ -1682,6 +1682,7 @@ add_test(NAME Score-P_Check_Version COMMAND ../scorep_check_version.sh)
 set_property(TEST Score-P_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "Score-P 9.4")
 set_property(TEST Score-P_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'scorep'")
 
+# This test fails on ROCm versions 7.0.2, 7.1.0, 7.1.1 because target commands are erroneously emitted in the code compiled for the CPU.
 add_test(NAME Score-P_CPU_Profile COMMAND ../scorep_cpu_profile.sh)
 set_property(TEST Score-P_CPU_Profile PROPERTY PASS_REGULAR_EXPRESSION "PASS: Score-P CPU profiling test completed successfully")
 set_property(TEST Score-P_CPU_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'scorep'")
