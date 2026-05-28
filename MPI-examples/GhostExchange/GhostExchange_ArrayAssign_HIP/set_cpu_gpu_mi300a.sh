@@ -39,7 +39,8 @@ let ranks_per_gpu=$(((${ranks_per_node}+${NUM_GPUS}-1)/${NUM_GPUS}))
 let my_gpu_index=$(($local_rank*$GPU_STRIDE/$ranks_per_gpu))+${GPU_START}
 let my_gpu=${gpu_list[${my_gpu_index}]}
 
-export GOMP_CPU_AFFINITY=$cpu_start-$cpu_stop:$OMP_STRIDE
+export OMP_PLACES="{${cpu_start}}:${OMP_NUM_THREADS}:${OMP_STRIDE}"
+export OMP_PROC_BIND=close
 export ROCR_VISIBLE_DEVICES=$my_gpu
 
 "$@"
