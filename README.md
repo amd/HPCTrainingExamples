@@ -78,6 +78,7 @@ Please refer to this table of contents to locate the exercises and examples you 
       4. [`Intro`](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/Intro): a collection of mostly C++ examples with some Fortran as well. There is no associated README at the moment so users will need to inspect the code directly for more details.
       5. [`USM`](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/USM): some examples specific to unified shared memory and OpenMP. [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/Pragma_Examples/OpenMP/USM/README.md).
       6. [`OpenMP_CPU`](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP_CPU): some examples of using OpenMP on the CPU.
+      7. [`default_gotchas`](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/default_gotchas): a collection of examples that go over some OpenMP default behavior that may sometimes be surprising to users.
    2. [**OpenACC**](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenACC): a few examples of offloading to GPU using OpenACC.
       1. [**C**](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenACC/C): examples of reductions, saxpy and vector addition in C using OpenACC.
       2. [**Fortran**](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenACC/Fortran): examples of reductions and vector add in Fortran using OpenACC.
