@@ -21,11 +21,7 @@ This tutorial demonstrates the complete GPU optimization pipeline from baseline 
 
 ### What You'll Learn
 
-1. **Baseline Performance Measurement** - Establish reference metrics
-2. **High-Level Optimizations** - Kernel fusion with PyTorch
-3. **Low-Level Optimizations** - Custom GPU kernels with Triton
-4. **Profiling Techniques** - Identify bottlenecks at each stage
-5. **Performance Analysis** - Understand where speedups come from
+This tutorial covers the complete optimization pipeline from profiling to implementation. You'll start by establishing baseline performance metrics with clean PyTorch code, then apply high-level kernel fusion optimizations without writing custom GPU code. Next, you'll drop down to low-level custom Triton kernels for maximum performance. Throughout the journey, you'll learn profiling techniques to identify bottlenecks at each stage and develop the analytical skills to understand exactly where speedups come from.
 
 ### Performance Journey
 
@@ -71,10 +67,8 @@ python3 -c "import torch; print(f'GPU: {torch.cuda.get_device_name(0)}')"
 Establish baseline performance with clean, readable PyTorch implementation.
 
 ### Characteristics
-- ✅ **Readable**: Clear, well-documented code
-- ✅ **Standard**: Pure PyTorch operations
-- ⚠️ **Unoptimized**: Multiple kernel launches, no fusion
-- ⚠️ **Slow**: Kernel overhead dominates for small workloads
+
+The baseline prioritizes clarity over performance. The code is clean and well-documented, using only standard PyTorch operations that anyone can understand. However, it's completely unoptimized—each operation launches a separate GPU kernel with no fusion. This means kernel launch overhead dominates execution time, especially for small workloads.
 
 ### Run Small Problem
 
@@ -149,10 +143,9 @@ python3 tiny_openfold_v1.py \
 tensorboard --logdir ./profiles_v1_small
 ```
 
-**What to look for:**
-1. **Multiple attention kernels** - Q, K, V as separate operations
-2. **Triangle operations** - Dominate backward pass
-3. **Kernel launch overhead** - Many small kernel calls
+**What to look for in the profiler traces:**
+
+You'll notice multiple attention kernels where Q, K, and V are computed as separate operations instead of being fused. Triangle operations dominate the backward pass due to their O(N³) complexity. You'll also see significant kernel launch overhead from many small, short-lived kernel calls.
 
 ### Run Medium Problem
 
@@ -180,13 +173,12 @@ python3 tiny_openfold_v1.py \
 ### Stage 1 Summary
 
 **Baseline Established:**
-- Small: 80.5 samples/sec, 49.7 ms/batch
-- Medium: 41.5 samples/sec, 48.2 ms/batch
+
+We now have reference numbers for both problem sizes. The small problem runs at 80.5 samples/sec with 49.7 ms per batch, while the medium problem achieves 41.5 samples/sec at 48.2 ms per batch.
 
 **Bottlenecks Identified:**
-1. Backward pass dominates (55-56% of time)
-2. Multiple kernel launches for attention
-3. Triangle operations are compute-intensive
+
+Profiling reveals where optimization will have the most impact. The backward pass dominates at 55-56% of total time, with multiple kernel launches for attention operations creating unnecessary overhead. Triangle operations are particularly compute-intensive due to their cubic complexity.
 
 **Next Step**: Apply kernel fusion to reduce launch overhead
 
@@ -366,27 +358,21 @@ ROCR_VISIBLE_DEVICES=0 python3 tiny_openfold_v2.py \
     --seq-len 64 --num-seqs 16 --batch-size 4 --num-steps 20 | grep "Average training speed"
 ```
 
-**Expected Results**:
-- Baseline (no fusion): ~80 samples/sec
-- MSA QKV only: ~87 samples/sec (+9%)
-- Flash Attention only: ~92 samples/sec (+15%)
-- Triangle fusion only: ~85 samples/sec (+6%)
-- All fusions: ~106 samples/sec (+32%)
+**Expected Results:**
+
+Each optimization contributes differently to the total speedup. The baseline with no fusion runs at ~80 samples/sec. Enabling only MSA QKV fusion improves this to ~87 samples/sec (+9%), while Flash Attention alone achieves ~92 samples/sec (+15%). Triangle fusion by itself reaches ~85 samples/sec (+6%). However, when all fusions are enabled together, performance jumps to ~106 samples/sec (+32%).
 
 **Key Learning**: Flash Attention provides the biggest single benefit, but combined optimizations are synergistic.
 
 ### Stage 2 Summary
 
 **Achievements:**
-- Small: 80.5 → 106.4 samples/sec (+32%)
-- Medium: 41.5 → 49.0 samples/sec (+18%)
-- No memory overhead
-- 80% kernel reduction
+
+Kernel fusion delivers solid gains without increasing memory usage. For the small problem, we've improved from 80.5 to 106.4 samples/sec (+32%), while the medium problem went from 41.5 to 49.0 samples/sec (+18%). We've reduced the total number of kernel launches by 80% without any memory overhead.
 
 **Remaining Bottlenecks:**
-1. Still using generic PyTorch kernels
-2. Backward pass still dominates
-3. Memory bandwidth not fully optimized
+
+Even with fusion, there's still room for improvement. We're still relying on generic PyTorch kernels that aren't optimized for our specific use case. The backward pass continues to dominate execution time, and memory bandwidth isn't fully optimized since PyTorch can't exploit all hardware capabilities.
 
 **Next Step**: Drop to GPU level with custom Triton kernels
 
@@ -437,26 +423,23 @@ def layernorm_kernel(
     tl.store(output_ptr + offset, output, mask=mask)
 ```
 
-**Benefits**:
-- Single kernel launch vs 3+ in PyTorch
-- Data stays in cache/registers
-- Optimized memory access patterns
+**Benefits:**
+
+Custom implementation beats PyTorch's generic approach. Instead of 3+ separate kernel launches, we execute everything in a single kernel. Data stays in cache and registers rather than being written back to main memory between operations. Memory access patterns are hand-optimized for sequential reads and writes.
 
 #### 2. Flash Attention for MSA (Triton)
 **Why optimize?** MSA operations dominate forward/backward passes.
 
-**Key Optimizations**:
-- Tiled computation to fit in shared memory
-- Reduced HBM traffic (main memory)
-- Optimized for ROCm/AMD GPUs
+**Key Optimizations:**
+
+MSA attention is memory-bound, so we focus on reducing data movement. Tiled computation allows us to fit working sets in shared memory, dramatically reducing expensive HBM (main memory) traffic. The implementation is specifically optimized for ROCm/AMD GPUs, taking advantage of architectural features like LDS (local data share).
 
 #### 3. Flash Attention for Triangles (Triton)
 **Why optimize?** Triangle operations are O(N³) and very expensive.
 
-**Key Optimizations**:
-- Custom tiling strategy for pair representation
-- Minimized memory transfers
-- Optimized backward pass (biggest bottleneck!)
+**Key Optimizations:**
+
+Triangle operations have O(N³) complexity, making backward pass optimization critical. We use a custom tiling strategy designed specifically for the pair representation's access patterns. Memory transfers are minimized by reusing data across tiles. The backward pass gets special attention since it's the biggest bottleneck—custom gradient implementations avoid PyTorch's generic autograd overhead.
 
 ### Run Small Problem (V3)
 
@@ -539,23 +522,17 @@ ROCR_VISIBLE_DEVICES=0 python3 tiny_openfold_v3.py \
 
 ### Why V3 is So Much Faster
 
-1. **Custom LayerNorm**: Fused computation, single pass through data
-2. **Optimized Flash Attention**: Hand-tuned for ROCm, better memory access
-3. **Triangle Backward Optimization**: Custom gradients with minimal memory traffic
-4. **Register/Cache Utilization**: Data stays in fast memory longer
+Triton kernels give us fine-grained control over memory hierarchy. **Custom LayerNorm** fuses all computation into a single pass through data instead of PyTorch's multi-pass approach. **Optimized Flash Attention** is hand-tuned for ROCm with carefully designed memory access patterns. **Triangle Backward Optimization** uses custom gradients that generate minimal memory traffic compared to autograd. Finally, **Register/Cache Utilization** is maximized by keeping data in fast memory (registers and L1 cache) much longer than generic PyTorch kernels allow.
 
 ### Stage 3 Summary
 
 **Final Achievements:**
-- Small: 80.5 → 162.5 samples/sec (**2.0x speedup!**)
-- Medium: 41.5 → 68.5 samples/sec (**1.65x speedup**)
-- Backward pass: 69% faster (small), 56% faster (medium)
+
+Custom kernels deliver the biggest gains of any optimization stage. The small problem improved from 80.5 to 162.5 samples/sec—a **2.0x speedup**! The medium problem went from 41.5 to 68.5 samples/sec (**1.65x speedup**). Most impressively, the backward pass is 69% faster for small problems and 56% faster for medium ones.
 
 **Trade-offs:**
-- ✅ Massive performance gains
-- ✅ Same numerical accuracy
-- ⚠️ Slightly higher memory (12-24%, still manageable)
-- ⚠️ More complex code (Triton kernels)
+
+Every optimization has costs—here's what we traded for 2x speedup. We achieved massive performance gains while maintaining the same numerical accuracy as the baseline. However, memory usage increased by 12-24% (still very manageable). The code is also more complex due to custom Triton kernels, which require GPU programming expertise to maintain.
 
 ---
 
@@ -627,14 +604,12 @@ This accounts for most of the total speedup!
 Small problem memory increase: 195.7 → 218.5 MB (+23 MB, +12%)
 
 **Why the increase?**
-- Triton kernels allocate scratch space
-- Optimized for speed, not minimum memory
-- Additional buffers for tiled computations
+
+Triton kernels trade some memory for speed. They allocate scratch space for intermediate computations and use additional buffers for tiled computations. These kernels are optimized for maximum speed, not minimum memory usage.
 
 **Is it worth it?**
-- ✅ Yes! 23 MB is negligible on modern GPUs (192 GB HBM)
-- ✅ 2.0x speedup far outweighs small memory cost
-- ✅ Can still run much larger problems
+
+The memory cost is negligible compared to the performance gain. The 23 MB increase is trivial on modern GPUs with 192 GB of HBM. The 2.0x speedup far outweighs this small memory cost, and we can still run much larger problems without hitting memory limits.
 
 ---
 
@@ -643,10 +618,8 @@ Small problem memory increase: 195.7 → 218.5 MB (+23 MB, +12%)
 ### 1. Optimization Strategy
 
 **Best Approach:**
-1. Start with clean, readable baseline (V1)
-2. Profile to identify bottlenecks
-3. Apply high-level optimizations first (V2 - kernel fusion)
-4. Drop to low-level only when needed (V3 - custom kernels)
+
+Always optimize incrementally—don't skip steps. Start with a clean, readable baseline (V1) to establish reference performance. Profile thoroughly to identify the real bottlenecks, not what you assume they are. Apply high-level optimizations first (V2 - kernel fusion) since these are easier to implement and debug. Only drop to low-level custom kernels (V3) when you've exhausted higher-level options.
 
 **Don't:** Jump straight to custom kernels - high-level optimizations give 70% of the benefit with 10% of the effort!
 
@@ -659,24 +632,17 @@ In deep learning workloads:
 
 ### 3. Problem Size Affects Speedup
 
-- **Small problems**: Larger speedup (2.0x) - kernel overhead dominates
-- **Medium problems**: Good speedup (1.65x) - balanced workload
-- **Large problems**: Smaller speedup (~1.3x) - compute-bound
+The speedup you achieve depends heavily on problem size. **Small problems** (64 residues) show the largest speedup at 2.0x because kernel launch overhead dominates, and our optimizations directly address this. **Medium problems** (128 residues) still achieve good speedup at 1.65x with a more balanced workload between kernel overhead and actual computation.
 
 **Lesson**: Optimize for your target workload size!
 
 ### 4. Memory vs Speed Trade-offs
 
-- V2: No memory cost, 32% speedup → **Always use**
-- V3: 12% memory cost, 102% speedup → **Use when speed matters**
+Each version offers a different balance. V2 has no memory cost while delivering a 32% speedup—you should **always use** kernel fusion. V3 adds 12% memory overhead but doubles performance with a 102% speedup—**use it when speed matters** more than memory.
 
 ### 5. Incremental Development
 
-Progressive optimization allows:
-- **Validation** at each stage (compare outputs)
-- **Debugging** (isolate which optimization broke things)
-- **Education** (understand what each optimization contributes)
-- **Flexibility** (choose optimization level based on needs)
+Progressive optimization allows you to validate, debug, and learn at each step. You can validate correctness at each stage by comparing outputs against the baseline. When something breaks, you can easily isolate which optimization caused the problem. From an educational perspective, you understand what each optimization contributes rather than seeing a black box. Finally, you have the flexibility to choose your optimization level based on specific needs—readability, memory constraints, or maximum performance.
 
 ---
 
@@ -739,25 +705,8 @@ ROCR_VISIBLE_DEVICES=0,1,2,3 python3 tiny_openfold_v3.py \
 
 ---
 
-## Documentation
-
-- **This tutorial**: Complete optimization guide
-- **QUICK_START_PERFORMANCE.md**: Fast reference
-- **REGRESSION_TEST_SUMMARY.md**: Full benchmarks (4 problem sizes)
-- **ARCHITECTURE.md**: Evoformer architecture details
-- **Version READMEs**: Version-specific documentation
-
----
-
 ## Summary: What You Learned
 
-✅ **Baseline measurement** - Establish reference performance  
-✅ **Profiling** - Identify bottlenecks systematically  
-✅ **Kernel fusion** - High-level PyTorch optimizations  
-✅ **Custom kernels** - Low-level GPU programming with Triton  
-✅ **Performance analysis** - Understand where speedups come from  
-✅ **Trade-offs** - Memory vs speed, complexity vs maintainability  
+You now have a complete mental model of GPU optimization. You learned how to establish reference performance through baseline measurement, identify bottlenecks systematically using profiling tools, and apply high-level PyTorch kernel fusion optimizations. You progressed to low-level GPU programming with custom Triton kernels, developed skills in performance analysis to understand where speedups actually come from, and learned to evaluate trade-offs between memory usage, speed, complexity, and maintainability.
 
-**Final Achievement**: **2.0x speedup** on small workloads through systematic optimization!
-
-🎉 **You now understand the complete GPU optimization pipeline!**
+**Final Achievement**: **2.0x speedup** on small workloads through systematic optimization! This tutorial should serve as a complete GPU optimization pipeline example.
