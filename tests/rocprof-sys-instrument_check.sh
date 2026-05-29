@@ -10,6 +10,7 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
+#module load amdclang
 
 if command -v rocprof-sys-instrument &> /dev/null; then
     echo "rocprof-sys-instrument found at: $(which rocprof-sys-instrument)"
@@ -23,12 +24,23 @@ pushd ${REPO_DIR}/HIP/Stream_Overlap/0-Orig/
 BUILD_DIR=$(mktemp -d build_XXXXXX)
 cd ${BUILD_DIR}
 cmake ../
-make -j
+make -j VERBOSE=1
+ldd compute_comm_overlap
 
+echo ""
+echo ""
+echo ""
+echo ""
+echo ""
+echo ""
+echo ""
+echo ""
+echo ""
+ldd `which rocprof-sys-instrument`
 rocprof-sys-instrument -o compute_comm_overlap.inst -- compute_comm_overlap
 
 cd ..
-rm -rf ${BUILD_DIR}
+#rm -rf ${BUILD_DIR}
 
 popd
 
