@@ -55,10 +55,10 @@ do
 done
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/HIP/jacobi
+SRCDIR=${REPO_DIR}/HIP/jacobi
 
-
-if ! module is-loaded "rocm"; then
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
   module load rocm
@@ -69,23 +69,25 @@ module load tau
 export TAU_PROFILE=${TAU_PROFILE}
 export TAU_TRACE=${TAU_TRACE}
 
-rm -rf profile.0*
-rm -rf tautrace.0*
-make clean
+WORKDIR=$(mktemp -d -p ${SRCDIR} build_XXXXXX)
+cp ${SRCDIR}/*.hip ${SRCDIR}/*.hpp ${SRCDIR}/*.h ${SRCDIR}/Makefile ${SRCDIR}/input.txt ${WORKDIR}/
+cd ${WORKDIR}
+
 make
 
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
 result=`echo ${ROCM_VERSION} | awk '$1>6.1.9'` && echo $result
+# Use a 1024x1024 local mesh so the TAU trace buffer fits in GPU memory
+# (default 4096x4096 caused "HIP failure: 'out of memory'" during trace finalization).
 if [[ "${result}" ]]; then
-   mpirun -n 2 tau_exec -rocm -T rocm,rocprofsdk ./Jacobi_hip -g 2 1
+   mpirun -n 2 --oversubscribe tau_exec -rocm -T rocm,rocprofsdk ./Jacobi_hip -g 2 1 -m 1024 1024
 else
-   mpirun -n 2 tau_exec -T rocm,roctracer,rocprofiler ./Jacobi_hip -g 2 1
+   mpirun -n 2 --oversubscribe tau_exec -T rocm,roctracer,rocprofiler ./Jacobi_hip -g 2 1 -m 1024 1024
 fi
 
 ls
 pprof
 
-make clean
-rm -rf profile.0*
-rm -rf tautrace.0*
+cd ..
+rm -rf ${WORKDIR}
 

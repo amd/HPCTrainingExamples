@@ -1,7 +1,7 @@
 SRC=nbody-orig.cu
 EXE=nbody-orig
 
-nvcc -arch=sm_35 -I../ -DSHMOO -o $EXE $SRC
+nvcc -arch=sm_35 -I../ -o $EXE $SRC
 
 echo $EXE
 

@@ -9,20 +9,25 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/cupy_setup.sh
 
 
-if ! module is-loaded "rocm"; then
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
   module load rocm
 fi
 module load cupy
 
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp * ${BUILD_DIR}
+
+cd ${BUILD_DIR}
+
 git clone -q --depth 1 --recursive https://github.com/ROCm/cupy.git
 
-cd cupy/tests/install_tests
+export CUPY_INSTALL_USE_HIP=1
 
-sed -i -e '23d' -e '31d' test_build.py
+cd cupy/tests/install_tests || exit 1
 
 python3 -m pytest -vvv
-
-cd ../../../
-rm -rf cupy

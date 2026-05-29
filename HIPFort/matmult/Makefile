@@ -8,12 +8,13 @@ HIPFORT_PATH ?= ${ROCM_PATH}
 
 OBJECTS = matmult_prog.o matmult_interface.o matmult_hip.o matmult_mod.o
 
-FC_FLAGS = -g -O2 -fopenmp --offload-arch=${ROCM_GPU} -I${HIPFORT_PATH}/include/hipfort/amdgcn
+FC_FLAGS = -g -O2 -fopenmp --offload-arch=${ROCM_GPU} -I${HIPFORT_INC}/amdgcn
 HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include
 
 HIPCC ?= hipcc
+HIPCC1=$(notdir $(HIPCC))
 
-ifeq ($(HIPCC), hipcc)
+ifneq ($(findstring hipcc,$(HIPCC1)),)
    HIPCC_FLAGS += -munsafe-fp-atomics
    LDFLAGS = -L${HIPFORT_PATH}/lib -lhipfort-amdgcn -L${ROCM_PATH}/lib -lhipblas -lamdhip64 -lstdc++
 endif

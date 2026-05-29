@@ -1,17 +1,21 @@
 #!/bin/bash
 
-
-
 module load miniforge3
 
-mamba create -y -n env_for_test numpy pandas
+export CONDA_TMPDIR=$(mktemp -d)
+export CONDA_PKGS_DIRS="${CONDA_TMPDIR}/pkgs"
+export CONDA_ENVS_PATH="${CONDA_TMPDIR}/envs"
 
-mamba activate env_for_test
+mamba create -y -n env_for_create_test numpy pandas
+
+mamba activate env_for_create_test
 
 mamba info --envs
 
 mamba deactivate
 
-mama remove -y -n env_for_test --all
+mamba remove -y -n env_for_create_test --all
 
 module unload miniforge3
+
+rm -rf ${CONDA_TMPDIR}

@@ -5,6 +5,7 @@ all: $(EXECUTABLE)
 
 OBJECTS = stream.o
 
+HIPCC ?= hipcc
 CXXFLAGS = -g -O2 -DNDEBUG -fPIC
 HIPCC_FLAGS = -g -O2 -DNDEBUG
 
@@ -19,10 +20,10 @@ ifeq ($(HIP_PLATFORM), amd)
 endif
 
 %.o: %.hip
-	hipcc $(HIPCC_FLAGS) -c $^ -o $@
+	${HIPCC} $(HIPCC_FLAGS) -c $^ -o $@
 
 $(EXECUTABLE): $(OBJECTS)
-	hipcc $< $(LDFLAGS) -o $@
+	${HIPCC} $< $(LDFLAGS) -o $@
 
 test: $(EXECUTABLE)
 	$(EXECUTABLE)

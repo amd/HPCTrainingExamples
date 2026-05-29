@@ -73,7 +73,7 @@ def train(train_data, val_data, model, opt, rank):
         import contextlib
         precision_context = contextlib.nullcontext()
 
-    if args.torch_profile == True:
+    if args.torch_profile and (rank == 0 or args.profile_all_ranks):
         from torch.profiler import profile, record_function, ProfilerActivity, schedule
         this_schedule = schedule(skip_first=3, wait=5, warmup=1, active=3,repeat=1)
         profiling_context = profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True, schedule=this_schedule)
@@ -107,7 +107,7 @@ def train(train_data, val_data, model, opt, rank):
 
                 end = time.time()
 
-                if args.torch_profile and rank == 0:
+                if args.torch_profile and (rank == 0 or args.profile_all_ranks):
                     profiling_context.step()
 
                 img_per_s = args.batch_size / (end - start)
@@ -123,9 +123,10 @@ def train(train_data, val_data, model, opt, rank):
 
         # Could add validation step here
 
-    if args.torch_profile and rank == 0:
-        profiling_context.export_chrome_trace(f"trace_{epoch}_{i}.json")
-        print(profiling_context.key_averages(group_by_stack_n=5).table(sort_by="cuda_time_total", row_limit=10))
+    if args.torch_profile and (rank == 0 or args.profile_all_ranks):
+        profiling_context.export_chrome_trace(f"trace_{epoch}_{i}_{rank}.json")
+        if rank == 0:
+            print(profiling_context.key_averages(group_by_stack_n=5).table(sort_by="cuda_time_total", row_limit=10))
 
 def build_dataset(args, rank, download):
 
@@ -160,14 +161,14 @@ def build_dataset(args, rank, download):
         batch_size=args.batch_size, 
         pin_memory=True,
         shuffle=False, 
-        num_workers=4,
+        num_workers=args.num_workers,
         sampler=DistributedSampler(training_data))
 
     val_dataloader = torch.utils.data.DataLoader(validation_data, 
         batch_size=args.batch_size, 
         pin_memory=True,
         shuffle=False, 
-        num_workers=4,
+        num_workers=args.num_workers,
         sampler=DistributedSampler(val_data))
 
     # Preprocess the images:
@@ -253,8 +254,16 @@ if __name__ == "__main__":
     parser.add_argument("--max-steps", "-ms", type=int, default=20,
                         help="Maximum number of steps to run for profiling")
 
+    parser.add_argument("--num-workers", "-nw", type=int, default=2,
+                        help="Number of DataLoader worker processes. "
+                             "Set to 0 when running under profilers (e.g. rocprof-sys) "
+                             "that do not handle PyTorch's forked data-loader workers.")
+
     parser.add_argument("--torch-profile", action="store_true",
                         help="Activate the pytorch profiler")
+
+    parser.add_argument("--profile-all-ranks", action="store_true",
+                        help="Store traces from every rank (default: only rank 0)")
 
     parser.add_argument("--model", type=str, 
                         choices=["resnet", "swinv2", "vit"],
@@ -275,7 +284,9 @@ if __name__ == "__main__":
 
     train_data, val_data = build_dataset(args, rank, download)
 
-    if download: exit(0)
+    if download:
+        dist.destroy_process_group()
+        exit(0)
 
     model, opt = init_model(args, rank)
 

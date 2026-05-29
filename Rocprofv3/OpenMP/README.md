@@ -17,7 +17,7 @@ git clone https://github.com/amd/HPCTrainingExamples.git
 cd HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/8_jacobi/1_jacobi_usm
 ```
 
-Load the necessary modules, including amdflang (a.k.a. flang-new) compiler. Note that the module name for the amdflang compiler on your system might differ, check for `rocm-afar-drop`, `amd-llvm`, `amdflang-new` or something similar.
+Load the necessary modules. In case you are using a ROCm release before 7.0, you will need to load a module with the new amdflang (a.k.a. flang-new) compiler. Note that the module name for the amdflang compiler on your system might differ, check for `rocm-afar-drop`, `amd-llvm`, `amdflang-new` or something similar.
 
 ```
 module load rocm

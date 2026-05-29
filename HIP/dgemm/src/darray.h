@@ -40,7 +40,7 @@ public:
   };
 
   darray<T> const& operator=(darray<T> && that){
-     m_data = std::move(that.data);
+     m_data = std::move(that.m_data);
      return *this;
   }
 

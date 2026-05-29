@@ -1,7 +1,7 @@
 
 ## C++ member function
 
-README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/CXX/5_device_routines` in Training Examples repository
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/CXX/6_device_routines` in Training Examples repository
 
 The first example is where there is a compute method in the Science class that is called from a parallel target region.
 
@@ -41,10 +41,10 @@ is in-lined into the `bigscience.cc` file. So it is handled by the directive add
 ## C++ member function external
 
 So what happens when the compute method is defined in a different file? For this case, let's take a look at the next example
-in `2_method_function_external`.
+in `2_member_function_external`.
 
 ```
-cd ../2_method_function_external
+cd ../2_member_function_external
 ```
 
 Try porting the code in `0_member_function_external_portyourself`. Note that in this example, the compute member function is defined

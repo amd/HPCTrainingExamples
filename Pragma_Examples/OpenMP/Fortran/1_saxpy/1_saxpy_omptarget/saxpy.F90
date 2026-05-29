@@ -1,6 +1,7 @@
-
+! Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
+! This software is distributed under the MIT License
+!
 module saxpymod
-!$omp requires unified_shared_memory
    use iso_fortran_env
    use omp_lib
   
@@ -8,6 +9,8 @@ module saxpymod
    private
 
    public :: saxpy,initialize
+
+   !$omp requires unified_shared_memory
  
 contains
         

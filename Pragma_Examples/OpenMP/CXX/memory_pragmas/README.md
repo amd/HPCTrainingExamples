@@ -163,7 +163,7 @@ Mem8 pattern: Demonstrating Unified Shared Memory with maps for backward compati
 
 We now switch to how unified address programming would look in other languages. The language we will work 
 with the most will be OpenMP. We'll start by looking at the unified address code shown in slide 31 and 32. 
-It is also in the mem12.cc file in the directory given below. You should also compare
+It is also in the mem11.cc file in the directory given below. You should also compare
 it to the original GPU code using explicit memory management in mem1.cc through mem6.cc.
 
 We'll now run the unified address example if we have access to an MI300A GPU. If you don't have access to an MI300A, we'll
@@ -172,7 +172,9 @@ also run nearly the same code in mem7.cc with managed memory on the MI200 series
 ```
 cd ~/HPCTrainingExamples/Pragma_Examples/OpenMP/CXX/memory_pragmas
 module load amdclang
-make mem12
-./mem12
+mkdir build && cd build
+cmake ..
+make mem11
+./mem11
 ```
 

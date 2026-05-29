@@ -6,67 +6,29 @@
 # to the instructions available in the model installation repo:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/petsc_setup.sh
 
-PETSC_MODULE="petsc"
-
-usage()
-{
-    echo ""
-    echo "--help : prints this message"
-    echo "--petsc-module : specifies which petsc module to load"
-    echo ""
-    exit
-}
-
-send-error()
-{
-    usage
-    echo -e "\nError: ${@}"
-    exit 1
-}
-
-reset-last()
-{
-   last() { send-error "Unsupported argument :: ${1}"; }
-}
-
-n=0
-while [[ $# -gt 0 ]]
-do
-   case "${1}" in
-      "--petsc-module")
-          shift
-          PETSC_MODULE=${1}
-          reset-last
-          ;;
-     "--help")
-          usage
-          ;;
-      "--*")
-          send-error "Unsupported argument at position $((${n} + 1)) :: ${1}"
-          ;;
-      *)
-         last ${1}
-         ;;
-   esac
-   n=$((${n} + 1))
-   shift
-done
-
-
-
-
-if ! module is-loaded "rocm"; then
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
   module load rocm
 fi
-module load openmpi $PETSC_MODULE
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   module load openmpi
+fi
+
+module load petsc_amdflang >& /dev/null
+if [ "$?" == "1" ]; then
+    module load petsc
+fi
 
 PETSC_VERSION=`$PETSC_DIR/lib/petsc/bin/petscversion`
 
-git clone --branch v$PETSC_VERSION https://gitlab.com/petsc/petsc.git petsc_for_test
+WORKDIR=$(mktemp -d -t petsc_test_XXXXXXXXXX)
+trap "rm -rf $WORKDIR" EXIT
 
-pushd petsc_for_test/src/ksp/ksp/tutorials
+git clone --branch v$PETSC_VERSION https://gitlab.com/petsc/petsc.git "$WORKDIR/petsc_for_test"
+
+pushd "$WORKDIR/petsc_for_test/src/ksp/ksp/tutorials"
 
 sed -i '/PetscCheck(norm/d' bench_kspsolve.c
 
@@ -75,8 +37,6 @@ mpicc bench_kspsolve.c -o bench_kspsolve -I$PETSC_PATH/include -L$PETSC_PATH/lib
 ./bench_kspsolve -mat_type aijhipsparse
 
 popd
-
-rm -rf petsc_for_test
 
 
 

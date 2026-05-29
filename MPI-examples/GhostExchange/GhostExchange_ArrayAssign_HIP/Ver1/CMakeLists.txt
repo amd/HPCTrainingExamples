@@ -12,6 +12,7 @@ find_package(hip REQUIRED IMPORTED CONFIG HINTS ${ROCM_PATH})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3")
+set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -g -O3")
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
@@ -32,6 +33,37 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${VECTOR_CXX_FLAGS}")
 
 # Require MPI for this project:
 find_package(MPI REQUIRED)
+
+option(USE_PNETCDF "Enable parallel NetCDF support" OFF)
+
+if(USE_PNETCDF)
+
+   add_compile_definitions(USE_PNETCDF)
+
+   find_program(PNETCDF_CONFIG pnetcdf-config REQUIRED)
+
+   execute_process(
+       COMMAND ${PNETCDF_CONFIG} --version
+       OUTPUT_VARIABLE PNETCDF_VERSION
+       OUTPUT_STRIP_TRAILING_WHITESPACE
+   )
+
+   execute_process(
+       COMMAND ${PNETCDF_CONFIG} --includedir
+       OUTPUT_VARIABLE PNETCDF_INCLUDEDIR
+       OUTPUT_STRIP_TRAILING_WHITESPACE
+   )
+
+   execute_process(
+       COMMAND ${PNETCDF_CONFIG} --libdir
+       OUTPUT_VARIABLE PNETCDF_LIBDIR
+       OUTPUT_STRIP_TRAILING_WHITESPACE
+   )
+
+   message(STATUS "Found PnetCDF ${PNETCDF_VERSION}")
+   message(STATUS "PnetCDF Include Dir: ${PNETCDF_INCLUDEDIR}")
+   message(STATUS "PnetCDF Lib Dir: ${PNETCDF_LIBDIR}")
+endif()
 
 execute_process(COMMAND rocminfo COMMAND grep -m 1 -E gfx[^0]{1} COMMAND sed -e "s/ *Name: *//" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE ROCM_GPU)
 
@@ -55,6 +87,12 @@ set_source_files_properties(GhostExchange.hip PROPERTIES LANGUAGE ${GPU_RUNTIME}
 set_target_properties(GhostExchange PROPERTIES INCLUDE_DIRECTORIES "${MPI_CXX_INCLUDE_PATH}")
 set_target_properties(GhostExchange PROPERTIES COMPILE_FLAGS "${MPI_CXX_COMPILE_FLAGS}")
 target_link_libraries(GhostExchange PRIVATE "${MPI_CXX_LIBRARIES}")
+
+if(USE_PNETCDF)
+   target_include_directories(GhostExchange PRIVATE ${PNETCDF_INCLUDEDIR})
+   target_link_directories(GhostExchange PRIVATE ${PNETCDF_LIBDIR})
+   target_link_libraries(GhostExchange PRIVATE pnetcdf)
+endif()
 
 # Add a test:
 enable_testing()

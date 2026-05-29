@@ -115,47 +115,45 @@ cd  version4_solution2
 ```
 For the trainings we usually provide a module for umpire, but if you need it on another system we provide the installation instructions here (unfold). 
 <details>
-  <summary> <hr> Install Umpire with the Next Generation amdflang compiler<\hr></summary>
+  <summary> *Install Umpire with amdflang*</summary>
 If you are not on a system with umpire installed as a module, details of installtion with the Next Generation Fortran Compiler are provided here:
 
 Adapt the UMPIRE_PATH to your favorite installation location:
 ```
-export UMPIRE_PATH=$HOME/Software/Umpire/install
-```
-And check that ROCM_PATH is set to the rocm-afar-drop-<version> location.
-Clone the umpire repository and its dependencies (--recursive) fmt and camp:
-```
-git clone --recursive https://github.com/LLNL/Umpire.git
-```
-```
-cd Umpire
-```
-There is a fix which needs to be applied in the current camp version:
-```
-sed -i 's/memoryType/type/g' src/umpire/tpl/camp/include/camp/resource/hip.hpp
-```
-Build directory:
-```
-mkdir -p build && cd build && rm -rf ./*
-```
-Installation directory:
-```
-mkdir $UMPIRE_PATH
-```
-Configure cmake, make sure the target is gfx942 (for MI300A), Fortran is enabled and the ROCM_PATH is set to the rocm-afar-drop-<version>. The Fortran compiler needs to be set through the `FC` variable. Our module for the compiler takes care of that but if you install on another system you have to set it right, too:
-```
-cmake -DCMAKE_INSTALL_PREFIX=${UMPIRE_PATH} -DROCM_ROOT_DIR=${ROCM_PATH} -DHIP_ROOT_DIR=${ROCM_PATH}/hip -DHIP_PATH=${ROCM_PATH}/llvm/bin -DENABLE_HIP=On -DENABLE_OPENMP=Off -DENABLE_CUDA=Off -DENABLE_MPI=Off -DCMAKE_CXX_COMPILER=${ROCM_PATH}/llvm/bin/amdclang++ -DCMAKE_C_COMPILER=${ROCM_PATH}/llvm/bin/amdclang -DCMAKE_HIP_ARCHITECTURES=gfx942 -DAMDGPU_TARGETS=gfx942 -DCMAKE_HIP_ARCHITECTURES=gfx942 -DGPU_TARGETS=gfx942 -DBLT_CXX_STD=c++14 -DUMPIRE_ENABLE_IPC_SHARED_MEMORY=On -DENABLE_FORTRAN=On ../
-```
-Note: for older versions of the Next Generation Fortran compiler -DCMAKE_Fortran_COMPILER_ID=GNU may be needed as the Next Generation Fortran Compiler was not yet detected correctly and the GNU flags are the same. Flags for the Next Generation Fortran Compiler are mostly compatible with gfortran.
-Build:
-```
+#!/bin/bash
+set -e
+
+export CXX=amdclang++
+export FC=amdflang
+export UMPIRE_PATH="$(pwd)"
+mkdir -p "$UMPIRE_PATH"
+cd "$UMPIRE_PATH"
+mkdir -p install
+
+if [ ! -d "$UMPIRE_PATH/Umpire" ]; then
+    git clone -b v2025.12.0 --recursive https://github.com/llnl/Umpire.git
+fi
+
+#patch the free form flag
+cd "$UMPIRE_PATH/Umpire"
+for f in \
+    tests/integration/interface/fortran/CMakeLists.txt \
+    src/umpire/interface/c_fortran/CMakeLists.txt \
+    examples/tutorial/fortran/CMakeLists.txt \
+    examples/cookbook/CMakeLists.txt; do
+    if grep -q -- '-Mfree)' "$f"; then
+        sed -i 's/-Mfree)/-ffree-form)/g' "$f"
+        echo "Patched -Mfree -> -ffree-form in $f"
+    fi
+done
+
+cd "$UMPIRE_PATH/Umpire"
+mkdir -p build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=${UMPIRE_PATH}/install -DROCM_ROOT_DIR=${ROCM_PATH} -DHIP_ROOT_DIR=${ROCM_PATH}/hip -DHIP_PATH=${ROCM_PATH}/llvm/bin -DENABLE_HIP=On -DENABLE_OPENMP=Off -DENABLE_CUDA=Off -DENABLE_MPI=Off -DCMAKE_CXX_COMPILER=${ROCM_PATH}/llvm/bin/amdclang++ -DCMAKE_C_COMPILER=${ROCM_PATH}/llvm/bin/amdclang -DCMAKE_Fortran_COMPILER=${ROCM_PATH}/llvm/bin/amdflang -DCMAKE_HIP_ARCHITECTURES=gfx942 -DAMDGPU_TARGETS=gfx942 -DCMAKE_HIP_ARCHITECTURES=gfx942 -DGPU_TARGETS=gfx942 -DBLT_CXX_STD=c++17 -DUMPIRE_ENABLE_IPC_SHARED_MEMORY=On -DENABLE_FORTRAN=On -DCMAKE_Fortran_COMPILER_ID=LLVMFlang ../
 make -j 32
-```
-Install:
-```
 make install
 ```
-
 With umpire installed, you can now use it to explore the effect of a memory pool.
 </details>
 
@@ -165,9 +163,9 @@ module load umpire/<version-matching-the-compiler>
 ```
 This module sets the ```UMPIRE_PATH``` for you. 
 
-<hr>
+
 Note: Some installations need also the ```FMT_PATH``` and/or ```CAMP_PATH``` e.g. if installation was performed through Spack.
-<\hr>
+
   
 Have a look how the memory pool is set up in the code by looking at version 4.
 Compile and run with roctx markers and umpire:

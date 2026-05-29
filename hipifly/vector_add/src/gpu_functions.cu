@@ -21,28 +21,35 @@ THE SOFTWARE.
 */
 
 #include "stdio.h"
+#include "stdlib.h"
 
 #ifndef ENABLE_HIP
 #include <cuda_runtime.h>
 #else
-// Translate CUDA functions to the analogous HIP function
 #include "hipifly.h"
 #endif
 
-#define TPB 256 //Number of threads per block for kernel calls
+#define TPB 256
+
+#define CHECK(cmd) do { \
+  cudaError_t err = cmd; \
+  if (err != cudaSuccess) { \
+    fprintf(stderr, "GPU ERROR: '%s' at %s:%d\n", cudaGetErrorString(err), __FILE__, __LINE__); \
+    exit(1); \
+  } \
+} while(0)
 
 void get_device_properties( const int device_id ){
  	cudaDeviceProp prop;
-	cudaGetDeviceProperties( &prop, device_id );
+	CHECK( cudaGetDeviceProperties( &prop, device_id ) );
   printf("Device: %d  name:  %s \n", device_id, prop.name );
-
 }
 
 
 int set_device( int device_id ){
   
   int n_devices;
-  cudaGetDeviceCount(&n_devices);
+  CHECK( cudaGetDeviceCount(&n_devices) );
   printf("Number of available devices %d\n", n_devices);  
   printf("Device id: %d \n", device_id);
   if ( device_id >= n_devices ){
@@ -50,7 +57,7 @@ int set_device( int device_id ){
     return -1;
   }
   
-  cudaSetDevice(device_id); 
+  CHECK( cudaSetDevice(device_id) ); 
   get_device_properties( device_id );
 
   return 0;
@@ -58,16 +65,16 @@ int set_device( int device_id ){
 }
 
 void allocate_device_arrays( int N, double *&d_a, double *&d_b, double *&d_c  ){
-  cudaMalloc( (void **)&d_a, N*sizeof(double) );
-  cudaMalloc( (void **)&d_b, N*sizeof(double) );
-  cudaMalloc( (void **)&d_c, N*sizeof(double) );  
+  CHECK( cudaMalloc( (void **)&d_a, N*sizeof(double) ) );
+  CHECK( cudaMalloc( (void **)&d_b, N*sizeof(double) ) );
+  CHECK( cudaMalloc( (void **)&d_c, N*sizeof(double) ) );  
 }
 
 
 void copy_host_to_device( int N, double *h_a, double *h_b, 
                           double *&d_a, double *&d_b   ){
-  cudaMemcpy( d_a, h_a, N*sizeof(double), cudaMemcpyHostToDevice );
-  cudaMemcpy( d_b, h_b, N*sizeof(double), cudaMemcpyHostToDevice );
+  CHECK( cudaMemcpy( d_a, h_a, N*sizeof(double), cudaMemcpyHostToDevice ) );
+  CHECK( cudaMemcpy( d_b, h_b, N*sizeof(double), cudaMemcpyHostToDevice ) );
 }
 
 
@@ -86,21 +93,22 @@ float gpu_vector_add( int N, double *d_a, double *d_b, double *d_c ){
   dim3 block( TPB, 1, 1 );
 
   cudaEvent_t start, stop;
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
+  CHECK( cudaEventCreate(&start) );
+  CHECK( cudaEventCreate(&stop) );
 
-  cudaEventRecord(start);
+  CHECK( cudaEventRecord(start) );
   vector_add_kernel<<<grid, block, 0, 0>>>( N, d_a, d_b, d_c );
-  cudaEventRecord(stop);
-  cudaEventSynchronize(stop);
+  CHECK( cudaGetLastError() );
+  CHECK( cudaEventRecord(stop) );
+  CHECK( cudaEventSynchronize(stop) );
   
   float elapsed_time_milliseconds = 0;
-  cudaEventElapsedTime(&elapsed_time_milliseconds, start, stop);
+  CHECK( cudaEventElapsedTime(&elapsed_time_milliseconds, start, stop) );
   return elapsed_time_milliseconds;
 
 }
 
 
 void copy_device_to_host( int N, double *d_a, double *h_a ){
-  cudaMemcpy( h_a, d_a, N*sizeof(double), cudaMemcpyDeviceToHost);
+  CHECK( cudaMemcpy( h_a, d_a, N*sizeof(double), cudaMemcpyDeviceToHost) );
 }

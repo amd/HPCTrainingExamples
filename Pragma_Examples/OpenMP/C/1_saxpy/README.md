@@ -19,16 +19,30 @@ to make use of the APU programming model (unified memory).
 
 Load a C compiler module <hr>
 **either**
-The AMD Compiler
+The AMD Compiler from the latest rocm 
+```
+module load rocm       #on AAC6
+
+```
+or
+```
+module load rocm-new   #on AAC7
+```
+then set
+```
+export C_COMPILER=amdclang
+
+```
+**or**
+The AMD Compiler with the Cray programming environment (only available on systems with CPE installed, e.g. AAC7)
 ```
 module load PrgEnv-amd
 module load rocm
 module load amd
 export C_COMPILER = amdclang
 ```
-Note: to correctly use the cray wrappers one should export C_COMPILER = cc, as the cray wrappers are broken in combination with rocm 6.3.0 we reccomend using amdclang directly in this training. This is not a good advise in general if you e.g. want to link Cray MPICH in your application!
 
-**or** (only available on systems with CPE installed)
+**or** (only available on systems with CPE installed, e.g. AAC7)
 ```
 module load PrgEnv-cray
 module load rocm
@@ -58,7 +72,7 @@ amdclang -fopenmp saxpy.c -o saxpy
 ```
  <hr>
  
-**or**
+**or** (CPE with cray wrappers only)
 ```
 cc -fopenmp saxpy.c -o saxpy
 ```
@@ -104,26 +118,29 @@ Run
 
 The observed time is much larger than for the CPU version which shows: More parallelism is required to make use of the GPU!
 
-### 1.2) Add parallelism
+### 1.2) Partial insufficient solution: Add parallelism
 ```
-cd ../2_saxpy_teamsdistribute
+cd ../2_saxpy_omptargetparallelfor
 vi saxpy.c
 ```
-add ```teams distribute```
+add ```parallel for```
 - Compile again
 - run again
 The observed time is a bit better than in case 1.1 but still not the full parallelism is used.
 
-### 1.3) Add multi-level parallelism
+### 1.3) Solution: Add multi-level parallelism
 ```
-cd ../3_saxpy_parallelforsimd
+cd ../3_saxpy_fullpragma
+```
+and inspect
+```
 vi saxpy.c
 ``` 
-Add "parallel for" for more parellelism.
+Adds "teams distribute" for more parellelism.
 - Compile again
 - run again
 The observed time is much better than all previous versions.
-Note that the initialization kernel is a warm-up kernel here. If we do not have a warm-up kernel, the observed performance would be significantly worse. Hence the benefit of the accelerator is usually seen only after the first kernel. You can try this by commenting the ```#pragma omp target...``` in the initialize subroutine, then the measured kernel is the first which touches the arrays used in the kernel. A way to circumvent the penalty is using ```omp_target_alloc``` if the data is only needed on the device.
+Note that the initialization kernel is a warm-up kernel here. If we do not have a warm-up kernel, the observed performance would be significantly worse. Hence the benefit of the accelerator is usually seen only after the first kernel touching the data on the device when system allocators were used. You can try this by commenting the ```#pragma omp target...``` in the initialize subroutine, then the measured kernel is the first which touches the arrays used in the kernel. A way to circumvent the penalty is using ```omp_target_alloc``` if the data is only needed on the device.
 
 Note: you could also switch around 1.2 and 1.3.
 

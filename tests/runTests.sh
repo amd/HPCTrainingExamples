@@ -8,10 +8,14 @@ TENSORFLOW=0
 ROCPROFV3=0
 PYTORCH=0
 FTORCH=0
+HIPPYTHON=0
+NUMBAHIP=0
 JULIA=0
 JAX=0
 PETSC=0
 HYPRE=0
+MAGMA=0
+ELPA=0
 TAU=0
 ROCPROF_SYS=0
 ROCPROF_COMPUTE=0
@@ -53,6 +57,7 @@ usage()
     echo "--pytorch : runs the pytorch tests"
     echo "--petsc : runs the petsc tests"
     echo "--hypre : runs the hypre tests"
+    echo "--magma : runs the magma tests"
     echo "--rocprof-sys: runs ROCm rocprof-sys tests depending on the ROCm version"
     echo "--rocprof-compute: runs ROCm rocprof-compute tests depending on the ROCm version"
     echo "--hip: runs the hip tests"
@@ -66,6 +71,8 @@ usage()
     echo "--mpi : runs all the mpi tests (same as including --opempi --mpi4py --mvapich2 --gpu-aware-mpi)"
     echo "--openmpi : runs the openmpi tests"
     echo "--fftw: runts the fftw tests"
+    echo "--hip-python: runs the hip-python tests"
+    echo "--numba-hip: runs the numba-hip tests"
     echo "--mpi4py : runs the mpi4py tests"
     echo "--jax : runs the jax tests"
     echo "--openmp : runs the openmp tests"
@@ -135,6 +142,16 @@ do
           HYPRE=1
           reset-last
           ;;
+      "--magma")
+          shift
+          MAGMA=1
+          reset-last
+          ;;
+      "--elpa")
+          shift
+          ELPA=1
+          reset-last
+          ;;
       "--rocprof-sys")
           shift
           ROCPROF_SYS=1
@@ -143,6 +160,16 @@ do
       "--rocprof-compute")
           shift
           ROCPROF_COMPUTE=1
+          reset-last
+          ;;
+      "--hip-python")
+          shift
+          HIPPYTHON=1
+          reset-last
+          ;;
+      "--numba-hip")
+          shift
+          NUMBAHIP=1
           reset-last
           ;;
       "--hip")
@@ -354,12 +381,20 @@ elif [ ${TAU} -eq 1 ]; then
    ctest -R TAU
 elif [ ${FTORCH} -eq 1 ]; then
    ctest -R FTorch
+elif [ ${HIPPYTHON} -eq 1 ]; then
+   ctest -R HIP-Python
+elif [ ${NUMBAHIP} -eq 1 ]; then
+   ctest -R Numba-HIP
 elif [ ${JULIA} -eq 1 ]; then
    ctest -R Julia
 elif [ ${PETSC} -eq 1 ]; then
    ctest -R PETSc
 elif [ ${HYPRE} -eq 1 ]; then
    ctest -R HYPRE
+elif [ ${MAGMA} -eq 1 ]; then
+   ctest -R MAGMA
+elif [ ${ELPA} -eq 1 ]; then
+   ctest -R ELPA
 elif [ ${FFTW} -eq 1 ]; then
    ctest -R FFTW
 elif [ ${SCOREP} -eq 1 ]; then

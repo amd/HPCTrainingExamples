@@ -1,6 +1,7 @@
 // Author: Bob Robey: Bob.Robey@amd.com
 
 #include <hip/hip_runtime.h>
+#include <cstring>
 #include <rocprim/rocprim.hpp>
 #include <iostream>
 #include <iomanip>
@@ -54,7 +55,7 @@ int main() {
   void* temporary_storage_ptr = nullptr;
 
   // Get required size of the temporary storage
-  rocprim::reduce(
+  hipCheck(rocprim::reduce(
      temporary_storage_ptr,
      temporary_storage_size_bytes,
      d_in,
@@ -63,13 +64,13 @@ int main() {
      0.0,
      N,
      sum_op
-  );
+  ));
 
   // Allocate temporary storage
   hipCheck(hipMalloc(&temporary_storage_ptr, temporary_storage_size_bytes));
 
   // Perform the reduce operation
-  rocprim::reduce(
+  hipCheck(rocprim::reduce(
      temporary_storage_ptr,
      temporary_storage_size_bytes,
      d_in,
@@ -77,7 +78,7 @@ int main() {
      0.0,
      N,
      sum_op
-  );
+  ));
 
   // Stop event timer
   hipCheck( hipEventRecord(stop, nullptr) );

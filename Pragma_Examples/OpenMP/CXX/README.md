@@ -34,7 +34,14 @@ to terminate a job.
 
 You can choose the Cray C++ compiler (CC) or the amdclang++ compiler.
 ##### amdclang++ compiler on aac7:
-Prepare the environment:
+On AAC7, if you use **amdclang++** without the Cray programming environment (no ```PrgEnv-*```), load **rocm-new**:
+```
+module load rocm-new
+```
+```
+export CXX=amdclang++
+```
+Note that in CPE/25.03 the CC compiler wrapper in PrgEnv-amd leads to a segfault at program finalization. Therefore we decided to not recommend to use the compiler wrappers for now on aac7 with amdclang++. If you have rocm 6.3.3 or greater in that version of CPE you should not encounter any issues. If you need the Cray ```CC``` wrapper with ```PrgEnv-amd``` instead, prepare the environment with:
 ```
 module load PrgEnv-amd
 module load craype-x86-genoa
@@ -45,22 +52,25 @@ module load rocm
 ```
 export CXX=CC
 ```
-Note that in CPE/25.03 the CC compiler wrapper in PrgEnv-amd leads to a segfault at program finalization. Therefore we decided to not recommend to use the compiler wrappers for now on aac7 with amdclang++. If you have rocm 6.3.3 or greater in that version of CPE you should not encounter any issues. You can use it without Cray wrappers by settimg:
-```
-module load rocm
-```
-```
-export CXX=amdclang++
-```
 ##### Cray C++ compiler on aac7:
-Prepare the environment (should be default, check with ```module list```):
+Prepare the environment:
 ```
-module load PrgEnv-cray
-module load craype-x86-genoa
+module swap rocm rocm-new/7.1.1
 module load craype-accel-amd-gfx942
-module load cce
-module load rocm
 ```
+make sure to load the right rocm version (non-default!).
+```
+module list
+```
+should show you this list of modules:
+```
+Currently Loaded Modulefiles:
+  1) craype-x86-genoa          7) cray-mpich/9.1.0
+  2) libfabric/2.2.0rc1        8) cray-libsci/26.03.0
+  3) craype-network-ofi        9) PrgEnv-cray/8.7.0
+  4) perftools-base/26.03.0   10) rocm-new/7.1.1
+  5) cce/21.0.0               11) craype-accel-amd-gfx942
+  6) craype/2.7.36```
 ```
 export CXX=CC
 ```

@@ -4,13 +4,13 @@
 README.md in `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/7_derived_types` of the Training Exercises repository.
 
 This exercise explores the possibilities of mapping derived types. This is one of the main challenges one may encounter when porting a Fortran app to discrete GPUs. This exercise also shows that on the APU using `HSA_XNACK=1` such problems do not exist.
-Note: This exercise was designed for amdflang-new.
+Note: This exercise targets the new LLVM-based **`amdflang`** compiler, which is shipped starting with ROCm/7.0.
 
 Compile the examples:
 ```
 make
 ```
-first, set 
+first, set
 ```
 export HSA_XNACK=0
 ```
@@ -60,24 +60,23 @@ export HSA_XNACK=1
 ```
 Run all the five examples again. All of them should run sucessfully.
 
-Set 
+For `amdflang` set
 ```
 export LIBOMPTARGET_INFO=-1 
 ```
-with the amdflang-new compiler or 
+or, if you work with the `ftn` compiler
 ```
 export CRAY_ACC_DEBUG=1
 
 ```
-if you work with the ftn compiler.
 
-Run example 3  with and without unified shared memory (export HSA_XNACK=1 and  HSA__XNACK=0)
+Run example 3 with and without unified shared memory (`export HSA_XNACK=1` and `export HSA_XNACK=0`)
 You are able to see host to device copies in the shown log in the case of HSA_XNACK=0.
 In the case of HSA_XNACK=1 those copies are gone and this message is shown:
 
 AMDGPU device 0 info: Application configured to run in zero-copy using auto zero-copy.
 
-Hence, if a discrete GPU program is compiled with HSA_XNACK=1 on MI300A, memory copies are automatically ignored. This makes code portable between discrete GPUs an APUs. Include !$omp requires_unified_shared_memory at the top of the program (after implicit none) such that the compiler can make full use of the APU programming model. This is shown in example code 5.
+Hence, if a discrete GPU program is compiled with HSA_XNACK=1 on MI300A, memory copies are automatically ignored. This makes code portable between discrete GPUs and APUs. Include `!$omp requires unified_shared_memory` at the top of the program (after `implicit none`) such that the compiler can make full use of the APU programming model. This is shown in example code 5.
 When you compare the code examples, the unified_shared_memory version dtype_derived_type_usm (version 5) is very simple to implement. If you only work on an APU, this is the easiest way to port, as mapping clauses are not required to obtain good performance.
 
 You may want to set

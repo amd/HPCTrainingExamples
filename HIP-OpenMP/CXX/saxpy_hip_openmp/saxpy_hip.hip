@@ -12,13 +12,6 @@ do{                                                                             
     }                                                                                           \
 }while(0)
 
-
-__global__ void saxpy_kernel(int n, float a, float * x, float * y) {
-   int i = threadIdx.x + blockIdx.x * blockDim.x;
-   y[i] = a * x[i] + y[i];
-}
-
-
 void compute_1(int n, float *x){
    for (int i=0; i<n; i++) {
       x[i] = 1.0f;  // use 1.0

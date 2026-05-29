@@ -8,10 +8,10 @@ CXX1=$(notdir $(CXX))
 
 # hipstdpar-path is not needed for ROCm 6.1 and later --hipstdpar-path=${STDPAR_PATH}
 ifneq ($(findstring amdclang++,$(CXX1)),)
-  STDPAR_FLAGS = --hipstdpar --offload-arch=$(ROCM_GPU) --hipstdpar-path=${STDPAR_PATH}
+  STDPAR_FLAGS = --hipstdpar --offload-arch=$(ROCM_GPU)
   #STDPAR_FLAGS = --hipstdpar --hipstdpar-path=${STDPAR_PATH}
 else ifneq ($(findstring clang++,$(CXX1)),)
-  STDPAR_FLAGS = --hipstdpar --offload-arch=$(ROCM_GPU) --hipstdpar-path=${STDPAR_PATH}
+  STDPAR_FLAGS = --hipstdpar --offload-arch=$(ROCM_GPU)
   #STDPAR_FLAGS = --hipstdpar --hipstdpar-path=${STDPAR_PATH}
 endif
 # Add --hipstdpar-interpose-alloc if HSA_XNACK is not set

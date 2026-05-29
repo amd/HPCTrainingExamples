@@ -11,7 +11,7 @@ Author: Gina Sitaraman
 #include <stdio.h>
 #include <hip/hip_runtime.h>
 #include <sys/time.h>
-#include <roctx.h>
+#include <rocprofiler-sdk-roctx/roctx.h>
 
 #define ELAPSED(t1,t2) (t2.tv_sec-t1.tv_sec + (t2.tv_usec-t1.tv_usec)*1E-6)
 #define NITER 25
@@ -103,6 +103,8 @@ int main (int argc, char *argv[])
     HIP_CHECK(hipMalloc (&d_z, szbytes));
 
     roctxRangePush("warmup");
+    // Alternative: process-wide range API
+    // roctx_range_id_t warmup_id = roctxRangeStartA("warmup");
     // copy input arrays to GPU memory
     HIP_CHECK(hipMemcpy (d_x, h_x, szbytes, hipMemcpyHostToDevice));
     HIP_CHECK(hipMemcpy (d_y, h_y, szbytes, hipMemcpyHostToDevice));
@@ -121,6 +123,7 @@ int main (int argc, char *argv[])
     HIP_CHECK(hipMemcpy (h_z, d_z, szbytes, hipMemcpyDeviceToHost));
     check_results (h_ref, h_z, N);
     roctxRangePop();
+    // Alternative: roctxRangeStop(warmup_id);
 
     // Now measure bandwidth achieved
     roctxRangePush("timing loop");

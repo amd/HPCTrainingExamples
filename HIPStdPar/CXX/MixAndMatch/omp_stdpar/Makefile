@@ -7,7 +7,7 @@ ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name
 ARCH_FLAGS   := --offload-arch=${ROCM_GPU}
 
 # If STDPAR_PATH is not specified on the command line, use this default.
-STDPAR_PATH ?= /opt/rocm/include/thrust/system/hip/hipstdpar
+STDPAR_PATH ?= ${ROCM_PATH}/include/thrust/system/hip/hipstdpar
 
 # Targets
 TARGET       := final

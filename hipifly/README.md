@@ -8,7 +8,7 @@ All CUDA functions are defined in the `src/gpu_functions.cu` file. By including 
 
 By default, the program is compiled for NVIDIA GPUs using `nvcc`. To compile for CUDA just run `make`.
 
-To compile for AMD GPUs using `hipcc` run `make DFLAGS=-DENABLE_HIP`. Note that the Makefile applies different GPU compilation flags when compiling for CUDA or for HIP.
+To compile for AMD GPUs using `hipcc` run `make DFLAGS="-DENABLE_HIP -fPIE"`. Note that the Makefile applies different GPU compilation flags when compiling for CUDA or for HIP.
 
 The paths to the CUDA or the ROCm software stack as `CUDA_PATH` or `ROCM_PATH` are needed to compile.
 

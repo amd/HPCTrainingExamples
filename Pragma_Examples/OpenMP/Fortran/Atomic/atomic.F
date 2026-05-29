@@ -1,18 +1,18 @@
+! Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+! This software is distributed under the MIT License
+!
 ! This program is based on a reproducer created by Mahdieh Ghazimirsaeed
-! Copyright (c) 2025 AMD HPC Application Performance Team
-! MIT License
-
 program atomic_vs_reduction
   use omp_lib
   implicit none
+
+  !$omp requires unified_shared_memory
 
   integer, parameter :: real8 = kind(0.0d0)
   integer, parameter :: N = 10000
   real(real8) :: a(N)
   real(real8) :: sum_of_a, sum_of_a_tmp, tstart
   integer :: i
-
-  !$omp requires unified_shared_memory
 
   !$omp target teams distribute parallel do
   do i = 1, N

@@ -19,23 +19,23 @@ to make use of the APU programming model (unified memory).
 
 Load a Fortran compiler module <hr>
 **either**
-The Next Generation AMD Fortran Compiler
+We recommend to use the new LLVM-based `amdflang` Fortran compiler for these exercises. The new LLVM-based `amdflang` compiler is the default Fortran compiler in ROCm since `rocm/7.X` and also in all of the `rocm-afar` or `therock` modules. Depending on the system you are on, you can simply load either
 ```
-module load amdflang-new
+module unload rocm
+module load rocm        # on AAC6
+module load rocm-new  # on AAC7
 ```
-Note: the module sets ```FC``` for you.<hr>
+Note: These modules set ```FC``` for you.<hr>
 
-**or** (only available on systems with CPE installed)
+**or** you can use the Cray Fortran compiler with (only available on systems with CPE installed)
 ```
 module load PrgEnv-cray
 module load rocm
 module load cce
-export FC = ftn
+export FC=ftn
 ```
  <hr>
  
-Note: starting from rocm 7.0, you also can use an older version of the Next Generation AMD Fortran Compiler from ```module load rocm``` and ```export FC=amdflang``` or in environments with CPE installed through ```module load PrgEnv-amd``` ```module load rocm``` ```module load amd``` ```export FC=ftn```. 
-
 Check with 
 ```
 $FC --version
@@ -67,21 +67,22 @@ Run the serial version.
 ./saxpy
 ```
 You can now try to port the serial CPU version to the GPU or follow the
-step by step solution and ideas:
+step by step sample solution and ideas in the following. 
+Suggestion: Use ```vimdiff``` to compare the different versions.
 
-### 1.1) Move the computation to the device
+### 1.1) Partial insufficient solution: Move the computation to the device
 ```
 cd ../1_saxpy_omptarget
 ```
 ```
 vi saxpy.f90
 ```
-add ```!$omp target``` to move the loop in the saxpy subroutine to the device.
+adds ```!$omp target``` to move the loop in the saxpy subroutine to the device.
 
 Compile this first GPU version.<hr>
 **either**
 Make sure you add ```--offload-arch=gfx942``` (on MI300A, find out what your system's gfx... is with ```rocminfo```)
-on systems with amdflang-new module or rocm 7.x:
+with the `amdflang` compiler.
 ```
 amdflang -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 ```
@@ -103,22 +104,25 @@ Run
 
 The observed time is much larger than for the CPU version which shows: More parallelism is required to make use of the GPU!
 
-### 1.2) Add parallelism
+### 1.2) Partial insufficient solution: Add parallelism
 ```
-cd ../2_saxpy_teamsdistribute
+cd ../2_saxpy_omptargetparalleldo
 vi saxpy.f90
 ```
-add ```teams distribute```
+add ```parallel do```
 - Compile again
 - run again
 The observed time is a bit better than in case 1.1 but still not the full parallelism is used.
 
-### 1.3) Add multi-level parallelism
+### 1.3) Solution: Add multi-level parallelism
 ```
-cd ../3_saxpy_paralleldosimd
+cd ../3_saxpy_fullpragma
+```
+and inspect
+```
 vi saxpy.f90
 ``` 
-Add "parallel do" for more parellelism.
+Adds "parallel do" for more parellelism.
 - Compile again
 - run again
 The observed time is much better than all previous versions.
@@ -154,7 +158,7 @@ export HSA_XNACK=0
 to get similar behaviour like on discrete GPUs (with memory copies). You can repeat exercise 1.4 with both versions and compare: You will see additional data movement.
 Compiling and running this version without any map clauses but with memory copies will result in much worse performance than with unified shared memory and ```HSA_XNACK=1``` (no memory copies on MI300A).
 
-Note: instead of adding ```!$omp requires unified_shared_memory``` everywhere by hand you can also use the compiler flag ```-fopenmp-force-usm```. This flag is understood by both the Next Generation Fortran Compiler and the Cray Fortran compiler.
+Note: If you don't want to add ```!$omp requires unified_shared_memory``` in every module by hand, you can use the compiler flag ```-fopenmp-force-usm```. This flag is also understood by the Cray Fortran compiler.
 
 ## Part 3: with map clauses
 Set

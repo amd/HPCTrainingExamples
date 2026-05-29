@@ -1,12 +1,14 @@
+! Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+! This software is distributed under the MIT License
+!
 ! This example was created by Johanna Potyka
-! Copyright (c) 2024 AMD HPC Application Performance Team
-! MIT License
-
 
        module computemod
-          !$omp requires unified_shared_memory
+          implicit none
           !--- device routine made public
           public :: compute
+
+          !$omp requires unified_shared_memory
 
          contains
           !--- device routine

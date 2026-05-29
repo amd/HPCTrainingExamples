@@ -20,7 +20,7 @@ fi
 source ${PROFILER_TOP_DIR}/setup.sh
 
 pushd ${PROFILER_TOP_DIR}
-if [ ! -f data/cifar-100-python ]; then
+if [ ! -d data/cifar-100-python ]; then
    ./download-data.sh
 fi
 popd

@@ -7,7 +7,8 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/hypre_setup.sh
 
 
-if ! module is-loaded "rocm"; then
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
   module load rocm
@@ -21,9 +22,11 @@ fi
 HYPRE_VERSION=`echo $HYPRE_VERSION | sed 's/set(PACKAGE_VERSION \"//g'`
 HYPRE_VERSION=`echo $HYPRE_VERSION | sed 's/\")//g'`
 
-git clone --branch v$HYPRE_VERSION https://github.com/hypre-space/hypre.git
+HYPRE_TMPDIR=$(mktemp -d -t hypre_ij_test.XXXXXXXXXX)
 
-pushd hypre/src/test
+git clone --branch v$HYPRE_VERSION https://github.com/hypre-space/hypre.git "$HYPRE_TMPDIR/hypre"
+
+pushd "$HYPRE_TMPDIR/hypre/src/test"
 
 mpicc ij.c -o ij -I$HYPRE_PATH/include -L$HYPRE_PATH/lib -lHYPRE -lm
 
@@ -32,7 +35,7 @@ mpicc ij.c -o ij -I$HYPRE_PATH/include -L$HYPRE_PATH/lib -lHYPRE -lm
 
 popd
 
-rm -rf hypre
+rm -rf "$HYPRE_TMPDIR"
 
 
 

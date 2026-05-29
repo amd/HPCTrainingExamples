@@ -6,6 +6,8 @@ function call. The register limit no longer shows up for recent versions of ROCm
 Nevertheless, this exercise is useful for learning how to find register limited kernels using ROCprof-compute and asks you to imagine the limiter exists for the sake of the exercise.
 This is an example of how many things influence performance bugs: they exist on hardware, with a software stack, at a certain time. They may never exist outside that context.
 
+Note that depending on the Rocprof-compute version, some commands or blocks may have slightly changed (e.g., in ROCm 7.2 Wavefront Occupancy is in block 2.1.16 and not 2.1.15).
+
 <details>
 <summary><h3>Background: Acronyms and terms used in this exercise</h3></summary>
      <ul>

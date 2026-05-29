@@ -5,7 +5,7 @@ README_AAC6.md in HPCTrainingExamples/MLExamples
 
 ## PyTorch wheel install
 
-AAC6 has ROCm 6.4.1. To download PyTorch
+AAC6 has multiple version of ROCm installed. There is a hierarchical structure for the modules, where after loading the desired version of ROCm, software that has been installed with that ROCm as a dependency will show up by doing `module avail`. Not all ROCm versions have an associated installation of PyTorch. If your desired version of ROCm does not show `pytorch` among the available modules, you can download a PyTorch wheel as follows:
 
 ```
 pip3 install --target temp/pip-installs --pre torch==2.8.0+rocm6.4 --index-url https://download.pytorch.org/whl
@@ -20,6 +20,8 @@ Collecting torch==2.8.0+rocm6.4
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.6/3.6 GB 528.2 kB/s eta 0:00:00
 ....
 ```
+
+Note that if your desired wheel does not exist in the official PyTorch website, you can find many more ROCm enabled wheels at [this](https://repo.radeon.com/rocm/manylinux/) link. 
 
 We can use the python packages that we just installed by setting the PYTHONPATH to the location where we installed PyTorch
 

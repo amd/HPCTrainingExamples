@@ -1,3 +1,6 @@
+! Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+! This software is distributed under the MIT License
+!
 program main
   use input_mod, only: parse_arguments
   use mesh_mod, only: mesh_t

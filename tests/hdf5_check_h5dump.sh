@@ -1,12 +1,33 @@
 #!/bin/bash
 
-
-if ! module is-loaded "rocm"; then
-  echo "rocm module is not loaded"
-  echo "loading default rocm module"
-  module load rocm
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+else
+   module -t list 2>&1 | grep -q "^rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   module load amdflang-new >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load amdclang
+   fi
 fi
-module load hdf5
+
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   module load cray-hdf5-parallel
+else
+   module load hdf5
+fi
 module load openmpi
 
 if [[ `which mpicc | wc -l` -eq 0 ]]; then
@@ -14,6 +35,10 @@ if [[ `which mpicc | wc -l` -eq 0 ]]; then
    echo "Skip"
 fi
 
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cd ${BUILD_DIR}
 
 git clone https://github.com/essentialsofparallelcomputing/Chapter16.git
 
@@ -27,13 +52,3 @@ mkdir build && cd build && cmake -DHDF5_IS_PARALLEL=ON .. && make
 mpirun -n 4 ./hdf5block2d
 
 h5dump -y example.hdf5
-
-
-
-popd
-
-rm -rf Chapter16
-
-
-
-

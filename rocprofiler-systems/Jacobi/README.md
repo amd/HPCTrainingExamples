@@ -18,7 +18,7 @@ git clone https://github.com/amd/HPCTrainingExamples.git
 For this training, one requires recent ROCm (>=6.3) which contains `rocprof-sys`, as well as an MPI installation.
 
 ```
-module load rocm/6.3.2
+module load rocm
 module load openmpi
 
 ```
@@ -68,7 +68,7 @@ rocprof-sys-avail -G ~/.rocprofsys.cfg
 export ROCPROFSYS_CONFIG_FILE=~/.rocprofsys.cfg
 ```
 
-Second, inspect configuration file, possibly changing some variables. For example, one can modify the following lines:
+Second, inspect configuration file, possibly changing some variables. For example, one can modify the following lines (note that options depend on the `rocprof-sys` version, e.g., ROCPROFSYS_USE_ROCTX was replaced in more recent versions):
 
 ```
 ROCPROFSYS_PROFILE                                  = true
@@ -220,7 +220,7 @@ Run the instrumented binary with multiple MPI ranks. Note separate output files 
 mpirun -np 2 rocprof-sys-run -- ./Jacobi_hip.inst -g 2 1
 ```
 
-Inspect output text files. Then visualize `perfetto-trace-*.proto` files in `Perfetto`. Note that one can merge multiple trace files into a single one using simple concatenation:
+Inspect output text files. Then visualize `perfetto-trace-*.proto` files in `Perfetto`. Note that one can merge multiple trace files into a single one using simple concatenation (this is done automatically with more recent ROCm):
 
 ```
 cat perfetto-trace-*.proto > merged.proto

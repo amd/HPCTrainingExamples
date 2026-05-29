@@ -26,7 +26,21 @@ You can see some information on the GPU you will be running on by doing:
 rocm-smi
 ```
 
-To introduce an error in your program, comment out the `hipMalloc` calls at line 71 and 72, then compile with:
+To introduce an error in your program, comment out the `hipMalloc` calls at lines 81 and 82 in `saxpy.hip`. You can do this manually or use the following `sed` commands:
+
+```bash
+sed -i 's|hipCheck( hipMalloc(\&d_x, size) );|// hipCheck( hipMalloc(\&d_x, size) );|' saxpy.hip
+sed -i 's|hipCheck( hipMalloc(\&d_y, size) );|// hipCheck( hipMalloc(\&d_y, size) );|' saxpy.hip
+```
+
+Since the code uses the `hipCheck` error-checking macro on the `hipMemcpy` calls at lines 83 and 84, you also need to remove these wrappers. Otherwise, the invalid pointer error will be caught at the `hipMemcpy` stage before reaching the kernel launch:
+
+```bash
+sed -i 's|hipCheck( hipMemcpy(d_x, h_x, size, hipMemcpyHostToDevice) );|hipMemcpy(d_x, h_x, size, hipMemcpyHostToDevice);|' saxpy.hip
+sed -i 's|hipCheck( hipMemcpy(d_y, h_y, size, hipMemcpyHostToDevice) );|hipMemcpy(d_y, h_y, size, hipMemcpyHostToDevice);|' saxpy.hip
+```
+
+Then compile with:
 
 ```bash
 mkdir build && cd build
@@ -60,10 +74,10 @@ For the latter command above, you need to have `cgdb` installed on your system.
 In the debugger, type `run` (or just `r`) and you will get an error similar to this one:
 
 ```bash
-Thread 3 "saxpy" received signal SIGSEGV, Segmentation fault.
-[Switching to thread 3, lane 0 (AMDGPU Lane 1:2:1:1/0 (0,0,0)[0,0,0])]
-0x00007ffff7ec1094 in saxpy() at saxpy.cpp:57
-57    y[i] += a*x[i];
+Thread 5 "saxpy" received signal SIGSEGV, Segmentation fault.
+[Switching to thread 5, lane 0 (AMDGPU Lane 1:1:1:1/0 (0,0,0)[0,0,0])]
+0x00007ffff623198c in saxpy() at saxpy.hip:67
+67        y[i] += a*x[i];
 ```
 
 Note that the cmake build type is set to `RelWithDebInfo` (see line 8 in CMakeLists.txt). With this build type, the debugger will be aware of the debug symbols. If that was not the case (for instance if compiling in `Release` mode), running the code with the debugger you would get an error message ***without*** line info, and also a warning like this one:
@@ -81,7 +95,7 @@ th 1
 where
 ```
 
-You can add breakpoints with `break` (or `b`) followed by the line number. For instance to put a breakpoint right after the `hipMalloc` lines do `b 72`.
+You can add breakpoints with `break` (or `b`) followed by the line number. For instance to put a breakpoint right after the `hipMalloc` lines do `b 83`.
 
 When possible, it is also advised to compile without optimization flags (so using  `-O0`) to avoid seeing breakpoints placed on lines different than those specified with the breakpoint command.
 
@@ -92,11 +106,11 @@ To list all the breakpoints that have been inserted type `info break` (or `i b`)
 ```bash
 (gdb) i b
 Num     Type           Disp Enb Address            What
-1       breakpoint     keep y   0x000000000020b334 in main() at /HPCTrainingExamples/HIP/saxpy/saxpy.hip:74
-2       breakpoint     keep y   0x000000000020b350 in main() at /HPCTrainingExamples/HIP/saxpy/saxpy.hip:78
+1       breakpoint     keep y   0x000000000020b334 in main() at /HPCTrainingExamples/HIP/saxpy/saxpy.hip:85
+2       breakpoint     keep y   0x000000000020b350 in main() at /HPCTrainingExamples/HIP/saxpy/saxpy.hip:88
 ```
 
-A breakpoint can be removed with `delete <Num>` (or `d <Num>`): note that `<Num>` is the breakpoint ID displayed above. For instance, to remove the breakpoint at line 74, you have to do `d 1`. 
+A breakpoint can be removed with `delete <Num>` (or `d <Num>`): note that `<Num>` is the breakpoint ID displayed above. For instance, to remove the breakpoint at line 85, you have to do `d 1`.
 
 To proceed to the next line you can do `next` (or `n`).  To step into a function, do `step` (or `s`) and to get out do `finish`. Note that if a breakpoint is at a kernel, doing `n` or `s` will switch between different threads. To avoid this behavior, it is necessary to disable the breakpoint at the kernel with `disable <Num>`.
 

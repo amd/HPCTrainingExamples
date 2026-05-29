@@ -2,7 +2,7 @@ all: nbody-orig nbody-soa nbody-block nbody-unroll
 
 CXXFLAGS =-g -O2
 HIPCC_FLAGS=-O2 -g -DNDEBUG
-HIPCC_FLAGS+=-I.. -DSHMOO
+HIPCC_FLAGS+=-I..
 
 HIPCC?=hipcc
 

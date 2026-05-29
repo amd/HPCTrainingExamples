@@ -1,7 +1,7 @@
+! Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+! This software is distributed under the MIT License
+!
 ! This program is based on a reproducer created by Mahdieh Ghazimirsaeed
-! Copyright (c) 2025 AMD HPC Application Performance Team
-! MIT License
-
     program reduction
     implicit none
 

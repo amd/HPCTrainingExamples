@@ -1,0 +1,57 @@
+#!/bin/bash
+
+REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
+
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -eq 1 ]; then
+   echo "rocm module is not loaded"
+   echo "loading default rocm module"
+   module load rocm
+fi
+GPU_IS_MI300A=$(rocminfo 2>/dev/null | grep -q MI300A && echo 1 || echo 0)
+
+if [ "$GPU_IS_MI300A" != "1" ]; then
+	echo "Skip"
+	exit 1
+fi	
+module load amdclang
+module load kokkos
+
+echo "=== Kokkos APU Capability Test ==="
+echo "Kokkos install: ${Kokkos_ROOT}"
+echo ""
+
+# --- Quick pre-flight check on the config header ---
+CONFIG_H="${Kokkos_ROOT}/include/KokkosCore_config.h"
+if [ ! -f "${CONFIG_H}" ]; then
+  echo "ERROR: ${CONFIG_H} not found"
+  exit 1
+fi
+
+if grep -q "^#define KOKKOS_ARCH_AMD_GFX942_APU" "${CONFIG_H}"; then
+  echo "Pre-flight: KOKKOS_ARCH_AMD_GFX942_APU found in KokkosCore_config.h"
+else
+  echo "FAIL: KOKKOS_ARCH_AMD_GFX942_APU not found in KokkosCore_config.h"
+  exit 1
+fi
+
+SCRIPT_DIR=$REPO_DIR/Kokkos/kokkos_check_apu_enabled
+
+# Build/run in a per-invocation /tmp scratch dir to avoid NFS metadata
+# contention on the shared source tree when concurrent regression tests
+# race against each other (CMake 3.31 try_compile scratch files would
+# otherwise vanish mid-configure and break FindOpenMP).
+BUILD_DIR=$(mktemp -d -p /tmp kokkos_check_apu_enabled_XXXXXX)
+trap "rm -rf ${BUILD_DIR}" EXIT
+
+cmake -S "${SCRIPT_DIR}" -B "${BUILD_DIR}" \
+  -DKokkos_ROOT="${Kokkos_ROOT}"
+
+cmake --build "${BUILD_DIR}" --verbose
+
+if "${BUILD_DIR}/kokkos_check_apu_enabled"; then
+  echo "Runtime test PASSED."
+else
+  echo ""
+  echo "ERROR: no executable produced" 
+fi

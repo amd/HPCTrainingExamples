@@ -36,7 +36,7 @@ int main( int argc, char *argv[] ){
   set_device( device_id );
 
   
-  const uint N = 256 * 256 * 256 * 32;
+  const uint N = 256 * 256 * 256 * 16;
   printf( "N elements: %d \n", N );
   
   //  Allocate host arrays  

@@ -12,7 +12,7 @@ To compile and run:
 ```
 module load rocm
 module load amdclang
-make
+HIPCC=hipcc make
 ./interop
 ```
 

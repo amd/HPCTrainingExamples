@@ -1,3 +1,6 @@
+! Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+! This software is distributed under the MIT License
+!
 module mesh_mod
   use, intrinsic :: ISO_Fortran_env, only: stdout=>output_unit
   use kind_mod

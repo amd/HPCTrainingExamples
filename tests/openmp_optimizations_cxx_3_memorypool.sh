@@ -1,20 +1,39 @@
 #!/bin/bash
 
-if ! module is-loaded "rocm"; then
-  echo "rocm module is not loaded"
-  echo "loading default rocm module"
-  module load rocm
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+else
+   if ! module -t list 2>&1 | grep -q "^rocm"; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   if ! module load amdflang-new >& /dev/null; then
+      module load amdclang
+   fi
 fi
-module load amdclang
+
 export HSA_XNACK=1
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/Pragma_Examples/OpenMP/CXX/optimization/Allocations/3_memorypool
 
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp * ${BUILD_DIR}
+
+cd ${BUILD_DIR}
+
 ./umpire_setup.sh
 export UMPIRE_PATH=${PWD}/Umpire_install
 make
 ./memorypool
-make clean
-
-rm -rf Umpire_source Umpire_install

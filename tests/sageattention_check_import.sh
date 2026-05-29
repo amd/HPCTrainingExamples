@@ -8,13 +8,14 @@
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/pytorch_setup.sh
 
 
-if ! module is-loaded "rocm"; then
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
   module load rocm
 fi
 module load pytorch
 
-python3 -c 'import sageattention' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import sageattention' && echo 'Success' || echo 'Failure'
 
 

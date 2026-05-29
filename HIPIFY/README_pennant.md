@@ -44,10 +44,10 @@ hipify-perl nbody-orig.cu > nbody-orig.cpp
 Compile the HIP programs.
 
 ```bash
-hipcc -DSHMOO -I ../ nbody-orig.cpp -o nbody-orig
+hipcc -I ../ nbody-orig.cpp -o nbody-orig
 ```
 
-The `#define SHMOO` fixes some timer printouts. Add `--offload-arch=<gpu_type>` to specify the GPU type and avoid the autodetection issues when running on a single GPU on a node.
+Note: due to [this](https://github.com/harrism/mini-nbody/issues/1) open issue, we decided to remove the `#define SHMOO` preprocessing and use only the code under its ifdef. Add `--offload-arch=<gpu_type>` to specify the GPU type and avoid the autodetection issues when running on a single GPU on a node.
 
 * Fix any compiler issues, for example, if there was something that didn't hipify correctly.
 * Be on the lookout for hard-coded Nvidia specific things like warp sizes and PTX.
@@ -73,7 +73,7 @@ module load rocm
 
 cd HPCTrainingExamples/HIPIFY/mini-nbody/cuda
 hipify-perl -print-stats nbody-orig.cu > nbody-orig.cpp
-hipcc -DSHMOO -I ../ nbody-orig.cpp -o nbody-orig
+hipcc -I ../ nbody-orig.cpp -o nbody-orig
 ./nbody-orig
 
 ```

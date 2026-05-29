@@ -24,7 +24,7 @@ THE SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 #include "timer.h"
-#include <roctx.h>
+#include <rocprofiler-sdk-roctx/roctx.h>
 
 #define BLOCK_SIZE 256
 #define SOFTENING 1e-9f
@@ -109,19 +109,10 @@ int main(const int argc, const char** argv) {
     if (iter > 1) { // First iter is warm up
       totalTime += tElapsed; 
     }
-#ifndef SHMOO
-    printf("Iteration %d: %.3f seconds\n", iter, tElapsed);
-#endif
   }
   double avgTime = totalTime / (double)(nIters-1); 
 
-#ifdef SHMOO
   printf("%d, %0.3f\n", nBodies, 1e-9 * nBodies * nBodies / avgTime);
-#else
-  printf("Average rate for iterations 2 through %d: %.3f +- %.3f steps per second.\n",
-         nIters, rate);
-  printf("%d Bodies: average %0.3f Billion Interactions / second\n", nBodies, 1e-9 * nBodies * nBodies / avgTime);
-#endif
   free(buf);
   HIP_CHECK(hipFree(d_buf));
 }

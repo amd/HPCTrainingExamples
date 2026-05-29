@@ -60,8 +60,11 @@ clean:
 	rm -rf build
 ```
 
+Load a Fortran compiler module (on AAC6 use ```rocm```, on AAC7 use ```rocm-new```):
+
 ```
-module load amdflang-new
+module load rocm        # on AAC6
+module load rocm-new  # on AAC7
 make
 ```
 
@@ -107,8 +110,11 @@ endif()
 add_executable(openmp_code openmp_code.F90)
 ```
 
+Load a Fortran compiler module (on AAC6 use ```rocm```, on AAC7 use ```rocm-new```):
+
 ```
-module load amdflang-new
+module load rocm        # on AAC6
+module load rocm-new  # on AAC7
 mkdir build && cd build && cmake ..
 make
 ```

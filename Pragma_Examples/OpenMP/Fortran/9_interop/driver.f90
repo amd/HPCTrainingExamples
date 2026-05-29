@@ -1,3 +1,6 @@
+! Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+! This software is distributed under the MIT License
+!
 module hip_interface
   interface
     subroutine hip_function(a, b, n) bind(C, name="hip_function")

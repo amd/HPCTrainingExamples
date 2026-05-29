@@ -58,7 +58,8 @@ do
 done
 
 
-if ! module is-loaded "rocm"; then
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
   module load rocm
@@ -67,8 +68,8 @@ fi
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 pushd ${REPO_DIR}/HIP/Stream_Overlap/0-Orig/
-rm -rf build_for_test
-mkdir build_for_test; cd build_for_test
+BUILD_DIR=$(mktemp -d $PWD/build_XXXXXX)
+cd ${BUILD_DIR}
 cmake ../
 make -j
 
@@ -91,24 +92,27 @@ else
    VERSION="/${VERSION}"
 fi
 
-echo " ------------------------------- "
-echo " "
-echo "loaded ${TOOL_NAME} from ${TOOL_ORIGIN}"
-echo " "
-echo " ------------------------------- "
-echo " "
-echo "module load ${TOOL_NAME}${VERSION}"
-echo " "
-echo " ------------------------------- "
-echo " "
-echo "tool commands are:"
-echo "${TOOL_COMMAND}-avail"
-echo "${TOOL_COMMAND}-instrument"
-echo "${TOOL_COMMAND}-run"
-echo " "
-echo " ------------------------------- "
-module show ${TOOL_NAME}${VERSION}
-module load ${TOOL_NAME}${VERSION}
+module avail 2>&1 | grep -q -w "${TOOL_NAME}"
+   if [ $? -eq 0 ]; then
+   echo " ------------------------------- "
+   echo " "
+   echo "loaded ${TOOL_NAME} from ${TOOL_ORIGIN}"
+   echo " "
+   echo " ------------------------------- "
+   echo " "
+   echo "module load ${TOOL_NAME}${VERSION}"
+   echo " "
+   echo " ------------------------------- "
+   echo " "
+   echo "tool commands are:"
+   echo "${TOOL_COMMAND}-avail"
+   echo "${TOOL_COMMAND}-instrument"
+   echo "${TOOL_COMMAND}-run"
+   echo " "
+   echo " ------------------------------- "
+   module show ${TOOL_NAME}${VERSION}
+   module load ${TOOL_NAME}${VERSION}
+fi
 
 ${TOOL_COMMAND}-avail -G $PWD/.configure.cfg
 export ${TOOL_CONFIG}_CONFIG_FILE=$PWD/.configure.cfg
@@ -118,7 +122,7 @@ cd ${TOOL_OUTPUT}-compute_comm_overlap.inst-output/
 ls *
 
 cd ..
-rm -rf build_for_test
+rm -rf ${BUILD_DIR}
 
 popd
 

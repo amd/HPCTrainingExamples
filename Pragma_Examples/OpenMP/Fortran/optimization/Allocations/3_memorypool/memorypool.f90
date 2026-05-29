@@ -1,5 +1,6 @@
 ! Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
-
+! This software is distributed under the MIT License
+!
 program main
 
     use omp_lib
@@ -12,11 +13,11 @@ program main
 
     implicit none
 
+    !$omp requires unified_shared_memory
+
     type(UmpireAllocator) base_allocator
     type(UmpireAllocator) mem_pool
     type(UmpireResourceManager) res_manager
-
-    !$omp requires unified_shared_memory
 
     ! Size of vectors
     integer :: n = 10000000

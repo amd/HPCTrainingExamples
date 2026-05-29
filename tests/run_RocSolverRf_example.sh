@@ -1,59 +1,20 @@
 #!/bin/bash
 
-usage()
-{
-    echo ""
-    echo "--help : prints this message"
-    echo "--remove-after-run : remove all dependencies and builds after run"
-    echo ""
-    exit
-}
-
-send-error()
-{
-    usage
-    echo -e "\nError: ${@}"
-    exit 1
-}
-
-reset-last()
-{
-   last() { send-error "Unsupported argument :: ${1}"; }
-}
-
-n=0
-while [[ $# -gt 0 ]]
-do
-   case "${1}" in
-      "--remove-after-run")
-          shift
-          REMOVE_AFTER=1
-          reset-last
-          ;;
-     "--help")
-          usage
-          ;;
-      "--*")
-          send-error "Unsupported argument at position $((${n} + 1)) :: ${1}"
-          ;;
-      *)
-         last ${1}
-         ;;
-   esac
-   n=$((${n} + 1))
-   shift
-done
-
-
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-pushd $REPO_DIR
+cd $REPO_DIR/Libraries/RocSolverRf
 
-cd Libraries/RocSolverRf
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp * ${BUILD_DIR}
+
+cd ${BUILD_DIR}
 
 mkdir dependencies && cd dependencies
 
 
-if ! module is-loaded "rocm"; then
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
   module load rocm
@@ -96,14 +57,3 @@ make
 wget https://suitesparse-collection-website.herokuapp.com/MM/Schenk_AFE/af_5_k101.tar.gz
 tar -xvf  af_5_k101.tar.gz
 ./klu_example --matrix1 af_5_k101/af_5_k101.mtx --matrix2 af_5_k101/af_5_k101.mtx --matrix3 af_5_k101/af_5_k101.mtx
-
-if [[ "${REMOVE_AFTER}" == "1" ]]; then
-   make clean
-   rm -rf dependencies
-   rm -rf af_5_*
-   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
-   popd
-fi
-
-
-

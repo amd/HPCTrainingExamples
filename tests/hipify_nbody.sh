@@ -1,16 +1,40 @@
 #!/bin/bash
 
-if ! module is-loaded "rocm"; then
-  echo "rocm module is not loaded"
-  echo "loading default rocm module"
-  module load rocm
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+else
+   module -t list 2>&1 | grep -q "^rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   module load amdflang-new >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load amdclang
+   fi
 fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/HIPIFY/mini-nbody/cuda
+SRCDIR=${REPO_DIR}/HIPIFY/mini-nbody
+BUILDDIR=$(mktemp -d)
+trap 'rm -rf ${BUILDDIR}' EXIT
+cp -r ${SRCDIR}/cuda ${SRCDIR}/timer.h ${BUILDDIR}/
+cd ${BUILDDIR}/cuda
+
 hipify-perl -examine nbody-orig.cu
 
 hipify-perl nbody-orig.cu > nbody-orig.cpp
 hipcc -DSHMOO -I../ nbody-orig.cpp -o nbody-orig
 
 ./nbody-orig
+
+rm -f nbody-orig nbody-orig.cpp

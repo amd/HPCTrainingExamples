@@ -9,13 +9,18 @@ tar -xvf osu-micro-benchmarks-7.3.tar.gz
 cd osu-micro-benchmarks-7.3
 
 
-if ! module is-loaded "rocm"; then
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
   module load rocm
 fi
 
-module load openmpi
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   module load mpi/openmpi-x86_64
+else
+   module load openmpi
+fi
 
 rm -rf build
 

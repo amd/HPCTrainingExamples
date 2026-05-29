@@ -10,14 +10,14 @@ To see details on the container environment (such as operating system and module
 
 To run this example, 
 
-```
+```bash
 module load cupy
 python cupy_array_sum.py
 ```
 
 The output should look like the following:
 
-```
+```text
 CuPy Array: [1 2 3 4 5]
 Squared CuPy Array: [ 1  4  9 16 25]
 NumPy Array: [5 6 7 8 9]
@@ -29,14 +29,14 @@ Result on CPU: [ 6  8 10 12 14]
 What is actually happening here? What is on the GPU and what is on the CPU?
 Let's try and see more.
 
-```
+```bash
 export AMD_LOG_LEVEL=1
 python cupy_array_sum.py
 ```
 
 Now our output is:
 
-```
+```text
 :1:hip_memory.cpp           :3721: 1083559518128d us:  Cannot get amd_mem_obj for ptr: 0x46b8a5f0
 CuPy Array: [1 2 3 4 5]
 Squared CuPy Array: [ 1  4  9 16 25]
@@ -49,14 +49,14 @@ Result on CPU: [ 6  8 10 12 14]
 
 The warning is from the AMD logging functions and doesn't impact the run. Now let's increase the log level for the run.
 
-```
+```bash
 export AMD_LOG_LEVEL=3
 python cupy_array_sum.py
 ```
 
 Now we see lots of output that shows the hip calls and the operations on the GPU.
 
-```
+```text
 ....
 hipMemcpyAsync ( 0x559ea98f65f0, 0x7f4556800000, 40, hipMemcpyDeviceToHost, stream:<null> )
 Signal = (0x7f4d5efff280), Translated start/end = 1083534945452078 / 1083534945453358, Elapsed = 1280 ns, ticks start/end = 27091222405615 / 27091222405647, Ticks elapsed = 32

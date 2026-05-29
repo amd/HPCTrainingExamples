@@ -91,18 +91,22 @@ int main() {
   // Size of array to reduce
   const static int N = 128e07;
 
+  // Query warp (wavefront) size from device — works across all ROCm versions
+  int warpSizeHost;
+  hipCheck( hipDeviceGetAttribute(&warpSizeHost, hipDeviceAttributeWarpSize, 0) );
+
   // Create start and stop event objects for timing
   hipEvent_t start, stop;
   hipCheck( hipEventCreate(&start) );
   hipCheck( hipEventCreate(&stop) );
 
-  if( GRIDSIZE % warpSize != 0){
-     std::cout<<"ERROR: GRIDSIZE needs to be a multiple of " << warpSize << " in this example" << std::endl;
+  if( GRIDSIZE % warpSizeHost != 0){
+     std::cout<<"ERROR: GRIDSIZE needs to be a multiple of " << warpSizeHost << " in this example" << std::endl;
      abort();
   }
 
-  if( BLOCKSIZE % warpSize != 0){
-     std::cout<<"ERROR: BLOCKSIZE needs to be a multiple of " << warpSize << " in this example" << std::endl;
+  if( BLOCKSIZE % warpSizeHost != 0){
+     std::cout<<"ERROR: BLOCKSIZE needs to be a multiple of " << warpSizeHost << " in this example" << std::endl;
      abort();
   }
 
@@ -130,8 +134,8 @@ int main() {
   hipCheck( hipEventRecord(start, nullptr) );
 
   // Compute the reductions
-  reduction_to_array<<<GRIDSIZE, BLOCKSIZE, (BLOCKSIZE / warpSize) * sizeof(double)>>>(d_in, d_partial_sums, N);
-  reduction_to_array<<<1, GRIDSIZE, (GRIDSIZE / warpSize) * sizeof(double)>>>(d_partial_sums, d_in, GRIDSIZE);
+  reduction_to_array<<<GRIDSIZE, BLOCKSIZE, (BLOCKSIZE / warpSizeHost) * sizeof(double)>>>(d_in, d_partial_sums, N);
+  reduction_to_array<<<1, GRIDSIZE, (GRIDSIZE / warpSizeHost) * sizeof(double)>>>(d_partial_sums, d_in, GRIDSIZE);
 
   // Stop event timer
   hipCheck( hipEventRecord(stop, nullptr) );

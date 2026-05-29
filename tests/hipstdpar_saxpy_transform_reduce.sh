@@ -1,18 +1,44 @@
 #!/bin/bash
 
-export HSA_XNACK=1
-if ! module is-loaded "rocm"; then
-  echo "rocm module is not loaded"
-  echo "loading default rocm module"
-  module load rocm
+if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+   if [ -z "$HIPCC" ]; then
+      export HIPCC=`which hipcc`
+   fi
+else
+   module -t list 2>&1 | grep -q "^rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   module load amdflang-new >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load amdclang
+   fi
 fi
-module load amdclang
+
+export HSA_XNACK=1
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/HIPStdPar/CXX/saxpy_transform_reduce
+SRC_DIR=${REPO_DIR}/HIPStdPar/CXX/saxpy_transform_reduce
+
+# Build/run in a per-invocation scratch dir so concurrent invocations
+# (e.g. parallel cdash array tasks on the same node) do not race in the
+# shared in-tree build of ${SRC_DIR}.
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp ${SRC_DIR}/Makefile ${SRC_DIR}/saxpy.cpp ${BUILD_DIR}/
+cd ${BUILD_DIR}
 
 make
 export AMD_LOG_LEVEL=3
 ./saxpy
-
-make clean

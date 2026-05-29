@@ -18,11 +18,12 @@ This example uses OpenMP on the CPU with threading for parallelism. The pragma u
 #pragma omp parallel for
 ```
 
-We go to the directory with the example and load the amdclang module. We can then build and run the code.
+We go to the directory with the example and load the Fortran compiler module (on AAC6 use ```rocm```, on AAC7 use ```rocm-new```). We can then build and run the code.
 
 ```
 cd HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/SingleLineConstructs
-module load amdflang-new
+module load rocm        # on AAC6
+module load rocm-new  # on AAC7
 make saxpy_cpu
 ./saxpy_cpu
 ```

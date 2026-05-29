@@ -1,6 +1,7 @@
 #!/bin/bash
 
-if ! module is-loaded "rocm"; then
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -eq 1 ]; then
   echo "rocm module is not loaded"
   echo "loading default rocm module"
   module load rocm
@@ -18,5 +19,5 @@ else
 
    mpirun -n 2 ./pt2pt
 
-   make clean
+   rm -f pt2pt
 fi

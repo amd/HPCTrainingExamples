@@ -63,6 +63,18 @@ cmake ..
 make -j
 ```
 
+Note: to enable writing the solution to a netCDF file called `solution.nc`, load the `netcdf-c` module and configure with:
+```
+cmake -DUSE_PNETCDF=ON ..
+```
+Then you can install the Python requirements using the `requirements.txt` file and then execute the `print_solution.py` file to print the initial solution and final solution.
+As part of the function to write the netCDF file, there is this call:
+```
+ncmpi_def_dim(ncid, "time", NC_UNLIMITED, &dimid_t);
+``` 
+that defines the "time" dimension as "unlimited", meaning that the last value defines the size. The last value is `maxIter-1` so space for the previous solutions is still allocated
+but the array is filled with zeros. 
+
 Run the example
 
 ```
