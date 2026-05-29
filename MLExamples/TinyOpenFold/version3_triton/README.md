@@ -32,11 +32,7 @@ version3_triton/
 ├── tiny_openfold_v3.py                 # Main model with Triton kernels
 ├── run_triton_profiling.py            # Triton-specific profiling
 ├── run_rocprof_triton.sh              # ROCProfiler for Triton kernels
-├── launch_performance_study.sh         # Performance comparison script
-└── exercises/
-    ├── exercise1_triton_basics.md      # Triton fundamentals
-    ├── exercise2_triangle_optimization.md  # Triangle operations deep dive
-    └── exercise3_msa_attention.md      # MSA attention implementation
+└── launch_performance_study.sh         # Performance comparison script
 ```
 
 ## Key Components and Triton Kernel Implementation
@@ -475,31 +471,6 @@ python3 run_triton_profiling.py
    - Monitor for overflow/underflow
    - Check reduction accuracy
    - Verify mask applications
-
-## Hands-on Exercises
-
-Work through the exercises in order to build understanding:
-
-### Exercise 1: Triton Basics (45 minutes)
-
-- Understand Triton kernel structure
-- Analyze memory access patterns
-- Optimize LayerNorm implementation
-- Compare with PyTorch baseline
-
-### Exercise 2: Triangle Optimization (60 minutes)
-
-- Understand triangle multiplicative updates
-- Analyze kernel fusion opportunities
-- Implement optimizations
-- Measure performance improvements
-
-### Exercise 3: MSA Attention (75 minutes)
-
-- Flash Attention algorithm details
-- Implement tiled attention computation
-- Handle pair bias integration
-- Optimize for different sequence lengths
 
 ## Troubleshooting
 

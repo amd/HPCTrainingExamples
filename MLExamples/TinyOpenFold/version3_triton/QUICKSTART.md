@@ -145,7 +145,6 @@ cd /path/to/TinyOpenFold/version3_triton/
 | `run_triton_profiling.py` | Benchmark kernels | Performance analysis |
 | `launch_performance_study.sh` | Compare versions | V1 vs V2 vs V3 |
 | `README.md` | Full documentation | Deep dive |
-| `exercises/` | Learning materials | Step-by-step learning |
 
 ## Performance Expectations
 
@@ -166,22 +165,20 @@ After successful run:
 
 1. ✅ Check `triton_profiles/performance_summary_v3.json`
 2. 📊 Compare with V1/V2 using `launch_performance_study.sh`
-3. 📚 Work through exercises in `exercises/`
-4. 🔬 Profile with `run_triton_profiling.py`
-5. 🚀 Experiment with different configurations
+3. 🔬 Profile with `run_triton_profiling.py`
+4. 🚀 Experiment with different configurations
 
 ## Support
 
 - **Full Documentation**: `README.md`
-- **Exercises**: `exercises/exercise*.md`
 - **Architecture**: `../ARCHITECTURE.md`
+- **Main Tutorial**: `../PERFORMANCE_OPTIMIZATION_TUTORIAL.md`
 
 ## Quick Links
 
 - [Full README](README.md)
-- [Exercise 1: Triton Basics](exercises/exercise1_triton_basics.md)
-- [Exercise 2: Triangle Optimization](exercises/exercise2_triangle_optimization.md)
-- [Exercise 3: Flash Attention](exercises/exercise3_msa_attention.md)
+- [Architecture Details](../ARCHITECTURE.md)
+- [Optimization Tutorial](../PERFORMANCE_OPTIMIZATION_TUTORIAL.md)
 
 ---
 
