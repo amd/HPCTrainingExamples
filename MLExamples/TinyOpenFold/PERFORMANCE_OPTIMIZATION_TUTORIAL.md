@@ -147,6 +147,18 @@ tensorboard --logdir ./profiles_v1_small
 
 You'll notice multiple attention kernels where Q, K, and V are computed as separate operations instead of being fused. Triangle operations dominate the backward pass due to their O(N³) complexity. You'll also see significant kernel launch overhead from many small, short-lived kernel calls.
 
+**Optional: ROCm System-Level Profiling**
+
+For deeper insights into GPU utilization and kernel behavior, use rocprof-sys:
+
+```bash
+# Profile GPU kernels and API calls
+./run_rocprof_sys.sh
+
+# Results show: kernel launch frequency, memory transfers, GPU occupancy
+# Look for: many short-lived kernels, poor occupancy on small operations
+```
+
 ### Run Medium Problem
 
 ```bash
@@ -364,6 +376,29 @@ Each optimization contributes differently to the total speedup. The baseline wit
 
 **Key Learning**: Flash Attention provides the biggest single benefit, but combined optimizations are synergistic.
 
+### Verify Fusion Impact with ROCm Profilers
+
+Now that we've fused kernels, let's verify the improvements at the hardware level:
+
+```bash
+cd version2_pytorch_fused
+
+# Kernel-level profiling with rocprofv3
+./run_rocprofv3.sh
+
+# Hardware counter analysis with rocprof-compute
+./run_rocprof_compute.sh
+
+# Compare kernel counts: V1 vs V2
+# V1: ~240 kernel launches per step
+# V2: ~48 kernel launches per step (80% reduction!)
+```
+
+**Key metrics to check:**
+- **Kernel count**: Should see dramatic reduction in total kernel launches
+- **Memory bandwidth**: Flash Attention should reduce HBM traffic by 50-80%
+- **Occupancy**: Fused kernels should show better GPU utilization
+
 ### Stage 2 Summary
 
 **Achievements:**
@@ -524,6 +559,28 @@ ROCR_VISIBLE_DEVICES=0 python3 tiny_openfold_v3.py \
 
 Triton kernels give us fine-grained control over memory hierarchy. **Custom LayerNorm** fuses all computation into a single pass through data instead of PyTorch's multi-pass approach. **Optimized Flash Attention** is hand-tuned for ROCm with carefully designed memory access patterns. **Triangle Backward Optimization** uses custom gradients that generate minimal memory traffic compared to autograd. Finally, **Register/Cache Utilization** is maximized by keeping data in fast memory (registers and L1 cache) much longer than generic PyTorch kernels allow.
 
+### Analyze Triton Kernel Performance
+
+Verify that custom Triton kernels are actually faster at the hardware level:
+
+```bash
+cd version3_triton
+
+# Profile Triton kernel efficiency
+./run_rocprof_compute.sh
+
+# System-level view of Triton kernels
+./run_rocprof_sys.sh
+```
+
+**What to verify:**
+- **Custom LayerNorm**: Single kernel vs 3+ PyTorch kernels, better register usage
+- **Flash Attention**: Reduced HBM bandwidth (memory-bound → compute-bound)
+- **Triangle kernels**: Improved cache hit rate, minimized memory traffic
+- **Overall occupancy**: Higher GPU utilization compared to V1/V2
+
+**Pro tip**: Compare rocprof-compute outputs between V2 and V3 to see memory bandwidth reduction—this is where Triton shines.
+
 ### Stage 3 Summary
 
 **Final Achievements:**
@@ -601,15 +658,7 @@ This accounts for most of the total speedup!
 
 ### Memory Trade-off Analysis
 
-Small problem memory increase: 195.7 → 218.5 MB (+23 MB, +12%)
-
-**Why the increase?**
-
-Triton kernels trade some memory for speed. They allocate scratch space for intermediate computations and use additional buffers for tiled computations. These kernels are optimized for maximum speed, not minimum memory usage.
-
-**Is it worth it?**
-
-The memory cost is negligible compared to the performance gain. The 23 MB increase is trivial on modern GPUs with 192 GB of HBM. The 2.0x speedup far outweighs this small memory cost, and we can still run much larger problems without hitting memory limits.
+The small problem shows a memory increase from 195.7 to 218.5 MB (+23 MB, +12%) because Triton kernels trade some memory for speed—they allocate scratch space for intermediate computations and use additional buffers for tiled operations. However, this cost is negligible compared to the performance gain. The 23 MB increase is trivial on modern GPUs with 192 GB of HBM, and the 2.0x speedup far outweighs this small memory cost while still leaving plenty of headroom for much larger problems.
 
 ---
 
@@ -619,16 +668,11 @@ The memory cost is negligible compared to the performance gain. The 23 MB increa
 
 **Best Approach:**
 
-Always optimize incrementally—don't skip steps. Start with a clean, readable baseline (V1) to establish reference performance. Profile thoroughly to identify the real bottlenecks, not what you assume they are. Apply high-level optimizations first (V2 - kernel fusion) since these are easier to implement and debug. Only drop to low-level custom kernels (V3) when you've exhausted higher-level options.
-
-**Don't:** Jump straight to custom kernels - high-level optimizations give 70% of the benefit with 10% of the effort!
+Always optimize incrementally—don't skip steps. Start with a clean, readable baseline (V1) to establish reference performance, then profile thoroughly to identify the real bottlenecks rather than what you assume they are. Apply high-level optimizations first (V2 - kernel fusion) since these are easier to implement and debug, and only drop to low-level custom kernels (V3) when you've exhausted higher-level options. Don't jump straight to custom kernels—high-level optimizations give 70% of the benefit with just 10% of the effort!
 
 ### 2. Backward Pass Matters Most
 
-In deep learning workloads:
-- Backward pass often dominates (50-60% of time)
-- Focus optimization efforts there first
-- V3's backward optimization gave the biggest gains (56-69% reduction)
+In deep learning workloads, the backward pass often dominates execution time at 50-60% of total runtime, making it the primary optimization target. Our results confirm this: V3's backward pass optimization delivered the biggest gains with a 56-69% reduction, accounting for most of the overall speedup. When profiling, always focus optimization efforts on the backward pass first.
 
 ### 3. Problem Size Affects Speedup
 
@@ -680,6 +724,21 @@ ROCR_VISIBLE_DEVICES=0 python3 tiny_openfold_v3.py --seq-len 64 --num-seqs 16 --
 
 ---
 
+## Profiling Cheat Sheet
+
+Quick reference for ROCm profiling tools across all versions:
+
+| Tool | What It Shows | When to Use | Command |
+|------|---------------|-------------|---------|
+| **PyTorch Profiler** | High-level PyTorch ops, kernel names | Initial bottleneck identification | `--enable-pytorch-profiler` |
+| **rocprof-sys** | System-level GPU trace, kernel timeline | Overall GPU utilization, kernel patterns | `./run_rocprof_sys.sh` |
+| **rocprofv3** | Detailed kernel metrics, launch counts | Verify fusion, count kernel launches | `./run_rocprofv3.sh` |
+| **rocprof-compute** | Hardware counters, memory bandwidth | Memory bottlenecks, cache efficiency | `./run_rocprof_compute.sh` |
+
+**Typical workflow**: Start with PyTorch Profiler → rocprof-sys for overview → rocprof-compute for memory analysis → rocprofv3 for kernel details.
+
+---
+
 ## Next Steps: Advanced Optimizations
 
 ### 1. Mixed Precision (V3 + AMP)
@@ -709,4 +768,4 @@ ROCR_VISIBLE_DEVICES=0,1,2,3 python3 tiny_openfold_v3.py \
 
 You now have a complete mental model of GPU optimization. You learned how to establish reference performance through baseline measurement, identify bottlenecks systematically using profiling tools, and apply high-level PyTorch kernel fusion optimizations. You progressed to low-level GPU programming with custom Triton kernels, developed skills in performance analysis to understand where speedups actually come from, and learned to evaluate trade-offs between memory usage, speed, complexity, and maintainability.
 
-**Final Achievement**: **2.0x speedup** on small workloads through systematic optimization! This tutorial should serve as a complete GPU optimization pipeline example.
+**Final Achievement**: **2.0x speedup** on small workloads through systematic optimization—you now have the blueprint to unlock similar performance gains in your own GPU workloads, from baseline profiling to production-ready custom kernels.
