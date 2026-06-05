@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv*/
+env*/
+ENV*/
+
+# Profiling and experimental outputs
+version1_pytorch_baseline/pytorch_profiles/
+version1_pytorch_baseline/profiles/
+version1_pytorch_baseline/scaling_study_*/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+

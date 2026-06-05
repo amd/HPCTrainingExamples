@@ -1,0 +1,11 @@
+{
+    "study_name": "performance_study_20251120_145715",
+    "num_runs": 3,
+    "batch_sizes": [2 4 8],
+    "seq_lens": [32 64 128],
+    "num_steps": 50,
+    "device": 0,
+    "run_baseline": true,
+    "run_ablation": false,
+    "timestamp": "2025-11-20T14:57:15-06:00"
+}
