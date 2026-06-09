@@ -939,6 +939,13 @@ add_test(NAME GPUAwareOpenMPI_pt2pt COMMAND ../gpuawarempi_pt2pt.sh )
 set_property(TEST GPUAwareOpenMPI_pt2pt PROPERTY PASS_REGULAR_EXPRESSION "Run successful: received buffer has the right value")
 set_property(TEST GPUAwareOpenMPI_pt2pt PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
 
+# Regression: GPU-aware MPI on OpenMP-offload device buffers passed via
+# use_device_addr / omp_target_alloc / a mix
+add_test(NAME GPUAwareOpenMPI_Alloc_Modes COMMAND ../gpuawarempi_alloc_modes.sh )
+set_property(TEST GPUAwareOpenMPI_Alloc_Modes PROPERTY PASS_REGULAR_EXPRESSION "REGRESSION_RESULT: PASS")
+set_property(TEST GPUAwareOpenMPI_Alloc_Modes PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_tests_properties(GPUAwareOpenMPI_Alloc_Modes PROPERTIES TIMEOUT 600)
+
 add_test(NAME OpenMPI_Hello_World_Run COMMAND ../openmpi_hello_world_run.sh )
 set_property(TEST OpenMPI_Hello_World_Run PROPERTY PASS_REGULAR_EXPRESSION "Hello world from processor")
 set_property(TEST OpenMPI_Hello_World_Run PROPERTY SKIP_REGULAR_EXPRESSION "module spider")

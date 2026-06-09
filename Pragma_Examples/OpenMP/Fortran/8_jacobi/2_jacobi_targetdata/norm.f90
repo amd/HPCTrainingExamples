@@ -19,13 +19,12 @@ contains
     real(RK) :: dxdy
 
     dxdy = mesh%dx*mesh%dy
-
     norm_val = 0._RK
 
     !$omp target teams distribute parallel do collapse(2) reduction(+:norm_val)
     do j = 1,mesh%n_y
       do i = 1,mesh%n_x
-        norm_val = norm_val + u(i,j)**2*dxdy
+        norm_val = norm_val + u(i,j)*u(i,j)*dxdy
       end do
     end do
 

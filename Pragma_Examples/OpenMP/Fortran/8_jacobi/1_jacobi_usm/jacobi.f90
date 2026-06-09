@@ -7,9 +7,10 @@ module jacobi_mod
   use input_mod, only: debug
   use mesh_mod, only: mesh_t
   use norm_mod, only: norm
-  use laplacian_mod, only: laplacian
-  use boundary_mod, only: boundary_conditions
+  use laplacian_mod, only: fused_laplacian_update
   use update_mod, only: update
+  use boundary_mod, only: boundary_conditions
+  use norm_mod, only: norm
   use omp_lib, only: omp_get_wtime
   implicit none
   !$omp requires unified_shared_memory
@@ -85,10 +86,13 @@ contains
     this%t_start = omp_get_wtime()
 
     do while (this%iters < max_iters .and. resid > tolerance)
-      ! Compute Laplacian
-      call laplacian(mesh,this%u,this%au)
+      ! Compute Laplacian + Update (fused kernel)
+      call fused_laplacian_update(mesh,this%rhs,this%u,this%au,this%res)
       if (debug) then
-        call print_2D(this%au)
+        call print_2D(this%u)
+        write(stdout,*)
+        call print_2D(this%res)
+        write(stdout,*)
         write(stdout,*)
       end if
 
@@ -96,16 +100,6 @@ contains
       call boundary_conditions(mesh,this%u,this%au)
       if (debug) then
         call print_2D(this%au)
-        write(stdout,*)
-      end if
-
-      ! Update the solution
-      call update(mesh,this%rhs,this%au,this%u,this%res)
-      if (debug) then
-        call print_2D(this%u)
-        write(stdout,*)
-        call print_2D(this%res)
-        write(stdout,*)
         write(stdout,*)
       end if
 
