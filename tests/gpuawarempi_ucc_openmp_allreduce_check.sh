@@ -1,20 +1,18 @@
 #!/bin/bash
 
-# Regression test for GPU-aware-MPI fault on MI300A.
+# Checking for errors when UCC collectives produce seg faults with OpenMP
+# when messages are passed across multiple GPUs 
 #
 # Three device-memory provisioning paths are used:
 #   - use_device_addr : OpenMP-offload mapped Fortran allocatables passed to
-#                       MPI inside !$omp target data use_device_addr (repro.F90)
+#                       MPI inside !$omp target data use_device_addr (example.F90)
 #   - omp_target_alloc: raw device pointer from omp_target_alloc, no mapping
-#                       table entry, handed straight to MPI (repro_alloc.F90)
+#                       table entry, handed straight to MPI (example_alloc.F90)
 #   - alloc+addr (mix): omp_target_alloc memory (~ hipMalloc) bound via
 #                       c_f_pointer, then ALSO put through map(to:)
-#                       use_device_addr around the MPI call (repro_mix.F90)
+#                       use_device_addr around the MPI call (example_mix.F90)
 #
-# All three tracks are Fortran built with the same compiler, so the only
-# difference between them is the device-memory provisioning path.
-#
-# and with UCC collectives ON and OFF, giving 6 cases total. On affected UCC
+# With UCC collectives ON and OFF, the above gives 6 cases total. On affected UCC
 # stacks the UCC-ON cases fault with a GPU memory access fault (exit 134);
 # --mca coll_ucc_enable 0 is the known workaround. A healthy stack passes all
 # 6. REGRESSION_RESULT: PASS iff all 6 pass.
@@ -40,26 +38,25 @@ GPU_COUNT=`rocminfo | grep "Device Type:             GPU" | wc -l`
 if [ ${GPU_COUNT} -lt 2 ]; then
    echo "Skip"
 else
+   module load amdclang
    module load openmpi
 
    GFX_MODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 | sed 's/ //g'`
    [ -z "${GFX_MODEL}" ] && GFX_MODEL=gfx942
 
-   export OMPI_FC=`which amdflang 2>/dev/null || echo ${ROCM_PATH}/bin/amdflang`
-
    WORKDIR=`mktemp -d`
    trap "rm -rf ${WORKDIR}" EXIT
 
-   cat > ${WORKDIR}/repro.F90 <<'EOF'
-module repro_buffers
+   cat > ${WORKDIR}/example.F90 <<'EOF'
+module example_buffers
   use, intrinsic :: iso_fortran_env, only : real64
   implicit none
   integer, parameter :: rp = real64
   real(rp), allocatable, dimension(:) :: sbuf, rbuf
-end module repro_buffers
+end module example_buffers
 
-module repro_kernels
-  use repro_buffers, only : rp
+module example_kernels
+  use example_buffers, only : rp
   implicit none
 contains
   subroutine reduce_dev(n, a0, a1, comm, ierr)
@@ -73,13 +70,13 @@ contains
     call MPI_Allreduce(MPI_IN_PLACE, a1, n, MPI_REAL8, MPI_SUM, comm, ierr)
 !$omp end target data
   end subroutine reduce_dev
-end module repro_kernels
+end module example_kernels
 
-program repro
+program example
   use mpi
   use omp_lib
-  use repro_buffers
-  use repro_kernels
+  use example_buffers
+  use example_kernels
   implicit none
 
   integer :: ierr, nrank, myrank, shmcomm, local_rank, ndev, i, n
@@ -105,9 +102,9 @@ program repro
 
   n = 4096
 
-  !-------------------------------------------------------------------
-  ! TEST A: dummy-arg use_device_addr + MPI_Allreduce(MPI_IN_PLACE)
-  !-------------------------------------------------------------------
+  !---------------------------------------------------------------------------------------
+  ! TEST A: dummy-arg use_device_addr + MPI_Allreduce(MPI_IN_PLACE) this is the UCC track
+  !---------------------------------------------------------------------------------------
   allocate(sum0(n), sum1(n))
   sum0 = real(myrank + 1, rp)
   sum1 = real(2*(myrank + 1), rp)
@@ -129,9 +126,9 @@ program repro
   call report('TEST_A_allreduce_use_device_addr', ok, myrank)
   deallocate(sum0, sum1)
 
-  !-------------------------------------------------------------------
-  ! TEST B: module-buffer use_device_addr + MPI_Isend/Irecv
-  !-------------------------------------------------------------------
+  !------------------------------------------------------------------------------------------------
+  ! TEST B: module-buffer use_device_addr + MPI_Isend/Irecv this is a pt2pt just as a sanity check
+  !------------------------------------------------------------------------------------------------
   allocate(sbuf(n), rbuf(n))
   sbuf = real(myrank + 1, rp)
   rbuf = -1.0_rp
@@ -172,16 +169,16 @@ contains
     end if
     flush(6)
   end subroutine report
-end program repro
+end program example
 EOF
 
-   cat > ${WORKDIR}/repro_alloc.F90 <<'EOF'
-! Same two collectives as repro.F90, but on RAW device memory obtained from
+   cat > ${WORKDIR}/example_alloc.F90 <<'EOF'
+! Same two collectives as example.F90, but on RAW device memory obtained from
 ! omp_target_alloc -- no map(), no use_device_addr, not in the OpenMP mapping
 ! table. The c_f_pointer-backed array (device address) is handed straight to
-! GPU-aware MPI. Same language/compiler as repro.F90, so the ONLY difference
+! GPU-aware MPI. Same language/compiler as example.F90, so the ONLY difference
 ! between the two tracks is the device-memory provisioning path.
-program repro_alloc
+program example_alloc
   use mpi
   use omp_lib
   use iso_c_binding
@@ -262,15 +259,15 @@ contains
     end if
     flush(6)
   end subroutine report
-end program repro_alloc
+end program example_alloc
 EOF
 
-   cat > ${WORKDIR}/repro_mix.F90 <<'EOF'
+   cat > ${WORKDIR}/example_mix.F90 <<'EOF'
 ! MIX of the two paths: memory is obtained from omp_target_alloc (on AMD GPUs
 ! effectively a hipMalloc, OUTSIDE any target region) and bound to a Fortran
 ! pointer via c_f_pointer -- but it is then ALSO handed to OpenMP through
 ! !$omp target data map(to:...) use_device_addr(...) around the MPI call.
-program repro_mix
+program example_mix
   use mpi
   use omp_lib
   use iso_c_binding
@@ -364,18 +361,19 @@ contains
     end if
     flush(6)
   end subroutine report
-end program repro_mix
+end program example_mix
 EOF
 
    cd ${WORKDIR}
-   mpifort -O3 -fopenmp --offload-arch=${GFX_MODEL} repro.F90       -o repro_addr
-   mpifort -O3 -fopenmp --offload-arch=${GFX_MODEL} repro_alloc.F90 -o repro_alloc
-   mpifort -O3 -fopenmp --offload-arch=${GFX_MODEL} repro_mix.F90   -o repro_mix
+   mpifort -O3 -fopenmp --offload-arch=${GFX_MODEL} example.F90       -o example_addr
+   mpifort -O3 -fopenmp --offload-arch=${GFX_MODEL} example_alloc.F90 -o example_alloc
+   mpifort -O3 -fopenmp --offload-arch=${GFX_MODEL} example_mix.F90   -o example_mix
 
    # HSA_XNACK=0 exposes the fault (HSA_XNACK=1 masks it via USM).
    export HSA_XNACK=0
    export OMP_PROC_BIND=spread
    export OMP_PLACES=cores
+   ulimit -s unlimited
 
    # Run one case: <label> <binary> <ucc_enable 0|1>.
    # A case passes when it exits 0 with 4 "RESULT: PASS" lines and no FAIL.
@@ -398,12 +396,12 @@ EOF
       fi
    }
 
-   run_case "use_device_addr__UCC_on"          repro_addr  1
-   run_case "use_device_addr__UCC_off"         repro_addr  0
-   run_case "omp_target_alloc__UCC_on"         repro_alloc 1
-   run_case "omp_target_alloc__UCC_off"        repro_alloc 0
-   run_case "alloc_plus_use_device_addr__UCC_on"  repro_mix 1
-   run_case "alloc_plus_use_device_addr__UCC_off" repro_mix 0
+   run_case "use_device_addr__UCC_on"          example_addr  1
+   run_case "use_device_addr__UCC_off"         example_addr  0
+   run_case "omp_target_alloc__UCC_on"         example_alloc 1
+   run_case "omp_target_alloc__UCC_off"        example_alloc 0
+   run_case "alloc_plus_use_device_addr__UCC_on"  example_mix 1
+   run_case "alloc_plus_use_device_addr__UCC_off" example_mix 0
 
    echo "=================================================================="
    if [ ${ncase_fail} -eq 0 ]; then
