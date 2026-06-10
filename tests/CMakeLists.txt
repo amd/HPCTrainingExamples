@@ -1810,6 +1810,12 @@ add_test(NAME Podman_Test COMMAND ../podman_test.sh)
 set_property(TEST Podman_Test PROPERTY PASS_REGULAR_EXPRESSION "HSA System Attributes")
 set_property(TEST Podman_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# IntelliKit tests
+add_test(NAME IntelliKit_Check_Import COMMAND ../intellikit_check_import.sh )
+set_property(TEST IntelliKit_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST IntelliKit_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'intellikit'")
+set_tests_properties(IntelliKit_Check_Import PROPERTIES TIMEOUT 300)
+
 # AMD flang 22.0.0 known compiler/linker bugs; remove WILL_FAIL once upstream ships a fix.
 #   - _4_Vecadd_USM_Async / _5_Vecadd_Async_*: "not yet implemented: Unhandled clause
 #     privatization for deferred target tasks in omp.target operation"
