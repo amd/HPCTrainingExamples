@@ -89,7 +89,11 @@ ls rocprofsys-nomarkers/
 
 Look for `perfetto-trace-<pid>.proto`. Copy this file to your local machine and open it in the [Perfetto UI](https://ui.perfetto.dev) (use Chrome browser). Navigate with WASD keys to zoom and move.
 
+<img width="1550" height="808" alt="image" src="https://github.com/user-attachments/assets/0d4c6f9a-1cc6-45bb-928d-f21154e3fe79" />
+
 **What you see:** GPU kernel dispatch events, HIP runtime API calls, and GPU device metrics. However, all GPU kernels have auto-generated names and there is no indication of which application phase (boundary conditions, flux calculation, state update, etc.) each kernel belongs to.
+
+<img width="1555" height="868" alt="image" src="https://github.com/user-attachments/assets/9b2af8a7-0774-4661-ac06-ac371c19708a" />
 
 ## Binary instrumentation (no markers yet)
 
@@ -210,6 +214,7 @@ HSA_XNACK=1 rocprof-sys-run --preset=trace-gpu \
 ### View the trace
 
 Open the generated `perfetto-trace-<pid>.proto` in [Perfetto UI](https://ui.perfetto.dev).
+<img width="887" height="537" alt="image" src="https://github.com/user-attachments/assets/803105a2-2e3e-4c7d-8a7f-8296e1c8688b" />
 
 **What changed:** The trace now shows named roctx regions (`bc_y`, `calc_timestep`, `flux_x`, etc.) on the CPU thread timeline. GPU kernel dispatches are visually grouped under these regions, making it clear which kernel belongs to which computation phase. This is especially valuable for identifying performance bottlenecks in specific phases.
 
@@ -303,4 +308,7 @@ Open the generated trace in [Perfetto UI](https://ui.perfetto.dev).
 - **HSA API row** (new): HSA-level calls including `hsa_signal_wait_*` that show synchronization points.
 - **GPU metrics rows** (new): Device temperature, power, utilization, and memory usage over time.
 - **KFD events** (new, if present): Page fault and migration events
+
+<img width="1902" height="1001" alt="image" src="https://github.com/user-attachments/assets/5271c59f-6e95-4dbe-8a15-ff21faf83812" />
+
 
