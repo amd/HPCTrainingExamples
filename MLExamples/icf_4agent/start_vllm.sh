@@ -3,16 +3,12 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 CHAT_TEMPLATE="${ICF_VLLM_CHAT_TEMPLATE:-${SCRIPT_DIR}/chatml_simple.jinja}"
-MODEL_PATH="${ICF_VLLM_MODEL_PATH:-/shareddata/TPC26/gptoss-20b-hedp.03302026}"
+MODEL_PATH="${ICF_VLLM_MODEL_PATH:-/home/jbelof/hfmodels/gptoss-20b-hedp.03302026}"
 MODEL_NAME="${ICF_VLLM_MODEL_NAME:-gptoss-20b-hedp}"
-VLLM_IMAGE_TAR="${ICF_VLLM_IMAGE_TAR:-/shareddata/TPC26/vllm_rocm_nightly_main_20260531.tar}"
+VLLM_IMAGE_TAR="${ICF_VLLM_IMAGE_TAR:-/home/jbelof/vllm_rocm_nightly_main_20260531.tar}"
 VLLM_PORT="${ICF_VLLM_PORT:-8000}"
-# XXX JB
-#TP_SIZE="${ICF_VLLM_TP_SIZE:-1}"
-TP_SIZE="${ICF_VLLM_TP_SIZE:-2}"
-# MI355X
-#MAX_MODEL_LEN="${ICF_VLLM_MAX_MODEL_LEN:-16384}"
-MAX_MODEL_LEN="${ICF_VLLM_MAX_MODEL_LEN:-8192}"
+TP_SIZE="${ICF_VLLM_TP_SIZE:-1}"
+MAX_MODEL_LEN="${ICF_VLLM_MAX_MODEL_LEN:-16384}"
 
 CONTAINER_RT="podman"
 if ! command -v podman &>/dev/null; then
@@ -72,7 +68,6 @@ exec $CONTAINER_RT $PODMAN_FLAGS run --rm \
     --served-model-name "$MODEL_NAME" \
     --tensor-parallel-size "$TP_SIZE" \
     --max-model-len "$MAX_MODEL_LEN" \
-    --gpu-memory-utilization=0.7 \
     --trust-remote-code \
     --chat-template /app/chat_template.jinja \
     --tool-call-parser none \

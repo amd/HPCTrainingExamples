@@ -1,6 +1,6 @@
 # Adversarial Multi-Agent ICF Capsule Optimizer
 
-A multi-agent system that autonomously optimizes Inertial Confinement Fusion (ICF) capsule designs under realistic manufacturing uncertainty. A Design Explorer agent maximizes fusion yield while a Defect Adversary agent stress-tests designs with manufacturing imperfections, orchestrated by a Principal Investigator agent — all powered by LLM reasoning and a fast physics surrogate.
+A multi-agent system that autonomously optimizes Inertial Confinement Fusion (ICF) capsule designs under realistic manufacturing uncertainty. A Design Explorer agent maximizes fusion yield while a Defect Adversary agent stress-tests designs with manufacturing imperfections, orchestrated by a Principal Investigator agent — all powered by LLM reasoning and a fast physics surrogate. After a campaign runs, the same Principal Investigator can be **interactively queried** about the results: it answers analysis questions ("why did the best design win?", "how robust is it to defects?") from the recorded run data, with multi-turn memory across the conversation.
 
 ## Architecture
 
@@ -31,6 +31,13 @@ A multi-agent system that autonomously optimizes Inertial Confinement Fusion (IC
 
 The agents communicate through AutoGen's group chat with constrained speaker transitions. Only the PI can invoke the physics simulation, ensuring a structured optimization loop. The physics engine is decoupled from the agents via the Model Context Protocol (MCP), allowing the backend to be swapped from this fast surrogate to a full radiation hydrodynamics code without changing any agent logic.
 
+Every campaign's structured results (best design, all sampled designs and their yields, mean/σ statistics, sweep curves, rendered media) are retained in a session-scoped store. A dedicated **conversational PI agent** (no tool access, separate from the orchestrating PI) draws on this store to answer follow-up analysis questions, so the user can interrogate what was run without launching a new simulation. The router automatically distinguishes a *request to run* (e.g. "optimize…", "sweep…", "show a movie…") from a *question about prior results*, sending the latter to the debrief agent.
+
+The system runs against either backend (selected by `ICF_API_TYPE`):
+
+- **`anthropic`** — a frontier cloud model. The PI invokes the simulation through AutoGen's native tool-calling.
+- **`openai`** — a local, OpenAI-compatible endpoint (vLLM serving the fine-tuned `gptoss-20b-hedp` weights). Because smaller open-weight models are unreliable at formal tool-calling, in this mode the PI instead emits a plain-text `RUN_SIMULATION: R0=..., v0=..., ...` line, which a hook parses and executes against the MCP server, injecting the results back into the conversation. This mode also uses deterministic speaker scheduling, response sanitization (stripping stray tool-call/null tokens), and bounded conversation history so long campaigns stay within the model's context window.
+
 ## Physics Model
 
 The surrogate implements a 0D deceleration-phase model combining:
@@ -50,14 +57,15 @@ The system solves a min-max game:
 max_x  min_d  Y(x, d)
 ```
 
-where **x** = (R0, v0, T0, M_sh, M_hs) are design parameters and **d** = (delta, mode, roughness) are manufacturing defects, subject to a fixed kinetic energy budget: KE = ½ M_sh v0² = 0.015 × E_laser.
+where **x** = (R0, v0, T0, M_sh, M_hs) are design parameters and **d** = (delta, mode, roughness) are manufacturing defects, subject to a kinetic energy budget KE = ½ M_sh v0² = 0.015 × E_laser. The laser energy E_laser is parsed from the user's request (any value, not a fixed 3 MJ), and the resulting budget is computed in code and handed to the agents — so a request for, say, a 5 MJ laser produces a 75 kJ budget and the agents scale the design accordingly.
 
 ## Files
 
 | File | Description |
 |---|---|
-| `app.py` | Multi-agent orchestration, Gradio UI, LLM configuration |
-| `icf_core.py` | Standalone physics engine (ODE solver) |
+| `app.py` | Multi-agent orchestration, request routing (single/sweep/media/analysis), conversational-PI debrief, session result store, Gradio UI, LLM configuration |
+| `icf_core.py` | Standalone physics engine (`solve_implosion` / `compute_metrics` + CLI) |
+| `icf_viz.py` | Media generation: implosion movie (ffmpeg) and diagnostic time-history plots |
 | `icf_mcp_server.py` | MCP tool server wrapping the physics engine with parameter validation |
 | `start_app.sh` | Launch script for the agent application |
 | `start_vllm.sh` | Launch script for local vLLM inference server |
@@ -122,11 +130,35 @@ Start the vLLM server in one terminal, then the app in another:
 ./start_app.sh
 ```
 
-The app opens a Gradio web UI with a public share link (no X server needed). Enter a prompt like:
+The app opens a Gradio web UI with a public share link (no X server needed). The interface uses the Origin theme (dark mode by default), shows the AMD logo, streams the agent conversation in a chat panel, and renders plots and movies in side panels. Agent messages stream to the browser in real time as each agent contributes.
+
+### Usage Modes
+
+The request is routed by keyword into one of four modes:
+
+**1. Single design campaign** (default) — one full agent optimization at a given laser energy.
 
 > Find a robust capsule design that maximizes fusion yield at 3 MJ laser energy
 
-Agent messages stream to the browser in real time as each agent contributes.
+**2. Laser-energy sweep** (triggered by "sweep", "scan", "as a function of", "vs laser energy", "curve"). Runs one full campaign per energy point and plots **mean fusion yield with ±1σ error bars** (the spread of yields the agents explore at each energy, reflecting sensitivity to manufacturing defects). The energy points are parsed from the request, supporting **multiple range segments each with their own step size**:
+
+> Sweep yield vs laser energy from 1.0 to 2.0 MJ in increments of 0.1 MJ and 2.0 to 10.0 MJ in increments of 1.0 MJ
+
+Also accepts a point count ("...from 1 to 10 MJ with 6 points") or a single uniform step.
+
+**3. Simulation media** (triggered by "movie", "animation", "render", "show the implosion", "diagnostic", etc.). Runs a campaign, takes the best design found, and renders an **implosion movie** (density field through stagnation) plus **diagnostic time-history plots** (radius, areal density, temperature).
+
+> Optimize a design at 4 MJ and show me a movie of the implosion
+
+**4. Analysis / debrief** (triggered once at least one campaign has run, by any question that is not itself a run request — e.g. it ends in "?" or uses words like "why", "how", "compare", "explain", "robust"). Instead of starting a new simulation, the question is routed to a conversational Principal Investigator that reasons over all results collected this session and replies in the chat panel. The exchange has multi-turn memory, so follow-up questions retain context.
+
+> Why did the best design win, and how robust is it to the defects we tried?
+> Which single defect parameter hurt the yield the most?
+> Compare the 3 MJ and 5 MJ campaigns.
+
+This mode is purely interpretive: the debrief agent has no simulation tool and never alters the design — it only analyzes the recorded data (best design, every sampled design and its yield, mean/σ, and any sweep curve). To start fresh work, use an explicit run phrasing ("optimize…", "sweep…", "render a movie…").
+
+Each campaign is capped at a fixed number of agent rounds (`SWEEP_MAX_ROUNDS` / `SINGLE_MAX_ROUNDS` / `MEDIA_MAX_ROUNDS` in `app.py`) and also stops early when the yield plateaus (improvement < 5% for two consecutive rounds). If a campaign produces no valid simulation, a physically reasonable fallback design at the target energy keeps the sweep/media output populated.
 
 ### Running the Physics Engine Standalone
 
@@ -178,7 +210,7 @@ Each agent role (Explorer, Frontier) has independent settings with fallback defa
 | `ICF_VLLM_IMAGE_TAR` | `~/vllm_rocm_nightly_main_20260531.tar` | vLLM container image tarball |
 | `ICF_VLLM_PORT` | `8000` | Port for the vLLM server |
 | `ICF_VLLM_TP_SIZE` | `1` | Tensor parallel degree (number of GPUs) |
-| `ICF_VLLM_MAX_MODEL_LEN` | `4096` | Maximum sequence length |
+| `ICF_VLLM_MAX_MODEL_LEN` | `16384` | Maximum sequence length |
 
 ## Parameter Bounds
 

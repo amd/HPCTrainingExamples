@@ -163,6 +163,75 @@ def plot_time_histories(sol, M1, M2, output_dir="implosion_frames"):
     plt.savefig(f"{output_dir}/time_histories.png", dpi=300, bbox_inches='tight')
     plt.close()
 
+def solve_implosion(R0, v0, T0, M_sh, M_hs, delta, mode, roughness):
+    """Integrate the deceleration-phase ODE system for a given capsule design.
+
+    Returns (sol, M1, M2): the solve_ivp solution object and the two piston masses.
+    All inputs are in SI units except T0 which is in keV.
+    """
+    M1 = (M_sh / 2.0) * (1.0 + delta)
+    M2 = (M_sh / 2.0) * (1.0 - delta)
+
+    V0 = (4.0 / 3.0) * np.pi * R0**3
+    P_hs0 = 2.0 * (M_hs / V0 / M_DT) * k * (T0 * 1.16045e7)
+    E_hs0 = 1.5 * P_hs0 * V0
+
+    y0 = [R0, v0, R0, v0, E_hs0, 0.0, 0.0, M_hs, M_hs]
+
+    t_span = (0, 0.6e-9)
+    t_eval = np.linspace(0, 0.6e-9, 200)
+
+    # Safely back on Radau. No custom tolerance arrays to trip it up.
+    sol = solve_ivp(asymmetric_odes, t_span, y0, t_eval=t_eval, method='Radau',
+                    args=(M1, M2, mode), rtol=1e-6, atol=1e-8, max_step=1e-12)
+
+    return sol, M1, M2
+
+
+def compute_metrics(sol, M1, M2, M_hs, mode):
+    """Compute stagnation metrics from an integrated solution. Returns a dict."""
+    R_eff_array = (sol.y[0] + sol.y[2]) / 2.0
+    stag_idx = np.argmin(R_eff_array)
+
+    R1_stag = sol.y[0][stag_idx]
+    R2_stag = sol.y[2][stag_idx]
+    v1_stag = sol.y[1][stag_idx]
+    v2_stag = sol.y[3][stag_idx]
+
+    RKE = 0.5 * M1 * v1_stag**2 + 0.5 * M2 * v2_stag**2
+
+    E_hs_stag = sol.y[4][stag_idx]
+    V_stag = (4.0 / 3.0) * np.pi * ((R1_stag + R2_stag) / 2.0)**3
+    P_stag = (2.0 / 3.0) * E_hs_stag / V_stag
+
+    rt_exponent = sol.y[6][stag_idx]
+    rt_amplification = np.exp(rt_exponent)
+
+    # Force diagnostic yield to non-negative just in case
+    final_yield_MJ = max(0.0, sol.y[5][-1] / 1e6)
+
+    initial_fuel_ug = M_hs * 1e9
+    final_fuel_ug = max(0.0, sol.y[7][-1] * 1e9)
+    total_ablated_mass_ug = max(0.0, (sol.y[8][-1] - M_hs) * 1e9)
+
+    total_pool = initial_fuel_ug + total_ablated_mass_ug
+    burned_fraction = ((total_pool - final_fuel_ug) / total_pool * 100.0) if total_pool > 0 else 0.0
+
+    return {
+        "stag_idx": stag_idx,
+        "R1_stag": R1_stag,
+        "R2_stag": R2_stag,
+        "P_stag_Gbar": P_stag / 1e14,
+        "yield_MJ": final_yield_MJ,
+        "ablated_ug": total_ablated_mass_ug,
+        "burn_fraction": burned_fraction,
+        "total_pool_ug": total_pool,
+        "RKE_J": RKE,
+        "rt_amplification": rt_amplification,
+        "mode": mode,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description="2D Asymmetric Piston Surrogate")
     parser.add_argument('--R0', type=float, default=150e-6)
@@ -174,80 +243,44 @@ def main():
     parser.add_argument('--mode', type=float, default=10.0)
     parser.add_argument('--roughness', type=float, default=0.1e-6)
     parser.add_argument('--plot', action='store_true')
-    
+
     args = parser.parse_args()
-    
-    M1 = (args.M_sh / 2.0) * (1.0 + args.delta)
-    M2 = (args.M_sh / 2.0) * (1.0 - args.delta)
-    
-    V0 = (4.0 / 3.0) * np.pi * args.R0**3
-    P_hs0 = 2.0 * (args.M_hs / V0 / M_DT) * k * (args.T0 * 1.16045e7)
-    E_hs0 = 1.5 * P_hs0 * V0
-    
-    y0 = [args.R0, args.v0, args.R0, args.v0, E_hs0, 0.0, 0.0, args.M_hs, args.M_hs]
-    
-    t_span = (0, 0.6e-9)
-    t_eval = np.linspace(0, 0.6e-9, 200)
-    
+
     print(f"Simulating implosion (Delta = {args.delta}, Mode = {args.mode})...")
-    
-    # Safely back on Radau. No custom tolerance arrays to trip it up.
-    sol = solve_ivp(asymmetric_odes, t_span, y0, t_eval=t_eval, method='Radau', 
-                    args=(M1, M2, args.mode), rtol=1e-6, atol=1e-8, max_step=1e-12)
-    
-    if len(sol.t) < len(t_eval):
+
+    sol, M1, M2 = solve_implosion(args.R0, args.v0, args.T0, args.M_sh, args.M_hs,
+                                  args.delta, args.mode, args.roughness)
+
+    t_eval_len = 200
+    if len(sol.t) < t_eval_len:
         print(f"Warning: ODE solver stopped early at step {len(sol.t)}.")
-    
-    R_eff_array = (sol.y[0] + sol.y[2]) / 2.0
-    stag_idx = np.argmin(R_eff_array)
-    
+
+    m = compute_metrics(sol, M1, M2, args.M_hs, args.mode)
+    stag_idx = m["stag_idx"]
+
     if args.plot:
         print("Generating high-resolution PNGs and time-history traces...")
         output_dir = "implosion_frames"
         plot_time_histories(sol, M1, M2, output_dir=output_dir)
-        
+
         end_idx = min(stag_idx + 20, len(sol.t))
-        for i in range(0, end_idx, 2): 
+        for i in range(0, end_idx, 2):
             plot_synthetic_density(
-                sol.y[0][i], sol.y[2][i], sol.y[6][i], sol.t[i], i, 
+                sol.y[0][i], sol.y[2][i], sol.y[6][i], sol.t[i], i,
                 args.mode, args.roughness, output_dir=output_dir
             )
         print(f"Saved visualization files to the '{output_dir}/' directory.")
-    
-    R1_stag = sol.y[0][stag_idx]
-    R2_stag = sol.y[2][stag_idx]
-    v1_stag = sol.y[1][stag_idx]
-    v2_stag = sol.y[3][stag_idx]
-    
-    RKE = 0.5 * M1 * v1_stag**2 + 0.5 * M2 * v2_stag**2
-    
-    E_hs_stag = sol.y[4][stag_idx]
-    V_stag = (4.0 / 3.0) * np.pi * ((R1_stag + R2_stag)/2.0)**3
-    P_stag = (2.0 / 3.0) * E_hs_stag / V_stag
-    
-    rt_exponent = sol.y[6][stag_idx]
-    rt_amplification = np.exp(rt_exponent)
-    
-    # Force diagnostic yield to non-negative just in case
-    final_yield_MJ = max(0.0, sol.y[5][-1] / 1e6)
-    
-    initial_fuel_ug = args.M_hs * 1e9
-    final_fuel_ug = max(0.0, sol.y[7][-1] * 1e9)
-    total_ablated_mass_ug = max(0.0, (sol.y[8][-1] - args.M_hs) * 1e9)
-    
-    total_pool = initial_fuel_ug + total_ablated_mass_ug
-    burned_fraction = ((total_pool - final_fuel_ug) / total_pool * 100.0) if total_pool > 0 else 0.0
-    
+
     print(f"\n--- Asymmetric Mode-1 Metrics (Delta = {args.delta}) ---")
-    print(f"Stagnation Radius (Left):  {R1_stag*1e6:.2f} um")
-    print(f"Stagnation Radius (Right): {R2_stag*1e6:.2f} um")
-    print(f"Stagnation Pressure:       {P_stag / 1e14:.2f} Gbar")
-    print(f"Total Fusion Yield:        {final_yield_MJ:.3f} MJ")
-    print(f"Ablated Mass Injected:     {total_ablated_mass_ug:.2f} ug")
-    print(f"Fuel Burn Fraction:        {burned_fraction:.2f}% (Total Pool: {total_pool:.2f} ug)")
-    print(f"Residual Kinetic Energy:   {RKE:.2f} Joules")
-    print(f"RT Amplification (l={args.mode}): {rt_amplification:.2f}x initial perturbation")
+    print(f"Stagnation Radius (Left):  {m['R1_stag']*1e6:.2f} um")
+    print(f"Stagnation Radius (Right): {m['R2_stag']*1e6:.2f} um")
+    print(f"Stagnation Pressure:       {m['P_stag_Gbar']:.2f} Gbar")
+    print(f"Total Fusion Yield:        {m['yield_MJ']:.3f} MJ")
+    print(f"Ablated Mass Injected:     {m['ablated_ug']:.2f} ug")
+    print(f"Fuel Burn Fraction:        {m['burn_fraction']:.2f}% (Total Pool: {m['total_pool_ug']:.2f} ug)")
+    print(f"Residual Kinetic Energy:   {m['RKE_J']:.2f} Joules")
+    print(f"RT Amplification (l={args.mode}): {m['rt_amplification']:.2f}x initial perturbation")
+
 
 if __name__ == "__main__":
     main()
-

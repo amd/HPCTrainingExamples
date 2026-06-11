@@ -160,7 +160,7 @@ The design space is constrained by the available laser energy. The kinetic energ
 E_k = \frac{1}{2}M_{sh} v_0^2 = \eta \, E_{laser}
 \label{eq:energy_constraint}
 \end{equation}
-For NIF-class indirect-drive implosions, $\eta \approx 0.015$ and $E_{laser} = 3$~MJ, giving a kinetic energy budget of $E_k = 45$~kJ. This constraint defines a one-dimensional manifold in $(M_{sh}, v_0)$ space: increasing shell mass requires decreasing implosion velocity, and vice versa. The fundamental tradeoff is between \textit{fuel inventory} (more mass to burn) and \textit{implosion vigor} (higher velocity for stronger compression and higher stagnation temperature).
+For NIF-class indirect-drive implosions, $\eta \approx 0.015$; a $3$~MJ laser then gives a kinetic energy budget of $E_k = 45$~kJ. The laser energy is not fixed: it is parsed from the user's request and the corresponding budget is computed and supplied to the agents at the start of each campaign, so the same machinery scans the full range from sub-MJ to multi-MJ drives. This constraint defines a one-dimensional manifold in $(M_{sh}, v_0)$ space: increasing shell mass requires decreasing implosion velocity, and vice versa. The fundamental tradeoff is between \textit{fuel inventory} (more mass to burn) and \textit{implosion vigor} (higher velocity for stronger compression and higher stagnation temperature).
 
 \subsection{Defect Bounds}
 
@@ -185,7 +185,7 @@ The system comprises four agents coordinated through the AutoGen framework \cite
 \begin{enumerate}
     \item \textbf{Principal Investigator (PI)}: The orchestrator agent, implemented on a frontier LLM. It coordinates the optimization campaign by sequentially engaging the Explorer and Adversary, validates the energy constraint (Eq.~\ref{eq:energy_constraint}), invokes the simulation tool, evaluates results against ignition criteria (yield $> 1$~MJ, stagnation pressure $> 100$~Gbar, RT amplification $< 1000\times$), and decides whether to iterate or terminate. The PI is the \textit{only} agent authorized to call the simulation tool.
 
-    \item \textbf{Design Explorer}: Proposes capsule design parameters $\mathbf{x}$ to maximize yield. In production, this agent runs on a domain-specific LLM fine-tuned on ICF literature, enabling physics-informed design intuition beyond what is available from general-purpose models. It receives feedback from prior simulation results and adjusts parameters along the constant-energy manifold.
+    \item \textbf{Design Explorer}: Proposes capsule design parameters $\mathbf{x}$ to maximize yield. This agent is intended to run on a domain-specific LLM fine-tuned on high-energy-density-physics literature, enabling physics-informed design intuition beyond what is available from general-purpose models. In the local deployment described in Section~\ref{sec:deployment}, all agents are served by such a model (\texttt{gptoss-20b-hedp}, a 20B-parameter open-weight model fine-tuned on HEDP papers). It receives feedback from prior simulation results and adjusts parameters along the constant-energy manifold.
 
     \item \textbf{Defect Adversary}: Proposes manufacturing defect parameters $\mathbf{d}$ to stress-test the Explorer's designs. It follows a systematic strategy: probing individual defect modes in early rounds to identify the design's primary sensitivity, then combining the most damaging perturbations in later rounds.
 
@@ -266,9 +266,38 @@ The decoupling of physics execution from agent reasoning via MCP is architectura
 \label{fig:architecture}
 \end{figure}
 
-\subsection{Streaming Interface}
+\subsection{Deployment and Backends}
+\label{sec:deployment}
 
-The agent swarm is served through a Gradio web interface that provides real-time visibility into the multi-agent conversation. The AutoGen group chat runs in a background thread while a generator function polls the shared message list, yielding each agent's contribution to the browser as it is produced. This streaming architecture allows users to monitor the optimization in real time, observing the Explorer's design rationale, the Adversary's perturbation strategy, and the PI's evaluation of each simulation result.
+The system supports two interchangeable LLM backends, selected at launch. The first is a frontier cloud model accessed through a hosted API, in which the PI invokes the simulation through the framework's native tool-calling interface. The second is a fully local deployment in which an open-weight model fine-tuned on HEDP literature (\texttt{gptoss-20b-hedp}, 20B parameters) is served through a high-throughput inference engine (vLLM) on AMD Instinct GPUs, exposing an OpenAI-compatible endpoint. The local deployment is significant for security-sensitive design work, where sending capsule parameters to an external service is undesirable: the entire reasoning--simulation loop runs on-premises.
+
+\subsection{Robustness Layer for Open-Weight Models}
+
+Small open-weight models are markedly less reliable than frontier models at the structured behaviors the orchestration depends on. Four mechanisms make the local deployment robust:
+
+\begin{enumerate}
+    \item \textbf{Text-based tool invocation.} Rather than relying on a structured tool-call API, the PI emits a plain-text directive (\texttt{RUN\_SIMULATION: R0=..., v0=..., ...}) that a parser intercepts, validates, executes against the MCP server, and replaces with the returned metrics. A markdown-tolerant regular expression handles the formatting variability typical of these models. This sidesteps the brittle and architecture-specific structured-output tokens that otherwise cause server-side parse failures.
+    \item \textbf{Deterministic speaker scheduling.} Speaker selection follows a fixed cycle (PI $\rightarrow$ Explorer $\rightarrow$ PI $\rightarrow$ Adversary $\rightarrow$ PI) rather than an LLM-driven selector, eliminating the malformed-selection errors and degenerate loops that small models produce when asked to choose the next speaker.
+    \item \textbf{Response sanitization.} A wrapper on the model client strips stray tool-call artifacts and substitutes empty strings for null content before any downstream processing, preventing exceptions from non-conforming responses.
+    \item \textbf{Bounded context.} A history-trimming hook caps what each agent sees to the campaign's opening message (which carries the energy budget) plus the most recent exchanges, so a long campaign cannot overflow the model's context window.
+\end{enumerate}
+
+\subsection{Operational Modes and Interface}
+
+The agent swarm is served through a Gradio web interface that provides real-time visibility into the multi-agent conversation. The group chat runs in a background thread while a generator polls the shared message list, streaming each agent's contribution to the browser as it is produced---the Explorer's design rationale, the Adversary's perturbation strategy, and the PI's evaluation of each simulation. A user request is routed by intent into one of four modes:
+
+\begin{itemize}
+    \item \textbf{Single design campaign:} one optimization campaign at a requested laser energy, streamed live.
+    \item \textbf{Laser-energy sweep:} one full campaign per energy point, producing a plot of fusion yield versus laser energy. Each point reports the \emph{mean} yield over the campaign's simulations with $\pm 1\sigma$ error bars; the variance is itself a diagnostic, growing where the design space straddles the ignition threshold (Section~\ref{sec:results}). The energy grid is parsed from natural language and supports multiple range segments with independent step sizes (e.g.\ fine spacing across the ignition cliff and coarse spacing across the high-yield plateau).
+    \item \textbf{Simulation media:} the best design from a campaign is rendered as an animation of the imploding density field and as diagnostic time-history traces.
+    \item \textbf{Interactive analysis (debrief):} once at least one campaign has run, the user can pose natural-language questions about the results---\textit{why} a design won, \textit{how} robust it is to defects, or \textit{which} parameter dominated---and receive a written analysis rather than a new simulation.
+\end{itemize}
+
+Each campaign is bounded by a maximum number of agent rounds and a yield-plateau stopping criterion (Section~\ref{sec:agents} prompt protocol). When a campaign yields no valid simulation, a physically reasonable fallback design at the target energy keeps the sweep and media outputs populated.
+
+\subsection{Conversational Debrief of Campaign Results}
+
+The first three modes are generative---they spend simulation budget to produce new designs. The fourth is interpretive. Every campaign's structured outcome (the best design and its yield, every sampled design with its eight parameters and resulting yield, the mean/$\sigma$ statistics, any sweep curve, and rendered-media references) is retained in a session-scoped store that persists across conversational turns. When the user's message is a question about prior results rather than a request to run something, an intent router dispatches it to a dedicated \emph{conversational PI} agent: the same frontier LLM as the orchestrating PI but operating from a debrief prompt with no simulation tool and no authority to alter the design. It is supplied the serialized result store as context and answers strictly from that data, declining and suggesting a follow-up campaign when the necessary information is absent. The exchange carries multi-turn memory, so follow-up questions retain context. The router separates the two intents with a keyword heuristic: explicit run verbs (\texttt{optimize}, \texttt{sweep}, \texttt{render a movie}) and energy-bearing requests start a campaign, while interrogatives and analysis verbs (\texttt{why}, \texttt{how}, \texttt{compare}, \texttt{explain}, \texttt{robust}) route to the debrief agent. This converts the system from a fire-and-forget optimizer into an interactive design assistant, with the human able to interrogate the rationale behind a result without re-running the swarm.
 
 %=============================================================================
 \section{Results}
@@ -435,6 +464,7 @@ We have presented a multi-agent system that autonomously optimizes ICF capsule d
     \item An adversarial min-max optimization formulation (Eq.~\ref{eq:minmax}) that discovers designs robust to mode-1 asymmetry, RT instability, and surface roughness within NIF-class manufacturing tolerances.
     \item A 4-agent architecture with constrained speaker transitions and server-enforced parameter bounds, addressing practical challenges of LLM-driven optimization (unit confusion, role drift, out-of-bounds proposals).
     \item Demonstration of autonomous convergence: agents navigate the $(M_{sh}, v_0)$ manifold over six rounds, improving yield from 7.4~MJ to 11.3~MJ (53\% gain) while maintaining robustness to $\delta \leq 0.012$ asymmetry, with yield-plateau stopping criteria terminating the campaign automatically.
+    \item An interactive debrief mode in which a tool-free conversational instance of the PI reasons over a persistent, session-scoped store of campaign results, allowing the human to interrogate the rationale and robustness of any completed design without re-running the swarm.
 \end{enumerate}
 
 The MCP-based decoupling of reasoning agents from physics execution provides a natural pathway to scaling this approach to high-fidelity radiation hydrodynamics simulations on HPC clusters, transforming the human-in-the-loop design bottleneck into an automated, adversarially robust optimization cycle.

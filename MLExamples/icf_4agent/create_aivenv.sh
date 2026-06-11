@@ -3,7 +3,7 @@
 set -e
 
 ROCMVERSION=7.2.2
-module load rocm/$ROCMVERSION
+#module load rocm/$ROCMVERSION
 
 python3 -m venv aivenv --system-site-packages
 source aivenv/bin/activate
