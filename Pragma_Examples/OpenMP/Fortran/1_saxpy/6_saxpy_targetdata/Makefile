@@ -9,31 +9,26 @@ FC1=$(notdir $(FC))
 ifneq ($(findstring amdflang,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -ffree-form
+  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else ifneq ($(findstring flang,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -Mfreeform
+  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else ifneq ($(findstring gfortran,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload=-march=$(ROCM_GPU)
   #OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
   FREE_FORM_FLAG = -ffree-form
 else ifneq ($(findstring ftn,$(FC1)),)
+  FTN_VERSION := $(shell $(FC) --version 2>&1)
   OPENMP_FLAGS = -fopenmp
+  ifneq ($(findstring Cray,$(FTN_VERSION)),)
+    FFLAGS = -g -eZ -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
+  else
+    FFLAGS = -g -O3 -ffree-form ${OPENMP_FLAGS}
+  endif
 endif
 
-ifneq ($(findstring ftn,$(FC1)),)
-  FFLAGS = -g -eZ -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
-else ifneq ($(findstring amdflang,$(FC1)),)
-  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
-else
-  FFLAGS = -g -O3 ${FREE_FORM_FLAG} -fstrict-aliasing ${OPENMP_FLAGS}
-endif
-ifeq (${FC1},gfortran-13)
-   LDFLAGS = ${OPENMP_FLAGS} -fno-lto
-else ifneq ($(findstring ftn,$(FC1)),)
-   LDFLAGS = ${OPENMP_FLAGS} #only needed on systems with non-matching default -L/opt/rh/gcc-toolset-12/root/usr/lib/gcc/x86_64-redhat-linux/12
-else
-   LDFLAGS = ${OPENMP_FLAGS}
-endif
+LDFLAGS = ${OPENMP_FLAGS}
 
 
 ${EXEC}: ${EXEC}.F90
