@@ -249,11 +249,11 @@ Note HIPSTDPAR assumes the device is HMM enabled and setting `HSA_XNACK=1` to on
 * omp_stdpar: demonstrates how to integrate StdPar and OpenMP within the same application.
 It utilizes object-oriented programming techniques to implement the same interface in specialized ways.
 
-* std_cpu_gpu: shows how to combine StdPar sections using `par` and `par_unseq`
-to run on both the CPU and GPU within the same application.
-
 * hip_stdpar: illustrates how to use HIP routines to allocate and transfer data to GPU buffers
-for use in StdPar sections. You can use `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ROCM_PATH/lib/rocprofiler-systems` for an installation of TBB (needed for stdpar on CPU). The Makefile also uses this TBB version shipped with rocprofiler-systems (works with rocm 7.2, not with rocm 6.4). Make sure to set TBB_LIBDIR if you want to use another TBB version.
+for use in StdPar sections.
+
+* std_cpu_gpu: shows how to combine StdPar sections using `par` and `par_unseq`
+to run on both the CPU and GPU within the same application. You can use `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ROCM_PATH/lib/rocprofiler-systems` for an installation of TBB (needed for stdpar on CPU). The Makefile also uses this TBB version shipped with rocprofiler-systems (works with rocm 7.2, not with rocm 6.4). Make sure to set TBB_LIBDIR if you want to use another TBB version.
 
 * atomic_stdpar_omp: explains how atomic operations can be safely performed within a StdPar
 section using the `par_unseq` policy. The example also includes an equivalent OpenMP implementation.
