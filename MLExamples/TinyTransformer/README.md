@@ -74,7 +74,7 @@ Each version introduces additional profiling capabilities:
 On the training cluster's compute node, load the modules (adjust names/versions for your site):
 
 ```bash
-module load rocm pytorch openmpi rocprofiler-compute rocprofiler-systems/develop
+module load rocm pytorch
 ```
 
 Then confirm ROCm, PyTorch, and the GPU(s) are setup correctly:

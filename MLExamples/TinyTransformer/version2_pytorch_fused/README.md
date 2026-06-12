@@ -263,8 +263,8 @@ $$
 
 $$
 \begin{aligned}
-\text{gate\_up} &= x[W_{\text{gate}} \parallel W_{\text{up}}] \quad \text{(Single GEMM)} \\
-\text{gate, up} &= \text{split}(\text{gate\_up}, \text{dim}=-1) \quad \text{(Tensor view)} \\
+\text{tmp}_\text{gate,up} &= x[W_{\text{gate}} \parallel W_{\text{up}}] \quad \text{(Single GEMM)} \\
+\text{gate, up} &= \text{split}(\text{tmp}_\text{gate,up}, \text{dim}=-1) \quad \text{(Tensor view)} \\
 \text{output} &= (\text{SiLU}(\text{gate}) \odot \text{up})W_{\text{down}} \quad \text{(Fused activation + projection)}
 \end{aligned}
 $$
@@ -534,7 +534,7 @@ The following reference results have been obtained on an MI300A with PyTorch 2.9
 | `--enable-torch-compile` | 794 | 10.1 | 875 |
 
 On this setup, fusion yields ~**1.5×** throughput over the unfused path; adding `torch.compile` reaches ~**2.7×** vs. unfused and ~**1.8×** vs. fused alone.
-With the short sequence length of `seq=128` because with this short sequence length, the majority of the memory is consumed by the weights and gradients.
+With the short sequence length of `seq=128`, the majority of the memory is consumed by the weights and gradients leading to only minor differences in peak memory between the versions.
 Continue to exercise 2 to learn more about the impact of kernel fusion and Flash Attention on the memory consumption.
 
 ### Exercise 2: Flash Attention Memory Analysis
@@ -566,11 +566,10 @@ The following reference results have been obtained on an MI300A with PyTorch 2.9
 |---------------|---------|---------|---------|----------|
 | `--disable-all-fusion` | 764 | 1031 | 1669 | 3471 |
 | Default fused (Flash Attention) | 764 | 967 | 1414 | 2302 |
-|---------------|---------|---------|---------|----------|
 | Ratio | 1.00x | 1.06x | 1.18x | 1.51x |
 
 Clearly, the fused attention kernel reduces the required memory significantly. Why is that?
-Unfused attention materializes an \(S \times S\) attention matrix, so the peak memory rises close to **quadratically** in sequence length once that tensor dominates. Flash Attention avoids storing the full matrix as it computes the local attention scores on-the-fly resulting in a roughly **linear** scaling in \(S\). At `seq=128`, all both models report the same peak because weights and activations dominate.
+Unfused attention materializes an $ S \times S $ attention matrix, so the peak memory rises close to **quadratically** in sequence length once that tensor dominates. Flash Attention avoids storing the full matrix as it computes the local attention scores on-the-fly resulting in a roughly **linear** scaling in $ S $. At `seq=128`, exhibit the same memory footprint since the the majority of the occupied memory is consumed by the weights and activations. The attention matrix only becomes the dominant factor for larger sequence lengths.
 
 Does the further fusion with `torch.compile` lower the peak even more? Try it out!
 
@@ -592,10 +591,13 @@ about each tool.
 Running rocprofv3 to collect GPU hotspots on this example would look like this:
 
 ```bash
-rocprofv3 --kernel-trace --stats --truncate-kernels -- python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
+rocprofv3 --kernel-trace -S --stats --truncate-kernels --output-format csv -- \
+     python tiny_llama_v1.py --batch-size 8 --seq-len 128 --num-steps 30
 ```
 
 View the `<pid>_kernel_stats.csv` file to see the GPU kernel hotspots.
+
+Note: Since the statistics are computed per kernel name, the `--truncate-kernels` argument might kernels with similar signatures into the same truncated name.
 
 #### Step 2: rocprof-sys System Analysis
 
