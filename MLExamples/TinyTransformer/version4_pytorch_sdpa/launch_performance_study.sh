@@ -86,7 +86,7 @@ mkdir -p "$OUTPUT_DIR"
 
 # Display configuration
 echo "================================================================================"
-echo "CASTILLE AI WORKSHOP - VERSION 4 PYTORCH SDPA PERFORMANCE STUDY"
+echo "CASTIEL AI WORKSHOP - VERSION 4 PYTORCH SDPA PERFORMANCE STUDY"
 echo "     Library-Optimized Approach: PyTorch SDPA (Same Performance as V3)"
 echo "================================================================================"
 echo ""

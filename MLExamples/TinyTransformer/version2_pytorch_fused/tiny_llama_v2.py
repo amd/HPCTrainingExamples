@@ -1052,7 +1052,7 @@ def main():
 
     # Print banner
     print("=" * 80)
-    print("CASTILLE AI WORKSHOP - VERSION 2: PYTORCH FUSED")
+    print("CASTIEL AI WORKSHOP - VERSION 2: PYTORCH FUSED")
     print("     Kernel Fusion Optimizations with ROCm Tools Integration")
     print("=" * 80)
 

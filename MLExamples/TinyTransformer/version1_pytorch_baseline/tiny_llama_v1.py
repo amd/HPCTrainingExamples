@@ -843,7 +843,7 @@ def main():
 
     # Print banner
     print("=" * 80)
-    print("CASTILLE AI WORKSHOP - VERSION 1: PYTORCH BASELINE")
+    print("CASTIEL AI WORKSHOP - VERSION 1: PYTORCH BASELINE")
     print("     Comprehensive Profiling Foundation for Transformer Optimization")
     print("=" * 80)
 

@@ -515,7 +515,7 @@ def train_triton_model(
     Training mode for Triton-optimized model with comprehensive metrics.
     """
     print("=" * 80)
-    print("CASTILLE AI WORKSHOP - VERSION 3: TRITON CUSTOM KERNELS")
+    print("CASTIEL AI WORKSHOP - VERSION 3: TRITON CUSTOM KERNELS")
     print("     Custom GPU Kernels for Maximum Performance")
     print("=" * 80)
 

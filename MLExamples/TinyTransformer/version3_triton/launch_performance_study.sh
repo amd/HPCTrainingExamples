@@ -86,7 +86,7 @@ mkdir -p "$OUTPUT_DIR"
 
 # Display configuration
 echo "================================================================================"
-echo "CASTILLE AI WORKSHOP - VERSION 3 TRITON CUSTOM KERNELS PERFORMANCE STUDY"
+echo "CASTIEL AI WORKSHOP - VERSION 3 TRITON CUSTOM KERNELS PERFORMANCE STUDY"
 echo "     Hand-Optimized GPU Kernels (RMSNorm, SwiGLU, Flash Attention)"
 echo "================================================================================"
 echo ""
