@@ -19,11 +19,12 @@ else ifneq ($(findstring gfortran,$(FC1)),)
   #OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
   FREE_FORM_FLAG = -ffree-form
 else ifneq ($(findstring ftn,$(FC1)),)
-  OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FTN_VERSION := $(shell $(FC) --version 2>&1)
   ifneq ($(findstring Cray,$(FTN_VERSION)),)
+    OPENMP_FLAGS = -fopenmp
     FFLAGS = -g -eZ -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
   else
+    OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
     FFLAGS = -g -O3 -ffree-form ${OPENMP_FLAGS}
   endif
 endif
