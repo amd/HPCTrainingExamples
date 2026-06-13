@@ -11,9 +11,9 @@ A multi-agent system that autonomously optimizes Inertial Confinement Fusion (IC
 │   ┌───────────────────────────────────┐     │
 │   │    Principal Investigator (PI)    │     │
 │   │       Orchestrator / Evaluator    │     │
-│   └──────┬────────────────┬──────────┘      │
+│   └──────┬────────────────┬───────-───┘     │
 │          │                │                 │
-│   ┌──────▼──────┐  ┌─────▼────────┐         │
+│   ┌──────▼──────┐  ┌────-─▼───────┐         │
 │   │   Design    │  │    Defect    │         │
 │   │  Explorer   │  │  Adversary   │         │
 │   └─────────────┘  └──────────────┘         │
