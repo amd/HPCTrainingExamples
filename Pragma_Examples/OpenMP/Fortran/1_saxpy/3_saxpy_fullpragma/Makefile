@@ -12,7 +12,7 @@ ifneq ($(findstring amdflang,$(FC1)),)
   FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else ifneq ($(findstring flang,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
-  FREE_FORM_FLAG = -Mfreeform
+  FREE_FORM_FLAG = -ffree-form
   FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else ifneq ($(findstring gfortran,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload=-march=$(ROCM_GPU)
