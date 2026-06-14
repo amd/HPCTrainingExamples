@@ -11,7 +11,7 @@ LDFLAG        =
 # OpenMP
 COMPILER_OMP  = $(CXX) # e.g. $(ROCM_PATH)/llvm/bin/clang++ here: accept from environment
 ifdef CRAYPE_VERSION
-   CXXFLAGS_OMP  = '-fopenmp
+   CXXFLAGS_OMP  = '-fopenmp'
 else
    CXXFLAGS_OMP  = '-fopenmp --offload-arch=${ROCM_GPU}'
 endif
