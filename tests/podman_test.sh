@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ "`printenv |grep -w CRAY |wc -l`" -lt 1 ]]; then
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    module -t list 2>&1 | grep -q "^rocm"
    if [ $? -eq 1 ]; then
      echo "rocm module is not loaded"

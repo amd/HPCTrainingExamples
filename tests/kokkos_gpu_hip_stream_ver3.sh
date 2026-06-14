@@ -9,7 +9,7 @@ fi
 
 GFX_MODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`
 
-if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    module switch PrgEnv-cray PrgEnv-amd
    export CXX=${ROCM_PATH}/llvm/bin/amdclang++
 else

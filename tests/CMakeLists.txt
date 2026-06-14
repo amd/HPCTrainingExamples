@@ -1788,19 +1788,19 @@ set_property(TEST Netcdf_Fortran_Check_Parallel_IO PROPERTY SKIP_REGULAR_EXPRESS
 # FFTW Tests
 add_test(NAME FFTW_Check_Version COMMAND ../fftw_check_version.sh)
 set_property(TEST FFTW_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "fftw-wisdom tool for FFTW version 3.3.10.")
-set_property(TEST FFTW_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST FFTW_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'fftw'")
 
 add_test(NAME FFTWF_Check_Version COMMAND ../fftwf_check_version.sh)
 set_property(TEST FFTWF_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "fftw-wisdom tool for FFTW version 3.3.10.")
-set_property(TEST FFTWF_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST FFTWF_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'fftw'")
 
 add_test(NAME FFTWL_Check_Version COMMAND ../fftwl_check_version.sh)
 set_property(TEST FFTWL_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "fftw-wisdom tool for FFTW version 3.3.10.")
-set_property(TEST FFTWL_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST FFTWL_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'fftw'")
 
 add_test(NAME FFTWL_Check_Install COMMAND ../fftw_check_install.sh)
 set_property(TEST FFTWL_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
-set_property(TEST FFTWL_Check_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST FFTWL_Check_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'fftw'")
 
 add_test(NAME Apptainer_Test COMMAND ../apptainer_test.sh)
 set_property(TEST Apptainer_Test PROPERTY PASS_REGULAR_EXPRESSION "HSA System Attributes")

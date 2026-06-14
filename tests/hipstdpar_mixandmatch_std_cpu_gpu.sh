@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    if [ -z "$CXX" ]; then
       export CXX=`which CC`
    fi
@@ -26,7 +26,7 @@ else
    fi
 fi
 
-if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/opt/cray/pe/cdst-support/2.14.6/lib:${ROCM_PATH}/lib/rocprofiler-systems"
    export LIBS="${LIBS} -L/opt/cray/pe/cdst-support/2.14.6/lib -L${ROCM_PATH}/lib/rocprofiler-systems"
 fi
