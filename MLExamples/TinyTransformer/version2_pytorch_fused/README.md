@@ -569,7 +569,7 @@ The following reference results have been obtained on an MI300A with PyTorch 2.9
 | Ratio | 1.00x | 1.06x | 1.18x | 1.51x |
 
 Clearly, the fused attention kernel reduces the required memory significantly. Why is that?
-Unfused attention materializes an $ S \times S $ attention matrix, so the peak memory rises close to **quadratically** in sequence length once that tensor dominates. Flash Attention avoids storing the full matrix as it computes the local attention scores on-the-fly resulting in a roughly **linear** scaling in $ S $. At `seq=128`, exhibit the same memory footprint since the the majority of the occupied memory is consumed by the weights and activations. The attention matrix only becomes the dominant factor for larger sequence lengths.
+Unfused attention materializes an $S \times S$ attention matrix, so the peak memory rises close to **quadratically** in sequence length once that tensor dominates. Flash Attention avoids storing the full matrix as it computes the local attention scores on-the-fly resulting in a roughly **linear** scaling in $S$. At `seq=128`, exhibit the same memory footprint since the the majority of the occupied memory is consumed by the weights and activations. The attention matrix only becomes the dominant factor for larger sequence lengths.
 
 Does the further fusion with `torch.compile` lower the peak even more? Try it out!
 
@@ -597,7 +597,7 @@ rocprofv3 --kernel-trace -S --stats --truncate-kernels --output-format csv -- \
 
 View the `<pid>_kernel_stats.csv` file to see the GPU kernel hotspots.
 
-Note: Since the statistics are computed per kernel name, the `--truncate-kernels` argument might kernels with similar signatures into the same truncated name.
+Note: Since the statistics are computed per kernel name, the `--truncate-kernels` argument might collapse kernels with similar signatures into the same truncated name.
 
 #### Step 2: rocprof-sys System Analysis
 
