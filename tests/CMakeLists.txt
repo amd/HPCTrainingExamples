@@ -851,31 +851,31 @@ set_tests_properties(OpenMP_Optimizations_CXX_3_MemoryPool PROPERTIES TIMEOUT 60
 
 add_test(NAME ROCm_rocBLAS_GEMM_Check COMMAND ../rocblas_gemm_check.sh )
 set_property(TEST ROCm_rocBLAS_GEMM_Check PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
-set_property(TEST ROCm_rocBLAS_GEMM_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST ROCm_rocBLAS_GEMM_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
 add_test(NAME HIPFort_ROCm_Check_hipfc_2003 COMMAND ../hipfort_rocm_check_hipfc_2003.sh )
 set_property(TEST HIPFort_ROCm_Check_hipfc_2003 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
-set_property(TEST HIPFort_ROCm_Check_hipfc_2003 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HIPFort_ROCm_Check_hipfc_2003 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
 add_test(NAME HIPFort_ROCm_Check_hipfc_2008 COMMAND ../hipfort_rocm_check_hipfc_2008.sh )
 set_property(TEST HIPFort_ROCm_Check_hipfc_2008 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
-set_property(TEST HIPFort_ROCm_Check_hipfc_2008 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HIPFort_ROCm_Check_hipfc_2008 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
 add_test(NAME HIPFort_ROCm_GEMM_Global COMMAND ../hipfort_rocm_gemm_global.sh )
 set_property(TEST HIPFort_ROCm_GEMM_Global PROPERTY PASS_REGULAR_EXPRESSION "2048")
-set_property(TEST HIPFort_ROCm_GEMM_Global PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HIPFort_ROCm_GEMM_Global PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
 add_test(NAME HIPFort_ROCm_GEMM_Local COMMAND ../hipfort_rocm_gemm_local.sh )
 set_property(TEST HIPFort_ROCm_GEMM_Local PROPERTY PASS_REGULAR_EXPRESSION "2048")
-set_property(TEST HIPFort_ROCm_GEMM_Local PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HIPFort_ROCm_GEMM_Local PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
 add_test(NAME HIPFort_ROCm_GEMM_Global_SD COMMAND ../hipfort_rocm_gemm_global_sd.sh )
 set_property(TEST HIPFort_ROCm_GEMM_Global_SD PROPERTY PASS_REGULAR_EXPRESSION "2048")
-set_property(TEST HIPFort_ROCm_GEMM_Global_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HIPFort_ROCm_GEMM_Global_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
 add_test(NAME HIPFort_ROCm_GEMM_Local_SD COMMAND ../hipfort_rocm_gemm_local_sd.sh )
 set_property(TEST HIPFort_ROCm_GEMM_Local_SD PROPERTY PASS_REGULAR_EXPRESSION "2048")
-set_property(TEST HIPFort_ROCm_GEMM_Local_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HIPFort_ROCm_GEMM_Local_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
 #add_test(NAME HIPFort_AFAR_GEMM_Global COMMAND ../hipfort_afar_gemm_global.sh )
 #set_property(TEST HIPFort_AFAR_GEMM_Global PROPERTY PASS_REGULAR_EXPRESSION "2048")

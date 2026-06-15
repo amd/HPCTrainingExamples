@@ -12,12 +12,11 @@ LDFLAG        =
 COMPILER_OMP  = $(CXX) # e.g. $(ROCM_PATH)/llvm/bin/clang++ here: accept from environment
 ifdef CRAYPE_VERSION
    CXXFLAGS_OMP  = '-fopenmp'
+   LDFLAGS_OMP   = '-fopenmp'
 else
    CXXFLAGS_OMP  = '-fopenmp --offload-arch=${ROCM_GPU}'
+   LDFLAGS_OMP   = '-fopenmp --offload-arch=${ROCM_GPU}'
 endif
-
-LDFLAGS_OMP   = -fopenmp
-
 
 # Source code
 OBJS=	Jacobi.o \
