@@ -807,7 +807,7 @@ Understanding the available options:
 ```bash
 --enable-pytorch-profiler   # Enable PyTorch profiler
 --profile-dir ./profiles    # Directory for profile output
---enable-memory-profiling   # CUDA alloc records in profiler trace (TensorBoard memory views)
+--enable-memory-profiling   # Enable profiling of GPU allocations
 --profile-operators         # Detailed operator profiling
 --profile-steps 5           # Number of steps to profile
 ```
