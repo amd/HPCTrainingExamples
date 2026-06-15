@@ -43,6 +43,6 @@ else
    export OMP_TARGET_OFFLOAD=MANDATORY
 
    cmake ${SRC_DIR}
-   make mem1
+   make VERBOSE=1 mem1
    ./mem1
 fi

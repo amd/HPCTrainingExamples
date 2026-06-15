@@ -9,7 +9,7 @@ execute_process(COMMAND rocminfo COMMAND grep -m 1 -E gfx[^0]{1} COMMAND sed -e 
 
 string(REPLACE "-O2" "-O3" CMAKE_Fortran_FLAGS_RELWITHDEBINFO "${CMAKE_Fortran_FLAGS_RELWITHDEBINFO}")
 set(CMAKE_Fortran_FLAGS_DEBUG "-ggdb")
-set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp --offload-arch=${ROCM_GPU}")
+set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS}")
 
 message(${CMAKE_Fortran_COMPILER_ID})
 if ("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Clang")

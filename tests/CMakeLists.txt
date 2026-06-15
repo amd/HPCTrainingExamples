@@ -1096,7 +1096,7 @@ set_property(TEST Hipifly_Without_Module PROPERTY SKIP_REGULAR_EXPRESSION "modul
 
 add_test(NAME Hipifly_With_Module COMMAND ../hipifly_with_module.sh )
 set_property(TEST Hipifly_With_Module PROPERTY PASS_REGULAR_EXPRESSION "Validation PASSED.")
-set_property(TEST Hipifly_With_Module PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Hipifly_With_Module PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipifly'")
 
 # OpenACC Examples
 #add_test(NAME OpenACC_Saxpy_C_AMDClang COMMAND ../openacc_saxpy_c_amdclang.sh )
