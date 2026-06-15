@@ -98,7 +98,7 @@ mkdir -p "$OUTPUT_DIR"
 
 # Display configuration
 echo "================================================================================"
-echo "CASTILLE AI WORKSHOP - VERSION 1 BASELINE PERFORMANCE STUDY"
+echo "CASTIEL AI WORKSHOP - VERSION 1 BASELINE PERFORMANCE STUDY"
 echo "================================================================================"
 echo ""
 echo "Problem Size: ${SIZE^^}"

@@ -330,34 +330,39 @@ def forward(self, hidden_states, attention_mask=None, position_ids=None):
 **Objective**: Establish baseline performance metrics and identify computational bottlenecks.
 
 #### Step 1: Run Basic Training
-```bash
-# Basic training without profiling
-python tiny_llama_v1.py --batch-size 8 --seq-len 128 --num-steps 10
 
-# Expected output: Training loss progression and timing info
+First, run the basic training without any profiling:
+
+```bash
+python tiny_llama_v1.py --batch-size 8 --seq-len 128 --num-steps 10
 ```
 
+The script should provide you with the key model architecture, the training progress and key performance metrics.
+
 #### Step 2: Enable PyTorch Profiler
+
+Next, run the the same setup with the PyTorch profiler enabled via the `--enable-pytorch-profiler` flag:
 ```bash
-# Make directory for the profiles
-mkdir pytorch_profiles
-# Run with PyTorch profiler enabled
+mkdir -p pytorch_profiles
 python tiny_llama_v1.py \
     --batch-size 8 \
     --seq-len 128 \
     --num-steps 10 \
     --enable-pytorch-profiler \
     --profile-dir ./pytorch_profiles
-
-# This generates detailed profiling traces in pytorch_profiles/
 ```
+This generates detailed profiling traces in `pytorch_profiles/`
 
 #### Step 3: Analyze Profiling Results
-```bash
-# Launch TensorBoard to visualize profiles
-tensorboard --logdir pytorch_profiles --port 6006
 
-# Or generate text report
+You can visualize the results either via TensorBoard by running
+```bash
+tensorboard --logdir pytorch_profiles --port 6006
+```
+and open the printed link in your browser.
+
+Alternatively, we provided a script that generates a text report that you can inspect in the terminal:
+```bash
 python run_pytorch_profiler.py --analyze-existing pytorch_profiles/profile_*.json
 ```
 
@@ -398,7 +403,7 @@ python tiny_llama_v1.py \
     --batch-size 8 \
     --seq-len 128 \
     --enable-pytorch-profiler \
-    --profile-memory \
+    --enable-memory-profiling \
     --profile-dir ./memory_analysis
 
 # Generate memory timeline visualization

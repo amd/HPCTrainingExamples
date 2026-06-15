@@ -191,7 +191,7 @@ done
 
 # Print banner
 echo "=" * 80
-echo "CASTILLE AI WORKSHOP - COMPREHENSIVE PROFILING SUITE V2"
+echo "CASTIEL AI WORKSHOP - COMPREHENSIVE PROFILING SUITE V2"
 echo "     Fusion Optimization Analysis with Complete ROCm Tools Integration"
 echo "=" * 80
 echo ""

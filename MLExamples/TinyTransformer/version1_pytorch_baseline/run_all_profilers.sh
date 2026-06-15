@@ -110,7 +110,7 @@ done
 
 # Print banner
 echo "=" * 80
-echo "CASTILLE AI WORKSHOP - COMPREHENSIVE PROFILING SUITE"
+echo "CASTIEL AI WORKSHOP - COMPREHENSIVE PROFILING SUITE"
 echo "     Version 1: PyTorch Baseline Performance Analysis"
 echo "=" * 80
 echo ""

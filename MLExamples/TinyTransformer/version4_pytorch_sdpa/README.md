@@ -67,8 +67,8 @@ $$\begin{aligned}
 
 $$\begin{aligned}
 \text{Input:} \quad & x \in \mathbb{R}^{B \times S \times D} \\
-\text{Attention Block:} \quad & \text{attn\_out} = x + \text{Attention}(\text{RMSNorm}(x)) \\
-\text{FFN Block:} \quad & \text{output} = \text{attn\_out} + \text{SwiGLU}(\text{RMSNorm}(\text{attn\_out})) \\
+\text{Attention Block:} \quad & \text{attn}_\text{out} = x + \text{Attention}(\text{RMSNorm}(x)) \\
+\text{FFN Block:} \quad & \text{output} = \text{attn}_\text{out} + \text{SwiGLU}(\text{RMSNorm}(\text{attn}_\text{out})) \\
 \text{All in One Kernel!} \quad & \text{Eliminates } 11 \text{ intermediate memory operations}
 \end{aligned}$$
 

@@ -98,7 +98,7 @@ mkdir -p "$OUTPUT_DIR"
 
 # Display configuration
 echo "================================================================================"
-echo "CASTILLE AI WORKSHOP - VERSION 2 PYTORCH FUSED PERFORMANCE STUDY"
+echo "CASTIEL AI WORKSHOP - VERSION 2 PYTORCH FUSED PERFORMANCE STUDY"
 echo "     Kernel Fusion Optimizations (QKV, Flash Attention, SwiGLU, Torch Compile)"
 echo "================================================================================"
 echo ""

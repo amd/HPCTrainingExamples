@@ -759,7 +759,7 @@ def train_ultra_fused_model(
     Training mode for ultra-fused model with comprehensive version comparison.
     """
     print("=" * 80)
-    print("CASTILLE AI WORKSHOP - VERSION 4: ULTRA-FUSED TRITON")
+    print("CASTIEL AI WORKSHOP - VERSION 4: ULTRA-FUSED TRITON")
     print("     Maximum Performance Through Aggressive Kernel Fusion")
     print("=" * 80)
 

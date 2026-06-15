@@ -474,7 +474,7 @@ MEMORY_ACCESS_PATTERNS = {
 Ensure Triton is installed in your environment:
 
 ```bash
-# Should already be installed from setup/
+# Should already be installed with your PyTorch / ROCm modules
 pip install triton
 ```
 
