@@ -21,7 +21,7 @@ main.o: main.cpp daxpy.hpp
 	$(CXX) $(CXXFLAGS) -c main.cpp -o main.o
 
 $(EXEC): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(EXEC) $(OBJECTS)
+	$(CXX) $(LDFLAGS) -o $(EXEC) $(OBJECTS)
 
 clean:
 	rm -f $(EXEC) $(OBJECTS)
