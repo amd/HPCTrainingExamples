@@ -23,6 +23,7 @@ else
    if [ "$?" == "1" ]; then
       module load amdclang
    fi
+   module load openmpi
 fi
 
 # Detect Cray MPICH so we can pick the right launcher and binding flags.
@@ -34,16 +35,6 @@ is_cray_mpich() {
   fi
   [[ -n "${CRAY_MPICH_VERSION:-}" || -n "${CRAY_MPICH_DIR:-}" ]]
 }
-
-if is_cray_mpich; then
-  echo "Detected Cray MPICH: using srun launcher"
-  MPIRUN="srun"
-  MPIRUN_OPTIONS="--cpu-bind=verbose,cores"
-else
-  module load openmpi
-  MPIRUN="mpirun"
-  MPIRUN_OPTIONS="--bind-to core --report-bindings"
-fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/MPI-examples/GhostExchange/GhostExchange_ArrayAssign
@@ -63,10 +54,15 @@ NUM_GPUS=`rocminfo |grep GPU |grep "Device Type" |wc -l`
 NUM_PER_RESOURCE_MPI4=`expr 4 / ${NUM_GPUS}`
 NUM_PER_RESOURCE_MPI16=`expr 16 / ${NUM_GPUS}`
 if is_cray_mpich; then
+  echo "Detected Cray MPICH: using srun launcher"
+  MPIRUN="srun"
+  MPIRUN_OPTIONS="--cpu-bind=verbose,cores"
   # per-resource placement: tasks per socket (closest NUMA equivalent)
   MPI_RESOURCE_MPI4="--ntasks-per-socket=${NUM_PER_RESOURCE_MPI4}"
   MPI_RESOURCE_MPI16="--ntasks-per-socket=${NUM_PER_RESOURCE_MPI16}"
 else
+  MPIRUN="mpirun"
+  MPIRUN_OPTIONS="--bind-to core --report-bindings"
   # per-resource placement: ranks per NUMA domain
   MPI_RESOURCE_MPI4="--map-by ppr:${NUM_PER_RESOURCE_MPI4:numa}"
   MPI_RESOURCE_MPI16="--map-by ppr:${NUM_PER_RESOURCE_MPI16:numa}"
