@@ -7,15 +7,16 @@ OBJECTS = daxpy.o daxpy_hip.o
 
 ifdef CRAYPE_VERSION
    OPENMP_FLAGS = -fopenmp
+   HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include
 else
    ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
    OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
+   HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include --offload-arch=${ROCM_GPU}
 endif
 
 HIP_PLATFORM ?= amd
 
 CXXFLAGS = -g -O2 -fPIC -D__HOST_CODE__ ${OPENMP_FLAGS}
-HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include --offload-arch=${ROCM_GPU}
 
 ifeq ($(HIP_PLATFORM), nvidia)
    HIPCC_FLAGS += -x cu
