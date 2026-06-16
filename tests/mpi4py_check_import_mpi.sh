@@ -9,7 +9,11 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load mpi4py
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+   module load mpi4py/cray-mpich-${CRAY_MPICH_VERSION}
+else
+   module load mpi4py
+fi
 
 python3 -c 'from mpi4py import MPI' 2> /dev/null && echo 'Success' || echo 'Failure'
 

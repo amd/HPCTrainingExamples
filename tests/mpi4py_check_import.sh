@@ -13,6 +13,6 @@ if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    module load mpi4py/cray-mpich-${CRAY_MPICH_VERSION}
 else
    module load mpi4py
-endif
+fi
 
 python3 -c 'import mpi4py' 2> /dev/null && echo 'Success' || echo 'Failure'

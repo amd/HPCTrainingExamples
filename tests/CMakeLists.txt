@@ -1436,15 +1436,15 @@ set_property(TEST Pytorch_Profile_TorchProfiler        PROPERTY RESOURCE_LOCK py
 # Python MPI tests
 add_test(NAME MPI4PY_Check_Import COMMAND ../mpi4py_check_import.sh)
 set_property(TEST MPI4PY_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST MPI4PY_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'mpi4py'")
+set_property(TEST MPI4PY_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'mpi4py")
 
 add_test(NAME MPI4PY_Check_Import_MPI COMMAND ../mpi4py_check_import_mpi.sh)
 set_property(TEST MPI4PY_Check_Import_MPI PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST MPI4PY_Check_Import_MPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'mpi4py'")
+set_property(TEST MPI4PY_Check_Import_MPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'mpi4py")
 
 add_test(NAME MPI4PY_Cupy COMMAND ../mpi4py_cupy.sh)
 set_property(TEST MPI4PY_Cupy PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST MPI4PY_Cupy PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'mpi4py'")
+set_property(TEST MPI4PY_Cupy PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'mpi4py'" Unable to locate a modulefile for 'cupy')
 
 # PETSc tests
 add_test(NAME PETSc_Bench_KSPSolve COMMAND ../petsc_bench_kspsolve.sh --petsc-module petsc)
