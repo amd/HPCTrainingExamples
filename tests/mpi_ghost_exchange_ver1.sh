@@ -39,14 +39,10 @@ if is_cray_mpich; then
   echo "Detected Cray MPICH: using srun launcher"
   MPIRUN="srun"
   MPIRUN_OPTIONS="--cpu-bind=verbose,cores"
-  # per-resource placement: tasks per socket (closest NUMA equivalent)
-  map_by() { echo "--ntasks-per-socket=$1"; }
 else
   module load openmpi
   MPIRUN="mpirun"
   MPIRUN_OPTIONS="--bind-to core --report-bindings"
-  # per-resource placement: ranks per NUMA domain
-  map_by() { echo "--map-by ppr:$1:numa"; }
 fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
@@ -66,10 +62,19 @@ NUMCPUS=`lscpu | grep '^CPU(s):' |cut -d':' -f2 | tr -d ' '`
 NUM_GPUS=`rocminfo |grep GPU |grep "Device Type" |wc -l`
 NUM_PER_RESOURCE_MPI4=`expr 4 / ${NUM_GPUS}`
 NUM_PER_RESOURCE_MPI16=`expr 16 / ${NUM_GPUS}`
+if is_cray_mpich; then
+  # per-resource placement: tasks per socket (closest NUMA equivalent)
+  MPI_RESOURCE_MPI4="--ntasks-per-socket=${NUM_PER_RESOURCE_MPI4}"
+  MPI_RESOURCE_MPI16="--ntasks-per-socket=${NUM_PER_RESOURCE_MPI16}"
+else
+  # per-resource placement: ranks per NUMA domain
+  MPI_RESOURCE_MPI4="--map-by ppr:${NUM_PER_RESOURCE_MPI4:numa}"
+  MPI_RESOURCE_MPI16="--map-by ppr:${NUM_PER_RESOURCE_MPI16:numa}"
+fi
 
-${MPIRUN} -n 4 ${MPIRUN_OPTIONS} $(map_by ${NUM_PER_RESOURCE_MPI4}) ./GhostExchange \
+${MPIRUN} -n 4 ${MPIRUN_OPTIONS} ${MPI_RESOURCE_MPI4} ./GhostExchange \
        -x 2  -y 2  -i 2000 -j 2000 -h 2 -t -c -I 1000
 if [[ ${NUM_PER_RESOURCE_MPI16} -le 4 ]]; then
-   ${MPIRUN} -n 16 ${MPIRUN_OPTIONS} $(map_by ${NUM_PER_RESOURCE_MPI16}) ./GhostExchange \
+   ${MPIRUN} -n 16 ${MPIRUN_OPTIONS} ${MPI_RESOURCE_MPI16} ./GhostExchange \
           -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I 1000
 fi
