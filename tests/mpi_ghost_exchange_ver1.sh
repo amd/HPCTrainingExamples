@@ -64,8 +64,8 @@ else
   MPIRUN="mpirun"
   MPIRUN_OPTIONS="--bind-to core --report-bindings"
   # per-resource placement: ranks per NUMA domain
-  MPI_RESOURCE_MPI4="--map-by ppr:${NUM_PER_RESOURCE_MPI4:numa}"
-  MPI_RESOURCE_MPI16="--map-by ppr:${NUM_PER_RESOURCE_MPI16:numa}"
+  MPI_RESOURCE_MPI4="--map-by ppr:${NUM_PER_RESOURCE_MPI4}:numa"
+  MPI_RESOURCE_MPI16="--map-by ppr:${NUM_PER_RESOURCE_MPI16}:numa"
 fi
 
 ${MPIRUN} -n 4 ${MPIRUN_OPTIONS} ${MPI_RESOURCE_MPI4} ./GhostExchange \
