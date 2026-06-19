@@ -63,7 +63,7 @@ if you loaded the compiler you expect.
 ```
 cd 0_saxpy_portyourself
 ```
-Try to port this example yourself. If you are stuck, use the step by step solution in folders 1-7 and read the instructions for those exersices below. Recommendation for your first port: use ```#pragma omp requires unified_shared memory``` and ```export HSA_XNACK=1``` (before running) so that you do not have to worry about map clauses. Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behaviour of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps.
+Try to port this example yourself. If you are stuck, use the step by step solution in folders 1-7 and read the instructions for those exersices below. Recommendation for your first port: use ```#pragma omp requires unified_shared_memory``` and ```export HSA_XNACK=1``` (before running) so that you do not have to worry about map clauses. Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behaviour of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps.
 
 Compile the serial version. Note that ```-fopenmp``` is required as ```omp_get_wtime``` is used to time the loop execution.<hr>
 **either**
