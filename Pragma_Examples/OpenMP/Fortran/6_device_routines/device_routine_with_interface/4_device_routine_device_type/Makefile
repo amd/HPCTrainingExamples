@@ -31,10 +31,10 @@ endif
 LDFLAGS = ${OPENMP_FLAGS}
 
 compute.o: compute.f90
-	$(FC1) $(FFLAGS) $(LDFLAGS) -c compute.f90
+	$(FC1) $(FFLAGS) -c compute.f90
 
 device_routine.o: device_routine.f90 compute.o
-	$(FC1) $(FFLAGS) $(LDFLAGS) -c device_routine.f90
+	$(FC1) $(FFLAGS) -c device_routine.f90
 
 device_routine: device_routine.o compute.o
 	$(FC1) $(FFLAGS) $(LDFLAGS)  -o device_routine device_routine.o compute.o

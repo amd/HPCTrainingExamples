@@ -31,8 +31,8 @@ if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
 else
    module load netcdf-c
    module load netcdf-fortran
+   module load openmpi
 fi
-module load openmpi
 
 if [[ ${HDF5_ENABLE_PARALLEL} == "OFF" ]]; then
    # NETCDF has not been built with parallel I/O support

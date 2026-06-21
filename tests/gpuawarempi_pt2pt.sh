@@ -10,14 +10,19 @@ GPU_COUNT=`rocminfo | grep "Device Type:             GPU"  | wc -l`
 if [ ${GPU_COUNT} -lt 2 ]; then
    echo "Skip"
 else
-   module load openmpi
+   if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+      MPIRUN=srun
+   else
+      module load openmpi
+      MPIRUN=mpirun
+   fi
    export OMPI_CXX=hipcc
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    cd ${REPO_DIR}/MPI-examples
    mpicxx -o ./pt2pt ./pt2pt.cpp
 
-   mpirun -n 2 ./pt2pt
+   ${MPIRUN} -n 2 ./pt2pt
 
    rm -f pt2pt
 fi

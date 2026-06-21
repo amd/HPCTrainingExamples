@@ -25,10 +25,12 @@ fi
 
 if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    module load cray-hdf5-parallel
+   MPIRUN=srun
 else
    module load hdf5
+   module load openmpi
+   MPIRUN=mpirun
 fi
-module load openmpi
 
 if [[ `which mpicc | wc -l` -eq 0 ]]; then
    # this means MPI is not found, but this is a test for parallel HDF5, so we skip
@@ -49,6 +51,6 @@ sed -i '37i target_link_libraries(hdf5block2d z)' CMakeLists.txt
 
 mkdir build && cd build && cmake -DHDF5_IS_PARALLEL=ON .. && make
 
-mpirun -n 4 ./hdf5block2d
+${MPIRUN} -n 4 ./hdf5block2d
 
 h5dump -y example.hdf5
