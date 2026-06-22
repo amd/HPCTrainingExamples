@@ -61,6 +61,7 @@ if [[ "${FORCE_NETCDF4}" == "1" ]]; then
    # Add NC_NETCDF4 to the create mode so nc_create_par uses parallel HDF5
    # instead of the classic/PnetCDF path (unavailable in the Cray build).
    sed -i -E 's/cmode[[:space:]]*=[[:space:]]*NC_CLOBBER[[:space:]]*;/cmode = NC_CLOBBER | NC_NETCDF4;/' ./netcdf-c/examples/C/parallel_vara.c
+   sed -i -E 's/nc_var_par_access\(ncid, NC_GLOBAL,/nc_var_par_access(ncid, varid,/g' ./netcdf-c/examples/C/parallel_vara.c
 fi
 $CC -O2 ./netcdf-c/examples/C/parallel_vara.c -o parallel_vara ${NETCDF_LIBS}
 ${MPIRUN} -n 4 ./parallel_vara testfile.nc
