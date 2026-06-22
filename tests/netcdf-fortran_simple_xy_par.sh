@@ -42,6 +42,11 @@ else
   MPIRUN="mpirun"
 fi
 
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+   NETCDF_LIBS=""
+else
+   NETCDF_LIBS="-I${NETCDF_F_ROOT}/include -L${NETCDF_F_ROOT}/lib -lnetcdff -L${PNETCDF_ROOT}/lib -lpnetcdf"
+fi
 # use the compiler used to build netcdf-fortran
 FC=`nf-config --fc`
 
@@ -51,6 +56,6 @@ trap "rm -rf ${BUILD_DIR}" EXIT
 cd ${BUILD_DIR}
 
 git clone https://github.com/Unidata/netcdf-fortran.git
-$FC  ./netcdf-fortran/examples/F90/simple_xy_par_wr.F90 -o simple_xy_par_wf  -I${NETCDF_F_ROOT}/include -L${NETCDF_F_ROOT}/lib -lnetcdff -L${PNETCDF_ROOT}/lib -lpnetcdf
+$FC  ./netcdf-fortran/examples/F90/simple_xy_par_wr.F90 -o simple_xy_par_wf ${NETCDF_LIBS}
 ${MPIRUN} -n 4 --oversubscribe ./simple_xy_par_wf
 ncdump simple_xy_par.nc

@@ -29,10 +29,12 @@ fi
 if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    module load cray-netcdf-hdf5parallel
    MPIRUN=srun
+   NETCDF_LIBS=""
 else
    module load netcdf-c
    module load openmpi
    MPIRUN=mpirun
+   NETCDF_LIBS="-L${NETCDF_C_ROOT}/lib -lnetcdf -L${PNETCDF_ROOT}/lib -lpnetcdf"
 fi
 
 if [[ ${HDF5_ENABLE_PARALLEL} == "OFF" ]]; then
@@ -50,6 +52,6 @@ trap "rm -rf ${BUILD_DIR}" EXIT
 cd ${BUILD_DIR}
 
 git clone https://github.com/Unidata/netcdf-c.git
-$CC -O2 ./netcdf-c/examples/C/parallel_vara.c -o parallel_vara -L${NETCDF_C_ROOT}/lib -lnetcdf -L${PNETCDF_ROOT}/lib -lpnetcdf
+$CC -O2 ./netcdf-c/examples/C/parallel_vara.c -o parallel_vara ${NETCDF_LIBS}
 ${MPIRUN} -n 4 ./parallel_vara testfile.nc
 ncdump testfile.nc
