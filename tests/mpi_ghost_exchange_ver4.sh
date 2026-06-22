@@ -49,6 +49,7 @@ else
       MPIRUN="srun"
       MPI_RUN_OPTIONS="--cpu-bind=verbose,cores"
       MPI_MAP_BY=""
+      export MPICH_GPU_SUPPORT_ENABLED=1
    else
       MPIRUN="mpirun"
       MPI_RUN_OPTIONS="--mca coll ^hcoll --bind-to core --report-bindings"

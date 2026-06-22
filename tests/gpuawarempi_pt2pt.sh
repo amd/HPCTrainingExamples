@@ -15,12 +15,12 @@ else
    else
       module load openmpi
       MPIRUN=mpirun
+      export OMPI_CXX=hipcc
    fi
-   export OMPI_CXX=hipcc
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    cd ${REPO_DIR}/MPI-examples
-   mpicxx -o ./pt2pt ./pt2pt.cpp
+   mpicxx -o ./pt2pt ./pt2pt.cpp -I${ROCM_PATH}/include
 
    ${MPIRUN} -n 2 ./pt2pt
 

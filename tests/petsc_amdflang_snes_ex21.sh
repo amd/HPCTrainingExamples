@@ -6,21 +6,29 @@
 # to the instructions available in the model installation repo:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/petsc_setup.sh
 
-
-module -t list 2>&1 | grep -q "^rocm"
-if [ $? -eq 1 ]; then
-  echo "rocm module is not loaded"
-  echo "loading default rocm module"
-  module load rocm
-fi
 if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
-   module load openmpi
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+   module load petsc
+else
+   module -t list 2>&1 | grep -q "^rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   module load petsc_amdflang >& /dev/null
+   if [ "$?" == "1" ]; then
+       module load petsc
+   fi
 fi
-module load petsc_amdflang >& /dev/null
-if [ "$?" == "1" ]; then
-    module load petsc
-fi
-
 
 PETSC_VERSION=`$PETSC_DIR/lib/petsc/bin/petscversion`
 
