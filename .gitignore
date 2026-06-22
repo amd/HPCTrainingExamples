@@ -77,3 +77,7 @@ events.*.edf
 
 # Build directories
 build/
+
+# Julia manifests
+Manifest.toml
+Manifest-v*.toml

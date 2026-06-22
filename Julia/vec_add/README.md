@@ -10,11 +10,11 @@ If you are working on AAC6 or AAC7, make sure that a ROCm module is loaded with
 ```bash
 module load rocm
 ```
-Next, install the third-party `AMDGPU.jl package` and verify your GPU is detected:
+Next, move to this directory, install the third-party `AMDGPU.jl` package and verify your GPU is detected:
 
 ```bash
-julia -e 'using Pkg; Pkg.add("AMDGPU")'
-julia -e 'using AMDGPU; AMDGPU.versioninfo()'
+cd Julia/vec_add
+julia --project -e 'using Pkg; Pkg.instantiate(); using AMDGPU; AMDGPU.versioninfo()'
 ```
 
 ## Run
@@ -22,7 +22,7 @@ julia -e 'using AMDGPU; AMDGPU.versioninfo()'
 With Julia and the necessary packages installed, you can now run the script with
 
 ```bash
-julia vec_add.jl
+julia --project vec_add.jl
 ```
 
 If the scripts runs succesfully, it should output: `PASS!`

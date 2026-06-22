@@ -27,15 +27,12 @@ export PATH=$PATH:"${WORK_DIR}/juliaup_install/bin"
 juliaup add 1.12
 juliaup default 1.12
 
-git clone https://github.com/CliMA/Oceananigans.jl.git &
-CLONE_PID=$!
-
-julia -e 'using Pkg; Pkg.add(["AMDGPU", "MPI", "Oceananigans", "CUDA", "FFTW", "KernelAbstractions", "SeawaterPolynomials", "OffsetArrays", "JLD2", "Adapt", "GPUArraysCore"])'
-
-wait $CLONE_PID
-pushd Oceananigans.jl/test
-julia test_amdgpu.jl
-popd
-rm -rf Oceananigans.jl
+julia -e '
+using Pkg;
+Pkg.activate(; temp=true);
+Pkg.add(["AMDGPU", "MPI", "Oceananigans", "CUDA", "FFTW", "KernelAbstractions", "SeawaterPolynomials", "OffsetArrays", "JLD2", "Adapt", "GPUArraysCore"]);
+using Oceananigans;
+include(joinpath(pkgdir(Oceananigans, "test", "test_amdgpu.jl")))
+'
 
 export HOME="${ORIG_HOME}"
