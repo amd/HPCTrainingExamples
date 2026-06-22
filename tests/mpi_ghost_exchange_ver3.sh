@@ -59,10 +59,10 @@ else
    NUMCPUS=`lscpu | grep '^CPU(s):' |cut -d':' -f2 | tr -d ' '`
 
    if [ ${NUMCPUS} -gt 255 ]; then
-      mpirun ${MPI_RUN_OPTIONS} -n 16 ${MPI_MAP_BY}  ./GhostExchange \
+      ${MPIRUN} ${MPI_RUN_OPTIONS} -n 16 ${MPI_MAP_BY}  ./GhostExchange \
           -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I 1000
    else
-      mpirun ${MPI_RUN_OPTIONS} -n 4 ./GhostExchange \
+      ${MPIRUN} ${MPI_RUN_OPTIONS} -n 4 ./GhostExchange \
           -x 2  -y 2  -i 2000 -j 2000 -h 2 -t -c -I 1000
    fi
 fi
