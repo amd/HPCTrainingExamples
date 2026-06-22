@@ -26,11 +26,28 @@
 #
 # Self-contained: all sources are generated and built here.
 
-module -t list 2>&1 | grep -q "^rocm"
-if [ $? -eq 1 ]; then
-  echo "rocm module is not loaded"
-  echo "loading default rocm module"
-  module load rocm
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+else
+   module -t list 2>&1 | grep -q "^rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   module load amdflang-new >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load amdclang
+   fi
+   module load openmpi
 fi
 
 # Need >= 2 visible GPU devices so the 2 ranks land on different devices.
@@ -38,8 +55,6 @@ GPU_COUNT=`rocminfo | grep "Device Type:             GPU" | wc -l`
 if [ ${GPU_COUNT} -lt 2 ]; then
    echo "Skip"
 else
-   module load amdclang
-   module load openmpi
 
    GFX_MODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 | sed 's/ //g'`
    [ -z "${GFX_MODEL}" ] && GFX_MODEL=gfx942
@@ -364,10 +379,22 @@ contains
 end program example_mix
 EOF
 
+   if [ -n "${CRAY_MPICH_VERSION:-}" ]; then
+      MPIFORT=ftn
+      OPENMP_FLAGS=-fopenmp
+      MPIRUN=srun
+      MPIRUN_OPTIONS=
+   else
+      MPIFORT=mpifort
+      OPENMP_FLAGS=-fopenmp --offload-arch=${GFX_MODEL}
+      MPIRUN=mpirun
+      MPIRUN_OPTIONS="--bind-to none -mca pml ucx -mca coll_ucc_enable"
+   fi
+
    cd ${WORKDIR}
-   mpifort -O3 -fopenmp --offload-arch=${GFX_MODEL} example.F90       -o example_addr
-   mpifort -O3 -fopenmp --offload-arch=${GFX_MODEL} example_alloc.F90 -o example_alloc
-   mpifort -O3 -fopenmp --offload-arch=${GFX_MODEL} example_mix.F90   -o example_mix
+   ${MPIFORT} -O3 ${OPENMP_FLAGS} example.F90       -o example_addr
+   ${MPIFORT} -O3 ${OPENMP_FLAGS} example_alloc.F90 -o example_alloc
+   ${MPIFORT} -O3 ${OPENMP_FLAGS} example_mix.F90   -o example_mix
 
    # HSA_XNACK=0 exposes the fault (HSA_XNACK=1 masks it via USM).
    export HSA_XNACK=0
@@ -383,7 +410,7 @@ EOF
       echo "=================================================================="
       echo "  CASE ${label}  (coll_ucc_enable=${ucc})"
       echo "=================================================================="
-      out=`mpirun -np 2 --bind-to none -mca pml ucx -mca coll_ucc_enable ${ucc} ./${bin} 2>&1`
+      out=`${MPIRUN} -np 2 ${MPIRUN_OPTIONS} ${ucc} ./${bin} 2>&1`
       rc=$?
       echo "${out}"
       npass=`echo "${out}" | grep -c 'RESULT: PASS'`
