@@ -36,7 +36,7 @@ rm -rf build
 
 mkdir build
 
-if is_cray_mpich; then
+if [ -n "${CRAY_MPICH_VERSION:-}" ]; then
    MPIRUN=srun
    MPI_RUN_OPTIONS=""
 else

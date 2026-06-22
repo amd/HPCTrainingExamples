@@ -26,16 +26,6 @@ else
    module load openmpi
 fi
 
-# Detect Cray MPICH so we can pick the right launcher and binding flags.
-# Open MPI uses mpirun with --bind-to/--map-by/--report-bindings; Cray MPICH
-# does not understand those and is launched through Slurm's srun instead.
-is_cray_mpich() {
-  if command -v mpichversion >/dev/null 2>&1 && mpichversion 2>/dev/null | grep -qi cray; then
-    return 0
-  fi
-  [[ -n "${CRAY_MPICH_VERSION:-}" || -n "${CRAY_MPICH_DIR:-}" ]]
-}
-
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/MPI-examples/GhostExchange/GhostExchange_ArrayAssign
 
@@ -53,7 +43,7 @@ NUMCPUS=`lscpu | grep '^CPU(s):' |cut -d':' -f2 | tr -d ' '`
 NUM_GPUS=`rocminfo |grep GPU |grep "Device Type" |wc -l`
 NUM_PER_RESOURCE_MPI4=`expr 4 / ${NUM_GPUS}`
 NUM_PER_RESOURCE_MPI16=`expr 16 / ${NUM_GPUS}`
-if is_cray_mpich; then
+if [ -n "${CRAY_MPICH_VERSION:-}" ]; then
   echo "Detected Cray MPICH: using srun launcher"
   MPIRUN="srun"
   MPIRUN_OPTIONS="--cpu-bind=verbose,cores"
