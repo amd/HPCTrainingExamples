@@ -26,7 +26,7 @@ fi
 
 if [ -n "${CRAY_MPICH_VERSION:-}" ]; then
    MPIRUN=srun
-   MPI_RUN_OPTIONS="cpu-bind=verbose,cores"
+   MPI_RUN_OPTIONS="--cpu-bind=verbose,cores"
    MPI_MAP_BY=""
 else
    MPIRUN=mpirun

@@ -13,6 +13,7 @@ if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    if [ -z "$HIPCC" ]; then
       export HIPCC=`which hipcc`
    fi
+   module load cray-netcdf-hdf5parallel
 else
    module -t list 2>&1 | grep -q "^rocm"
    if [ $? -eq 1 ]; then
@@ -24,11 +25,6 @@ else
    if [ "$?" == "1" ]; then
       module load amdclang
    fi
-fi
-
-if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
-   module load cray-netcdf-hdf5parallel
-else
    module load netcdf-c
    module load netcdf-fortran
    module load openmpi
@@ -37,6 +33,13 @@ fi
 if [[ ${HDF5_ENABLE_PARALLEL} == "OFF" ]]; then
    # NETCDF has not been built with parallel I/O support
    echo "Skip"
+fi
+
+if [ -n "${CRAY_MPICH_VERSION:-}" ]; then
+  echo "Detected Cray MPICH: using srun launcher"
+  MPIRUN="srun"
+else
+  MPIRUN="mpirun"
 fi
 
 # use the compiler used to build netcdf-fortran
@@ -49,5 +52,5 @@ cd ${BUILD_DIR}
 
 git clone https://github.com/Unidata/netcdf-fortran.git
 $FC  ./netcdf-fortran/examples/F90/simple_xy_par_wr.F90 -o simple_xy_par_wf  -I${NETCDF_F_ROOT}/include -L${NETCDF_F_ROOT}/lib -lnetcdff -L${PNETCDF_ROOT}/lib -lpnetcdf
-mpirun -n 4 --oversubscribe ./simple_xy_par_wf
+${MPIRUN} -n 4 --oversubscribe ./simple_xy_par_wf
 ncdump simple_xy_par.nc

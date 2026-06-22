@@ -59,7 +59,8 @@ ls -l ../build/libexec/osu-micro-benchmarks/mpi
 
 export HIP_VISIBLE_DEVICES=0,1
 
-${MPIRUN} -N 2 -n 2 ${MPI_RUN_OPTIONS} ../build/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bw -m 10240000
+#${MPIRUN} -N 2 -n 2 ${MPI_RUN_OPTIONS} ../build/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bw -m 10240000
+${MPIRUN} -N 1 -n 2 ${MPI_RUN_OPTIONS} ../build/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bw -m 10240000
 
 cd ../..
 
