@@ -941,7 +941,7 @@ set_property(TEST GPUAwareOpenMPI_pt2pt PROPERTY SKIP_REGULAR_EXPRESSION "module
 
 add_test(NAME GPUAwareOpenMPI_UCC_OpenMP_AllReduce COMMAND ../gpuawarempi_ucc_openmp_allreduce_check.sh )
 set_property(TEST GPUAwareOpenMPI_UCC_OpenMP_AllReduce PROPERTY PASS_REGULAR_EXPRESSION "REGRESSION_RESULT: PASS")
-set_property(TEST GPUAwareOpenMPI_UCC_OpenMP_AllReduce PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_property(TEST GPUAwareOpenMPI_UCC_OpenMP_AllReduce PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip" "Skip -- Cray MPICH does not use UCC")
 set_tests_properties(GPUAwareOpenMPI_UCC_OpenMP_AllReduce PROPERTIES TIMEOUT 600)
 
 add_test(NAME OpenMPI_Hello_World_Run COMMAND ../openmpi_hello_world_run.sh )

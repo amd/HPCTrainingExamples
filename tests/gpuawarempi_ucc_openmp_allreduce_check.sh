@@ -26,6 +26,11 @@
 #
 # Self-contained: all sources are generated and built here.
 
+if [
+if [ -n "${CRAY_MPICH_VERSION:-}" ]; then
+   echo "Skip -- Cray MPICH does not use UCC"
+fi
+
 if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    if [ -z "$CXX" ]; then
       export CXX=`which CC`
