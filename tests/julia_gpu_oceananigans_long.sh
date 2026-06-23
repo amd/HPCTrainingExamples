@@ -15,12 +15,9 @@ fi
 
 ORIG_HOME="${HOME}"
 
-TEST_DIR="$(dirname "$(readlink -fm "$0")")"
-
 export WORK_DIR=$(mktemp -d)
 trap "rm -rf ${WORK_DIR}" EXIT
 cd ${WORK_DIR}
-cp "${TEST_DIR}/oceananigans_latlon_testset.jl" .
 export HOME="${WORK_DIR}"
 export JULIA_DEPOT_PATH="${WORK_DIR}/julia_depot"
 export JULIA_NUM_PRECOMPILE_TASKS=8
@@ -33,9 +30,9 @@ juliaup default 1.12
 julia -e '
 using Pkg;
 Pkg.activate(; temp=true);
-Pkg.add(["AMDGPU", "MPI", "Oceananigans", "FFTW", "KernelAbstractions", "SeawaterPolynomials", "OffsetArrays", "JLD2", "Adapt", "GPUArraysCore"]);
+Pkg.add(["AMDGPU", "MPI", "Oceananigans", "CUDA", "FFTW", "KernelAbstractions", "SeawaterPolynomials", "OffsetArrays", "JLD2", "Adapt", "GPUArraysCore"]);
 using Oceananigans;
-include(joinpath(ENV["WORK_DIR"], "oceananigans_latlon_testset.jl"))
+include(joinpath(pkgdir(Oceananigans, "test", "test_amdgpu.jl")))
 '
 
 export HOME="${ORIG_HOME}"
