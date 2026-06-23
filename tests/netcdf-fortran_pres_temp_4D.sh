@@ -27,7 +27,12 @@ else
 fi
 
 if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
-   module load cray-netcdf-hdf5parallel
+   FTN_VERSION=$("$FC" --version 2>&1)
+   if [[ "$FTN_VERSION" == *Cray* ]]; then
+      module load cray-netcdf-hdf5parallel
+   else
+      module load netcdf-fortran
+   fi
 else
    module load netcdf-fortran
 fi
