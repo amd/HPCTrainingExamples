@@ -2,6 +2,7 @@ all: gemm_global gemm_local gemm_global_sd gemm_local_sd
 
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 HIPFORT_PATH ?= ${ROCM_PATH}
+HIPFORT_INC ?= ${ROCM_PATH}/include/hipfort
 
 gemm_global:
 	amdflang -g -c -fopenmp --offload-arch=${ROCM_GPU} gemm_mod.f90 -I${HIPFORT_INC}/amdgcn

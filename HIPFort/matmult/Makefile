@@ -5,6 +5,7 @@ all: $(EXECUTABLE)
 
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 HIPFORT_PATH ?= ${ROCM_PATH}
+HIPFORT_INC ?= ${ROCM_PATH}/include/hipfort
 
 OBJECTS = matmult_prog.o matmult_interface.o matmult_hip.o matmult_mod.o
 

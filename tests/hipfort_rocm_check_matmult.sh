@@ -24,9 +24,9 @@ else
    if [ "$?" == "1" ]; then
       module load amdclang
    fi
+   module load hipfort
 fi
 
-module load hipfort
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/HIPFort/matmult
 
