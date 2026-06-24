@@ -1,20 +1,36 @@
 #!/bin/bash
 
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+else
+   module -t list 2>&1 | grep -q "^rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   module load amdflang-new >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load amdclang
+   fi
+fi
+
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
-module -t list 2>&1 | grep -q "^rocm"
-if [ $? -eq 1 ]; then
-   echo "rocm module is not loaded"
-   echo "loading default rocm module"
-   module load rocm
-fi
 GPU_IS_MI300A=$(rocminfo 2>/dev/null | grep -q MI300A && echo 1 || echo 0)
 
 if [ "$GPU_IS_MI300A" != "1" ]; then
 	echo "Skip"
 	exit 1
 fi	
-module load amdclang
 module load kokkos
 
 echo "=== Kokkos APU Capability Test ==="
