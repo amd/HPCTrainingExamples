@@ -13,6 +13,7 @@ if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    if [ -z "$FC" ]; then
       export FC=`which ftn`
    fi
+   module load cray-python
 else
    module -t list 2>&1 | grep -q "^rocm"
    if [ $? -eq 1 ]; then
@@ -20,14 +21,6 @@ else
      echo "loading default rocm module"
      module load rocm
    fi
-fi
-
-if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
-   module load mpi4py/cray-mpich-${CRAY_MPICH_VERSION} >& /dev/null
-   if [ "$?" == "1" ]; then
-      module load mpi4py
-   fi
-else
    module load mpi4py
 fi
 
