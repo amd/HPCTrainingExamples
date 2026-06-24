@@ -36,5 +36,6 @@ cp * ${BUILD_DIR}
 
 cd ${BUILD_DIR}
 
+make clean
 make arraysum1
 ./arraysum1

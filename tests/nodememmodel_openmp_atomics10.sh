@@ -49,6 +49,7 @@ else
 
    cd ${BUILD_DIR}
 
+   make clean
    make arraysum10
    export HSA_XNACK=1
    ./arraysum10

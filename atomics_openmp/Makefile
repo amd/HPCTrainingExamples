@@ -6,7 +6,8 @@ UNAMEP = $(shell uname -p)
 ROCM_CPUTARGET = $(UNAMEP)-pc-linux-gnu
 ROCM_GPUTARGET ?= amdgcn-amd-amdhsa
 
-CC1=$(notdir $(COMPILER))
+CC ?= amdclang
+CC1 = $(notdir $(CC))
 
 ifneq ($(findstring amdclang,$(CC1)),)
 # OPENMP_FLAGS = -fopenmp -target $(ROCM_CPUTARGET) -fopenmp-targets=$(ROCM_GPUTARGET) -Xopenmp-target=$(ROCM_GPUTARGET) -march=$(ROCM_GPU) 

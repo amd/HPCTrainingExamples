@@ -36,6 +36,7 @@ cp * ${BUILD_DIR}
 
 cd ${BUILD_DIR}
 
+make clean
 make arraysum3
 export HSA_XNACK=0
 ./arraysum3
