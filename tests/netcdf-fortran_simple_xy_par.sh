@@ -13,7 +13,13 @@ if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    if [ -z "$HIPCC" ]; then
       export HIPCC=`which hipcc`
    fi
-   module load cray-netcdf-hdf5parallel
+   if [ "$PE_ENV" = "AMD" ]; then
+      echo "Using the AMD compiler"
+      module load netcdf-c
+      module load netcdf-fortran
+   elif [ "$PE_ENV" = "CRAY" ]; then
+      module load cray-netcdf-hdf5parallel
+   fi
 else
    module -t list 2>&1 | grep -q "^rocm"
    if [ $? -eq 1 ]; then
