@@ -24,7 +24,10 @@ else
 fi
 
 if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
-   module load cray-fftw
+   module load cray-fftw >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load fftw
+   fi
 else
    module load fftw
 fi
