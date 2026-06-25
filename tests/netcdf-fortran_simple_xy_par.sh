@@ -15,9 +15,13 @@ if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    fi
    if [ "$PE_ENV" = "AMD" ]; then
       echo "Using the AMD compiler"
+      # Custom amdflang-capable NetCDF build (not the Cray-authored module).
       module load netcdf-c
       module load netcdf-fortran
    elif [ "$PE_ENV" = "CRAY" ]; then
+      echo "Using the Cray compiler"
+      # Cray-authored module; the ftn wrapper injects NetCDF paths for the
+      # active PrgEnv, so no explicit flags are needed.
       module load cray-netcdf-hdf5parallel
    fi
 else
@@ -52,9 +56,9 @@ if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    NETCDF_LIBS=""
 else
    NETCDF_LIBS="-I${NETCDF_F_ROOT}/include -L${NETCDF_F_ROOT}/lib -lnetcdff -L${PNETCDF_ROOT}/lib -lpnetcdf"
+   # use the compiler used to build netcdf-fortran
+   FC=`nf-config --fc`
 fi
-# use the compiler used to build netcdf-fortran
-FC=`nf-config --fc`
 
 SRC_DIR=$(pwd)
 BUILD_DIR=$(mktemp -d)
