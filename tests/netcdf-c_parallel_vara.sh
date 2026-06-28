@@ -38,7 +38,9 @@ else
    module load netcdf-c
    module load openmpi
    MPIRUN=mpirun
-   NETCDF_LIBS="-L${NETCDF_C_ROOT}/lib -lnetcdf -L${PNETCDF_ROOT}/lib -lpnetcdf"
+   # The netcdf-c and pnetcdf modules put their lib dirs on LIBRARY_PATH, so
+   # -lnetcdf / -lpnetcdf resolve without explicit -L paths.
+   NETCDF_LIBS="-lnetcdf -lpnetcdf"
    FORCE_NETCDF4=0
 fi
 

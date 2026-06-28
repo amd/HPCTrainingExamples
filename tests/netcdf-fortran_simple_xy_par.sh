@@ -52,26 +52,27 @@ else
   MPIRUN="mpirun"
 fi
 
-if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
-   if [ "$PE_ENV" = "AMD" ]; then
-      # The Cray ftn wrapper does NOT auto-inject the custom amdflang
-      # netcdf-fortran module's paths (only the Cray-authored cray-netcdf
-      # module is wired into ftn). amdflang does not honor FPATH/CPATH for
-      # Fortran .mod lookup, so netcdf.mod is not found and every nf90_* symbol
-      # is undeclared. Pass the include dir (where netcdf.mod lives) and link
-      # libs explicitly. netcdf-c lives in a SEPARATE prefix (NETCDF_C_ROOT)
-      # from netcdf-fortran, so both -L dirs are required; nf-config --flibs
-      # alone emits -lnetcdf without netcdf-c's -L (ld.lld: cannot find
-      # -lnetcdf). Mirrors netcdf-fortran_pres_temp_4D.sh.
-      NETCDF_LIBS="-I${NETCDF_F_ROOT}/include -L${NETCDF_F_ROOT}/lib -lnetcdff -L${NETCDF_C_ROOT}/lib -lnetcdf"
-   else
-      # Cray PrgEnv + cray-netcdf-hdf5parallel: the ftn wrapper injects paths.
-      NETCDF_LIBS=""
-   fi
+# NetCDF compile/link flags.
+#   * Cray PrgEnv-cray (cray-netcdf-hdf5parallel): the ftn wrapper injects the
+#     NetCDF include/lib paths automatically -> no explicit flags, keep ftn.
+#   * Everywhere else -- Cray PrgEnv-amd-new with the custom netcdf-c /
+#     netcdf-fortran modules, or a non-Cray AMD system -- nf-config reports the
+#     right -I (netcdf.mod lives in netcdf-fortran/include; ftn/amdflang do not
+#     honor CPATH/FPATH for .mod lookup) and -l flags. nf-config --flibs emits
+#     -lnetcdff -lnetcdf but omits netcdf-c's -L (netcdf-c is a separate install
+#     prefix); the netcdf modules now put both lib dirs on LIBRARY_PATH so the
+#     link resolves without an explicit -L. flang-new (AMD_COMPILER_TYPE=DEFAULT,
+#     set by the amd-new / PrgEnv-amd-new modules) links its Fortran runtime
+#     statically, so the binary needs no libpgmath.so/libflang.so at run time.
+#     On non-Cray, use the compiler netcdf-fortran was built with (nf-config
+#     --fc); on Cray keep the ftn wrapper set above.
+if [ "$PE_ENV" = "CRAY" ]; then
+   NETCDF_LIBS=""
 else
-   NETCDF_LIBS="-I${NETCDF_F_ROOT}/include -L${NETCDF_F_ROOT}/lib -lnetcdff -L${PNETCDF_ROOT}/lib -lpnetcdf"
-   # use the compiler used to build netcdf-fortran
-   FC=`nf-config --fc`
+   if [[ -z "$CRAYPE_VERSION" && ! -f /etc/cray-release ]]; then
+      FC=`nf-config --fc`
+   fi
+   NETCDF_LIBS="$(nf-config --fflags) $(nf-config --flibs)"
 fi
 
 SRC_DIR=$(pwd)

@@ -41,7 +41,9 @@ trap "rm -rf ${BUILD_DIR}" EXIT
 cd ${BUILD_DIR}
 
 git clone https://github.com/Unidata/netcdf-c.git
-$CC ./netcdf-c/examples/C/pres_temp_4D_wr.c -lnetcdf -L${NETCDF_C_ROOT}/lib -o pres_temp_4D_wr
-$CC ./netcdf-c/examples/C/pres_temp_4D_rd.c -lnetcdf -L${NETCDF_C_ROOT}/lib -o pres_temp_4D_rd
+# The netcdf-c module puts its lib dir on LIBRARY_PATH (and the Cray cc wrapper
+# injects it under cray-netcdf), so -lnetcdf resolves without an explicit -L.
+$CC ./netcdf-c/examples/C/pres_temp_4D_wr.c -lnetcdf -o pres_temp_4D_wr
+$CC ./netcdf-c/examples/C/pres_temp_4D_rd.c -lnetcdf -o pres_temp_4D_rd
 ./pres_temp_4D_wr
 ./pres_temp_4D_rd
