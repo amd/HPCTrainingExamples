@@ -946,11 +946,11 @@ set_tests_properties(GPUAwareOpenMPI_UCC_OpenMP_AllReduce PROPERTIES TIMEOUT 600
 
 add_test(NAME OpenMPI_Hello_World_Run COMMAND ../openmpi_hello_world_run.sh )
 set_property(TEST OpenMPI_Hello_World_Run PROPERTY PASS_REGULAR_EXPRESSION "Hello world from processor")
-set_property(TEST OpenMPI_Check_ROCm_Support PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skipped - this is MPICH")
+set_property(TEST OpenMPI_Hello_World_Run PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMPI_Check_ROCm_Support COMMAND ../openmpi_check_rocm_support.sh )
 set_property(TEST OpenMPI_Check_ROCm_Support PROPERTY PASS_REGULAR_EXPRESSION "MPI extensions: affinity, cuda, ftmpi, rocm")
-set_property(TEST OpenMPI_Check_ROCm_Support PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST OpenMPI_Check_ROCm_Support PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skipped - this is MPICH")
 
 #add_test(NAME Mvapich2_Hello_World_C_Compile COMMAND ../mvapich2_hello_world_c_compile.sh )
 #set_property(TEST Mvapich2_Hello_World_C_Compile PROPERTY PASS_REGULAR_EXPRESSION "Executable created")
