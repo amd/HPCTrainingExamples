@@ -53,7 +53,19 @@ else
 fi
 
 if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
-   NETCDF_LIBS=""
+   if [ "$PE_ENV" = "AMD" ]; then
+      # The Cray ftn wrapper does NOT auto-inject the custom amdflang
+      # netcdf-fortran module's paths (only the Cray-authored cray-netcdf
+      # module is wired into ftn). amdflang does not honor FPATH/CPATH for
+      # Fortran .mod lookup, so netcdf.mod is not found and every nf90_* symbol
+      # is undeclared. Pass the include dir (where netcdf.mod lives) plus the
+      # recorded link libs explicitly; nf-config (from the loaded module)
+      # supplies the full libnetcdff + netcdf-c/HDF5 dependency chain.
+      NETCDF_LIBS="-I${NETCDF_F_ROOT}/include $(nf-config --flibs)"
+   else
+      # Cray PrgEnv + cray-netcdf-hdf5parallel: the ftn wrapper injects paths.
+      NETCDF_LIBS=""
+   fi
 else
    NETCDF_LIBS="-I${NETCDF_F_ROOT}/include -L${NETCDF_F_ROOT}/lib -lnetcdff -L${PNETCDF_ROOT}/lib -lpnetcdf"
    # use the compiler used to build netcdf-fortran
