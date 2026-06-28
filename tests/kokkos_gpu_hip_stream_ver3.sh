@@ -9,12 +9,12 @@ fi
 
 GFX_MODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`
 
-if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
-   module switch PrgEnv-cray PrgEnv-amd
-   export CXX=${ROCM_PATH}/llvm/bin/amdclang++
-else
-   module load amdclang
-fi
+#if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+#   module switch PrgEnv-cray PrgEnv-amd
+#   export CXX=${ROCM_PATH}/llvm/bin/amdclang++
+#else
+#   module load amdclang
+#fi
 module load kokkos
 
 CLONE_DIR=$(mktemp -d -p /tmp Chapter13_XXXXXX)
