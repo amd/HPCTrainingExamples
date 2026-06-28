@@ -58,10 +58,12 @@ if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
       # netcdf-fortran module's paths (only the Cray-authored cray-netcdf
       # module is wired into ftn). amdflang does not honor FPATH/CPATH for
       # Fortran .mod lookup, so netcdf.mod is not found and every nf90_* symbol
-      # is undeclared. Pass the include dir (where netcdf.mod lives) plus the
-      # recorded link libs explicitly; nf-config (from the loaded module)
-      # supplies the full libnetcdff + netcdf-c/HDF5 dependency chain.
-      NETCDF_LIBS="-I${NETCDF_F_ROOT}/include $(nf-config --flibs)"
+      # is undeclared. Pass the include dir (where netcdf.mod lives) and link
+      # libs explicitly. netcdf-c lives in a SEPARATE prefix (NETCDF_C_ROOT)
+      # from netcdf-fortran, so both -L dirs are required; nf-config --flibs
+      # alone emits -lnetcdf without netcdf-c's -L (ld.lld: cannot find
+      # -lnetcdf). Mirrors netcdf-fortran_pres_temp_4D.sh.
+      NETCDF_LIBS="-I${NETCDF_F_ROOT}/include -L${NETCDF_F_ROOT}/lib -lnetcdff -L${NETCDF_C_ROOT}/lib -lnetcdf"
    else
       # Cray PrgEnv + cray-netcdf-hdf5parallel: the ftn wrapper injects paths.
       NETCDF_LIBS=""
