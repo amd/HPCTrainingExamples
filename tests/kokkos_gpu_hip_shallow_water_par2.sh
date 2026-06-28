@@ -9,12 +9,12 @@ if [ $? -eq 1 ]; then
   module load rocm
 fi
 
-if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
-   module switch PrgEnv-cray PrgEnv-amd
-   export CXX=${ROCM_PATH}/llvm/bin/amdclang++
-else
-   module load amdclang
-fi
+#if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+#   module switch PrgEnv-cray PrgEnv-amd
+#   export CXX=${ROCM_PATH}/llvm/bin/amdclang++
+#else
+#   module load amdclang
+#fi
 
 module load kokkos 
 
