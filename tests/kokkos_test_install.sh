@@ -24,7 +24,26 @@ sed -i -e 's/80000000/100000/' StreamTriad.cc
 
 rm -rf build
 mkdir build && cd build
-cmake ..
+# Pin OpenMP to the host libomp.so. find_package(Kokkos) pulls in
+# OpenMP::OpenMP_CXX (the OpenMP-enabled Kokkos backend); under the Cray CC
+# wrapper + ROCm clang CMake's FindOpenMP mis-resolves it to the amdgcn device
+# archive libompdevice.a, which ld.lld then rejects on the host link
+# ("incompatible with elf64-x86-64"). Feed host libomp.so to FindOpenMP.
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+  OMP_CXX="${CXX:-$(command -v CC)}"
+else
+  OMP_CXX="${CXX:-$(command -v amdclang++ || command -v clang++)}"
+fi
+OMP_HOST_LIB="$(${OMP_CXX} -print-file-name=libomp.so 2>/dev/null)"
+OMP_HINTS=()
+if [ -n "${OMP_HOST_LIB}" ] && [ -f "${OMP_HOST_LIB}" ]; then
+  OMP_HINTS=(
+    -DOpenMP_CXX_FLAGS="-fopenmp=libomp"
+    -DOpenMP_CXX_LIB_NAMES="omp"
+    -DOpenMP_omp_LIBRARY="${OMP_HOST_LIB}"
+  )
+fi
+cmake .. "${OMP_HINTS[@]}"
 make
 HSA_XNACK=1 ./StreamTriad
 
