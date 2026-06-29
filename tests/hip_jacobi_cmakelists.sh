@@ -36,10 +36,14 @@ else
 fi
 
 SRC_DIR=$(pwd)
+# mktemp -d already creates the directory, so do NOT mkdir it again (that
+# fails with "File exists", and the && short-circuit then skips the cd,
+# leaving us in the source tree). Build out-of-tree and point cmake at the
+# absolute source dir -- a relative ".." would resolve under /tmp, not here.
 BUILD_DIR=$(mktemp -d)
 trap "rm -rf ${BUILD_DIR}" EXIT
-mkdir ${BUILD_DIR} && cd ${BUILD_DIR}
-cmake ..
+cd "${BUILD_DIR}"
+cmake "${SRC_DIR}"
 make
 
 #salloc -p LocalQ --gpus=2 -n 2 -t 00:10:00
