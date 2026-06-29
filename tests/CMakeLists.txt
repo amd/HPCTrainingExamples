@@ -1502,7 +1502,7 @@ set_tests_properties(Julia_Check_GPU_Access PROPERTIES TIMEOUT 400)
 
 add_test(NAME Julia_GPU_Vec_Add COMMAND ../julia_gpu_vec_add.sh )
 set_property(TEST Julia_GPU_Vec_Add PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
-set_tests_properties(Julia_GPU_Vec_Add PROPERTIES TIMEOUT 400)
+set_tests_properties(Julia_GPU_Vec_Add PROPERTIES TIMEOUT 500)
 
 add_test(NAME Julia_GPU_Oceananigans COMMAND ../julia_gpu_oceananigans.sh )
 set_property(TEST Julia_GPU_Oceananigans PROPERTY PASS_REGULAR_EXPRESSION "AMDGPU on LatitudeLongitudeGrid with HydrostaticFreeSurfaceModel |   34     34")

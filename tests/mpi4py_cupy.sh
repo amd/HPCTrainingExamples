@@ -17,7 +17,13 @@ if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    if [ -z "$FC" ]; then
       export FC=`which ftn`
    fi
-   module load cray-python
+   # Do NOT load cray-python here: its interpreter (3.12) cannot import the
+   # custom cupy/numpy stack, whose C-extensions are built for the system
+   # python3 (3.9) -- that mismatch yields "No module named
+   # numpy._core._multiarray_umath". Load the custom mpi4py module instead
+   # (built for system python3 + cray-mpich), matching the custom cupy module
+   # loaded below so both run under one interpreter.
+   module load mpi4py
 else
    module -t list 2>&1 | grep -q "^rocm"
    if [ $? -eq 1 ]; then
