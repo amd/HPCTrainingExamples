@@ -36,14 +36,6 @@ rm -rf build
 
 mkdir build
 
-if [ -n "${CRAY_MPICH_VERSION:-}" ]; then
-   MPIRUN=srun
-   MPI_RUN_OPTIONS=""
-else
-   MPIRUN=mpirun
-   MPI_RUN_OPTIONS="-mca pml ucx -mca coll_ucc_enable 1  -mca coll_ucc_enable 1"
-fi
-
 ./configure --prefix=`pwd`/../build/ \
 	CC=`which mpicc` \
 	CPPFLAGS=-D__HIP_PLATFORM_AMD__=1 \
@@ -59,8 +51,34 @@ ls -l ../build/libexec/osu-micro-benchmarks/mpi
 
 export HIP_VISIBLE_DEVICES=0,1
 
-#${MPIRUN} -N 2 -n 2 ${MPI_RUN_OPTIONS} ../build/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bw -m 10240000
-${MPIRUN} -N 1 -n 2 ${MPI_RUN_OPTIONS} ../build/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bw -m 10240000
+# Launch with the launcher that MATCHES the MPI the benchmark was built with
+# (CC=`which mpicc`). The project's from-source GPU-aware MPICH (mpich-wrappers)
+# and OpenMPI both ship their own mpirun/mpiexec next to mpicc. Launching that
+# MPICH with srun gives each rank a singleton MPI_COMM_WORLD ("This test
+# requires exactly two processes") because srun's Cray PMI does not wire it up.
+# Only a bare Cray MPICH (mpicc under /opt/cray, with no co-located launcher)
+# is launched with srun.
+MPI_BINDIR=$(dirname "$(which mpicc)")
+if [ -x "${MPI_BINDIR}/mpirun" ]; then
+   LAUNCHER="${MPI_BINDIR}/mpirun"
+elif [ -x "${MPI_BINDIR}/mpiexec" ]; then
+   LAUNCHER="${MPI_BINDIR}/mpiexec"
+else
+   LAUNCHER=""
+fi
+
+OSU_BW=../build/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_bw
+if [ -n "${LAUNCHER}" ]; then
+   if "${LAUNCHER}" --version 2>&1 | grep -qiE "open[ -]?mpi|openrte"; then
+      # OpenMPI: select the UCX point-to-point/collective stack.
+      "${LAUNCHER}" -np 2 -mca pml ucx -mca coll_ucc_enable 1 ${OSU_BW} -m 10240000
+   else
+      # MPICH/Hydra: -mca is OpenMPI-only and would be rejected.
+      "${LAUNCHER}" -np 2 ${OSU_BW} -m 10240000
+   fi
+else
+   srun -N 1 -n 2 ${OSU_BW} -m 10240000
+fi
 
 cd ../..
 
