@@ -106,17 +106,9 @@ else
   echo "WARNING: could not resolve host libomp.so via ${OMP_CXX}; relying on FindOpenMP autodetect"
 fi
 
-# Pin the C++ compiler (amdclang++ non-Cray / CC wrapper Cray) so CMake does
-# not auto-detect /usr/bin/c++ (GNU g++), which rejects the amdclang-only
-# flags the HIP-enabled kokkos imported target injects.
-CXX_HINTS=()
-if [ -n "${OMP_CXX}" ]; then
-  CXX_HINTS=( -DCMAKE_CXX_COMPILER="${OMP_CXX}" )
-fi
 cmake -S "${SCRIPT_DIR}" -B "${BUILD_DIR}" \
   -DKokkos_ROOT="${Kokkos_ROOT}" \
   -DEXPECTED_KOKKOS_ARCH="${EXPECTED_ARCH}" \
-  "${CXX_HINTS[@]}" \
   "${OMP_HINTS[@]}"
 
 cmake --build "${BUILD_DIR}" --verbose

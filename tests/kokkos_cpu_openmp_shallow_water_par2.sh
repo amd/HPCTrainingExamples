@@ -67,16 +67,7 @@ if [ -n "${OMP_HOST_LIB}" ] && [ -f "${OMP_HOST_LIB}" ]; then
     -DOpenMP_omp_LIBRARY="${OMP_HOST_LIB}"
   )
 fi
-# Pin the C++ compiler to amdclang++ (non-Cray) / CC (Cray). The kokkos
-# module is a HIP-enabled build whose imported target injects amdclang
-# flags (-fno-gpu-rdc, --rocm-path, --offload-arch, -fopenmp=libomp) into
-# the consuming compile; without this CMake auto-detects /usr/bin/c++
-# (GNU g++), which rejects those flags and the build fails.
-CXX_HINTS=()
-if [ -n "${OMP_CXX}" ]; then
-  CXX_HINTS=( -DCMAKE_CXX_COMPILER="${OMP_CXX}" )
-fi
-cmake .. "${CXX_HINTS[@]}" "${OMP_HINTS[@]}"
+cmake .. "${OMP_HINTS[@]}"
 make -j ShallowWater_par2
 
 ./ShallowWater_par2
