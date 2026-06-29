@@ -64,7 +64,14 @@ else
        -DOpenMP_omp_LIBRARY="${OMP_HOST_LIB}"
      )
    fi
-   cmake .. "${OMP_HINTS[@]}"
+   # Pin the C++ compiler (amdclang++ non-Cray / CC wrapper Cray) so CMake does
+   # not auto-detect /usr/bin/c++ (GNU g++), which rejects the amdclang-only
+   # flags the HIP-enabled kokkos imported target injects.
+   CXX_HINTS=()
+   if [ -n "${OMP_CXX}" ]; then
+     CXX_HINTS=( -DCMAKE_CXX_COMPILER="${OMP_CXX}" )
+   fi
+   cmake .. "${CXX_HINTS[@]}" "${OMP_HINTS[@]}"
    make
    ./kokkos_code
 

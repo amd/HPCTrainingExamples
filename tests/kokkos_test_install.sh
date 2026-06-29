@@ -6,7 +6,23 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load amdclang
+
+# Select the AMD/ROCm C++ compiler before loading kokkos. The kokkos module
+# is a HIP-enabled build whose imported target injects amdclang-only flags
+# (-fno-gpu-rdc, --rocm-path, --offload-arch, -fopenmp=libomp); the consuming
+# build must therefore use amdclang++ (non-Cray) or the AMD new compiler via
+# the Cray CC wrapper (Cray). The amdclang module exports CXX, which both
+# makes CMake pick amdclang++ and makes the OMP_CXX libomp.so lookup below
+# resolve against the ROCm host runtime instead of /usr/bin/c++ (GNU g++).
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+   # On Cray the amd/amd-new PrgEnv module makes the CC wrapper drive the AMD
+   # new compiler; it does not export CXX, so the OMP_CXX block below falls
+   # back to the CC wrapper (keeping cray-mpich / PrgEnv wiring intact).
+   module load amd-new 2>/dev/null || module load amd
+else
+   module load amdclang
+fi
+
 module load kokkos
 
 GFX_MODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`
@@ -43,7 +59,14 @@ if [ -n "${OMP_HOST_LIB}" ] && [ -f "${OMP_HOST_LIB}" ]; then
     -DOpenMP_omp_LIBRARY="${OMP_HOST_LIB}"
   )
 fi
-cmake .. "${OMP_HINTS[@]}"
+# Pin the C++ compiler (amdclang++ non-Cray / CC wrapper Cray) so CMake does
+# not auto-detect /usr/bin/c++ (GNU g++), which rejects the amdclang-only
+# flags the HIP-enabled kokkos imported target injects.
+CXX_HINTS=()
+if [ -n "${OMP_CXX}" ]; then
+  CXX_HINTS=( -DCMAKE_CXX_COMPILER="${OMP_CXX}" )
+fi
+cmake .. "${CXX_HINTS[@]}" "${OMP_HINTS[@]}"
 make
 HSA_XNACK=1 ./StreamTriad
 
