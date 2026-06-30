@@ -39,6 +39,12 @@ else
    cp ${SRC_DIR}/* ${BUILD_DIR}/
    cd ${BUILD_DIR}
 
+   # ROCm 7.2.4's OpenMP-offload link goes through clang-linker-wrapper, which
+   # (unlike 7.2.3 and plain clang++) does not honor the -L${ROCM_PATH}/lib
+   # passed by the Cray CC wrapper. Put the ROCm lib dir on LIBRARY_PATH so the
+   # offload linker can resolve the host library libamdhip64.
+   export LIBRARY_PATH=${ROCM_PATH}/lib${LIBRARY_PATH:+:${LIBRARY_PATH}}
+
    make
    ./daxpy
 
