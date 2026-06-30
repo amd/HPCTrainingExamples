@@ -29,14 +29,19 @@ fi
 # Module + NetCDF compile/link flags.
 #   * Cray + Cray (CCE) compiler: cray-netcdf-hdf5parallel + the ftn wrapper
 #     inject the paths automatically -> no explicit flags, keep ftn.
-#   * Cray + AMD compiler, or off-Cray: the custom netcdf-fortran module +
-#     nf-config provide -I (netcdf.mod; ftn/amdflang ignore CPATH/FPATH for
-#     .mod lookup) and -l. nf-config --flibs emits -lnetcdff -lnetcdf but omits
-#     netcdf-c's -L (separate prefix); the netcdf modules now put both lib dirs
-#     on LIBRARY_PATH so the link resolves without an explicit -L. flang-new
-#     (AMD_COMPILER_TYPE=DEFAULT, set by the amd-new/PrgEnv-amd-new modules)
-#     links its Fortran runtime statically -> no libpgmath.so/libflang.so at
-#     run time. Off-Cray, use the compiler netcdf-fortran was built with.
+#   * Cray + AMD compiler, or off-Cray: build with the compiler the custom
+#     netcdf-fortran module was built with -- nf-config --fc, the from-source
+#     mpich-wrappers mpifort (wrapping flang-new). Do NOT keep the Cray ftn
+#     wrapper for the AMD compiler: ftn always links cray-mpich's
+#     /opt/cray/pe/lib64/libmpifort_amd.so.12 (even for serial code), which was
+#     compiled with CLASSIC flang and hard-NEEDs libpgmath.so / libflang.so --
+#     absent in the flang-new toolchain, so the binary dies at startup with
+#     "libpgmath.so: cannot open shared object file". mpifort links the
+#     mpich-wrappers libmpifort_amd (flang-new, self-contained) instead.
+#     nf-config also reports the right -I (netcdf.mod; ftn/amdflang ignore
+#     CPATH/FPATH for .mod lookup) and -l flags. nf-config --flibs emits
+#     -lnetcdff -lnetcdf but omits netcdf-c's -L (separate prefix); the netcdf
+#     modules put both lib dirs on LIBRARY_PATH so the link resolves.
 if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    FTN_VERSION=$("$FC" --version 2>&1)
    if [[ "$FTN_VERSION" == *Cray* ]]; then
@@ -44,6 +49,7 @@ if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
       NETCDF_LIBS=""
    else
       module load netcdf-fortran
+      FC=`nf-config --fc`
       NETCDF_LIBS="$(nf-config --fflags) $(nf-config --flibs)"
    fi
 else

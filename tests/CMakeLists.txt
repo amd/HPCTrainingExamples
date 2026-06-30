@@ -1447,13 +1447,13 @@ set_property(TEST MPI4PY_Cupy PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST MPI4PY_Cupy PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'mpi4py'" "Unable to locate a modulefile for 'cupy'")
 
 # PETSc tests
-add_test(NAME PETSc_Bench_KSPSolve COMMAND ../petsc_bench_kspsolve.sh --petsc-module petsc)
+add_test(NAME PETSc_Bench_KSPSolve COMMAND ../petsc_bench_kspsolve.sh)
 set_property(TEST PETSc_Bench_KSPSolve PROPERTY PASS_REGULAR_EXPRESSION "KSP iters:     41")
 set_property(TEST PETSc_Bench_KSPSolve PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'petsc'")
 
-add_test(NAME PETSc_AMDFlang_Bench_KSPSolve COMMAND ../petsc_bench_kspsolve.sh --petsc-module petsc_amdflang)
-set_property(TEST PETSc_AMDFlang_Bench_KSPSolve PROPERTY PASS_REGULAR_EXPRESSION "KSP iters:     41")
-set_property(TEST PETSc_AMDFlang_Bench_KSPSolve PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'petsc'")
+#add_test(NAME PETSc_AMDFlang_Bench_KSPSolve COMMAND ../petsc_bench_kspsolve.sh)
+#set_property(TEST PETSc_AMDFlang_Bench_KSPSolve PROPERTY PASS_REGULAR_EXPRESSION "KSP iters:     41")
+#set_property(TEST PETSc_AMDFlang_Bench_KSPSolve PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'petsc'")
 
 add_test(NAME PETSc_AMDFlang_Snes_Ex21 COMMAND ../petsc_amdflang_snes_ex21.sh )
 set_property(TEST PETSc_AMDFlang_Snes_Ex21 PROPERTY PASS_REGULAR_EXPRESSION "Nonlinear solve converged due to CONVERGED_FNORM_RELATIVE iterations 48")

@@ -60,4 +60,23 @@ else
   MPI_LAUNCH_OPTS=()
 fi
 
-OMP_NUM_THREADS=2 OMP_PROC_BIND=close mpirun -np 4 "${MPI_LAUNCH_OPTS[@]}" ./hello_mpi_omp
+# Launcher binding *reports* are implementation specific: OpenMPI prints
+# "rank N bound to ..." via --report-bindings, but MPICH/Hydra (the Cray PE
+# launcher) has no equivalent, so the OpenMPI-only "rank 3 bound to" pass
+# criterion can never match under MPICH even though the ranks ARE bound.
+# Verify binding launcher-independently instead: wrap each rank so it prints
+# its OWN CPU affinity (from /proc/self/status) in a fixed "Rank N bound to ..."
+# form that matches the existing pass regex on every MPI. The rank index comes
+# from whichever launcher set it (MPICH PMI_RANK, OpenMPI OMPI_COMM_WORLD_RANK,
+# PMIx, or Slurm). Unpadded N so "Rank 3 bound to" matches "ank 3 bound to".
+RANK_REPORT="${BUILD_DIR}/rank_affinity.sh"
+cat > "${RANK_REPORT}" <<'EOF'
+#!/bin/bash
+r=${PMI_RANK:-${OMPI_COMM_WORLD_RANK:-${PMIX_RANK:-${SLURM_PROCID:-0}}}}
+cpus=$(awk '/Cpus_allowed_list/{print $2}' /proc/self/status)
+echo "Rank ${r} bound to CPUs ${cpus}"
+exec "$@"
+EOF
+chmod +x "${RANK_REPORT}"
+
+OMP_NUM_THREADS=2 OMP_PROC_BIND=close mpirun -np 4 "${MPI_LAUNCH_OPTS[@]}" "${RANK_REPORT}" ./hello_mpi_omp

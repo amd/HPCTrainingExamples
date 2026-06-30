@@ -45,34 +45,51 @@ if [[ ${HDF5_ENABLE_PARALLEL} == "OFF" ]]; then
    echo "Skip"
 fi
 
-if [ -n "${CRAY_MPICH_VERSION:-}" ]; then
-  echo "Detected Cray MPICH: using srun launcher"
-  MPIRUN="srun"
-else
-  MPIRUN="mpirun"
-fi
-
-# NetCDF compile/link flags.
-#   * Cray PrgEnv-cray (cray-netcdf-hdf5parallel): the ftn wrapper injects the
-#     NetCDF include/lib paths automatically -> no explicit flags, keep ftn.
-#   * Everywhere else -- Cray PrgEnv-amd-new with the custom netcdf-c /
-#     netcdf-fortran modules, or a non-Cray AMD system -- nf-config reports the
-#     right -I (netcdf.mod lives in netcdf-fortran/include; ftn/amdflang do not
-#     honor CPATH/FPATH for .mod lookup) and -l flags. nf-config --flibs emits
-#     -lnetcdff -lnetcdf but omits netcdf-c's -L (netcdf-c is a separate install
-#     prefix); the netcdf modules now put both lib dirs on LIBRARY_PATH so the
-#     link resolves without an explicit -L. flang-new (AMD_COMPILER_TYPE=DEFAULT,
-#     set by the amd-new / PrgEnv-amd-new modules) links its Fortran runtime
-#     statically, so the binary needs no libpgmath.so/libflang.so at run time.
-#     On non-Cray, use the compiler netcdf-fortran was built with (nf-config
-#     --fc); on Cray keep the ftn wrapper set above.
+# Compiler, NetCDF flags, and MPI launcher are all keyed on the compiler/MPI
+# actually in use -- they MUST stay matched:
+#
+#   * Cray PrgEnv-cray (PE_ENV=CRAY, cray-netcdf-hdf5parallel): the ftn wrapper
+#     injects the NetCDF include/lib paths and links cray-mpich, which is
+#     PMI-integrated with srun. Keep ftn (FC set above) + srun, no explicit
+#     NetCDF flags.
+#
+#   * AMD compiler (PE_ENV=AMD on Cray, or any non-Cray AMD system): build with
+#     the compiler the custom netcdf-c/netcdf-fortran modules were built with --
+#     nf-config --fc, which is the from-source mpich-wrappers mpifort (wrapping
+#     flang-new). Do NOT use the Cray ftn wrapper here: ftn links cray-mpich's
+#     /opt/cray/pe/lib64/libmpifort_amd.so.12, which was compiled with CLASSIC
+#     flang and hard-NEEDs libpgmath.so / libflang.so. Those .so are absent in
+#     the flang-new toolchain, so every rank dies at startup with
+#     "libpgmath.so: cannot open shared object file". mpifort instead links the
+#     mpich-wrappers libmpifort_amd (flang-new, self-contained) and supplies a
+#     flang-new-format mpi.mod. nf-config also reports the right -I (netcdf.mod
+#     lives in netcdf-fortran/include) and -l flags.
+#     Launch with that MPI's OWN mpiexec/mpirun: srun cannot wire up the
+#     from-source MPICH (each rank would get a singleton MPI_COMM_WORLD), exactly
+#     like the HIP Jacobi / TAU tests.
 if [ "$PE_ENV" = "CRAY" ]; then
    NETCDF_LIBS=""
+   MPIRUN="srun"
 else
-   if [[ -z "$CRAYPE_VERSION" && ! -f /etc/cray-release ]]; then
-      FC=`nf-config --fc`
-   fi
+   FC=`nf-config --fc`
    NETCDF_LIBS="$(nf-config --fflags) $(nf-config --flibs)"
+   MPI_BINDIR=$(dirname "$(command -v "$FC" 2>/dev/null)" 2>/dev/null)
+   if [ -n "${MPI_BINDIR}" ] && [ -x "${MPI_BINDIR}/mpirun" ]; then
+      MPIRUN="${MPI_BINDIR}/mpirun"
+   elif [ -n "${MPI_BINDIR}" ] && [ -x "${MPI_BINDIR}/mpiexec" ]; then
+      MPIRUN="${MPI_BINDIR}/mpiexec"
+   elif [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+      MPIRUN="srun"
+   else
+      MPIRUN="mpirun"
+   fi
+fi
+
+# --oversubscribe is an OpenMPI flag (lets >1 rank share a slot); MPICH's hydra
+# mpiexec rejects it. Only add it for OpenMPI.
+MPI_OPTS=""
+if command -v ompi_info >/dev/null 2>&1; then
+   MPI_OPTS="--oversubscribe"
 fi
 
 SRC_DIR=$(pwd)
@@ -82,5 +99,5 @@ cd ${BUILD_DIR}
 
 git clone https://github.com/Unidata/netcdf-fortran.git
 $FC  ./netcdf-fortran/examples/F90/simple_xy_par_wr.F90 -o simple_xy_par_wf ${NETCDF_LIBS}
-${MPIRUN} -n 4 --oversubscribe ./simple_xy_par_wf
+${MPIRUN} -n 4 ${MPI_OPTS} ./simple_xy_par_wf
 ncdump simple_xy_par.nc
