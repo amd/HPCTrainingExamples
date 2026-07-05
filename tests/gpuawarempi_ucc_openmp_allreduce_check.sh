@@ -390,7 +390,7 @@ EOF
       MPIRUN_OPTIONS=
    else
       MPIFORT=mpifort
-      OPENMP_FLAGS=-fopenmp --offload-arch=${GFX_MODEL}
+      OPENMP_FLAGS="-fopenmp --offload-arch=${GFX_MODEL}"
       MPIRUN=mpirun
       MPIRUN_OPTIONS="--bind-to none -mca pml ucx -mca coll_ucc_enable"
    fi
