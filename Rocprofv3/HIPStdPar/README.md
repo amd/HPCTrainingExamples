@@ -12,7 +12,7 @@ C++ template names that give no hint about which phase of *your* code they belon
 `std::transform_reduce` even expands to **three** GPU kernels. This exercise teaches you to make
 the profile readable with roctx markers and `--kernel-rename`.
 
-This exercise focusses on GPU only profiling which is more lightweight.
+This exercise focuses on GPU-only profiling which is more lightweight.
 A related example profiles the same app with the ROCm Systems Profiler: [rocprofiler-systems/ShallowWater/HIPStdPar](https://github.com/amd/HPCTrainingExamples/tree/main/rocprofiler-systems/ShallowWater/HIPStdPar) which gives more insights in CPU and GPU interaction.
 
 ## Setup environment
@@ -23,14 +23,14 @@ Allocate a single GPU on one node on a non-default partition (replace the partit
 one from your system):
 
 ```
-salloc -N 1 --gpus=1
+salloc -N 1 --gpus=1 -p=<your partition>
 ```
 
-Load a ROCm module and enable unified memory (XNACK), required on MI300A for HIPStdPar managed
-memory:
+Load a ROCm module and enable unified memory (`XNACK`), which is required for HIPStdPar managed
+memory on MI300A:
 
 ```
-module load rocm #the exercise was tested with a pre-release version of therock 7.14
+module load rocm  # this exercise was tested with a pre-release version of therock 7.14
 export HSA_XNACK=1
 ```
 
@@ -41,14 +41,14 @@ export HSA_XNACK=1
 
 Start from the clean, unmodified source:
 
-```
+```bash
 cd HPCTrainingExamples/HIPStdPar/CXX/ShallowWater_StdPar
 export CXX=amdclang++
 make clean && make
 ./ShallowWater
 ```
 
-The run should finish in well under a second and conserve mass:
+The run should finish in well under a second and conserve the total mass:
 
 ```
 Iteration:00000, Time:0.000000, Timestep:0.048059 Total mass:399200.000000
@@ -61,14 +61,14 @@ Iteration:02000, Time:0.441816, Timestep:0.022692 Total mass:399200.000000
 
 Collect kernel statistics for the unmodified app:
 
-```
+```bash
 rocprofv3 --stats --kernel-trace --output-format csv -- ./ShallowWater
 ```
 
 Open the generated `*_kernel_stats.csv`. Every row is a `rocprim`/`thrust` template name that is
 hundreds of characters long, for example:
 
-```
+```bash
 "Name","Calls","TotalDurationNs",...
 "void thrust::THRUST_200805_400400_NS::hip_rocprim::__parallel_for::kernel<256u, thrust::...for_each_f<range::iterator, ...main::{lambda(int)#9}...> >(...)",...
 "void rocprim::ROCPRIM_400400_NS::detail::trampoline_kernel<...reduce_impl<...transform_iterator<main::{lambda(int)#10}...> >(...)",...
@@ -149,7 +149,7 @@ make clean && make
 
 Collect a kernel trace including the markers and write a Perfetto trace file:
 
-```
+```bash
 rocprofv3 --kernel-trace --marker-trace --output-format pftrace --output-file timeline -- ./ShallowWater
 ```
 
@@ -168,40 +168,44 @@ scp <user>@<host>:<path>/timeline_results.pftrace .
 
 Now use `--kernel-rename`, which replaces each kernel name with the enclosing roctx range name:
 
-```
+```bash
 rocprofv3 --stats --kernel-trace --marker-trace --output-format csv --kernel-rename -- ./ShallowWater
 ```
 
-The `*_kernel_stats.csv` is now readable:
+The kernel names in the `*_kernel_stats.csv` file are now readable:
 
 ```
 "Name","Calls","TotalDurationNs","AverageNs","Percentage","MinNs","MaxNs","StdDev"
-"calc_timestep",300,1415852,4719.506667,25.81,560,9280,2647.619502
-"state_update",100,1316286,13162.860000,24.00,11280,14640,745.481663
-"flux_y",100,944367,9443.670000,17.22,7761,11040,646.745544
-"bc_y",100,870726,8707.260000,15.87,7200,10200,740.930450
-"flux_x",100,549723,5497.230000,10.02,4480,6680,476.473533
-"bc_x",100,378240,3782.400000,6.90,2960,4560,376.408117
-"check_mass",3,10000,3333.333333,0.1823,1400,6160,2502.585330
+"calc_timestep",6000,29349493,4891.582167,31.75,800,9160,2415.840931
+"bc_y",2000,16726779,8363.389500,18.10,6920,9960,685.548138
+"state_update",2000,14978512,7489.256000,16.21,6680,541203,11941.465077
+"flux_y",2000,12209094,6104.547000,13.21,5160,350282,7706.673181
+"flux_x",2000,10748326,5374.163000,11.63,4480,737324,16376.742939
+"bc_x",2000,7222356,3611.178000,7.81,2640,4640,339.870308
+"init_state",1,961605,961605.000000,1.04,961605,961605,0.00000000e+00
+"check_mass",60,206720,3445.333333,0.2237,1520,6200,1561.719464
+"init_timestep",3,15000,5000.000000,0.0162,2600,8840,3360.000000
+"init_total_mass",3,11120,3706.666667,0.0120,2120,5400,1642.599566
 ```
 
 > **CAREFUL:** `--kernel-rename` renames **every** kernel inside a roctx range to that range's
 > name. All kernels in one range are merged into a single entry. That is exactly why
-> `calc_timestep` reports **300** calls here: the range runs 100 times and each
-> `std::transform_reduce` is 3 kernels (100 x 3 = 300). This is convenient for grouping by phase,
+> `calc_timestep` reports **6000** calls here: the range runs 100 times and each
+> `std::transform_reduce` launches 3 individual kernels (2000 x 3 = 6000). This is convenient for grouping by phase,
 > but you lose the per-kernel breakdown. Use Step 1 (no rename) when you need the individual
 > kernels, and choose your marker granularity accordingly: one marker per kernel keeps the rename
-> one-to-one, currently there is no (not yet) a feature to rename kernels within a region with 
+> one-to-one, currently there is no feature (yet) to rename kernels within a region with
 > individual names, thus be mindful about the 3 reduction kernels we saw earlier.
 
-### Limiting collection to a few iterations (optional)
+### Limiting collection to a range of iterations (optional)
 
-For long runs you can restrict data collection to a representative window instead of tracing
-every iteration. Add `roctxProfilerPause(0)` at the start of `main()` and toggle around a target
+For long runs, you can restrict data collection to a representative window of iterations or a
+certain part of the code instead of tracing the whole run.
+Add `roctxProfilerPause(0)` at the start of `main()` and toggle around a target
 iteration range, e.g. resume at iteration 500 and pause again at 600:
 
 ```cpp
-roctxProfilerPause(0);                       // at the start of main()
+roctxProfilerPause(0);                       // pause at the start of main()
 ...
 if (n == 500) roctxProfilerResume(0);        // inside the iteration loop
 ...
@@ -215,25 +219,25 @@ recorded (the counts above reflect such a window). This keeps trace files small 
 
 Read the counters available for this GPU (look for the `gfx942` section):
 
-```
+```bash
 less $ROCM_PATH/lib/rocprofiler/gfx_metrics.xml
 ```
 
 Create an `input_counters.txt`. Each `pmc:` line is collected in a separate pass. Keep only a few
 counters per line: many derived metrics (e.g. `VALUUtilization`, `MeanOccupancyPerCU`) expand to
 several base counters and a single line can exceed the hardware counter slots, which fails with
-`error code 38: Request exceeds the capabilities of the hardware to collect`. A working set on
-MI300A (gfx942) is for example:
+`error code 38: Request exceeds the capabilities of the hardware to collect`.
+A working set on MI300A (gfx942) is for example:
 
 ```
 pmc: VALUBusy FetchSize
 pmc: WriteSize MemUnitStalled
 pmc: CU_OCCUPANCY GPU_UTIL
 ```
-e.g. FetchSize and WriteSize on the same line will not work.
+For instance, combining `FetchSize` and `WriteSize` on the same line will not work.
 Collect the counters. Combine with `--kernel-rename` to get per-phase counter values:
 
-```
+```bash
 rocprofv3 -i input_counters.txt --kernel-trace --output-format csv --kernel-rename -- ./ShallowWater
 ```
 

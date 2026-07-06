@@ -51,12 +51,10 @@ HSA_XNACK=1 ./ShallowWater
 The output should show iterations progressing with conservation of mass:
 
 ```
-Iteration:00000, Time:0.000000, Timestep:0.008827 Total mass:600000.000000
-Iteration:00100, Time:0.930498, Timestep:0.009498 Total mass:600000.000000
-Iteration:00200, Time:1.893498, Timestep:0.009685 Total mass:600000.000000
+Iteration:00000, Time:0.000000, Timestep:0.048059 Total mass:399200.000000
 ...
-Iteration:02000, Time:19.322498, Timestep:0.009716 Total mass:600000.000000
- Flow finished in ... seconds
+Iteration:02000, Time:0.441816, Timestep:0.022692 Total mass:399200.000000
+ Flow finished in 0.211508 seconds
 ```
 
 Note: `HSA_XNACK=1` is required on MI300A for stdpar managed memory. If your GPU does not support XNACK, the Makefile will add `--hipstdpar-interpose-alloc` automatically.
@@ -100,10 +98,12 @@ Look for `perfetto-trace-<pid>.proto`. Copy this file to your local machine and 
 To also see host-side function entry and exit in the trace, use `rocprof-sys-instrument` to create an instrumented binary:
 
 ```
-rocprof-sys-instrument -o ShallowWater.inst -- ./ShallowWater
+rocprof-sys-instrument -o ShallowWater.inst -i 16 -- ./ShallowWater
 ```
 
-This uses dynamic binary rewriting to insert profiling hooks into host functions. By default, only functions with more than 1024 instructions are instrumented. You can lower this threshold with `--min-instructions` or select specific functions with `--function-include`.
+This uses dynamic binary rewriting to insert profiling hooks into host functions. By default, only functions with more than 1024 instructions are instrumented.
+In this easy example, only a single function would be instrumented with this default, so we lower this threshold with the `-i 16` argument to 16 instructions.
+You can also select specific functions explicitly with `--function-include`.
 
 Now run the instrumented binary:
 
@@ -224,7 +224,7 @@ For a long-running application with many iterations, collecting a full trace can
 
 ### Step 1: Add pause/resume to the source
 
-At the beginning of `main()`, pause profiling so data collection starts disabled:
+At the beginning of `main()`, pause profiling so data collection is disabled at the start:
 
 ```cpp
 int main(int argc, char *argv[])
@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
   // ... existing code ...
 ```
 
-Inside the outer iteration loop (`for (int n = 0; n < ntimes; )`), add conditions to resume and pause around a target iteration range. For example, to profile only iterations 500-600, add just before the burst loop:
+Inside the outer iteration loop (`for (int n = 0; n < ntimes; )`), add conditions to resume and pause around a targeted iteration range. For example, to profile only iterations 500-600, add just before the burst loop:
 
 ```cpp
 for (int n = 0; n < ntimes; ) {
