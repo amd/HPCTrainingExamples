@@ -74,45 +74,69 @@ def _parse_custom_headers(header_str):
     return headers or None
 
 
-def _require_env(name, fallback_name=None):
-    val = os.environ.get(name)
-    if not val and fallback_name:
-        val = os.environ.get(fallback_name)
-    if not val:
-        sys.exit(f"ERROR: Set {name} (or {fallback_name}) environment variable.")
-    return val
+def _env_first(*names, default=None):
+    """Return the first environment variable that is set (non-empty) among `names`, else
+    `default`. Lets configuration come from the environment (e.g. exported in ~/.bashrc) and
+    fall back to code defaults only when nothing is set."""
+    for n in names:
+        v = os.environ.get(n)
+        if v:
+            return v
+    return default
 
 
-def _build_config(role):
-    """Build an AutoGen LLM config for the given role (explorer or frontier)."""
-    prefix = "ICF_EXPLORER" if role == "explorer" else "ICF_FRONTIER"
+def _build_config():
+    """Build the SINGLE AutoGen LLM config used by ALL agents (there is no separate
+    'frontier' vs 'explorer' model). Every value is taken from the environment if set,
+    otherwise it falls back to the code default below.
 
+    Recognized env vars (first one that is set wins):
+      base URL : ICF_BASE_URL, ICF_EXPLORER_BASE_URL   (+ ANTHROPIC_BASE_URL for anthropic)
+      model    : ICF_MODEL, ICF_EXPLORER_MODEL
+      api key  : ICF_API_KEY, ICF_EXPLORER_API_KEY     (+ ANTHROPIC_API_KEY for anthropic)
+      timeout  : ICF_TIMEOUT, ICF_REQUEST_TIMEOUT
+      temp     : ICF_TEMPERATURE
+    """
     if API_TYPE == "openai":
-        api_key = os.environ.get(f"{prefix}_API_KEY", "unused")
-        base_url = _require_env(f"{prefix}_BASE_URL")
-        model = os.environ.get(f"{prefix}_MODEL", "gptoss-20b-hedp")
-        entry = {"model": model, "api_key": api_key, "base_url": base_url, "max_tokens": 2048}
+        base_url = _env_first("ICF_BASE_URL", "ICF_EXPLORER_BASE_URL",
+                              default="http://localhost:8000/v1")
+        model = _env_first("ICF_MODEL", "ICF_EXPLORER_MODEL", default="gptoss-20b-hedp")
+        api_key = _env_first("ICF_API_KEY", "ICF_EXPLORER_API_KEY", default="unused")
+        # A per-request timeout is essential for a REMOTE endpoint: without it, one stalled
+        # generation (long-context request, dropped/half-open connection, server-side queueing)
+        # blocks the OpenAI client indefinitely and freezes the whole campaign mid-round. On a
+        # timeout the SDK retries, so a transient stall recovers instead of hanging forever.
+        timeout = int(_env_first("ICF_TIMEOUT", "ICF_REQUEST_TIMEOUT", default="180"))
+        entry = {"model": model, "api_key": api_key, "base_url": base_url,
+                 "max_tokens": 2048, "timeout": timeout, "max_retries": 3}
     else:
-        api_key = _require_env(f"{prefix}_API_KEY", "ANTHROPIC_API_KEY")
-        base_url = _require_env(f"{prefix}_BASE_URL", "ANTHROPIC_BASE_URL")
-        model = os.environ.get(f"{prefix}_MODEL", "Claude-Sonnet-4.5")
+        base_url = _env_first("ICF_BASE_URL", "ICF_EXPLORER_BASE_URL", "ANTHROPIC_BASE_URL")
+        api_key = _env_first("ICF_API_KEY", "ICF_EXPLORER_API_KEY", "ANTHROPIC_API_KEY")
+        if not base_url or not api_key:
+            sys.exit("ERROR: set ICF_BASE_URL and ICF_API_KEY (or ANTHROPIC_BASE_URL / "
+                     "ANTHROPIC_API_KEY) in the environment.")
+        model = _env_first("ICF_MODEL", "ICF_EXPLORER_MODEL", default="Claude-Sonnet-4.5")
         headers = _parse_custom_headers(
-            os.environ.get(f"{prefix}_CUSTOM_HEADERS", os.environ.get("ANTHROPIC_CUSTOM_HEADERS", ""))
-        )
+            _env_first("ICF_CUSTOM_HEADERS", "ICF_EXPLORER_CUSTOM_HEADERS",
+                       "ANTHROPIC_CUSTOM_HEADERS", default=""))
         entry = {"model": model, "api_key": api_key, "base_url": base_url, "api_type": "anthropic"}
         if headers:
             entry["default_headers"] = headers
 
-    temp = 0.7 if role == "explorer" else 0.3
+    # gpt-oss is calibrated to sample at temperature 1.0 / top_p 1.0 (OpenAI's stated
+    # recommendation); running it much lower can degrade its reasoning. Default to 1.0 and
+    # let ICF_TEMPERATURE override (dial down toward ~0.7 only if strict format-following,
+    # e.g. the RUN_SIMULATION line, becomes unreliable).
+    temp = float(_env_first("ICF_TEMPERATURE", default="1.0"))
     return {"config_list": [entry], "temperature": temp}
 
 
-config_explorer = _build_config("explorer")
-config_frontier = _build_config("frontier")
+# One config, used by every agent and the group-chat manager.
+config = _build_config()
 if API_TYPE == "openai":
-    for cfg in [config_explorer, config_frontier]:
-        cfg["config_list"][0]["price"] = [0, 0]
-print(f"API backend: {API_TYPE} | Explorer model: {config_explorer['config_list'][0]['model']} | Frontier model: {config_frontier['config_list'][0]['model']}")
+    config["config_list"][0]["price"] = [0, 0]
+print(f"API backend: {API_TYPE} | Model: {config['config_list'][0]['model']} | "
+      f"Endpoint: {config['config_list'][0]['base_url']}")
 
 # --- MCP client implementation ---
 def call_mcp_icf_server(R0: float, v0: float, T0: float, M_sh: float, M_hs: float, delta: float, mode: float, roughness: float) -> str:
@@ -222,13 +246,13 @@ The User_Proxy will parse this, run the simulation, and return results."""
 
 principal_investigator = autogen.AssistantAgent(
     name="Principal_Investigator",
-    llm_config=config_frontier,
+    llm_config=config,
     system_message=_PI_SYSTEM_BASE + _PI_TOOL_INSTR,
 )
 
 explorer_agent = autogen.AssistantAgent(
     name="Design_Explorer",
-    llm_config=config_explorer,
+    llm_config=config,
     system_message="""\
 You are the ICF Design Explorer. You propose capsule parameters to maximize fusion yield.
 You CANNOT call tools or run simulations. You ONLY output parameter proposals for the
@@ -257,12 +281,15 @@ REFERENCE POINT (at the 45 kJ / 3 MJ budget, yields ~7 MJ):
   R0=1.5e-4, v0=-4.5e5, T0=1.0, M_sh=2.5e-7, M_hs=5e-9
   KE = 0.5 * 2.5e-7 * (4.5e5)^2 = 25312 J. Scale M_sh/v0 to match the actual campaign budget.
 
-Reply with ONLY your 5 parameter values and KE check. Keep it brief."""
+Reply with ONLY your 5 parameter values and KE check. Keep it brief.
+Propose EXACTLY ONE design for the current round — do NOT enumerate multiple rounds or a
+table of designs. Do NOT output the word TERMINATE; only the Principal_Investigator ends the
+campaign."""
 )
 
 adversary_agent = autogen.AssistantAgent(
     name="Defect_Adversary",
-    llm_config=config_frontier,
+    llm_config=config,
     system_message="""\
 You are the Defect_Adversary. Your ONLY job is to propose 3 defect parameter values.
 Do NOT coordinate other agents. Do NOT discuss design parameters. Do NOT role-play as the PI.
@@ -282,7 +309,9 @@ PARAMETER BOUNDS (server-enforced, values outside will be clamped):
 STRATEGY — vary defects across rounds:
   Round 1: moderate asymmetry (delta~0.04), low mode (~10), typical roughness (~5e-7).
   Round 2: low asymmetry (delta~0.01), high mode (~30), roughness (~2e-6).
-  Round 3: combine whatever was most damaging."""
+  Round 3: combine whatever was most damaging.
+
+Do NOT output the word TERMINATE; only the Principal_Investigator ends the campaign."""
 )
 
 # --- Conversational PI for post-campaign analysis ("debrief" mode) ---
@@ -307,7 +336,7 @@ UNITS: SI throughout except T0 which is in keV. KE budget = 0.015 * E_laser."""
 
 pi_analyst = autogen.AssistantAgent(
     name="Principal_Investigator",
-    llm_config=config_frontier,
+    llm_config=config,
     system_message=_PI_ANALYST_SYSTEM,
 )
 
@@ -436,19 +465,45 @@ def run_campaign(user_message, e_laser, max_rounds, result_holder):
     msgs_per_round = 7 if API_TYPE == "anthropic" else 5
     groupchat.max_round = 3 + max_rounds * msgs_per_round
 
+    # Per-campaign record of (params, yield) for every simulation actually executed.
+    recorder = []
+    _active_recorder = recorder
+
+    # --- Deterministic stopping (does NOT rely on the LLM emitting TERMINATE) ---
+    # Stop when the best recorded yield has improved < 5% for two consecutive simulations
+    # (the documented convergence criterion), computed in code from the recorded yields.
+    CONV_THRESH = 0.05
+    MIN_SIMS = 3
+    def _converged():
+        ys = [y for _p, y in recorder]
+        if len(ys) < MIN_SIMS:
+            return False
+        best_seq, b = [], 0.0
+        for y in ys:
+            b = max(b, y)
+            best_seq.append(b)
+        def imp(cur, prev):
+            return (cur - prev) / prev if prev > 0 else 1.0
+        return imp(best_seq[-1], best_seq[-2]) < CONV_THRESH and imp(best_seq[-2], best_seq[-3]) < CONV_THRESH
+
     def _is_termination(msg):
-        # Match TERMINATE only at the END of a message (the PI's "end your summary with
-        # TERMINATE" convention). Checking for it anywhere would also match instruction text
-        # that merely mentions the word (e.g. the kickoff's round-budget note). Strip trailing
-        # markdown emphasis/punctuation first, since models often write "**TERMINATE**" or
-        # "TERMINATE." which a naive endswith("TERMINATE") would miss.
-        content = msg.get("content") if isinstance(msg, dict) else msg
+        # The campaign ends only on a Principal_Investigator turn, when EITHER the design has
+        # converged (deterministic, code-based) OR the PI explicitly signs off with TERMINATE.
+        # Restricting to the PI avoids the Explorer/Adversary ending the chat by echoing the
+        # keyword or dumping all rounds at once; the code-based convergence avoids depending on
+        # the LLM following the stopping protocol (which the larger models often don't). The
+        # trailing-markdown strip handles "**TERMINATE**" / "TERMINATE.".
+        if not isinstance(msg, dict) or msg.get("name") != principal_investigator.name:
+            return False
+        if _converged():
+            return True
+        content = msg.get("content")
         if not isinstance(content, str):
             return False
         return content.rstrip().rstrip("*_`~.!: \t\r\n").upper().endswith("TERMINATE")
 
     manager = autogen.GroupChatManager(
-        groupchat=groupchat, llm_config=config_frontier, is_termination_msg=_is_termination)
+        groupchat=groupchat, llm_config=config, is_termination_msg=_is_termination)
 
     ke_budget = ETA_COUPLING * e_laser
     budget_note = (
@@ -461,8 +516,6 @@ def run_campaign(user_message, e_laser, max_rounds, result_holder):
         f"stopping criteria (do not stop after a single round)."
     )
 
-    recorder = []
-    _active_recorder = recorder
     chat_error = []
     done = threading.Event()
 
@@ -482,6 +535,13 @@ def run_campaign(user_message, e_laser, max_rounds, result_holder):
 
     seen = 0
     accumulated = ""
+    # Keepalive: during a model turn no new messages appear, so without periodic output the
+    # streaming connection to the browser can drop and the UI "freezes" mid-run even though the
+    # backend keeps going. Re-emit the transcript with a small rotating marker every few seconds
+    # so the stream stays alive and the user can see the agents are still working.
+    KEEPALIVE_SECS = 4.0
+    last_emit = time.time()
+    spin = 0
     while not done.is_set():
         msgs = groupchat.messages
         if len(msgs) > seen:
@@ -492,8 +552,13 @@ def run_campaign(user_message, e_laser, max_rounds, result_holder):
                     accumulated += f"\n\n---\n**{name}:**\n{content}"
                     yield accumulated.strip()
             seen = len(msgs)
+            last_emit = time.time()
         else:
             time.sleep(0.5)
+            if time.time() - last_emit >= KEEPALIVE_SECS:
+                spin = (spin + 1) % 3
+                yield (accumulated + f"\n\n---\n_agents working{'.' * (spin + 1)}_").strip()
+                last_emit = time.time()
 
     for msg in groupchat.messages[seen:]:
         name = msg.get("name", "System")
@@ -518,6 +583,14 @@ def run_campaign(user_message, e_laser, max_rounds, result_holder):
             best_yield, best_params = y, params
     mean_yield = statistics.fmean(yields) if yields else 0.0
     std_yield = statistics.stdev(yields) if len(yields) > 1 else 0.0
+
+    # Always show a clear end-of-campaign line, even if the LLM never produced a clean summary.
+    if not chat_error:
+        reason = "converged" if _converged() else "reached the round budget"
+        accumulated += (f"\n\n---\n**Campaign complete** ({reason}). "
+                        f"Ran {len(recorder)} simulation(s); best yield {best_yield:.2f} MJ.")
+        yield accumulated.strip()
+
     result_holder["best_yield"] = best_yield
     result_holder["best_params"] = best_params
     result_holder["results"] = recorder
@@ -876,28 +949,55 @@ def handle_request(user_message, chat_history, state):
         return
 
     if mode == "media":
+        import icf_viz
         e_laser = _parse_laser_energy(user_message)
-        log = (f"# Simulation Media\n\nRunning an agent campaign at {e_laser/1e6:.2f} MJ to find a "
-               f"design, then rendering its implosion movie and diagnostic plots.\n")
-        yield _assistant(log), gr.update(), gr.update()
 
-        holder = {}
-        sub_msg = f"optimize an ICF capsule for a {e_laser/1e6:.2f} MJ laser"
-        for transcript in run_campaign(sub_msg, e_laser, MEDIA_MAX_ROUNDS, holder):
-            yield _assistant(log + "\n" + transcript), gr.update(), gr.update()
+        # A media request is usually a FOLLOW-UP ("...now show the movie"), so by default reuse
+        # the best design already found this session instead of re-running the whole optimization
+        # (which is slow and can disagree with the earlier result). Only run a fresh campaign if
+        # the user explicitly asks to optimize/run, or if no design has been found yet.
+        wants_new_run = any(k in user_message.lower() for k in
+                            ["optimize", "simulate", "run a", "run the sim", "new campaign", "design a"])
+        best, best_yield, best_e = None, 0.0, e_laser
+        for c in state.get("campaigns", []):
+            bp = c.get("best_params")
+            if bp and c.get("best_yield", 0.0) >= best_yield:
+                best, best_yield, best_e = bp, c.get("best_yield", 0.0), c.get("e_laser", e_laser)
 
-        best = holder.get("best_params")
-        if not best:
-            best = _fallback_design(e_laser)
-            holder["best_params"] = best  # so the PI debrief reflects what was actually rendered
-            log += "\n\n_(agent campaign produced no simulation; rendering a fallback design)_\n"
+        if best is not None and not wants_new_run:
+            e_laser = best_e
+            log = (f"# Simulation Media\n\nReusing the best design found earlier this session "
+                   f"(**{best_yield:.2f} MJ** yield at {e_laser/1e6:.2f} MJ laser) and rendering its "
+                   f"implosion movie and diagnostic plots. _No new optimization is run — ask me to "
+                   f"\"optimize\" if you want a fresh campaign._\n\n"
+                   f"**Design:** " + _fmt_params(best) + "\n")
+            yield _assistant(log), gr.update(), gr.update()
+        else:
+            reason = "you asked for a new optimization" if wants_new_run else "no design has been found yet this session"
+            log = (f"# Simulation Media\n\nRunning an agent campaign at {e_laser/1e6:.2f} MJ "
+                   f"({reason}), then rendering its implosion movie and diagnostic plots.\n")
             yield _assistant(log), gr.update(), gr.update()
 
-        log += (f"\n\n## Best design found (yield {holder.get('best_yield', 0):.2f} MJ)\n"
-                f"Rendering implosion movie and diagnostics...\n")
+            holder = {}
+            sub_msg = f"optimize an ICF capsule for a {e_laser/1e6:.2f} MJ laser"
+            for transcript in run_campaign(sub_msg, e_laser, MEDIA_MAX_ROUNDS, holder):
+                yield _assistant(log + "\n" + transcript), gr.update(), gr.update()
+
+            best = holder.get("best_params")
+            if not best:
+                best = _fallback_design(e_laser)
+                holder["best_params"] = best  # so the PI debrief reflects what was actually rendered
+                log += ("\n\n_(the agent campaign produced no recorded simulation, so the agents' "
+                        "narrative yield is not a real result — rendering a physically reasonable "
+                        "fallback design instead)_\n")
+            else:
+                log += f"\n\n## Best design found (recorded yield {holder.get('best_yield', 0):.2f} MJ)\n"
+            _record_campaign(state, f"media @ {e_laser/1e6:.2f} MJ", user_message, e_laser, holder)
+            yield _assistant(log), gr.update(), gr.update()
+
+        log += "\nRendering implosion movie and diagnostics...\n"
         yield _assistant(log), gr.update(), gr.update()
 
-        import icf_viz
         outdir = _new_media_dir()
         try:
             png = icf_viz.render_diagnostics(best, outdir)
@@ -905,8 +1005,6 @@ def handle_request(user_message, chat_history, state):
             mp4 = icf_viz.render_implosion_movie(best, outdir)
             log += "\n\n**Media rendering complete.**"
             yield _assistant(log), gr.update(value=png), gr.update(value=mp4)
-            _record_campaign(state, f"media @ {e_laser/1e6:.2f} MJ", user_message, e_laser,
-                             holder, media=f"diagnostics={png}, movie={mp4}")
         except Exception as e:
             log += f"\n\n**Media generation failed:** {e}"
             yield _assistant(log), gr.update(), gr.update()
@@ -916,9 +1014,8 @@ def handle_request(user_message, chat_history, state):
 def build_ui():
     _here = os.path.dirname(os.path.abspath(__file__))
     # Prefer the white logo (legible on the dark background); fall back to the black one.
-    _logo_white = os.path.join(_here, "amd_logo_white.png")
-    _logo_black = os.path.join(_here, "amd_logo.png")
-    _logo = _logo_white if os.path.exists(_logo_white) else _logo_black
+    # Only the white logo is bundled (legible on the dark theme).
+    _logo = os.path.join(_here, "amd_logo_white.png")
     theme = gr.themes.Origin(
         primary_hue="green",
         neutral_hue="slate",
@@ -938,9 +1035,18 @@ def build_ui():
     with gr.Blocks(title="Agentic RL Fusion Capsule Optimizer", theme=theme) as demo:
         # Session-scoped store of all campaign results + the PI analysis conversation.
         results_state = gr.State({"campaigns": [], "chat": []})
-        if os.path.exists(_logo):
-            gr.Image(value=_logo, height=64, show_label=False, container=False,
-                     interactive=False)
+        with gr.Row(equal_height=True):
+            with gr.Column(scale=2, min_width=120):
+                if os.path.exists(_logo):
+                    gr.Image(value=_logo, height=64, show_label=False, container=False,
+                             interactive=False)
+            with gr.Column(scale=6):
+                gr.Markdown(
+                    "<div style='text-align:right; padding-top:18px;'>"
+                    "<span style='display:inline-block; background:#2a2f36; color:#ffffff; "
+                    "font-size:1.8em; font-weight:600; padding:6px 12px; border-radius:14px; "
+                    "border:1px solid #3c4450;'>powered by LUX and the AIMS Ecosystem</span></div>"
+                )
         gr.Markdown("# Agentic RL Fusion Capsule Optimizer\n"
                     "Multi-agent system for robust fusion yield assessment. "
                     "Ask for a single point design (*'optimize a capsule for a 3 MJ laser energy'*), "
@@ -961,7 +1067,7 @@ def build_ui():
                     submit = gr.Button("Send", variant="primary", scale=1, min_width=80)
             with gr.Column(scale=2):
                 image = gr.Image(label="Plots", type="filepath")
-                video = gr.Video(label="Implosion Movie")
+                video = gr.Video(label="Dynamics")
                 gr.Markdown(
                     "<div style='text-align:right; font-size:0.75em; color:#888; "
                     "line-height:1.4;'>"

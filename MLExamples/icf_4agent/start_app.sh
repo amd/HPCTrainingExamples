@@ -4,39 +4,27 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # --- Backend selection ---
-# Set to "openai" for local vLLM, "anthropic" for cloud API
-#export ICF_API_TYPE="${ICF_API_TYPE:-anthropic}"
+# "openai"    = any OpenAI-compatible endpoint (local vLLM or a remote server)
+# "anthropic" = Anthropic cloud API
 export ICF_API_TYPE="${ICF_API_TYPE:-openai}"
 
-if [ "$ICF_API_TYPE" = "openai" ]; then
-    # Local vLLM defaults. To use a REMOTE OpenAI-compatible endpoint instead, override the
-    # ICF_EXPLORER_* / ICF_FRONTIER_* variables below (e.g. export them before running, or edit
-    # the defaults here).
-    #
-    # IMPORTANT: the *_API_KEY must be the raw token only -- do NOT prepend "Bearer ". The
-    # OpenAI SDK adds the "Bearer " prefix automatically; including it yourself sends
-    # "Authorization: Bearer Bearer <key>" and the endpoint rejects it (HTTP 403).
-    #
-    # Note: ICF_FRONTIER_* backs the PI, the Defect_Adversary, and the GroupChatManager -- if
-    # it points at an unreachable endpoint the campaign aborts on the PI's first turn with a
-    # connection error, so make sure BOTH roles point at a live server.
-    VLLM_PORT="${ICF_VLLM_PORT:-8000}"
-    export ICF_EXPLORER_BASE_URL="${ICF_EXPLORER_BASE_URL:-http://localhost:${VLLM_PORT}/v1}"
-    export ICF_EXPLORER_MODEL="${ICF_EXPLORER_MODEL:-gptoss-20b-hedp}"
-    export ICF_EXPLORER_API_KEY="${ICF_EXPLORER_API_KEY:-unused}"
-    export ICF_FRONTIER_BASE_URL="${ICF_FRONTIER_BASE_URL:-http://localhost:${VLLM_PORT}/v1}"
-    export ICF_FRONTIER_MODEL="${ICF_FRONTIER_MODEL:-gptoss-20b-hedp}"
-    export ICF_FRONTIER_API_KEY="${ICF_FRONTIER_API_KEY:-unused}"
-else
-    # Anthropic cloud defaults (reads from ANTHROPIC_* env vars)
-    export ICF_EXPLORER_MODEL="${ICF_EXPLORER_MODEL:-Claude-Sonnet-4.5}"
-    export ICF_FRONTIER_MODEL="${ICF_FRONTIER_MODEL:-Claude-Sonnet-4.5}"
-fi
+# There is ONE base model, shared by every agent. Its settings are read from the environment
+# (export them in ~/.bashrc so secrets never live in this repo) and fall back to the code
+# defaults in app.py when unset. Recognized variables (first one set wins):
+#
+#   ICF_BASE_URL   / ICF_EXPLORER_BASE_URL   base URL of the OpenAI-compatible endpoint
+#   ICF_MODEL      / ICF_EXPLORER_MODEL       served model name
+#   ICF_API_KEY    / ICF_EXPLORER_API_KEY     raw API token (NO "Bearer " prefix)
+#   ICF_TIMEOUT    / ICF_REQUEST_TIMEOUT      per-request timeout in seconds (default 180)
+#   ICF_TEMPERATURE                           sampling temperature (default 0.5)
+#
+# For the anthropic backend, ANTHROPIC_BASE_URL / ANTHROPIC_API_KEY are also honored.
+# This script intentionally sets NO model variables and NO secrets — it just launches the app.
 
 echo "Starting ICF Multi-Agent Optimizer"
-echo "  Backend:        $ICF_API_TYPE"
-echo "  Explorer model: $ICF_EXPLORER_MODEL"
-echo "  Frontier model: $ICF_FRONTIER_MODEL"
+echo "  Backend: $ICF_API_TYPE"
+echo "  Model:   ${ICF_MODEL:-${ICF_EXPLORER_MODEL:-<app.py default>}}"
+echo "  Endpoint:${ICF_BASE_URL:-${ICF_EXPLORER_BASE_URL:-<app.py default>}}"
 echo ""
 
 source "$SCRIPT_DIR/aivenv/bin/activate"

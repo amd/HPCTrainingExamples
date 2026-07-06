@@ -1,3 +1,5 @@
+<img src="amd_logo_white.png" alt="AMD" height="48">
+
 # Adversarial Multi-Agent ICF Capsule Optimizer
 
 A multi-agent system that autonomously optimizes Inertial Confinement Fusion (ICF) capsule designs under realistic manufacturing uncertainty. A Design Explorer agent maximizes fusion yield while a Defect Adversary agent stress-tests designs with manufacturing imperfections, orchestrated by a Principal Investigator agent — all powered by LLM reasoning and a fast physics surrogate. After a campaign runs, the same Principal Investigator can be **interactively queried** about the results: it answers analysis questions ("why did the best design win?", "how robust is it to defects?") from the recorded run data, with multi-turn memory across the conversation.
@@ -33,10 +35,10 @@ The agents communicate through AutoGen's group chat with constrained speaker tra
 
 Every campaign's structured results (best design, all sampled designs and their yields, mean/σ statistics, sweep curves, rendered media) are retained in a session-scoped store. A dedicated **conversational PI agent** (no tool access, separate from the orchestrating PI) draws on this store to answer follow-up analysis questions, so the user can interrogate what was run without launching a new simulation. The router automatically distinguishes a *request to run* (e.g. "optimize…", "sweep…", "show a movie…") from a *question about prior results*, sending the latter to the debrief agent.
 
-The system runs against either backend (selected by `ICF_API_TYPE`):
+All agents share a **single LLM** (there is no separate "frontier" vs "explorer" model). The system runs against either backend (selected by `ICF_API_TYPE`):
 
-- **`anthropic`** — a frontier cloud model. The PI invokes the simulation through AutoGen's native tool-calling.
-- **`openai`** — a local, OpenAI-compatible endpoint (vLLM serving the fine-tuned `gptoss-20b-hedp` weights). Because smaller open-weight models are unreliable at formal tool-calling, in this mode the PI instead emits a plain-text `RUN_SIMULATION: R0=..., v0=..., ...` line, which a hook parses and executes against the MCP server, injecting the results back into the conversation. This mode also uses deterministic speaker scheduling, response sanitization (stripping stray tool-call/null tokens), and bounded conversation history so long campaigns stay within the model's context window.
+- **`anthropic`** — a cloud model via the Anthropic API. The PI invokes the simulation through AutoGen's native tool-calling.
+- **`openai`** — any OpenAI-compatible endpoint, **local or remote** (e.g. a local vLLM serving `gptoss-20b-hedp`, or a remote server hosting `openai/gpt-oss-120b`). Because open-weight models are unreliable at formal tool-calling, in this mode the PI instead emits a plain-text `RUN_SIMULATION: R0=..., v0=..., ...` line, which a hook parses and executes against the MCP server, injecting the results back into the conversation. This mode also uses deterministic speaker scheduling, response sanitization (stripping stray tool-call/null tokens), bounded conversation history, and a per-request timeout with automatic retries so a slow or stalled remote call cannot hang a campaign.
 
 ## Physics Model
 
@@ -101,7 +103,7 @@ pip install -r requirements.txt
 
 ## Running
 
-The system supports two LLM backends: a cloud API (Anthropic) and local inference (vLLM with OpenAI-compatible API).
+The system supports a cloud API (Anthropic) and any OpenAI-compatible endpoint — a **local** vLLM server or a **remote** hosted model. All agents share one model, configured entirely through environment variables (see [Model Configuration](#model-configuration-single-shared-model)).
 
 ### Option A: Cloud API (Anthropic)
 
@@ -130,6 +132,20 @@ Start the vLLM server in one terminal, then the app in another:
 ./start_app.sh
 ```
 
+### Option C: Remote OpenAI-compatible endpoint
+
+Point the app at any remote OpenAI-compatible server (e.g. a hosted `gpt-oss-120b`) by exporting the model variables — ideally in `~/.bashrc` so the token stays out of the repo:
+
+```bash
+export ICF_API_TYPE=openai
+export ICF_BASE_URL="https://your-endpoint/v1"    # or ICF_EXPLORER_BASE_URL
+export ICF_MODEL="openai/gpt-oss-120b"            # or ICF_EXPLORER_MODEL
+export ICF_API_KEY="your-raw-token"               # NO "Bearer " prefix; or ICF_EXPLORER_API_KEY
+./start_app.sh
+```
+
+`start_app.sh` sets no model variables or secrets itself — it reads them from the environment and falls back to the code defaults in `app.py` when unset.
+
 The app opens a Gradio web UI with a public share link (no X server needed). The interface uses the Origin theme (dark mode by default), shows the AMD logo, streams the agent conversation in a chat panel, and renders plots and movies in side panels. Agent messages stream to the browser in real time as each agent contributes.
 
 ### Usage Modes
@@ -146,9 +162,11 @@ The request is routed by keyword into one of four modes:
 
 Also accepts a point count ("...from 1 to 10 MJ with 6 points") or a single uniform step.
 
-**3. Simulation media** (triggered by "movie", "animation", "render", "show the implosion", "diagnostic", etc.). Runs a campaign, takes the best design found, and renders an **implosion movie** (density field through stagnation) plus **diagnostic time-history plots** (radius, areal density, temperature).
+**3. Simulation media** (triggered by "movie", "animation", "render", "show the implosion", "diagnostic", etc.). Renders an **implosion movie** (density field through stagnation) plus **diagnostic time-history plots** (radius, areal density, temperature). If a design has already been found this session, media requests **reuse that best design** — a follow-up like "now show the movie" does *not* re-run the optimization; a fresh campaign is only run when you explicitly ask to "optimize" or when no design exists yet.
 
 > Optimize a design at 4 MJ and show me a movie of the implosion
+>
+> *(as a follow-up)* show me the implosion movie and the time-dependent plots
 
 **4. Analysis / debrief** (triggered once at least one campaign has run, by any question that is not itself a run request — e.g. it ends in "?" or uses words like "why", "how", "compare", "explain", "robust"). Instead of starting a new simulation, the question is routed to a conversational Principal Investigator that reasons over all results collected this session and replies in the chat panel. The exchange has multi-turn memory, so follow-up questions retain context.
 
@@ -158,7 +176,7 @@ Also accepts a point count ("...from 1 to 10 MJ with 6 points") or a single unif
 
 This mode is purely interpretive: the debrief agent has no simulation tool and never alters the design — it only analyzes the recorded data (best design, every sampled design and its yield, mean/σ, and any sweep curve). To start fresh work, use an explicit run phrasing ("optimize…", "sweep…", "render a movie…").
 
-Each campaign is capped at a fixed number of agent rounds (`SWEEP_MAX_ROUNDS` / `SINGLE_MAX_ROUNDS` / `MEDIA_MAX_ROUNDS` in `app.py`) and also stops early when the yield plateaus (improvement < 5% for two consecutive rounds). If a campaign produces no valid simulation, a physically reasonable fallback design at the target energy keeps the sweep/media output populated.
+Each campaign is capped at a number of **design rounds** (`SWEEP_MAX_ROUNDS` / `SINGLE_MAX_ROUNDS` / `MEDIA_MAX_ROUNDS` in `app.py`, converted internally to an AutoGen message budget) and stops early on **convergence**. Convergence is enforced **deterministically in code** from the recorded simulation yields (best yield improving < 5% for two consecutive simulations) rather than relying on the LLM to self-terminate — the streamed transcript ends with a clear `Campaign complete (converged / reached the round budget)` marker. If a campaign produces no valid simulation, a physically reasonable fallback design at the target energy keeps the sweep/media output populated.
 
 ### Running the Physics Engine Standalone
 
@@ -184,22 +202,20 @@ python3 icf_core.py --R0 1.2e-4 --v0 -5e5 --M_sh 3.6e-7 --M_hs 8e-9 --T0 1.2
 
 | Variable | Default | Description |
 |---|---|---|
-| `ICF_API_TYPE` | `anthropic` | LLM backend: `anthropic` or `openai` |
+| `ICF_API_TYPE` | `anthropic` | LLM backend: `anthropic` or `openai` (the bundled `start_app.sh` sets `openai`) |
 
-### Per-Role LLM Configuration
+### Model Configuration (single shared model)
 
-Each agent role (Explorer, Frontier) has independent settings with fallback defaults:
+All agents use **one** model. Each setting is read from the environment if set, otherwise it falls back to the code default below. For each setting the **first variable that is set wins**, so the concise `ICF_*` names or the legacy `ICF_EXPLORER_*` names both work. Export these in your shell (e.g. `~/.bashrc`) so secrets never live in the repo.
 
-| Variable | Anthropic Default | OpenAI Default | Description |
+| Variable(s) | Anthropic Default | OpenAI Default | Description |
 |---|---|---|---|
-| `ICF_EXPLORER_API_KEY` | `$ANTHROPIC_API_KEY` | `unused` | Explorer LLM API key |
-| `ICF_EXPLORER_BASE_URL` | `$ANTHROPIC_BASE_URL` | `http://localhost:8000/v1` | Explorer LLM endpoint |
-| `ICF_EXPLORER_MODEL` | `Claude-Sonnet-4.5` | `gptoss-20b-hedp` | Explorer model name |
-| `ICF_FRONTIER_API_KEY` | `$ANTHROPIC_API_KEY` | `unused` | PI + Adversary API key |
-| `ICF_FRONTIER_BASE_URL` | `$ANTHROPIC_BASE_URL` | `http://localhost:8000/v1` | PI + Adversary endpoint |
-| `ICF_FRONTIER_MODEL` | `Claude-Sonnet-4.5` | `gptoss-20b-hedp` | PI + Adversary model name |
-| `ICF_EXPLORER_CUSTOM_HEADERS` | `$ANTHROPIC_CUSTOM_HEADERS` | — | Custom HTTP headers (Anthropic mode only) |
-| `ICF_FRONTIER_CUSTOM_HEADERS` | `$ANTHROPIC_CUSTOM_HEADERS` | — | Custom HTTP headers (Anthropic mode only) |
+| `ICF_BASE_URL` / `ICF_EXPLORER_BASE_URL` | `$ANTHROPIC_BASE_URL` | `http://localhost:8000/v1` | Model endpoint (local or remote) |
+| `ICF_MODEL` / `ICF_EXPLORER_MODEL` | `Claude-Sonnet-4.5` | `gptoss-20b-hedp` | Served model name |
+| `ICF_API_KEY` / `ICF_EXPLORER_API_KEY` | `$ANTHROPIC_API_KEY` | `unused` | API token — **raw token only, no `Bearer ` prefix** (the SDK adds it) |
+| `ICF_TEMPERATURE` | `1.0` | `1.0` | Sampling temperature (gpt-oss is calibrated for 1.0) |
+| `ICF_TIMEOUT` / `ICF_REQUEST_TIMEOUT` | — | `180` | Per-request timeout in seconds, with automatic retries (openai backend) |
+| `ICF_CUSTOM_HEADERS` / `ICF_EXPLORER_CUSTOM_HEADERS` | `$ANTHROPIC_CUSTOM_HEADERS` | — | Custom HTTP headers (Anthropic mode only) |
 
 ### vLLM Server Configuration
 
