@@ -439,9 +439,13 @@ def run_campaign(user_message, e_laser, max_rounds, result_holder):
     def _is_termination(msg):
         # Match TERMINATE only at the END of a message (the PI's "end your summary with
         # TERMINATE" convention). Checking for it anywhere would also match instruction text
-        # that merely mentions the word (e.g. the kickoff's round-budget note).
+        # that merely mentions the word (e.g. the kickoff's round-budget note). Strip trailing
+        # markdown emphasis/punctuation first, since models often write "**TERMINATE**" or
+        # "TERMINATE." which a naive endswith("TERMINATE") would miss.
         content = msg.get("content") if isinstance(msg, dict) else msg
-        return isinstance(content, str) and content.rstrip().rstrip(".").upper().endswith("TERMINATE")
+        if not isinstance(content, str):
+            return False
+        return content.rstrip().rstrip("*_`~.!: \t\r\n").upper().endswith("TERMINATE")
 
     manager = autogen.GroupChatManager(
         groupchat=groupchat, llm_config=config_frontier, is_termination_msg=_is_termination)
