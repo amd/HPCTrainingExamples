@@ -1,4 +1,7 @@
-<img src="amd_logo_white.png" alt="AMD" height="48">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="amd_logo_white.png">
+  <img alt="AMD" src="amd_logo.png" height="48">
+</picture>
 
 # Adversarial Multi-Agent ICF Capsule Optimizer
 
