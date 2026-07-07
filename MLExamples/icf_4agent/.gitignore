@@ -1,0 +1,16 @@
+# Python virtual environment
+aivenv/
+venv/
+
+# Caches
+.cache/
+.gradio/
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+
+# Generated media / simulation output
+media_output/
+implosion_frames/

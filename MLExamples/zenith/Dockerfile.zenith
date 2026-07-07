@@ -1,0 +1,312 @@
+#
+# { podman build --format docker -f Dockerfile.zenith -t zenith_train_image && podman save -o zenith_train_image.tar zenith_train_image; } 2>&1 | tee build.log
+#
+# build container image for large-scale training on ROCm
+# targetting the MI250X/MI300A (gfx90a/gfx942), HPE slingshot NIC-enabled GPU-GPU RDMA
+# over aws-ofi/libfabric/RCCL
+#
+# Jon Belof, AMD 5/30/2026
+#
+
+# rocm pytorch base image
+ARG TRAIN_BASE_IMAGE="rocm/pytorch:rocm7.2.4_ubuntu24.04_py3.12_pytorch_release_2.10.0"
+
+# ensure that the packages installed by apt are those that were frozen as of current build date
+# improves static reproducibility of the image build process
+# format = date to "freeze" (YYYYMMDDTHHMMSSZ)
+ARG TRAIN_BASE_SNAPSHOT_ID="20260530T000000Z"
+
+# single stage build for now
+FROM ${TRAIN_BASE_IMAGE} AS builder
+
+# build targetting the MI250X GPU and MI300A APU
+#ARG TRAIN_ARCHS="gfx90a;gfx942"
+ARG TRAIN_ARCHS="gfx942"
+
+# commit hashes and repo urls
+ARG CXI_HEADERS_HASH="06f69b003aa362b3137f3e6bcd280f48906eb17c"
+ARG CXI_HEADERS_REPO=https://github.com/HewlettPackard/shs-cassini-headers.git
+
+ARG CXI_DRIVER_HASH="6dba406c11b64b5c1e62cc061e98fd4923008b2c"
+ARG CXI_DRIVER_REPO=https://github.com/HewlettPackard/shs-cxi-driver.git
+
+ARG CXI_LIBCXI_HASH="6a6d13ad8dc8cfd6bfa2573290a7a29d64ec6274"
+ARG CXI_LIBCXI_REPO="https://github.com/HewlettPackard/shs-libcxi.git"
+
+ARG FABRIC_HASH="ff7e78cbbe0e0f6c45a510cccee15e3ba3659b44"
+ARG FABRIC_REPO="https://github.com/ofiwg/libfabric.git"
+
+ARG RCCL_HASH="57e58688f44c77076ad536ef1f6b68741fc6e694"
+ARG RCCL_REPO="https://github.com/ROCm/rccl.git"
+
+ARG OFI_HASH="d28863c12d3d6e8c0c7b3a3caa71fbcbf0dca7a8"
+ARG OFI_REPO="https://github.com/aws/aws-ofi-nccl.git"
+
+#ARG MORI_HASH="2d02c6a9"
+#ARG MORI_REPO="https://github.com/ROCm/mori.git"
+
+ARG FA_HASH="0e60e394"
+ARG FA_REPO="https://github.com/Dao-AILab/flash-attention.git"
+
+ARG AITER_HASH="ccb21de005303eeaa193c48fcff9527886d9ef0e"
+ARG AITER_REPO="https://github.com/ROCm/aiter.git"
+
+ARG BITSANDBYTES_HASH="2177945befb0cf7ec5cfc726649579a361ca6b57"
+ARG BITSANDBYTES_REPO="https://github.com/bitsandbytes-foundation/bitsandbytes.git"
+
+ARG AXOLOTL_HASH="bf19bff277614f3bee4a74983654a425f3e4da00"
+ARG AXOLOTL_REPO="https://github.com/axolotl-ai-cloud/axolotl.git"
+
+# set env variables needed for rocm/hip/torch/nccl
+ENV ROCM_VERS="7.2.4"
+ENV ROCM_HOME="/opt/rocm-${ROCM_VERS}"
+ENV PYTORCH_ROCM_ARCH="${TRAIN_ARCHS}"
+ENV BNB_ROCM_ARCH="${TRAIN_ARCHS}"
+ENV HIP_FORCE_DEV_KERNARG=1
+ENV HSA_XNACK=1
+ENV HSA_OVERRIDE_CPU_AFFINITY_DEBUG=0
+ENV HSA_ENABLE_SCRATCH_ASYNC_RECLAIM=0
+
+# needed for libfabric/ofi
+ENV FI_PROVIDER="cxi"
+# VNI=1 is what works on tuolumne, SLINGSHOT_VNIS not set on that host
+ENV FI_CXI_DEFAULT_VNI=1
+ENV SLINGSHOT_VNIS=1
+ENV SLINGSHOT_SVC_IDS=1
+ENV FI_OFI_RXM_USE_SRX=1
+ENV FI_MR_CACHE_MONITOR=memhooks
+ENV FI_CXI_DISABLE_HOST_REGISTER=1
+ENV FI_CXI_OPTIMIZED_GETS=1
+ENV FI_CXI_OPTIMIZED_MRS=0
+ENV FI_CXI_DEFAULT_CQ_SIZE=131072
+ENV FI_CXI_DEFAULT_TX_SIZE=256
+ENV FI_CXI_RDZV_PROTO=alt_read
+ENV FI_CXI_RDZV_THRESHOLD=2048
+ENV FI_CXI_RDZV_GET_MIN=2049
+ENV FI_CXI_OFLOW_BUF_SIZE=2MB
+ENV FI_CXI_ATS=0
+ENV FI_CXI_ODP=0
+#ENV FI_CXI_RX_MATCH_MODE=hybrid
+ENV FI_CXI_RX_MATCH_MODE=software
+ENV FI_CXI_XPMEM=0
+ENV FI_HMEM_ROCR_ENABLE=1
+ENV FI_HMEM_CUDA_USE_X_PROXIES=0
+ENV FI_HMEM_ROCR_USE_DMABUF=1
+ENV FI_SHM_XPMEM=0
+ENV FI_MR_CACHE_MONITOR=rocr
+ENV OFI_NCCL_PLATFORM=cray
+ENV OFI_NCCL_PROTOCOL=rdma
+
+# RCCL tuning
+ENV NCCL_DMABUF_ENABLE=1
+ENV NCCL_MIN_NCHANNELS=112
+ENV NCCL_TUNER_PLUGIN=/opt/aws-ofi-rccl/lib/libnccl-ofi-tuner.so
+ENV NCCL_NET_PLUGIN_PATH=/opt/aws-ofi-rccl/lib
+ENV NCCL_NET_GDR_LEVEL=3
+ENV NCCL_COMM_BLOCKING=0
+ENV NCCL_CROSS_TP_TIMEOUT=1200
+ENV NCCL_P2P_DISABLE=1
+ENV NCCL_IB_DISABLE=1
+ENV NCCL_TIMEOUT=3600000
+ENV NCCL_IGNORE_CPU_AFFINITY=1
+ENV NCCL_IGNORE_CPU_AFFINITY=1
+ENV DISTRIBUTED_TIMEOUT=7200
+
+# ray settings
+ENV RAY_EXPERIMENTAL_NOSET_HIP_VISIBLE_DEVICES=1
+ENV RAY_memory_usage_threshold=0.99
+ENV RAY_gcs_rpc_server_reconnect_timeout_s=600
+ENV RAY_num_heartbeats_timeout=600
+ENV RAY_TRAIN_WORKER_NOT_READY_TIMEOUT_S=1200
+ENV RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO=0
+ENV RAY_LOG_LEVEL=error
+ENV RAY_STATE_LOG_LEVEL=error
+ENV RAY_DEDUP_LOGS=0
+ENV RAY_TRAIN_ENABLE_STATE_TRACKING=0
+ENV RAY_TRAIN_ENABLE_PLACEMENT_GROUP_CLEANER=0
+ENV RAY_RAYLET_LOG_LEVEL=error
+ENV RAY_DEDUP_LOGS=1
+ENV RAY_CHDIR_TO_TRIAL_DIR=0
+ENV RAY_IGNORE_UNHANDLED_ERRORS=1
+ENV RAY_PRINT_ALL_WORKER_LOGS=0
+
+# pytorch settings
+ENV TORCH_BLAS_PREFER_HIPBLASLT=1
+ENV TORCH_NCCL_BLOCKING_WAIT=1
+ENV TORCH_NCCL_ASYNC_ERROR_HANDLING=1
+ENV TORCH_NCCL_ASYNC_ERROR_HANDLING=1
+ENV TORCHAO_SKIP_CPP_EXT=1
+
+# turn off axolotl telemetery
+ENV AXOLOTL_DO_NOT_TRACK=1
+ENV DO_NOT_TRACK=1
+ENV ACCELERATE_DISABLE_RICH=1
+ENV AXOLOTL_USE_KERNELS=1
+ENV PYTHONWARNINGS="ignore"
+
+# misc python library configs
+ENV CURL_CA_BUNDLE=""
+ENV PYTHONHTTPSVERIFY=0
+ENV ACCELERATE_SKIP_KERNEL_CHECK=1
+ENV ACCELERATE_USE_FLASH_ATTENTION_2=true
+ENV TRANSFORMERS_OFFLINE=1
+ENV TRANSFORMERS_VERBOSITY="error"
+ENV TRANSFORMERS_OK_TO_USE_HUB_KERNELS=0
+ENV HF_HUB_OFFLINE=1
+ENV TORCHAO_SKIP_VERSION_CHECK=1
+ENV TRL_SKIP_VERSION_CHECK=1
+ENV KERNELS_OFFLINE=1
+ENV KERNELS_VERBOSITY="error"
+ENV NUMEXPR_MAX_THREADS=96
+ENV TRITON_OFFLINE=1
+ENV TRITON_CACHE_DIR=/app/models/.triton_cache
+
+# runtime shared lib path
+ENV LD_LIBRARY_PATH=/opt/venv/lib/python3.12/site-packages/torch/lib:/opt/aws-ofi-rccl/lib:/opt/libfabric/lib:/opt/libcxi/lib:$ROCM_HOME/lib:/usr/local/lib:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu
+
+# have to remove _apt user or else run into uid problems with apt-get on rootless podman
+# these are various dependencies needed for what follows
+RUN cp /etc/passwd /etc/passwd.orig \
+    && sed "/^_apt/d" /etc/passwd > /etc/passwd.new \
+    && mv /etc/passwd.new /etc/passwd \
+    && apt-get update -o "Acquire::https::Verify-Peer=false" --snapshot "$TRAIN_BASE_SNAPSHOT_ID" \
+    && apt-get install -o "Acquire::https::Verify-Peer=false" -y --no-install-recommends --snapshot "$TRAIN_BASE_SNAPSHOT_ID" autoconf libtool mpich libmpich-dev libconfig-dev libuv1 libuv1-dev fuse libfuse-dev libyaml-dev libnl-3-dev libnl-genl-3-dev udev lm-sensors libsensors-dev cmake rocm-cmake libibverbs-dev libpci-dev libcurl4-openssl-dev libjson-c-dev libhwloc-dev vim \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# operate here for our building
+WORKDIR /tmp
+
+# for some reason, this ubuntu image is missing ROCm torchao :(
+RUN pip install --no-deps --pre torchao --index-url https://download.pytorch.org/whl/nightly/rocm7.2
+
+# cxi headers
+RUN git clone "$CXI_HEADERS_REPO" \
+    && cd shs-cassini-headers \
+    && git checkout "$CXI_HEADERS_HASH" \
+    && cp -r include/* /usr/include \
+    && cp -r share/cassini-headers /usr/share/
+
+# build cxi driver
+RUN git clone "$CXI_DRIVER_REPO" \
+    && cd shs-cxi-driver \
+    && git checkout "$CXI_DRIVER_HASH" \
+    && cp -r include/* /usr/include
+
+# build libcxi
+RUN git clone "$CXI_LIBCXI_REPO" \
+    && cd shs-libcxi \
+    && git checkout "$CXI_LIBCXI_HASH" \
+    && mkdir /usr/include/libcxi \
+    && cp -r include/* /usr/include/libcxi/ \
+    && ./autogen.sh \
+    && LIBUV_CFLAGS="-L/usr/lib/x86_64-linux-gnu" LIBFUSE_CFLAGS="-D_FILE_OFFSET_BITS=64 -I/usr/include/" ./configure --prefix=/opt/libcxi \
+    && make -j $(nproc) install
+
+# install libfabric
+RUN rm -f /usr/lib/x86_64-linux-gnu/libfabric*
+RUN git clone "$FABRIC_REPO" \
+    && cd libfabric \
+    && git checkout "$FABRIC_HASH" \
+    && ./autogen.sh \
+    && LDFLAGS="-L/opt/libcxi/lib -L$ROCM_HOME/lib -Wl,-rpath,/opt/libcxi/lib" \
+    CPPFLAGS="-I/opt/libcxi/include -I$ROCM_HOME/include" \
+    ./configure --prefix=/opt/libfabric --with-rocr="$ROCM_HOME" \
+          --enable-cxi --enable-mrail --enable-rxm \
+    && make -j $(nproc) install
+
+# install RCCL
+#RUN git clone "$RCCL_REPO" \
+#    && cd rccl \
+#    && git checkout "$RCCL_HASH" \
+#    && cp -r ./src/include/* /opt/$ROCM_HOME/include/ \
+#    && mkdir build \
+#    && cd build \
+#    && CXX=$ROCM_HOME/bin/hipcc cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$ROCM_HOME -DGPU_TARGETS="$TRAIN_ARCHS" ..
+#    && make -j $(nproc) install
+#    && cd $ROCM_HOME/include/rccl \
+#    && ln -sf rccl.h nccl.h \
+#    && ln -sf rccl.h nccl_common.h \
+#    && ln -sf rccl_net.h nccl_net.h
+
+# install AWS OFI (needs access to libfabric and rccl builds)
+RUN git clone "$OFI_REPO" \
+    && cd aws-ofi-nccl \
+    && git checkout "$OFI_HASH" \
+    && ./autogen.sh \
+    && ./configure --prefix=/opt/aws-ofi-rccl --with-libfabric=/opt/libfabric --with-rocm=$ROCM_HOME \
+    CPPFLAGS="-I$ROCM_HOME/include -I$ROCM_HOME/include/rccl -I/usr/include/x86_64-linux-gnu/mpich" \
+    LDFLAGS="-L$ROCM_HOME/lib -L/opt/libfabric/lib -L/opt/libcxi/lib" \
+    && make -j $(nproc) install \
+    && ln -sf /opt/aws-ofi-rccl/lib/librccl-net.so /opt/aws-ofi-rccl/lib/libnccl-net.so
+
+# install MORI
+#RUN git clone ${MORI_REPO} \
+#    && cd mori \
+#    && git checkout ${MORI_HASH} \
+#    && git submodule update --init --recursive \
+#    && pip install --no-cache-dir wheel setuptools_scm \
+#    && pip wheel . --wheel-dir=dist --no-deps --no-build-isolation \
+#    && pip install --root-user-action=ignore --no-cache-dir dist/*.whl
+
+# build flash attention 2
+RUN git clone ${FA_REPO} \
+    && cd flash-attention \
+    && git checkout ${FA_HASH} \
+    && git submodule update --init \
+    && GPU_ARCHS=$(echo ${TRAIN_ARCHS} | sed -e 's/;gfx1[0-9]\{3\}//g') python setup.py bdist_wheel --dist-dir=dist \
+    && pip install --root-user-action=ignore --no-cache-dir dist/*.whl
+
+# build AITER
+RUN git clone --recursive ${AITER_REPO} \
+    && cd aiter \
+    && git checkout ${AITER_HASH} \
+    && git submodule update --init --recursive \
+    && pip install -r requirements.txt
+RUN pip install pyyaml && cd aiter \
+    && AITER_USE_SYSTEM_TRITON=1 GPU_ARCHS=${TRAIN_ARCHS} python setup.py bdist_wheel --dist-dir=dist \
+    && pip install --root-user-action=ignore --no-cache-dir dist/*.whl
+
+# install our frozen axolotl dependencies + ray.train
+COPY requirements.txt .
+
+# dynamically constrain pip to the currently installed ROCm-specific ones in pytorch image
+RUN pip freeze | grep -iE "^(torch|torchvision|torchaudio|triton|flash-attn|xformers|deepspeed)==|rocm" > /tmp/constraints.txt && \
+    pip install -r requirements.txt \
+    -c /tmp/constraints.txt \
+    --root-user-action=ignore \
+    --no-cache-dir \
+    --extra-index-url https://download.pytorch.org/whl/rocm7.2
+
+# bitsandbytes for ROCm
+RUN git clone "$BITSANDBYTES_REPO" \
+    && cd bitsandbytes \
+    && git checkout "$BITSANDBYTES_HASH" \
+    && cmake -DCOMPUTE_BACKEND=hip -DBNB_ROCM_ARCH="$TRAIN_ARCHS" -S . \
+    && make -j 96 \
+    && pip install --root-user-action=ignore --no-cache-dir . \
+    #&& cd /opt/venv/lib/python3.13/site-packages/bitsandbytes \
+    && cd /opt/venv/lib/python3.12/site-packages/bitsandbytes \
+    && ln -sf libbitsandbytes_hip.so libbitsandbytes_rocm72.so
+
+# build axolotl without touching the existing torch/flash-attn
+RUN git clone "$AXOLOTL_REPO" \
+    && cd axolotl \
+    && git checkout "$AXOLOTL_HASH" \
+    && pip install --no-deps --root-user-action=ignore . \
+    && pip install --no-deps "cut-cross-entropy[transformers] @ git+https://github.com/axolotl-ai-cloud/ml-cross-entropy.git@63b15e6"
+
+# run install once more to ensure HIP version is there (unsure why this step seems necessary)
+RUN cd /tmp/bitsandbytes \
+    && pip install --root-user-action=ignore --no-cache-dir .
+
+
+# work space for execution
+WORKDIR /app
+
+# set runtime shared lib path again, just in case one of the previous package installs modified it
+ENV LD_LIBRARY_PATH=/opt/venv/lib/python3.12/site-packages/torch/lib:/opt/aws-ofi-rccl/lib:/opt/libfabric/lib:/opt/libcxi/lib:$ROCM_HOME/lib:/usr/local/lib:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu
+
+# user entry point
+CMD ["/bin/bash"]
+
