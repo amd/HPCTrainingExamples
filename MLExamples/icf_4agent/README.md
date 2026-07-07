@@ -71,7 +71,7 @@ where **x** = (R0, v0, T0, M_sh, M_hs) are design parameters and **d** = (delta,
 | `start_app.sh` | Launch script for the agent application |
 | `start_vllm.sh` | Launch script for local vLLM inference server |
 | `requirements.txt` | Python dependencies |
-| `docs/summary.tex` | Manuscript (IEEE format) |
+| `docs/summary.tex` | Report describing the methods |
 
 ## Setup
 
@@ -102,7 +102,7 @@ pip install -r requirements.txt
 
 ## Running
 
-The model runs on any OpenAI-compatible endpoint — a **local** vLLM server or a **remote** hosted model — configured entirely through environment variables (see [Model Configuration](#model-configuration-single-shared-model)). `start_app.sh` sets no model variables or secrets itself; it reads them from the environment and falls back to the code defaults in `app.py` when unset.
+The model runs on any OpenAI-compatible API endpoint — a **local** vLLM server or a **remote** hosted model — configured entirely through environment variables (see [Model Configuration](#model-configuration-single-shared-model)). `start_app.sh` sets no model variables or secrets itself; it reads them from the environment and falls back to the code defaults in `app.py` when unset.
 
 ### Option A: Local Inference (vLLM + ROCm)
 
@@ -122,18 +122,18 @@ Start the vLLM server in one terminal, then the app in another:
 
 ### Option B: Remote LLM server / AMD AIMS
 
-Point the app at any remote OpenAI-compatible server — for example an **AMD Inference Microservice (AIMS)** endpoint hosting `gpt-oss-120b` — by exporting the model variables, ideally in `~/.bashrc` so the token stays out of the repo:
+Point the app at any remote OpenAI-compatible server — for example an **AMD Inference Microservice (AIMS)** endpoint hosting `gpt-oss-120b` — by exporting the model variables, ideally in `~/.bashrc`:
 
 ```bash
-export ICF_BASE_URL="https://your-aims-endpoint/v1"   # or ICF_EXPLORER_BASE_URL
-export ICF_MODEL="openai/gpt-oss-120b"                # or ICF_EXPLORER_MODEL
-export ICF_API_KEY="your-raw-token"                   # NO "Bearer " prefix; or ICF_EXPLORER_API_KEY
+export ICF_BASE_URL="https://your-aims-endpoint/v1"
+export ICF_MODEL="openai/gpt-oss-120b"
+export ICF_API_KEY="your-raw-token"
 ./start_app.sh
 ```
 
 AIMS is AMD's containerized inference service (part of the [AMD Enterprise AI Suite](https://enterprise-ai.docs.amd.com/en/latest/aims/overview.html)); because it exposes a standard OpenAI-compatible API, no code changes are needed to target it — only the three variables above.
 
-The app opens a Gradio web UI with a public share link (no X server needed). The interface uses the Origin theme (dark mode by default), shows the AMD logo, streams the agent conversation in a chat panel, and renders plots and movies in side panels. Agent messages stream to the browser in real time as each agent contributes.
+The app opens a Gradio web UI with a public share link (no X server needed). The interface streams the agent conversation in a chat panel, and renders plots and movies in side panels. Agent messages stream to the browser in real time as each agent contributes.
 
 ### Usage Modes
 
