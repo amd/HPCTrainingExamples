@@ -35,10 +35,9 @@ The agents communicate through AutoGen's group chat with constrained speaker tra
 
 Every campaign's structured results (best design, all sampled designs and their yields, mean/σ statistics, sweep curves, rendered media) are retained in a session-scoped store. A dedicated **conversational PI agent** (no tool access, separate from the orchestrating PI) draws on this store to answer follow-up analysis questions, so the user can interrogate what was run without launching a new simulation. The router automatically distinguishes a *request to run* (e.g. "optimize…", "sweep…", "show a movie…") from a *question about prior results*, sending the latter to the debrief agent.
 
-All agents share a **single LLM** (there is no separate "frontier" vs "explorer" model). The system runs against either backend (selected by `ICF_API_TYPE`):
+All agents share a **single LLM** (there is no separate "frontier" vs "explorer" model), served over any **OpenAI-compatible endpoint**. This can be a **local** vLLM instance (e.g. `gptoss-20b-hedp` on an on-prem GPU) or a **remote** inference server — in particular the **AMD Inference Microservice (AIMS)**, AMD's containerized, ROCm-based, production-ready inference service that serves models on AMD Instinct™ GPUs and exposes an OpenAI-compatible API (part of the [AMD Enterprise AI Suite](https://enterprise-ai.docs.amd.com/en/latest/aims/overview.html)). Because the app speaks the OpenAI protocol, pointing it at a local server, a remote server, or an AIMS endpoint (e.g. a hosted `openai/gpt-oss-120b`) is purely a matter of setting the base URL, model, and key.
 
-- **`anthropic`** — a cloud model via the Anthropic API. The PI invokes the simulation through AutoGen's native tool-calling.
-- **`openai`** — any OpenAI-compatible endpoint, **local or remote** (e.g. a local vLLM serving `gptoss-20b-hedp`, or a remote server hosting `openai/gpt-oss-120b`). Because open-weight models are unreliable at formal tool-calling, in this mode the PI instead emits a plain-text `RUN_SIMULATION: R0=..., v0=..., ...` line, which a hook parses and executes against the MCP server, injecting the results back into the conversation. This mode also uses deterministic speaker scheduling, response sanitization (stripping stray tool-call/null tokens), bounded conversation history, and a per-request timeout with automatic retries so a slow or stalled remote call cannot hang a campaign.
+Because open-weight models are unreliable at formal tool-calling, the PI requests a simulation by emitting a plain-text `RUN_SIMULATION: R0=..., v0=..., ...` line, which a hook parses and executes against the MCP server, injecting the results back into the conversation. The system also uses deterministic speaker scheduling, response sanitization (stripping stray tool-call/null tokens), bounded conversation history, and a per-request timeout with automatic retries so a slow or stalled remote call cannot hang a campaign.
 
 ## Physics Model
 
@@ -103,20 +102,9 @@ pip install -r requirements.txt
 
 ## Running
 
-The system supports a cloud API (Anthropic) and any OpenAI-compatible endpoint — a **local** vLLM server or a **remote** hosted model. All agents share one model, configured entirely through environment variables (see [Model Configuration](#model-configuration-single-shared-model)).
+The model runs on any OpenAI-compatible endpoint — a **local** vLLM server or a **remote** hosted model — configured entirely through environment variables (see [Model Configuration](#model-configuration-single-shared-model)). `start_app.sh` sets no model variables or secrets itself; it reads them from the environment and falls back to the code defaults in `app.py` when unset.
 
-### Option A: Cloud API (Anthropic)
-
-Set the API credentials and run:
-
-```bash
-export ANTHROPIC_API_KEY="your-key"
-export ANTHROPIC_BASE_URL="https://api.anthropic.com"
-
-ICF_API_TYPE=anthropic ./start_app.sh
-```
-
-### Option B: Local Inference (vLLM + ROCm)
+### Option A: Local Inference (vLLM + ROCm)
 
 Download the latest ROCm vLLM dev image from [dockerhub](http://hub.docker.com/r/rocm/vllm-dev/tags), e.g.
 ```
@@ -132,19 +120,18 @@ Start the vLLM server in one terminal, then the app in another:
 ./start_app.sh
 ```
 
-### Option C: Remote OpenAI-compatible endpoint
+### Option B: Remote LLM server / AMD AIMS
 
-Point the app at any remote OpenAI-compatible server (e.g. a hosted `gpt-oss-120b`) by exporting the model variables — ideally in `~/.bashrc` so the token stays out of the repo:
+Point the app at any remote OpenAI-compatible server — for example an **AMD Inference Microservice (AIMS)** endpoint hosting `gpt-oss-120b` — by exporting the model variables, ideally in `~/.bashrc` so the token stays out of the repo:
 
 ```bash
-export ICF_API_TYPE=openai
-export ICF_BASE_URL="https://your-endpoint/v1"    # or ICF_EXPLORER_BASE_URL
-export ICF_MODEL="openai/gpt-oss-120b"            # or ICF_EXPLORER_MODEL
-export ICF_API_KEY="your-raw-token"               # NO "Bearer " prefix; or ICF_EXPLORER_API_KEY
+export ICF_BASE_URL="https://your-aims-endpoint/v1"   # or ICF_EXPLORER_BASE_URL
+export ICF_MODEL="openai/gpt-oss-120b"                # or ICF_EXPLORER_MODEL
+export ICF_API_KEY="your-raw-token"                   # NO "Bearer " prefix; or ICF_EXPLORER_API_KEY
 ./start_app.sh
 ```
 
-`start_app.sh` sets no model variables or secrets itself — it reads them from the environment and falls back to the code defaults in `app.py` when unset.
+AIMS is AMD's containerized inference service (part of the [AMD Enterprise AI Suite](https://enterprise-ai.docs.amd.com/en/latest/aims/overview.html)); because it exposes a standard OpenAI-compatible API, no code changes are needed to target it — only the three variables above.
 
 The app opens a Gradio web UI with a public share link (no X server needed). The interface uses the Origin theme (dark mode by default), shows the AMD logo, streams the agent conversation in a chat panel, and renders plots and movies in side panels. Agent messages stream to the browser in real time as each agent contributes.
 
@@ -198,24 +185,17 @@ python3 icf_core.py --R0 1.2e-4 --v0 -5e5 --M_sh 3.6e-7 --M_hs 8e-9 --T0 1.2
 
 ## Environment Variables
 
-### Backend Selection
-
-| Variable | Default | Description |
-|---|---|---|
-| `ICF_API_TYPE` | `anthropic` | LLM backend: `anthropic` or `openai` (the bundled `start_app.sh` sets `openai`) |
-
 ### Model Configuration (single shared model)
 
-All agents use **one** model. Each setting is read from the environment if set, otherwise it falls back to the code default below. For each setting the **first variable that is set wins**, so the concise `ICF_*` names or the legacy `ICF_EXPLORER_*` names both work. Export these in your shell (e.g. `~/.bashrc`) so secrets never live in the repo.
+All agents use **one** model on **one** OpenAI-compatible endpoint. Each setting is read from the environment if set, otherwise it falls back to the code default below. For each setting the **first variable that is set wins**, so the concise `ICF_*` names or the legacy `ICF_EXPLORER_*` names both work. Export these in your shell (e.g. `~/.bashrc`) so secrets never live in the repo.
 
-| Variable(s) | Anthropic Default | OpenAI Default | Description |
-|---|---|---|---|
-| `ICF_BASE_URL` / `ICF_EXPLORER_BASE_URL` | `$ANTHROPIC_BASE_URL` | `http://localhost:8000/v1` | Model endpoint (local or remote) |
-| `ICF_MODEL` / `ICF_EXPLORER_MODEL` | `Claude-Sonnet-4.5` | `gptoss-20b-hedp` | Served model name |
-| `ICF_API_KEY` / `ICF_EXPLORER_API_KEY` | `$ANTHROPIC_API_KEY` | `unused` | API token — **raw token only, no `Bearer ` prefix** (the SDK adds it) |
-| `ICF_TEMPERATURE` | `1.0` | `1.0` | Sampling temperature (gpt-oss is calibrated for 1.0) |
-| `ICF_TIMEOUT` / `ICF_REQUEST_TIMEOUT` | — | `180` | Per-request timeout in seconds, with automatic retries (openai backend) |
-| `ICF_CUSTOM_HEADERS` / `ICF_EXPLORER_CUSTOM_HEADERS` | `$ANTHROPIC_CUSTOM_HEADERS` | — | Custom HTTP headers (Anthropic mode only) |
+| Variable(s) | Default | Description |
+|---|---|---|
+| `ICF_BASE_URL` / `ICF_EXPLORER_BASE_URL` | `http://localhost:8000/v1` | Model endpoint (local or remote) |
+| `ICF_MODEL` / `ICF_EXPLORER_MODEL` | `gptoss-20b-hedp` | Served model name |
+| `ICF_API_KEY` / `ICF_EXPLORER_API_KEY` | `unused` | API token — **raw token only, no `Bearer ` prefix** (the SDK adds it) |
+| `ICF_TEMPERATURE` | `1.0` | Sampling temperature (gpt-oss is calibrated for 1.0) |
+| `ICF_TIMEOUT` / `ICF_REQUEST_TIMEOUT` | `180` | Per-request timeout in seconds, with automatic retries |
 
 ### vLLM Server Configuration
 

@@ -8,39 +8,22 @@ import asyncio
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-# --- API backend: "anthropic" (cloud API) or "openai" (vLLM / local) ---
-API_TYPE = os.environ.get("ICF_API_TYPE", "anthropic")
-
-if API_TYPE == "anthropic":
-    from anthropic import Anthropic
-    import autogen.oai.anthropic as _anthropic_module
-    _original_init = _anthropic_module.AnthropicClient.__init__
-    def _patched_init(self, **kwargs):
-        base_url = kwargs.pop("base_url", None)
-        default_headers = kwargs.pop("default_headers", None)
-        _original_init(self, **kwargs)
-        if self._api_key is not None and (base_url or default_headers):
-            ctor_kwargs = {"api_key": self._api_key}
-            if base_url:
-                ctor_kwargs["base_url"] = base_url
-            if default_headers:
-                ctor_kwargs["default_headers"] = default_headers
-            self._client = Anthropic(**ctor_kwargs)
-    _anthropic_module.AnthropicClient.__init__ = _patched_init
-else:
-    from autogen.oai.client import OpenAIClient
-    _orig_message_retrieval = OpenAIClient.message_retrieval
-    def _safe_message_retrieval(self, response):
-        for choice in response.choices:
-            if hasattr(choice, "message") and choice.message:
-                if choice.message.tool_calls:
-                    choice.message.tool_calls = None
-                if choice.message.function_call:
-                    choice.message.function_call = None
-                if choice.message.content is None:
-                    choice.message.content = ""
-        return _orig_message_retrieval(self, response)
-    OpenAIClient.message_retrieval = _safe_message_retrieval
+# --- LLM backend: an OpenAI-compatible endpoint (local vLLM or a remote server) ---
+# Open-weight models sometimes return null content or stray tool-call artifacts; patch the
+# AutoGen OpenAI client's message retrieval to tolerate that instead of raising.
+from autogen.oai.client import OpenAIClient
+_orig_message_retrieval = OpenAIClient.message_retrieval
+def _safe_message_retrieval(self, response):
+    for choice in response.choices:
+        if hasattr(choice, "message") and choice.message:
+            if choice.message.tool_calls:
+                choice.message.tool_calls = None
+            if choice.message.function_call:
+                choice.message.function_call = None
+            if choice.message.content is None:
+                choice.message.content = ""
+    return _orig_message_retrieval(self, response)
+OpenAIClient.message_retrieval = _safe_message_retrieval
 
 
 # Hydrodynamic coupling efficiency: fraction of laser energy delivered to shell KE
@@ -86,42 +69,28 @@ def _env_first(*names, default=None):
 
 
 def _build_config():
-    """Build the SINGLE AutoGen LLM config used by ALL agents (there is no separate
-    'frontier' vs 'explorer' model). Every value is taken from the environment if set,
-    otherwise it falls back to the code default below.
+    """Build the SINGLE AutoGen LLM config used by ALL agents (one shared model, one
+    OpenAI-compatible endpoint). Every value is taken from the environment if set, otherwise
+    it falls back to the code default below.
 
     Recognized env vars (first one that is set wins):
-      base URL : ICF_BASE_URL, ICF_EXPLORER_BASE_URL   (+ ANTHROPIC_BASE_URL for anthropic)
+      base URL : ICF_BASE_URL, ICF_EXPLORER_BASE_URL
       model    : ICF_MODEL, ICF_EXPLORER_MODEL
-      api key  : ICF_API_KEY, ICF_EXPLORER_API_KEY     (+ ANTHROPIC_API_KEY for anthropic)
+      api key  : ICF_API_KEY, ICF_EXPLORER_API_KEY
       timeout  : ICF_TIMEOUT, ICF_REQUEST_TIMEOUT
       temp     : ICF_TEMPERATURE
     """
-    if API_TYPE == "openai":
-        base_url = _env_first("ICF_BASE_URL", "ICF_EXPLORER_BASE_URL",
-                              default="http://localhost:8000/v1")
-        model = _env_first("ICF_MODEL", "ICF_EXPLORER_MODEL", default="gptoss-20b-hedp")
-        api_key = _env_first("ICF_API_KEY", "ICF_EXPLORER_API_KEY", default="unused")
-        # A per-request timeout is essential for a REMOTE endpoint: without it, one stalled
-        # generation (long-context request, dropped/half-open connection, server-side queueing)
-        # blocks the OpenAI client indefinitely and freezes the whole campaign mid-round. On a
-        # timeout the SDK retries, so a transient stall recovers instead of hanging forever.
-        timeout = int(_env_first("ICF_TIMEOUT", "ICF_REQUEST_TIMEOUT", default="180"))
-        entry = {"model": model, "api_key": api_key, "base_url": base_url,
-                 "max_tokens": 2048, "timeout": timeout, "max_retries": 3}
-    else:
-        base_url = _env_first("ICF_BASE_URL", "ICF_EXPLORER_BASE_URL", "ANTHROPIC_BASE_URL")
-        api_key = _env_first("ICF_API_KEY", "ICF_EXPLORER_API_KEY", "ANTHROPIC_API_KEY")
-        if not base_url or not api_key:
-            sys.exit("ERROR: set ICF_BASE_URL and ICF_API_KEY (or ANTHROPIC_BASE_URL / "
-                     "ANTHROPIC_API_KEY) in the environment.")
-        model = _env_first("ICF_MODEL", "ICF_EXPLORER_MODEL", default="Claude-Sonnet-4.5")
-        headers = _parse_custom_headers(
-            _env_first("ICF_CUSTOM_HEADERS", "ICF_EXPLORER_CUSTOM_HEADERS",
-                       "ANTHROPIC_CUSTOM_HEADERS", default=""))
-        entry = {"model": model, "api_key": api_key, "base_url": base_url, "api_type": "anthropic"}
-        if headers:
-            entry["default_headers"] = headers
+    base_url = _env_first("ICF_BASE_URL", "ICF_EXPLORER_BASE_URL",
+                          default="http://localhost:8000/v1")
+    model = _env_first("ICF_MODEL", "ICF_EXPLORER_MODEL", default="gptoss-20b-hedp")
+    api_key = _env_first("ICF_API_KEY", "ICF_EXPLORER_API_KEY", default="unused")
+    # A per-request timeout is essential for a REMOTE endpoint: without it, one stalled
+    # generation (long-context request, dropped/half-open connection, server-side queueing)
+    # blocks the OpenAI client indefinitely and freezes the whole campaign mid-round. On a
+    # timeout the SDK retries, so a transient stall recovers instead of hanging forever.
+    timeout = int(_env_first("ICF_TIMEOUT", "ICF_REQUEST_TIMEOUT", default="180"))
+    entry = {"model": model, "api_key": api_key, "base_url": base_url,
+             "max_tokens": 2048, "timeout": timeout, "max_retries": 3, "price": [0, 0]}
 
     # gpt-oss is calibrated to sample at temperature 1.0 / top_p 1.0 (OpenAI's stated
     # recommendation); running it much lower can degrade its reasoning. Default to 1.0 and
@@ -133,9 +102,7 @@ def _build_config():
 
 # One config, used by every agent and the group-chat manager.
 config = _build_config()
-if API_TYPE == "openai":
-    config["config_list"][0]["price"] = [0, 0]
-print(f"API backend: {API_TYPE} | Model: {config['config_list'][0]['model']} | "
+print(f"Model: {config['config_list'][0]['model']} | "
       f"Endpoint: {config['config_list'][0]['base_url']}")
 
 # --- MCP client implementation ---
@@ -232,13 +199,7 @@ STOPPING CRITERIA:
   When stopping, summarize the best design found, its parameters, and its robustness to defects.
 End your final summary with TERMINATE."""
 
-if API_TYPE == "anthropic":
-    _PI_TOOL_INSTR = """
-
-You are the ONLY agent that can call the run_icf_implosion tool. The other agents cannot run simulations.
-When you have all 8 parameters, call the run_icf_implosion tool directly."""
-else:
-    _PI_TOOL_INSTR = """
+_PI_TOOL_INSTR = """
 
 When you have all 8 parameters and want to run the simulation, output EXACTLY this format:
 RUN_SIMULATION: R0=<val>, v0=<val>, T0=<val>, M_sh=<val>, M_hs=<val>, delta=<val>, mode=<val>, roughness=<val>
@@ -340,112 +301,87 @@ pi_analyst = autogen.AssistantAgent(
     system_message=_PI_ANALYST_SYSTEM,
 )
 
-if API_TYPE == "anthropic":
-    def _run_icf_implosion_recorded(R0: float, v0: float, T0: float, M_sh: float, M_hs: float,
-                                    delta: float, mode: float, roughness: float) -> str:
-        """Runs the ICF deceleration surrogate via MCP. Requires 8 float parameters."""
-        result = call_mcp_icf_server(R0, v0, T0, M_sh, M_hs, delta, mode, roughness)
-        _record_result({"R0": R0, "v0": v0, "T0": T0, "M_sh": M_sh, "M_hs": M_hs,
-                        "delta": delta, "mode": mode, "roughness": roughness}, result)
-        return result
+# Open-weight models are unreliable at formal tool-calling, so the PI requests a simulation
+# with a plain-text RUN_SIMULATION directive that a hook parses and executes against the MCP
+# server. The other hooks tolerate null/malformed content and bound the context window.
+import re
 
-    autogen.agentchat.register_function(
-        _run_icf_implosion_recorded,
-        caller=principal_investigator,
-        executor=user_proxy,
-        name="run_icf_implosion",
-        description="Runs the ICF deceleration surrogate via MCP. Requires 8 float parameters."
-    )
-else:
-    import re
+def _sanitize_content(sender, message, recipient, silent):
+    if isinstance(message, dict):
+        content = message.get("content")
+        if content is None:
+            reasoning = message.pop("reasoning", None) or message.pop("thinking", None)
+            message["content"] = reasoning if reasoning else "(no response)"
+    elif message is None:
+        message = "(no response)"
+    return message
 
-    def _sanitize_content(sender, message, recipient, silent):
-        if isinstance(message, dict):
-            content = message.get("content")
-            if content is None:
-                reasoning = message.pop("reasoning", None) or message.pop("thinking", None)
-                message["content"] = reasoning if reasoning else "(no response)"
-        elif message is None:
-            message = "(no response)"
+for _agent in [principal_investigator, explorer_agent, adversary_agent, user_proxy]:
+    _agent.register_hook("process_message_before_send", _sanitize_content)
+
+# Bound the context an agent sees so a long (up to 100-round) campaign never
+# overflows the model's context window. Keep the first message (which carries the
+# energy-budget instructions) plus the most recent KEEP_RECENT messages.
+KEEP_RECENT = 12
+
+def _trim_history(messages):
+    if not messages or len(messages) <= KEEP_RECENT + 1:
+        return messages
+    return [messages[0]] + messages[-KEEP_RECENT:]
+
+for _agent in [principal_investigator, explorer_agent, adversary_agent]:
+    _agent.register_hook("process_all_messages_before_reply", _trim_history)
+
+def _auto_execute_simulation(sender, message, recipient, silent):
+    content = (message.get("content") or "") if isinstance(message, dict) else str(message or "")
+    # Tolerate markdown around the keyword, e.g. "**RUN_SIMULATION**:" or "RUN_SIMULATION :"
+    match = re.search(r"RUN_SIMULATION\s*\**\s*:?\s*(R0\s*=.+)", content)
+    if not match:
         return message
+    param_str = match.group(1)
+    params = {}
+    for pair in re.findall(r"(\w+)\s*=\s*([^\s,]+)", param_str):
+        try:
+            params[pair[0]] = float(pair[1])
+        except ValueError:
+            pass
+    required = ["R0", "v0", "T0", "M_sh", "M_hs", "delta", "mode", "roughness"]
+    if all(k in params for k in required):
+        result = call_mcp_icf_server(**{k: params[k] for k in required})
+        _record_result({k: params[k] for k in required}, result)
+        content += "\n\n--- SIMULATION RESULTS ---\n" + result
+    else:
+        content += f"\n\nERROR: Missing parameters. Got: {list(params.keys())}. Need: {required}"
+    if isinstance(message, dict):
+        message["content"] = content
+    else:
+        message = content
+    return message
 
-    for _agent in [principal_investigator, explorer_agent, adversary_agent, user_proxy]:
-        _agent.register_hook("process_message_before_send", _sanitize_content)
-
-    # Bound the context an agent sees so a long (up to 100-round) campaign never
-    # overflows the model's context window. Keep the first message (which carries the
-    # energy-budget instructions) plus the most recent KEEP_RECENT messages.
-    KEEP_RECENT = 12
-
-    def _trim_history(messages):
-        if not messages or len(messages) <= KEEP_RECENT + 1:
-            return messages
-        return [messages[0]] + messages[-KEEP_RECENT:]
-
-    for _agent in [principal_investigator, explorer_agent, adversary_agent]:
-        _agent.register_hook("process_all_messages_before_reply", _trim_history)
-
-    def _auto_execute_simulation(sender, message, recipient, silent):
-        content = (message.get("content") or "") if isinstance(message, dict) else str(message or "")
-        # Tolerate markdown around the keyword, e.g. "**RUN_SIMULATION**:" or "RUN_SIMULATION :"
-        match = re.search(r"RUN_SIMULATION\s*\**\s*:?\s*(R0\s*=.+)", content)
-        if not match:
-            return message
-        param_str = match.group(1)
-        params = {}
-        for pair in re.findall(r"(\w+)\s*=\s*([^\s,]+)", param_str):
-            try:
-                params[pair[0]] = float(pair[1])
-            except ValueError:
-                pass
-        required = ["R0", "v0", "T0", "M_sh", "M_hs", "delta", "mode", "roughness"]
-        if all(k in params for k in required):
-            result = call_mcp_icf_server(**{k: params[k] for k in required})
-            _record_result({k: params[k] for k in required}, result)
-            content += "\n\n--- SIMULATION RESULTS ---\n" + result
-        else:
-            content += f"\n\nERROR: Missing parameters. Got: {list(params.keys())}. Need: {required}"
-        if isinstance(message, dict):
-            message["content"] = content
-        else:
-            message = content
-        return message
-
-    principal_investigator.register_hook("process_message_before_send", _auto_execute_simulation)
+principal_investigator.register_hook("process_message_before_send", _auto_execute_simulation)
 
 # --- Campaign runner ---
 def _build_groupchat():
     """Construct a fresh GroupChat + manager with per-campaign speaker state."""
     agents = [user_proxy, principal_investigator, explorer_agent, adversary_agent]
-    if API_TYPE == "anthropic":
-        allowed_transitions = {
-            user_proxy: [principal_investigator],
-            principal_investigator: [explorer_agent, adversary_agent, user_proxy],
-            explorer_agent: [principal_investigator],
-            adversary_agent: [principal_investigator],
-        }
-        groupchat = autogen.GroupChat(
-            agents=agents, messages=[], max_round=30,
-            allowed_or_disallowed_speaker_transitions=allowed_transitions,
-            speaker_transitions_type="allowed",
-        )
-    else:
-        _turn_cycle = [principal_investigator, explorer_agent,
-                       principal_investigator, adversary_agent,
-                       principal_investigator]
-        _cycle_state = {"idx": -1}
+    # Deterministic speaker cycle (open-weight models are unreliable at choosing the next
+    # speaker themselves): PI -> Explorer -> PI -> Adversary -> PI, then repeat.
+    _turn_cycle = [principal_investigator, explorer_agent,
+                   principal_investigator, adversary_agent,
+                   principal_investigator]
+    _cycle_state = {"idx": -1}
 
-        def _deterministic_speaker(last_speaker, groupchat):
-            if last_speaker == user_proxy:
-                _cycle_state["idx"] = 0
-                return principal_investigator
-            _cycle_state["idx"] = (_cycle_state["idx"] + 1) % len(_turn_cycle)
-            return _turn_cycle[_cycle_state["idx"]]
+    def _deterministic_speaker(last_speaker, groupchat):
+        if last_speaker == user_proxy:
+            _cycle_state["idx"] = 0
+            return principal_investigator
+        _cycle_state["idx"] = (_cycle_state["idx"] + 1) % len(_turn_cycle)
+        return _turn_cycle[_cycle_state["idx"]]
 
-        groupchat = autogen.GroupChat(
-            agents=agents, messages=[], max_round=30,
-            speaker_selection_method=_deterministic_speaker,
-        )
+    groupchat = autogen.GroupChat(
+        agents=agents, messages=[], max_round=30,
+        speaker_selection_method=_deterministic_speaker,
+    )
     return groupchat
 
 
@@ -459,10 +395,9 @@ def run_campaign(user_message, e_laser, max_rounds, result_holder):
     groupchat = _build_groupchat()
     # AutoGen's max_round counts individual messages (turns), NOT design iterations. One
     # design round (PI -> Explorer -> PI -> Adversary -> PI + simulation/eval) spans a full
-    # speaker cycle of ~5 messages; the anthropic backend adds ~2 more per round for the tool
-    # call + response. Convert the requested number of DESIGN rounds into a message budget,
-    # with headroom for the kickoff and the final summary.
-    msgs_per_round = 7 if API_TYPE == "anthropic" else 5
+    # speaker cycle of ~5 messages. Convert the requested number of DESIGN rounds into a
+    # message budget, with headroom for the kickoff and the final summary.
+    msgs_per_round = 5
     groupchat.max_round = 3 + max_rounds * msgs_per_round
 
     # Per-campaign record of (params, yield) for every simulation actually executed.

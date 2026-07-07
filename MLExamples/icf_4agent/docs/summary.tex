@@ -9,6 +9,7 @@
 \usepackage{listings}
 \usepackage{booktabs}
 \usepackage{multirow}
+\usepackage{url}
 \usetikzlibrary{shapes.geometric, arrows, positioning, fit, backgrounds}
 
 \lstset{
@@ -269,7 +270,7 @@ The decoupling of physics execution from agent reasoning via MCP is architectura
 \subsection{Deployment and Backends}
 \label{sec:deployment}
 
-The system supports two interchangeable LLM backends, selected at launch. The first is a frontier cloud model accessed through a hosted API, in which the PI invokes the simulation through the framework's native tool-calling interface. The second is a fully local deployment in which an open-weight model fine-tuned on HEDP literature (\texttt{gptoss-20b-hedp}, 20B parameters) is served through a high-throughput inference engine (vLLM) on AMD Instinct GPUs, exposing an OpenAI-compatible endpoint. The local deployment is significant for security-sensitive design work, where sending capsule parameters to an external service is undesirable: the entire reasoning--simulation loop runs on-premises. The OpenAI-compatible backend is not restricted to on-premises servers---the same interface drives a \emph{remote} hosted endpoint (for example an AIMS/LUX-hosted \texttt{gpt-oss-120b}) with no code changes, so the deployment scales from a single local GPU to a shared inference cluster. In all cases a single shared model backs every agent role; the architecture permits distinct per-role models (e.g.\ a domain-tuned Explorer alongside a frontier PI), but the reference implementation uses one model configured entirely through environment variables, keeping credentials out of the source tree.
+The system connects to a single LLM served over an OpenAI-compatible endpoint, and the same client interface covers both on-premises and hosted deployments. For fully local, security-sensitive work---where sending capsule parameters to an external service is undesirable---an open-weight model fine-tuned on HEDP literature (\texttt{gptoss-20b-hedp}, 20B parameters) is served through a high-throughput inference engine (vLLM) on AMD Instinct GPUs, keeping the entire reasoning--simulation loop on-premises. For larger or shared deployments the identical client drives a \emph{remote} inference server with no code changes---in particular the \textbf{AMD Inference Microservice (AIMS)}, a containerized, ROCm-based, production-ready inference service (part of the AMD Enterprise AI Suite\footnote{\url{https://enterprise-ai.docs.amd.com/en/latest/aims/overview.html}}) that serves models on AMD Instinct GPUs and, like vLLM, exposes an OpenAI-compatible API. Beyond that API, AIMS adds automatic hardware-profile selection, model caching, integrated health/metrics, and Kubernetes/KServe scaling, turning model serving into a largely one-command deployment; in our remote runs the swarm is served an \texttt{openai/gpt-oss-120b} model through an AIMS endpoint. In all cases a single shared model backs every agent role; the architecture permits distinct per-role models (e.g.\ a domain-tuned Explorer alongside a frontier PI), but the reference implementation uses one model configured entirely through environment variables, keeping credentials out of the source tree.
 
 \subsection{Robustness Layer for Open-Weight Models}
 

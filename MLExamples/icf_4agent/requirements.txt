@@ -1,5 +1,4 @@
 pyautogen~=0.2.0
-anthropic
 gradio
 numpy
 scipy
