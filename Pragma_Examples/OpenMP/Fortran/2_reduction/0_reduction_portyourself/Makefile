@@ -9,12 +9,15 @@ FC1=$(notdir $(FC))
 ifneq ($(findstring amdflang,$(FC1)),)
   OPENMP_FLAGS = 
   FREE_FORM_FLAG = -ffree-form
+  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else ifneq ($(findstring flang,$(FC1)),)
   OPENMP_FLAGS = 
   FREE_FORM_FLAG = -ffree-form
+  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else ifneq ($(findstring gfortran,$(FC1)),)
   OPENMP_FLAGS = 
   FREE_FORM_FLAG = -ffree-form
+  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else ifneq ($(findstring ftn,$(FC1)),)
   FTN_VERSION := $(shell $(FC) --version 2>&1)
   OPENMP_FLAGS =

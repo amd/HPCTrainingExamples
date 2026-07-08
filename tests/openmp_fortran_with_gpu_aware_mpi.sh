@@ -20,6 +20,7 @@ else
      module load rocm
    fi
    module load amdclang
+   module load openmpi
 fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"

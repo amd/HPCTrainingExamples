@@ -9,12 +9,15 @@ FC1=$(notdir $(FC))
 ifneq ($(findstring amdflang,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -ffree-form
+  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else ifneq ($(findstring flang,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -Mfreeform
+  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else ifneq ($(findstring gfortran,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload=-march=$(ROCM_GPU)
   FREE_FORM_FLAG = -ffree-form
+  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else ifneq ($(findstring ftn,$(FC1)),)
   OPENMP_FLAGS = -fopenmp
   FTN_VERSION := $(shell $(FC) --version 2>&1)

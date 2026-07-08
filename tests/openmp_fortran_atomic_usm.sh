@@ -24,7 +24,13 @@ else
 fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/Atomic
+SRCDIR=${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/Atomic
+
+BUILDDIR=$(mktemp -d)
+trap 'rm -rf ${BUILDDIR}' EXIT
+cp ${SRCDIR}/Makefile ${SRCDIR}/*.cpp ${SRCDIR}/*.F90 ${BUILDDIR}/
+cd ${BUILDDIR}
+
 export HSA_XNACK=1
 make
 ./atomic
