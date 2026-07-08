@@ -168,17 +168,14 @@ Usually you are interested in a specific kernel. select the kernel wiht `-k` or 
 
 ## Notes and known issues
 
-**`-n` vs `--output-directory` in therock 7.15 early nightlies:** In the 1st July 2026 therock 7.15 pre-release build, using `--output-directory` for full profiling (non-roof-only) causes a path mismatch where the `results.db` file cannot be found during the analyze step. Use `-n <name>` instead, which places results under `workloads/<name>/%gpumodel%/` and is correctly resolved by the analyzer.
+- `-n` vs `--output-directory` in therock 7.15 early nightlies:** In the 1st July 2026 therock 7.15 pre-release build, using `--output-directory` for full profiling (non-roof-only) causes a path mismatch where the `results.db` file cannot be found during the analyze step. Use `-n <name>` instead, which places results under `workloads/<name>/%gpumodel%/` and is correctly resolved by the analyzer.
 
-**rocprof-compute does not support kernel-rename and/or pause and resume roctx markers. Names of kernels have to be identified using other tools (see other exercises using the same example).
+- rocprof-compute does not support kernel-rename and/or pause and resume roctx markers. Names of kernels have to be identified using other tools (see other exercises using the same example).
 
-**`ROCPROF=rocprofv3` fallback:** If the native rocprofiler-sdk backend fails on your system for whatever reason, you can currently (therock 7.14 and 7.15 pre-release build) try to fall back to the rocprofv3 backend by:
-
-```
-export ROCPROF=rocprofv3
-```
-
-This allows rocprof-compute to proceed using rocprofv3 instead of the native tool. However, the fallback backend does **not** support `--iteration-multiplexing`, so the application will be run once per counter group.
+- `ROCPROF=rocprofv3` fallback: If the native rocprofiler-sdk backend fails on your system for whatever reason, you can currently (therock 7.14 and 7.15 pre-release build) try to fall back to the rocprofv3 backend by:`export ROCPROF=rocprofv3`. This allows rocprof-compute to proceed using rocprofv3 instead of the native tool. However, the fallback backend does **not** support `--iteration-multiplexing`, so the application will be run once per counter group.
+- Affinity is important when you run rocprof-compute with MPI. Make sure you leave some threads on the CPU for rocprof helper threads. Recommendation: pin to at least 4 more cores than you would need otherwise when running the app without the profiler.
+- When running with MPI wrap mpirun or srun command including stting the affinity as you would run the whole app around rocprof-compute.
+- When running with MPI make sure to include %rank% in the naming of folders, otherwise all processes may write to the same folder leading to hangs or crashes or corrupt data.
 
 ## References
 
