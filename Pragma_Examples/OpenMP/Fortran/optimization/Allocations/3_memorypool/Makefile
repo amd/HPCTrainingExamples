@@ -26,8 +26,8 @@ else ifneq ($(findstring ftn,$(FC1)),)
   endif
 endif
 
-FFLAGS := -g -O3 ${FFLAGS} ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
-LDFLAGS = ${OPENMP_FLAGS}
+FFLAGS := -g -O3 ${FFLAGS} ${FREE_FORM_FLAG} ${OPENMP_FLAGS} -I${UMPIRE_PATH}/include/umpire
+LDFLAGS = ${OPENMP_FLAGS} -L${UMPIRE_PATH}/lib64 -L${UMPIRE_PATH}/lib -lumpire -lcamp -lfmt -L${ROCM_PATH}/lib -lamdhip64 -lstdc++
 
 memorypool.o: memorypool.f90
 	$(FC) -c $(FFLAGS) $^
