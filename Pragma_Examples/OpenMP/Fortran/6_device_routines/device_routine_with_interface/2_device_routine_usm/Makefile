@@ -10,24 +10,28 @@ ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name
 FC1=$(notdir $(FC))
 
 ifneq ($(findstring amdflang,$(FC1)),)
-  OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU) -fopenmp-force-usm
+  OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -ffree-form
 else ifneq ($(findstring flang,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
-  FREE_FORM_FLAG = -Mfreeform
+  FREE_FORM_FLAG = -ffree-form
 else ifneq ($(findstring gfortran,$(FC1)),)
-  OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
+  OPENMP_FLAGS = -fopenmp --offload=-march=$(ROCM_GPU)
+  #OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
   FREE_FORM_FLAG = -ffree-form
 else ifneq ($(findstring ftn,$(FC1)),)
-  OPENMP_FLAGS = -fopenmp
   FTN_VERSION := $(shell $(FC) --version 2>&1)
+  OPENMP_FLAGS = -fopenmp
   ifneq ($(findstring Cray,$(FTN_VERSION)),)
-    FFLAGS = -g -eZ -O3 -f free ${OPENMP_FLAGS}
+    FREE_FORM_FLAG = -f free
+    FFLAGS = -eZ
   else
-    FFLAGS = -g -O3 -ffree-form ${OPENMP_FLAGS}
+    FREE_FORM_FLAG = -ffree-form
+    FFLAGS =
   endif
 endif
 
+FFLAGS := -g -O3 ${FFLAGS} ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 LDFLAGS = ${OPENMP_FLAGS}
 
 compute.o: compute.f90

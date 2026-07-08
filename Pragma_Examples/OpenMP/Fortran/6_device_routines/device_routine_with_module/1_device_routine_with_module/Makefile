@@ -22,12 +22,15 @@ else ifneq ($(findstring ftn,$(FC1)),)
   OPENMP_FLAGS = -fopenmp
   FTN_VERSION := $(shell $(FC) --version 2>&1)
   ifneq ($(findstring Cray,$(FTN_VERSION)),)
-    FFLAGS = -g -eZ -O3 -f free ${OPENMP_FLAGS}
+    FREE_FORM_FLAG = -f free
+    FFLAGS = -eZ
   else
-    FFLAGS = -g -O3 -ffree-form ${OPENMP_FLAGS}
+    FREE_FORM_FLAG = -ffree-form
+    FFLAGS =
   endif
 endif
 
+FFLAGS := -g -O3 ${FFLAGS} ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 LDFLAGS = ${OPENMP_FLAGS}
 
 computemod.o: computemod.f90
@@ -37,7 +40,7 @@ device_routine.o: device_routine.f90 computemod.o
 	$(FC1) $(FFLAGS) $(LDFLAGS) -c device_routine.f90
 
 device_routine: device_routine.o computemod.o
-	$(FC1) $(FFLAGS) $(LDFLAGS)  -o device_routine device_routine.o computemod.o
+	$(FC1) $(LDFLAGS)  -o device_routine device_routine.o computemod.o
 # Cleanup
 clean:
 	rm -f *.o *.mod device_routine

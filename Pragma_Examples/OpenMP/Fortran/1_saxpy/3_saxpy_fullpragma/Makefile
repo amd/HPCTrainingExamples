@@ -9,11 +9,9 @@ FC1=$(notdir $(FC))
 ifneq ($(findstring amdflang,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -ffree-form
-  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else ifneq ($(findstring flang,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -ffree-form
-  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 else ifneq ($(findstring gfortran,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload=-march=$(ROCM_GPU)
   #OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
@@ -22,14 +20,16 @@ else ifneq ($(findstring ftn,$(FC1)),)
   FTN_VERSION := $(shell $(FC) --version 2>&1)
   OPENMP_FLAGS = -fopenmp
   ifneq ($(findstring Cray,$(FTN_VERSION)),)
-    FFLAGS = -g -eZ -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
+    FREE_FORM_FLAG = -f free
+    FFLAGS = -eZ
   else
-    FFLAGS = -g -O3 -ffree-form ${OPENMP_FLAGS}
+    FREE_FORM_FLAG = -ffree-form
+    FFLAGS =
   endif
 endif
 
+FFLAGS := -g -O3 ${FFLAGS} ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 LDFLAGS = ${OPENMP_FLAGS}
-
 
 ${EXEC}: ${EXEC}.F90
 	$(FC) $(FFLAGS) $(LDFLAGS) $^ -o $@

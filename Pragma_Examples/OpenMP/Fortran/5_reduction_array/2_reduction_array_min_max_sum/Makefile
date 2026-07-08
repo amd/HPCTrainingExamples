@@ -8,18 +8,24 @@ EXE := reduction
 FC1=$(notdir $(FC))
 
 ifneq ($(findstring amdflang,$(FC1)),)
-  OPENMP_FLAGS = -fopenmp --offload-arch=$(GPU_ARCH)
+  OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
 else ifneq ($(findstring flang,$(FC1)),)
-  OPENMP_FLAGS = -fopenmp --offload-arch=$(GPU_ARCH)
+  OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
 else ifneq ($(findstring gfortran,$(FC1)),)
-  OPENMP_FLAGS = -fopenmp --offload=-march=$(GPU_ARCH)
+  OPENMP_FLAGS = -fopenmp --offload=-march=$(ROCM_GPU)
+  #OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
 else ifneq ($(findstring ftn,$(FC1)),)
   FTN_VERSION := $(shell $(FC) --version 2>&1)
   OPENMP_FLAGS = -fopenmp
+  ifneq ($(findstring Cray,$(FTN_VERSION)),)
+    FFLAGS = -eZ
+  else
+    FFLAGS =
+  endif
 endif
 
-FFLAGS := -g -O3 -fdefault-real-8 -fdefault-double-8 ${OPENMP_FLAGS}
-LDFLAGS := ${OPENMP_FLAGS}
+FFLAGS := -g -O3 -fdefault-real-8 -fdefault-double-8 ${FFLAGS} ${OPENMP_FLAGS}
+LDFLAGS = ${OPENMP_FLAGS}
 
 .PHONY: all clean run check
 
