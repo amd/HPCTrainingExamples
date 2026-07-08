@@ -24,7 +24,12 @@ else
 fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/2_reduction/0_reduction_portyourself
+
+SRCDIR=${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/2_reduction/0_reduction_portyourself
+BUILDDIR=$(mktemp -d)
+trap 'rm -rf ${BUILDDIR}' EXIT
+cp ${SRCDIR}/Makefile ${SRCDIR}/*.cpp ${SRCDIR}/*.F90 ${BUILDDIR}/
+cd ${BUILDDIR}
 
 make
 ./freduce
