@@ -28,7 +28,7 @@ SRCDIR=${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/Atomic
 
 BUILDDIR=$(mktemp -d)
 trap 'rm -rf ${BUILDDIR}' EXIT
-cp ${SRCDIR}/Makefile ${SRCDIR}/*.cpp ${SRCDIR}/*.F90 ${BUILDDIR}/
+cp ${SRCDIR}/Makefile ${SRCDIR}/*.F ${BUILDDIR}/
 cd ${BUILDDIR}
 
 export HSA_XNACK=1

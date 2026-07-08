@@ -30,7 +30,7 @@ SRCDIR=${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/2_reduction/1_reduction_soluti
 
 BUILDDIR=$(mktemp -d)
 trap 'rm -rf ${BUILDDIR}' EXIT
-cp ${SRCDIR}/Makefile ${SRCDIR}/*.cpp ${SRCDIR}/*.F90 ${BUILDDIR}/
+cp ${SRCDIR}/Makefile ${SRCDIR}/*.F ${BUILDDIR}/
 cd ${BUILDDIR}
 
 make
