@@ -1170,14 +1170,17 @@ set_property(TEST Kokkos_ShallowWater_OpenMP_Par2 PROPERTY SKIP_REGULAR_EXPRESSI
 add_test(NAME Kokkos_ShallowWater_OpenMP_Par3 COMMAND ../kokkos_cpu_openmp_shallow_water_par3.sh )
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par3 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
+set_tests_properties(Kokkos_ShallowWater_OpenMP_Par3 PROPERTIES TIMEOUT 400)
 
 add_test(NAME Kokkos_ShallowWater_OpenMP_Par4 COMMAND ../kokkos_cpu_openmp_shallow_water_par4.sh )
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par4 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
+set_tests_properties(Kokkos_ShallowWater_OpenMP_Par4 PROPERTIES TIMEOUT 400)
 
 add_test(NAME Kokkos_ShallowWater_OpenMP_Par5 COMMAND ../kokkos_cpu_openmp_shallow_water_par5.sh )
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par5 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
+set_tests_properties(Kokkos_ShallowWater_OpenMP_Par5 PROPERTIES TIMEOUT 400)
 
 add_test(NAME CPU_Shallow_Water COMMAND ../cpu_shallow_water.sh )
 set_property(TEST CPU_Shallow_Water PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
