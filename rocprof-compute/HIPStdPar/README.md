@@ -1,4 +1,4 @@
-Note: The following was tested with a therock 7.15 pre-release nightly build from 1st July 2026 on MI300A.
+Note: The following was tested with a therock 7.14 and 7.15 pre-release nightly build from 1st July 2026 on MI300A.
 
 # Profiling the ShallowWater HIPStdPar Example with `rocprof-compute`
 
@@ -22,7 +22,7 @@ salloc -N 1 --gpus=1 -p <your_partition>
 Load the ROCm module. The exact module name depends on your system:
 
 ```
-module load therock/therock-dist-linux-gfx94X-dcgpu-7.15.0a20260701
+module load therock/therock-dist-linux-gfx94X-dcgpu-7.14.0a20260608
 ```
 
 Install the Python dependencies required by rocprof-compute:
