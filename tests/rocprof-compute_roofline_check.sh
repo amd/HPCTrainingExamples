@@ -13,7 +13,14 @@ fi
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 SRC_DIR=${REPO_DIR}/HIP/saxpy
 BUILD_DIR=$(mktemp -d)
-trap 'rm -rf ${BUILD_DIR}' EXIT
+# Clean up the build dir plus any roofline benchmark lock files this user owns.
+# rocprof-compute keys the lock only on the GPU UUID under a shared 1777 dir
+# (/tmp/rocprof-compute-benchmark), so a leftover lock owned by one user makes
+# open(...,"a") fail with EACCES for the next user and roofline gets skipped.
+# Owner-scoped -delete is safe under the sticky bit and only removes our own.
+trap 'rm -rf ${BUILD_DIR}; \
+  find /tmp/rocprof-compute-benchmark -maxdepth 1 -user "$(id -un)" \
+       -name "rocprof-compute-benchmark-*.lock" -delete 2>/dev/null' EXIT
 cp ${SRC_DIR}/* ${BUILD_DIR}/
 cd ${BUILD_DIR}
 
