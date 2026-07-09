@@ -24,7 +24,7 @@ python3 -m venv venv
 source venv/bin/activate
 
 # Install dependencies
-pip install --quiet cython numpy
+pip install --quiet cython numpy setuptools
 
 # Build the extension
 python3 setup.py build_ext --inplace 2>/dev/null
