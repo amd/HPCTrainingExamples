@@ -1,6 +1,10 @@
 
-ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
-OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
+ifdef CRAYPE_VERSION
+   OPENMP_FLAGS = -fopenmp
+else
+   ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
+   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
+endif
 
 CXXFLAGS = -g -O3  -Wall -std=c++17 ${OPENMP_FLAGS} -I"../daxpy" 
 LDFLAGS= ${OPENMP_FLAGS} 

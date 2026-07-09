@@ -14,15 +14,27 @@ sed -i 's/Mfree/ffree-form/g' tests/integration/interface/fortran/CMakeLists.txt
 mkdir -p build && cd build
 mkdir $UMPIRE_PATH
 
-module -t list 2>&1 | grep -q "^rocm"
-if [ $? -eq 1 ]; then
-  echo "rocm module is not loaded"
-  echo "loading default rocm module"
-  module load rocm
-fi
-module load rocm >& /dev/null
-if [ "$?" == "1" ]; then
-   module load amdclang
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+else
+   module -t list 2>&1 | grep -q "^rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   module load amdflang-new >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load amdclang
+   fi
 fi
 
 AMDGPU_GFXMODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`
@@ -44,6 +56,7 @@ cmake -DCMAKE_INSTALL_PREFIX=${UMPIRE_PATH} \
       -DBLT_CXX_STD=c++17 \
       -DUMPIRE_ENABLE_IPC_SHARED_MEMORY=On \
       -DENABLE_FORTRAN=On \
+      -DENABLE_TESTS=Off \
       ../
 
 make -j 16

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    if [ -z "$CXX" ]; then
       export CXX=`which CC`
    fi
@@ -45,7 +45,33 @@ else
 
    cd ${BUILD_DIR}
    mkdir build && cd build
-   cmake ..
+   # Pin OpenMP to the host libomp.so. find_package(Kokkos) pulls in
+   # OpenMP::OpenMP_CXX (the OpenMP-enabled Kokkos backend); under the Cray CC
+   # wrapper + ROCm clang CMake's FindOpenMP mis-resolves it to the amdgcn
+   # device archive libompdevice.a, which ld.lld then rejects on the host link
+   # ("incompatible with elf64-x86-64"). Feed host libomp.so to FindOpenMP.
+   if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+     OMP_CXX="${CXX:-$(command -v CC)}"
+   else
+     OMP_CXX="${CXX:-$(command -v amdclang++ || command -v clang++)}"
+   fi
+   OMP_HOST_LIB="$(${OMP_CXX} -print-file-name=libomp.so 2>/dev/null)"
+   OMP_HINTS=()
+   if [ -n "${OMP_HOST_LIB}" ] && [ -f "${OMP_HOST_LIB}" ]; then
+     OMP_HINTS=(
+       -DOpenMP_CXX_FLAGS="-fopenmp=libomp"
+       -DOpenMP_CXX_LIB_NAMES="omp"
+       -DOpenMP_omp_LIBRARY="${OMP_HOST_LIB}"
+     )
+   fi
+   # Pin the C++ compiler (amdclang++ non-Cray / CC wrapper Cray) so CMake does
+   # not auto-detect /usr/bin/c++ (GNU g++), which rejects the amdclang-only
+   # flags the HIP-enabled kokkos imported target injects.
+   CXX_HINTS=()
+   if [ -n "${OMP_CXX}" ]; then
+     CXX_HINTS=( -DCMAKE_CXX_COMPILER="${OMP_CXX}" )
+   fi
+   cmake .. "${CXX_HINTS[@]}" "${OMP_HINTS[@]}"
    make
    ./kokkos_code
 

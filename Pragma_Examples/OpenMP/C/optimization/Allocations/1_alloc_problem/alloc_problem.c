@@ -8,7 +8,7 @@
 int main(int argc, char *argv[])
 {
 
-#pragma requires unified_shared memory
+#pragma requires unified_shared_memory
 
    // Size of vectors
    int n = 10000000;

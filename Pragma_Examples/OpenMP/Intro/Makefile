@@ -111,7 +111,7 @@ run: saxpy_cpu saxpy1 saxpy2 saxpy1f saxpy3 saxpy4 saxpy5 saxpy6 saxpy7 saxpy2f 
 	./saxpy3
 	./saxpy4
 	./saxpy5
-	#./saxpy6
+	./saxpy6
 	./saxpy7
 	./saxpy2f
 	./target_data_structured

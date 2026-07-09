@@ -49,7 +49,7 @@ include(CheckFortranCompilerFlag)
 
 # Set vectorization flags for a few compilers
 if(CMAKE_C_COMPILER_LOADED)
-    if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang") # using Clang
+    if ("${CMAKE_C_COMPILER_ID}" MATCHES "Clang") # using Clang
         set(VECTOR_ALIASING_C_FLAGS "${VECTOR_ALIASING_C_FLAGS} -fstrict-aliasing")
         if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
            set(VECTOR_ARCH_C_FLAGS "${VECTOR_ARCH_C_FLAGS} -march=native -mtune=native")
@@ -139,7 +139,7 @@ if(CMAKE_C_COMPILER_LOADED)
         #set(VECTOR_NOVEC_C_OPT "${VECTOR_NOVEC_C_OPT} -qhot=novector")
         set(VECTOR_C_VERBOSE "${VECTOR_C_VERBOSE} -qreport")
 
-    elseif (CMAKE_C_COMPILER_ID MATCHES "Cray")
+    elseif (CMAKE_C_COMPILER_ID STREQUAL "Cray")
         set(VECTOR_ALIASING_C_FLAGS "${VECTOR_ALIASING_C_FLAGS} -h restrict=a")
         set(VECTOR_C_OPTS "${VECTOR_C_OPTS} -h vector3")
   
@@ -177,7 +177,7 @@ endif(CMAKE_C_COMPILER_LOADED)
 
 #Start CXX Flags
 if(CMAKE_CXX_COMPILER_LOADED)
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") # using Clang
+    if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") # using Clang
         set(VECTOR_ALIASING_CXX_FLAGS "${VECTOR_ALIASING_CXX_FLAGS} -fstrict-aliasing")
         if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
            #set(VECTOR_ARCH_CXX_FLAGS "${VECTOR_ARCH_CXX_FLAGS} -march=native -mtune=native")
@@ -263,7 +263,7 @@ if(CMAKE_CXX_COMPILER_LOADED)
         #set(VECTOR_NOVEC_CXX_OPT "${VECTOR_NOVEC_CXX_OPT} -qhot=novector")
         set(VECTOR_CXX_VERBOSE "${VECTOR_CXX_VERBOSE} -qreport")
 
-    elseif (CMAKE_CXX_COMPILER_ID MATCHES "Cray")
+    elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Cray")
         set(VECTOR_ALIASING_CXX_FLAGS "${VECTOR_ALIASING_CXX_FLAGS} -h restrict=a")
         set(VECTOR_CXX_OPTS "${VECTOR_CXX_OPTS} -h vector3")
   

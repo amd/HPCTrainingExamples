@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    if [ -z "$CXX" ]; then
       export CXX=`which CC`
    fi
@@ -27,7 +27,7 @@ else
 fi
 
 IS_CRAY=0
-if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    module load cray-netcdf-hdf5parallel
    IS_CRAY=1
 else

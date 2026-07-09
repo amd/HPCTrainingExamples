@@ -42,7 +42,7 @@ This workshop follows a progressive optimization methodology with four implement
 | **V3 Triton** | 156,652 | 52.3 | 51.3 | 0.6 | 0.4 | 916.2 | **3.13x** |
 | **V4 Ultra** | 157,169 | 52.1 | 51.1 | 0.6 | 0.4 | 916.5 | **3.14x** |
 
-**See [PERFORMANCE_RESULTS.md](PERFORMANCE_RESULTS.md) for complete analysis**
+Performance figures for the small and medium configurations are summarized in the tables above and in [Key Performance Insights](#key-performance-insights).
 
 ### Profiling Tools Progression
 
@@ -70,15 +70,15 @@ Each version introduces additional profiling capabilities:
 
 ## Quick Start
 
-### 0. Set up environment
-On the training cluster's compute node, the required environment may be set up using the following
-commands:
+### 0. Set up and verify environment
+On the training cluster's compute node, load the modules (adjust names/versions for your site):
 
 ```bash
-module load rocm pytorch openmpi rocprofiler-compute rocprofiler-systems/develop
+module load rocm pytorch
 ```
 
-### 1. Verify Environment
+Then confirm ROCm, PyTorch, and the GPU(s) are setup correctly:
+
 ```bash
 # Check ROCm installation
 rocminfo
@@ -90,7 +90,7 @@ rocm-smi
 python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA Available: {torch.cuda.is_available()}'); print(f'GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"N/A\"}')"
 ```
 
-### 2. Run Version 1 (Baseline) - 5 minutes
+### 1. Run Version 1 (Baseline) - 5 minutes
 ```bash
 cd version1_pytorch_baseline/
 python tiny_llama_v1.py --batch-size 8 --seq-len 128 --num-steps 20
@@ -105,7 +105,7 @@ For a deeper analysis with the PyTorch profiler, and visualizing the output in T
 please follow the workshop exercises in
 [version1_pytorch_baseline/README.md](https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples/TinyTransformer/version1_pytorch_baseline#workshop-exercises).
 
-### 3. Run Version 2 (Fused) - 5 minutes
+### 2. Run Version 2 (Fused) - 5 minutes
 ```bash
 cd version2_pytorch_fused
 python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
@@ -148,7 +148,7 @@ with `rocprof-sys` using the command below:
 ```bash
 rocprof-sys-run --profile --trace -- python tiny_llama_v3.py --batch-size 8 --seq-len 128 --num-steps 30
 ```
-View the trace at [https://ui.perfetto.dev](https://ui.perfetto.dev).
+View the trace with [https://ui.perfetto.dev](https://ui.perfetto.dev).
 
 ### 4. Run Version 4 (Ultra optimized) - 5 minutes
 ```bash
@@ -174,75 +174,33 @@ cd version3_triton/exercises/performance_debugging/
 
 ## Directory Structure
 
+Layout under `MLExamples/TinyTransformer/` in this repository:
+
 ```
-ai-workshop-training/
- README.md                              # This overview
- setup/                                 # Environment and prerequisites
-    environment_setup.md               # Detailed setup instructions
-    environment_setup.sh               # Automated setup script
-    requirements.txt                   # Python dependencies
-    validation_scripts/                # Environment validation
-        test_environment.py            # Comprehensive environment test
-        test_rocm_installation.py      # ROCm stack validation
-        test_profiling_tools.py        # Profiling tools validation
- version1_pytorch_baseline/             # Standard PyTorch implementation
-    README.md                          # Detailed guided instructions
-    tiny_llama_v1.py                   # Enhanced baseline implementation
-    run_pytorch_profiler.py            # PyTorch profiler integration
-    run_deepspeed_flops.py            # DeepSpeed FLOPS profiler
-    run_all_profilers.sh              # Orchestrated profiling script
-    exercises/                         # Hands-on exercises and analysis
-        exercise_1_baseline_analysis.md
-        exercise_2_memory_analysis.md
-        exercise_3_bottleneck_identification.md
- version2_pytorch_fused/                # Fused operations optimization
-    README.md                          # Fusion optimization guide
-    tiny_llama_v2.py                   # Fused implementation
-    run_pytorch_profiler.py            # Enhanced PyTorch profiling
-    run_deepspeed_flops.py            # FLOPS analysis
-    run_rocprofv3.sh                   # rocprofv3 integration
-    run_rocprof_sys.sh                # System profiling
-    run_rocprof_compute.sh             # Kernel-level profiling
-    run_all_profilers.sh              # Complete profiling suite
-    exercises/                         # Advanced profiling exercises
-        exercise_1_fusion_analysis.md
-        exercise_2_flash_attention.md
-        exercise_3_rocm_tools_intro.md
- version3_triton/                       # Triton kernel integration
-    README.md                          # Triton optimization guide
-    tiny_llama_v3.py                   # Triton-enhanced implementation
-    triton_kernels.py                  # Custom Triton kernels
-    run_pytorch_profiler.py            # Framework profiling
-    run_deepspeed_flops.py            # Computational analysis
-    run_rocprofv3.sh                   # Legacy profiling
-    run_rocprof_sys.sh                # System monitoring
-    run_rocprof_compute.sh             # Advanced kernel analysis
-    run_all_profilers.sh              # Complete profiling
-    exercises/                         # Triton development exercises
-        exercise_1_triton_basics.md
-        exercise_2_custom_kernels.md
-        exercise_3_performance_tuning.md
- version4_pytorch_sdpa/                 # Ultra-fused implementation
-    README.md                          # Ultra-optimization guide
-    tiny_llama_v4.py                   # Ultra-fused implementation
-    triton_ultra_kernels.py            # Ultra-fused kernels
-    [profiling scripts]                # Complete profiling suite
-    exercises/                         # Advanced optimization
-        exercise_1_ultra_fusion.md
-        exercise_2_register_optimization.md
-        exercise_3_production_deployment.md
- analysis_tools/                        # Performance analysis utilities
-    compare_versions.py                # Cross-version performance comparison
-    roofline_analysis.py               # Roofline model implementation
-    performance_dashboard.py           # Interactive performance dashboard
-    regression_tester.py               # Automated regression testing
-    report_generator.py                # Comprehensive report generation
- slides/                                # Presentation materials
-     luka_presentation_materials/        # AI workshop slides
-         workshop_overview.pptx
-         profiling_methodology.pptx
-         optimization_techniques.pptx
-         results_analysis.pptx
+TinyTransformer/
+├── README.md
+├── TINY_LLAMA_ARCHITECTURE.md
+├── TECHNICAL_APPENDICES.md
+├── version1_pytorch_baseline/
+│   ├── tiny_llama_v1.py
+│   ├── run_pytorch_profiler.py, run_deepspeed_flops.py, run_all_profilers.sh
+│   ├── run_*.sh, launch_performance_study.sh
+│   └── exercises/
+│       ├── exercise_1_baseline_analysis.md
+│       ├── exercise_2_memory_analysis.md
+│       └── exercise_3_bottleneck_identification.md
+├── version2_pytorch_fused/
+│   ├── tiny_llama_v2.py
+│   ├── run_*.py, run_*.sh, launch_performance_study.sh
+│   └── exercises/
+├── version3_triton/
+│   ├── tiny_llama_v3.py, run_triton_profiling.py, run_rocprof_triton.sh
+│   ├── launch_performance_study.sh
+│   └── exercises/  (including performance_debugging/)
+└── version4_pytorch_sdpa/
+    ├── tiny_llama_v4.py, run_ultra_profiling.py, launch_performance_study.sh
+    └── exercises/
+        └── exercise1_ultra_fusion.md
 ```
 
 ## Workshop Execution Timeline
@@ -345,10 +303,10 @@ Developed for the CASTIEL AI Workshop (October 16, 2024) by HPC/AI performance e
 
 ## License
 
-MIT License - See LICENSE file for details
+MIT License — see the repository [`LICENSE.md`](../../LICENSE.md) at the git root of **HPCTrainingExamples**.
 
 ---
 
-**Ready to start profiling? Begin with the [Environment Setup Guide](setup/environment_setup.md)**
+**Ready to start profiling?** Begin with [Quick Start](#quick-start) (environment modules and first runs) above.
 
 

@@ -6,14 +6,27 @@
 # to the instructions available in the model installation repo:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/hypre_setup.sh
 
-
-module -t list 2>&1 | grep -q "^rocm"
-if [ $? -eq 1 ]; then
-  echo "rocm module is not loaded"
-  echo "loading default rocm module"
-  module load rocm
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+else
+   module -t list 2>&1 | grep -q "^rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   module load openmpi
 fi
-module load openmpi hypre
+
+module load hypre
 
 HYPRE_VERSION=`cat $HYPRE_PATH/lib/cmake/HYPRE/HYPREConfigVersion.cmake | grep "set(PACKAGE_VERSION \"3"`
 if [[ "$HYPRE_VERSION" == "" ]]; then
@@ -22,20 +35,15 @@ fi
 HYPRE_VERSION=`echo $HYPRE_VERSION | sed 's/set(PACKAGE_VERSION \"//g'`
 HYPRE_VERSION=`echo $HYPRE_VERSION | sed 's/\")//g'`
 
-HYPRE_TMPDIR=$(mktemp -d -t hypre_ij_test.XXXXXXXXXX)
+BUILDDIR=$(mktemp -d)
+trap 'rm -rf ${BUILDDIR}' EXIT
+cd ${BUILDDIR}
 
-git clone --branch v$HYPRE_VERSION https://github.com/hypre-space/hypre.git "$HYPRE_TMPDIR/hypre"
+git clone --branch v$HYPRE_VERSION https://github.com/hypre-space/hypre.git "hypre"
 
-pushd "$HYPRE_TMPDIR/hypre/src/test"
+pushd "hypre/src/test"
 
 mpicc ij.c -o ij -I$HYPRE_PATH/include -L$HYPRE_PATH/lib -lHYPRE -lm
 
 
 ./ij -n 25 25 25 -pmis -keepT 1 -rlx 18 -exec_device -rap 1 -mod_rap2 1 -interptype 6 -solver 1 -agg_nl 1 -27pt -mxrs 0.9 -ns 2 -Pmx 8
-
-popd
-
-rm -rf "$HYPRE_TMPDIR"
-
-
-

@@ -1,0 +1,54 @@
+base_model: /app/models/Ministral-3-14B-Reasoning-2512
+flash_attention: true
+use_kernels: false
+model_kwargs:
+  attn_implementation: "flash_attention_2"
+
+# keep everything in VRAM, not a discrete GPU system
+experimental_skip_move_to_device: true
+
+gradient_checkpointing: true
+gradient_checkpointing_kwargs:
+  use_reentrant: false
+
+datasets:
+  - path: /app/datasets/sci-base-science-local
+    type: completion
+    text_column: text
+
+val_set_size: 0
+output_dir: /app/models/ministral-3-14b-cpt-science
+
+sequence_len: 2048
+pad_to_sequence_len: true
+#sample_packing_bin_size: 2048
+sample_packing: false
+eval_sample_packing: false
+pretrain_multipack_attn: false
+
+# batch size math: 4 * 4 * 4 (GPUs) = 64 global batch
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+num_epochs: 3
+max_steps: 100
+
+optimizer: adamw_torch
+lr_scheduler: constant_with_warmup
+learning_rate: 2e-5
+
+bf16: true
+tf32: false
+
+save_strategy: "epoch"
+logging_steps: 1
+warmup_ratio: 0.03
+
+save_safetensors: true
+ray_log_to_driver: false
+
+streaming: false
+streaming_multipack_buffer_size: 2000
+skip_prepare_dataset: false
+
+use_ray: false
+

@@ -1,9 +1,13 @@
 all: saxpy_cpu saxpy_gpu_singleunit_autoalloc saxpy_gpu_singleunit_dynamic saxpy_gpu_parallelfor saxpy_gpu_loop saxpy_gpu_collapse
 
-ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
+ifdef CRAYPE_VERSION
+   OPENMP_OFFLOAD_FLAGS=-fopenmp
+else
+   ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
+   OPENMP_OFFLOAD_FLAGS=-fopenmp --offload-arch=${ROCM_GPU}
+endif
 
 OPENMP_FLAGS=-fopenmp
-OPENMP_OFFLOAD_FLAGS=-fopenmp --offload-arch=${ROCM_GPU}
 
 CFLAGS = -g -O3 -fstrict-aliasing
 

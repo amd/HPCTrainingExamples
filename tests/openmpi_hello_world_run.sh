@@ -6,7 +6,7 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    module load libfabric
    MPIRUN=srun
 else

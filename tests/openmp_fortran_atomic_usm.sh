@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    if [ -z "$CXX" ]; then
       export CXX=`which CC`
    fi
@@ -24,7 +24,13 @@ else
 fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/Atomic
+SRCDIR=${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/Atomic
+
+BUILDDIR=$(mktemp -d)
+trap 'rm -rf ${BUILDDIR}' EXIT
+cp ${SRCDIR}/Makefile ${SRCDIR}/*.F ${BUILDDIR}/
+cd ${BUILDDIR}
+
 export HSA_XNACK=1
 make
 ./atomic

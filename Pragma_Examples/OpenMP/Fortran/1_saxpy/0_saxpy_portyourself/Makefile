@@ -17,23 +17,18 @@ else ifneq ($(findstring gfortran,$(FC1)),)
   FREE_FORM_FLAG = -ffree-form
 else ifneq ($(findstring ftn,$(FC1)),)
   OPENMP_FLAGS = -fopenmp
+  FTN_VERSION := $(shell $(FC) --version 2>&1)
+  ifneq ($(findstring Cray,$(FTN_VERSION)),)
+    FREE_FORM_FLAG = -f free
+    FFLAGS = -eZ
+  else
+    FREE_FORM_FLAG = -ffree-form
+    FFLAGS =
+  endif
 endif
 
-ifneq ($(findstring ftn,$(FC1)),)
-  FFLAGS = -g -eZ -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
-else ifneq ($(findstring amdflang,$(FC1)),)
-  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
-else
-  FFLAGS = -g -O3 ${FREE_FORM_FLAG} -fstrict-aliasing ${OPENMP_FLAGS}
-endif
-ifeq (${FC1},gfortran-13)
-   LDFLAGS = ${OPENMP_FLAGS} -fno-lto
-else ifneq ($(findstring ftn,$(FC1)),)
-   LDFLAGS = ${OPENMP_FLAGS} #only needed on systems with non-matching default -L/opt/rh/gcc-toolset-12/root/usr/lib/gcc/x86_64-redhat-linux/12
-else
-   LDFLAGS = ${OPENMP_FLAGS}
-endif
-
+FFLAGS := -g -O3 ${FFLAGS} ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
+LDFLAGS = ${OPENMP_FLAGS}
 
 ${EXEC}: ${EXEC}.F90
 	$(FC) $(LDFLAGS) $^ -o $@

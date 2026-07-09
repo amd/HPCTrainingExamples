@@ -2,7 +2,8 @@
 #include <omp.h>
 void saxpy() {
    int N=1000000;
-   float a, x[N], y[N];
+   float x[N], y[N];
+   float a=2.0f;
    double t = 0.0;
    double tb, te;
 

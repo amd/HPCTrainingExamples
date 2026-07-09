@@ -10,9 +10,10 @@ void saxpy(float a, float* x, float* y,
    {
       int bs = n / omp_get_num_teams(); // could also use nteams
       #pragma omp distribute
-      for (int i = 0; i < n; i++) {
-         #pragma omp parallel for simd firstprivate(i,bs)
-         for (int ii = i; ii < i + bs; ii++) {
+      for (int i = 0; i < n; i += bs) {
+         int hi = i + bs < n ? i + bs : n; // clamp tail block to n
+         #pragma omp parallel for simd firstprivate(i,hi)
+         for (int ii = i; ii < hi; ii++) {
             y[ii] = a * x[ii] + y[ii];
          }
       }
@@ -20,7 +21,8 @@ void saxpy(float a, float* x, float* y,
 }
 int main(int argc, char *argv[]){
    int N=1000000;
-   float a, x[N], y[N];
+   float x[N], y[N];
+   float a=2.0f;
    double tb, te;
    double t = 0.0;
 

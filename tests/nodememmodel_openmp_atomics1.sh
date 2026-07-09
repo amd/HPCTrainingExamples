@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    if [ -z "$CXX" ]; then
       export CXX=`which CC`
    fi
@@ -36,5 +36,6 @@ cp * ${BUILD_DIR}
 
 cd ${BUILD_DIR}
 
+make clean
 make arraysum1
 ./arraysum1

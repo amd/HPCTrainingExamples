@@ -27,9 +27,21 @@ ifneq ($(USE_CRAYPE),)
   MPICC=CC
 endif
 
-IS_OMPI=$(shell which ompi_info)
-IS_MPICH=$(shell ${MPICC} --version | grep mpich)
-IS_MPICH=$(shell ${MPICC} --version | grep Cray)
+IS_OMPI=$(shell which ompi_info 2>/dev/null)
+# MPICH detection. The Cray cc/CC wrapper prints "CrayPE is loaded" (matched by
+# 'Cray' below). The standalone mpich-wrappers MPICH on a Cray, however, reports
+# the underlying compiler from `--version` (e.g. "AMD clang"), so grepping the
+# version string misses it -- fall back to a working MPICH-style `-compile_info`
+# (mpich-wrappers supports it; see the else branch), then to the `mpichversion`
+# tool. (Previously the second assignment clobbered the first, so only the
+# 'Cray' match survived and mpich-wrappers hit the "Unknown MPI version" error.)
+IS_MPICH=$(shell ${MPICC} --version 2>/dev/null | grep -iE 'mpich|cray')
+ifeq ($(strip $(IS_MPICH)),)
+  IS_MPICH=$(shell ${MPICC} -compile_info >/dev/null 2>&1 && echo mpich)
+endif
+ifeq ($(strip $(IS_MPICH)),)
+  IS_MPICH=$(shell which mpichversion 2>/dev/null)
+endif
 
 ifneq ($(IS_OMPI),)
   MPICFLAGS=$(shell ${MPICC} --showme:compile)

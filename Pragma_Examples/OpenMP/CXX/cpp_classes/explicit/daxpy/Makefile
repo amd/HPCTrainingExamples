@@ -1,6 +1,15 @@
-
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
-OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
+CXX1=$(notdir $(CXX))
+
+ifneq ($(findstring amdclang,$(CXX1)),)
+  OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
+else ifneq ($(findstring clang,$(CXX1)),)
+  OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
+else ifneq ($(findstring gcc,$(CXX1)),)
+  OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU}
+else ifneq ($(findstring CC,$(CXX1)),)
+  OPENMP_FLAGS = -fopenmp
+endif
 
 CXXFLAGS = -g -O3  -Wall -std=c++17 ${OPENMP_FLAGS} 
 LDFLAGS= ${OPENMP_FLAGS} 
@@ -17,7 +26,7 @@ main.o: main.cpp daxpy.hpp
 	$(CXX) $(CXXFLAGS) -c main.cpp -o main.o
 
 $(EXEC): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(EXEC) $(OBJECTS)
+	$(CXX) $(LDFLAGS) -o $(EXEC) $(OBJECTS)
 
 clean:
 	rm -f $(EXEC) $(OBJECTS)

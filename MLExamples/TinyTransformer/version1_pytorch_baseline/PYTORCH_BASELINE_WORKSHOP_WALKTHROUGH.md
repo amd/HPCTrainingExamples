@@ -807,7 +807,7 @@ Understanding the available options:
 ```bash
 --enable-pytorch-profiler   # Enable PyTorch profiler
 --profile-dir ./profiles    # Directory for profile output
---profile-memory            # Include memory profiling
+--enable-memory-profiling   # Enable profiling of GPU allocations
 --profile-operators         # Detailed operator profiling
 --profile-steps 5           # Number of steps to profile
 ```
@@ -934,7 +934,7 @@ python3 tiny_llama_v1.py \
     --num-steps 20 \
     --enable-pytorch-profiler \
     --profile-dir ./pytorch_profiles \
-    --profile-memory
+    --enable-memory-profiling
 ```
 
 **With DeepSpeed FLOPS Profiler:**
@@ -1472,7 +1472,7 @@ python3 tiny_llama_v1.py \
     --seq-len 128 \
     --num-steps 15 \
     --enable-pytorch-profiler \
-    --profile-memory \
+    --enable-memory-profiling \
     --profile-dir ./memory_analysis_bs4
 
 # Batch size 8
@@ -1481,7 +1481,7 @@ python3 tiny_llama_v1.py \
     --seq-len 128 \
     --num-steps 15 \
     --enable-pytorch-profiler \
-    --profile-memory \
+    --enable-memory-profiling \
     --profile-dir ./memory_analysis_bs8
 
 # Batch size 16
@@ -1490,7 +1490,7 @@ python3 tiny_llama_v1.py \
     --seq-len 128 \
     --num-steps 15 \
     --enable-pytorch-profiler \
-    --profile-memory \
+    --enable-memory-profiling \
     --profile-dir ./memory_analysis_bs16
 ```
 
@@ -1618,7 +1618,7 @@ python3 tiny_llama_v1.py \
     --batch-size 8 \
     --seq-len 64 \
     --num-steps 10 \
-    --profile-memory \
+    --enable-memory-profiling \
     --profile-dir ./memory_seq64
 
 # Sequence length 128 (baseline)
@@ -1626,7 +1626,7 @@ python3 tiny_llama_v1.py \
     --batch-size 8 \
     --seq-len 128 \
     --num-steps 10 \
-    --profile-memory \
+    --enable-memory-profiling \
     --profile-dir ./memory_seq128
 
 # Sequence length 256
@@ -1634,7 +1634,7 @@ python3 tiny_llama_v1.py \
     --batch-size 8 \
     --seq-len 256 \
     --num-steps 10 \
-    --profile-memory \
+    --enable-memory-profiling \
     --profile-dir ./memory_seq256
 
 # Sequence length 512 (might OOM - use smaller batch if needed)
@@ -1642,7 +1642,7 @@ python3 tiny_llama_v1.py \
     --batch-size 4 \
     --seq-len 512 \
     --num-steps 5 \
-    --profile-memory \
+    --enable-memory-profiling \
     --profile-dir ./memory_seq512
 ```
 
@@ -1694,7 +1694,7 @@ python3 tiny_llama_v1.py \
     --seq-len 128 \
     --num-steps 10 \
     --enable-pytorch-profiler \
-    --profile-memory \
+    --enable-memory-profiling \
     --profile-operators \
     --profile-dir ./memory_hotspots
 ```

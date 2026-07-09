@@ -9,15 +9,18 @@ execute_process(COMMAND rocminfo COMMAND grep -m 1 -E gfx[^0]{1} COMMAND sed -e 
 
 string(REPLACE "-O2" "-O3" CMAKE_Fortran_FLAGS_RELWITHDEBINFO "${CMAKE_Fortran_FLAGS_RELWITHDEBINFO}")
 set(CMAKE_Fortran_FLAGS_DEBUG "-ggdb")
-set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp --offload-arch=${ROCM_GPU}")
+set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS}")
 
 message(${CMAKE_Fortran_COMPILER_ID})
-if ("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Clang")
+if ("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "LLVMFlang" OR "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Flang")
    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp --offload-arch=${ROCM_GPU}")
+   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fopenmp --offload-arch=${ROCM_GPU}")
 elseif ("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp -foffload=-march=${ROCM_GPU}")
+   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fopenmp --offload-arch=${ROCM_GPU}")
 elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Cray")
    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp")
+   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fopenmp")
    #the cray compiler decides the offload-arch by loading appropriate modules
    #module load craype-accel-amd-gfx942 for example
 endif()

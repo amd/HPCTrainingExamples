@@ -5,14 +5,18 @@
 # Compilers and related
 ROCM_PATH     ?= /opt/rocm
 ROCM_GPU      ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
-CXXFLAG       = -O2 -g --offload-arch=$(ROCM_GPU)
+CXXFLAG       = -O2 -g
 LDFLAG        =
 
 # OpenMP
 COMPILER_OMP  = $(CXX) # e.g. $(ROCM_PATH)/llvm/bin/clang++ here: accept from environment
-CXXFLAGS_OMP  = '-fopenmp --offload-arch=${ROCM_GPU}'  #if offload-arch is needed this depends on the compiler chosen!
-LDFLAGS_OMP   =
-
+ifdef CRAYPE_VERSION
+   CXXFLAGS_OMP  = '-fopenmp'
+   LDFLAGS_OMP   = '-fopenmp'
+else
+   CXXFLAGS_OMP  = '-fopenmp --offload-arch=${ROCM_GPU}'
+   LDFLAGS_OMP   = '-fopenmp --offload-arch=${ROCM_GPU}'
+endif
 
 # Source code
 OBJS=	Jacobi.o \
@@ -38,7 +42,7 @@ omp:
 
 
 jacobi: $(OBJS)
-	$(CXX) $(CXXFLAG) $(CXXFLAGS) $(LDFLAG) $(LDFLAGS) -o Jacobi  $(OBJS)
+	$(CXX) $(CXXFLAG) $(LDFLAG) $(LDFLAGS) -o Jacobi  $(OBJS)
 
 %.o : %.cpp
 	$(CXX) $(CXXFLAG) $(CXXFLAGS) -c $< -o $@

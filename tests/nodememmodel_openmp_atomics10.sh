@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
    if [ -z "$CXX" ]; then
       export CXX=`which CC`
    fi
@@ -31,7 +31,7 @@ if [ ${XNACK_COUNT} -lt 1 ]; then
    echo "Skip"
 else
 
-   if [[ "`printenv |grep -w CRAY |wc -l`" -gt 1 ]]; then
+   if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
       export CXX=${ROCM_PATH}/llvm/bin/amdclang++
       export CC=${ROCM_PATH}/llvm/bin/amdclang
       export FC=${ROCM_PATH}/llvm/bin/amdflang
@@ -49,6 +49,7 @@ else
 
    cd ${BUILD_DIR}
 
+   make clean
    make arraysum10
    export HSA_XNACK=1
    ./arraysum10

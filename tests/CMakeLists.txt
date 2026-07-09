@@ -851,31 +851,31 @@ set_tests_properties(OpenMP_Optimizations_CXX_3_MemoryPool PROPERTIES TIMEOUT 60
 
 add_test(NAME ROCm_rocBLAS_GEMM_Check COMMAND ../rocblas_gemm_check.sh )
 set_property(TEST ROCm_rocBLAS_GEMM_Check PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
-set_property(TEST ROCm_rocBLAS_GEMM_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST ROCm_rocBLAS_GEMM_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
 add_test(NAME HIPFort_ROCm_Check_hipfc_2003 COMMAND ../hipfort_rocm_check_hipfc_2003.sh )
 set_property(TEST HIPFort_ROCm_Check_hipfc_2003 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
-set_property(TEST HIPFort_ROCm_Check_hipfc_2003 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HIPFort_ROCm_Check_hipfc_2003 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
 add_test(NAME HIPFort_ROCm_Check_hipfc_2008 COMMAND ../hipfort_rocm_check_hipfc_2008.sh )
 set_property(TEST HIPFort_ROCm_Check_hipfc_2008 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
-set_property(TEST HIPFort_ROCm_Check_hipfc_2008 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HIPFort_ROCm_Check_hipfc_2008 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
 add_test(NAME HIPFort_ROCm_GEMM_Global COMMAND ../hipfort_rocm_gemm_global.sh )
 set_property(TEST HIPFort_ROCm_GEMM_Global PROPERTY PASS_REGULAR_EXPRESSION "2048")
-set_property(TEST HIPFort_ROCm_GEMM_Global PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HIPFort_ROCm_GEMM_Global PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
 add_test(NAME HIPFort_ROCm_GEMM_Local COMMAND ../hipfort_rocm_gemm_local.sh )
 set_property(TEST HIPFort_ROCm_GEMM_Local PROPERTY PASS_REGULAR_EXPRESSION "2048")
-set_property(TEST HIPFort_ROCm_GEMM_Local PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HIPFort_ROCm_GEMM_Local PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
 add_test(NAME HIPFort_ROCm_GEMM_Global_SD COMMAND ../hipfort_rocm_gemm_global_sd.sh )
 set_property(TEST HIPFort_ROCm_GEMM_Global_SD PROPERTY PASS_REGULAR_EXPRESSION "2048")
-set_property(TEST HIPFort_ROCm_GEMM_Global_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HIPFort_ROCm_GEMM_Global_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
 add_test(NAME HIPFort_ROCm_GEMM_Local_SD COMMAND ../hipfort_rocm_gemm_local_sd.sh )
 set_property(TEST HIPFort_ROCm_GEMM_Local_SD PROPERTY PASS_REGULAR_EXPRESSION "2048")
-set_property(TEST HIPFort_ROCm_GEMM_Local_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HIPFort_ROCm_GEMM_Local_SD PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
 #add_test(NAME HIPFort_AFAR_GEMM_Global COMMAND ../hipfort_afar_gemm_global.sh )
 #set_property(TEST HIPFort_AFAR_GEMM_Global PROPERTY PASS_REGULAR_EXPRESSION "2048")
@@ -941,7 +941,7 @@ set_property(TEST GPUAwareOpenMPI_pt2pt PROPERTY SKIP_REGULAR_EXPRESSION "module
 
 add_test(NAME GPUAwareOpenMPI_UCC_OpenMP_AllReduce COMMAND ../gpuawarempi_ucc_openmp_allreduce_check.sh )
 set_property(TEST GPUAwareOpenMPI_UCC_OpenMP_AllReduce PROPERTY PASS_REGULAR_EXPRESSION "REGRESSION_RESULT: PASS")
-set_property(TEST GPUAwareOpenMPI_UCC_OpenMP_AllReduce PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_property(TEST GPUAwareOpenMPI_UCC_OpenMP_AllReduce PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip" "Skip -- Cray MPICH does not use UCC")
 set_tests_properties(GPUAwareOpenMPI_UCC_OpenMP_AllReduce PROPERTIES TIMEOUT 600)
 
 add_test(NAME OpenMPI_Hello_World_Run COMMAND ../openmpi_hello_world_run.sh )
@@ -950,7 +950,7 @@ set_property(TEST OpenMPI_Hello_World_Run PROPERTY SKIP_REGULAR_EXPRESSION "modu
 
 add_test(NAME OpenMPI_Check_ROCm_Support COMMAND ../openmpi_check_rocm_support.sh )
 set_property(TEST OpenMPI_Check_ROCm_Support PROPERTY PASS_REGULAR_EXPRESSION "MPI extensions: affinity, cuda, ftmpi, rocm")
-set_property(TEST OpenMPI_Check_ROCm_Support PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST OpenMPI_Check_ROCm_Support PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skipped - this is MPICH")
 
 #add_test(NAME Mvapich2_Hello_World_C_Compile COMMAND ../mvapich2_hello_world_c_compile.sh )
 #set_property(TEST Mvapich2_Hello_World_C_Compile PROPERTY PASS_REGULAR_EXPRESSION "Executable created")
@@ -1096,7 +1096,7 @@ set_property(TEST Hipifly_Without_Module PROPERTY SKIP_REGULAR_EXPRESSION "modul
 
 add_test(NAME Hipifly_With_Module COMMAND ../hipifly_with_module.sh )
 set_property(TEST Hipifly_With_Module PROPERTY PASS_REGULAR_EXPRESSION "Validation PASSED.")
-set_property(TEST Hipifly_With_Module PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Hipifly_With_Module PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipifly'")
 
 # OpenACC Examples
 #add_test(NAME OpenACC_Saxpy_C_AMDClang COMMAND ../openacc_saxpy_c_amdclang.sh )
@@ -1145,11 +1145,11 @@ set_property(TEST Kokkos_Test_Install PROPERTY SKIP_REGULAR_EXPRESSION "module s
 
 add_test(NAME Kokkos_CPU_OpenMP_Stream_Ver3 COMMAND ../kokkos_cpu_openmp_stream_ver3.sh )
 set_property(TEST Kokkos_CPU_OpenMP_Stream_Ver3 PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
-set_property(TEST Kokkos_CPU_OpenMP_Stream_Ver3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Kokkos_CPU_OpenMP_Stream_Ver3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
 
 add_test(NAME Kokkos_CPU_OpenMP_Stream_Ver4 COMMAND ../kokkos_cpu_openmp_stream_ver4.sh )
 set_property(TEST Kokkos_CPU_OpenMP_Stream_Ver4 PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
-set_property(TEST Kokkos_CPU_OpenMP_Stream_Ver4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Kokkos_CPU_OpenMP_Stream_Ver4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
 
 add_test(NAME CPU_Stream COMMAND ../cpu_stream.sh )
 set_property(TEST CPU_Stream PROPERTY PASS_REGULAR_EXPRESSION "Average runtime")
@@ -1165,19 +1165,19 @@ set_property(TEST Kokkos_GPU_HIP_Stream_Ver4 PROPERTY SKIP_REGULAR_EXPRESSION "m
 
 add_test(NAME Kokkos_ShallowWater_OpenMP_Par2 COMMAND ../kokkos_cpu_openmp_shallow_water_par2.sh )
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par2 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_OpenMP_Par2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Kokkos_ShallowWater_OpenMP_Par2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
 
 add_test(NAME Kokkos_ShallowWater_OpenMP_Par3 COMMAND ../kokkos_cpu_openmp_shallow_water_par3.sh )
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par3 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_OpenMP_Par3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Kokkos_ShallowWater_OpenMP_Par3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
 
 add_test(NAME Kokkos_ShallowWater_OpenMP_Par4 COMMAND ../kokkos_cpu_openmp_shallow_water_par4.sh )
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par4 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_OpenMP_Par4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Kokkos_ShallowWater_OpenMP_Par4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
 
 add_test(NAME Kokkos_ShallowWater_OpenMP_Par5 COMMAND ../kokkos_cpu_openmp_shallow_water_par5.sh )
 set_property(TEST Kokkos_ShallowWater_OpenMP_Par5 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_OpenMP_Par5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Kokkos_ShallowWater_OpenMP_Par5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
 
 add_test(NAME CPU_Shallow_Water COMMAND ../cpu_shallow_water.sh )
 set_property(TEST CPU_Shallow_Water PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
@@ -1185,19 +1185,19 @@ set_property(TEST CPU_Shallow_Water PROPERTY SKIP_REGULAR_EXPRESSION "module spi
 
 add_test(NAME Kokkos_ShallowWater_HIP_Par2 COMMAND ../kokkos_gpu_hip_shallow_water_par2.sh )
 set_property(TEST Kokkos_ShallowWater_HIP_Par2 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_HIP_Par2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Kokkos_ShallowWater_HIP_Par2 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
 
 add_test(NAME Kokkos_ShallowWater_HIP_Par3 COMMAND ../kokkos_gpu_hip_shallow_water_par3.sh )
 set_property(TEST Kokkos_ShallowWater_HIP_Par3 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_HIP_Par3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Kokkos_ShallowWater_HIP_Par3 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
 
 add_test(NAME Kokkos_ShallowWater_HIP_Par4 COMMAND ../kokkos_gpu_hip_shallow_water_par4.sh )
 set_property(TEST Kokkos_ShallowWater_HIP_Par4 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_HIP_Par4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Kokkos_ShallowWater_HIP_Par4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
 
 add_test(NAME Kokkos_ShallowWater_HIP_Par5 COMMAND ../kokkos_gpu_hip_shallow_water_par5.sh )
 set_property(TEST Kokkos_ShallowWater_HIP_Par5 PROPERTY PASS_REGULAR_EXPRESSION "Flow finished")
-set_property(TEST Kokkos_ShallowWater_HIP_Par5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST Kokkos_ShallowWater_HIP_Par5 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'kokkos'")
 
 #Node Memory Model Managed Memory
 add_test(NAME NodeMemModel_Managed_Memory_HIP_Orig COMMAND ../nodememmodel_managed_memory_hip_orig.sh )
@@ -1436,24 +1436,24 @@ set_property(TEST Pytorch_Profile_TorchProfiler        PROPERTY RESOURCE_LOCK py
 # Python MPI tests
 add_test(NAME MPI4PY_Check_Import COMMAND ../mpi4py_check_import.sh)
 set_property(TEST MPI4PY_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST MPI4PY_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'mpi4py'")
+set_property(TEST MPI4PY_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'mpi4py")
 
 add_test(NAME MPI4PY_Check_Import_MPI COMMAND ../mpi4py_check_import_mpi.sh)
 set_property(TEST MPI4PY_Check_Import_MPI PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST MPI4PY_Check_Import_MPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'mpi4py'")
+set_property(TEST MPI4PY_Check_Import_MPI PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'mpi4py")
 
 add_test(NAME MPI4PY_Cupy COMMAND ../mpi4py_cupy.sh)
 set_property(TEST MPI4PY_Cupy PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST MPI4PY_Cupy PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'mpi4py'")
+set_property(TEST MPI4PY_Cupy PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'mpi4py'" "Unable to locate a modulefile for 'cupy'")
 
 # PETSc tests
-add_test(NAME PETSc_Bench_KSPSolve COMMAND ../petsc_bench_kspsolve.sh --petsc-module petsc)
+add_test(NAME PETSc_Bench_KSPSolve COMMAND ../petsc_bench_kspsolve.sh)
 set_property(TEST PETSc_Bench_KSPSolve PROPERTY PASS_REGULAR_EXPRESSION "KSP iters:     41")
 set_property(TEST PETSc_Bench_KSPSolve PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'petsc'")
 
-add_test(NAME PETSc_AMDFlang_Bench_KSPSolve COMMAND ../petsc_bench_kspsolve.sh --petsc-module petsc_amdflang)
-set_property(TEST PETSc_AMDFlang_Bench_KSPSolve PROPERTY PASS_REGULAR_EXPRESSION "KSP iters:     41")
-set_property(TEST PETSc_AMDFlang_Bench_KSPSolve PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'petsc'")
+#add_test(NAME PETSc_AMDFlang_Bench_KSPSolve COMMAND ../petsc_bench_kspsolve.sh)
+#set_property(TEST PETSc_AMDFlang_Bench_KSPSolve PROPERTY PASS_REGULAR_EXPRESSION "KSP iters:     41")
+#set_property(TEST PETSc_AMDFlang_Bench_KSPSolve PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'petsc'")
 
 add_test(NAME PETSc_AMDFlang_Snes_Ex21 COMMAND ../petsc_amdflang_snes_ex21.sh )
 set_property(TEST PETSc_AMDFlang_Snes_Ex21 PROPERTY PASS_REGULAR_EXPRESSION "Nonlinear solve converged due to CONVERGED_FNORM_RELATIVE iterations 48")
@@ -1502,11 +1502,11 @@ set_tests_properties(Julia_Check_GPU_Access PROPERTIES TIMEOUT 400)
 
 add_test(NAME Julia_GPU_Vec_Add COMMAND ../julia_gpu_vec_add.sh )
 set_property(TEST Julia_GPU_Vec_Add PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
-set_tests_properties(Julia_GPU_Vec_Add PROPERTIES TIMEOUT 400)
+set_tests_properties(Julia_GPU_Vec_Add PROPERTIES TIMEOUT 500)
 
 add_test(NAME Julia_GPU_Oceananigans COMMAND ../julia_gpu_oceananigans.sh )
 set_property(TEST Julia_GPU_Oceananigans PROPERTY PASS_REGULAR_EXPRESSION "AMDGPU on LatitudeLongitudeGrid with HydrostaticFreeSurfaceModel |   34     34")
-set_tests_properties(Julia_GPU_Oceananigans PROPERTIES TIMEOUT 1000)
+set_tests_properties(Julia_GPU_Oceananigans PROPERTIES TIMEOUT 800)
 
 # HIP-Python tests
 add_test(NAME HIP-Python_Check_Import COMMAND ../hip-python_check_import.sh )
@@ -1788,19 +1788,19 @@ set_property(TEST Netcdf_Fortran_Check_Parallel_IO PROPERTY SKIP_REGULAR_EXPRESS
 # FFTW Tests
 add_test(NAME FFTW_Check_Version COMMAND ../fftw_check_version.sh)
 set_property(TEST FFTW_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "fftw-wisdom tool for FFTW version 3.3.10.")
-set_property(TEST FFTW_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST FFTW_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'fftw'")
 
 add_test(NAME FFTWF_Check_Version COMMAND ../fftwf_check_version.sh)
 set_property(TEST FFTWF_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "fftw-wisdom tool for FFTW version 3.3.10.")
-set_property(TEST FFTWF_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST FFTWF_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'fftw'")
 
 add_test(NAME FFTWL_Check_Version COMMAND ../fftwl_check_version.sh)
 set_property(TEST FFTWL_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "fftw-wisdom tool for FFTW version 3.3.10.")
-set_property(TEST FFTWL_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST FFTWL_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'fftw'")
 
 add_test(NAME FFTWL_Check_Install COMMAND ../fftw_check_install.sh)
 set_property(TEST FFTWL_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
-set_property(TEST FFTWL_Check_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST FFTWL_Check_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'fftw'")
 
 add_test(NAME Apptainer_Test COMMAND ../apptainer_test.sh)
 set_property(TEST Apptainer_Test PROPERTY PASS_REGULAR_EXPRESSION "HSA System Attributes")

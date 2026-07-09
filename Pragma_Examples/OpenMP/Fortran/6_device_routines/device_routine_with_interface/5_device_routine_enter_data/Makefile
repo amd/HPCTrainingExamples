@@ -14,36 +14,34 @@ ifneq ($(findstring amdflang,$(FC1)),)
   FREE_FORM_FLAG = -ffree-form
 else ifneq ($(findstring flang,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
-  FREE_FORM_FLAG = -Mfreeform
+  FREE_FORM_FLAG = -ffree-form
 else ifneq ($(findstring gfortran,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload=-march=$(ROCM_GPU)
+  #OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp
   FREE_FORM_FLAG = -ffree-form
 else ifneq ($(findstring ftn,$(FC1)),)
+  FTN_VERSION := $(shell $(FC) --version 2>&1)
   OPENMP_FLAGS = -fopenmp
-  FREE_FORM_FLAG = -f free
+  ifneq ($(findstring Cray,$(FTN_VERSION)),)
+    FREE_FORM_FLAG = -f free
+    FFLAGS = -eZ
+  else
+    FREE_FORM_FLAG = -ffree-form
+    FFLAGS =
+  endif
 endif
 
-ifneq ($(findstring ftn,$(FC1)),)
-  FFLAGS = -g -eZ -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
-else
-  FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
-endif
-ifeq (${FC1},gfortran-13)
-   LDFLAGS = ${OPENMP_FLAGS} -fno-lto
-else ifneq ($(findstring ftn,$(FC1)),)
-   LDFLAGS = ${OPENMP_FLAGS} -L/opt/rh/gcc-toolset-12/root/usr/lib/gcc/x86_64-redhat-linux/12
-else
-   LDFLAGS = ${OPENMP_FLAGS}
-endif
+FFLAGS := -g -O3 ${FFLAGS} ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
+LDFLAGS = ${OPENMP_FLAGS}
 
 compute.o: compute.f90
-	$(FC1) $(FFLAGS) $(LDFLAGS) -c compute.f90
+	$(FC) $(FFLAGS) $(LDFLAGS) -c compute.f90
 
 device_routine.o: device_routine.f90 compute.o
-	$(FC1) $(FFLAGS) $(LDFLAGS) -c device_routine.f90
+	$(FC) $(FFLAGS) $(LDFLAGS) -c device_routine.f90
 
 device_routine: device_routine.o compute.o
-	$(FC1) $(FFLAGS) $(LDFLAGS)  -o device_routine device_routine.o compute.o
+	$(FC) $(LDFLAGS)  -o device_routine device_routine.o compute.o
 # Cleanup
 clean:
 	rm -f *.o *.mod device_routine
