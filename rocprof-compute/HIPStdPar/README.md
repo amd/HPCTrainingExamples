@@ -163,7 +163,7 @@ rocprof-compute analyze -p workloads/Profile-ShallowWater-all/0/
 
 The full profile includes memory traffic, occupancy, instruction mix, cache utilization, and many other metrics organized into numbered blocks in the analyze output.
 
-Usually you are interested in a specific kernel. select the kernel wiht `-k` or dispatch `-d` number from the stats in block one in the analysis. Both during collection as well as analysis one can filter for a kernel name where also a partial name is sufficient. This can be useful if an interesting kernel name was identified with rocprofv3 (compare linked example below). 
+Usually you are interested in a specific kernel. Select the kernel with `-k` or dispatch `-d` number from the stats in block 0 in the analysis. Both during collection as well as analysis one can filter for a kernel name where also a partial name is sufficient. This can be useful if an interesting kernel name was identified with rocprofv3 (compare linked example below). 
 
 
 ## Notes and known issues
