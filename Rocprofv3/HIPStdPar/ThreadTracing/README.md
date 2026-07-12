@@ -12,7 +12,7 @@ Allocate a compute node and load the ROCm module:
 
 ```bash
 salloc -N 1 --gpus=1
-module load therock/therock-dist-linux-gfx94X-dcgpu-7.14.0a20260608
+module load rocm/therock-dist-linux-gfx94X-dcgpu-7.14.0a20260608
 export HSA_XNACK=1
 ```
 
