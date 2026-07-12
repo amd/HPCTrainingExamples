@@ -30,7 +30,7 @@ Load a ROCm module and enable unified memory (`XNACK`), which is required for HI
 memory on MI300A:
 
 ```
-module load module load rocm/therock-dist-linux-gfx94X-dcgpu-7.14.0a20260608  # this exercise was tested with a pre-release version of therock 7.14
+module load rocm/therock-dist-linux-gfx94X-dcgpu-7.14.0a20260608  # this exercise was tested with a pre-release version of therock 7.14
 export HSA_XNACK=1
 ```
 
