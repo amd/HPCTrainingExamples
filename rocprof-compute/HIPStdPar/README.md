@@ -22,7 +22,7 @@ salloc -N 1 --gpus=1 -p <your_partition>
 Load the ROCm module. The exact module name depends on your system:
 
 ```
-module load therock/therock-dist-linux-gfx94X-dcgpu-7.14.0a20260608
+module load rocm/therock-dist-linux-gfx94X-dcgpu-7.14.0a20260608
 ```
 
 Install the Python dependencies required by rocprof-compute:
