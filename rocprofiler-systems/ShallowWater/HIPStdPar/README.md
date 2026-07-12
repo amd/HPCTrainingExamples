@@ -16,7 +16,7 @@ The exercise progressively introduces:
 Load a ROCm module that contains `rocprof-sys`. The exact module name depends on your system.
 
 ```
-module load therock/therock-dist-linux-gfx94X-dcgpu-7.14.0a20260608
+module load rocm/therock-dist-linux-gfx94X-dcgpu-7.14.0a20260608
 ```
 
 Verify that the tools are available:
