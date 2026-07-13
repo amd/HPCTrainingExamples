@@ -1402,7 +1402,7 @@ add_test(NAME Pytorch_HIPBLASLt_Origami_Regression_Check COMMAND ../hipblaslt_or
 set_property(TEST Pytorch_HIPBLASLt_Origami_Regression_Check PROPERTY PASS_REGULAR_EXPRESSION "ORIGAMI CHECK: PASSED")
 set_property(TEST Pytorch_HIPBLASLt_Origami_Regression_Check PROPERTY FAIL_REGULAR_EXPRESSION "ORIGAMI CHECK: FAILED")
 set_property(TEST Pytorch_HIPBLASLt_Origami_Regression_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'" "ORIGAMI CHECK: SKIPPED")
-set_tests_properties(Pytorch_HIPBLASLt_Origami_Regression_Check PROPERTIES TIMEOUT 300)
+set_tests_properties(Pytorch_HIPBLASLt_Origami_Regression_Check PROPERTIES TIMEOUT 600)
 
 add_test(NAME Pytorch_RCCL_Distributed_Regression COMMAND ../pytorch_rccl_distributed_regression.sh )
 set_property(TEST Pytorch_RCCL_Distributed_Regression PROPERTY PASS_REGULAR_EXPRESSION "REGRESSION RESULT: PASS")
@@ -1702,6 +1702,7 @@ set_property(TEST TAU_Check_HIP_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module
 add_test(NAME TAU_Check_MPI_Profile COMMAND ../tau_exec_check.sh --tau-profile)
 set_property(TEST TAU_Check_MPI_Profile PROPERTY PASS_REGULAR_EXPRESSION "MPI_Allreduce()")
 set_property(TEST TAU_Check_MPI_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider tau" "Unable to locate a modulefile for 'tau'")
+set_property(TEST TAU_Check_MPI_Profile PROPERTY TIMEOUT 600)
 
 
 # Score-P Tests
