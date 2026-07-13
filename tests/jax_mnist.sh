@@ -16,10 +16,10 @@ if [ $? -eq 1 ]; then
 fi
 module load jax
 
-SRC_DIR=$(pwd)
+#SRC_DIR=$(pwd)
 BUILD_DIR=$(mktemp -d)
 trap "rm -rf ${BUILD_DIR}" EXIT
-cp * ${BUILD_DIR}
+#cp * ${BUILD_DIR}
 
 cd ${BUILD_DIR}
 
