@@ -1404,6 +1404,25 @@ set_property(TEST Pytorch_HIPBLASLt_Origami_Regression_Check PROPERTY FAIL_REGUL
 set_property(TEST Pytorch_HIPBLASLt_Origami_Regression_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'" "ORIGAMI CHECK: SKIPPED")
 set_tests_properties(Pytorch_HIPBLASLt_Origami_Regression_Check PROPERTIES TIMEOUT 300)
 
+add_test(NAME Pytorch_RCCL_Distributed_Regression COMMAND ../pytorch_rccl_distributed_regression.sh )
+set_property(TEST Pytorch_RCCL_Distributed_Regression PROPERTY PASS_REGULAR_EXPRESSION "REGRESSION RESULT: PASS")
+set_property(TEST Pytorch_RCCL_Distributed_Regression PROPERTY FAIL_REGULAR_EXPRESSION "REGRESSION RESULT: FAIL")
+set_property(TEST Pytorch_RCCL_Distributed_Regression PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'" "REGRESSION RESULT: SKIPPED")
+set_property(TEST Pytorch_RCCL_Distributed_Regression PROPERTY SKIP_RETURN_CODE 77)
+set_tests_properties(Pytorch_RCCL_Distributed_Regression PROPERTIES TIMEOUT 300)
+
+# ROCm HIP-runtime host-memory leak on the D2H / .item() path.
+# Discriminator = host-RSS growth in bytes/call (default fail > 100 B/call);
+# clean runtimes report ~0 B/call, leaky ones ~800-1100 B/call. Checks the
+# .item() headline plus the D2H-copy family (C/D/E/F) so it also catches the
+# rocm-7.2.0 + torch-2.12.0 case where the leak moves off .item() onto the
+# pinned-copy path. Tune via MEM_LEAK_THRESHOLD_BYTES / MEM_LEAK_ITEM_N / MEM_LEAK_ISO_N.
+add_test(NAME Pytorch_Item_Leak_Regression_Check COMMAND ../pytorch_item_leak_regression_check.sh )
+set_property(TEST Pytorch_Item_Leak_Regression_Check PROPERTY PASS_REGULAR_EXPRESSION "MEM LEAK CHECK: PASSED")
+set_property(TEST Pytorch_Item_Leak_Regression_Check PROPERTY FAIL_REGULAR_EXPRESSION "MEM LEAK CHECK: FAILED")
+set_property(TEST Pytorch_Item_Leak_Regression_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'" "MEM LEAK CHECK: SKIPPED")
+set_tests_properties(Pytorch_Item_Leak_Regression_Check PROPERTIES TIMEOUT 400)
+
 add_test(NAME Pytorch_Profile_Rocprof-compute_ROCm COMMAND ../pytorch_profiling_rocprof-compute.sh )
 set_property(TEST Pytorch_Profile_Rocprof-compute_ROCm PROPERTY PASS_REGULAR_EXPRESSION "2.1 System Speed-of-Light")
 set_property(TEST Pytorch_Profile_Rocprof-compute_ROCm PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
@@ -1687,7 +1706,7 @@ set_property(TEST TAU_Check_MPI_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module
 
 # Score-P Tests
 add_test(NAME Score-P_Check_Version COMMAND ../scorep_check_version.sh)
-set_property(TEST Score-P_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "Score-P 11.0-dev" "Score-P 9.4")
+set_property(TEST Score-P_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "Score-P 11.0-dev")
 set_property(TEST Score-P_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'scorep'")
 
 add_test(NAME Score-P_CPU_Profile COMMAND ../scorep_cpu_profile.sh)
