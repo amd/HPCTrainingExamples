@@ -1824,6 +1824,36 @@ add_test(NAME FFTWL_Check_Install COMMAND ../fftw_check_install.sh)
 set_property(TEST FFTWL_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
 set_property(TEST FFTWL_Check_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'fftw'")
 
+add_test(NAME MPItrace_Check_Install COMMAND ../mpitrace_check_install.sh)
+set_property(TEST MPItrace_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
+set_property(TEST MPItrace_Check_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'mpitrace'")
+set_tests_properties(MPItrace_Check_Install PROPERTIES TIMEOUT 300)
+
+add_test(NAME TraceLens_Check_Install COMMAND ../tracelens_check_install.sh)
+set_property(TEST TraceLens_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
+set_property(TEST TraceLens_Check_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'tracelens'")
+set_tests_properties(TraceLens_Check_Install PROPERTIES TIMEOUT 300)
+
+add_test(NAME RCCL_Tests_Check_Install COMMAND ../rccl-tests_check_install.sh)
+set_property(TEST RCCL_Tests_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
+set_property(TEST RCCL_Tests_Check_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip" "Unable to locate a modulefile for 'rccl-tests'")
+set_tests_properties(RCCL_Tests_Check_Install PROPERTIES TIMEOUT 600)
+
+add_test(NAME LIKWID_Check_Install COMMAND ../likwid_check_install.sh)
+set_property(TEST LIKWID_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
+set_property(TEST LIKWID_Check_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'likwid'")
+set_tests_properties(LIKWID_Check_Install PROPERTIES TIMEOUT 300)
+
+add_test(NAME rocSHMEM_Check_Install COMMAND ../rocshmem_check_install.sh)
+set_property(TEST rocSHMEM_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
+set_property(TEST rocSHMEM_Check_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip" "Unable to locate a modulefile for 'rocshmem'")
+set_tests_properties(rocSHMEM_Check_Install PROPERTIES TIMEOUT 300)
+
+add_test(NAME MDB_Check_Install COMMAND ../mdb_check_install.sh)
+set_property(TEST MDB_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
+set_property(TEST MDB_Check_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'mdb'")
+set_tests_properties(MDB_Check_Install PROPERTIES TIMEOUT 300)
+
 add_test(NAME Apptainer_Test COMMAND ../apptainer_test.sh)
 set_property(TEST Apptainer_Test PROPERTY PASS_REGULAR_EXPRESSION "HSA System Attributes")
 set_property(TEST Apptainer_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
