@@ -14,13 +14,17 @@
 #   ./rccl_scaling_sweep.sh                          # GPU counts 2 4 8
 #   GPUS="2 4 8" N_LAYERS=24 DIM=2048 ./rccl_scaling_sweep.sh
 #   MIXED_PRECISION=1 ./rccl_scaling_sweep.sh
+#   OPTS="--compile" ./rccl_scaling_sweep.sh          # torch.compile the model
 #
 # Environment:
 #   GPUS         space-separated GPU counts (default "2 4 8")
 #   N_LAYERS/N_HEADS/DIM/SEQ/BATCH   model + per-GPU batch (defaults 16/16/1024/512/8)
 #   MIXED_PRECISION   set to 1 to pass --mixed-precision
+#   OPTS         extra bench flags passed through (e.g. --compile)
 #   BENCH        path to fsdp2_bench.py (default alongside this script)
 #   NCCL_DEBUG   set INFO to log RCCL rings/trees (default WARN)
+#   AFFINITY=1   bind each rank to its GPU's local NUMA node (via numactl); effect
+#                is within noise here (see ../common/PERFORMANCE_NOTES.md)
 set -euo pipefail
 
 GPUS=${GPUS:-"2 4 8"}
@@ -44,6 +48,15 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BENCH=${BENCH:-"$here/fsdp2_bench.py"}
 [[ -f "$BENCH" ]] || { echo "ERROR: benchmark not found: $BENCH" >&2; exit 1; }
 
+# Optional NUMA affinity: prepend the launcher so each rank binds to its GPU's
+# local node. Empty by default (no behavior change).
+AFFIN=""
+if [[ "${AFFINITY:-0}" == "1" ]]; then
+  LAUNCHER="$here/../common/affinity_launcher.py"
+  if [[ -f "$LAUNCHER" ]]; then AFFIN="$LAUNCHER"; echo "AFFINITY=1: binding ranks to local NUMA nodes";
+  else echo "WARN: $LAUNCHER not found; AFFINITY ignored" >&2; fi
+fi
+
 LOGDIR=${LOGDIR:-rccl_scaling_logs}
 mkdir -p "$LOGDIR"
 
@@ -54,9 +67,9 @@ printf '%-6s %-12s %-14s %-14s %-10s %-10s\n' \
 base=""; g0=${GPUS%% *}
 for n in $GPUS; do
   log="$LOGDIR/fsdp2_${n}gpu.log"
-  torchrun --standalone --nproc_per_node="$n" "$BENCH" \
+  torchrun --standalone --nproc_per_node="$n" $AFFIN "$BENCH" \
     --n-layers "$N_LAYERS" --n-heads "$N_HEADS" --dim "$DIM" \
-    --seq-len "$SEQ" --batch-size "$BATCH" $mp_flag > "$log" 2>&1 || {
+    --seq-len "$SEQ" --batch-size "$BATCH" $mp_flag ${OPTS:-} > "$log" 2>&1 || {
       printf '%-6s %s\n' "$n" "FAILED (see $log)"; continue; }
 
   line=$(grep '^RESULT' "$log" | tail -n1)

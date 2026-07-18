@@ -78,7 +78,7 @@ CG_SEED=12345 mpirun -n 4 ./gpu_bind.sh ./cg_gpu src/Dubcova2.pm isend   # via e
 mpirun -n 4 ./gpu_bind.sh ./cg_gpu src/Dubcova2.pm isend 12345           # via argv[3]
 ```
 
-The seed is echoed as `RHS seed: 12345` at the top of the output. With it fixed, **all five methods converge in
+The seed is echoed as `RHS seed: 12345` at the top of the output. With it fixed, **all seven methods converge in
 exactly the same iteration count with the same residual** (e.g. 172 iterations, final residual 1.815e-4). Now a
 difference in solve time is a difference in *transport*, not in *how much work* was done.
 
@@ -116,7 +116,7 @@ CG solve time:      0.0513 s  (0.0003 s/iter)
 ```
 
 - **`halo exchange`** = staging copies (D↔H) + GPU gather/pack + the MPI/RCCL `send`/`recv`/`wait`/`alltoallv`
-  calls. This is what differs between the five variants.
+  calls. This is what differs between the seven variants.
 - **`dot allreduce`** = the global reductions. Independent of the halo transport.
 - **`compute (rest)`** = `solve − comm total`. rocSPARSE/rocBLAS kernels + launch latency. Independent of the
   halo transport — so if it moves when you change *only* the transport, that is your noise floor talking.

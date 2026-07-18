@@ -59,7 +59,7 @@ the RCCL collective kernels, so one table attributes time to compute vs.
 communication.
 
 ```bash
-module load rocm/6.4.3 pytorch/2.12.0
+module load rocm openmpi pytorch
 export MIOPEN_FIND_MODE=FAST
 # 2 GPUs, dump a trace per rank under ./torch_prof/rank{0,1}
 torchrun --standalone --nproc_per_node=2 ddp_resnet_bench.py \
@@ -141,7 +141,7 @@ a step-time breakdown into compute / communication / other.
 so install them into a venv layered on the module:
 
 ```bash
-module load rocm/6.4.3 pytorch/2.12.0
+module load rocm openmpi pytorch
 python -m venv --system-site-packages ~/venvs/tbprof
 source ~/venvs/tbprof/bin/activate
 pip install tensorboard torch-tb-profiler
@@ -162,7 +162,7 @@ For a framework-independent kernel trace (and to see the RCCL collectives as
 device kernels / API calls):
 
 ```bash
-module load rocm/6.4.3 pytorch/2.12.0
+module load rocm openmpi pytorch
 export MIOPEN_FIND_MODE=FAST
 # --profile keeps the window short; rocprofv3 traces the whole process, so use a
 # small iters/warmup run instead to bound the trace size:
@@ -187,7 +187,7 @@ the RCCL trace; their total is the communication time, comparable to `comm_s`.
 Prove whether the convolutions are compute- or memory-bound on MI300A:
 
 ```bash
-module load rocm/6.4.3 pytorch/2.12.0
+module load rocm openmpi pytorch
 export MIOPEN_FIND_MODE=FAST
 rocprof-compute profile -n resnet_roof -- \
   torchrun --standalone --nproc_per_node=1 ddp_resnet_bench.py \

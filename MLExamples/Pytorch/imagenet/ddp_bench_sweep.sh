@@ -17,6 +17,9 @@
 #   BATCH  per-GPU batch (default 128)       OPTS   extra bench flags (e.g. --channels-last --amp)
 #   NCCL_P2P_DISABLE (unset => xGMI P2P; set 1 only as a fallback w/o iommu=pt),
 #   MIOPEN_FIND_MODE (default FAST), MIOPEN_DB (cache dir)
+#   AFFINITY=1  bind each rank to its GPU's local NUMA node (via numactl). Effect
+#               is within noise for these GPU-resident runs (see
+#               ../common/PERFORMANCE_NOTES.md); useful for host-staged/CPU paths.
 set -euo pipefail
 
 GPUS=${GPUS:-"1 2 4"}
@@ -41,6 +44,15 @@ WARM="$here/warm_miopen.py"
 LOGDIR=${LOGDIR:-ddp_bench_logs}
 mkdir -p "$LOGDIR"
 
+# Optional NUMA affinity: prepend the launcher so each rank binds to its GPU's
+# local node. Empty by default (no behavior change).
+AFFIN=""
+if [[ "${AFFINITY:-0}" == "1" ]]; then
+  LAUNCHER="$here/../common/affinity_launcher.py"
+  if [[ -f "$LAUNCHER" ]]; then AFFIN="$LAUNCHER"; echo "AFFINITY=1: binding ranks to local NUMA nodes";
+  else echo "WARN: $LAUNCHER not found; AFFINITY ignored" >&2; fi
+fi
+
 # Pre-warm MIOpen once for this arch/batch (single process => no cache lock
 # contention between ranks, which is what makes the first multi-rank run crawl).
 if [[ -f "$WARM" ]]; then
@@ -55,7 +67,7 @@ printf '%-6s %-12s %-12s %-10s %-14s %-10s %-10s\n' \
 base=""; g0=${GPUS%% *}
 for n in $GPUS; do
   log="$LOGDIR/${ARCH}_${n}gpu.log"
-  torchrun --standalone --nproc_per_node="$n" "$BENCH" -a "$ARCH" -b "$BATCH" $OPTS \
+  torchrun --standalone --nproc_per_node="$n" $AFFIN "$BENCH" -a "$ARCH" -b "$BATCH" $OPTS \
     > "$log" 2>&1 || { printf '%-6s %s\n' "$n" "FAILED (see $log)"; continue; }
 
   line=$(grep '^RESULT' "$log" | tail -n1)

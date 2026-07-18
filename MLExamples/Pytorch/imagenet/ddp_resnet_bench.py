@@ -18,7 +18,8 @@ same technique as the minGPT-ddp example):
     comm_per_step ~= step_time(all-reduce) - step_time(no_sync)
 
 Optimizations exposed as flags: ``--channels-last`` (NHWC, big win for conv on
-CDNA/MI300) and ``--amp`` (bf16 autocast).
+CDNA/MI300), ``--amp`` (bf16 autocast), and ``--compile`` (``torch.compile``
+graph capture + kernel fusion).
 
 Launch (one node, N GPUs):
 
@@ -42,13 +43,14 @@ import torchvision.models as models
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 
-def timed_steps(model, optimizer, criterion, x, y, iters, sync, amp):
+def timed_steps(model, optimizer, criterion, next_x, y, iters, sync, amp):
     torch.cuda.synchronize()
     dist.barrier()
     start = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
     start.record()
     for _ in range(iters):
+        x = next_x()  # fixed on-GPU tensor, or a host->GPU staged batch
         optimizer.zero_grad(set_to_none=True)
         ctx = torch.autocast("cuda", dtype=torch.bfloat16) if amp else _null()
         if sync:
@@ -130,12 +132,25 @@ def main():
     p.add_argument("--iters", type=int, default=40)
     p.add_argument("--channels-last", action="store_true")
     p.add_argument("--amp", action="store_true")
+    p.add_argument("--compile", action="store_true",
+                   help="wrap the model in torch.compile (graph capture + fusion)")
     p.add_argument("--profile", action="store_true",
                    help="run a few steps under torch.profiler and dump a trace")
     p.add_argument("--profile-dir", default="./torch_prof",
                    help="output dir for the torch.profiler trace")
     p.add_argument("--flops", action="store_true",
                    help="rank 0 prints a DeepSpeed FLOPs/params/latency report")
+    p.add_argument("--migrate", action="store_true",
+                   help="stage each input batch from host to GPU with zero-copy "
+                        "migrate() (MI300A unified memory; needs HSA_XNACK=1)")
+    p.add_argument("--host-copy", action="store_true",
+                   help="stage each input batch from host to GPU with a .to() copy "
+                        "(baseline to compare against --migrate)")
+    p.add_argument("--migrate-method", choices=["managed", "register"],
+                   default="managed",
+                   help="zero-copy method for --migrate: 'managed' aliases a "
+                        "hipMallocManaged buffer; 'register' hipHostRegisters an "
+                        "ordinary pageable buffer (works on any existing tensor)")
     args = p.parse_args()
 
     rank = int(os.environ.get("RANK", 0))
@@ -150,6 +165,10 @@ def main():
     if args.channels_last:
         model = model.to(memory_format=torch.channels_last)
     model = DDP(model, device_ids=[local_rank])
+    if args.compile:
+        # Compile the DDP module; the first (warm-up) step pays the compile cost.
+        # OptimizedModule delegates attribute access, so model.no_sync() still works.
+        model = torch.compile(model)
     optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
     criterion = torch.nn.CrossEntropyLoss().to(device)
 
@@ -158,22 +177,45 @@ def main():
         x = x.to(memory_format=torch.channels_last)
     y = torch.randint(0, 1000, (args.batch_size,), device=device)
 
+    # Optional host->GPU input staging (to exercise migrate vs .to). Default is
+    # the pre-resident on-GPU tensor above, which leaves existing results intact.
+    stage = args.migrate or args.host_copy
+    if stage:
+        import sys as _sys
+        from pathlib import Path as _Path
+        _sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / "common"))
+        from zerocopy import Stager
+        stager = Stager(device, enabled=args.migrate, method=args.migrate_method)
+        host_x = stager.host_empty((args.batch_size, 3, 224, 224), torch.float32)
+        host_x.copy_(torch.randn(args.batch_size, 3, 224, 224))
+
+        def next_x():
+            gx = stager.to_device(host_x)
+            return gx.to(memory_format=torch.channels_last) if args.channels_last else gx
+    else:
+        stager = None
+        def next_x():
+            return x
+
     n_params = sum(p.numel() for p in model.parameters())
 
     if args.flops and rank == 0:
         flops_report(args.arch, args.batch_size, device, args.channels_last)
 
     if args.profile:
-        timed_steps(model, optimizer, criterion, x, y, args.warmup, True, args.amp)
-        profile_steps(model, optimizer, criterion, x, y, args.amp,
+        timed_steps(model, optimizer, criterion, next_x, y, args.warmup, True, args.amp)
+        profile_steps(model, optimizer, criterion, next_x(), y, args.amp,
                       f"{args.profile_dir}/rank{rank}", rank)
         dist.barrier()
         dist.destroy_process_group()
         return
 
-    timed_steps(model, optimizer, criterion, x, y, args.warmup, True, args.amp)
-    t_sync = timed_steps(model, optimizer, criterion, x, y, args.iters, True, args.amp)
-    t_nosync = timed_steps(model, optimizer, criterion, x, y, args.iters, False, args.amp)
+    timed_steps(model, optimizer, criterion, next_x, y, args.warmup, True, args.amp)
+    if args.compile:
+        # Warm the no_sync graph too; torch.compile recompiles it on first use.
+        timed_steps(model, optimizer, criterion, next_x, y, 3, False, args.amp)
+    t_sync = timed_steps(model, optimizer, criterion, next_x, y, args.iters, True, args.amp)
+    t_nosync = timed_steps(model, optimizer, criterion, next_x, y, args.iters, False, args.amp)
 
     comm = max(t_sync - t_nosync, 0.0)
     comm_pct = 100.0 * comm / t_sync if t_sync > 0 else 0.0
@@ -183,6 +225,8 @@ def main():
         opt = []
         if args.channels_last: opt.append("channels_last")
         if args.amp: opt.append("amp_bf16")
+        if args.compile: opt.append("compile")
+        if stage: opt.append(f"stage_input={stager.mode}")
         print(f"# arch={args.arch} world_size={world_size} per_gpu_batch={args.batch_size} "
               f"params={n_params/1e6:.1f}M grad_allreduce={n_params*4/1e6:.0f}MB "
               f"opts={','.join(opt) or 'none'}")

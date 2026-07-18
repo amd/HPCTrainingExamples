@@ -34,17 +34,22 @@ cg-solver-example/
 Only the numerical kernels move to the GPU and the halo exchange gains four alternative implementations. That
 shared lineage is what makes the comparison meaningful.
 
-## The five communication variants (preview)
+## The seven communication variants (preview)
 
 | method | transport | buffers | collective? |
 |--------|-----------|---------|-------------|
 | `staged` | `MPI_Isend/Irecv` | **host** (D→H, H→D copies) | no |
 | `isend` | `MPI_Isend/Irecv` | **GPU** (GPU-Aware MPI) | no |
+| `staged_unified` | `MPI_Isend/Irecv` | **host `malloc`, 0 copies** (APU + XNACK) | no |
 | `rccl` | `ncclSend/ncclRecv` | **GPU** (RCCL) | no |
 | `alltoallv_staged` | `MPI_Alltoallv` | **host** | yes |
 | `alltoallv` | `MPI_Alltoallv` | **GPU** (GPU-Aware MPI) | yes |
+| `alltoallv_unified` | `MPI_Alltoallv` | **host `malloc`, 0 copies** (APU + XNACK) | yes |
 
-All five produce **identical numerical results** — they differ only in how ghost values move.
+All seven produce **identical numerical results** — they differ only in how ghost values move. The two
+`*_unified` variants exploit the MI300A APU's single address space: MPI uses the **host** path on ordinary
+`malloc`'d buffers (not GPU-Aware MPI), yet the GPU packs/reads them in place via XNACK, so there are **no
+staging copies**. They require `HSA_XNACK=1` and an APU.
 
 ## Hardware & software prerequisites
 

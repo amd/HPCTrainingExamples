@@ -29,6 +29,7 @@ saves). It reuses the upstream `pytorch/examples/distributed/FSDP2` transformer.
 | `rccl_scaling_sweep.sh` | Runs the benchmark at 2/4/8 GPUs; prints throughput, efficiency, peak memory |
 | `pytorch_fsdp2_venv.batch` | Slurm job: venv install + fp32 & bf16 sweeps |
 | `pytorch_fsdp2_module.batch` | Slurm job: `module load` variant |
+| `PROFILING.md` | Full profiling guide: torch.profiler, DeepSpeed FLOPs, TensorBoard, rocprofv3, rocprof-compute, rocprof-sys |
 
 ## Why two metrics, not just throughput
 
@@ -120,10 +121,22 @@ Two things to read together:
 ```bash
 GPUS="2 4 8" N_LAYERS=24 DIM=2048 ./rccl_scaling_sweep.sh    # bigger shards + more comm
 GPUS="2 4 8" MIXED_PRECISION=1 ./rccl_scaling_sweep.sh        # bf16 params, fp32 reduce
+GPUS="2 4 8" OPTS="--compile" ./rccl_scaling_sweep.sh         # torch.compile the sharded model
+GPUS="2 4 8" MIXED_PRECISION=1 OPTS="--compile" ./rccl_scaling_sweep.sh
 ```
 
 Mixed precision reduces the all-gather byte volume (bf16 params) while keeping
 the gradient reduce-scatter in fp32 — a common way to cut FSDP communication.
+`--compile` wraps the sharded model in `torch.compile` (graph capture + kernel
+fusion); the first (warm-up) step pays a one-time compilation cost.
+
+`--migrate` (with `--host-copy` as the copy baseline) stages each token batch
+from the host to the GPU via **zero-copy unified-memory aliasing** rather than a
+`.to()` copy; `--migrate-method managed|register` picks the mechanism. Requires
+`HSA_XNACK=1`. As with minGPT, the token-ID batch is ~2 MB so this does not move
+FSDP2 throughput — see [`../common/README.md`](../common/README.md) for the
+100×–1000× raw-transfer micro-benchmark and the memory saving (100% of the
+device-resident duplicate eliminated), which is where it pays off.
 
 ## Measured results (MI300A, AAC6 `PPAC_MI300A_SPX`, ROCm 6.4.3 / PyTorch 2.12)
 
@@ -166,14 +179,31 @@ efficiency from 105% to 89% at 4 GPUs — the RCCL share is now more visible.
 
 ## 4. Precise kernel attribution (optional)
 
+The benchmark exposes the PyTorch-native profilers directly:
+
+```bash
+# torch.profiler: per-op/kernel + all-gather/reduce-scatter table, trace per rank
+torchrun --standalone --nproc_per_node=2 fsdp2_bench.py \
+  --profile --profile-dir ./torch_prof
+
+# DeepSpeed FlopsProfiler on the dense (unsharded) model: FLOPs / MACs / params
+torchrun --standalone --nproc_per_node=1 fsdp2_bench.py --flops
+```
+
+For a framework-independent kernel trace:
+
 ```bash
 rocprofv3 --kernel-trace --stats --truncate-kernels -- \
-  torchrun --standalone --nproc_per_node=8 fsdp2_bench.py
+  torchrun --standalone --nproc_per_node=8 fsdp2_bench.py --warmup 3 --iters 10
 ```
 
 Look for `ncclDevKernel_AllGather*` and `ncclDevKernel_ReduceScatter*` — these
 are the FSDP2 collectives, distinct from DDP's `AllReduce`. `rocprof-sys` shows
 them on a timeline so you can see the all-gather prefetch overlapping compute.
+
+**See [`PROFILING.md`](PROFILING.md)** for the full guide covering torch.profiler,
+the DeepSpeed FlopsProfiler, TensorBoard, rocprofv3, rocprof-compute (roofline),
+rocprofiler-systems (timeline), and multi-node TAU/HPCToolkit.
 
 ## 5. Run the upstream example (optional)
 

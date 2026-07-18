@@ -50,7 +50,8 @@ profiler — more so, because profiling adds overhead:
   `gpu_bind.sh` / `set_affinity_mi300a.sh`. Bad affinity dominates everything.
 - **Fix the RHS** with `CG_SEED` so every profiled run solves the same system.
 - Profile **one transport at a time** (`staged`, `isend`, `rccl`, `alltoallv`,
-  `alltoallv_staged`) and compare across runs.
+  `alltoallv_staged`, and the APU zero-copy `staged_unified` / `alltoallv_unified`
+  with `HSA_XNACK=1`) and compare across runs.
 - Give **each rank its own output directory** (use `$OMPI_COMM_WORLD_RANK`).
 
 > **Launch note (verified on AAC6 / MI300A, ROCm 6.4.3, OpenMPI 5.0.10).** Use an

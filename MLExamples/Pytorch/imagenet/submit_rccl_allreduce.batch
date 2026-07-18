@@ -11,7 +11,7 @@
 
 set -e
 
-module load rocm pytorch 2>/dev/null || source rocm-pytorch-imagenet/bin/activate
+module load rocm openmpi pytorch 2>/dev/null || source rocm-pytorch-imagenet/bin/activate
 
 cd "$SLURM_SUBMIT_DIR"
 

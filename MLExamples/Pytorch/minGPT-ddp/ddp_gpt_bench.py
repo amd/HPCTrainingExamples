@@ -57,12 +57,63 @@ class _null:
     def __exit__(self, *a): return False
 
 
-def timed_steps(model, optimizer, batch, target, iters, sync, amp=False):
+def profile_steps(model, optimizer, batch, target, amp, out_dir, rank):
+    """Run a few steps under torch.profiler and dump a Kineto/TensorBoard trace.
+
+    On ROCm the CUDA activity set captures HIP kernels *and* the RCCL collective
+    kernels, so the key-averages table attributes time to compute (attention/GEMM)
+    vs. communication (``nccl:all_reduce`` / ``ncclDevKernel_AllReduce_*``). The
+    transformer's gradients are large, so the all-reduce is a bigger share here
+    than for the ResNet in the imagenet example.
+    """
+    from torch.profiler import (profile, ProfilerActivity, schedule,
+                                tensorboard_trace_handler)
+    os.makedirs(out_dir, exist_ok=True)
+    sched = schedule(wait=1, warmup=3, active=6, repeat=1)
+    acts = [ProfilerActivity.CPU, ProfilerActivity.CUDA]
+    with profile(activities=acts, schedule=sched,
+                 on_trace_ready=tensorboard_trace_handler(out_dir),
+                 record_shapes=True, profile_memory=True, with_stack=False) as prof:
+        for _ in range(10):
+            optimizer.zero_grad(set_to_none=True)
+            ctx = torch.autocast("cuda", dtype=torch.bfloat16) if amp else _null()
+            with ctx:
+                _, loss = model(batch, target)
+            loss.backward()
+            optimizer.step()
+            prof.step()
+    if rank == 0:
+        print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=20))
+        print(f"# torch.profiler trace written to {out_dir} "
+              f"(view: chrome://tracing, https://ui.perfetto.dev, or TensorBoard)")
+
+
+def flops_report(GPT, cfg, batch, device):
+    """Report FLOPs/MACs/params of the GPT with the DeepSpeed profiler.
+
+    ``get_model_profile`` runs on a plain ``nn.Module`` (no DeepSpeed engine
+    needed), so it works on the unwrapped GPT as a compute-cost reference. The
+    GPT ``forward(idx, targets=None)`` accepts just the token batch.
+    """
+    from deepspeed.profiling.flops_profiler import get_model_profile
+    m = GPT(cfg).to(device).eval()
+    flops, macs, params = get_model_profile(
+        m, args=(batch,), print_profile=True, detailed=False,
+        warm_up=3, as_string=True)
+    print(f"FLOPS_PROFILE model=gpt n_layer={cfg.n_layer} n_embd={cfg.n_embd} "
+          f"batch={batch.size(0)} block={batch.size(1)} "
+          f"flops={flops} macs={macs} params={params}")
+    del m
+    torch.cuda.empty_cache()
+
+
+def timed_steps(model, optimizer, next_batch, target, iters, sync, amp=False):
     """Run `iters` train steps; return average step time in seconds.
 
     sync=True  -> normal DDP (gradients all-reduced every step over RCCL).
     sync=False -> model.no_sync() (all-reduce skipped) to expose the comm cost.
     amp=True   -> bf16 autocast for the forward pass.
+    next_batch -> callable returning the token batch (fixed on-GPU, or staged).
     """
     torch.cuda.synchronize()
     dist.barrier()
@@ -70,6 +121,7 @@ def timed_steps(model, optimizer, batch, target, iters, sync, amp=False):
     end = torch.cuda.Event(enable_timing=True)
     start.record()
     for _ in range(iters):
+        batch = next_batch()
         optimizer.zero_grad(set_to_none=True)
         ctx = torch.autocast("cuda", dtype=torch.bfloat16) if amp else _null()
         if sync:
@@ -97,6 +149,27 @@ def main():
     p.add_argument("--warmup", type=int, default=10)
     p.add_argument("--iters", type=int, default=40)
     p.add_argument("--amp", action="store_true", help="bf16 autocast forward")
+    p.add_argument("--compile", action="store_true",
+                   help="wrap the model in torch.compile (graph capture + fusion)")
+    p.add_argument("--profile", action="store_true",
+                   help="run a few steps under torch.profiler and dump a trace")
+    p.add_argument("--profile-dir", default="./torch_prof",
+                   help="output dir for the torch.profiler trace")
+    p.add_argument("--flops", action="store_true",
+                   help="rank 0 prints a DeepSpeed FLOPs/MACs/params report")
+    p.add_argument("--migrate", action="store_true",
+                   help="stage each token batch from host to GPU with zero-copy "
+                        "migrate() (MI300A unified memory; needs HSA_XNACK=1). "
+                        "Note: token-id batches are tiny, so the end-to-end effect "
+                        "here is small; see common/migrate_bench.py for raw cost.")
+    p.add_argument("--host-copy", action="store_true",
+                   help="stage each token batch from host to GPU with a .to() copy "
+                        "(baseline to compare against --migrate)")
+    p.add_argument("--migrate-method", choices=["managed", "register"],
+                   default="managed",
+                   help="zero-copy method for --migrate: 'managed' aliases a "
+                        "hipMallocManaged buffer; 'register' hipHostRegisters an "
+                        "ordinary pageable buffer (works on any existing tensor)")
     args = p.parse_args()
 
     GPT, GPTConfig, upstream = find_upstream_model()
@@ -116,6 +189,10 @@ def main():
     )
     model = GPT(cfg).to(device)
     model = DDP(model, device_ids=[local_rank])
+    if args.compile:
+        # Compile the DDP module; the first (warm-up) step pays the compile cost.
+        # OptimizedModule delegates attribute access, so model.no_sync() still works.
+        model = torch.compile(model)
     optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, betas=(0.9, 0.95))
 
     # Synthetic token batch (fixed per rank).
@@ -123,14 +200,45 @@ def main():
     batch = torch.randint(0, args.vocab_size, (args.batch_size, args.block_size), device=device)
     target = torch.randint(0, args.vocab_size, (args.batch_size, args.block_size), device=device)
 
+    # Optional host->GPU input staging (to exercise migrate vs .to). Default is
+    # the pre-resident on-GPU batch above, which leaves existing results intact.
+    stage = args.migrate or args.host_copy
+    if stage:
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                        os.pardir, "common"))
+        from zerocopy import Stager
+        stager = Stager(device, enabled=args.migrate, method=args.migrate_method)
+        host_batch = stager.host_empty((args.batch_size, args.block_size), batch.dtype)
+        host_batch.copy_(batch.cpu())
+        def next_batch():
+            return stager.to_device(host_batch)
+    else:
+        stager = None
+        def next_batch():
+            return batch
+
     n_params = sum(p.numel() for p in model.parameters())
     grad_bytes = n_params * 4  # fp32 gradients all-reduced per step
 
-    # Warm-up (also lets RCCL build its channels/rings).
-    timed_steps(model, optimizer, batch, target, args.warmup, sync=True, amp=args.amp)
+    if args.flops and rank == 0:
+        flops_report(GPT, cfg, batch, device)
 
-    t_sync = timed_steps(model, optimizer, batch, target, args.iters, sync=True, amp=args.amp)
-    t_nosync = timed_steps(model, optimizer, batch, target, args.iters, sync=False, amp=args.amp)
+    if args.profile:
+        timed_steps(model, optimizer, next_batch, target, args.warmup, sync=True, amp=args.amp)
+        profile_steps(model, optimizer, next_batch(), target, args.amp,
+                      f"{args.profile_dir}/rank{rank}", rank)
+        dist.barrier()
+        dist.destroy_process_group()
+        return
+
+    # Warm-up (also lets RCCL build its channels/rings).
+    timed_steps(model, optimizer, next_batch, target, args.warmup, sync=True, amp=args.amp)
+    if args.compile:
+        # Warm the no_sync graph too; torch.compile recompiles it on first use.
+        timed_steps(model, optimizer, next_batch, target, 3, sync=False, amp=args.amp)
+
+    t_sync = timed_steps(model, optimizer, next_batch, target, args.iters, sync=True, amp=args.amp)
+    t_nosync = timed_steps(model, optimizer, next_batch, target, args.iters, sync=False, amp=args.amp)
 
     comm = max(t_sync - t_nosync, 0.0)
     comm_pct = 100.0 * comm / t_sync if t_sync > 0 else 0.0
@@ -142,7 +250,9 @@ def main():
         print(f"# world_size={world_size}  params={n_params/1e6:.1f}M  "
               f"grad_allreduce={grad_bytes/1e6:.0f}MB/step  "
               f"per_gpu_batch={args.batch_size} block={args.block_size} "
-              f"amp={'bf16' if args.amp else 'off'}")
+              f"amp={'bf16' if args.amp else 'off'} "
+              f"compile={'on' if args.compile else 'off'} "
+              f"stage_input={stager.mode if stage else 'none'}")
         print(f"RESULT world_size={world_size} "
               f"step_sync_s={t_sync:.4f} step_nosync_s={t_nosync:.4f} "
               f"comm_s={comm:.4f} comm_pct={comm_pct:.1f} "

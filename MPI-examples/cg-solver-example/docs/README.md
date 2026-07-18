@@ -3,8 +3,8 @@
 A step-by-step tutorial built around the two examples in this repository:
 
 - **`CG-CPU/`** — a distributed, CPU-only Conjugate Gradient (CG) solver (reference implementation).
-- **`CG-GPU/`** — the same solver ported to AMD GPUs (rocSPARSE / rocBLAS / RCCL) with **five interchangeable
-  communication variants** for the halo exchange.
+- **`CG-GPU/`** — the same solver ported to AMD GPUs (rocSPARSE / rocBLAS / RCCL) with **seven interchangeable
+  communication variants** for the halo exchange (including two zero-copy host-path variants for the MI300A APU).
 
 The goal is not just to run the examples, but to walk the **path to a trustworthy, optimized performance
 measurement** so you can fairly compare communication approaches on AMD Instinct MI300A hardware.
@@ -23,7 +23,7 @@ to pick.
 | 1 | [The CPU reference](01-cpu-reference.md) | Build/run `CG-CPU`, understand the algorithm and distributed SpMV |
 | 2 | [Porting to the GPU](02-gpu-port.md) | Build/run `CG-GPU`, what changed (rocSPARSE/rocBLAS/RCCL/GPU-Aware MPI) |
 | 3 | [Measuring performance correctly](03-correct-measurement.md) | **The core chapter:** affinity, reproducibility, warm-up, repeats, isolating comm vs compute |
-| 4 | [Comparing communication variants](04-communication-variants.md) | The five transports, a fair comparison, and how to read the results |
+| 4 | [Comparing communication variants](04-communication-variants.md) | The seven transports, a fair comparison, and how to read the results |
 | 5 | [Tuning the copy engines (SDMA vs blit)](05-sdma-vs-blit.md) | `HSA_ENABLE_SDMA` / `_GANG`, when each wins |
 | 6 | [ROCm version & the SpMV API](06-rocm-version-and-spmv.md) | Version sweeps, the 7.x compute regression, `rocsparse_v2_spmv`, OpenMPI vs cray-mpich |
 | 7 | [The optimized configuration](07-optimization-path.md) | Putting it together: a recommended launch, a checklist, and where to go next |

@@ -16,6 +16,8 @@
 #   N_LAYER/N_HEAD/N_EMBD/BLOCK/BATCH   model + per-GPU batch (defaults 12/12/768/512/8)
 #   BENCH       path to ddp_gpt_bench.py (default alongside this script)
 #   NCCL_DEBUG  set INFO to log RCCL rings/trees (default WARN)
+#   AFFINITY=1  bind each rank to its GPU's local NUMA node (via numactl); effect
+#               is within noise here (see ../common/PERFORMANCE_NOTES.md)
 set -euo pipefail
 
 GPUS=${GPUS:-"1 2 4 8"}
@@ -36,6 +38,15 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BENCH=${BENCH:-"$here/ddp_gpt_bench.py"}
 [[ -f "$BENCH" ]] || { echo "ERROR: benchmark not found: $BENCH" >&2; exit 1; }
 
+# Optional NUMA affinity: prepend the launcher so each rank binds to its GPU's
+# local node. Empty by default (no behavior change).
+AFFIN=""
+if [[ "${AFFINITY:-0}" == "1" ]]; then
+  LAUNCHER="$here/../common/affinity_launcher.py"
+  if [[ -f "$LAUNCHER" ]]; then AFFIN="$LAUNCHER"; echo "AFFINITY=1: binding ranks to local NUMA nodes";
+  else echo "WARN: $LAUNCHER not found; AFFINITY ignored" >&2; fi
+fi
+
 LOGDIR=${LOGDIR:-rccl_scaling_logs}
 mkdir -p "$LOGDIR"
 
@@ -46,7 +57,7 @@ printf '%-6s %-12s %-12s %-10s %-14s %-10s %-10s\n' \
 base=""
 for n in $GPUS; do
   log="$LOGDIR/mingpt_${n}gpu.log"
-  torchrun --standalone --nproc_per_node="$n" "$BENCH" \
+  torchrun --standalone --nproc_per_node="$n" $AFFIN "$BENCH" \
     --n-layer "$N_LAYER" --n-head "$N_HEAD" --n-embd "$N_EMBD" \
     --block-size "$BLOCK" --batch-size "$BATCH" ${OPTS:-} > "$log" 2>&1 || {
       printf '%-6s %s\n' "$n" "FAILED (see $log)"; continue; }

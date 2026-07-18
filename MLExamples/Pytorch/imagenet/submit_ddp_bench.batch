@@ -14,7 +14,7 @@
 
 set -e
 
-module load rocm pytorch
+module load rocm openmpi pytorch
 
 cd "$SLURM_SUBMIT_DIR"
 

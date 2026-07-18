@@ -82,10 +82,11 @@ mpirun -n 4 ./cg_gpu src/Dubcova2.pm isend             # Isend/Irecv with GPU bu
 mpirun -n 4 ./cg_gpu src/Dubcova2.pm rccl              # RCCL ncclSend/ncclRecv
 mpirun -n 4 ./cg_gpu src/Dubcova2.pm alltoallv_staged  # MPI_Alltoallv through CPU host buffers
 mpirun -n 4 ./cg_gpu src/Dubcova2.pm alltoallv         # MPI_Alltoallv with GPU buffers (GPU-Aware)
-HSA_XNACK=1 mpirun -n 4 ./cg_gpu src/Dubcova2.pm staged_unified  # zero-copy plain MPI via MI300A single address space
+HSA_XNACK=1 mpirun -n 4 ./cg_gpu src/Dubcova2.pm staged_unified     # zero-copy host-path Isend/Irecv via MI300A single address space
+HSA_XNACK=1 mpirun -n 4 ./cg_gpu src/Dubcova2.pm alltoallv_unified  # zero-copy host-path MPI_Alltoallv via MI300A single address space
 ```
 
-All six methods produce the same numerical result (the CG algorithm is identical; only the spmv data exchange differs).
+All seven methods produce the same numerical result (the CG algorithm is identical; only the spmv data exchange differs).
 
 By default the right-hand side is built from a **random** vector seeded by wall-clock time, so each invocation solves a slightly different
 system and the iteration count varies from run to run.  To make runs reproducible (identical system across methods and invocations), fix the
@@ -237,15 +238,22 @@ Comparing `alltoallv_staged` vs. `alltoallv` isolates the PCIe round-trip cost (
 
 ### Method 6 — `staged_unified` (MI300A single address space, zero-copy plain MPI)
 
-Exploits the **APU's unified, coherent HBM**: on MI300A the CPU can address the GPU
-send/recv buffers directly, so this variant gets the simplicity of `staged`
-(**plain, non-GPU-Aware MPI on the host**) with **zero staging copies**. The send
-buffer is packed on the GPU with `rocsparse_dgthr`; a single `hipDeviceSynchronize`
-makes it visible to the host; MPI then `Isend`/`Irecv`s directly on the *device*
-pointers, and off-proc SpMV reads the received ghosts in place.
+Exploits the **APU's unified address space**: the send/recv buffers are ordinary
+**`malloc`'d host memory**, so MPI sees *host* pointers and takes the **host
+transport (plain, non-GPU-Aware MPI)** — yet there are still **zero staging
+copies**, because on MI300A the GPU reads/writes those same host buffers directly
+via XNACK page faulting. The send buffer is packed on the GPU with
+`rocsparse_dgthr` (GPU writing host memory); a single `hipDeviceSynchronize` makes
+it visible to MPI; MPI then `Isend`/`Irecv`s on the host pointers, and off-proc
+SpMV reads the received ghosts in place on the GPU.
 
-**Requires `HSA_XNACK=1`** in the environment (set before HSA init) so host access
-to device allocations page-faults coherently:
+This is the key difference from `isend`: `isend` hands **device** pointers to
+GPU-Aware MPI, whereas `staged_unified` only ever gives MPI **host** pointers
+(`malloc`, *not* `hipMalloc`/`hipHostMalloc`) — a device or pinned pointer would
+push UCX back onto the GPU-Aware path.
+
+**Requires `HSA_XNACK=1`** in the environment (set before HSA init) so the GPU can
+access the `malloc`'d host memory via page faults:
 
 ```bash
 HSA_XNACK=1 mpirun -n 4 ./cg_gpu src/Dubcova2.pm staged_unified
@@ -253,9 +261,31 @@ HSA_XNACK=1 mpirun -n 4 ./cg_gpu src/Dubcova2.pm staged_unified
 
 It is APU-specific — on a discrete GPU the same code degrades to slow migration.
 Comparing `staged` vs. `isend` vs. `staged_unified` shows three points on the
-spectrum: copies+plain MPI, zero-copy+GPU-Aware MPI, and zero-copy+plain MPI on an
+spectrum: copies+host MPI, zero-copy+GPU-Aware MPI, and zero-copy+host MPI on an
 APU. Verified on MI300A (gfx942): `staged_unified` converges bit-for-bit with
-`staged` and matches/beats `isend` while needing no GPU-Aware MPI.
+`staged`, runs ~2× faster (no copies), and sits between `staged` and `isend`
+because it uses the host transport rather than GPU-Aware MPI.
+
+### Method 7 — `alltoallv_unified` (MI300A single address space, zero-copy host MPI_Alltoallv)
+
+The **collective analogue of `staged_unified`**. `MPI_Alltoallv` runs on the same
+**`malloc`'d host buffers** (host transport, *not* GPU-Aware MPI), while the GPU
+packs `u_sendbuf` and reads `u_recvbuf` in place via XNACK — **zero staging
+copies**. It completes the 3×2 matrix of communication choices:
+
+| | 2 copies + host MPI | 0 copies + GPU-Aware MPI | 0 copies + host MPI (APU) |
+|---|---|---|---|
+| **point-to-point** | `staged` | `isend` | `staged_unified` |
+| **collective** | `alltoallv_staged` | `alltoallv` | `alltoallv_unified` |
+
+**Requires `HSA_XNACK=1`**:
+
+```bash
+HSA_XNACK=1 mpirun -n 4 ./cg_gpu src/Dubcova2.pm alltoallv_unified
+```
+
+Verified on MI300A (gfx942): converges bit-for-bit with the other variants; like
+`staged_unified`, it lands between the staged (copies) and GPU-Aware collectives.
 
 ---
 

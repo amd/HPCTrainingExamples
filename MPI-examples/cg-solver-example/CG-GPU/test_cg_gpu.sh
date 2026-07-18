@@ -5,9 +5,10 @@
 # Based on CG-GPU/README.md: builds ./cg_gpu and runs it across every
 # communication variant, checking that each one converges to a small residual.
 #
-#   staged | isend | rccl | alltoallv_staged | alltoallv
+#   staged | isend | rccl | alltoallv_staged | alltoallv | staged_unified |
+#   alltoallv_unified
 #
-# The CG algorithm is identical for all five variants; only the SpMV ghost
+# The CG algorithm is identical for all seven variants; only the SpMV ghost
 # exchange differs, so every variant must converge with a residual below the
 # solver's tolerance (tol = 1e-6 * initial_residual).
 #
@@ -15,7 +16,7 @@
 #   MATRIX     matrix file to solve      (default: src/Dubcova2.pm)
 #   NUM_RANKS  number of MPI ranks       (default: min(4, GPU count))
 #   RES_TOL    max acceptable residual   (default: 1e-3)
-#   METHODS    space-separated variants  (default: all five)
+#   METHODS    space-separated variants  (default: all seven)
 # =============================================================================
 
 set -u
@@ -77,11 +78,11 @@ cd "$REPO_DIR" || { echo "FAIL: cannot cd to $REPO_DIR"; exit 1; }
 
 MATRIX=${MATRIX:-src/Dubcova2.pm}
 RES_TOL=${RES_TOL:-1e-3}
-METHODS=${METHODS:-"staged isend rccl alltoallv_staged alltoallv staged_unified"}
+METHODS=${METHODS:-"staged isend rccl alltoallv_staged alltoallv staged_unified alltoallv_unified"}
 
-# 'staged_unified' exploits the MI300A single address space: the host addresses
-# the GPU send/recv buffers coherently via XNACK (no staging copies, no GPU-Aware
-# MPI). This must be enabled before HSA init, so export it here for all ranks.
+# The '*_unified' methods exploit the MI300A single address space: the GPU accesses
+# malloc'd host send/recv buffers coherently via XNACK (no staging copies, no
+# GPU-Aware MPI). This must be enabled before HSA init, so export it for all ranks.
 export HSA_XNACK=${HSA_XNACK:-1}
 
 # Optional fixed RHS seed (CG_SEED). When set, every method solves the identical

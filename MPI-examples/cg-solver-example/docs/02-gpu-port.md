@@ -13,7 +13,7 @@ on the host.
 | hand-written pack/gather | `rocsparse_dgthr` (GPU gather) |
 | hand-written dot | `rocblas_ddot` |
 | hand-written axpy/scal | `rocblas_daxpy` / `rocblas_dscal` |
-| `MPI_Isend/Irecv` on host buffers | **choice of 5 communication variants** |
+| `MPI_Isend/Irecv` on host buffers | **choice of 7 communication variants** |
 
 ## Build & run
 

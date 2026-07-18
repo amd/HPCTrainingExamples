@@ -238,6 +238,13 @@ struct GPUParMat {
     double *h_sendbuf;
     double *h_recvbuf;
 
+    // ── Variant 6: plain-malloc host buffers (staged_unified, MI300A APU) ───
+    // Ordinary system memory (malloc). On an APU with HSA_XNACK=1 the GPU can
+    // read/write these via page faults, while MPI sees them as HOST pointers and
+    // uses the host transport -- zero copies AND no GPU-Aware MPI.
+    double *u_sendbuf;
+    double *u_recvbuf;
+
     // ── Variant 3: MPI_Alltoallv arrays (CPU, one entry per rank) ──────────
     // Non-communicating ranks simply have count = 0.
     std::vector<int> a2a_sendcounts, a2a_sdispls;

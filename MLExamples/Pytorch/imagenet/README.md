@@ -115,14 +115,39 @@ single-process (so ranks don't contend on the cold cache SQLite db).
 
 ```bash
 salloc -p PPAC_MI300A_SPX -N1 --gpus=4 -t 00:20:00
-module load rocm pytorch
+module load rocm openmpi pytorch     # add version pins to sample a combo, e.g. rocm/7.2.3 pytorch/2.12.0
 
 # Baseline weak scaling (per-GPU batch held constant):
 GPUS="1 2 4" ARCH=resnet50 BATCH=128 ./ddp_bench_sweep.sh
 
 # Optimized: NHWC memory format + bf16 autocast
 GPUS="1 2 4" ARCH=resnet50 BATCH=128 OPTS="--channels-last --amp" ./ddp_bench_sweep.sh
+
+# Add torch.compile (graph capture + kernel fusion) on top:
+GPUS="1 2 4" ARCH=resnet50 BATCH=128 OPTS="--channels-last --amp --compile" ./ddp_bench_sweep.sh
 ```
+
+The optimization levers exposed by `ddp_resnet_bench.py` (pass via `OPTS`):
+
+| Flag | Effect |
+|------|--------|
+| `--channels-last` | NHWC memory format — matches CDNA conv layout |
+| `--amp` | bf16 autocast — the single biggest throughput win |
+| `--compile` | `torch.compile` graph capture + kernel fusion; first (warm-up) step pays a one-time compile cost |
+| `--migrate` | Stage each host input batch to the GPU with **zero-copy `migrate()`** (MI300A unified memory; needs `HSA_XNACK=1`). See [`../common/README.md`](../common/README.md) |
+| `--migrate-method managed\|register` | Zero-copy method: `managed` aliases a `hipMallocManaged` buffer (default); `register` `hipHostRegister`s any pageable tensor (e.g. a DataLoader batch) |
+| `--host-copy` | Stage each host input batch with a `.to()` copy — the baseline to compare `--migrate` against |
+
+> **Zero-copy input staging (MI300A).** By default the input batch is
+> pre-resident on the GPU. `--host-copy`/`--migrate` instead produce the batch on
+> the host each step and move it to the GPU — a `hipMemcpy` copy vs. an aliased
+> unified-memory pointer. The raw transfer is ~30× cheaper with `migrate` (see
+> [`../common/README.md`](../common/README.md) for the micro-benchmark), but for
+> this compute-bound step the reused-buffer copy overlaps compute, so end-to-end
+> throughput is within noise. The win shows up for large, per-step-fresh host
+> batches and in memory footprint: the copy path keeps a **second device-resident
+> copy** of every batch, while `migrate` keeps one (measured **100%** of the
+> device duplicate eliminated). Requires `HSA_XNACK=1`.
 
 ### Measured results (MI300A, resnet50, per-GPU batch 128)
 

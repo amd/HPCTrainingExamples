@@ -27,6 +27,7 @@ It builds on the upstream `pytorch/examples/distributed/minGPT-ddp` code:
 | `rccl_scaling_sweep.sh` | Runs the benchmark at 1/2/4/8 GPUs; prints comm%, throughput, efficiency |
 | `pytorch_mingpt_ddp_venv.batch` | Slurm job: venv install + scaling sweep |
 | `pytorch_mingpt_ddp_module.batch` | Slurm job: `module load` variant |
+| `PROFILING.md` | Full profiling guide: torch.profiler, DeepSpeed FLOPs, TensorBoard, rocprofv3, rocprof-compute, rocprof-sys |
 
 ## The key measurement: `no_sync()` isolates the all-reduce
 
@@ -128,6 +129,33 @@ Because the fp32 gradients are still all-reduced (498 MB/step for the 124M-param
 model), faster bf16 compute makes the fixed RCCL cost a **larger** share of each
 step — comm% rises even though wall-clock throughput ~1.8×.
 
+## 3b. Optimization: `torch.compile` (`--compile`)
+
+`torch.compile` captures the GPT block into a fused graph. It stacks with
+`--amp`, and (like TunableOp) is a large lever for these GEMM-bound transformers:
+
+```bash
+GPUS="1 2 4" OPTS="--compile" ./rccl_scaling_sweep.sh
+GPUS="1 2 4" OPTS="--amp --compile" ./rccl_scaling_sweep.sh
+```
+
+The first (warm-up) step pays a one-time compilation cost; the benchmark warms
+both the sync and `no_sync()` graphs before timing so the comm measurement stays
+clean. Faster compute again makes the fixed all-reduce a larger share, so `comm%`
+rises even as throughput climbs.
+
+## 3c. Zero-copy host→GPU input staging (`--migrate`, MI300A)
+
+`--migrate` stages each token batch from the host with **zero-copy `migrate()`**
+(unified-memory aliasing) instead of a `.to()` copy; `--migrate-method
+managed|register` picks the mechanism (`register` works on any pageable tensor),
+and `--host-copy` is the copy baseline. Requires `HSA_XNACK=1`. **Note:** minGPT
+batches are token IDs (~2 MB), far too small for this to move end-to-end
+throughput — it is included for completeness and to exercise the API. The raw
+100×–1000× transfer win and the memory saving (the device-resident duplicate is
+eliminated — measured 100%) are documented in
+[`../common/README.md`](../common/README.md).
+
 ## Measured results (MI300A, AAC6 `PPAC_MI300A_SPX`, ROCm 6.4.3 / PyTorch 2.12)
 
 GPT2-small (12 layers, 768 embd, 124M params, block 512, per-GPU batch 8).
@@ -163,14 +191,31 @@ GPUs) because the 498 MB all-reduce is unchanged while compute got cheaper.
 
 ## 4. Precise kernel attribution (optional)
 
+The benchmark exposes the PyTorch-native profilers directly:
+
+```bash
+# torch.profiler: per-op/kernel + RCCL all_reduce table, trace per rank
+torchrun --standalone --nproc_per_node=2 ddp_gpt_bench.py \
+  --profile --profile-dir ./torch_prof
+
+# DeepSpeed FlopsProfiler: FLOPs / MACs / params (compute ceiling)
+torchrun --standalone --nproc_per_node=1 ddp_gpt_bench.py --flops
+```
+
+For a framework-independent kernel trace:
+
 ```bash
 rocprofv3 --kernel-trace --stats --truncate-kernels -- \
-  torchrun --standalone --nproc_per_node=8 ddp_gpt_bench.py
+  torchrun --standalone --nproc_per_node=8 ddp_gpt_bench.py --warmup 5 --iters 10
 ```
 
 RCCL collectives appear as `ncclDevKernel_AllReduce*`; their total confirms the
 `no_sync()` estimate. `rocprof-sys` gives a timeline showing how much of the
 all-reduce overlaps backward compute (DDP overlaps by default).
+
+**See [`PROFILING.md`](PROFILING.md)** for the full guide covering torch.profiler,
+the DeepSpeed FlopsProfiler, TensorBoard, rocprofv3, rocprof-compute (roofline),
+rocprofiler-systems (timeline), and multi-node TAU/HPCToolkit.
 
 ## 5. Run the real training job (optional)
 

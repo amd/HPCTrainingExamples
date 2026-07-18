@@ -8,9 +8,13 @@
 //   ./cg_gpu matrix.pm rccl                        RCCL ncclSend/ncclRecv, GPU buffers
 //   ./cg_gpu matrix.pm alltoallv_staged            MPI_Alltoallv through CPU buffers
 //   ./cg_gpu matrix.pm alltoallv                   MPI_Alltoallv with GPU buffers (GPU-Aware)
-//   ./cg_gpu matrix.pm staged_unified              Isend/Irecv on GPU buffers via the
-//                                                  MI300A single address space (plain
-//                                                  MPI, no copies) — needs HSA_XNACK=1
+//   ./cg_gpu matrix.pm staged_unified              Isend/Irecv on malloc'd host buffers
+//                                                  the GPU shares via the MI300A single
+//                                                  address space (host MPI, no copies)
+//                                                  — needs HSA_XNACK=1
+//   ./cg_gpu matrix.pm alltoallv_unified           MPI_Alltoallv on malloc'd host buffers
+//                                                  the GPU shares (host MPI, no copies)
+//                                                  — needs HSA_XNACK=1
 //
 // All variants produce identical numerical output.  The differences are purely in
 // how ghost values are exchanged between MPI ranks.
@@ -240,6 +244,16 @@ static void upload_par_mat(const ParMat& cpu, GPUParMat& gpu,
     else
         gpu.h_recvbuf = nullptr;
 
+    // ── Plain-malloc host buffers (variant 6: staged_unified) ─────────────────
+    // Ordinary system memory. On an MI300A APU with HSA_XNACK=1 the GPU accesses
+    // these via page faults, but MPI treats them as HOST pointers (host transport,
+    // no GPU-Aware MPI). Deliberately NOT hipMalloc/hipHostMalloc: a device or
+    // pinned pointer would push MPI onto the GPU-Aware path.
+    gpu.u_sendbuf = (cpu.send_comm.size_msgs > 0)
+        ? (double*)malloc(cpu.send_comm.size_msgs * sizeof(double)) : nullptr;
+    gpu.u_recvbuf = (cpu.recv_comm.size_msgs > 0)
+        ? (double*)malloc(cpu.recv_comm.size_msgs * sizeof(double)) : nullptr;
+
     // ── MPI_Alltoallv arrays (variant 3) ─────────────────────────────────────
     // Expand the sparse send/recv comm pattern into full per-rank arrays.
     gpu.a2a_sendcounts.assign(num_procs, 0);
@@ -433,20 +447,25 @@ static void spmv_isend_irecv(double alpha, GPUParMat& A, double* d_x,
 // =============================================================================
 // Variant — staged_unified: single-address-space halo exchange (MI300A APU)
 //
-// Exploits the APU's unified, coherent HBM: the CPU can address the GPU send/recv
-// buffers directly, giving the simplicity of the host-staged variant with ZERO
-// staging copies AND without requiring GPU-Aware MPI:
-//   • rocsparse_dgthr packs d_sendbuf on the GPU (no full-vector D->H copy)
-//   • plain (non-GPU-Aware) MPI Isend/Irecv operate on the hipMalloc'd DEVICE
-//     pointers -- the host reads/writes them coherently via XNACK page faulting
-//   • off-proc SpMV reads d_recvbuf directly (no H->D copy)
+// Exploits the APU's unified address space: the send/recv buffers are ordinary
+// malloc'd HOST memory, so MPI uses the HOST transport (NOT GPU-Aware MPI) -- yet
+// there are ZERO staging copies, because on the APU the GPU reads/writes those
+// same host buffers directly via XNACK page faulting:
+//   • rocsparse_dgthr packs the malloc'd u_sendbuf on the GPU (host memory, GPU
+//     writes it via XNACK) -- no full-vector D->H copy
+//   • plain (non-GPU-Aware) MPI Isend/Irecv operate on the HOST pointers
+//   • off-proc SpMV reads the malloc'd u_recvbuf directly on the GPU (XNACK) --
+//     no H->D copy
 //
-// REQUIRES  HSA_XNACK=1  in the environment (set before HSA init) so host access
-// to device allocations page-faults coherently. On a discrete GPU this path
-// degrades to slow managed-style migration; it targets MI300A-class APUs.
+// This is the key distinction from 'isend': isend hands DEVICE pointers to
+// GPU-Aware MPI; here MPI only ever sees host pointers, so it takes the host path.
 //
-// Contrast:  staged (2 copies, plain MPI) | isend (0 copies, GPU-Aware MPI) |
-//            staged_unified (0 copies, plain MPI, APU single address space).
+// REQUIRES  HSA_XNACK=1  in the environment (set before HSA init) so the GPU can
+// access the malloc'd host memory via page faults. On a discrete GPU this path
+// degrades to slow migration; it targets MI300A-class APUs.
+//
+// Contrast:  staged (2 copies, host MPI) | isend (0 copies, GPU-Aware MPI, device
+//            ptrs) | staged_unified (0 copies, host MPI, host ptrs the GPU shares).
 // =============================================================================
 static void spmv_staged_unified(double alpha, GPUParMat& A, double* d_x,
                                  double beta,  double* d_b,
@@ -457,25 +476,25 @@ static void spmv_staged_unified(double alpha, GPUParMat& A, double* d_x,
     Comm& send = *A.send_comm;
 
     double _t = MPI_Wtime();
-    // Post receives directly into the (coherent) GPU recv buffer
+    // Post receives into the malloc'd HOST recv buffer (host-path MPI)
     for (int i = 0; i < recv.n_msgs; i++)
-        MPI_Irecv(A.d_recvbuf + recv.ptr[i],
+        MPI_Irecv(A.u_recvbuf + recv.ptr[i],
                   recv.ptr[i+1] - recv.ptr[i],
                   MPI_DOUBLE, recv.procs[i], tag,
                   MPI_COMM_WORLD, &recv.req[i]);
 
-    // Gather send values on the GPU; sync so the host (MPI) sees the writes.
+    // Gather send values on the GPU into the malloc'd HOST send buffer (GPU writes
+    // host memory via XNACK); sync so the writes are visible to MPI on the host.
     if (send.size_msgs > 0) {
         ROCSPARSE_CHECK(rocsparse_dgthr(
-            handle, send.size_msgs, d_x, A.d_sendbuf, A.d_send_idx,
+            handle, send.size_msgs, d_x, A.u_sendbuf, A.d_send_idx,
             rocsparse_index_base_zero));
-        HIP_CHECK(hipDeviceSynchronize());   // gather visible to host before MPI reads it
+        HIP_CHECK(hipDeviceSynchronize());
     }
 
-    // Plain host MPI reads the DEVICE send buffer directly (APU single address
-    // space + XNACK) -- no GPU-Aware MPI, no D->H copy.
+    // Plain host MPI sends from the HOST send buffer -- host transport, no copy.
     for (int i = 0; i < send.n_msgs; i++)
-        MPI_Isend(A.d_sendbuf + send.ptr[i],
+        MPI_Isend(A.u_sendbuf + send.ptr[i],
                   send.ptr[i+1] - send.ptr[i],
                   MPI_DOUBLE, send.procs[i], tag,
                   MPI_COMM_WORLD, &send.req[i]);
@@ -489,8 +508,8 @@ static void spmv_staged_unified(double alpha, GPUParMat& A, double* d_x,
         MPI_Waitall(recv.n_msgs, recv.req.data(), MPI_STATUSES_IGNORE);
     g_halo_time += MPI_Wtime() - _t;
 
-    // Host wrote d_recvbuf; the next GPU kernel reads it coherently (XNACK).
-    spmv(alpha, A.off_proc, A.d_recvbuf, 1.0, d_b, handle);
+    // Host wrote u_recvbuf; the GPU off-proc SpMV reads it directly (XNACK).
+    spmv(alpha, A.off_proc, A.u_recvbuf, 1.0, d_b, handle);
 
     _t = MPI_Wtime();
     if (send.n_msgs)
@@ -650,6 +669,54 @@ static void spmv_alltoallv(double alpha, GPUParMat& A, double* d_x,
 }
 
 // =============================================================================
+// Variant 7 — MPI_Alltoallv on the APU single address space (zero-copy, host MPI)
+//
+// The collective analogue of 'staged_unified'. The send/recv buffers are ordinary
+// malloc'd HOST memory, so MPI_Alltoallv uses the HOST transport (NOT GPU-Aware
+// MPI) -- yet there are ZERO staging copies, because on the APU the GPU packs and
+// reads those same host buffers directly via XNACK page faulting.
+//
+// Contrast the three collective variants:
+//   alltoallv_staged  2 copies (D->H, H->D) + host collective  (device buffers)
+//   alltoallv         0 copies + GPU-Aware collective          (device pointers)
+//   alltoallv_unified 0 copies + host collective               (host ptrs, XNACK)
+//
+// REQUIRES  HSA_XNACK=1  (set before HSA init) so the GPU can access the malloc'd
+// host memory via page faults. APU-specific; degrades to slow migration on a dGPU.
+// =============================================================================
+static void spmv_alltoallv_unified(double alpha, GPUParMat& A, double* d_x,
+                                    double beta,  double* d_b,
+                                    rocsparse_handle handle)
+{
+    Comm& send = *A.send_comm;
+
+    double _t = MPI_Wtime();
+    // Gather send values on the GPU into the malloc'd HOST send buffer (GPU writes
+    // host memory via XNACK); sync so the writes are visible to MPI on the host.
+    if (send.size_msgs > 0) {
+        ROCSPARSE_CHECK(rocsparse_dgthr(
+            handle, send.size_msgs, d_x, A.u_sendbuf, A.d_send_idx,
+            rocsparse_index_base_zero));
+        HIP_CHECK(hipDeviceSynchronize());
+    }
+    g_halo_time += MPI_Wtime() - _t;
+
+    // Submit on-proc SpMV to GPU (async); CPU continues to MPI_Alltoallv
+    spmv(alpha, A.on_proc, d_x, beta, d_b, handle);
+
+    _t = MPI_Wtime();
+    // One collective on HOST pointers -- host transport, no GPU-Aware MPI, no copy.
+    MPI_Alltoallv(A.u_sendbuf, A.a2a_sendcounts.data(), A.a2a_sdispls.data(),
+                  MPI_DOUBLE,
+                  A.u_recvbuf, A.a2a_recvcounts.data(), A.a2a_rdispls.data(),
+                  MPI_DOUBLE, MPI_COMM_WORLD);
+    g_halo_time += MPI_Wtime() - _t;
+
+    // Host wrote u_recvbuf; the GPU off-proc SpMV reads it directly (XNACK).
+    spmv(alpha, A.off_proc, A.u_recvbuf, 1.0, d_b, handle);
+}
+
+// =============================================================================
 // inner_product — global dot(a,b) via rocBLAS + MPI_Allreduce
 // =============================================================================
 static double inner_product(double* d_a, double* d_b, int n,
@@ -721,26 +788,29 @@ int main(int argc, char* argv[])
     else if (!strcmp(method, "alltoallv_staged")) par_spmv = spmv_alltoallv_staged;
     else if (!strcmp(method, "alltoallv"))        par_spmv = spmv_alltoallv;
     else if (!strcmp(method, "staged_unified"))   par_spmv = spmv_staged_unified;
+    else if (!strcmp(method, "alltoallv_unified")) par_spmv = spmv_alltoallv_unified;
     else {
         if (rank == 0)
             fprintf(stderr,
                 "Unknown method '%s'.\n"
                 "Choose: staged | isend | rccl | alltoallv_staged | alltoallv | "
-                "staged_unified\n",
+                "staged_unified | alltoallv_unified\n",
                 method);
         MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
-    // 'staged_unified' relies on the APU single address space: the host addresses
-    // device buffers coherently via XNACK. That must be enabled BEFORE HSA init,
-    // so it can only come from the environment -- warn if it is not set.
-    if (!strcmp(method, "staged_unified")) {
+    // The '*_unified' methods rely on the APU single address space: the GPU
+    // accesses malloc'd host buffers coherently via XNACK. That must be enabled
+    // BEFORE HSA init, so it can only come from the environment -- warn if unset.
+    if (!strcmp(method, "staged_unified") ||
+        !strcmp(method, "alltoallv_unified")) {
         const char* xnack = getenv("HSA_XNACK");
         if (rank == 0 && (!xnack || strcmp(xnack, "1") != 0))
             fprintf(stderr,
-                "WARNING: method 'staged_unified' needs HSA_XNACK=1 in the "
-                "environment for coherent host access to device buffers.\n"
-                "         Run:  export HSA_XNACK=1   before launching.\n");
+                "WARNING: method '%s' needs HSA_XNACK=1 in the environment for "
+                "coherent GPU access to malloc'd host buffers.\n"
+                "         Run:  export HSA_XNACK=1   before launching.\n",
+                method);
     }
 
     // -------------------------------------------------------------------------
@@ -914,6 +984,9 @@ int main(int argc, char* argv[])
     if (gA.d_send_idx) HIP_CHECK(hipFree(gA.d_send_idx));
     if (gA.h_sendbuf)  HIP_CHECK(hipHostFree(gA.h_sendbuf));
     if (gA.h_recvbuf)  HIP_CHECK(hipHostFree(gA.h_recvbuf));
+
+    if (gA.u_sendbuf)  free(gA.u_sendbuf);
+    if (gA.u_recvbuf)  free(gA.u_recvbuf);
 
     RCCL_CHECK(ncclCommDestroy(gA.rccl_comm));
     HIP_CHECK(hipStreamDestroy(gA.rccl_stream));

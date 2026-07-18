@@ -72,7 +72,9 @@ For a distributed GPU CG solve on MI300A, in priority order:
 2. **Per-rank GPU + NUMA-local CPU binding** (`gpu_bind.sh` or `set_affinity_mi300a.sh`, launched under
    `--bind-to none` / `--cpu-bind=none`). *This is worth up to ~100× — nothing else comes close.*
 3. **A GPU-Aware transport** — `isend`, `alltoallv`, or `rccl`. Avoid the `staged` variants unless you have no
-   GPU-Aware MPI; the staging copies cost ~7× the halo time.
+   GPU-Aware MPI; the staging copies cost ~7× the halo time. **If you lack GPU-Aware MPI but are on an APU
+   (MI300A), use `staged_unified` / `alltoallv_unified` with `HSA_XNACK=1`** — they drop the staging copies via
+   the single address space and recover most of the win over `staged` while staying on the host MPI path.
 4. **SDMA copy engines on** (the default), with `HSA_ENABLE_SDMA_GANG=1` if halo volume is large.
 5. **The best available ROCm compute version** — on this workload ROCm 6.4.x compute is ~1.85× faster than
    7.x; check whether that still holds on your version before locking it in.
