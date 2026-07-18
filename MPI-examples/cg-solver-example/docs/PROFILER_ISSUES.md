@@ -13,17 +13,26 @@ covered once there and cross-referenced).
 Status legend: **OPEN** (needs a fix we do not control) · **WORKAROUND** (documented,
 usable today) · **RESOLVED** (fixed in this repo).
 
+> **Re-evaluated 2026-07-18** after a site image update. Newly resolved by the site:
+> the graphics/GUI dependencies (`Xvfb`, `libturbojpeg0`, `libxcb-cursor0`, a JRE) are
+> now installed — a **headless CubeGUI screenshot works** (§2.3) and **paraprof** can
+> start (§2.1). Re-tested and **still open**: the Score-P ROCm adapter still aborts on
+> ROCm 7.2.4 (§1.1); the bf16 hipBLASLt transformer hang persists (ML doc §5.2).
+
 ---
 
 ## 1. Score-P
 
-### 1.1 ROCm adapter aborts on ROCm 7.2.x — **OPEN (upstream)**
+### 1.1 ROCm adapter aborts on ROCm 7.2.x — **OPEN (upstream)** · re-confirmed 2026-07-18
 - **Symptom:** with GPU capture enabled, the run **SIGABRTs** before finalize; the
   experiment dir is empty (no `profile.cubex`).
 - **Cause:** the Score-P ROCm (roctracer/rocprofiler) adapter is incompatible with
   the rocprofiler-sdk in ROCm 7.2.x.
 - **Impact:** no GPU/HIP kernel attribution on the toolchain the rest of the stack
   uses (7.2.x).
+- **Re-test (2026-07-18):** `run_scorep.sh` with `ROCM_VERSION=7.2.4 SCOREP_GPU=1`
+  **still aborts** (no `profile.cubex`); the same run on **6.4.3 still succeeds**
+  (fresh `profile.cubex`, HIP 38.9 % / MPI 24.1 %). No change — still open.
 - **Workaround:** full GPU+HIP+MPI capture is reliable on **ROCm 6.4.3**; on 7.2.x
   run **MPI-only** (`SCOREP_GPU=0`). Documented in
   [`profilers/scorep.md`](profilers/scorep.md) §7.
@@ -31,13 +40,15 @@ usable today) · **RESOLVED** (fixed in this repo).
   upstream Score-P + rocprofiler-sdk compatibility issue; revisit when a fixed
   Score-P lands so GPU capture works on the production ROCm.
 
-### 1.2 `cube_dump -c region` hangs — **WORKAROUND**
-- **Symptom:** `cube_dump` hangs (no output) on some `profile.cubex` files.
+### 1.2 `cube_dump` not provided by the `scorep` module — **WORKAROUND**
+- **Symptom:** earlier `cube_dump -c region` hung on some files; on re-test
+  (2026-07-18) `cube_dump` is simply **not on `PATH`** from the `scorep/9.4` module
+  (`cube_dump: command not found`) — only `cube_stat` / `scorep-score` ship with it.
 - **Workaround:** use `cube_stat -p -m time` (with a `timeout` wrapper) for the flat
-  region/time table; this is what `run_scorep.sh` captures.
-- **To address:** confirm the CubeLib version pairing (`cube_dump` needs a
-  version-matched CubeLib for the writer that produced the file); document the
-  matching binary or drop `cube_dump` from the workflow permanently.
+  region/time table; this is what `run_scorep.sh` captures. Verified working.
+- **To address:** if `cube_dump` is needed, load a matching **CubeLib** module/AppImage
+  (`squashfs-root/usr/bin/` from the CubeGUI AppImage carries the tools); otherwise
+  `cube_stat` covers the workflow.
 
 ### 1.3 `SCOREP_TOTAL_MEMORY` / compiler instrumentation — **RESOLVED (documented)**
 - **Symptom:** `No free memory page … increase SCOREP_TOTAL_MEMORY`, or huge
@@ -58,14 +69,15 @@ usable today) · **RESOLVED** (fixed in this repo).
 
 ## 2. GUI / graphics viewers (shared with the ML examples)
 
-### 2.1 No native Cube/Vampir GUI; TAU paraprof unusable — **WORKAROUND**
-- **Symptom:** CubeGUI and Vampir are not installed; TAU's `paraprof` will not start
-  (**no Java runtime** on the nodes).
+### 2.1 No native Cube/Vampir GUI; paraprof JRE — **WORKAROUND** (JRE now present, 2026-07-18)
+- **Symptom:** CubeGUI and Vampir are still not installed as native modules.
+- **Update (2026-07-18):** a **JRE is now installed** (`java` → OpenJDK 21), so TAU's
+  `paraprof` and other Java GUIs can start (they still need an X display, §2.3).
 - **Workaround:** use text tools (`scorep-score`, `cube_stat`, `pprof`) and the
   committed matplotlib figures ([`profilers/figs/`](profilers/figs/)); view a real
-  GUI via the CubeGui AppImage in a remote desktop (below).
-- **To address:** request a site install of CubeGUI/Vampir and a JRE (for paraprof),
-  or the Cube 4.9.1 JupyterLab (WASM) service.
+  GUI via the CubeGui AppImage (native Cube/Vampir remain a site-install ask).
+- **To address:** a site install of native CubeGUI/Vampir modules would be convenient
+  but is no longer blocking — the AppImage renders headlessly now (§2.3).
 
 ### 2.2 CubeGUI container reference was wrong — **RESOLVED**
 - **Was:** docs told users to `apptainer pull docker://ghcr.io/scalasca/cubegui:latest`,
@@ -74,15 +86,19 @@ usable today) · **RESOLVED** (fixed in this repo).
   downloaded, `--appimage-extract`, `usr/bin/cube` present) plus the `cube_server` +
   `ssh -L` remote option. See [`profilers/scorep.md`](profilers/scorep.md) §6.
 
-### 2.3 Headless CubeGUI screenshot not possible on the frontend — **OPEN (env)**
-- **Symptom:** cannot auto-capture a CubeGUI screenshot from a login shell.
-- **Cause:** no `Xvfb`; the TurboVNC `Xvnc` is missing `libturbojpeg.so.0`
-  (not installed anywhere on the node); `cube` is Qt/xcb and needs a real X display
-  + `libxcb-cursor0`.
-- **Workaround:** open CubeGUI in an interactive **TurboVNC / noVNC / `ssh -X`**
-  session (`man aac6_vnc` / `aac6_novnc` / `aac6_x11`) and screenshot there.
-- **To address:** install `libturbojpeg0` (fixes TurboVNC `Xvnc`) and/or `xvfb` +
-  `libxcb-cursor0` on the compute image so screenshots can be scripted headlessly.
+### 2.3 Headless CubeGUI screenshot — **RESOLVED (2026-07-18, site deps installed)**
+- **Was:** could not auto-capture a CubeGUI screenshot from a login shell — no `Xvfb`,
+  the TurboVNC `Xvnc` was missing `libturbojpeg.so.0`, and Qt/xcb needed `libxcb-cursor0`.
+- **Fixed by the site image:** `Xvfb` + `xvfb-run`, `libturbojpeg.so.0`, and
+  `libxcb-cursor.so.0` are now all installed (`Xvnc` also resolves all libs).
+- **Now:** the helper [`CG-GPU/shot_cubegui.sh`](../CG-GPU/shot_cubegui.sh) starts
+  `Xvfb :99`, launches the CubeGui AppImage on `profile.cubex`, and captures the
+  screen with Pillow (xcb) — verified end-to-end, producing
+  [`profilers/figs/cg_cubegui.png`](profilers/figs/cg_cubegui.png) (real 3-pane
+  metric/call/system view). Embedded in [`profilers/scorep.md`](profilers/scorep.md) §6.
+- **Note:** interactive **TurboVNC / noVNC / `ssh -X`** (`man aac6_vnc` /
+  `aac6_novnc` / `aac6_x11`) is still the way to *click through* trees; the headless
+  path is for scripted/CI screenshots (no window manager, so trees render collapsed).
 
 ---
 
@@ -114,8 +130,9 @@ issues beyond those recorded above.
 ---
 
 ## Action-item checklist
-- [ ] **Score-P GPU capture on ROCm ≥7.2.x** (§1.1) — track upstream fix; retest per release.
-- [ ] **`cube_dump` version-matched CubeLib** (§1.2) — pin or remove from workflow.
-- [ ] **Site GUI install** (§2.1) — CubeGUI/Vampir + JRE, or Cube JupyterLab WASM.
-- [ ] **Compute-image graphics deps** (§2.3) — `libturbojpeg0`, `xvfb`, `libxcb-cursor0`.
+- [ ] **Score-P GPU capture on ROCm ≥7.2.x** (§1.1) — still open (re-confirmed 2026-07-18 on 7.2.4); track upstream fix; retest per release.
+- [ ] **`cube_dump` from a CubeLib module/AppImage** (§1.2) — optional; `cube_stat` covers the workflow.
+- [x] **Compute-image graphics deps** (§2.3) — `libturbojpeg0`, `xvfb`, `libxcb-cursor0` **installed** (site, 2026-07-18); headless screenshot works.
+- [x] **JRE for paraprof/Java GUIs** (§2.1) — **installed** (OpenJDK 21, 2026-07-18).
+- [ ] **Native CubeGUI/Vampir modules** (§2.1) — nice-to-have; AppImage now covers it.
 - [ ] **rocSPARSE SpMV 7.x regression** (§3) — `rocprofv3` kernel trace + upstream report.

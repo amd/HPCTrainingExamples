@@ -193,12 +193,29 @@ LD_LIBRARY_PATH=~/tools/squashfs-root/usr/lib \
   ~/tools/squashfs-root/usr/bin/cube scorep_cg_isend/profile.cubex
 ```
 
-> The GUI is Qt/xcb — it needs a **real X display** (a TurboVNC/noVNC desktop or
-> `ssh -X`), not a headless shell, and the host must provide `libxcb-cursor0`. On a
-> compute node without those, use the text views in step 4 and the PNG below.
+> The GUI is Qt/xcb — it needs an X display and `libxcb-cursor0`. A TurboVNC/noVNC
+> desktop or `ssh -X` is the interactive route; for an **unattended screenshot** you
+> can now also drive it under a virtual X server (`Xvfb`) — see below.
 
-In CubeGUI's three panes you can expand **MPI** and **HIP** under the call tree and
-see the per-metric time distribute across ranks (the system tree on the right).
+### Headless screenshot (Xvfb)
+
+The AAC6 image now ships `Xvfb`, `libxcb-cursor0` and `libturbojpeg0`, so CubeGUI can
+be rendered without a desktop and captured to a PNG. The helper
+[`../../CG-GPU/shot_cubegui.sh`](../../CG-GPU/shot_cubegui.sh) starts `Xvfb :99`,
+launches the AppImage on a `profile.cubex`, and grabs the screen:
+
+```bash
+cd MPI-examples/cg-solver-example/CG-GPU
+./shot_cubegui.sh scorep_cg_isend/profile.cubex ../docs/profilers/figs/cg_cubegui.png
+```
+
+![CubeGUI on the CG profile](figs/cg_cubegui.png)
+
+The three panes are the **metric tree** (left — `Time`, `Visits`, `HIP Memory`, bytes
+sent/received …), the **call/flat tree** (centre — the instrumented `cg_gpu` root,
+expandable into the MPI and HIP calls), and the **system tree** (right — the machine
+/ ranks). This is the same view you get interactively; in a live VNC/`ssh -X` session
+you can click to expand **MPI** and **HIP** under the call tree and
 Alternatively, run a remote **`cube_server`** on the cluster and connect a local
 CubeGUI/AppImage to it (`cube_server` on the node, then `ssh -L 3300:localhost:3300`),
 or use the 4.9.1 JupyterLab CubeGUI (WASM) extension if your site enables it.
@@ -219,7 +236,7 @@ xdg-open docs/profilers/figs/scorep_cg_breakdown.png
 | Process **aborts** when GPU capture is on (ROCm 7.2.x) | Known ROCm-adapter incompatibility on 7.2.x. Use MPI-only (`SCOREP_GPU=0`) or profile GPU on ROCm 6.4.3. |
 | `not enough slots available` | Add `--oversubscribe` to `mpirun` inside an `srun` shell. |
 | `libpapi.so.7.1: cannot open shared object file` | Runs on a **compute node** (it has libpapi); the login node does not. |
-| `cube_dump` hangs | Use `cube_stat -p -m time` instead (see step 4). |
+| `cube_dump: command not found` / hangs | The `scorep` module ships `cube_stat`/`scorep-score` but not `cube_dump`. Use `cube_stat -p -m time` (see step 4). |
 | Empty experiment dir / no `profile.cubex` | Measurement aborted before finalize — check for the abort above; on 7.2.x disable GPU capture. |
 
 ## See also

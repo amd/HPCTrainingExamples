@@ -12,6 +12,13 @@ PyTorch 2.12.0, Score-P 11.0-dev, 2 GPUs.
 Status legend: **OPEN** (needs a fix we do not control) · **WORKAROUND** (documented,
 usable today) · **RESOLVED** (fixed in this repo).
 
+> **Re-evaluated 2026-07-18** after a site image update. Newly resolved by the site:
+> the shared graphics/GUI deps (`Xvfb`, `libturbojpeg0`, `libxcb-cursor0`, a JRE) are
+> installed — a headless CubeGUI screenshot now works (§4, and CG doc §2.3). Re-tested
+> and **still open**: the bf16 hipBLASLt transformer hang on ROCm 7.2.3 (§5.2 — still
+> hangs >200 s; `TORCH_BLAS_PREFER_HIPBLASLT=0` still fixes it, 132,320 tok/s), and
+> Score-P GPU/RCCL capture on 7.2.x (§2.3, same adapter abort as the CG solver).
+
 ---
 
 ## 1. Environment / module hygiene (bit every profiler)
@@ -60,11 +67,13 @@ usable today) · **RESOLVED** (fixed in this repo).
   with `torchrun --no-python` → `python -m scorep` per rank
   ([`common/scorep_launch.sh`](common/scorep_launch.sh)).
 
-### 2.3 No GPU/RCCL capture under Score-P here — **OPEN (upstream) / WORKAROUND**
+### 2.3 No GPU/RCCL capture under Score-P here — **OPEN (upstream) / WORKAROUND** · re-confirmed 2026-07-18
 - **Symptom:** Score-P profiles show Python regions only — no GPU kernels, no RCCL.
 - **Cause:** the PyTorch module is on **ROCm 7.2.x**, where the Score-P ROCm adapter
   aborts (same root cause as the CG solver, §1.1 there), and `torchrun` uses RCCL,
   not MPI.
+- **Re-test (2026-07-18):** the CG solver's `SCOREP_GPU=1` run on **ROCm 7.2.4 still
+  aborts** (same adapter), so nothing changed for the GPU dimension here.
 - **Workaround:** use [torch.profiler](common/profilers/torch-profiler.md),
   [rocprofv3](common/profilers/rocprofv3.md), or
   [rocprofiler-systems](common/profilers/rocprofiler-systems.md) for GPU/RCCL detail;
@@ -98,13 +107,16 @@ usable today) · **RESOLVED** (fixed in this repo).
 ---
 
 ## 4. GUI / graphics viewers — shared with the CG solver
-CubeGUI/Vampir are not installed; the `ghcr.io/scalasca/cubegui` container does not
-exist (use the **CubeGui AppImage**); a headless GUI screenshot is blocked on the
-frontend (no `Xvfb`; TurboVNC `Xvnc` missing `libturbojpeg.so.0`; Qt needs a real X
-display + `libxcb-cursor0`). Full details and action items in the CG doc,
-[§2](../../MPI-examples/cg-solver-example/docs/PROFILER_ISSUES.md#2-gui--graphics-viewers-shared-with-the-ml-examples).
-Use TurboVNC / noVNC / `ssh -X` (`man aac6_vnc` / `aac6_novnc` / `aac6_x11`), or the
-committed matplotlib figures in [`common/profilers/figs/`](common/profilers/figs/).
+Native CubeGUI/Vampir modules are still not installed (use the **CubeGui AppImage**;
+the `ghcr.io/scalasca/cubegui` container never existed). **Update (2026-07-18):** the
+site image now ships `Xvfb`, `libturbojpeg0`, `libxcb-cursor0`, and a JRE (OpenJDK 21),
+so a **headless CubeGUI screenshot now works** and Java GUIs (paraprof) can start —
+see the CG doc [§2.3](../../MPI-examples/cg-solver-example/docs/PROFILER_ISSUES.md#23-headless-cubegui-screenshot--resolved-2026-07-18-site-deps-installed)
+(resolved) and the verified capture
+[`cg_cubegui.png`](../../MPI-examples/cg-solver-example/docs/profilers/figs/cg_cubegui.png).
+For interactive click-through use TurboVNC / noVNC / `ssh -X` (`man aac6_vnc` /
+`aac6_novnc` / `aac6_x11`), or the committed matplotlib figures in
+[`common/profilers/figs/`](common/profilers/figs/).
 
 ---
 
@@ -116,14 +128,18 @@ committed matplotlib figures in [`common/profilers/figs/`](common/profilers/figs
   for **skinny fp16 GEMMs**, which these workloads don't hit. Full data:
   [`common/hipblaslt-notes.md`](common/hipblaslt-notes.md) §1.
 
-### 5.2 bf16 transformer hang in hipBLASLt on ROCm 7.2.x — **OPEN (upstream) / WORKAROUND**
+### 5.2 bf16 transformer hang in hipBLASLt on ROCm 7.2.x — **OPEN (upstream) / WORKAROUND** · re-confirmed 2026-07-18
 - **Symptom:** `minGPT-ddp --amp` and `FSDP2 --mixed-precision` **stall for minutes**
   in hipBLASLt on the first bf16 GEMMs (fp32 is fine; ResNet `--amp` is fine;
   `hipblaslt/patched` does **not** fix it).
 - **Cause:** the 7.2.x hipBLASLt path for these transformer bf16 GEMM shapes. bf16
   works normally on ROCm 6.4.3.
+- **Re-test (2026-07-18, ROCm 7.2.3 / PyTorch 2.12.0, 2 GPU, n_layer=12 n_embd=768):**
+  default (hipBLASLt) bf16 **still hangs** — killed at a 200 s timeout; with
+  `TORCH_BLAS_PREFER_HIPBLASLT=0` the same run finishes in **23 s at 132,320 tok/s**.
+  No change — still open, workaround still valid.
 - **Workaround:** `export TORCH_BLAS_PREFER_HIPBLASLT=0` (routes to rocBLAS) — bf16
-  then runs and is ~2.3× faster than fp32 (137,645 vs 60,723 tok/s). Details:
+  then runs and is ~2.3× faster than fp32 (~132–138k vs 60,723 tok/s). Details:
   [`common/hipblaslt-notes.md`](common/hipblaslt-notes.md) §2.
 - **To address:** file an upstream hipBLASLt/PyTorch issue with the reproducing
   transformer shapes on ROCm 7.2.x; retest on later ROCm.
@@ -131,7 +147,8 @@ committed matplotlib figures in [`common/profilers/figs/`](common/profilers/figs
 ---
 
 ## Action-item checklist
-- [ ] **Score-P GPU/RCCL capture on ROCm 7.2.x** (§2.3) — track the same upstream fix as the CG solver.
-- [ ] **bf16 transformer hipBLASLt hang** (§5.2) — file upstream issue; retest on later ROCm; keep the `TORCH_BLAS_PREFER_HIPBLASLT=0` note.
-- [ ] **Site GUI install + compute-image graphics deps** (§4) — CubeGUI/Vampir/JRE, `libturbojpeg0`, `xvfb`, `libxcb-cursor0`.
+- [ ] **Score-P GPU/RCCL capture on ROCm 7.2.x** (§2.3) — still open (re-confirmed 2026-07-18); track the same upstream fix as the CG solver.
+- [ ] **bf16 transformer hipBLASLt hang** (§5.2) — still open (re-confirmed 2026-07-18); file upstream issue; retest on later ROCm; keep the `TORCH_BLAS_PREFER_HIPBLASLT=0` note.
+- [x] **Compute-image graphics deps + JRE** (§4) — `xvfb`, `libturbojpeg0`, `libxcb-cursor0`, OpenJDK 21 **installed** (site, 2026-07-18); headless screenshot works.
+- [ ] **Native CubeGUI/Vampir modules** (§4) — nice-to-have; AppImage now covers it.
 - [ ] Keep venv-scrub + login-shell boilerplate (§1.1–1.2) in any new job scripts.
