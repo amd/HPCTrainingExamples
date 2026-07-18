@@ -68,6 +68,19 @@ The implementation uses:
 - `driver.cpp` - Laplacian test driver
 - `driver_mtx.cpp` - Matrix Market driver
 
+## Profiling: communication and compute performance
+
+See [`PROFILING.md`](PROFILING.md) for a step-by-step supplement on using the
+ROCm profilers on this system (`rocprofv3`, `rocprof-compute`, and
+`rocprofiler-systems`) to measure and visualize:
+
+- **Compute** — per-kernel time for SpMV, the triangular solves (SpSV), and the
+  rocBLAS vector kernels, plus a roofline showing the memory-bandwidth ceiling.
+- **Communication** — host&harr;device transfers and, in particular, the
+  per-iteration dot-product synchronizations (the single-GPU analog of the
+  `MPI_Allreduce` in a distributed CG), with the timeline view that exposes the
+  host stalls waiting on each reduction.
+
 ## Version Compatibility
 
 The code includes version detection macros to handle API differences

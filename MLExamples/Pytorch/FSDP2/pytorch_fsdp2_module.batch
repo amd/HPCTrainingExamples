@@ -1,0 +1,34 @@
+#!/bin/bash
+#SBATCH --gpus=8
+#SBATCH --ntasks=1
+#SBATCH --time=01:00:00
+#SBATCH --output=pytorch_fsdp2_module.out
+#SBATCH --error=pytorch_fsdp2_module.out
+#
+# FSDP2 RCCL scaling / memory study using a site-provided ROCm + PyTorch module.
+# NOTE: FSDP2 (torch.distributed.fsdp.fully_shard) needs PyTorch >= 2.5.
+
+set -e
+
+module load rocm pytorch
+
+python3 -c 'import torch; from torch.distributed.fsdp import fully_shard; \
+  print("Torch:", torch.__version__, "HIP:", getattr(torch.version,"hip",None), \
+  "count:", torch.cuda.device_count(), "FSDP2 OK")'
+
+if [[ ! -f "$HOME/pytorch_examples/distributed/FSDP2/model.py" ]]; then
+  git clone --depth=1 https://github.com/pytorch/examples.git "$HOME/pytorch_examples"
+fi
+export UPSTREAM="$HOME/pytorch_examples/distributed/FSDP2"
+
+export NCCL_DEBUG=INFO
+export NCCL_DEBUG_SUBSYS=INIT,COLL
+
+cd "$SLURM_SUBMIT_DIR"
+echo "===== FSDP2 scaling (fp32) ====="
+GPUS="2 4 8" bash ./rccl_scaling_sweep.sh
+
+echo "===== FSDP2 scaling (mixed precision bf16) ====="
+GPUS="2 4 8" MIXED_PRECISION=1 bash ./rccl_scaling_sweep.sh
+
+echo "Finished"

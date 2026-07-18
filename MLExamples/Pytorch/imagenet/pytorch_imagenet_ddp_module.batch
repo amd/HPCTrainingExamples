@@ -1,0 +1,38 @@
+#!/bin/bash
+#SBATCH --gpus=8
+#SBATCH --ntasks=1
+#SBATCH --time=01:00:00
+#SBATCH --output=pytorch_imagenet_ddp_module.out
+#SBATCH --error=pytorch_imagenet_ddp_module.out
+#
+# RCCL scaling study of the PyTorch imagenet DDP example using --dummy data.
+# Uses a site-provided ROCm + PyTorch module (see the mnist README module notes).
+
+set -e
+
+module load rocm pytorch
+
+python3 - <<'EOF'
+import torch
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("cuda available:", torch.cuda.is_available(), "device count:", torch.cuda.device_count())
+EOF
+
+# Get the upstream example if it is not already present.
+if [[ ! -f "$HOME/pytorch_examples/imagenet/main.py" ]]; then
+  git clone --depth=1 https://github.com/pytorch/examples.git "$HOME/pytorch_examples"
+fi
+export MAIN="$HOME/pytorch_examples/imagenet/main.py"
+
+export NCCL_DEBUG=INFO
+export NCCL_DEBUG_SUBSYS=INIT,COLL
+
+cd "$SLURM_SUBMIT_DIR"
+
+echo "===== Weak scaling (constant per-GPU batch) ====="
+MODE=weak ARCH=resnet50 GPUS="1 2 4 8" PERGPU_BATCH=256 bash ./rccl_scaling_sweep.sh
+
+echo "===== Strong scaling (constant global batch) ====="
+MODE=strong ARCH=resnet50 GPUS="1 2 4 8" GLOBAL_BATCH=2048 bash ./rccl_scaling_sweep.sh
+
+echo "Finished"

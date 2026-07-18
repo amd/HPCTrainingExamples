@@ -1,0 +1,21 @@
+########## CONFIG=blit (HSA_ENABLE_SDMA=0 GANG=unset) ##########
+method                  run  iters     solve      comm      halo    allred   compute
+staged             AVG(n=5)      -    0.1809    0.1158    0.0944    0.0214    0.0651
+isend              AVG(n=5)      -    0.1001    0.0234    0.0188    0.0046    0.0766
+rccl               AVG(n=5)      -    0.0925    0.0132    0.0101    0.0031    0.0793
+alltoallv_staged   AVG(n=5)      -    0.1275    0.0560    0.0441    0.0119    0.0714
+alltoallv          AVG(n=5)      -    0.1001    0.0218    0.0179    0.0039    0.0783
+########## CONFIG=sdma (HSA_ENABLE_SDMA=1 GANG=unset) ##########
+method                  run  iters     solve      comm      halo    allred   compute
+staged             AVG(n=5)      -    0.1766    0.1078    0.0890    0.0188    0.0689
+isend              AVG(n=5)      -    0.0959    0.0199    0.0164    0.0035    0.0760
+rccl               AVG(n=5)      -    0.0921    0.0127    0.0096    0.0030    0.0793
+alltoallv_staged   AVG(n=5)      -    0.1265    0.0554    0.0437    0.0117    0.0711
+alltoallv          AVG(n=5)      -    0.0972    0.0177    0.0145    0.0032    0.0795
+########## CONFIG=sdma_gang (HSA_ENABLE_SDMA=1 GANG=1) ##########
+method                  run  iters     solve      comm      halo    allred   compute
+staged             AVG(n=5)      -    0.1769    0.1060    0.0867    0.0194    0.0709
+isend              AVG(n=5)      -    0.0955    0.0177    0.0142    0.0034    0.0778
+rccl               AVG(n=5)      -    0.0916    0.0128    0.0099    0.0029    0.0789
+alltoallv_staged   AVG(n=5)      -    0.1320    0.0645    0.0487    0.0158    0.0675
+alltoallv          AVG(n=5)      -    0.0984    0.0171    0.0137    0.0034    0.0813

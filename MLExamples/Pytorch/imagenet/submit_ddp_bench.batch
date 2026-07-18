@@ -1,0 +1,27 @@
+#!/bin/bash
+#SBATCH --gpus=4
+#SBATCH --ntasks=1
+#SBATCH --time=00:30:00
+#SBATCH --output=submit_ddp_bench.out
+#SBATCH --error=submit_ddp_bench.out
+#
+# Recommended RCCL scaling study on MI300A: torchrun DDP ResNet benchmark with
+# synthetic data. Runs a baseline and an optimized (channels_last + bf16 AMP)
+# weak-scaling sweep. The sweep applies the required RCCL/MIOpen settings and
+# pre-warms the MIOpen cache automatically.
+#
+# Adjust --gpus and GPUS to the GPUs available on your node/partition.
+
+set -e
+
+module load rocm pytorch
+
+cd "$SLURM_SUBMIT_DIR"
+
+echo "===== BASELINE (fp32, NCHW) ====="
+GPUS="1 2 4" ARCH=resnet50 BATCH=128 bash ./ddp_bench_sweep.sh
+
+echo "===== OPTIMIZED (channels_last + bf16 AMP) ====="
+GPUS="1 2 4" ARCH=resnet50 BATCH=128 OPTS="--channels-last --amp" bash ./ddp_bench_sweep.sh
+
+echo "Finished"
