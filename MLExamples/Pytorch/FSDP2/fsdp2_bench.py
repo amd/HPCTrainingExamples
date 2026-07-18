@@ -32,6 +32,11 @@ import sys
 import torch
 import torch.distributed as dist
 
+# Optional Score-P user-region annotations (no-op unless launched via
+# ../common/scorep_launch.sh, which sets SCOREP_ML=1 and runs under scorep).
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "common"))
+from scorep_ml import region
+
 
 def find_upstream_model():
     """Locate upstream FSDP2 dir and import Transformer/ModelArgs."""
@@ -119,12 +124,13 @@ def timed_steps(model, optimizer, next_x, iters):
     end = torch.cuda.Event(enable_timing=True)
     start.record()
     for _ in range(iters):
-        x = next_x()
-        optimizer.zero_grad(set_to_none=True)
-        loss = model(x).sum()
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-        optimizer.step()
+        with region("train_step"):
+            x = next_x()
+            optimizer.zero_grad(set_to_none=True)
+            loss = model(x).sum()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            optimizer.step()
     end.record()
     torch.cuda.synchronize()
     return start.elapsed_time(end) / iters / 1e3

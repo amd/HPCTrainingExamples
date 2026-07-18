@@ -44,10 +44,15 @@ chmod +x gpu_bind.sh 2>/dev/null
 
 module purge >/dev/null 2>&1
 module load "rocm/$ROCM_VER" >/dev/null 2>&1 || { echo "no rocm/$ROCM_VER module"; exit 1; }
+# Tuned hipBLASLt for performance runs, where this ROCm build provides one.
+if module avail hipblaslt/patched 2>&1 | grep -q 'hipblaslt/patched'; then
+   module load hipblaslt/patched >/dev/null 2>&1
+fi
 module load openmpi           >/dev/null 2>&1 || { echo "no openmpi module"; exit 1; }
 export OMPI_CXX=hipcc
 
-echo "SDMA sweep: rocm=$ROCM_VER ranks=$RANKS repeats=$REPEATS seed=$CG_SEED matrix=$MATRIX"
+if module list 2>&1 | grep -q 'hipblaslt/patched'; then hbl="hipblaslt/patched"; else hbl="(stock hipBLASLt)"; fi
+echo "SDMA sweep: rocm=$ROCM_VER $hbl ranks=$RANKS repeats=$REPEATS seed=$CG_SEED matrix=$MATRIX"
 echo "Node: ${SLURM_JOB_NODELIST:-$(hostname)}"
 echo
 

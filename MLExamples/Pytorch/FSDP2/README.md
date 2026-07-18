@@ -130,6 +130,12 @@ the gradient reduce-scatter in fp32 — a common way to cut FSDP communication.
 `--compile` wraps the sharded model in `torch.compile` (graph capture + kernel
 fusion); the first (warm-up) step pays a one-time compilation cost.
 
+> **ROCm 7.2.x bf16 gotcha.** On ROCm 7.2.x the bf16 (`MIXED_PRECISION=1`) path can
+> **stall for minutes in hipBLASLt**. Run these on ROCm 6.4.3, or force rocBLAS with
+> `export TORCH_BLAS_PREFER_HIPBLASLT=0`. The `hipblaslt/patched` module does **not**
+> fix this and makes no measurable difference here — see
+> [`../common/hipblaslt-notes.md`](../common/hipblaslt-notes.md).
+
 `--migrate` (with `--host-copy` as the copy baseline) stages each token batch
 from the host to the GPU via **zero-copy unified-memory aliasing** rather than a
 `.to()` copy; `--migrate-method managed|register` picks the mechanism. Requires

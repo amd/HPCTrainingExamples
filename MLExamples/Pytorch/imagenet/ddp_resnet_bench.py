@@ -35,12 +35,18 @@ Recommended environment on MI300A:
 """
 import argparse
 import os
+import sys
 import time
 
 import torch
 import torch.distributed as dist
 import torchvision.models as models
 from torch.nn.parallel import DistributedDataParallel as DDP
+
+# Optional Score-P user-region annotations (no-op unless launched via
+# ../common/scorep_launch.sh, which sets SCOREP_ML=1 and runs under scorep).
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "common"))
+from scorep_ml import region
 
 
 def timed_steps(model, optimizer, criterion, next_x, y, iters, sync, amp):
@@ -50,19 +56,20 @@ def timed_steps(model, optimizer, criterion, next_x, y, iters, sync, amp):
     end = torch.cuda.Event(enable_timing=True)
     start.record()
     for _ in range(iters):
-        x = next_x()  # fixed on-GPU tensor, or a host->GPU staged batch
-        optimizer.zero_grad(set_to_none=True)
-        ctx = torch.autocast("cuda", dtype=torch.bfloat16) if amp else _null()
-        if sync:
-            with ctx:
-                loss = criterion(model(x), y)
-            loss.backward()
-        else:
-            with model.no_sync():
+        with region("train_step_sync" if sync else "train_step_nosync"):
+            x = next_x()  # fixed on-GPU tensor, or a host->GPU staged batch
+            optimizer.zero_grad(set_to_none=True)
+            ctx = torch.autocast("cuda", dtype=torch.bfloat16) if amp else _null()
+            if sync:
                 with ctx:
                     loss = criterion(model(x), y)
                 loss.backward()
-        optimizer.step()
+            else:
+                with model.no_sync():
+                    with ctx:
+                        loss = criterion(model(x), y)
+                    loss.backward()
+            optimizer.step()
     end.record()
     torch.cuda.synchronize()
     return start.elapsed_time(end) / iters / 1e3

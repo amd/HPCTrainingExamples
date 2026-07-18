@@ -138,6 +138,12 @@ The optimization levers exposed by `ddp_resnet_bench.py` (pass via `OPTS`):
 | `--migrate-method managed\|register` | Zero-copy method: `managed` aliases a `hipMallocManaged` buffer (default); `register` `hipHostRegister`s any pageable tensor (e.g. a DataLoader batch) |
 | `--host-copy` | Stage each host input batch with a `.to()` copy — the baseline to compare `--migrate` against |
 
+> **hipBLASLt note.** ResNet `--amp` is conv-bound (MIOpen), so hipBLASLt has little
+> effect here: the `hipblaslt/patched` module makes **no measurable difference**
+> (244 vs 245 img/s). Unlike the transformer examples, ResNet `--amp` does **not**
+> hit the ROCm 7.2.x bf16 hipBLASLt stall. See
+> [`../common/hipblaslt-notes.md`](../common/hipblaslt-notes.md).
+
 > **Zero-copy input staging (MI300A).** By default the input batch is
 > pre-resident on the GPU. `--host-copy`/`--migrate` instead produce the batch on
 > the host each step and move it to the GPU — a `hipMemcpy` copy vs. an aliased

@@ -129,6 +129,12 @@ Because the fp32 gradients are still all-reduced (498 MB/step for the 124M-param
 model), faster bf16 compute makes the fixed RCCL cost a **larger** share of each
 step — comm% rises even though wall-clock throughput ~1.8×.
 
+> **ROCm 7.2.x bf16 gotcha.** On ROCm 7.2.x the bf16 (`--amp`) transformer path can
+> **stall for minutes in hipBLASLt**. Run these bf16 sweeps on ROCm 6.4.3, or force
+> rocBLAS with `export TORCH_BLAS_PREFER_HIPBLASLT=0` (then bf16 runs and is ~2.3×
+> faster than fp32). The `hipblaslt/patched` module does **not** fix this and makes
+> no measurable difference here — see [`../common/hipblaslt-notes.md`](../common/hipblaslt-notes.md).
+
 ## 3b. Optimization: `torch.compile` (`--compile`)
 
 `torch.compile` captures the GPT block into a fused graph. It stacks with

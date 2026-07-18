@@ -16,6 +16,7 @@
 #   make                      # build ./cg_gpu (auto-detects the toolchain)
 #   make GPU_ARCH=gfx90a      # build for a specific GPU architecture
 #   make SPMV_V2=1            # use rocsparse_v2_spmv (ROCm 7.x); default uses rocsparse_spmv
+#   make SCOREP=1             # instrument with Score-P (MPI + ROCm/HIP GPU regions)
 #   make run                  # quick 4-rank sanity run over four methods
 #   make clean
 
@@ -50,6 +51,20 @@ else
   MPICXX  ?= mpicxx
   export OMPI_CXX = hipcc
   HIP_LANG =
+endif
+
+# ---------------------------------------------------------------------------
+# Optional Score-P instrumentation (make SCOREP=1).
+#   Wraps the MPI compiler with the Score-P measurement system.  We use
+#   --nocompiler on purpose: automatic compiler instrumentation of the
+#   HIP/rocSPARSE/rocBLAS header inlines generates so many regions that it
+#   overflows the Score-P trace buffer.  --nocompiler still records the MPI
+#   adapter and, at run time with SCOREP_ROCM_ENABLE=yes, the ROCm/HIP GPU
+#   kernels and memcpys, which is exactly the communication+compute view we want.
+#   GPU capture is validated on ROCm 6.4.x + scorep/9.4 (see docs/profilers/scorep.md).
+# ---------------------------------------------------------------------------
+ifeq ($(SCOREP),1)
+  MPICXX := scorep --nocompiler --mpp=mpi $(MPICXX)
 endif
 
 CXXFLAGS = -O3 -std=c++17 $(HIP_LANG) --offload-arch=$(GPU_ARCH) -I$(ROCM_PATH)/include -Isrc

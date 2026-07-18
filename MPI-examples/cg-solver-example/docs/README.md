@@ -27,7 +27,7 @@ to pick.
 | 5 | [Tuning the copy engines (SDMA vs blit)](05-sdma-vs-blit.md) | `HSA_ENABLE_SDMA` / `_GANG`, when each wins |
 | 6 | [ROCm version & the SpMV API](06-rocm-version-and-spmv.md) | Version sweeps, the 7.x compute regression, `rocsparse_v2_spmv`, OpenMPI vs cray-mpich |
 | 7 | [The optimized configuration](07-optimization-path.md) | Putting it together: a recommended launch, a checklist, and where to go next |
-| 8 | [Profiling communication & compute](08-profiling.md) | The system profilers — rocprofv3 (incl. ATT), rocprof-compute, rocprofiler-systems, TAU, HPCToolkit, likwid, AMD uProf, IntelliKit, roofline-extractor, rocBudAI, Linux perf, cachegrind — and perf_events security |
+| 8 | [Profiling communication & compute](08-profiling.md) | Hub + per-profiler step-by-step [guides](profilers/README.md) — Score-P, rocprofv3 (incl. ATT), rocprof-compute, rocprofiler-systems, TAU, HPCToolkit, likwid, AMD uProf, IntelliKit, roofline-extractor, rocBudAI, Linux perf, cachegrind — and perf_events security |
 | 9 | [perf_events security — implementation & demo](09-perf-security-demo.md) | The `perf_event_paranoid` ladder, `CAP_PERFMON`, resource limits; a no-root demo on `CG-CPU` (kernel-level, ROCm-independent) |
 
 ## TL;DR — the recommended optimized measurement

@@ -1,0 +1,6 @@
+Routine                           time
+INCL(python3.12)             47.019994
+  EXCL(python3.12)           24.511489
+  user:train_step_sync       22.492135
+  user:train_step_nosync      0.016370
+

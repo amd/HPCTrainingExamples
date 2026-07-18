@@ -29,6 +29,11 @@ import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
+# Optional Score-P user-region annotations (no-op unless launched via
+# ../common/scorep_launch.sh, which sets SCOREP_ML=1 and runs under scorep).
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "common"))
+from scorep_ml import region
+
 
 def find_upstream_model():
     """Locate the upstream minGPT `mingpt` package dir and import GPT/GPTConfig."""
@@ -121,18 +126,19 @@ def timed_steps(model, optimizer, next_batch, target, iters, sync, amp=False):
     end = torch.cuda.Event(enable_timing=True)
     start.record()
     for _ in range(iters):
-        batch = next_batch()
-        optimizer.zero_grad(set_to_none=True)
-        ctx = torch.autocast("cuda", dtype=torch.bfloat16) if amp else _null()
-        if sync:
-            with ctx:
-                _, loss = model(batch, target)
-            loss.backward()
-        else:
-            with model.no_sync(), ctx:
-                _, loss = model(batch, target)
+        with region("train_step_sync" if sync else "train_step_nosync"):
+            batch = next_batch()
+            optimizer.zero_grad(set_to_none=True)
+            ctx = torch.autocast("cuda", dtype=torch.bfloat16) if amp else _null()
+            if sync:
+                with ctx:
+                    _, loss = model(batch, target)
                 loss.backward()
-        optimizer.step()
+            else:
+                with model.no_sync(), ctx:
+                    _, loss = model(batch, target)
+                    loss.backward()
+            optimizer.step()
     end.record()
     torch.cuda.synchronize()
     return start.elapsed_time(end) / iters / 1e3

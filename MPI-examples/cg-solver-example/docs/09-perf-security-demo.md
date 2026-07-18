@@ -1,7 +1,7 @@
 # 9. perf_events security — implementation & demo plan
 
-This chapter turns the [perf_events security reference](08-profiling.md#m-perf_events-security--access-control)
-(§M, a distillation of the
+This chapter turns the [perf_events security reference](profilers/perf-security.md)
+(a distillation of the
 [kernel perf-security guide](https://docs.kernel.org/admin-guide/perf-security.html))
 into something you can **run** on the CG example.
 
@@ -295,6 +295,6 @@ Talking points:
 
 ## See also
 
-- [§M — perf_events security & access control](08-profiling.md#m-perf_events-security--access-control) — the reference.
-- [§K — Linux perf](08-profiling.md#k-cg-cpu--linux-perf-always-available-cpu-baseline) — the profiler this secures.
+- [perf_events security & access control](profilers/perf-security.md) — the reference.
+- [Linux perf](profilers/perf.md) — the profiler this secures.
 - [Kernel perf-security guide](https://docs.kernel.org/admin-guide/perf-security.html) — the upstream source (Privileged Perf users groups, CAP_PERFMON, resource control).

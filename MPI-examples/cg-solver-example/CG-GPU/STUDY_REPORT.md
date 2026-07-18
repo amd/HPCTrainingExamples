@@ -45,6 +45,15 @@ The study built, instrumented, and benchmarked the five communication variants o
    small further gain from `HSA_ENABLE_SDMA_GANG=1`. Compute was unchanged, confirming the effect is
    isolated to data transport. See §5.2.
 
+7. **A patched hipBLASLt does *not* recover the 7.x compute regression** for this solver. An A/B sweep on
+   one node (stock vs `hipblaslt/patched`, ROCm 7.2.4 and 7.13.0) moved solve time by **≤0.5 %** — within
+   noise. The reason is structural: the CG compute path is **rocSPARSE SpMV + rocBLAS level-1**
+   (`ddot`/`daxpy`/`dscal`), and none of those dispatch through **hipBLASLt**, which accelerates **GEMM
+   (level-3)**. So the patched library is loaded correctly (the sweep confirms `+p`) but has no work to
+   accelerate here. The ~2.6–2.8× compute regression vs ROCm 6.4.3 persists across the entire 7.x line
+   regardless of hipBLASLt. See §5.3. (`hipblaslt/patched` would matter for a GEMM-bound workload, not this
+   sparse-iterative one.)
+
 ---
 
 ## 2. Methodology
@@ -56,7 +65,7 @@ Artifacts produced during the study (all in `CG-GPU/`):
 | `Makefile` | Build `cg_gpu` (auto-detects `--offload-arch`, links rocSPARSE/rocBLAS/RCCL/HIP). `make SPMV_V2=1` selects the `rocsparse_v2_spmv` path. |
 | `test_cg_gpu.sh` | Build + run all 5 variants, verify convergence, print timing summary. |
 | `submit_cg_gpu_test.sbatch` | SLURM wrapper (`--exclusive` + binding) to build/run on a GPU node. |
-| `sweep_rocm_versions.sh` / `submit_rocm_sweep.sbatch` | Sweep ROCm versions (one method) in a single allocation; supports `SPMV="v1 v2"` to build+benchmark both SpMV paths. |
+| `sweep_rocm_versions.sh` / `submit_rocm_sweep.sbatch` | Sweep ROCm versions (one method) in a single allocation; `SPMV="v1 v2"` builds+benchmarks both SpMV paths; `HBL=both` A/B's stock vs `hipblaslt/patched` (rows marked `+p`). |
 | `sweep_sdma.sh` / `submit_sdma_sweep.sbatch` | Sweep SDMA vs blit copy engines (`HSA_ENABLE_SDMA` / `_GANG`) across all methods, one build. |
 | `gpu_bind.sh` | Per-rank GPU + NUMA binding wrapper. |
 | `check_affinity.cpp` / `submit_affinity_check.sbatch` | Diagnostic: per-rank GPU PCI id + CPU mask. |
@@ -317,6 +326,48 @@ additional win for the copy-heaviest variants and is worth enabling when the hal
 
 ---
 
+## 5.3 Patched hipBLASLt — does it recover the 7.x regression?
+
+On ROCm 7.x builds a tuned **`hipblaslt/patched`** module is available (auto-loaded on 7.2.x, manual on
+7.13.0; absent on 6.x/7.0.x). The hypothesis was that it might close some of the 6.4.3→7.x compute gap from
+§5/§5.1. Because hipBLASLt is a **runtime rocBLAS backend**, this can be tested without rebuilding: run the
+same binary once with stock hipBLASLt and once with the patched module (`sweep_rocm_versions.sh HBL=both`,
+which marks patched rows `+p`).
+
+Sweep on **ROCm 6.4.3 / 7.0.2 / 7.2.4 / 7.13.0**, method `isend`, 4 ranks, `--exclusive` + `gpu_bind.sh`,
+`CG_SEED=12345`, **minimum of 5 runs**, all on the same node `ppac-pl1-s24-26` (PPAC MI300A SPX, job 15539).
+All rows converge in **172 iterations** (numerics unchanged); times are seconds, max across ranks, CG loop
+only:
+
+| ROCm | hipBLASLt | iters | solve (s) | comm (s) | compute (s) | compute vs 6.4.3 |
+|------|-----------|-------|-----------|----------|-------------|------------------|
+| 6.4.3  | stock                | 172 | 0.0370 | 0.0140 | **0.0230** | 1.00× (baseline) |
+| 7.0.2  | stock (no patched)   | 172 | 0.0796 | 0.0150 | 0.0646 | 2.81× |
+| 7.2.4  | stock                | 172 | 0.0773 | 0.0147 | 0.0626 | 2.72× |
+| 7.2.4  | **patched (`+p`)**   | 172 | 0.0769 | 0.0148 | 0.0621 | 2.70× |
+| 7.13.0 | stock                | 172 | 0.0751 | 0.0150 | 0.0601 | 2.61× |
+| 7.13.0 | **patched (`+p`)**   | 172 | 0.0750 | 0.0173 | 0.0577 | 2.51× |
+
+### Findings
+
+- **Patched hipBLASLt has no measurable effect on this solver.** Solve time changes by ≤0.5 % between stock
+  and `+p` (7.2.4 0.0773 → 0.0769 s; 7.13.0 0.0751 → 0.0750 s) — within run-to-run noise. The small wobble
+  in the split (e.g. 7.13.0 comm 0.0150 → 0.0173) is the min-solve run selection absorbing noise, not a
+  real communication change; solve time is the robust metric and it is unchanged.
+- **Why:** the CG compute path is **rocSPARSE SpMV + rocBLAS level-1** (`ddot`/`daxpy`/`dscal`). hipBLASLt
+  accelerates **GEMM (level-3 BLAS)**, which this solver never calls, so the patched library — though loaded
+  correctly (`+p`) — has nothing to accelerate. This is consistent with §5.1, which localized the regression
+  to the **rocSPARSE CSR SpMV kernel**, not any BLAS path.
+- **The 6.4.3→7.x compute regression persists across the whole 7.x line** (2.5–2.8×), with or without the
+  patched library. 7.13.0 is marginally the fastest 7.x (compute ~0.058–0.060 s) but still ~2.6× the 6.4.3
+  baseline.
+- **Practical guidance:** keep loading `hipblaslt/patched` for performance runs where it exists (the sweep
+  and `run_scorep.sh` now do this automatically) — it is the right default and helps **GEMM-bound**
+  workloads — but it is **not** a remedy for this sparse-iterative benchmark. Chase the rocSPARSE SpMV
+  kernel regression per §5.1 instead.
+
+---
+
 ## 6. Recommendations — further optimization
 
 **A. Reduce dot-product synchronization (highest ROI).**
@@ -347,6 +398,9 @@ and use deterministic reductions; document the (small) performance trade-off.
 - ~~Migrate `rocsparse_spmv` → `rocsparse_v2_spmv` and re-measure.~~ **Done (§5.1):** v2 does *not* recover
   the regression (0–3 %, within noise). The cause is the rocSPARSE CSR SpMV kernel, not the API — so keep
   the v2 migration for API longevity but pursue the kernel-level cause separately.
+- ~~Try the tuned `hipblaslt/patched` library on 7.x.~~ **Done (§5.3):** no effect (≤0.5 %) — the solver
+  uses SpMV + level-1 BLAS, not GEMM, so hipBLASLt has nothing to accelerate. Keep loading it for GEMM-bound
+  runs, but it is not the fix here.
 - **Localize with `rocprofv3`:** one-iteration kernel trace on 6.4.1 vs 7.2.4 to find the SpMV kernel whose
   duration grew; file a rocSPARSE issue with the reproducer if confirmed.
 - Try `rocsparse_spmv_alg_csr_rowsplit` for this near-uniform-nnz matrix (currently `csr_adaptive`).
@@ -390,6 +444,10 @@ sbatch submit_affinity_check.sbatch
 
 # ROCm-version sweep comparing the two SpMV paths (v1 vs v2), one method:
 sbatch --export=ALL,SPMV="v1 v2",VERSIONS="6.4.1 7.0.2 7.2.4 7.13.0",REPEATS=5,METHOD=isend \
+       submit_rocm_sweep.sbatch
+
+# ROCm-version sweep A/B'ing stock vs patched hipBLASLt (adds '+p' rows), §5.3:
+sbatch --partition=<mi300a_spx> --export=ALL,HBL=both,VERSIONS="6.4.3 7.0.2 7.2.4 7.13.0",REPEATS=5,METHOD=isend \
        submit_rocm_sweep.sbatch
 
 # SDMA vs blit copy-engine sweep (all methods, one build):
