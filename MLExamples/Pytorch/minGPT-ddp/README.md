@@ -156,6 +156,15 @@ throughput — it is included for completeness and to exercise the API. The raw
 eliminated — measured 100%) are documented in
 [`../common/README.md`](../common/README.md).
 
+## 3d. Runtime, version, and affinity
+
+See [`../common/PERFORMANCE_NOTES.md`](../common/PERFORMANCE_NOTES.md) for the
+cross-cutting, measured MI300A results: **ROCm/PyTorch version selection**
+(ROCm 6.4 is ~30% faster than 7.2.3 on this GEMM-bound transformer; TunableOp on
+7.2.3 recovers it; the pip **wheel vs. site module is a wash** at matched ROCm),
+and **NUMA affinity** (negligible here — enable with `AFFINITY=1
+./rccl_scaling_sweep.sh` for CPU-heavy/host-staged paths).
+
 ## Measured results (MI300A, AAC6 `PPAC_MI300A_SPX`, ROCm 6.4.3 / PyTorch 2.12)
 
 GPT2-small (12 layers, 768 embd, 124M params, block 512, per-GPU batch 8).

@@ -149,6 +149,15 @@ The optimization levers exposed by `ddp_resnet_bench.py` (pass via `OPTS`):
 > copy** of every batch, while `migrate` keeps one (measured **100%** of the
 > device duplicate eliminated). Requires `HSA_XNACK=1`.
 
+### Runtime, version, and affinity
+
+See [`../common/PERFORMANCE_NOTES.md`](../common/PERFORMANCE_NOTES.md) for the
+cross-cutting, measured results on MI300A: **ROCm/PyTorch version selection**
+(ROCm 6.4 vs 7.2.3, TunableOp, and why the pip **wheel vs. site module is a
+wash** at matched ROCm), and **NUMA affinity/placement** (negligible for these
+GPU-resident runs — enable with `AFFINITY=1 ./ddp_bench_sweep.sh` when you have a
+CPU-heavy or host-staged path).
+
 ### Measured results (MI300A, resnet50, per-GPU batch 128)
 
 > These numbers were measured earlier with the host-staged P2P workaround (nodes

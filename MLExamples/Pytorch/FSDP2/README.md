@@ -138,6 +138,13 @@ FSDP2 throughput — see [`../common/README.md`](../common/README.md) for the
 100×–1000× raw-transfer micro-benchmark and the memory saving (100% of the
 device-resident duplicate eliminated), which is where it pays off.
 
+For cross-cutting, measured MI300A results — **ROCm/PyTorch version selection**
+(ROCm 6.4 ~15% faster than 7.2.3 on this sharded transformer; TunableOp on 7.2.3
+recovers it; pip **wheel vs. site module is a wash** at matched ROCm) and **NUMA
+affinity** (negligible here; enable with `AFFINITY=1 ./rccl_scaling_sweep.sh` for
+CPU-heavy/host-staged paths) — see
+[`../common/PERFORMANCE_NOTES.md`](../common/PERFORMANCE_NOTES.md).
+
 ## Measured results (MI300A, AAC6 `PPAC_MI300A_SPX`, ROCm 6.4.3 / PyTorch 2.12)
 
 Transformer (16 layers, dim 1024, 16 heads, seq 512, per-GPU batch 8).
