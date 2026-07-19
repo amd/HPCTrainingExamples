@@ -87,8 +87,9 @@ sed -i 's/pin_memory=True/pin_memory=False/g' main.py
 sed -i '/^def validate(/i\
     _prof.stop()\
     _rccl_ms = sum(e.self_device_time_total for e in _prof.key_averages() if "nccl" in e.key.lower())/1e3\
-    getattr(args,"rank",0)<=0 and print(f"RCCL_TOTAL_MS {_rccl_ms:.3f}")\
-    getattr(args,"rank",0)<=0 and _stage_n and print(f"STAGE_MS_PER_STEP {_stage_ms/_stage_n:.4f}")' main.py
+    _ws = getattr(args,"world_size","?"); _stg = os.environ.get("STAGE","")\
+    getattr(args,"rank",0)<=0 and print(f"RCCL_TOTAL_MS {_rccl_ms:.3f} gpus={_ws}")\
+    getattr(args,"rank",0)<=0 and _stage_n and print(f"STAGE_MS_PER_STEP {_stage_ms/_stage_n:.4f} gpus={_ws} stage={_stg}")' main.py
 
 export MIOPEN_FIND_MODE=${MIOPEN_FIND_MODE:-FAST}
 export MIOPEN_LOG_LEVEL=3
@@ -123,12 +124,17 @@ done
 
 # .to (copy) vs migrate staging comparison on a SINGLE partition: compare STAGE_MS_PER_STEP
 STAGE=copy    HIP_VISIBLE_DEVICES=0 python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
-	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b $PERGPU_BATCH -p 20 --epochs 1 |& tee run_copy.log
+	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b $PERGPU_BATCH -p 20 --epochs 1 |& tee stage_copy.log
 STAGE=migrate HIP_VISIBLE_DEVICES=0 python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
-	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b $PERGPU_BATCH -p 20 --epochs 1 |& tee run_migrate.log
+	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b $PERGPU_BATCH -p 20 --epochs 1 |& tee stage_migrate.log
 
-echo "=== RCCL total time (per run) and .to vs migrate staging time ==="
-grep -h -E "RCCL_TOTAL_MS|STAGE_MS_PER_STEP" run_*.log
+# Scaling runs are run_<N>.log; staging runs are stage_{copy,migrate}.log, so a
+# plain glob keeps the two reports separate. Lines are self-describing (gpus=N).
+echo "=== RCCL total time (per GPU count) ==="
+grep -h RCCL_TOTAL_MS run_*.log | sort -t= -k2 -n
+
+echo "=== Host->device staging: .to (copy) vs .migrate ==="
+grep -h STAGE_MS_PER_STEP stage_*.log
 
 echo "=== Calculating the performance =="
 PERGPU_BATCH=$PERGPU_BATCH $BASE_DIR/images_per_sec.sh
