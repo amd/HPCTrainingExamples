@@ -33,6 +33,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 # ../common/scorep_launch.sh, which sets SCOREP_ML=1 and runs under scorep).
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "common"))
 from scorep_ml import region
+from rccl_time import rccl_time_per_step
 
 
 def find_upstream_model():
@@ -161,6 +162,8 @@ def main():
                    help="run a few steps under torch.profiler and dump a trace")
     p.add_argument("--profile-dir", default="./torch_prof",
                    help="output dir for the torch.profiler trace")
+    p.add_argument("--rccl-time", action="store_true",
+                   help="also report per-step RCCL kernel device time (profiler)")
     p.add_argument("--flops", action="store_true",
                    help="rank 0 prints a DeepSpeed FLOPs/MACs/params report")
     p.add_argument("--migrate", action="store_true",
@@ -243,13 +246,27 @@ def main():
         # Warm the no_sync graph too; torch.compile recompiles it on first use.
         timed_steps(model, optimizer, next_batch, target, 3, sync=False, amp=args.amp)
 
+    torch.cuda.reset_peak_memory_stats(device)
     t_sync = timed_steps(model, optimizer, next_batch, target, args.iters, sync=True, amp=args.amp)
+    peak_mb = torch.cuda.max_memory_allocated(device) / 1e6
     t_nosync = timed_steps(model, optimizer, next_batch, target, args.iters, sync=False, amp=args.amp)
 
     comm = max(t_sync - t_nosync, 0.0)
     comm_pct = 100.0 * comm / t_sync if t_sync > 0 else 0.0
     tokens = args.batch_size * args.block_size
     global_tokens_per_s = tokens * world_size / t_sync
+
+    rccl_s = -1.0
+    if args.rccl_time:
+        def _one_step():
+            batch = next_batch()
+            optimizer.zero_grad(set_to_none=True)
+            ctx = torch.autocast("cuda", dtype=torch.bfloat16) if args.amp else _null()
+            with ctx:
+                _, loss = model(batch, target)
+            loss.backward()
+            optimizer.step()
+        rccl_s, _names = rccl_time_per_step(_one_step, args.iters, warmup=3)
 
     if rank == 0:
         print(f"# upstream model: {upstream}")
@@ -262,7 +279,8 @@ def main():
         print(f"RESULT world_size={world_size} "
               f"step_sync_s={t_sync:.4f} step_nosync_s={t_nosync:.4f} "
               f"comm_s={comm:.4f} comm_pct={comm_pct:.1f} "
-              f"tokens_per_s={global_tokens_per_s:.0f}")
+              f"tokens_per_s={global_tokens_per_s:.0f} peak_mem_mb={peak_mb:.0f} "
+              f"rccl_s={rccl_s:.4f}")
 
     dist.barrier()
     dist.destroy_process_group()

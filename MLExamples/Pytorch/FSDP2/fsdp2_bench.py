@@ -36,6 +36,7 @@ import torch.distributed as dist
 # ../common/scorep_launch.sh, which sets SCOREP_ML=1 and runs under scorep).
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "common"))
 from scorep_ml import region
+from rccl_time import rccl_time_per_step
 
 
 def find_upstream_model():
@@ -153,6 +154,9 @@ def main():
                    help="run a few steps under torch.profiler and dump a trace")
     p.add_argument("--profile-dir", default="./torch_prof",
                    help="output dir for the torch.profiler trace")
+    p.add_argument("--rccl-time", action="store_true",
+                   help="also report per-step RCCL kernel device time (profiler): "
+                        "FSDP2 all-gather + reduce-scatter")
     p.add_argument("--flops", action="store_true",
                    help="rank 0 prints a DeepSpeed FLOPs/MACs/params report (dense model)")
     p.add_argument("--migrate", action="store_true",
@@ -254,6 +258,17 @@ def main():
     t_step = timed_steps(model, optimizer, next_x, args.iters)
     peak_mb = torch.cuda.max_memory_allocated(device) / 1e6
 
+    rccl_s = -1.0
+    if args.rccl_time:
+        def _one_step():
+            xx = next_x()
+            optimizer.zero_grad(set_to_none=True)
+            loss = model(xx).sum()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            optimizer.step()
+        rccl_s, _names = rccl_time_per_step(_one_step, args.iters, warmup=3)
+
     # A full (unsharded) parameter count, for reference.
     n_params = sum(p.numel() for p in model.parameters())  # local shard count
     tokens = args.batch_size * args.seq_len
@@ -268,7 +283,8 @@ def main():
               f"stage_input={stager.mode if stage else 'none'}")
         print(f"RESULT world_size={world_size} step_s={t_step:.4f} "
               f"tokens_per_s={global_tokens_per_s:.0f} peak_mem_mb={peak_mb:.0f} "
-              f"local_shard_params={n_params/1e6:.1f}M")
+              f"local_shard_params={n_params/1e6:.1f}M "
+              f"rccl_s={rccl_s:.4f}")
 
     dist.barrier()
     dist.destroy_process_group()
