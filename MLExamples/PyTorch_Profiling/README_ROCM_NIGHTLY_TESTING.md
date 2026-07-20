@@ -95,8 +95,8 @@ Example (baseline sanity check first, then a profiler):
 cd no-profiling
 sbatch slurm_single_process_noprofile.sh
 
-cd ../rocm-compute-profiler
-sbatch slurm_single_process_profile.sh
+cd ../rocprofv3
+sbatch slurm_single_process_kernels.sh
 ```
 
 Check job status and output:
@@ -118,7 +118,16 @@ squeue --me
 > the wrong numpy version and crash on import. Let all profiling jobs finish,
 > then run the analysis by itself.
 
-- **ROCm Compute Profiler:** `rocprof-compute analyze -p rocm-compute-profiler/workloads/cifar_100_single_proc/<subdir>`
+- **ROCm Compute Profiler:** submit the companion analysis job from
+  `rocm-compute-profiler/` (it locates the workload and runs the analysis for
+  you, handling the numpy pin described above):
+
+```bash
+cd rocm-compute-profiler
+sbatch slurm_single_process_analyze.sh
+```
+
+  Or run it by hand: `rocprof-compute analyze -p rocm-compute-profiler/workloads/cifar_100_single_proc/<subdir>`
 - **RocProfiler:** open the CSVs (kernels) or load the `.pftrace` in
   [ui.perfetto.dev](https://ui.perfetto.dev) (traces).
 - **ROCm Systems Profiler:** load the `perfetto-trace-*.proto` from
