@@ -58,7 +58,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 # Optional Score-P user-region annotations (no-op unless launched via
 # ../../common/scorep_launch.sh, which sets SCOREP_ML=1 and runs under scorep).
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "common"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "common"))
 from scorep_ml import region
 from rccl_time import rccl_time_per_step
 
@@ -260,7 +260,7 @@ def main():
     if stage:
         import sys as _sys
         from pathlib import Path as _Path
-        _sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / "common"))
+        _sys.path.insert(0, str(_Path(__file__).resolve().parent.parent.parent / "common"))
         from zerocopy import Stager
         stager = Stager(device, enabled=args.migrate, method=args.migrate_method)
         host_x = stager.host_empty((args.batch_size, 3, 224, 224), torch.float32)
