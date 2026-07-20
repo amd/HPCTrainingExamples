@@ -12,20 +12,27 @@
 #   GPUS="2 4" OPTS="--channels-last --amp" ./ddp_bench_sweep.sh
 #   ARCH=resnet101 BATCH=256 ./ddp_bench_sweep.sh
 #
+#   # Knob comparison: baseline vs each optimization at each GPU count. OPT_SETS
+#   # is a ';'-separated list of "label=flags" (first entry is the baseline):
+#   GPUS="2 4" OPT_SETS="baseline= ; amp=--amp ; ch+amp=--channels-last --amp ; \
+#     bf16comm=--channels-last --amp --bf16-comm" ./ddp_bench_sweep.sh
+#
 # Environment:
 #   GPUS   GPU counts (default "1 2 4")     ARCH   torchvision model (default resnet50)
 #   BATCH  per-GPU batch (default 128)       OPTS   extra bench flags (e.g. --channels-last --amp)
+#   OPT_SETS  ';'-separated "label=flags" list => knob-comparison mode (overrides OPTS)
 #   NCCL_P2P_DISABLE (unset => xGMI P2P; set 1 only as a fallback w/o iommu=pt),
 #   MIOPEN_FIND_MODE (default FAST), MIOPEN_DB (cache dir)
 #   AFFINITY=1  bind each rank to its GPU's local NUMA node (via numactl). Effect
 #               is within noise for these GPU-resident runs (see
-#               ../common/PERFORMANCE_NOTES.md); useful for host-staged/CPU paths.
+#               ../../common/PERFORMANCE_NOTES.md); useful for host-staged/CPU paths.
 set -euo pipefail
 
 GPUS=${GPUS:-"1 2 4"}
 ARCH=${ARCH:-resnet50}
 BATCH=${BATCH:-128}
 OPTS=${OPTS:-}
+OPT_SETS=${OPT_SETS:-}
 export NCCL_DEBUG=${NCCL_DEBUG:-WARN}
 # PPAC MI300A nodes are booted with "iommu=pt" (REQUIRED), so RCCL uses direct
 # xGMI P2P -- we set no P2P override. On a node without iommu=pt, RCCL P2P DMA
@@ -48,7 +55,7 @@ mkdir -p "$LOGDIR"
 # local node. Empty by default (no behavior change).
 AFFIN=""
 if [[ "${AFFINITY:-0}" == "1" ]]; then
-  LAUNCHER="$here/../common/affinity_launcher.py"
+  LAUNCHER="$here/../../common/affinity_launcher.py"
   if [[ -f "$LAUNCHER" ]]; then AFFIN="$LAUNCHER"; echo "AFFINITY=1: binding ranks to local NUMA nodes";
   else echo "WARN: $LAUNCHER not found; AFFINITY ignored" >&2; fi
 fi
@@ -58,6 +65,53 @@ fi
 if [[ -f "$WARM" ]]; then
   echo "Pre-warming MIOpen cache ($ARCH, batch $BATCH)..."
   python3 "$WARM" "$BATCH" "$ARCH" > "$LOGDIR/warm.log" 2>&1 || true
+fi
+
+# Run one config at GPU count $1 with flags $2 (label $3 => log name). Echoes
+# "img commp step nosync" from the RESULT line, or nothing (rc!=0) on failure.
+run_one () {
+  local n="$1" flags="$2" label="$3" tag log line
+  tag=$(printf '%s' "${label:-opts}" | tr -c 'A-Za-z0-9._-' '_')
+  log="$LOGDIR/${ARCH}_${n}gpu_${tag}.log"
+  torchrun --standalone --nproc_per_node="$n" $AFFIN "$BENCH" -a "$ARCH" -b "$BATCH" $flags \
+    > "$log" 2>&1 || { echo "" ; return 1; }
+  line=$(grep '^RESULT' "$log" | tail -n1 || true)
+  local img; img=$(sed -n 's/.*img_per_s=\([0-9.]*\).*/\1/p' <<<"$line")
+  [[ -z "$img" ]] && { echo "" ; return 1; }
+  local commp step nosync
+  commp=$(sed -n 's/.*comm_pct=\(-\?[0-9.]*\).*/\1/p' <<<"$line")
+  step=$(sed -n 's/.*step_sync_s=\([0-9.]*\).*/\1/p' <<<"$line")
+  nosync=$(sed -n 's/.*step_nosync_s=\(-\?[0-9.]*\).*/\1/p' <<<"$line")
+  echo "$img $commp $step $nosync"
+}
+
+# --- Knob-comparison mode: baseline vs each option set, per GPU count ---
+if [[ -n "$OPT_SETS" ]]; then
+  echo "DDP $ARCH knob comparison: per_gpu_batch=$BATCH gpus=[$GPUS]"
+  IFS=';' read -ra SETS <<< "$OPT_SETS"
+  for n in $GPUS; do
+    echo
+    echo "=== $n GPU(s) ==="
+    printf '%-18s %-12s %-8s %-10s\n' "opt-set" "img_per_s" "comm%" "vs_base"
+    base=""
+    for entry in "${SETS[@]}"; do
+      [[ -z "${entry// }" ]] && continue
+      if [[ "$entry" == *"="* ]]; then
+        label="$(echo "${entry%%=*}" | xargs)"; flags="${entry#*=}"
+      else
+        label="$(echo "$entry" | xargs)"; flags="$entry"
+      fi
+      out=$(run_one "$n" "$flags" "${label:-baseline}") || {
+        printf '%-18s %s\n' "${label:-baseline}" "FAILED/no RESULT (see $LOGDIR/)"; continue; }
+      read -r img commp _step _nosync <<< "$out"
+      [[ -z "$base" ]] && base=$img
+      vs=$(awk -v a="$img" -v b="$base" 'BEGIN{printf "%.2fx", a/b}')
+      printf '%-18s %-12s %-8s %-10s\n' "${label:-baseline}" "$img" "$commp" "$vs"
+    done
+  done
+  echo
+  echo "vs_base is img/s relative to the first opt-set at each GPU count. Logs: $LOGDIR/"
+  exit 0
 fi
 
 echo "DDP $ARCH scaling: per_gpu_batch=$BATCH opts='${OPTS:-none}' gpus=[$GPUS]"

@@ -1,9 +1,9 @@
 # ImageNet DDP benchmark: rigorous RCCL scaling study
 
-`README_benchmark.md` from `HPCTrainingExamples/MLExamples/Pytorch/imagenet` in
-the Training Examples repository.
+`README_benchmark.md` from `HPCTrainingExamples/MLExamples/Pytorch/imagenet/benchmarks`
+in the Training Examples repository.
 
-This is the in-depth companion to the [quick-start `README.md`](README.md). Start
+This is the in-depth companion to the [quick-start `README.md`](../README.md). Start
 there for the simple, manual step-by-step sweep. This document covers the
 scaling-sweep drivers, the required MI300A environment, the optimization levers,
 measured results, the pure-RCCL bandwidth micro-benchmark, profiling, and how
@@ -17,7 +17,7 @@ this example relates to the other distributed examples.
 | File | Purpose |
 |------|---------|
 | `ddp_resnet_bench.py` | **Recommended** torchrun DDP ResNet benchmark; synthetic data, `no_sync()` RCCL isolation, `--channels-last`/`--amp` |
-| `ddp_bench_sweep.sh` | Scaling driver for `ddp_resnet_bench.py` (pre-warms MIOpen, prints comm%/speedup/efficiency) |
+| `ddp_bench_sweep.sh` | Scaling driver for `ddp_resnet_bench.py` (pre-warms MIOpen, prints comm%/speedup/efficiency); `OPT_SETS=` enables baseline-vs-knob comparison |
 | `submit_ddp_bench.batch` | Slurm job: baseline + optimized (channels_last/AMP) sweeps |
 | `run_imagenet_uv.sh` | **Self-contained** upstream `main.py --dummy` sweep in a disposable **uv** venv (auto clone + install + warm + cleanup) |
 | `submit_imagenet_uv.batch` | Slurm job wrapper for `run_imagenet_uv.sh` (per-job MIOpen cache, auto cleanup) |
@@ -116,19 +116,54 @@ GPUS="1 2 4" ARCH=resnet50 BATCH=128 OPTS="--channels-last --amp" ./ddp_bench_sw
 
 # Add torch.compile (graph capture + kernel fusion) on top:
 GPUS="1 2 4" ARCH=resnet50 BATCH=128 OPTS="--channels-last --amp --compile" ./ddp_bench_sweep.sh
+
+# Knob comparison: baseline vs each optimization at each GPU count (OPT_SETS is a
+# ';'-separated "label=flags" list; the first entry is the baseline for vs_base):
+GPUS="2 4" OPT_SETS="baseline= ; amp=--amp ; ch+amp=--channels-last --amp ; \
+  bf16comm=--channels-last --amp --bf16-comm" ./ddp_bench_sweep.sh
 ```
 
 > For the simple, by-hand version of this sweep (one warm-up command + one line
-> per GPU count), see the [quick-start `README.md`](README.md).
+> per GPU count), see the [quick-start `README.md`](../README.md).
 
-The optimization levers exposed by `ddp_resnet_bench.py` (pass via `OPTS`):
+The optimization levers exposed by `ddp_resnet_bench.py` (pass via `OPTS`, or as
+the `flags` of an `OPT_SETS` entry). These mirror the by-hand exercises in
+[`../README_compute_optimization.md`](../README_compute_optimization.md) and
+[`../README_rccl_optimization.md`](../README_rccl_optimization.md).
+
+**Compute:**
 
 | Flag | Effect |
 |------|--------|
 | `--channels-last` | NHWC memory format — matches CDNA conv layout |
 | `--amp` | bf16 autocast — the single biggest throughput win |
-| `--compile` | `torch.compile` graph capture + kernel fusion; first (warm-up) step pays a one-time compile cost |
-| `--migrate` | Stage each host input batch to the GPU with **zero-copy `migrate()`** (MI300A unified memory; needs `HSA_XNACK=1`). See [`../common/README.md`](../common/README.md) |
+| `--compile` [`--compile-mode default\|reduce-overhead\|max-autotune`] | `torch.compile` graph capture + kernel fusion; first (warm-up) step pays a one-time compile cost |
+| `--matmul-precision high\|medium` | `set_float32_matmul_precision` — lower-precision path for fp32 matmuls |
+| `--cudnn-benchmark` | MIOpen fastest-kernel autotuning for the fixed input shape |
+| `--fused-optimizer` | Fused SGD step (one kernel instead of one per tensor) |
+
+**RCCL communication:**
+
+| Flag | Effect |
+|------|--------|
+| `--bf16-comm` | bf16 gradient-compression DDP comm hook — halves the all-reduce bytes |
+| `--nccl-algo Ring\|Tree` | Sets `NCCL_ALGO` before init (Ring = bandwidth, Tree = latency/cross-APU) |
+| `--nccl-proto Simple\|LL\|LL128` | Sets `NCCL_PROTO` before init |
+| `--nccl-min-nchannels N` | Sets `NCCL_MIN_NCHANNELS` before init (more parallel channels) |
+
+**DDP bucketing / overlap:**
+
+| Flag | Effect |
+|------|--------|
+| `--grad-as-bucket-view` | `gradient_as_bucket_view=True` — skip a gradient copy |
+| `--bucket-cap-mb N` | All-reduce bucket size (default 25); larger = fewer, bigger collectives |
+| `--static-graph` | `static_graph=True`; **incompatible with the `no_sync()` comm split**, so `comm_pct` is reported as `-1` — add `--rccl-time` for the RCCL number |
+
+**Input staging (MI300A):**
+
+| Flag | Effect |
+|------|--------|
+| `--migrate` | Stage each host input batch to the GPU with **zero-copy `migrate()`** (MI300A unified memory; needs `HSA_XNACK=1`). See [`../../common/README.md`](../../common/README.md) |
 | `--migrate-method managed\|register` | Zero-copy method: `managed` aliases a `hipMallocManaged` buffer (default); `register` `hipHostRegister`s any pageable tensor (e.g. a DataLoader batch) |
 | `--host-copy` | Stage each host input batch with a `.to()` copy — the baseline to compare `--migrate` against |
 
@@ -136,13 +171,13 @@ The optimization levers exposed by `ddp_resnet_bench.py` (pass via `OPTS`):
 > effect here: the `hipblaslt/patched` module makes **no measurable difference**
 > (244 vs 245 img/s). Unlike the transformer examples, ResNet `--amp` does **not**
 > hit the ROCm 7.2.x bf16 hipBLASLt stall. See
-> [`../common/hipblaslt-notes.md`](../common/hipblaslt-notes.md).
+> [`../../common/hipblaslt-notes.md`](../../common/hipblaslt-notes.md).
 
 > **Zero-copy input staging (MI300A).** By default the input batch is
 > pre-resident on the GPU. `--host-copy`/`--migrate` instead produce the batch on
 > the host each step and move it to the GPU — a `hipMemcpy` copy vs. an aliased
 > unified-memory pointer. The raw transfer is ~30× cheaper with `migrate` (see
-> [`../common/README.md`](../common/README.md) for the micro-benchmark), but for
+> [`../../common/README.md`](../../common/README.md) for the micro-benchmark), but for
 > this compute-bound step the reused-buffer copy overlaps compute, so end-to-end
 > throughput is within noise. The win shows up for large, per-step-fresh host
 > batches and in memory footprint: the copy path keeps a **second device-resident
@@ -151,7 +186,7 @@ The optimization levers exposed by `ddp_resnet_bench.py` (pass via `OPTS`):
 
 ### Runtime, version, and affinity
 
-See [`../common/PERFORMANCE_NOTES.md`](../common/PERFORMANCE_NOTES.md) for the
+See [`../../common/PERFORMANCE_NOTES.md`](../../common/PERFORMANCE_NOTES.md) for the
 cross-cutting, measured results on MI300A: **ROCm/PyTorch version selection**
 (ROCm 6.4 vs 7.2.3, TunableOp, and why the pip **wheel vs. site module is a
 wash** at matched ROCm), and **NUMA affinity/placement** (negligible for these
@@ -209,7 +244,7 @@ Grab a multi-GPU allocation (8 GPUs shown; adapt the partition to your site):
 salloc --gpus=8 --ntasks=1 --time=01:00:00
 ```
 
-Set up PyTorch exactly as in the [mnist README](../mnist/README.md) (venv,
+Set up PyTorch exactly as in the [mnist README](../../mnist/README.md) (venv,
 container, or module). For a venv:
 
 ```bash
@@ -368,7 +403,7 @@ Quick pointers:
 - **rocprof-sys** (timeline): captures host+device activity so you can *see* the
   all-reduce overlapping (or not) with backward compute.
 
-**See [`PROFILING.md`](PROFILING.md)** for the full, MI300A-verified guide
+**See [`../profiling/PROFILING.md`](../profiling/PROFILING.md)** for the full, MI300A-verified guide
 covering torch.profiler, the DeepSpeed FlopsProfiler, TensorBoard, rocprofv3,
 rocprof-compute (roofline), rocprofiler-systems (timeline), and multi-node
 TAU/HPCToolkit.
@@ -466,7 +501,7 @@ collective patterns.
 
 ### `MLExamples/TinyTransformer` — not suitable for RCCL scaling
 
-The [TinyTransformer](../../TinyTransformer) workshop is an excellent
+The [TinyTransformer](../../../TinyTransformer) workshop is an excellent
 **single-GPU** profiling progression (PyTorch profiler, rocprofv3, rocprof-sys,
 rocprof-compute; kernel fusion and Triton optimization of a Tiny-LLaMA). However,
 it contains **no distributed code** — no `init_process_group`,

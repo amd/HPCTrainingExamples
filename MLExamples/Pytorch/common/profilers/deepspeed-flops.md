@@ -1,6 +1,6 @@
 # DeepSpeed FlopsProfiler — PyTorch examples
 
-> Shared guide for [`imagenet`](../../imagenet/PROFILING.md),
+> Shared guide for [`imagenet`](../../imagenet/profiling/PROFILING.md),
 > [`minGPT-ddp`](../../minGPT-ddp/PROFILING.md), and [`FSDP2`](../../FSDP2/PROFILING.md).
 > Read each example's *Ground rules* first.
 

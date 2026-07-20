@@ -22,7 +22,7 @@ communication cost.
 > This README is the **quick start**. For the required MI300A settings, the
 > scaling-sweep drivers, optimization levers, measured results, profiling, and
 > the pure-RCCL bandwidth micro-benchmark, see
-> **[`README_benchmark.md`](README_benchmark.md)**.
+> **[`benchmarks/README_benchmark.md`](benchmarks/README_benchmark.md)**.
 
 > On ROCm, PyTorch's `nccl` backend is provided by **librccl**, so all the
 > `NCCL_*` environment variables are honored by RCCL.
@@ -166,7 +166,7 @@ and the two numbers will match.
 > This is the simple, demo-friendly version. For the robust, per-step, per-rank
 > instrumentation (with a fair pinned-memory baseline) use
 > `ddp_resnet_bench.py`'s `--rccl-time`, `--host-copy`, and `--migrate` flags,
-> documented in [`README_benchmark.md`](README_benchmark.md).
+> documented in [`benchmarks/README_benchmark.md`](benchmarks/README_benchmark.md).
 
 ## 6. Run on CPX partitions (SH5_MI300A_CPX, PPAC_MI300A_CPX)
 
@@ -223,13 +223,19 @@ communication behavior only appears once the rank count crosses physical APUs
 
 ## Next steps
 
-- **[`README_benchmark.md`](README_benchmark.md)** — the rigorous study:
-  automated sweep drivers (`ddp_bench_sweep.sh`), optimization levers
+- **[`benchmarks/`](benchmarks/README_benchmark.md)** — the rigorous study:
+  automated sweep drivers (`benchmarks/ddp_bench_sweep.sh`), optimization levers
   (`--channels-last`, `--amp`, `--compile`), the required MI300A/RCCL settings,
   measured results, batch jobs, the pure-RCCL bandwidth micro-benchmark, and how
   this compares to the other distributed examples.
-- **[`PROFILING.md`](PROFILING.md)** — splitting a step into compute vs.
+- **[`README_rccl_optimization.md`](README_rccl_optimization.md)** — hands-on
+  exercises that optimize the RCCL all-reduce by editing `main.py` directly
+  (bf16 gradient compression, `NCCL_ALGO`/`PROTO`/channels, DDP bucketing/overlap).
+- **[`README_compute_optimization.md`](README_compute_optimization.md)** — hands-on
+  exercises that optimize per-GPU compute by editing `main.py` directly (bf16
+  autocast, `channels_last`, `cudnn.benchmark`, `torch.compile`, fused optimizer).
+- **[`profiling/`](profiling/PROFILING.md)** — splitting a step into compute vs.
   communication with torch.profiler, rocprofv3, and rocprof-sys.
 - **Self-contained runs** — `run_imagenet_uv.sh` (and `submit_imagenet_uv.batch`)
   build a disposable **uv** venv, clone the upstream example, warm, sweep, and
-  clean up automatically. See [`README_benchmark.md`](README_benchmark.md).
+  clean up automatically. See [`benchmarks/README_benchmark.md`](benchmarks/README_benchmark.md).

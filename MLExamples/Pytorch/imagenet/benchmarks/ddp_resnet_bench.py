@@ -17,9 +17,22 @@ same technique as the minGPT-ddp example):
 
     comm_per_step ~= step_time(all-reduce) - step_time(no_sync)
 
-Optimizations exposed as flags: ``--channels-last`` (NHWC, big win for conv on
-CDNA/MI300), ``--amp`` (bf16 autocast), and ``--compile`` (``torch.compile``
-graph capture + kernel fusion).
+Optimizations exposed as flags:
+
+  * Compute: ``--channels-last`` (NHWC, big win for conv on CDNA/MI300),
+    ``--amp`` (bf16 autocast), ``--compile`` [+``--compile-mode``]
+    (``torch.compile`` graph capture + kernel fusion), ``--matmul-precision``
+    (fp32 matmul precision), ``--cudnn-benchmark`` (MIOpen kernel autotuning),
+    and ``--fused-optimizer`` (single-kernel SGD step).
+  * RCCL: ``--bf16-comm`` (bf16 gradient-compression comm hook, halves
+    all-reduce bytes) and the transport knobs ``--nccl-algo`` / ``--nccl-proto``
+    / ``--nccl-min-nchannels`` (set the matching ``NCCL_*`` env before init).
+  * DDP: ``--grad-as-bucket-view`` (skip a gradient copy), ``--bucket-cap-mb``
+    (all-reduce bucket size), and ``--static-graph`` (fixed-graph optimization),
+    which tune how gradients are bucketed and overlapped with backward.
+
+These mirror the hands-on exercises in ``../README_rccl_optimization.md`` and
+``../README_compute_optimization.md`` so a sweep can A/B them without editing code.
 
 Launch (one node, N GPUs):
 
@@ -44,7 +57,7 @@ import torchvision.models as models
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 # Optional Score-P user-region annotations (no-op unless launched via
-# ../common/scorep_launch.sh, which sets SCOREP_ML=1 and runs under scorep).
+# ../../common/scorep_launch.sh, which sets SCOREP_ML=1 and runs under scorep).
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "common"))
 from scorep_ml import region
 from rccl_time import rccl_time_per_step
@@ -142,6 +155,36 @@ def main():
     p.add_argument("--amp", action="store_true")
     p.add_argument("--compile", action="store_true",
                    help="wrap the model in torch.compile (graph capture + fusion)")
+    p.add_argument("--compile-mode", default="default",
+                   choices=["default", "reduce-overhead", "max-autotune"],
+                   help="torch.compile mode (only used with --compile)")
+    # --- Compute knobs (see ../README_compute_optimization.md) ---
+    p.add_argument("--matmul-precision", choices=["highest", "high", "medium"],
+                   default=None,
+                   help="torch.set_float32_matmul_precision for fp32 matmuls")
+    p.add_argument("--cudnn-benchmark", action="store_true",
+                   help="enable cudnn/MIOpen fastest-kernel autotuning (fixed shapes)")
+    p.add_argument("--fused-optimizer", action="store_true",
+                   help="use the fused SGD optimizer (one kernel for the step)")
+    # --- RCCL knobs (see ../README_rccl_optimization.md) ---
+    p.add_argument("--bf16-comm", action="store_true",
+                   help="register the bf16 gradient-compression DDP comm hook "
+                        "(halves all-reduce bytes)")
+    p.add_argument("--nccl-algo", default=None,
+                   help="set NCCL_ALGO before init (e.g. Ring, Tree)")
+    p.add_argument("--nccl-proto", default=None,
+                   help="set NCCL_PROTO before init (e.g. Simple, LL, LL128)")
+    p.add_argument("--nccl-min-nchannels", default=None,
+                   help="set NCCL_MIN_NCHANNELS before init (e.g. 8)")
+    # --- DDP knobs (see ../README_rccl_optimization.md, Section 3) ---
+    p.add_argument("--grad-as-bucket-view", action="store_true",
+                   help="DDP gradient_as_bucket_view=True (skip a gradient copy)")
+    p.add_argument("--bucket-cap-mb", type=int, default=None,
+                   help="DDP all-reduce bucket size in MB (default 25)")
+    p.add_argument("--static-graph", action="store_true",
+                   help="DDP static_graph=True; note this is incompatible with the "
+                        "no_sync() comm-isolation path, so comm_s/comm_pct are "
+                        "skipped when set (use --rccl-time for the RCCL number)")
     p.add_argument("--profile", action="store_true",
                    help="run a few steps under torch.profiler and dump a trace")
     p.add_argument("--profile-dir", default="./torch_prof",
@@ -167,6 +210,18 @@ def main():
     local_rank = int(os.environ.get("LOCAL_RANK", 0))
     world_size = int(os.environ.get("WORLD_SIZE", 1))
 
+    # Compute-side global settings (apply before any kernels run).
+    if args.matmul_precision:
+        torch.set_float32_matmul_precision(args.matmul_precision)
+    if args.cudnn_benchmark:
+        torch.backends.cudnn.benchmark = True
+
+    # RCCL transport/algorithm knobs are read when the communicator is built, so
+    # they must be set BEFORE dist.init_process_group below.
+    if args.nccl_algo:          os.environ["NCCL_ALGO"] = args.nccl_algo
+    if args.nccl_proto:         os.environ["NCCL_PROTO"] = args.nccl_proto
+    if args.nccl_min_nchannels: os.environ["NCCL_MIN_NCHANNELS"] = args.nccl_min_nchannels
+
     torch.cuda.set_device(local_rank)
     device = torch.device("cuda", local_rank)
     dist.init_process_group(backend="nccl", init_method="env://", device_id=torch.device('cuda', local_rank))
@@ -174,12 +229,24 @@ def main():
     model = getattr(models, args.arch)().to(device)
     if args.channels_last:
         model = model.to(memory_format=torch.channels_last)
-    model = DDP(model, device_ids=[local_rank])
+    ddp_kwargs = {"device_ids": [local_rank]}
+    if args.grad_as_bucket_view:
+        ddp_kwargs["gradient_as_bucket_view"] = True
+    if args.bucket_cap_mb is not None:
+        ddp_kwargs["bucket_cap_mb"] = args.bucket_cap_mb
+    if args.static_graph:
+        ddp_kwargs["static_graph"] = True
+    model = DDP(model, **ddp_kwargs)
+    if args.bf16_comm:
+        # Compress gradients to bf16 for the all-reduce only (half the bytes).
+        from torch.distributed.algorithms.ddp_comm_hooks import default_hooks as ddp_hooks
+        model.register_comm_hook(None, ddp_hooks.bf16_compress_hook)
     if args.compile:
         # Compile the DDP module; the first (warm-up) step pays the compile cost.
         # OptimizedModule delegates attribute access, so model.no_sync() still works.
-        model = torch.compile(model)
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
+        model = torch.compile(model, mode=args.compile_mode)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9,
+                                weight_decay=1e-4, fused=args.fused_optimizer)
     criterion = torch.nn.CrossEntropyLoss().to(device)
 
     x = torch.randn(args.batch_size, 3, 224, 224, device=device)
@@ -221,16 +288,22 @@ def main():
         return
 
     timed_steps(model, optimizer, criterion, next_x, y, args.warmup, True, args.amp)
-    if args.compile:
+    if args.compile and not args.static_graph:
         # Warm the no_sync graph too; torch.compile recompiles it on first use.
         timed_steps(model, optimizer, criterion, next_x, y, 3, False, args.amp)
     torch.cuda.reset_peak_memory_stats(device)
     t_sync = timed_steps(model, optimizer, criterion, next_x, y, args.iters, True, args.amp)
     peak_mb = torch.cuda.max_memory_allocated(device) / 1e6
-    t_nosync = timed_steps(model, optimizer, criterion, next_x, y, args.iters, False, args.amp)
 
-    comm = max(t_sync - t_nosync, 0.0)
-    comm_pct = 100.0 * comm / t_sync if t_sync > 0 else 0.0
+    if args.static_graph:
+        # static_graph=True records a fixed autograd graph on the first step and
+        # is incompatible with DDP no_sync(), so skip the comm-isolation timing
+        # (use --rccl-time for the RCCL number instead).
+        t_nosync = comm = comm_pct = -1.0
+    else:
+        t_nosync = timed_steps(model, optimizer, criterion, next_x, y, args.iters, False, args.amp)
+        comm = max(t_sync - t_nosync, 0.0)
+        comm_pct = 100.0 * comm / t_sync if t_sync > 0 else 0.0
     global_img_s = args.batch_size * world_size / t_sync
 
     rccl_s = -1.0
@@ -249,7 +322,16 @@ def main():
         opt = []
         if args.channels_last: opt.append("channels_last")
         if args.amp: opt.append("amp_bf16")
-        if args.compile: opt.append("compile")
+        if args.compile: opt.append(f"compile={args.compile_mode}")
+        if args.matmul_precision: opt.append(f"matmul={args.matmul_precision}")
+        if args.cudnn_benchmark: opt.append("cudnn_benchmark")
+        if args.fused_optimizer: opt.append("fused_opt")
+        if args.bf16_comm: opt.append("bf16_comm")
+        if args.grad_as_bucket_view: opt.append("grad_bucket_view")
+        if args.bucket_cap_mb is not None: opt.append(f"bucket_cap_mb={args.bucket_cap_mb}")
+        if args.static_graph: opt.append("static_graph")
+        for _k in ("NCCL_ALGO", "NCCL_PROTO", "NCCL_MIN_NCHANNELS"):
+            if os.environ.get(_k): opt.append(f"{_k}={os.environ[_k]}")
         if stage: opt.append(f"stage_input={stager.mode}")
         print(f"# arch={args.arch} world_size={world_size} per_gpu_batch={args.batch_size} "
               f"params={n_params/1e6:.1f}M grad_allreduce={n_params*4/1e6:.0f}MB "
