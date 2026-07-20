@@ -14,10 +14,6 @@ if [ $? -eq 1 ]; then
    module load rocm
 fi
 
-# There is no default (D) mpitrace module and each is keyed on the rocm
-# version (prereq("rocm/<ver>")), so a bare `module load mpitrace` would pick
-# the highest version and fail the prereq. Load the version that matches the
-# loaded rocm.
 ROCM_VER=$(module -t list 2>&1 | grep '^rocm/' | head -1 | cut -d/ -f2)
 if ! module load mpitrace/${ROCM_VER} 2>/tmp/mpitrace_check.$$.err; then
    cat /tmp/mpitrace_check.$$.err
@@ -80,24 +76,19 @@ fi
 # Launch a trivial CPU-only MPI job (mpitrace profiles the host MPI layer; no
 # GPU needed). Force pml ob1 + shared-mem/self btl so it runs on a GPU-less
 # front-end too (the default UCX pml aborts where no HIP device is present).
-# Try 2 ranks, then fall back to 1 rank; each attempt is time-boxed so a stuck
-# launcher can't hang the test.
+# Require a real 2-rank run; the launch is time-boxed so a stuck launcher can't
+# hang the test.
 RC=1
-for LAUNCH in \
-   "mpirun -np 2 --oversubscribe -mca pml ob1 -mca btl self,sm ./mpi_hello" \
-   "mpirun -np 1 -mca pml ob1 ./mpi_hello" ; do
-   rm -f mpi_profile.*
-   echo "+ ${LAUNCH}"
-   timeout 90 ${LAUNCH}
-   if ls mpi_profile.* >/dev/null 2>&1; then
-      echo "mpitrace produced profile output:"
-      ls -1 mpi_profile.*
-      echo "MPItrace Install Check: SUCCESS"
-      RC=0
-      break
-   fi
-done
-if [ ${RC} -ne 0 ]; then
+LAUNCH="mpirun -np 2 --oversubscribe -mca pml ob1 -mca btl self,sm ./mpi_hello"
+rm -f mpi_profile.*
+echo "+ ${LAUNCH}"
+timeout 90 ${LAUNCH}
+if ls mpi_profile.* >/dev/null 2>&1; then
+   echo "mpitrace produced profile output:"
+   ls -1 mpi_profile.*
+   echo "MPItrace Install Check: SUCCESS"
+   RC=0
+else
    echo "FAIL: no mpi_profile.* files produced (LD_PRELOAD profiling did not run)"
 fi
 
