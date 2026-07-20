@@ -103,6 +103,54 @@ pip3 install -r setup/requirements_rocprof-compute-develop.txt
 
 **Note**: Activate the virtual environment (`source venv/bin/activate`) each time you start a new session.
 
+### Environment Setup — ROCm 7.13 (TheRock nightly)
+
+The setup above (ROCm 7.2 module + PyTorch rocm7.1 nightly) remains fully supported. Use the
+instructions below **instead** if you want the newer ROCm 7.13 stack — PyTorch **2.11** and
+Triton **3.6** — for gfx942 (MI300X) / gfx950 (MI355X).
+
+ROCm 7.13 is **alpha-only** and is not available as a system module or from the pytorch.org
+nightly index. It comes from AMD's [TheRock](https://github.com/ROCm/TheRock) multi-arch pip
+channel, which ships a self-contained ROCm runtime as a wheel dependency of `torch` — no
+`/opt/rocm` and no `rocm/7.x` module are needed for training.
+
+```bash
+# ROCm 7.13 requires Python 3.14 from the module system.
+# (The module ships libpython3.14.so.1.0, which pyenv/system Python 3.14 lacks.)
+module load python/3.14
+
+# Navigate to TinyOpenFold and create a dedicated venv
+cd HPCTrainingExamples/MLExamples/TinyOpenFold
+python3 -m venv venv713
+source venv713/bin/activate
+pip3 install --upgrade pip
+
+# Install PyTorch 2.11 + Triton 3.6 for ROCm 7.13 from TheRock's multi-arch index.
+# torch pulls the matching rocm[libraries] wheels in automatically.
+pip3 install --index-url https://rocm.nightlies.amd.com/whl-multi-arch/ \
+    torch torchvision torchaudio triton
+
+# Verify the ROCm 7.13 stack and GPU
+python3 -c "import torch, triton; print('torch', torch.__version__); print('triton', triton.__version__); print('GPU', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N/A')"
+# Expected:
+#   torch 2.11.0+rocm7.13.0aYYYYMMDD
+#   triton 3.6.0+rocm7.13.0aYYYYMMDD
+#   GPU AMD Instinct MI300X
+
+# Install the remaining Python dependencies (DeepSpeed, plotting, etc.)
+pip3 install deepspeed
+pip3 install -r setup/requirements.txt
+```
+
+Notes for the ROCm 7.13 path:
+- **No `LD_LIBRARY_PATH` fix is needed.** The `libcaffe2_nvrtc.so` workaround only applies to the
+  ROCm 7.2 / pytorch-nightly install above; the TheRock wheels bundle their own runtime.
+- **ROCm hardware profilers** (`rocprofv3`, `rocprof-compute`, `rocprof-sys`) used by V2/V3 are
+  *not* included in the training wheels. For those, install the full TheRock SDK with the `devel`
+  extra (`rocm[libraries,devel,device-gfx942]==7.13.*`) and source its environment — see
+  `~/software/therock_install/` for a working install and `sourceme` script.
+- Re-run `module load python/3.14` and `source venv713/bin/activate` each new session.
+
 ### Basic Training
 
 ```bash

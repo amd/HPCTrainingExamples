@@ -2,7 +2,7 @@
 
 **Learn GPU optimization by progressively improving AlphaFold 2 Evoformer performance**
 
-This tutorial demonstrates the complete GPU optimization pipeline from baseline PyTorch to custom Triton kernels, achieving **2.0x speedup** on real workloads.
+This tutorial demonstrates the complete GPU optimization pipeline from baseline PyTorch through kernel fusion and custom Triton kernels, with kernel fusion (V2) delivering the peak **~2.4x speedup** and `torch.compile` adding an orthogonal ~1.6–1.9x on top of the baseline. All numbers are measured on AMD Instinct MI300X / ROCm 7.13.
 
 ---
 
@@ -25,23 +25,51 @@ This tutorial covers the complete optimization pipeline from profiling to implem
 
 ### Performance Journey
 
+Measured on **AMD Instinct MI300X, ROCm 7.13 (PyTorch 2.11 / Triton 3.6)**, small
+problem (seq-len 64, 16 MSA, batch 4), training samples/sec:
+
 ```
-Version 1 (Baseline)     →     Version 2 (Fused)     →     Version 3 (Triton)
-   80.5 samples/sec            106.4 samples/sec           162.5 samples/sec
-        100%                        +32%                        +102%
-   [Pure PyTorch]              [Kernel Fusion]          [Custom Kernels]
+Version 1 (Baseline)   →   Version 2 (Fused)   →   Version 3 (Triton)
+   100 samples/sec          241 samples/sec         92 samples/sec
+      1.00x                    2.4x                    0.9x
+  [Pure PyTorch]          [Kernel Fusion]        [Custom Triton kernels]
 ```
+
+**Two independent optimization axes.** Kernel *fusion* (V2) is the biggest single
+lever — ~2.4x with no memory cost. `torch.compile` (inductor auto-fusion) is an
+orthogonal lever available on **all three** versions and roughly doubles V1 and V3:
+
+```
+              eager      + torch.compile
+V1 baseline   100 s/s        164 s/s      (1.6x)
+V2 fused      241 s/s        235 s/s      (already fused — compile adds nothing)
+V3 triton      92 s/s        175 s/s      (1.9x — compiled V3 edges past compiled V1)
+```
+
+**How to read this tutorial:** V2 (fusion) is the performance peak and the main
+lesson. V3's lesson is different — how to write *correct, gradient-safe* custom
+Triton kernels and combine them with `torch.compile`; eager V3 sits near the V1
+baseline (the model is GEMM-dominated, so the memory-bound ops V3 customizes are a
+small slice), but compiled V3 overtakes compiled V1. Numbers below are ROCm 7.13
+measurements and will vary by hardware and stack.
+
+> **Note on the earlier "2.0x from custom kernels" figure:** that came from an
+> initial V3 whose raw Triton kernels bypassed autograd (no gradients flowed, so
+> the backward pass did almost no work). With correct gradients the honest result
+> is the table above. See Stage 3 for details.
 
 ### Problem Sizes (Small & Medium for best demonstration)
 
 | Size | Seq Length | MSA Seqs | Batch | Memory | Best For |
 |------|------------|----------|-------|--------|----------|
-| **Small** | 64 | 16 | 4 | ~196 MB | Quick demos, shows best speedup (2.0x) |
-| **Medium** | 128 | 32 | 2 | ~209 MB | Realistic workloads, balanced performance (1.65x) |
+| **Small** | 64 | 16 | 4 | ~196 MB | Quick demos; V2 fusion ~2.4x, compile stacks on V1/V3 |
+| **Medium** | 128 | 32 | 2 | ~209 MB | Realistic workload; V2 fusion ~1.9x |
 
 ---
 
 ## Environment Setup
+
+### Option A: ROCm 7.2 (module + PyTorch rocm7.1 nightly)
 
 ```bash
 # Load required modules
@@ -58,6 +86,58 @@ python3 -c "import torch; print(f'GPU: {torch.cuda.get_device_name(0)}')"
 ```
 
 **Expected**: `GPU: AMD Instinct MI300X`
+
+### Option B: ROCm 7.13 (TheRock nightly — PyTorch 2.11 + Triton 3.6)
+
+Newer alpha stack for gfx942 (MI300X) / gfx950 (MI355X). ROCm 7.13 is not a system module and is
+not on the pytorch.org nightly index; it comes from AMD's
+[TheRock](https://github.com/ROCm/TheRock) multi-arch pip channel, which bundles the ROCm runtime
+as a wheel dependency of `torch`.
+
+```bash
+# Python 3.14 from the module system (ships libpython3.14.so.1.0 that pyenv Python lacks)
+module load python/3.14
+
+cd HPCTrainingExamples/MLExamples/TinyOpenFold
+python3 -m venv venv713 && source venv713/bin/activate
+pip3 install --upgrade pip
+
+# PyTorch 2.11 + Triton 3.6 for ROCm 7.13 (torch pulls the ROCm libraries in automatically)
+pip3 install --index-url https://rocm.nightlies.amd.com/whl-multi-arch/ \
+    torch torchvision torchaudio triton
+pip3 install deepspeed && pip3 install -r setup/requirements.txt
+
+# Verify the stack and GPU
+python3 -c "import torch, triton; print('torch', torch.__version__, '| triton', triton.__version__, '|', torch.cuda.get_device_name(0))"
+```
+
+**Expected**: `torch 2.11.0+rocm7.13.0a... | triton 3.6.0+rocm7.13.0a... | AMD Instinct MI300X`
+
+Notes for Option B:
+- No `LD_LIBRARY_PATH` / `libcaffe2_nvrtc.so` fix is needed — the TheRock wheels bundle their own runtime.
+- The ROCm hardware profilers (`rocprofv3`, `rocprof-compute`, `rocprof-sys`) below are *not* in the
+  training wheels. Install the full TheRock SDK (`rocm[libraries,devel,device-gfx942]==7.13.*`) and
+  source its `sourceme` env for those — see `~/software/therock_install/`.
+
+### `torch.compile` — an optimization axis available on every version
+
+All three versions accept `--enable-torch-compile`, which wraps the model in
+`torch.compile` (PyTorch's inductor backend generates and fuses Triton kernels
+automatically). It is **orthogonal** to the manual optimizations: it stacks on top
+of V1's plain PyTorch, V2's fusion, and V3's custom kernels.
+
+```bash
+# Works on all three (add to any run command):
+python3 tiny_openfold_v1.py --seq-len 64 --num-seqs 16 --batch-size 4 --enable-torch-compile
+ROCR_VISIBLE_DEVICES=0 python3 tiny_openfold_v2.py --enable-all-fusion --enable-torch-compile
+ROCR_VISIBLE_DEVICES=0 python3 tiny_openfold_v3.py --enable-torch-compile
+```
+
+- First step is slow (compilation); measured steps after warm-up are what count.
+- Biggest wins on V1 (~1.6x) and V3 (~1.9x). V2 is already hand-fused, so compile
+  adds little on top.
+- For V3, the custom Triton LayerNorm still genuinely runs under compile (inductor
+  calls out to it); inductor fuses the surrounding graph.
 
 ---
 
@@ -103,29 +183,32 @@ Training Configuration:
    Batch size: 4
 
 ======================================================================
-Step   0/30 | Loss: 33.06 | Speed:  80.5 samples/sec | Memory:  195.7 MB | Time:  49.7ms
-Step  10/30 | Loss: 33.25 | Speed:  80.5 samples/sec | Memory:  195.7 MB | Time:  49.7ms
-Step  20/30 | Loss: 33.45 | Speed:  80.5 samples/sec | Memory:  195.7 MB | Time:  49.7ms
+Step   0/50 | Loss: 33.06 | Speed: 100.1 samples/sec | Memory:  195.7 MB | Time:  40.0ms
+Step  10/50 | Loss: 33.25 | Speed: 100.1 samples/sec | Memory:  195.7 MB | Time:  40.0ms
+Step  20/50 | Loss: 33.45 | Speed: 100.1 samples/sec | Memory:  195.7 MB | Time:  40.0ms
 ======================================================================
 
 Performance Summary:
-   Average training speed: 80.5 samples/sec
-   Average batch time: 49.7 ms
-   Average forward time: 18.3 ms
-   Average backward time: 27.2 ms
+   Average training speed: 100.1 samples/sec
+   Average batch time: 40.0 ms
+   Average forward time: 15.4 ms
+   Average backward time: 21.0 ms
    Average optimizer time: 4.1 ms
    Peak memory usage: 195.7 MB
 ```
+
+*(Measured on MI300X / ROCm 7.13. With `--enable-torch-compile` this rises to ~164
+samples/sec / 24.4 ms.)*
 
 ### Key Metrics (Small Problem)
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| Speed | **80.5 samples/sec** | Baseline reference |
-| Batch time | **49.7 ms** | Total time per step |
-| Forward | 18.3 ms | 37% of batch time |
-| **Backward** | **27.2 ms** | **55% of batch time** (main bottleneck) |
-| Optimizer | 4.1 ms | 8% of batch time |
+| Speed | **100.1 samples/sec** | Baseline reference (eager) |
+| Batch time | **40.0 ms** | Total time per step |
+| Forward | 15.4 ms | ~38% of batch time |
+| **Backward** | **21.0 ms** | **~53% of batch time** (main bottleneck) |
+| Optimizer | 4.1 ms | ~10% of batch time |
 | Memory | 195.7 MB | Peak allocation |
 
 ### Bottleneck Analysis
@@ -175,22 +258,21 @@ python3 tiny_openfold_v1.py \
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| Speed | **41.5 samples/sec** | Half of small (expected - 4x work) |
-| Batch time | **48.2 ms** | Similar to small! (batch size = 2 vs 4) |
-| Forward | 17.4 ms | 36% of batch time |
-| **Backward** | **26.8 ms** | **56% of batch time** |
-| Optimizer | 4.0 ms | 8% of batch time |
+| Speed | **47.4 samples/sec** | ~half of small (larger per-sample work) |
+| Batch time | **42.2 ms** | Similar to small! (batch size = 2 vs 4) |
 | Memory | 208.9 MB | Scales with sequence length² |
+
+*(With `--enable-torch-compile`: ~73 samples/sec / 27.4 ms.)*
 
 ### Stage 1 Summary
 
 **Baseline Established:**
 
-We now have reference numbers for both problem sizes. The small problem runs at 80.5 samples/sec with 49.7 ms per batch, while the medium problem achieves 41.5 samples/sec at 48.2 ms per batch.
+We now have reference numbers for both problem sizes. The small problem runs at ~100 samples/sec with 40.0 ms per batch, while the medium problem achieves ~47 samples/sec at 42.2 ms per batch (eager, MI300X / ROCm 7.13).
 
 **Bottlenecks Identified:**
 
-Profiling reveals where optimization will have the most impact. The backward pass dominates at 55-56% of total time, with multiple kernel launches for attention operations creating unnecessary overhead. Triangle operations are particularly compute-intensive due to their cubic complexity.
+Profiling reveals where optimization will have the most impact. The backward pass dominates (~53% of batch time), with many small kernel launches for attention operations creating overhead. Triangle operations are the most compute-intensive due to their cubic complexity, and run as rocBLAS GEMMs.
 
 **Next Step**: Apply kernel fusion to reduce launch overhead
 
@@ -284,32 +366,28 @@ Fusion Optimizations:
    Kernel Reduction: 80.0% (48 fewer kernels)
 
 ======================================================================
-Step   0/30 | Loss: 33.06 | Speed: 106.4 samples/sec | Memory:  195.7 MB | Time:  37.6ms
-Step  10/30 | Loss: 33.25 | Speed: 106.4 samples/sec | Memory:  195.7 MB | Time:  37.6ms
-Step  20/30 | Loss: 33.45 | Speed: 106.4 samples/sec | Memory:  195.7 MB | Time:  37.6ms
+Step   0/50 | Loss: 33.06 | Speed: 240.8 samples/sec | Memory:  195.6 MB | Time:  16.6ms
+Step  10/50 | Loss: 33.25 | Speed: 240.8 samples/sec | Memory:  195.6 MB | Time:  16.6ms
+Step  20/50 | Loss: 33.45 | Speed: 240.8 samples/sec | Memory:  195.6 MB | Time:  16.6ms
 ======================================================================
 
 Performance Summary V2:
-   Average training speed: 106.4 samples/sec  [+32% vs V1]
-   Average batch time: 37.6 ms                [-24% vs V1]
-   Average forward time: 14.7 ms              [-20% vs V1]
-   Average backward time: 19.5 ms             [-28% vs V1]
-   Average optimizer time: 3.4 ms             [-17% vs V1]
-   Peak memory usage: 195.7 MB                [Same as V1]
+   Average training speed: 240.8 samples/sec  [+141% vs V1]
+   Average batch time: 16.6 ms                [-59% vs V1]
+   Peak memory usage: 195.6 MB                [Same as V1]
 ```
 
-### V1 → V2 Improvement (Small Problem)
+### V1 → V2 Improvement (Small Problem, MI300X / ROCm 7.13)
 
 | Metric | V1 | V2 | Improvement |
 |--------|----|----|-------------|
-| Speed | 80.5 s/s | 106.4 s/s | **+32%** ⚡ |
-| Batch time | 49.7 ms | 37.6 ms | **-24%** |
-| Forward | 18.3 ms | 14.7 ms | -20% |
-| **Backward** | **27.2 ms** | **19.5 ms** | **-28%** ⚡⚡ |
-| Optimizer | 4.1 ms | 3.4 ms | -17% |
-| Memory | 195.7 MB | 195.7 MB | **No change** |
+| Speed | 100.1 s/s | 240.8 s/s | **+141%** ⚡⚡⚡ |
+| Batch time | 40.0 ms | 16.6 ms | **-59%** |
+| Memory | 195.7 MB | 195.6 MB | **No change** |
 
-**Key Insight**: Backward pass sees the largest improvement (28% reduction)
+**Key Insight**: Kernel fusion (QKV + gate/proj + Flash Attention) cuts launch
+overhead across both forward and backward — a ~2.4x throughput gain with no memory
+cost. `torch.compile` adds almost nothing on top of V2 because it's already fused.
 
 ### Run Medium Problem (V2)
 
@@ -326,11 +404,8 @@ ROCR_VISIBLE_DEVICES=0 python3 tiny_openfold_v2.py \
 
 | Metric | V1 | V2 | Improvement |
 |--------|----|----|-------------|
-| Speed | 41.5 s/s | 49.0 s/s | **+18%** |
-| Batch time | 48.2 ms | 40.8 ms | **-15%** |
-| Forward | 17.4 ms | 14.5 ms | -17% |
-| **Backward** | **26.8 ms** | **22.9 ms** | **-15%** |
-| Optimizer | 4.0 ms | 3.4 ms | -15% |
+| Speed | 47.4 s/s | 88.8 s/s | **+87%** ⚡⚡ |
+| Batch time | 42.2 ms | 22.5 ms | **-47%** |
 | Memory | 208.9 MB | 208.9 MB | **No change** |
 
 ### Ablation Study: Which Fusion Helps Most?
@@ -372,7 +447,12 @@ ROCR_VISIBLE_DEVICES=0 python3 tiny_openfold_v2.py \
 
 **Expected Results:**
 
-Each optimization contributes differently to the total speedup. The baseline with no fusion runs at ~80 samples/sec. Enabling only MSA QKV fusion improves this to ~87 samples/sec (+9%), while Flash Attention alone achieves ~92 samples/sec (+15%). Triangle fusion by itself reaches ~85 samples/sec (+6%). However, when all fusions are enabled together, performance jumps to ~106 samples/sec (+32%).
+Each optimization contributes differently. Starting from the `--disable-all-fusion`
+baseline (which behaves like V1), enabling fusions individually each adds a modest
+gain (Flash Attention typically the largest single contributor), and enabling them
+all together is where the big jump happens — from ~100 samples/sec (no fusion) to
+~240 samples/sec (all fusions) at the small size on MI300X / ROCm 7.13. Exact
+per-fusion percentages vary run to run; the point is that the fusions are synergistic.
 
 **Key Learning**: Flash Attention provides the biggest single benefit, but combined optimizations are synergistic.
 
@@ -403,20 +483,50 @@ cd version2_pytorch_fused
 
 **Achievements:**
 
-Kernel fusion delivers solid gains without increasing memory usage. For the small problem, we've improved from 80.5 to 106.4 samples/sec (+32%), while the medium problem went from 41.5 to 49.0 samples/sec (+18%). We've reduced the total number of kernel launches by 80% without any memory overhead.
+Kernel fusion delivers the tutorial's biggest gains without increasing memory usage.
+The small problem improved from ~100 to ~241 samples/sec (**~2.4x**), and the medium
+problem from ~47 to ~89 samples/sec (**~1.9x**), with ~80% fewer kernel launches and
+no memory overhead. This is the performance peak of the three versions.
 
 **Remaining Bottlenecks:**
 
-Even with fusion, there's still room for improvement. We're still relying on generic PyTorch kernels that aren't optimized for our specific use case. The backward pass continues to dominate execution time, and memory bandwidth isn't fully optimized since PyTorch can't exploit all hardware capabilities.
+The remaining time is in the triangle/transition **GEMMs**, which are already handled
+by rocBLAS and which fusion doesn't touch. That's the key context for Stage 3: the
+next lever (custom kernels) targets memory-bound ops that are *not* the bottleneck
+here, so it teaches kernel authoring more than it moves the clock.
 
-**Next Step**: Drop to GPU level with custom Triton kernels
+**Next Step**: Write custom Triton kernels (V3) — and learn where they do and don't help
 
 ---
 
 ## Stage 3: Custom Triton Kernels (V3) - GPU-Level Optimization
 
 ### Objective
-Hand-optimize critical kernels with Triton for maximum performance.
+Learn to write **correct, gradient-safe** custom Triton kernels and integrate them
+into a real training loop — and understand *when* custom kernels help versus when
+PyTorch's native/compiled kernels already win.
+
+> **What V3 is (and isn't).** V3 is the "author your own GPU kernels" lesson, not
+> the performance peak — that's V2. On this GEMM-dominated model at educational
+> sizes, the memory-bound ops V3 customizes (LayerNorm, attention) are a small
+> fraction of runtime, so eager V3 lands near the V1 baseline. Its payoff shows up
+> **with `torch.compile`**, where compiled V3 overtakes compiled V1. The lesson is
+> as much about *measuring honestly* as about writing kernels.
+
+### Correctness first: three things V3 gets right
+
+Custom kernels are only useful if they're numerically correct and differentiable.
+V3's kernels are validated by `test_correctness.py` (run it — expect **4/4**):
+
+1. **LayerNorm numerics.** The Triton LayerNorm matches `torch.nn.LayerNorm` to
+   ~1e-6. (A subtle bug to avoid: masked out-of-range lanes must be excluded from
+   the variance reduction with `tl.where`, or they inflate the variance.)
+2. **Gradients actually flow.** A raw `@triton.jit` kernel that writes into a fresh
+   output tensor is *opaque to autograd* — no parameter behind it gets a gradient.
+   V3 wraps its kernels in `torch.autograd.Function` with an explicit backward, so
+   `loss.backward()` trains every parameter.
+3. **Pair bias is used.** MSA row attention is genuinely pair-biased (via a
+   bias-aware fused attention), not silently dropped.
 
 ### Triton Optimizations
 
@@ -497,39 +607,56 @@ TINY OPENFOLD - VERSION 3: TRITON CUSTOM KERNELS
 ================================================================================
 
 Triton Kernel Performance:
-   Custom kernels active: LayerNorm, Flash Attention (MSA & Triangle)
-   Kernel fusion benefits: Reduced memory bandwidth, lower latency
+   Custom kernels active: LayerNorm (Triton), Flash Attention (SDPA), QKV fusion
 
-Running 5 warmup steps to compile Triton kernels...
-Warmup complete. Triton kernels compiled. Starting measured training loop...
+Running warmup steps to compile Triton kernels...
+Warmup complete. Starting measured training loop...
 
 ======================================================================
-Step   0/30 | Loss: 33.12 | Speed: 162.5 samples/sec | Memory:  218.5 MB | Time:  24.6ms
-Step  10/30 | Loss: 33.26 | Speed: 163.5 samples/sec | Memory:  218.5 MB | Time:  24.5ms
-Step  20/30 | Loss: 33.45 | Speed: 163.2 samples/sec | Memory:  218.5 MB | Time:  24.5ms
+Step   0/50 | Loss: 33.06 | Speed:  91.5 samples/sec | Memory:  195.6 MB | Time:  43.7ms
+Step  10/50 | Loss: 33.25 | Speed:  91.6 samples/sec | Memory:  195.6 MB | Time:  43.7ms
 ======================================================================
 
-Performance Summary V3:
-   Average training speed: 162.5 samples/sec  [+102% vs V1, +53% vs V2]
-   Average batch time: 24.6 ms                [-51% vs V1, -35% vs V2]
-   Average forward time: 14.0 ms              [-23% vs V1, -5% vs V2]
-   Average backward time: 8.5 ms              [-69% vs V1, -56% vs V2]
-   Average optimizer time: 1.5 ms             [-63% vs V1, -56% vs V2]
-   Peak memory usage: 218.5 MB                [+12% vs V1/V2]
+Performance Summary V3 (eager):
+   Average training speed: 91.5 samples/sec   [~0.9x vs V1 eager]
+   Average batch time: 43.7 ms
+   Final loss: 33.21                          [matches V1 — numerically correct]
+   Peak memory usage: 195.6 MB
 ```
 
-### V1 → V2 → V3 Progression (Small Problem)
+### V1 → V2 → V3 Progression (Small Problem, ROCm 7.13 / MI300X)
 
-| Metric | V1 | V2 | V3 | V1→V2 | V2→V3 | **V1→V3** |
-|--------|----|----|----|----- |-------|-----------|
-| **Speed** | 80.5 s/s | 106.4 s/s | **162.5 s/s** | +32% | +53% | **+102%** ⚡⚡⚡ |
-| Batch time | 49.7 ms | 37.6 ms | **24.6 ms** | -24% | -35% | **-51%** |
-| Forward | 18.3 ms | 14.7 ms | **14.0 ms** | -20% | -5% | **-23%** |
-| **Backward** | **27.2 ms** | **19.5 ms** | **8.5 ms** | -28% | -56% | **-69%** ⚡⚡⚡ |
-| Optimizer | 4.1 ms | 3.4 ms | **1.5 ms** | -17% | -56% | **-63%** |
-| Memory | 195.7 MB | 195.7 MB | 218.5 MB | 0% | +12% | +12% |
+**Eager (no `torch.compile`):**
 
-**🎯 Key Achievement**: Backward pass reduced by **69%** (27.2 → 8.5 ms)!
+| Metric | V1 | V2 | V3 | V1→V2 | V1→V3 |
+|--------|----|----|----|-------|-------|
+| **Speed** | 100 s/s | **241 s/s** | 92 s/s | **+141%** ⚡ | -8% |
+| Batch time | 40.0 ms | **16.6 ms** | 43.7 ms | -59% | +9% |
+| Memory | 195.7 MB | 195.6 MB | 195.6 MB | ~0% | ~0% |
+
+V2 (fusion) is the clear performance win. Eager V3 sits slightly *below* V1: the
+model's runtime is dominated by triangle/transition GEMMs (identical rocBLAS calls
+in every version), so customizing the memory-bound LayerNorm/attention moves the
+needle little, and the custom-kernel autograd wrappers add a small per-call
+overhead at this size.
+
+**With `--enable-torch-compile`:**
+
+| Metric | V1 | V2 | V3 |
+|--------|----|----|----|
+| **Speed** | 164 s/s | 235 s/s | **175 s/s** |
+| Batch time | 24.4 ms | 17.1 ms | 22.8 ms |
+| vs its own eager | **1.6x** | ~1.0x | **1.9x** |
+
+`torch.compile` roughly doubles V1 and V3. Compiled V3 (175 s/s) **edges past
+compiled V1 (164 s/s)** — the custom Triton LayerNorm plus QKV fusion and SDPA
+finally pay off once inductor fuses the surrounding graph. V2 is already hand-fused,
+so compile adds nothing.
+
+**🎯 Key lesson**: On a GEMM-dominated model at small sizes, hand-written
+memory-bound kernels barely move total runtime on their own — but they compose with
+`torch.compile` to overtake the baseline. Always measure against the *compiled*
+baseline, not just eager.
 
 ### Run Medium Problem (V3)
 
@@ -542,22 +669,44 @@ ROCR_VISIBLE_DEVICES=0 python3 tiny_openfold_v3.py \
     --num-steps 30
 ```
 
-### V1 → V2 → V3 Progression (Medium Problem)
+### V1 → V2 → V3 Progression (Medium Problem, seq-len 128 / 32 MSA / batch 2)
 
-| Metric | V1 | V2 | V3 | V1→V2 | V2→V3 | **V1→V3** |
-|--------|----|----|----|----- |-------|-----------|
-| **Speed** | 41.5 s/s | 49.0 s/s | **68.5 s/s** | +18% | +40% | **+65%** ⚡⚡ |
-| Batch time | 48.2 ms | 40.8 ms | **29.2 ms** | -15% | -28% | **-39%** |
-| Forward | 17.4 ms | 14.5 ms | **14.8 ms** | -17% | +2% | **-15%** |
-| **Backward** | **26.8 ms** | **22.9 ms** | **11.7 ms** | -15% | -49% | **-56%** ⚡⚡⚡ |
-| Optimizer | 4.0 ms | 3.4 ms | **1.6 ms** | -15% | -53% | **-60%** |
-| Memory | 208.9 MB | 208.9 MB | 259.9 MB | 0% | +24% | +24% |
+**Eager:**
 
-**🎯 Key Achievement**: Backward pass reduced by **56%** (26.8 → 11.7 ms)!
+| Metric | V1 | V2 | V3 | V1→V2 | V1→V3 |
+|--------|----|----|----|-------|-------|
+| **Speed** | 47.4 s/s | **88.8 s/s** | 45.0 s/s | **+87%** ⚡ | -5% |
+| Batch time | 42.2 ms | **22.5 ms** | 44.5 ms | -47% | +5% |
 
-### Why V3 is So Much Faster
+**With `--enable-torch-compile`:**
 
-Triton kernels give us fine-grained control over memory hierarchy. **Custom LayerNorm** fuses all computation into a single pass through data instead of PyTorch's multi-pass approach. **Optimized Flash Attention** is hand-tuned for ROCm with carefully designed memory access patterns. **Triangle Backward Optimization** uses custom gradients that generate minimal memory traffic compared to autograd. Finally, **Register/Cache Utilization** is maximized by keeping data in fast memory (registers and L1 cache) much longer than generic PyTorch kernels allow.
+| Metric | V1 | V2 | V3 |
+|--------|----|----|----|
+| **Speed** | 73.1 s/s | 88.7 s/s | **76.9 s/s** |
+| Batch time | 27.4 ms | 22.6 ms | 26.0 ms |
+| vs its own eager | **1.5x** | ~1.0x | **1.7x** |
+
+Same pattern as small: V2 fusion is the peak; compiled V3 (76.9 s/s) edges past
+compiled V1 (73.1 s/s). The crossover holds across problem sizes.
+
+### Why eager V3 ≈ V1 (and where the custom kernels *do* help)
+
+This model spends most of its time in **triangle and transition GEMMs**, which are
+identical rocBLAS calls in all three versions — V3 doesn't touch them. The ops V3
+customizes (LayerNorm, attention) are memory-bound but a small slice of total
+runtime, so replacing them barely moves the needle on its own. Two forces cancel out
+in eager mode:
+
+- **Wins:** QKV fusion (3 GEMMs → 1) and PyTorch's fused SDPA (a real flash-attention
+  kernel) cut launch overhead.
+- **Costs:** each custom Triton kernel is wrapped in a `torch.autograd.Function`, and
+  that Python wrapper adds ~0.1 ms/call. Across ~36 LayerNorm calls per step that
+  overhead roughly matches the fusion savings.
+
+`torch.compile` tips the balance: inductor fuses the graph around the custom kernels
+and eliminates the per-call Python overhead, so compiled V3 pulls ahead of compiled
+V1. The custom Triton LayerNorm still runs under compile (verified: inductor calls
+out to it rather than replacing it).
 
 ### Analyze Triton Kernel Performance
 
@@ -583,13 +732,30 @@ cd version3_triton
 
 ### Stage 3 Summary
 
-**Final Achievements:**
+**What V3 achieves:**
 
-Custom kernels deliver the biggest gains of any optimization stage. The small problem improved from 80.5 to 162.5 samples/sec—a **2.0x speedup**! The medium problem went from 41.5 to 68.5 samples/sec (**1.65x speedup**). Most impressively, the backward pass is 69% faster for small problems and 56% faster for medium ones.
+Correct, gradient-safe custom Triton kernels integrated into a real training loop.
+`test_correctness.py` passes 4/4 (LayerNorm numerics, MSA attention, full-model
+forward, and gradient flow), and V3's loss curve matches the V1 baseline — the
+kernels are numerically faithful, not just fast-looking.
 
-**Trade-offs:**
+**Performance (ROCm 7.13 / MI300X):**
 
-Every optimization has costs—here's what we traded for 2x speedup. We achieved massive performance gains while maintaining the same numerical accuracy as the baseline. However, memory usage increased by 12-24% (still very manageable). The code is also more complex due to custom Triton kernels, which require GPU programming expertise to maintain.
+- Eager V3 lands near the V1 baseline (0.9–0.95x) — the model is GEMM-dominated, so
+  customizing memory-bound ops has limited headroom, and autograd-wrapper overhead
+  offsets the fusion wins at these sizes.
+- With `torch.compile`, V3 reaches ~1.7–1.9x over eager V1 and edges past compiled
+  V1. This is the regime where writing custom kernels pays off.
+- V2 (kernel fusion) remains the outright performance peak (~2.4x small / ~1.9x
+  medium) with no memory cost.
+
+**Trade-offs & the real lesson:**
+
+Custom kernels add real complexity (GPU programming, explicit autograd backward) and,
+on this workload, don't beat native/compiled kernels on their own — the compute is in
+GEMMs neither version customizes. The takeaway is a professional habit: **profile to
+find where time actually goes, measure against the compiled baseline, and reach for
+custom kernels only when a memory-bound op is genuinely the bottleneck.**
 
 ---
 
@@ -597,68 +763,53 @@ Every optimization has costs—here's what we traded for 2x speedup. We achieved
 
 ### Complete Comparison Table
 
+All numbers measured on **AMD Instinct MI300X, ROCm 7.13** (PyTorch 2.11 / Triton
+3.6), average training speed in samples/sec.
+
 #### Small Problem (64 residues, 16 MSA, batch=4)
 
 ```
-Metric          V1 Baseline    V2 Fused      V3 Triton     Total Gain
-───────────────────────────────────────────────────────────────────────
-Speed (s/s)        80.5         106.4         162.5         +102% ⚡⚡⚡
-Batch (ms)         49.7          37.6          24.6          -51%
-Forward (ms)       18.3          14.7          14.0          -23%
-Backward (ms)      27.2          19.5           8.5          -69% ⚡⚡⚡
-Optimizer (ms)      4.1           3.4           1.5          -63%
-Memory (MB)       195.7         195.7         218.5          +12%
-───────────────────────────────────────────────────────────────────────
+Mode              V1 Baseline    V2 Fused      V3 Triton
+──────────────────────────────────────────────────────────────
+eager (s/s)          100           241            92
++torch.compile       164           235           175
+peak memory (MB)     196           196           196
+──────────────────────────────────────────────────────────────
+Best:  V2 fused (241 s/s, 2.4x over eager V1)
 ```
 
 #### Medium Problem (128 residues, 32 MSA, batch=2)
 
 ```
-Metric          V1 Baseline    V2 Fused      V3 Triton     Total Gain
-───────────────────────────────────────────────────────────────────────
-Speed (s/s)        41.5          49.0          68.5          +65% ⚡⚡
-Batch (ms)         48.2          40.8          29.2          -39%
-Forward (ms)       17.4          14.5          14.8          -15%
-Backward (ms)      26.8          22.9          11.7          -56% ⚡⚡⚡
-Optimizer (ms)      4.0           3.4           1.6          -60%
-Memory (MB)       208.9         208.9         259.9          +24%
-───────────────────────────────────────────────────────────────────────
+Mode              V1 Baseline    V2 Fused      V3 Triton
+──────────────────────────────────────────────────────────────
+eager (s/s)          47            89            45
++torch.compile       73            89            77
+──────────────────────────────────────────────────────────────
+Best:  V2 fused (89 s/s, ~1.9x over eager V1)
 ```
 
-### Optimization Contribution Breakdown
+### Where Do the Gains Come From?
 
-#### Small Problem
-```
-V1 → V2 (+32%):
-  - MSA QKV fusion: ~9%
-  - Flash Attention: ~15%
-  - Triangle fusion: ~8%
-  = Total: 32% (synergistic effect)
+Two orthogonal levers, plus one that doesn't pay off here:
 
-V2 → V3 (+53%):
-  - Custom LayerNorm: ~10%
-  - Flash Attention (MSA): ~20%
-  - Flash Attention (Triangle): ~23%
-  = Total: 53%
+1. **Kernel fusion (V2) — the big win.** Fusing QKV projections, gate/proj, and
+   using Flash Attention cuts kernel-launch overhead dramatically: **~2.4x** (small)
+   and **~1.9x** (medium) over eager V1, with no extra memory. This is the lesson to
+   internalize.
+2. **`torch.compile` — a free, stacking win.** Inductor auto-fusion gives ~1.6x on
+   V1 and ~1.9x on V3. It adds ~nothing to V2 because V2 is already hand-fused —
+   a nice demonstration that manual fusion and compiler fusion target the same
+   overhead.
+3. **Custom Triton kernels (V3) — not a standalone win on this model.** The runtime
+   is dominated by triangle/transition GEMMs (identical rocBLAS in every version),
+   so hand-writing the memory-bound LayerNorm/attention kernels can't move the total
+   much. Eager V3 ≈ V1; only *with* `torch.compile` does V3 edge past V1.
 
-V1 → V3 (+102%):
-  = Multiplicative effect: 1.32 × 1.53 ≈ 2.0x
-```
+### Memory
 
-### Where Did the Speedup Come From?
-
-**Backward Pass Optimization is Key:**
-- V1: 27.2 ms (55% of batch time)
-- V2: 19.5 ms (52% of batch time)
-- V3: 8.5 ms (35% of batch time)
-
-**Reduction**: 27.2 → 8.5 ms = **-69% improvement**
-
-This accounts for most of the total speedup!
-
-### Memory Trade-off Analysis
-
-The small problem shows a memory increase from 195.7 to 218.5 MB (+23 MB, +12%) because Triton kernels trade some memory for speed—they allocate scratch space for intermediate computations and use additional buffers for tiled operations. However, this cost is negligible compared to the performance gain. The 23 MB increase is trivial on modern GPUs with 192 GB of HBM, and the 2.0x speedup far outweighs this small memory cost while still leaving plenty of headroom for much larger problems.
+Memory is essentially flat across all three versions (~196 MB small, ~209 MB
+medium) — none of these optimizations trades memory for speed at these sizes.
 
 ---
 
@@ -666,27 +817,41 @@ The small problem shows a memory increase from 195.7 to 218.5 MB (+23 MB, +12%) 
 
 ### 1. Optimization Strategy
 
-**Best Approach:**
+Always optimize incrementally and profile before you act. Start with a clean baseline
+(V1), profile to find where time *actually* goes, then apply the cheapest effective
+lever first. Here that order is: **kernel fusion (V2) → `torch.compile` → custom
+kernels (V3)**. Fusion gave the biggest win for the least code; custom kernels were
+the most effort and, on this model, the smallest standalone payoff. Don't jump
+straight to writing Triton.
 
-Always optimize incrementally—don't skip steps. Start with a clean, readable baseline (V1) to establish reference performance, then profile thoroughly to identify the real bottlenecks rather than what you assume they are. Apply high-level optimizations first (V2 - kernel fusion) since these are easier to implement and debug, and only drop to low-level custom kernels (V3) when you've exhausted higher-level options. Don't jump straight to custom kernels—high-level optimizations give 70% of the benefit with just 10% of the effort!
+### 2. Know What Dominates Your Runtime
 
-### 2. Backward Pass Matters Most
+The single most important measurement here: this model is **GEMM-dominated**
+(triangle multiplications, transitions). Those GEMMs are identical rocBLAS calls in
+every version, so no amount of hand-writing memory-bound kernels changes them. Custom
+kernels only help when a *memory-bound* op is genuinely your bottleneck — profile to
+confirm that before investing in Triton.
 
-In deep learning workloads, the backward pass often dominates execution time at 50-60% of total runtime, making it the primary optimization target. Our results confirm this: V3's backward pass optimization delivered the biggest gains with a 56-69% reduction, accounting for most of the overall speedup. When profiling, always focus optimization efforts on the backward pass first.
+### 3. Measure Against the Compiled Baseline
 
-### 3. Problem Size Affects Speedup
+`torch.compile` roughly doubles the plain baseline for free. If you compare your
+hand-optimized version only against *eager* V1, you can fool yourself — eager V3 looks
+like ~V1, but the honest comparison is compiled-vs-compiled. Always benchmark both
+your change and the baseline with the same compilation settings.
 
-The speedup you achieve depends heavily on problem size. **Small problems** (64 residues) show the largest speedup at 2.0x because kernel launch overhead dominates, and our optimizations directly address this. **Medium problems** (128 residues) still achieve good speedup at 1.65x with a more balanced workload between kernel overhead and actual computation.
+### 4. Correctness Is Not Optional
 
-**Lesson**: Optimize for your target workload size!
+V3's first implementation *looked* 2x faster — because its raw Triton kernels bypassed
+autograd and computed no gradients, so the backward pass did almost no work. Fast but
+wrong is worthless. `test_correctness.py` (numerics + gradient flow) is what caught
+it. Validate every custom kernel against the baseline, including that gradients flow.
 
-### 4. Memory vs Speed Trade-offs
+### 5. Problem Size Shifts the Balance
 
-Each version offers a different balance. V2 has no memory cost while delivering a 32% speedup—you should **always use** kernel fusion. V3 adds 12% memory overhead but doubles performance with a 102% speedup—**use it when speed matters** more than memory.
-
-### 5. Incremental Development
-
-Progressive optimization allows you to validate, debug, and learn at each step. You can validate correctness at each stage by comparing outputs against the baseline. When something breaks, you can easily isolate which optimization caused the problem. From an educational perspective, you understand what each optimization contributes rather than seeing a black box. Finally, you have the flexibility to choose your optimization level based on specific needs—readability, memory constraints, or maximum performance.
+Smaller problems are launch-overhead-bound (favoring fusion/compile); larger problems
+shift toward compute (where the GEMMs dominate even more). The crossover where
+compiled V3 overtakes compiled V1 held across sizes here, but the margin is small —
+your mileage depends on hardware, sizes, and stack.
 
 ---
 
@@ -741,26 +906,31 @@ Quick reference for ROCm profiling tools across all versions:
 
 ## Next Steps: Advanced Optimizations
 
-### 1. Mixed Precision (V3 + AMP)
+### 1. Torch Compile — the orthogonal lever (all versions)
 ```bash
-ROCR_VISIBLE_DEVICES=0 python3 tiny_openfold_v3.py \
-    --seq-len 128 --num-seqs 32 --batch-size 2 --use-amp
-```
-**Expected**: Additional 20-30% speedup
-
-### 2. Torch Compile (V3 + Compiler)
-```bash
+# Stacks on top of any version; biggest wins on V1 and V3
 ROCR_VISIBLE_DEVICES=0 python3 tiny_openfold_v3.py \
     --seq-len 128 --num-seqs 32 --batch-size 2 --enable-torch-compile
 ```
-**Expected**: Additional 10-20% speedup
+**Measured (MI300X / ROCm 7.13)**: ~1.6x on V1, ~1.7–1.9x on V3, ~1.0x on the
+already-fused V2.
 
-### 3. Multi-GPU (V3 + Data Parallel)
+### 2. Combine fusion + compile (V2)
 ```bash
-ROCR_VISIBLE_DEVICES=0,1,2,3 python3 tiny_openfold_v3.py \
+ROCR_VISIBLE_DEVICES=0 python3 tiny_openfold_v2.py \
+    --seq-len 128 --num-seqs 32 --batch-size 2 --enable-all-fusion --enable-torch-compile
+```
+**Note**: V2 is already hand-fused, so compile adds little — a useful demonstration
+that manual and compiler fusion target the same launch overhead.
+
+### 3. Multi-GPU (V1)
+```bash
+# DataParallel scaling lives in V1 (see version1_pytorch_baseline/README.md)
+ROCR_VISIBLE_DEVICES=0,1,2,3 python3 tiny_openfold_v1.py \
     --seq-len 128 --num-seqs 32 --batch-size 8
 ```
-**Expected**: Near-linear scaling (3.5-3.8x on 4 GPUs)
+**Note**: Multi-GPU (`nn.DataParallel`) is implemented in V1 only; V2/V3 are
+single-GPU. See the V1 scaling scripts for measured efficiency.
 
 ---
 
@@ -768,4 +938,11 @@ ROCR_VISIBLE_DEVICES=0,1,2,3 python3 tiny_openfold_v3.py \
 
 You now have a complete mental model of GPU optimization. You learned how to establish reference performance through baseline measurement, identify bottlenecks systematically using profiling tools, and apply high-level PyTorch kernel fusion optimizations. You progressed to low-level GPU programming with custom Triton kernels, developed skills in performance analysis to understand where speedups actually come from, and learned to evaluate trade-offs between memory usage, speed, complexity, and maintainability.
 
-**Final Achievement**: **2.0x speedup** on small workloads through systematic optimization—you now have the blueprint to unlock similar performance gains in your own GPU workloads, from baseline profiling to production-ready custom kernels.
+**Final Achievement**: **~2.4x speedup** on small workloads from kernel fusion (V2),
+plus an orthogonal **~1.6–1.9x** from `torch.compile` on the baseline and Triton
+versions — and, just as importantly, the judgment to know *which* lever to pull.
+You've seen that fusion beats hand-written kernels on this GEMM-dominated model, that
+`torch.compile` is nearly free throughput, and that a "fast" custom kernel is
+worthless if it isn't numerically correct and gradient-safe. That measurement
+discipline — profile first, compare against the compiled baseline, verify
+correctness — is the transferable skill.
