@@ -30,7 +30,7 @@ source ~/venvs/rocm-pytorch-pip/bin/activate
 
 ```bash
 # Pin the nightly ROCm version once and reuse it everywhere below.
-ROCM_VERSION=7.15.0a20260707
+ROCM_VERSION=7.15.0a20260716
 
 pip install --index-url https://rocm.nightlies.amd.com/whl-multi-arch/ \
     "rocm[profiler,devel,libraries,device-gfx942]==${ROCM_VERSION}" \
@@ -119,7 +119,7 @@ Expected output resembles:
 
 ```
 ROCm venv active: /.../rocm-pytorch-pip
-torch 2.12.0+rocm7.15.0a20260707
+torch 2.12.0+rocm7.15.0a20260716
 device ok: 8.0
 ```
 

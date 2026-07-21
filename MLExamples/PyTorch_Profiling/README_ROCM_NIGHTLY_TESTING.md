@@ -32,7 +32,7 @@ create the `rocm-pytorch-pip` venv. In short, it:
 To test a **specific nightly**, set the ROCm version pin in that guide, e.g.:
 
 ```bash
-ROCM_VERSION=7.15.0a20260707
+ROCM_VERSION=7.15.0a20260716
 ```
 
 Change this value to the nightly date you want to validate.
