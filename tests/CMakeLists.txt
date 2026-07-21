@@ -1411,6 +1411,16 @@ set_property(TEST Pytorch_RCCL_Distributed_Regression PROPERTY SKIP_REGULAR_EXPR
 set_property(TEST Pytorch_RCCL_Distributed_Regression PROPERTY SKIP_RETURN_CODE 77)
 set_tests_properties(Pytorch_RCCL_Distributed_Regression PROPERTIES TIMEOUT 300)
 
+# Reports the torch.distributed comm backends the loaded PyTorch build exposes
+# (nccl(=RCCL)/mpi/gloo/ucc), which one is the DEFAULT per device, and the
+# native RCCL / MPI / UCC / UCX libraries (soname + realpath + version) the
+# build is actually wired to. Needs no GPU or launcher (pure build introspection).
+add_test(NAME Pytorch_Comm_Backends_Check COMMAND ../pytorch_comm_backends_check.sh )
+set_property(TEST Pytorch_Comm_Backends_Check PROPERTY PASS_REGULAR_EXPRESSION "GPU-AWARE MPI: OK")
+set_property(TEST Pytorch_Comm_Backends_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'" "COMM BACKENDS CHECK: SKIPPED")
+set_property(TEST Pytorch_Comm_Backends_Check PROPERTY SKIP_RETURN_CODE 77)
+set_tests_properties(Pytorch_Comm_Backends_Check PROPERTIES TIMEOUT 300)
+
 # ROCm HIP-runtime host-memory leak on the D2H / .item() path.
 # Discriminator = host-RSS growth in bytes/call (default fail > 100 B/call);
 # clean runtimes report ~0 B/call, leaky ones ~800-1100 B/call. Checks the
