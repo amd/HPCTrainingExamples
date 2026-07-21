@@ -89,13 +89,22 @@ python3 -c "import torch; print(f'GPU: {torch.cuda.get_device_name(0)}')"
 
 ### Option B: ROCm 7.13 (TheRock nightly — PyTorch 2.11 + Triton 3.6)
 
-Newer alpha stack for gfx942 (MI300X) / gfx950 (MI355X). ROCm 7.13 is not a system module and is
-not on the pytorch.org nightly index; it comes from AMD's
-[TheRock](https://github.com/ROCm/TheRock) multi-arch pip channel, which bundles the ROCm runtime
-as a wheel dependency of `torch`.
+Newer alpha stack for gfx942 (MI300X) / gfx950 (MI355X): PyTorch 2.11 + Triton 3.6. ROCm 7.13 is
+alpha-only and not on the pytorch.org nightly index. There are two ways to get the ROCm 7.13
+runtime — pick whichever matches your site:
+
+- **B1 — TheRock pip wheels (self-contained).** The ROCm runtime is pulled in as a wheel dependency
+  of `torch` from AMD's [TheRock](https://github.com/ROCm/TheRock) multi-arch pip channel. No system
+  ROCm module needed.
+- **B2 — ROCm 7.13 as a system module.** If your cluster provides a `rocm/7.13` module, `module load`
+  it and install only the Python packages (`torch`, `triton`, …) into a venv on top of it.
+
+Both install the Python packages into a venv; they differ only in where the ROCm runtime comes from.
+
+**B1 — TheRock pip wheels:**
 
 ```bash
-# Python 3.14 from the module system (ships libpython3.14.so.1.0 that pyenv Python lacks)
+# Python 3.14 from the module system
 module load python/3.14
 
 cd HPCTrainingExamples/MLExamples/TinyOpenFold
@@ -111,13 +120,31 @@ pip3 install deepspeed && pip3 install -r setup/requirements.txt
 python3 -c "import torch, triton; print('torch', torch.__version__, '| triton', triton.__version__, '|', torch.cuda.get_device_name(0))"
 ```
 
+**B2 — ROCm 7.13 system module (if available at your site):**
+
+```bash
+module load rocm/7.13 python/3.14        # module names may differ per cluster
+python3 -m venv venv713 && source venv713/bin/activate
+pip3 install --upgrade pip
+
+# Match the torch/triton wheels to the module's ROCm version. Use the pytorch.org
+# ROCm index if a matching build exists, or your site's provided wheels.
+pip3 install torch torchvision torchaudio triton
+pip3 install deepspeed && pip3 install -r setup/requirements.txt
+
+python3 -c "import torch, triton; print('torch', torch.__version__, '| triton', triton.__version__, '|', torch.cuda.get_device_name(0))"
+```
+
 **Expected**: `torch 2.11.0+rocm7.13.0a... | triton 3.6.0+rocm7.13.0a... | AMD Instinct MI300X`
 
 Notes for Option B:
-- No `LD_LIBRARY_PATH` / `libcaffe2_nvrtc.so` fix is needed — the TheRock wheels bundle their own runtime.
-- The ROCm hardware profilers (`rocprofv3`, `rocprof-compute`, `rocprof-sys`) below are *not* in the
-  training wheels. Install the full TheRock SDK (`rocm[libraries,devel,device-gfx942]==7.13.*`) and
-  source its `sourceme` env for those — see `~/software/therock_install/`.
+- **B1 (pip wheels):** no `LD_LIBRARY_PATH` / `libcaffe2_nvrtc.so` fix is needed — the TheRock wheels
+  bundle their own runtime.
+- **B2 (module):** the ROCm runtime comes from the module, so you may need `ROCM_PATH` /
+  `LD_LIBRARY_PATH` set up by the module (usually automatic on `module load`).
+- The ROCm hardware profilers (`rocprofv3`, `rocprof-compute`, `rocprof-sys`) come with the module
+  (B2) but are *not* in the TheRock training wheels (B1). For B1, install the full TheRock SDK
+  (`rocm[libraries,devel,device-gfx942]==7.13.*`).
 
 ### `torch.compile` — an optimization axis available on every version
 
