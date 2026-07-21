@@ -11,20 +11,19 @@
 # SLURM script: analyze the workload produced by slurm_single_process_profile.sh
 # with rocprofiler-compute (rocprof-compute analyze).
 #
-# It sources ../setup_rocm.sh to activate the ROCm PyTorch venv and set the
-# matching ROCm env vars.
+# Instead of downgrading numpy inside the shared ROCm PyTorch venv (and
+# restoring it afterwards), this uses a SEPARATE, isolated virtual environment
+# that contains only rocprof-compute's own pinned requirements (numpy==1.26.4,
+# pandas, dash, textual, ...). The shared venv is never modified, so this can
+# run safely even while training/profiling jobs use the shared venv.
+#
+# rocprof-compute itself is NOT reinstalled into the analysis venv: the bundled
+# tool that ships inside the shared venv (the `_rocm_profiler` package) is
+# reused by pointing PATH / PYTHONPATH / LD_LIBRARY_PATH at it. Only the pure
+# Python analysis dependencies live in the dedicated venv.
 #
 # Analysis is CPU-only (it parses the counter database), so no GPU is requested.
-#
-# !!! IMPORTANT - WHEN TO RUN THIS SCRIPT !!!
-#   1. Run this ONLY AFTER slurm_single_process_profile.sh has completed, so
-#      the workload counter database exists.
-#   2. Do NOT run this while any other job that uses the same venv is running.
-#      This script temporarily pins numpy==1.26.4 (required by rocprof-compute
-#      analyze) in the SHARED venv and restores it on exit. If a training or
-#      profiling job runs concurrently, it will observe the wrong numpy version
-#      and crash on import. Run all such jobs to completion first, then run
-#      this analysis by itself.
+# Run this after slurm_single_process_profile.sh has completed.
 # ---------------------------------------------------------------------------
 
 set -e
@@ -43,36 +42,74 @@ echo "SCRIPT_DIR=${SCRIPT_DIR}"
 echo "PROFILER_TOP_DIR=${PROFILER_TOP_DIR}"
 
 # ---------------------------------------------------------------------------
-# Software environment.
-#
-# ../setup_rocm.sh (i.e. ${PROFILER_TOP_DIR}/setup_rocm.sh) activates the ROCm
-# PyTorch venv and exports the matching ROCm env vars.
+# Locate the shared ROCm PyTorch venv (built via ROCM_PYTORCH_PIP_VENV_SETUP.md
+# and activated by ../setup_rocm.sh) WITHOUT activating it. We only need the
+# ROCm install that lives inside it: the bundled rocprof-compute launcher and
+# the ROCm shared libraries.
 # ---------------------------------------------------------------------------
-source ${PROFILER_TOP_DIR}/setup_rocm.sh
-rocprof-compute --version
-
-# ---------------------------------------------------------------------------
-# rocprof-compute analyze pins numpy==1.26.4, but other tools that share this
-# venv (e.g. the roofline extractor's scipy) can bump numpy to 2.x, which makes
-# analyze abort with a version-requirement error. Temporarily install the
-# required numpy for the analysis, then restore whatever version was there
-# before so the shared venv is left unchanged (restored even on failure).
-# ---------------------------------------------------------------------------
-REQUIRED_NUMPY=1.26.4
-ORIG_NUMPY="$(python3 -c 'import numpy; print(numpy.__version__)' 2>/dev/null)"
-
-restore_numpy() {
-    if [[ -n "${ORIG_NUMPY}" && "${ORIG_NUMPY}" != "${REQUIRED_NUMPY}" ]]; then
-        echo "Restoring numpy==${ORIG_NUMPY}"
-        pip install "numpy==${ORIG_NUMPY}"
-    fi
-}
-
-if [[ "${ORIG_NUMPY}" != "${REQUIRED_NUMPY}" ]]; then
-    echo "Installing numpy==${REQUIRED_NUMPY} for rocprof-compute analyze"
-    pip install "numpy==${REQUIRED_NUMPY}"
-    trap restore_numpy EXIT
+MAIN_VENV="${HOME}/venvs/rocm-pytorch-pip"
+if [[ ! -x "${MAIN_VENV}/bin/python3" ]]; then
+    echo "ERROR: shared ROCm venv not found at ${MAIN_VENV}" >&2
+    exit 1
 fi
+# site-packages of the shared venv (avoids hard-coding the python3.x version).
+MAIN_SP="$("${MAIN_VENV}/bin/python3" -c 'import site; print(site.getsitepackages()[0])')"
+ROCM_PROFILER="${MAIN_SP}/_rocm_profiler"
+ROCM_CORE="${MAIN_SP}/_rocm_sdk_core"
+ROCM_DEVEL="${MAIN_SP}/_rocm_sdk_devel"
+COMPUTE_LIBEXEC="${ROCM_PROFILER}/libexec/rocprofiler-compute"
+REQ_FILE="${COMPUTE_LIBEXEC}/requirements.txt"
+RPC="${ROCM_PROFILER}/bin/rocprof-compute"
+
+for p in "${RPC}" "${REQ_FILE}" "${ROCM_CORE}" "${ROCM_DEVEL}"; do
+    if [[ ! -e "${p}" ]]; then
+        echo "ERROR: expected ROCm component not found: ${p}" >&2
+        exit 1
+    fi
+done
+
+# ---------------------------------------------------------------------------
+# Create / refresh the dedicated analysis venv with just rocprof-compute's
+# pinned requirements (numpy==1.26.4 etc.). This is isolated from the shared
+# venv (no --system-site-packages), so it can never be shadowed by the shared
+# venv's numpy 2.x. Re-installation is skipped unless requirements.txt changed.
+# ---------------------------------------------------------------------------
+ANALYZE_VENV="${HOME}/venvs/rocprof-compute-analyze"
+if [[ ! -x "${ANALYZE_VENV}/bin/python3" ]]; then
+    echo "Creating analysis venv at ${ANALYZE_VENV}"
+    /usr/bin/python3 -m venv "${ANALYZE_VENV}"
+fi
+source "${ANALYZE_VENV}/bin/activate"
+
+STAMP="${ANALYZE_VENV}/.rocprof_compute_reqs_installed"
+if [[ ! -f "${STAMP}" || "${REQ_FILE}" -nt "${STAMP}" ]]; then
+    echo "Installing rocprof-compute requirements into ${ANALYZE_VENV}"
+    python3 -m pip install --upgrade pip
+    python3 -m pip install -r "${REQ_FILE}"
+    cp "${REQ_FILE}" "${STAMP}"
+else
+    echo "Analysis venv already satisfies ${REQ_FILE}"
+fi
+
+# ---------------------------------------------------------------------------
+# Point the isolated venv at the ROCm install in the shared venv so the bundled
+# rocprof-compute launcher and its shared libraries are found.
+#   * PYTHONPATH  -> the rocprofiler-compute python sources (libexec).
+#   * LD_LIBRARY_PATH -> ROCm core/devel libs (+ bundled sysdeps).
+#   * PATH        -> append the ROCm devel bin LAST so it can never shadow the
+#                    analysis venv's `python3` (isolation must be preserved).
+# The bundled launcher (${RPC}) is invoked by absolute path and re-execs with
+# `#!/usr/bin/env python3`, which resolves to the analysis venv's python since
+# its bin dir is first on PATH after activation -> numpy==1.26.4 is used.
+# ---------------------------------------------------------------------------
+export PYTHONPATH="${COMPUTE_LIBEXEC}:${PYTHONPATH}"
+export LD_LIBRARY_PATH="${ROCM_CORE}/lib:${ROCM_CORE}/lib/rocm_sysdeps/lib:${ROCM_DEVEL}/lib:${ROCM_DEVEL}/lib/rocm_sysdeps/lib:${LD_LIBRARY_PATH}"
+export ROCM_PATH="${ROCM_DEVEL}"
+export HIP_PATH="${ROCM_DEVEL}"
+export PATH="${PATH}:${ROCM_DEVEL}/bin"
+
+echo "Analysis python : $(which python3)  (numpy $(python3 -c 'import numpy; print(numpy.__version__)'))"
+"${RPC}" --version
 
 # ---------------------------------------------------------------------------
 # Locate the workload written by slurm_single_process_profile.sh. This must
@@ -104,7 +141,7 @@ echo "==================================================================="
 echo "rocprof-compute analyze --list-stats -p ${ARCH_DIR}"
 echo "==================================================================="
 STATS_FILE=${SCRIPT_DIR}/stats_${SLURM_JOB_ID}.txt
-rocprof-compute analyze --list-stats -p ${ARCH_DIR} >& ${STATS_FILE}
+"${RPC}" analyze --list-stats -p ${ARCH_DIR} >& ${STATS_FILE}
 echo "Stats and dispatch IDs written to ${STATS_FILE}"
 
 echo
@@ -112,7 +149,7 @@ echo "==================================================================="
 echo "rocprof-compute analyze -p ${ARCH_DIR}"
 echo "==================================================================="
 ANALYSIS_FILE=${SCRIPT_DIR}/analysis_${SLURM_JOB_ID}.txt
-rocprof-compute analyze -p ${ARCH_DIR} > ${ANALYSIS_FILE} 2>&1
+"${RPC}" analyze -p ${ARCH_DIR} > ${ANALYSIS_FILE} 2>&1
 echo "Analysis written to ${ANALYSIS_FILE}"
 
 echo
@@ -122,6 +159,6 @@ echo "specific kernel, inspect ${STATS_FILE} for the kernel names and"
 echo "dispatch IDs, then re-run rocprof-compute analyze narrowing to that"
 echo "kernel with --kernel <kernel-id>, or to a specific invocation with"
 echo "--dispatch <dispatch-id> (you may pass either one, or both):"
-echo "  rocprof-compute analyze -p ${ARCH_DIR} --kernel <kernel-id>"
-echo "  rocprof-compute analyze -p ${ARCH_DIR} --dispatch <dispatch-id>"
+echo "  ${RPC} analyze -p ${ARCH_DIR} --kernel <kernel-id>"
+echo "  ${RPC} analyze -p ${ARCH_DIR} --dispatch <dispatch-id>"
 echo "-------------------------------------------------------------------"

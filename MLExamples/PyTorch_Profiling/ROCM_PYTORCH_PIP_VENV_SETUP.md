@@ -41,7 +41,7 @@ pip install --index-url https://rocm.nightlies.amd.com/whl-multi-arch/ \
 The `rocm[...]` extras pull in the pieces this workflow needs:
 - `profiler`  — the ROCm profilers: `rocprof-compute`, `rocprofv3`, and
   `rocprof-sys` (bundled `_rocm_profiler`)
-- `devel`     — development package (headers/device code, extracted in step 5)
+- `devel`     — development package (headers/device code, extracted in step 4)
 - `libraries` — math libraries (hipBLAS, rocBLAS, ...)
 - `device-gfx942` — the GPU-arch kernels for MI300A
 
@@ -54,16 +54,15 @@ pip install transformers
 The training script builds its models with `transformers`, so this package is
 required.
 
-## 4. Install `rocprof-compute analyze` dependencies
+> **Note:** Do **not** install `rocprof-compute analyze`'s `requirements.txt`
+> into this shared venv. Those packages pin `numpy==1.26.4`, which conflicts
+> with the `numpy>=2.0` that PyTorch/transformers need and will break the
+> training/profiling runs. The analysis step
+> (`rocm-compute-profiler/slurm_single_process_analyze.sh`) provisions its own
+> isolated venv for those dependencies and reuses the ROCm install from this
+> venv, so this shared venv stays on `numpy>=2.0`.
 
-```bash
-pip install -r ~/venvs/rocm-pytorch-pip/lib/python3.12/site-packages/_rocm_profiler/libexec/rocprofiler-compute/requirements.txt
-```
-
-These extra Python packages are needed by `rocprof-compute analyze` (the
-reporting/analysis step), not by counter collection itself.
-
-## 5. Extract development headers and device code
+## 4. Extract development headers and device code
 
 ```bash
 ~/venvs/rocm-pytorch-pip/bin/rocm-sdk init
@@ -76,7 +75,7 @@ next step.
 
 ---
 
-## 6. Write `setup_rocm.sh`
+## 5. Write `setup_rocm.sh`
 
 Create `~/setup_rocm.sh` to activate the venv and point the ROCm environment at
 the extracted `_rocm_sdk_devel` tree. Adjust `python3.12` to your Python version.
@@ -96,7 +95,7 @@ export LD_LIBRARY_PATH="$DEVEL/lib:$DEVEL/lib/rocm_sysdeps/lib:$LD_LIBRARY_PATH"
 echo "ROCm venv active: $VENV"
 ```
 
-## 7. Re-source to pick up the ROCm env vars
+## 6. Re-source to pick up the ROCm env vars
 
 If the venv is already active from step 1, deactivate and source the script so
 the `ROCM_PATH` / `LD_LIBRARY_PATH` exports take effect:
@@ -108,7 +107,7 @@ source setup_rocm.sh
 
 ---
 
-## 8. Verify (on a GPU node)
+## 7. Verify (on a GPU node)
 
 ```bash
 source ~/setup_rocm.sh

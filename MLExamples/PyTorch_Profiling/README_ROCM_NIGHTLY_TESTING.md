@@ -26,7 +26,7 @@ create the `rocm-pytorch-pip` venv. In short, it:
 
 - creates a venv at `~/venvs/rocm-pytorch-pip`,
 - installs nightly ROCm + PyTorch + profilers from the multi-arch nightly index,
-- installs `transformers` and the `rocprof-compute analyze` dependencies,
+- installs `transformers` (required by the training script),
 - runs `rocm-sdk init` to extract the development headers and device code.
 
 To test a **specific nightly**, set the ROCm version pin in that guide, e.g.:
@@ -41,7 +41,7 @@ Change this value to the nightly date you want to validate.
 
 The SLURM scripts in each sub-directory activate the environment by sourcing
 `../setup_rocm.sh` — i.e. a `setup_rocm.sh` located in **this**
-(`PyTorch_Profiling/`) directory. Create it here (see step 6 of the venv guide
+(`PyTorch_Profiling/`) directory. Create it here (see step 5 of the venv guide
 for the full contents), pointing at the venv you just built:
 
 ```bash
@@ -108,19 +108,19 @@ squeue --me
 
 ### Analyzing the results
 
-> **Important — running `rocprof-compute analyze`:** the analysis step (the
-> `rocm-compute-profiler/slurm_single_process_analyze.sh` helper) must be run
-> **only after** its profile job has finished, and **not while any other job is
-> using the same venv**. `rocprof-compute analyze` requires `numpy==1.26.4`,
-> which conflicts with the `numpy>=2.0` needed by the training/profiling jobs.
-> The analysis script temporarily changes numpy in the shared venv and restores
-> it on exit, so a training or profiling job running in parallel would pick up
-> the wrong numpy version and crash on import. Let all profiling jobs finish,
-> then run the analysis by itself.
+> **Note — running `rocprof-compute analyze`:** run the analysis step only
+> **after** its profile job has finished (the counter database must exist).
+> `rocprof-compute analyze` requires `numpy==1.26.4`, which conflicts with the
+> `numpy>=2.0` needed by the training/profiling jobs. To avoid disturbing the
+> shared venv, the analysis script uses a separate, isolated venv
+> (`~/venvs/rocprof-compute-analyze`) that holds only rocprof-compute's pinned
+> requirements, while reusing the ROCm install from the shared venv. The shared
+> venv is never modified, so the analysis can run even while training or
+> profiling jobs are using it.
 
 - **ROCm Compute Profiler:** submit the companion analysis job from
   `rocm-compute-profiler/` (it locates the workload and runs the analysis for
-  you, handling the numpy pin described above):
+  you, using the isolated analysis venv described above):
 
 ```bash
 cd rocm-compute-profiler
