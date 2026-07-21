@@ -37,29 +37,17 @@ ROCM_VERSION=7.15.0a20260716
 
 Change this value to the nightly date you want to validate.
 
-## Step 2 — Create `setup_rocm.sh`
+## Step 2 — Verify `setup_rocm.sh`
 
 The SLURM scripts in each sub-directory activate the environment by sourcing
-`../setup_rocm.sh` — i.e. a `setup_rocm.sh` located in **this**
-(`PyTorch_Profiling/`) directory. Create it here (see step 5 of the venv guide
-for the full contents), pointing at the venv you just built:
+`../setup_rocm.sh` — i.e. the `setup_rocm.sh` shipped in **this**
+(`PyTorch_Profiling/`) directory. It is already provided; just verify (and edit
+if needed) that its `VENV` points at the venv you built in Step 1. Its full
+contents, and a GPU-node sanity check, are covered in steps 5-7 of
+[`ROCM_PYTORCH_PIP_VENV_SETUP.md`](./ROCM_PYTORCH_PIP_VENV_SETUP.md).
 
-```bash
-#!/usr/bin/env bash
-VENV="$HOME/venvs/rocm-pytorch-pip"
-DEVEL="$VENV/lib/python3.12/site-packages/_rocm_sdk_devel"
-source "$VENV/bin/activate"
-export ROCM_PATH="$DEVEL"
-export HIP_PATH="$DEVEL"
-export HIP_DEVICE_LIB_PATH="$DEVEL/lib/llvm/amdgcn/bitcode"
-export PATH="$DEVEL/bin:$PATH"
-export LD_LIBRARY_PATH="$DEVEL/lib:$DEVEL/lib/rocm_sysdeps/lib:$LD_LIBRARY_PATH"
-echo "ROCm venv active: $VENV"
-```
-
-Adjust `python3.12` to match your Python version.
-
-Verify the environment on a GPU node before profiling:
+Once verified, a quick check that the nightly build runs GPU kernels through
+PyTorch:
 
 ```bash
 source setup_rocm.sh
@@ -67,15 +55,14 @@ srun -n1 --gpus=1 python3 -c "import torch; print('torch', torch.__version__); \
 x = torch.ones(4, device='cuda:0'); print('device ok:', (x+1).sum().item())"
 ```
 
-If you see `device ok:`, the nightly ROCm build runs GPU kernels through PyTorch
-and you are ready to profile.
+If you see `device ok:`, you are ready to profile.
 
 ## Step 3 — Run the SLURM scripts
 
 Each sub-directory contains a single-process SLURM script that sources
 `../setup_rocm.sh`, pre-downloads the dataset if needed, and runs the workload
 under one tool. All of them use a single GPU and a short run
-(`--batch-size 64 --max-steps 5`) so a nightly can be checked quickly.
+(`--batch-size 32 --max-steps 5`) so a nightly can be checked quickly.
 
 **Submit each script from its own directory** (the scripts use
 `SLURM_SUBMIT_DIR` to locate themselves):

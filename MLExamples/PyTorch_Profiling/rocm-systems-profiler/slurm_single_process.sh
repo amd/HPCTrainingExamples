@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=rps-single-sample
+#SBATCH --job-name=rps-single-run
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gpus=1
@@ -10,7 +10,7 @@
 
 # ---------------------------------------------------------------------------
 # SLURM script: profile the single-process CIFAR-100 workload with the ROCm
-# Systems Profiler (rocprof-sys-sample).
+# Systems Profiler (rocprof-sys-run).
 #
 # It sources ../setup_rocm.sh to activate the ROCm PyTorch venv and set the
 # matching ROCm env vars.

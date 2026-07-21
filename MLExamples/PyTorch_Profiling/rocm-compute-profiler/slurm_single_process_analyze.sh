@@ -77,7 +77,11 @@ done
 ANALYZE_VENV="${HOME}/venvs/rocprof-compute-analyze"
 if [[ ! -x "${ANALYZE_VENV}/bin/python3" ]]; then
     echo "Creating analysis venv at ${ANALYZE_VENV}"
-    /usr/bin/python3 -m venv "${ANALYZE_VENV}"
+    # Use the shared venv's python3 (validated above) to create the analysis
+    # venv. A venv is isolated from its creator's site-packages, so this stays
+    # independent of the shared venv while avoiding a hard-coded /usr/bin/python3
+    # that may be absent or lack the venv module on some clusters.
+    "${MAIN_VENV}/bin/python3" -m venv "${ANALYZE_VENV}"
 fi
 source "${ANALYZE_VENV}/bin/activate"
 

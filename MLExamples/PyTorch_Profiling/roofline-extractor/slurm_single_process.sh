@@ -52,7 +52,7 @@ RE_DIR=${SCRIPT_DIR}/rooflineExtractor
 if [ ! -d ${RE_DIR} ]; then
     git clone https://github.com/AMD-HPC/rooflineExtractor.git ${RE_DIR}
 fi
-pip install -r ${RE_DIR}/requirements.txt
+python3 -m pip install -r ${RE_DIR}/requirements.txt
 
 # Distributed bootstrap variables expected by train_cifar_100.py (single rank).
 export NPROCS=1

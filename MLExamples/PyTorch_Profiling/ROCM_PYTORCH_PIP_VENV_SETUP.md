@@ -9,8 +9,7 @@ profilers use the same ROCm. Each step below is a single command block you can
 copy and run.
 
 > This guide targets an AMD MI300A GPU (`gfx942`). If you have a different GPU,
-> change `device-gfx942` to your architecture. Also make sure the Python version
-> in the paths below (`python3.12`) matches your `python --version`.
+> change `device-gfx942` to your architecture.
 
 ---
 
@@ -21,10 +20,6 @@ mkdir -p ~/venvs
 python -m venv ~/venvs/rocm-pytorch-pip
 source ~/venvs/rocm-pytorch-pip/bin/activate
 ```
-
-> Tip: the setup script below hardcodes the Python minor version in the
-> `site-packages` path (e.g. `python3.12`). Check what `python --version` (or
-> `module load python`) gives you and keep the two consistent.
 
 ## 2. Install ROCm + PyTorch from the nightly multi-arch index
 
@@ -75,18 +70,22 @@ next step.
 
 ---
 
-## 5. Write `setup_rocm.sh`
+## 5. Verify `setup_rocm.sh`
 
-Create `~/setup_rocm.sh` to activate the venv and point the ROCm environment at
-the extracted `_rocm_sdk_devel` tree. Adjust `python3.12` to your Python version.
+The repo already ships `setup_rocm.sh` in `MLExamples/PyTorch_Profiling/` (the
+SLURM scripts source it as `../setup_rocm.sh`). It activates the venv and points
+the ROCm environment at the extracted `_rocm_sdk_devel` tree. Verify (and edit
+if needed) that its `VENV` matches the venv you built in step 1. The
+site-packages path is derived from the active venv's `python3`, so it works
+regardless of the Python minor version. Its contents are:
 
 ```bash
 #!/usr/bin/env bash
 # Source this to activate the ROCm venv and set ROCm env vars:
 #   source setup_rocm.sh
 VENV="$HOME/venvs/rocm-pytorch-pip"
-DEVEL="$VENV/lib/python3.12/site-packages/_rocm_sdk_devel"
 source "$VENV/bin/activate"
+DEVEL="$(python3 -c 'import site; print(site.getsitepackages()[0])')/_rocm_sdk_devel"
 export ROCM_PATH="$DEVEL"
 export HIP_PATH="$DEVEL"
 export HIP_DEVICE_LIB_PATH="$DEVEL/lib/llvm/amdgcn/bitcode"
@@ -98,7 +97,8 @@ echo "ROCm venv active: $VENV"
 ## 6. Re-source to pick up the ROCm env vars
 
 If the venv is already active from step 1, deactivate and source the script so
-the `ROCM_PATH` / `LD_LIBRARY_PATH` exports take effect:
+the `ROCM_PATH` / `LD_LIBRARY_PATH` exports take effect (run from
+`MLExamples/PyTorch_Profiling/`):
 
 ```bash
 deactivate
@@ -110,7 +110,7 @@ source setup_rocm.sh
 ## 7. Verify (on a GPU node)
 
 ```bash
-source ~/setup_rocm.sh
+source setup_rocm.sh
 srun -n1 --gpus=1 python3 -c "import torch; print('torch', torch.__version__); \
 x = torch.ones(4, device='cuda:0'); print('device ok:', (x+1).sum().item())"
 ```
