@@ -4,7 +4,8 @@ In this example we explicitly manage the memory movement onto the device by usin
 `omp target enter data map`, `omp target update from`, and `omp target exit data map`, etc. 
 instead of requiring OpenMP to use managed memory and have the OS manage page migrations 
 automatically. We no longer need either the pragma `omp requires unified_shared_memory` on
-each translation unit or the `HSA_XNACK=1` setting.
+each translation unit or the `HSA_XNACK=1` setting. However, if the openmpi implementation we will be
+using does not have GPU-aware MPI, then we need `HSA_XNACK=1` to make the code run.
 
 Typically, startup costs of an application are not as important as the kernel runtimes. 
 In this case, by explicitly moving memory at the beginning of our run, 
@@ -21,14 +22,24 @@ module load omnitrace/1.11.2
 module load craype-accel-amd-gfx90a cmake/3.23.2
 ```
 
+If your environment is AAC, you do not need to load the cray specific modules and the cmake module, but rather the `amdclang` module. If the OpenMPI you will be using does not have GPU-aware MPI enabled, you will need to `export HSA_XNACK=1`. If you have GPU-aware MPI enabled, then you can `unset HSA_XNACK`. This is because in the code there are some `target data` OpenMP directives that pass the device pointers to the MPI API to leverage GPU-aware MPI, but these OpenMP directives have no effect when `export HSA_XNACK=1` and so if no GPU-aware MPI is present, we can by pass the directives by doing `export HSA_XNACK=1`.
+
 ## Build and Run
 
 ```
 cd Ver6
 mkdir build; cd build;
 cmake ..
-make -j8
+make -j
+```
+
+On Frontier, you can run with:
+```
 srun -N1 -n4 -c7 --gpu-bind=closest -A <account> -t 05:00 ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
+```
+On AAC, you can use `mpirun`:
+```
+mpirun -n 4 ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
 ```
 
 The output for this run should look like:
@@ -45,7 +56,6 @@ in previous examples.
 ## Get a Trace
 
 ```
-unset HSA_XNACK
 export OMNITRACE_CONFIG_FILE=~/.omnitrace.cfg
 srun -N1 -n4 -c7 --gpu-bind=closest -A <account> -t 05:00 ./GhostExchange.inst -x 2  -y 2  -i 20000 -j 20000 -h 2 -t -c -I 100
 ```

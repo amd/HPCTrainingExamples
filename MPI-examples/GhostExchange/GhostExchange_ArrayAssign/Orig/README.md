@@ -57,15 +57,15 @@ Note: it is necessary to run with `omnitrace-run` when running an instrumented b
 Omnitrace will output text indicating its progress when using both `omnitrace-instrument` and
 `omnitrace-run`. `omnitrace-instrument` shows which functions it instrumented and which functions are available to be instrumented in output files, the paths are reported as shown here:
 
-<p><img src="instrument_output.png"/></p>
+<p><img src="images/mi250x/instrument_output.png"/></p>
 
 The `available` output file looks like this:
 
-<p><img src="available.png"/></p>
+<p><img src="images/mi250x/available.png"/></p>
 
 While the `instrumented` output file looks like this:
 
-<p><img src="instrumented.png"/></p>
+<p><img src="images/mi250x/instrumented.png"/></p>
 
 We see in this case `omnitrace-instrument` seems to only instrument a few functions. This is because 
 by default Omnitrace excludes any functions smaller than a certain number of instructions from instrumentation to reduce the overhead of tracing, the size of the resulting trace, and increase readability of the trace visualization. This can be tuned by the `-i <instruction-count>` argument to `omnitrace-instrument`, which will include functions with at least `<instruction-count>` instructions in instrumentation. Specific functions can be included by providing a regular expression to the `-I <function-regex>`, which will include in instrumentation any function name matching the regular expression, despite heuristics.
@@ -74,11 +74,11 @@ For more thorough details on Omnitrace options, we defer to the [Omnitrace docum
 
 For `omnitrace-run`, we look for the following output to ensure our run is correctly using Omnitrace, and for locating the output files:
 
-<p><img src="ascii_omni.png"/></p>
+<p><img src="images/mi250x/ascii_omni.png"/></p>
 
 The ASCII art lets you know Omnitrace is running, and:
 
-<p><img src="output_paths.png"/></p>
+<p><img src="images/mi250x/output_paths.png"/></p>
 
 Shows the output paths for the proto files, and also validates that the proto files generated successfully.
 
@@ -88,9 +88,9 @@ can run successfully outside of Omnitrace.
 ## Initial Trace
 
 Below is a screenshot of a trace obtained for this example:
-<p><img src="orig_0.png"/></p>
+<p><img src="images/mi250x/orig_0.png"/></p>
 (truncated for space)
-<p><img src="orig_1.png"/></p>
+<p><img src="images/mi250x/orig_1.png"/></p>
 
 In this screenshot, we see Omnitrace is showing CPU frequency data for every core.
 To have Omnitrace only show CPU frequency for a single CPU core, add this to `~/.omnitrace.cfg`:
@@ -107,11 +107,11 @@ srun -N1 -n4 -c7 --gpu-bind=closest -A <account> -t 05:00 omnitrace-run -- ./Gho
 
 Now we see that only one instance of CPU frequency is reported:
 
-<p><img src="orig_3_sample_1cpu.png"/></p>
+<p><img src="images/mi250x/orig_3_sample_1cpu.png"/></p>
 
 Zooming in, we see instrumented MPI activity:
 
-<p><img src="orig_2_zoom_in.png"/></p>
+<p><img src="images/mi250x/orig_2_zoom_in.png"/></p>
 
 We can alter the Omnitrace configuration to see MPI overheads measured numerically. Add this to `~/.omnitrace.cfg`:
 
@@ -121,7 +121,7 @@ OMNITRACE_PROFILE                                  = true
 
 Then re-running our same instrumented binary gives us a few new output files, look for `wall_clock-0.txt`:
 
-<p><img src="profile.png"/></p>
+<p><img src="images/mi250x/profile.png"/></p>
 
 Here, we see a hierarchical view of overheads, to flatten the profile to see total count and mean duration for each MPI call, add this to `~/.omnitrace.cfg`:
 
@@ -131,6 +131,6 @@ OMNITRACE_FLAT_PROFILE                             = true
 
 Re-running `omnitrace-run` with our intrumented binary will now produce a `wall_clock-0.txt` file that looks like this:
 
-<p><img src="flat_profile.png"/></p>
+<p><img src="images/mi250x/flat_profile.png"/></p>
 
 We can see the number of times each MPI function was called, and the time associated with each.

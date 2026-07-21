@@ -1,0 +1,19 @@
+// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+// This software is distributed under the MIT License
+//
+// C version of reduction scalar reproducer created by Mahdieh Ghazimirsaeed
+// Converted by Bob Robey
+
+#include <stdio.h>
+int main(int argc, char *argv[]){
+   double ce1=0.0;
+   double ce2=0.0;
+   
+   for (int j = 0; j< 1000; j++){
+      ce1 += 1.0;
+      ce2 += 1.0;
+   }
+
+   printf("ce1 = %lf ce2 %lf\n", ce1, ce2);
+   return(0);
+}

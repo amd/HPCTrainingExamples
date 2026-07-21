@@ -1,0 +1,37 @@
+#!/bin/bash
+#SBATCH --gpus=8
+#SBATCH --ntasks=1
+#SBATCH --time=01:00:00
+#SBATCH --output=pytorch_fsdp2_venv.out
+#SBATCH --error=pytorch_fsdp2_venv.out
+#
+# FSDP2 RCCL scaling / memory study in a fresh virtual environment.
+# NOTE: FSDP2 (torch.distributed.fsdp.fully_shard) needs PyTorch >= 2.5.
+
+set -e
+
+python3 -m venv rocm-pytorch-fsdp2
+cd rocm-pytorch-fsdp2
+source bin/activate
+echo "Starting pytorch install"
+time pip3 install torch --index-url https://download.pytorch.org/whl/rocm6.4
+
+python3 -c 'import torch; from torch.distributed.fsdp import fully_shard; \
+  print("Torch:", torch.__version__, "count:", torch.cuda.device_count(), "FSDP2 OK")'
+
+# Upstream provides the transformer model reused by the benchmark.
+git clone --depth=1 https://github.com/pytorch/examples.git pytorch_examples
+export UPSTREAM="$PWD/pytorch_examples/distributed/FSDP2"
+
+export NCCL_DEBUG=INFO
+export NCCL_DEBUG_SUBSYS=INIT,COLL
+
+cd "$SLURM_SUBMIT_DIR"
+echo "===== FSDP2 scaling (fp32) ====="
+GPUS="2 4 8" bash ./rccl_scaling_sweep.sh
+
+echo "===== FSDP2 scaling (mixed precision bf16) ====="
+GPUS="2 4 8" MIXED_PRECISION=1 bash ./rccl_scaling_sweep.sh
+
+deactivate
+echo "Finished"

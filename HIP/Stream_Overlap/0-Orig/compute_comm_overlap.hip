@@ -31,7 +31,7 @@ __global__ void cube(double *input, double *output,int offset, int elements_per_
  
 void usage()
 {
-  printf("Usage: ./compute_comm_overlap <nstreams>\n");
+  printf("Usage: ./compute_comm_overlap <nstreams> <blockSize (optional, default=64)>\n");
   exit(1);
   return;
 }
@@ -43,9 +43,19 @@ int main( int argc, char* argv[] )
       usage();
     int num_streams = atoi(argv[1]);
 
+    // Number of threads in each thread block
+    int blockSize = BLOCKDIM;
+    if (argc == 3)
+      blockSize = atoi(argv[2]);
+
     // Size of vectors
     int n = 100000000;
-    int elements_per_stream = n/num_streams;
+    int elements_per_stream = (n % num_streams == 0) ? n/num_streams : -1;
+    if (elements_per_stream == -1) {
+       printf("ERROR: input value of num_streams does not evenly devide the array size \n");
+       printf("Please provide an input value for num_streams that evenly divides %d\n", n);
+       exit(1);
+    }
     int bytes_per_stream = elements_per_stream*sizeof(double);
     printf("bytes/stream: %f (MB)\n", bytes_per_stream*1.e-6);
 
@@ -100,14 +110,12 @@ int main( int argc, char* argv[] )
         h_input1[i] = sin(i);
     }
 
-
-    int blockSize, gridSizePerStream;
-
-    // Number of threads in each thread block
-    blockSize = BLOCKDIM; //256;
-
     // Number of thread blocks in grid
-    gridSizePerStream = 104; //(int)ceil((float)elements_per_stream/blockSize);
+#ifdef MI300A_RUN
+    int gridSizePerStream = 228; //(int)ceil((float)elements_per_stream/blockSize);
+#else
+    int gridSizePerStream = 104; //(int)ceil((float)elements_per_stream/blockSize);
+#endif
     printf("gridSizePerStream: %d\n", gridSizePerStream);
 
     hipEventRecord(start);
@@ -145,7 +153,7 @@ int main( int argc, char* argv[] )
 
     float milliseconds = 0;
     hipEventElapsedTime(&milliseconds, start, stop);
-    printf("Time required total %f\n", milliseconds);
+    printf("Time required total (ms) %f\n", milliseconds);
     printf("Finished copying the output vector from the GPU to the CPU\n");
 
    //Compute for CPU 

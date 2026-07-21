@@ -1,4 +1,7 @@
-# Complete the matrix multiply with shared memory
+
+## Complete the matrix multiply with shared memory
+
+README.md in `HPCTrainingExamples/HIP/07_matrix_multiply_shared` of the Training Exercises repository.
 
 In this example, a matrix multiply is performed with shared memory, where each thread computes 1 element of the resultant matrix.
 
@@ -10,5 +13,9 @@ To compile and run:
 ```
 $ make
 
-$ sbatch submit.sh
+$ sbatch -A <account-name> submit.sh
+```
+where `account-name` is your assigned Frontier username. A job file titled `<name-of-exercise>-%J.out` will be produced, where `%J` is the job id number of your run. To check your program output, simply run:
+```
+cat <name-of-exercise>-%J.out
 ```

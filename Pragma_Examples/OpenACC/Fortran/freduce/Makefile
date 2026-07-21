@@ -4,10 +4,10 @@ all: ${EXEC}
 
 FC1=$(notdir $(FC))
 
-ifeq ($(findstring flang, $(FC1)), flang)
+ifneq ($(findstring amdflang, $(FC1)),)
   OPENACC_FLAGS = -fopenacc --offload-arch=native
   FREE_FORM_FLAG = -Mfreeform
-else ifeq ($(findstring amdflang, $(FC1)), amdflang)
+else ifneq ($(findstring flang, $(FC1)),)
   OPENACC_FLAGS = -fopenacc --offload-arch=native
   FREE_FORM_FLAG = -Mfreeform
 else

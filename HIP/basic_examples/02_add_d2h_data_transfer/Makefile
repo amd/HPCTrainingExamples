@@ -1,15 +1,16 @@
 # ------------------------------
 
 HIPCC    = hipcc
-HIPFLAGS = --offload-arch=gfx908,gfx90a
+ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
+HIPFLAGS = --offload-arch=${ROCM_GPU}
 
 # ------------------------------
 
 add_one: add_one.o
-	${HIPCC} add_one.o -o add_one
+	${HIPCC} ${HIPFLAGS} add_one.o -o add_one
 
 add_one.o: add_one.cpp
-	${HIPCC} -c add_one.cpp
+	${HIPCC} ${HIPFLAGS} -c add_one.cpp
 
 .PHONY: clean
 

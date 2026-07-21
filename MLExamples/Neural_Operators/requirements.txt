@@ -1,0 +1,7 @@
+tqdm
+numpy
+argparse
+neuraloperator
+the_well
+matplotlib
+wandb

@@ -1,4 +1,7 @@
-# Complete the matrix multiply kernel
+
+## Complete the matrix multiply kernel
+
+README.md in `HPCTrainingExamples/HIP/05_compare_with_library` of the Training Exercises repository.
 
 In this exercise, we will use the `matrix_multiply` kernel we completed in `04_complete_the_kernel` and compare its performance against the hipBLAS version of DGEMM. 
 
@@ -8,7 +11,11 @@ To compile and run:
 ```
 $ make
 
-$ sbatch submit.sh
+$ sbatch -A <account-name> submit.sh
+```
+where `account-name` is your account name for the system (may be required for certain systems). A job file titled `<name-of-exercise>-%J.out` will be produced, where `%J` is the job id number of your run. To check your program output, simply run:
+```
+cat <name-of-exercise>-%J.out
 ```
 
 To view the resulting profile, run the python script:

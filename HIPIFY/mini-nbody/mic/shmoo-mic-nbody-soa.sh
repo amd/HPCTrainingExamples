@@ -7,7 +7,7 @@ if [ $# -gt 0 ]
     MIC=$1
 fi
 
-icc -std=c99 -openmp -mmic -DSHMOO -I../ -o $EXE $SRC
+icc -std=c99 -openmp -mmic -I../ -o $EXE $SRC
 
 scp $EXE $MIC:~/
 scp $MICROOT/libiomp5.so $MIC:~/

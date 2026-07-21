@@ -1,5 +1,0 @@
-/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/GhostExchange.dir
-/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/distclean.dir
-/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/test.dir
-/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/edit_cache.dir
-/home/gcapodag/repos/HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig2/build/CMakeFiles/rebuild_cache.dir

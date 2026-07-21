@@ -8,10 +8,11 @@ CXX               = g++
 GPUCXX            ?= nvcc
 
 # Uncomment this to use HIP
-# DFLAGS += -DENABLE_HIP  
+# DFLAGS += -DENABLE_HIP -fPIE 
 
 CFLAGS   = -g -O2
 CXXFLAGS = -Ofast -std=c++11
+ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 
 DIRS     := src 
 CFILES   := $(foreach DIR,$(DIRS),$(wildcard $(DIR)/*.c))
@@ -38,11 +39,11 @@ GPUFLAGS += $(DFLAGS) -Isrc
 
  
 # Use appropiate flags whether using CUDA or HIP
-ifeq ($(findstring -DENABLE_HIP,$(DFLAGS)),-DENABLE_HIP)
+ifneq ($(findstring -DENABLE_HIP,$(DFLAGS)),)
 # Set hipcc as the compiler for device code
 	GPUCXX    = hipcc
 	CXXFLAGS  += -I$(ROCM_PATH)/include
-	GPUFLAGS  += -O3 --offload-arch=gfx90a
+	GPUFLAGS  += -O3 --offload-arch=$(ROCM_GPU)
 	LIBS      += -L$(ROCM_PATH)/lib -lamdhip64 
 else
 	CXXFLAGS  += -I$(CUDA_PATH)/include

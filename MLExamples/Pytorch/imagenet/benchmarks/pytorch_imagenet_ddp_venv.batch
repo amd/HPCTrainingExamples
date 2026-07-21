@@ -1,0 +1,43 @@
+#!/bin/bash
+#SBATCH --gpus=8
+#SBATCH --ntasks=1
+#SBATCH --time=01:00:00
+#SBATCH --output=pytorch_imagenet_ddp_venv.out
+#SBATCH --error=pytorch_imagenet_ddp_venv.out
+#
+# RCCL scaling study of the PyTorch imagenet DDP example using --dummy data.
+# Uses a fresh virtual environment (adapt the ROCm wheel index for your version).
+
+set -e
+
+python3 -m venv rocm-pytorch-imagenet
+cd rocm-pytorch-imagenet
+source bin/activate
+echo "Starting pytorch install"
+time pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
+
+python3 -c 'import torch; print("cuda available:", torch.cuda.is_available(), \
+  "device count:", torch.cuda.device_count())'
+
+# Get the upstream example (contains imagenet/main.py with the --dummy flag).
+git clone --depth=1 https://github.com/pytorch/examples.git pytorch_examples
+pip3 install -r pytorch_examples/imagenet/requirements.txt
+
+export MAIN="$PWD/pytorch_examples/imagenet/main.py"
+
+# Confirm the RCCL topology once (rings/trees, per-GPU peers) for the record.
+export NCCL_DEBUG=INFO
+export NCCL_DEBUG_SUBSYS=INIT,COLL
+
+# Run the weak-scaling sweep shipped with this example.
+SWEEP="$SLURM_SUBMIT_DIR/rccl_scaling_sweep.sh"
+[[ -f "$SWEEP" ]] || SWEEP="$OLDPWD/rccl_scaling_sweep.sh"
+
+echo "===== Weak scaling (constant per-GPU batch) ====="
+MODE=weak ARCH=resnet50 GPUS="1 2 4 8" PERGPU_BATCH=256 bash "$SWEEP"
+
+echo "===== Strong scaling (constant global batch) ====="
+MODE=strong ARCH=resnet50 GPUS="1 2 4 8" GLOBAL_BATCH=2048 bash "$SWEEP"
+
+deactivate
+echo "Finished"

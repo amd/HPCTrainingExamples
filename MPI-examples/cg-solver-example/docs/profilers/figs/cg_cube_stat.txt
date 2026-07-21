@@ -1,0 +1,56 @@
+Routine                                       time
+INCL(cg_gpu)                             18.931784
+  EXCL(cg_gpu)                            7.805500
+  MPI_Init                                6.088721
+  MPI_Comm_rank                           0.000062
+  MPI_Comm_size                           0.000017
+  hipGetDeviceCount                       0.001044
+  hipSetDevice                            0.000019
+  hipGetDevice                            0.000298
+  hipGetDevicePropertiesR0600             0.000078
+  hipMalloc                               0.044942
+  __hipPushCallConfiguration              0.002470
+  __hipPopCallConfiguration               0.002348
+  hipLaunchKernel                         1.161256
+  hipMemsetAsync                          0.007970
+  hipMemcpyAsync                          0.068648
+  hipStreamSynchronize                    0.073777
+  MPI_Exscan                              0.005290
+  MPI_Allgather                           0.287930
+  MPI_Allreduce                           0.069153
+  MPI_Isend                               0.027188
+  MPI_Probe                               0.001318
+  MPI_Recv                                0.001213
+  MPI_Waitall                             0.478415
+  hipMemcpy                               0.120051
+  hipFree                                 0.011329
+  hipHostMalloc                           0.007890
+  MPI_Bcast                               0.012135
+  hipThreadExchangeStreamCaptureMode      0.001743
+  hipDeviceGetAttribute                   0.000143
+  hipExtMallocWithFlags                   0.018455
+  hipFuncGetAttributes                    0.785020
+  hipFuncSetAttribute                     0.000074
+  hipEventCreateWithFlags                 0.000056
+  hipDeviceGetPCIBusId                    0.003008
+  hipStreamCreateWithFlags                0.227185
+  hipStreamDestroy                        0.010132
+  hipDeviceCanAccessPeer                  0.022214
+  hipStreamWaitEvent                      0.000344
+  hipIpcOpenMemHandle                     0.062840
+  hipEventRecord                          0.000288
+  hipStreamCreate                         0.005689
+  hipMemset                               0.000136
+  MPI_Irecv                               0.005311
+  hipDeviceSynchronize                    0.014786
+  hipPeekAtLastError                      0.003239
+  MPI_Barrier                             0.000197
+  MPI_Reduce                              0.000410
+  hipHostFree                             0.004516
+  hipIpcCloseMemHandle                    0.308422
+  hipEventDestroy                         0.000036
+  MPI_Finalize                            0.028101
+  PER PROCESS METRICS                     0.000000
+  KERNELS                                 0.020429
+  THREADS                                 1.129948
+

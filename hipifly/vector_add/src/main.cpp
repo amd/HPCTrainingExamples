@@ -36,7 +36,7 @@ int main( int argc, char *argv[] ){
   set_device( device_id );
 
   
-  const uint N = 256 * 256 * 256 * 32;
+  const uint N = 256 * 256 * 256 * 16;
   printf( "N elements: %d \n", N );
   
   //  Allocate host arrays  
@@ -71,7 +71,9 @@ int main( int argc, char *argv[] ){
   bool validation_passed = true;
   for ( int i=0; i<N; i++ ){
     if ( h_c[i] != ( h_a[i] + h_b[i] ) ){
-      printf( "ERROR: Result doesn't match expected value: %f   %f \n", h_c[i], h_a[i] + h_b[i] );
+      if(validation_passed){
+        printf( "ERROR: Result doesn't match expected value: %f   %f \n", h_c[i], h_a[i] + h_b[i] );
+      }
       validation_passed = false;
     }
   }

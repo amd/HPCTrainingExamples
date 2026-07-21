@@ -1,0 +1,7 @@
+pyautogen~=0.2.0
+gradio
+numpy
+scipy
+matplotlib
+mcp[cli]
+

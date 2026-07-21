@@ -69,7 +69,7 @@ void host_device_transfer(const char* direction){
         else if( strcmp(direction, "D2H") == 0){
 
             for(int iteration=0; iteration<5; iteration++){
-                gpuCheck( cudaMemcpy(d_A, h_A, bytes, cudaMemcpyHostToDevice) );
+                gpuCheck( cudaMemcpy(h_A, d_A, bytes, cudaMemcpyDeviceToHost) );
             }        
         }
         else{
@@ -90,7 +90,7 @@ void host_device_transfer(const char* direction){
         else if( strcmp(direction, "D2H") == 0){
 
             for(int iteration=0; iteration<loop_count; iteration++){
-                gpuCheck( cudaMemcpy(d_A, h_A, bytes, cudaMemcpyHostToDevice) );
+                gpuCheck( cudaMemcpy(h_A, d_A, bytes, cudaMemcpyDeviceToHost) );
             }
         }
         else{

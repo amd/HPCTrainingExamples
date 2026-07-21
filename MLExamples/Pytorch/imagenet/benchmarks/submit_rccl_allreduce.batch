@@ -1,0 +1,29 @@
+#!/bin/bash
+#SBATCH --gpus=8
+#SBATCH --ntasks=1
+#SBATCH --time=00:30:00
+#SBATCH --output=submit_rccl_allreduce.out
+#SBATCH --error=submit_rccl_allreduce.out
+#
+# Compute-independent RCCL measurement: pure all-reduce bandwidth vs. GPU count.
+# Sweeps 2, 4, 8 ranks by masking visible GPUs and launching one process each
+# via torchrun. Reports algbw/busbw per message size.
+
+set -e
+
+module load rocm openmpi pytorch 2>/dev/null || source rocm-pytorch-imagenet/bin/activate
+
+cd "$SLURM_SUBMIT_DIR"
+
+export NCCL_DEBUG=WARN         # set INFO to inspect rings/trees
+
+for n in 2 4 8; do
+  devs=$(seq -s, 0 $(( n - 1 )))
+  echo "================ ${n} GPUs ================"
+  HIP_VISIBLE_DEVICES=$devs ROCR_VISIBLE_DEVICES=$devs \
+    torchrun --standalone --nproc_per_node=$n rccl_allreduce_bench.py \
+      --min-bytes $((1<<20)) --max-bytes $((1<<30))
+  echo
+done
+
+echo "Finished"

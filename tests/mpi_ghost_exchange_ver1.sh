@@ -1,17 +1,29 @@
 #!/bin/bash
 
 export HSA_XNACK=1
-module load amdclang openmpi
 
-# OpenIB is removed as of OpenMPI 5.0.0, so only needed for older versions
-CurrentVersion=`mpirun --version |head -1 | tr -d '[:alpha:] ) (' `
-RequiredVersion="4.9.9"
-if [ "$(printf '%s\n' "$RequiredVersion" "$CurrentVersion" | sort -Vr | head -n1)" = "$RequiredVersion" ]; then
-   echo "Setting MPIRUN options to exclude openib transport layer for mpi version ${CurrentVersion}"
-   echo "OpenMPI versions starting with 5.0.0 have the legacy openib transport layer removed"
-   MPI_RUN_OPTIONS="--mca pml ob1 --mca btl ^openib"
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
 else
-   MPI_RUN_OPTIONS="--mca coll ^hcoll"
+   module -t list 2>&1 | grep -q "^rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   module load amdflang-new >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load amdclang
+   fi
+   module load openmpi
 fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
@@ -19,20 +31,36 @@ cd ${REPO_DIR}/MPI-examples/GhostExchange/GhostExchange_ArrayAssign
 
 cd Ver1
 
-rm -rf build
-mkdir build && cd build
-cmake ..
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cd ${BUILD_DIR}
+
+cmake ${SRC_DIR}
 make
 
 NUMCPUS=`lscpu | grep '^CPU(s):' |cut -d':' -f2 | tr -d ' '`
-
-if [ ${NUMCPUS} -gt 255 ]; then
-  mpirun ${MPI_RUN_OPTIONS} -n 16 --bind-to core --map-by ppr:2:numa  --report-bindings ./GhostExchange \
-      -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I 1000
+NUM_GPUS=`rocminfo |grep GPU |grep "Device Type" |wc -l`
+NUM_PER_RESOURCE_MPI4=`expr 4 / ${NUM_GPUS}`
+NUM_PER_RESOURCE_MPI16=`expr 16 / ${NUM_GPUS}`
+if [ -n "${CRAY_MPICH_VERSION:-}" ]; then
+  echo "Detected Cray MPICH: using srun launcher"
+  MPIRUN="srun"
+  MPIRUN_OPTIONS="--cpu-bind=verbose,cores"
+  # per-resource placement: tasks per socket (closest NUMA equivalent)
+  MPI_RESOURCE_MPI4="--ntasks-per-socket=${NUM_PER_RESOURCE_MPI4}"
+  MPI_RESOURCE_MPI16="--ntasks-per-socket=${NUM_PER_RESOURCE_MPI16}"
 else
-   mpirun ${MPI_RUN_OPTIONS} -n 4 --bind-to core --report-bindings ./GhostExchange \
-       -x 2  -y 2  -i 2000 -j 2000 -h 2 -t -c -I 1000
+  MPIRUN="mpirun"
+  MPIRUN_OPTIONS="--bind-to core --report-bindings"
+  # per-resource placement: ranks per NUMA domain
+  MPI_RESOURCE_MPI4="--map-by ppr:${NUM_PER_RESOURCE_MPI4}:numa"
+  MPI_RESOURCE_MPI16="--map-by ppr:${NUM_PER_RESOURCE_MPI16}:numa"
 fi
 
-cd ..
-rm -rf build
+${MPIRUN} -n 4 ${MPIRUN_OPTIONS} ${MPI_RESOURCE_MPI4} ./GhostExchange \
+       -x 2  -y 2  -i 2000 -j 2000 -h 2 -t -c -I 1000
+if [[ ${NUM_PER_RESOURCE_MPI16} -le 4 ]]; then
+   ${MPIRUN} -n 16 ${MPIRUN_OPTIONS} ${MPI_RESOURCE_MPI16} ./GhostExchange \
+          -x 4  -y 4  -i 20000 -j 20000 -h 2 -t -c -I 1000
+fi

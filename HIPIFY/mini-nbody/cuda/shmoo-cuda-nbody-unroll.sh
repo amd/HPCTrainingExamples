@@ -1,7 +1,7 @@
 SRC=nbody-unroll.cu
 EXE=nbody-unroll
 
-nvcc -arch=sm_35 -ftz=true -I../ -o $EXE $SRC -DSHMOO
+nvcc -arch=sm_35 -ftz=true -I../ -o $EXE $SRC
 
 echo $EXE
 

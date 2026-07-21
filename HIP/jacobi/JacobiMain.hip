@@ -48,9 +48,16 @@ int main(int argc, char ** argv)
                             grid,
                             mesh);
 
-  Jacobi_t Jacobi(grid, mesh);
+  // Scope the Jacobi object so its destructor (hipFree/hipHostFree and
+  // roctracer_stop via finalize_logger) runs BEFORE MPI_Finalize(). Releasing
+  // HIP/roctracer resources after MPI and the profiler have finalized corrupts
+  // the heap ("corrupted size vs. prev_size in fastbins") under the ROCm 7.x
+  // rocprofiler-sdk backend used by tau_exec.
+  {
+    Jacobi_t Jacobi(grid, mesh);
 
-  Jacobi.Run();
+    Jacobi.Run();
+  }
 
   // Finalize the MPI process
   MPI_Finalize();

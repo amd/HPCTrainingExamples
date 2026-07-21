@@ -37,11 +37,11 @@ do{                                                                             
 /* --------------------------------------------------
 Square elements kernel
 -------------------------------------------------- */
-__global__ void square_elements(int *A, int n)
+__global__ void square_elements(float *A, int n)
 {
     int id = blockDim.x * blockIdx.x + threadIdx.x;
 
-    if (id < n) { 
+    if (id < n) {
 
         A[id] = A[id] * A[id];
 
@@ -57,18 +57,18 @@ int main(int argc, char *argv[]){
     int N = 1024 * 1024;
 
     /* Bytes in N ints */
-    size_t bytes = N * sizeof(int);
+    size_t bytes = N * sizeof(float);
 
     /* Allocate memory for host array */
-    int *h_A = (int*)malloc(bytes);
+    float *h_A = (float*)malloc(bytes);
 
     /* Initialize host arrays */
     for(int i=0; i<N; i++){
-        h_A[i] = i; 
-    }    
+        h_A[i] = static_cast<float>(i);
+    }
 
     /* Allocate memory for device array */
-    int *d_A;
+    float *d_A;
     gpuCheck( hipMalloc(&d_A, bytes) );
 
     /* Copy data from host array to device array */
@@ -94,9 +94,9 @@ int main(int argc, char *argv[]){
 
     /* Check for correct results */
     for (int i=0; i<N; i++){
-
-        if(h_A[i] != i * i){
-            printf("Error: h_A[%d] = %d instead of %d\n", i, h_A[i], i*i );
+        float expected = static_cast<float>(i) * static_cast<float>(i);
+        if(h_A[i] != expected){
+            printf("Error: h_A[%d] = %f instead of %f\n", i, h_A[i], expected );
             exit(1);
         }
     }

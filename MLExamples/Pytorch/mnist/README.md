@@ -1,0 +1,727 @@
+# MNIST pytorch examples
+
+README.md from `HPCTrainingExamples/MLExamples/Pytorch/mnist` in the Training Examples repository
+
+We'll cover three different ways to run Pytorch jobs:
+- [Virtual Environments](#Virtual-Environment)
+- [Container Environments](#Container-Environment)
+- [Module Environments](#Module-Environment)
+
+Why are there different ways? Each method fits a different scenario
+and system configuration. Knowing how to use each of them is
+important since the method you use on your laptop or workstation
+may not be ideal on an HPC system.
+
+First we'll set up the problem and make a few small modifications.
+
+```bash
+git clone https://github.com/pytorch/examples.git pytorch_examples
+cd pytorch_examples
+```
+
+The example we want to run is the MNIST training
+example. It is a Image classification (MNIST) using Convnets.
+We go to that directory and set up for our run.
+
+```bash
+cd mnist
+```
+
+The key file in this directory is `main.py`. This script will run on either CPUs or GPUs,
+depending on what is available. In order to run on the GPU, the model and tensors need to
+be moved to device using `.to(device)` after `device` is chosen to be either CPU or GPU.
+
+To print which `device` was selected, we add this line to line 101 of `main.py`:
+
+```python
+    print(f"Using device: {device}")
+```
+
+For our scripts, we use `sed` to insert that line on the fly:
+
+```bash
+sed -i -e '/device = torch.device("cpu")/a\    print(f"Using device: {device}")' main.py
+```
+
+And return to the base directory with
+
+```bash
+cd ../..
+```
+
+## Virtual Environment
+
+Probably the most common way to run a pytorch application is to use a python
+virtual environment. It is the most flexible and can be used from your local
+PC, to a workstation and then for larger jobs, on an HPC system with the latest
+powerful GPUs.
+
+On an HPC cluster, we need to get an allocation with a GPU so that we can
+run this exercise. We'll get just one GPU to begin with so that we don't
+monopolize the resources.
+
+```bash
+salloc --ntasks 1 --gpus=1 --time=01:00:00
+```
+
+Go to the directory with the mnist example
+
+```bash
+cd ~/pytorch_examples/mnist
+```
+
+Create a virtual environment. This will provide an isolated working space that
+will be separated from other python packages.
+
+```bash
+python3 -m venv rocm-pytorch
+source rocm-pytorch/bin/activate
+```
+
+This will create a directory `rocm-pytorch`, which is empty at first.
+We have to populate it with the software that we need. First, we will
+install the correct version of PyTorch.
+
+```bash
+time pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
+```
+
+> [!NOTE]
+> This is for a ROCm 6.4.x release. Make sure that you have a ROCm module loaded
+> and adapt the url for your ROCm version. Otherwise PyTorch might not run on
+> the GPU.
+
+Before we jump into running our project, lets confirm that
+the environment is set up and running properly. We'll first 
+confirm that we can import the torch module in our python
+environment. Then we'll check that we can access a GPU (on ROCm,
+PyTorch still uses the `torch.cuda` API for this):
+
+```bash
+python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import torch; print(torch.cuda.is_available())'
+```
+
+Now let's run the MNIST example. We time it for later analysis.
+
+```bash
+time python3 main.py
+```
+
+You should see the line `Using device: cuda` that we added before. On ROCm GPU builds,
+the label may still say **cuda** even though it runs on an AMD GPU. If
+`torch.cuda.is_available()` is `False` but you requested GPUs in Slurm, verify that the
+GPUs are actually visible using `amd-smi`.
+
+Cleaning up after our run, we deactivate the virtual environment
+and remove our directory. With the amount of disk space that these
+environments can consume, it is important to clean up if we don't
+plan to reuse it.
+
+```bash
+deactivate
+rm -rf rocm-pytorch
+```
+
+Be sure and exit the allocation to free it up for other users.
+
+```bash
+exit
+```
+
+Now that we have it running, it is best to submit the project
+to the HPC cluster using a batch script. Exit the allocation
+and set up to submit the job using a batch script. For convenience,
+clone the HPC Training Examples and go to the directory with
+the scripts. Or you can cut and paste the following into a batch script named
+`pytorch_mnist_venv.batch`.
+
+```bash
+git clone https://github.com/AMD/HPCTrainingExamples
+cd HPCTrainingExamples/MLExamples/Pytorch/mnist
+```
+
+Here are the contents of the batch script:
+
+```bash
+#!/bin/bash
+#SBATCH --gpus=1
+#SBATCH --time=01:00:00
+#SBATCH --ntasks=1
+#SBATCH --output=pytorch_mnist_venv.out
+#SBATCH --error=pytorch_mnist_venv.out
+
+python3 -m venv rocm-pytorch
+cd rocm-pytorch
+source bin/activate
+echo "Starting pytorch install"
+time pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
+
+python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import torch; print(torch.cuda.is_available())'
+
+git clone --depth=1 https://github.com/pytorch/examples.git pytorch_examples
+cd pytorch_examples/mnist
+sed -i -e '/device = torch.device("cpu")/a\    print(f"Using device: {device}")' main.py
+
+pip3 install -r requirements.txt
+
+echo "Starting mnist"
+time python3 main.py
+cd ../../..
+
+deactivate
+rm -rf rocm-pytorch
+
+echo "Finished"
+```
+
+And we submit the batch script with 
+
+```bash
+sbatch pytorch_mnist_venv.batch
+```
+
+The output will show up in `pytorch_mnist_venv.out`. Check the result and the
+time it took to run the job. Also, confirm that it ran on the GPU.
+
+If we wanted to reuse the virtual environment that we created. we could
+leave the directory and just start with sourcing the activate script. This
+would save some time and network traffic.
+
+
+## Container Environment
+
+We'll look at two different container systems for running this problem. HPC centers usually
+support only non-root options for containers. Check with your local HPC documentation for
+what they recommend.
+
+
+### Apptainer
+
+With Apptainer, we first need to download the container to the local system. Most container
+images are in docker format, so we download it and convert it to the `sif` format. We can do this 
+in advance and keep the converted image locally for future runs. Check with your local system
+on whether they recommend that this is done on the front-end or as a batch job.
+
+> [!TIP]
+> Converting a container image can take significant time and the container itself a lot of disk space.
+> Therefore, we already prepared a converted image on AAC6 and AAC7. You can follow the rest of the
+> instructions after linking it into your home directory with:
+> ```bash
+> ln -s /shareddata/containers/pytorch/rocm-pytorch.sif ~/
+> ```
+
+The container image will have a self-contained operating system, python and ROCm version.
+We try to get the closest matches to our current system versions. Squashfs needs a lot of
+memory, so on AAC6 we'll get an exclusive allocation on one of the SH5 nodes, which only
+have a single GPU so that we don't tie up the nodes with more GPUs. For other systems,
+adapt the partition accordingly.
+
+```bash
+salloc --exclusive -p 1CN48C1G1H_MI300A_Ubuntu22
+apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu24.04_py3.12_pytorch_release_2.6.0
+exit
+```
+
+Now we can follow similar steps as done in the previous example, but replace the pip install
+with starting up the apptainer image. We get an GPU allocation with salloc and start up the 
+container image with a shell.
+
+```bash
+salloc --ntasks 1 --gpus=1 --time=01:00:00
+apptainer shell --rocm ~/rocm-pytorch.sif
+```
+
+We can test whether the pytorch is functioning correctly and that we can access a GPU.
+
+```bash
+python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import torch; print(torch.cuda.is_available())'
+```
+
+We are ready to run the example problem. We go to the directory with the example files.
+
+```bash
+cd ~/pytorch_examples/mnist
+```
+
+We need to install the python library requirements.
+
+```bash
+pip3 install --user -r requirements.txt
+```
+
+And we are finally ready to run the example.
+
+```bash
+time python3 main.py
+```
+
+Exit the shell and then exit the allocation and clean up.
+
+#### Apptainer batch file
+
+It is better to run as a batch job once you have the verified the steps that you need.
+We put all the commands in a batch file. And we change the apptainer command to exec
+instead of "shell". Apptainer will run the command following the load of the container
+image. The batch file should look something
+like the following. We'll name the file `pytorch_mnist_apptainer.batch`.
+
+``` bash
+#!/bin/bash
+#SBATCH --gpus=1
+#SBATCH --ntasks=1
+#SBATCH --time=01:00:00
+#SBATCH --output=pytorch_mnist_apptainer.out
+#SBATCH --error=pytorch_mnist_apptainer.out
+
+# Pre-pull rocm-pytorch image on a login/front-end node
+#  apptainer pull rocm-pytorch.sif docker://rocm/pytorch:rocm6.4.3_ubuntu24.04_py3.12_pytorch_release_2.6.0
+
+cd $HOME/pytorch_examples/mnist
+mkdir -p .torch
+
+apptainer exec --rocm \
+   --bind "$PWD:/workspace" -W /workspace \
+   --env TORCH_HOME=/workspace/.torch \
+   "$HOME/rocm-pytorch.sif" \
+   bash -s <<'EOS'
+pip3 install --user -r requirements.txt
+python3 <<'EOF'
+import torch, platform
+print("Torch module location: ", torch)
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("Platform:", platform.platform())
+print("torch.cuda.is_available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+EOF
+time python3 main.py
+EOS
+```
+
+We submit the job with 
+
+```bash
+sbatch pytorch_mnist_apptainer.batch
+```
+
+Output will be in `pytorch_mnist_apptainer.out`
+
+#### Extending the container with a writable overlay
+
+By default, the container image is read-only and changes to the image are lost once the the container is teared down.
+One way to keep persistent changes in Apptainer is using a **writable overlay**. An overlay is a writeable disk file
+that Apptainer layers on the read-only `.sif` such that all changes within the container (e.g. installing a venv)
+persist. This avoids having to rebuild the container for each minor change and allows to build multiple setups
+based on a single read-only base container. Create an overlay before submitting (`--size` is MiB) with:
+
+```bash
+mkdir -p ~/apptainer_mnist_overlay
+apptainer overlay create --size 2048 ~/apptainer_mnist_overlay/mnist_overlay.img
+```
+
+This overlay can be applied like this when launching the container:
+
+```bash
+apptainer exec \
+  --rocm \
+  --overlay ~/apptainer_mnist_overlay/mnist_overlay.img \
+  --bind "$PWD:/workspace" -W /workspace \
+  ~/rocm-pytorch.sif python3 -c 'import sys; print(sys.version)'
+```
+
+Instead of installing the additional dependencies for this example into the Python environment of the
+host, we can now create a persistent virtual environment with all the dependencies into this overlay.
+Once we are inside the container launched with the overlay option, all changes we make in the container
+are automatically captured in the overlay. To setup the example and its dependencies, we just run
+
+```bash
+apptainer exec \
+  --rocm \
+  --overlay ~/apptainer_mnist_overlay/mnist_overlay.img \
+  ~/rocm-pytorch.sif \
+  bash -s <<'EOF'
+cd /opt
+python3 -m venv --system-site-packages mnist_venv
+source mnist_venv/bin/activate
+git clone --depth=1 https://github.com/pytorch/examples.git pytorch_examples
+cd pytorch_examples/mnist
+pip3 install -r requirements.txt
+EOF
+```
+Now you can submit `pytorch_mnist_apptainer_overlay.batch` to test if the environment is correctly setup
+and the example runs.
+
+> [!NOTE]
+> The container image has **not been changed**. You can test this by launching a container without the overlay and checking if
+> `/opt/mnist_venv` or `/opt/pytorch_examples` exist.
+
+### Podman
+
+To run the same example with podman, we can directly use the docker container.
+The steps for an interactive job are
+
+First, get an allocation with a GPU
+
+```bash
+salloc --ntasks 1 --gpus=1 --time=01:00:00
+```
+
+Now start up an interactive shell in Podman
+
+```bash
+podman run -it --device=/dev/dri --device=/dev/kfd --network=host --ipc=host \
+  --userns=keep-id --group-add=keep-groups --cgroupns=host \
+  --cap-add=SYS_PTRACE --security-opt seccomp=unconfined \
+  -v "$HOME:/workdir" -w /workdir \
+  docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.6.0 bash
+```
+
+Inside that container shell:
+
+```bash
+cd pytorch_examples/mnist
+pip3 install -r requirements.txt
+
+python3 - << EOF
+import torch, platform
+print("Torch module location: ", torch)
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("Platform:", platform.platform())
+print("torch.cuda.is_available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+EOF
+
+time python3 main.py
+```
+
+Then the Slurm batch file for the podman job is
+
+```bash
+#!/bin/bash
+#SBATCH --gpus=1
+#SBATCH --ntasks=1
+#SBATCH --time=01:00:00
+#SBATCH --output=pytorch_mnist_podman.out
+#SBATCH --error=pytorch_mnist_podman.out
+
+cd "$HOME/pytorch_examples/mnist" || exit 1
+
+podman run --rm \
+  --device=/dev/dri --device=/dev/kfd --network=host --ipc=host \
+  --userns=keep-id --group-add=keep-groups --cgroupns=host \
+  --cap-add=SYS_PTRACE --security-opt seccomp=unconfined \
+  -v "$PWD:/workdir" -w /workdir \
+  docker://rocm/pytorch:rocm6.4.3_ubuntu22.04_py3.10_pytorch_release_2.6.0 \
+  bash -s <<'EOS'
+set -e
+pip3 install -r requirements.txt
+python3 <<'EOF'
+import torch, platform
+print("Torch module location: ", torch)
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("Platform:", platform.platform())
+print("torch.cuda.is_available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+EOF
+time python3 main.py
+EOS
+```
+
+## Module Environment
+
+For sites that are heavily using pytorch, it may be worth installing it locally on the system
+and providing it to users in a module environment. The local pytorch installation can be done
+with pip installs or by building from source. Building from source allows customization and
+optimization for the local CPU and GPU hardware. 
+
+In this local pytorch module, the version is built from source with the GPU-aware MPI and only
+the MI200 and MI300 series GPU gfx model support. The build is also done without miniconda
+or miniforge so that it is self-standing and not dependent on another package.
+Also, many additional pytorch packages have been 
+added. These include
+
+- torchvision
+- torchaudio
+- triton
+- transformers
+- sageattention
+- flashattention
+
+We get an interactive compute node with a single GPU
+
+```bash
+salloc --ntasks 1 --gpus=1 --time=01:00:00
+```
+
+Load the environment
+
+```bash
+module load rocm pytorch
+```
+
+Going to the mnist example
+
+```bash
+cd ~/pytorch_examples/mnist
+pip3 install --user -r requirements.txt
+```
+
+Check that it is working properly.
+
+```bash
+python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import torch; print(torch.cuda.is_available())'
+```
+
+We can get more information with the same check script that we used above in the
+container examples.
+
+```bash
+python3 - << EOF
+import torch, platform
+print("Torch module location: ",torch)
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("Platform:", platform.platform())
+print("torch.cuda.is_available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+EOF
+```
+
+We can now move on to running our pytorch application
+
+```bash
+time python3 main.py
+```
+
+Exit the allocation
+
+```bash
+exit
+```
+
+If additional python packages need to be added, like above, it is suggested to create a python virtual
+environment as in the first example. Also, to fully isolate the pytorch module, it is recommended to
+clear the PYTHONPATH variable. The pytorch module will add to the PYTHONPATH variable the paths
+necessary for the software in the module. To support loading other module packages, the additions
+are appended to the existing PYTHONPATH. With these additions, our example looks like:
+
+We get an interactive compute node with a single GPU
+
+```bash
+salloc --ntasks 1 --gpus=1 --time=01:00:00
+```
+
+Changing to the location of the mnist example and creating a virtual environment
+
+```bash
+module load rocm pytorch
+cd ~/pytorch_examples/mnist
+python3 -m venv rocm-pytorch
+source rocm-pytorch/bin/activate
+pip3 install -r requirements.txt
+
+python3 - << EOF
+import torch, platform
+print("Torch module location: ",torch)
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("Platform:", platform.platform())
+print("torch.cuda.is_available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+EOF
+
+time python3 main.py
+
+deactivate
+rm -rf rocm-pytorch
+```
+
+We can make this run as a batch file by adding the batch file directives
+at the top. First without the virtual environment
+
+```bash
+#!/bin/bash
+#SBATCH --gpus=1
+#SBATCH --time=01:00:00
+#SBATCH --ntasks=1
+#SBATCH --output=pytorch_mnist_module.out
+#SBATCH --error=pytorch_mnist_module.out
+
+module load rocm pytorch
+python3 - << EOF
+import torch, platform
+print("Torch module location: ",torch)
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("Platform:", platform.platform())
+print("torch.cuda.is_available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+EOF
+
+~/pytorch_examples/mnist
+pip3 install --user -r requirements.txt
+time python3 main.py
+```
+
+And submit the job with
+
+```bash
+sbatch pytorch_mnist_module.batch
+```
+
+With a virtual environment in the `pytorch_mnist_module_venv.batch` file
+
+```bash
+#!/bin/bash
+#SBATCH --gpus=1
+#SBATCH --time=01:00:00
+#SBATCH --ntasks=1
+#SBATCH --output=pytorch_mnist_module_venv.out
+#SBATCH --error=pytorch_mnist_module_venv.out
+
+python3 -m venv rocm-pytorch
+pushd rocm-pytorch
+source bin/activate
+
+module load rocm pytorch
+python3 - << EOF
+import torch, platform
+print("Torch module location: ",torch)
+print("Torch:", torch.__version__, " HIP:", getattr(torch.version, "hip", None))
+print("Platform:", platform.platform())
+print("torch.cuda.is_available:", torch.cuda.is_available())
+print("Device count:", torch.cuda.device_count())
+if torch.cuda.is_available():
+    print("Device 0:", torch.cuda.get_device_name(0))
+EOF
+
+pushd ~/pytorch_examples/mnist
+pip3 install -r requirements.txt
+python3 main.py
+
+popd
+deactivate
+popd
+rm -rf rocm-pytorch
+```
+
+And submit the job with
+
+```bash
+sbatch pytorch_mnist_module_venv.batch
+```
+
+### Modifications to run on multiple GPUs
+
+It is a simple procedure to run on multiple GPUs.
+
+We first modify the main.py script to use the GPUs that we have allocated.
+This is done right after line 127 by wrapping the model in a `DataParallel`
+block. But to do this, we
+have to split the line setting the model from the operation sending it
+to the device.
+
+```python
+model = Net().to(device)
+```
+
+becomes
+
+```python
+model = Net()
+model.to(device)
+```
+
+Now we can add the code to `model` to make it use multiple GPUs. 
+The revised and lines are:
+
+```python
+model = Net()
+if torch.cuda.device_count() > 1:
+    print(f"Using {torch.cuda.device_count()} GPUs!")
+    model = nn.DataParallel(model)
+model.to(device)
+optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
+```
+
+We have conveniently created a sed script that can be used to make
+this modification on the fly for our Slurm batch script:
+
+```bash
+sed -i -e '/device = torch.device("cpu")/a\    print(f"Using device: {device}")' main.py
+sed -i -e '/model = Net().to(device)/s/.to(device)//' main.py
+sed -i -e '/model = Net()/a\    if torch.cuda.device_count() > 1:\
+        print(f"Using {torch.cuda.device_count()} GPUs!")\
+        model = nn.DataParallel(model)\
+    model.to(device)' main.py
+```
+
+And now we make a new batch script with a simple change to the SBATCH 
+directives to get more GPUs. 
+
+```bash
+#!/bin/bash
+#SBATCH --gpus=2
+#SBATCH --time=01:00:00
+#SBATCH --ntasks=2
+#SBATCH --output=pytorch_mnist_venv_2gpus.out
+#SBATCH --error=pytorch_mnist_venv_2gpus.out
+
+python3 -m venv rocm-pytorch-2gpus
+cd rocm-pytorch-2gpus
+source bin/activate
+echo "Starting pytorch install"
+time pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
+
+python3 -c 'import torch' 2> /dev/null && echo 'Success' || echo 'Failure'
+python3 -c 'import torch; print(torch.cuda.is_available())'
+
+git clone --depth=1 https://github.com/pytorch/examples.git pytorch_examples
+cd pytorch_examples/mnist
+
+sed -i -e '/device = torch.device("cpu")/a\    print(f"Using device: {device}")' main.py
+sed -i -e '/model = Net().to(device)/s/.to(device)//' main.py
+sed -i -e '/model = Net()/a\    if torch.cuda.device_count() > 1:\
+        print(f"Using {torch.cuda.device_count()} GPUs!")\
+        model = nn.DataParallel(model)\
+    model.to(device)' main.py
+
+pip3 install -r requirements.txt
+
+echo "Starting mnist"
+time python3 main.py
+cd ../../..
+
+deactivate
+rm -rf rocm-pytorch-2gpus
+
+echo "Finished"
+```
+All that is left to do is submit the job.
+
+```bash
+sbatch pytorch_mnist_venv_2gpus.batch
+```
+
+Output will be in `pytorch_mnist_venv_2gpus.out`
+
+## Wrapup
+
+There are also many combinations of the approaches presented. There is not one ideal choice that will
+work on every system. Consider how each works for your situation and the system you are running on. Consult
+the recommendations for your HPC center for guidance.
+What works best on your local system may not be the best in an HPC or cloud environment. Consider the
+load on the system, especially network load and file system space.
+

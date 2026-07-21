@@ -1,11 +1,39 @@
 #!/bin/bash
 
-module load rocm
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+   if [ -z "$HIPCC" ]; then
+      export HIPCC=`which hipcc`
+   fi
+else
+   module -t list 2>&1 | grep -q "^rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   module load amdflang-new >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load amdclang
+   fi
+fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-cd ${REPO_DIR}/ManagedMemory/vectorAdd
+SRC_DIR=${REPO_DIR}/ManagedMemory/vectorAdd
 
-sed -i 's/\/opt\/rocm/${ROCM_PATH}/g' Makefile
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp ${SRC_DIR}/* ${BUILD_DIR}
+
+cd ${BUILD_DIR}
 
 make vectoradd_hip.exe
 

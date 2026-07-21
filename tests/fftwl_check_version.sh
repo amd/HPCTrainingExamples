@@ -1,0 +1,36 @@
+#!/bin/bash
+
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+else
+   module -t list 2>&1 | grep -q "^rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   module load amdflang-new >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load amdclang
+   fi
+fi
+
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+   module load cray-fftw >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load fftw
+   fi
+else
+   module load fftw
+fi
+
+fftwl-wisdom -V
+

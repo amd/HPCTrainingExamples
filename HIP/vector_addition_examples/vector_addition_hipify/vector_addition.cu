@@ -48,7 +48,7 @@ Main program
 int main(int argc, char *argv[]){
 
     /* Size of array */
-    int N = 1024 * 1024;
+    int N = 2560 * 2560;
 
     /* Bytes in array in double precision */
     size_t bytes = N * sizeof(double);

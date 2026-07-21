@@ -1,6 +1,11 @@
 #!/bin/bash
 
-module purge
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -eq 1 ]; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 module load scorep
 
 scorep --version

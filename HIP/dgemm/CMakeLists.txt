@@ -2,14 +2,14 @@
 #  Copyright (c) 2022, Advanced Micro Devices, Inc. All rights reserved.
 # ***************************************************************************/
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.16)
 project(xGEMM)
 
 # ----------------------------------------------------------------SET CXX STANDARD--
 set(CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
+set(CMAKE_EXE_LINKER_FLAGS "-lpthread")
 # -------------------------------------------------------------------------INCLUDES--
 include(GNUInstallDirs)
 # ------------------------------------------------------------------------------HIP--

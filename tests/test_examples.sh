@@ -8,7 +8,12 @@ REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 
 #salloc -N 1 -p LocalQ --gpus=1 -t 10:00
 
-module load rocm
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -eq 1 ]; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 cd ${REPO_DIR}/HIP/vectorAdd
 make vectoradd
 ./vectoradd
@@ -52,7 +57,12 @@ cd
 
 cd ${REPO_DIR}/HIP/jacobi
 
-module load rocm
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -eq 1 ]; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 module load openmpi
 
 rm -rf build
@@ -116,8 +126,13 @@ cp CMakeLists.txt CMakeLists.txt.portable
 cp ~/Makefile .
 cp ~/CMakeLists.txt .
 
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/C/saxpy/
-module load rocm
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/C/1_saxpy/6_saxpy_targetdata
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -eq 1 ]; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 module load amdclang
 make
 ./saxpy
@@ -125,8 +140,13 @@ make clean
 
 cd
 
-cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/freduce
-module load rocm
+cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/2_reduction/1_reduction_solution
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -eq 1 ]; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 module load amdclang
 make
 ./freduce

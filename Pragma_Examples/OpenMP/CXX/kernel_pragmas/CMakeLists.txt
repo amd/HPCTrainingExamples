@@ -11,15 +11,13 @@ execute_process(COMMAND rocminfo COMMAND grep -m 1 -E gfx[^0]{1} COMMAND sed -e 
 
 string(REPLACE -O2 -O3 CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
 set(CMAKE_CXX_FLAGS_DEBUG "-ggdb")
-set(CMAKE_CXX_FLAGS "-g")
-#set(CMAKE_CXX_FLAGS "-g -faligned-allocation -fnew-alignment=256")
+set(CMAKE_CXX_FLAGS "-fstrict-aliasing -faligned-allocation -fnew-alignment=256")
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-   # using Clang
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp --offload-arch=${ROCM_GPU} -target x86_64-pc-linux-gnu -fstrict-aliasing")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp --offload-arch=${ROCM_GPU}")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-   # using GCC
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -foffload=-march=${ROCM_GPU} -fstrict-aliasing -fopt-info-optimized-omp")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -foffload=-march=${ROCM_GPU}")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Cray")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 endif()
 
 add_executable(kernel1 kernel1.cc)

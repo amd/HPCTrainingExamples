@@ -1,17 +1,16 @@
-# Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved This software is distributed under the MIT License, Contact: Peter Cross
+import sys
 import requests
 import logging
 from langchain_community.document_loaders import PDFPlumberLoader
 from langchain_experimental.text_splitter import SemanticChunker
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.llms import Ollama
-from langchain.prompts import PromptTemplate
-from langchain.chains.llm import LLMChain
-from langchain.chains.combine_documents.stuff import StuffDocumentsChain
-from langchain.chains import RetrievalQA
-from langchain_community.vectorstores import Chroma
-from langchain.schema import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_ollama import OllamaLLM
+from langchain_core.prompts import PromptTemplate
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains.retrieval import create_retrieval_chain
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
 from bs4 import BeautifulSoup
 import gradio as gr
 from urllib.parse import urljoin
@@ -62,70 +61,58 @@ for link in links:
         if content:
             all_content.append(Document(page_content=content, metadata={"source": full_url}))
 
-# Define llm
-llm = Ollama(model="llama3.1:70b")
+llm = OllamaLLM(model="llama3.3:70b")
 
-# Split the text into chunks
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 texts = text_splitter.split_documents(all_content)
 
-# Create embeddings
 embeddings = HuggingFaceEmbeddings()
 
-# Create a vector store
 vectorstore = Chroma.from_documents(texts, embeddings)
 
-# Create a retriever
 retriever = vectorstore.as_retriever()
 
-# Define the prompt
-prompt = """
+prompt = PromptTemplate.from_template("""
 1. Use the following pieces of context to answer the question related to AMD's ROCm product.
-2. If you don't know the answer, just say that "I don't know" but don't make up an answer on your own.\n
+2. If you don't know the answer, just say that "I don't know" but don't make up an answer on your own.
 3. Keep the answer crisp and limited to 3,4 sentences, and try to only use the context provided when answering.
 
 Context: {context}
 
-Question: {question}
+Question: {input}
 
-Helpful Answer:"""
+Helpful Answer:""")
 
-QA_CHAIN_PROMPT = PromptTemplate.from_template(prompt) 
+combine_docs_chain = create_stuff_documents_chain(llm, prompt)
+qa = create_retrieval_chain(retriever, combine_docs_chain)
 
-llm_chain = LLMChain(
-                  llm=llm, 
-                  prompt=QA_CHAIN_PROMPT, 
-                  callbacks=None, 
-                  verbose=True)
+def respond(question, history=None):
+    return qa.invoke({"input": question})["answer"]
 
-document_prompt = PromptTemplate(
-    input_variables=["page_content", "source"],
-    template="Context:\ncontent:{page_content}\nsource:{source}",
-)
+def run_cli():
+    print("\nAMD AI Assistant Ready! Type your questions. Type 'exit', 'quit' or 'bye' to stop.\n")
+    while True:
+        user_input = input("Prompt: ")
+        if user_input.lower() in ["exit", "quit", "bye"]:
+            print("Goodbye!")
+            break
+        answer = respond(user_input)
+        print(f"AMD AI Assistant: {answer}\n")
 
-combine_documents_chain = StuffDocumentsChain(
-                  llm_chain=llm_chain,
-                  document_variable_name="context",
-                  document_prompt=document_prompt,
-                  callbacks=None)
-              
-qa = RetrievalQA(
-                  combine_documents_chain=combine_documents_chain,
-                  verbose=True,
-                  retriever=retriever,
-                  return_source_documents=True)
+def run_webui():
+    gr.ChatInterface(
+        respond,
+        chatbot=gr.Chatbot(height=500),
+        textbox=gr.Textbox(placeholder="Ask me question related to the awesomeness of ROCm and how it can revolutionize your AI workflows", container=False, scale=7),
+        title="Rocm-bot",
+        examples=["How can I install ROCm", "What installation methods exist for ROCm"],
+        cache_examples=False,
+        theme="Glass",
+    ).launch(share=True, server_name="0.0.0.0")
 
-def respond(question,history):
-    return qa(question)["result"]
+if __name__ == "__main__":
+    if "--webui" in sys.argv:
+        run_webui()
+    else:
+        run_cli()
 
-
-gr.ChatInterface(
-    respond,
-    chatbot=gr.Chatbot(height=500),
-    textbox=gr.Textbox(placeholder="Ask me question related to the awesomeness of ROCm and how it can revolutionize your AI workflows", container=False, scale=7),
-    title="Rocm-bot",
-    examples=["How can I install ROCm", "What installation methods exist for ROCm"],
-    cache_examples=False,
-    theme="Glass",
-    retry_btn=None,
-).launch(share = True, server_name="0.0.0.0")

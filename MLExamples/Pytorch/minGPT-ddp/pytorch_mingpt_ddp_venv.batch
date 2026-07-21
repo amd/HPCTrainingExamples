@@ -1,0 +1,35 @@
+#!/bin/bash
+#SBATCH --gpus=8
+#SBATCH --ntasks=1
+#SBATCH --time=01:00:00
+#SBATCH --output=pytorch_mingpt_ddp_venv.out
+#SBATCH --error=pytorch_mingpt_ddp_venv.out
+#
+# minGPT DDP RCCL scaling study in a fresh virtual environment.
+
+set -e
+
+python3 -m venv rocm-pytorch-mingpt
+cd rocm-pytorch-mingpt
+source bin/activate
+echo "Starting pytorch install"
+time pip3 install torch --index-url https://download.pytorch.org/whl/rocm6.4
+
+python3 -c 'import torch; print("cuda:", torch.cuda.is_available(), "count:", torch.cuda.device_count())'
+
+# Upstream provides the minGPT model definition reused by the benchmark.
+git clone --depth=1 https://github.com/pytorch/examples.git pytorch_examples
+export UPSTREAM="$PWD/pytorch_examples/distributed/minGPT-ddp/mingpt"
+
+export NCCL_DEBUG=INFO
+export NCCL_DEBUG_SUBSYS=INIT,COLL
+
+cd "$SLURM_SUBMIT_DIR"
+echo "===== minGPT DDP scaling (gpt2-size) ====="
+GPUS="1 2 4 8" bash ./rccl_scaling_sweep.sh
+
+echo "===== larger model (more gradient volume => more RCCL) ====="
+GPUS="1 2 4 8" N_LAYER=24 N_EMBD=1024 N_HEAD=16 bash ./rccl_scaling_sweep.sh
+
+deactivate
+echo "Finished"

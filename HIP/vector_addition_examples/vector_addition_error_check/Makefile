@@ -1,7 +1,8 @@
 # ------------------------------
 
 HIPCC    = hipcc
-HIPFLAGS = --offload-arch=gfx908,gfx90a
+ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
+HIPFLAGS = --offload-arch=${ROCM_GPU}
 
 # ------------------------------
 

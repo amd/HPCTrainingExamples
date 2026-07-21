@@ -40,6 +40,8 @@ Vector addition kernel
 __global__ void vector_addition(double *A, double *B, double *C, int n)
 {
     int id = blockDim.x * blockIdx.x + threadIdx.x;
+    // try defining id as below, what happens? why do you think it happens?
+    // int id = threadIdx.x * gridDim.x + blockIdx.x;
     if (id < n) C[id] = A[id] + B[id];
 }
 
@@ -49,7 +51,7 @@ Main program
 int main(int argc, char *argv[]){
 
     /* Size of array */
-    int N = 64* 1024 * 1024;
+    int N = 64* 2560 * 2560;
 
     /* Bytes in array in double precision */
     size_t bytes = N * sizeof(double);

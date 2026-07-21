@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# This test installs Julia in $PWD/.julia 
+
+# NOTE: this test uses the instructions located at 
+# https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/julia_setup.sh
+
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+else
+   module -t list 2>&1 | grep -q "^rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+fi
+
+export CUR_DIR=$(mktemp -d)
+ORIG_HOME="${HOME}"
+export HOME="${CUR_DIR}"
+export TMPDIR="${CUR_DIR}"
+export JULIA_DEPOT_PATH="${CUR_DIR}/julia_depot"
+export JULIA_NUM_PRECOMPILE_TASKS=8
+curl -fsSL https://install.julialang.org | sh -s -- --yes --add-to-path=no -p=${CUR_DIR}/juliaup_install
+export PATH=$PATH:"${CUR_DIR}/juliaup_install/bin"
+
+juliaup add 1.12
+juliaup default 1.12
+juliaup status
+
+export HOME="${ORIG_HOME}"
+rm -rf ${CUR_DIR}

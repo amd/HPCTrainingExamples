@@ -1,52 +1,78 @@
 #!/bin/bash
 
-module load rocm
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+   if [ -z "$HIPCC" ]; then
+      export HIPCC=`which hipcc`
+   fi
+else
+   module -t list 2>&1 | grep -q "^rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   module load amdflang-new >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load amdclang
+   fi
+fi
+
+module load kokkos
+
 XNACK_COUNT=`rocminfo | grep xnack | wc -l`
 if [ ${XNACK_COUNT} -lt 1 ]; then
    echo "Skip"
 else
-   module load amdclang
-
-   PROB_NAME=programming_model_kokkos_code
-   mkdir ${PROB_NAME} && cd ${PROB_NAME}
-
-   PWDir=`pwd`
-
-   git clone https://github.com/kokkos/kokkos Kokkos_build
-   cd Kokkos_build
-
-   rm -rf build_hip
-   mkdir build_hip && cd build_hip
-   cmake -DCMAKE_INSTALL_PREFIX=${PWDir}/Kokkos_HIP -DKokkos_ENABLE_SERIAL=ON \
-         -DKokkos_ENABLE_HIP=ON -DKokkos_ARCH_ZEN=ON -DKokkos_ARCH_VEGA90A=ON \
-         -DCMAKE_CXX_COMPILER=hipcc ..
-
-   make -j 8
-   make install
-
-   cd ../..
-
-   rm -rf Kokkos_build
-
-   export Kokkos_DIR=${PWDir}/Kokkos_HIP
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-   cd ${REPO_DIR}/ManagedMemory/Kokkos_Code
+   SRC_DIR=${REPO_DIR}/ManagedMemory/Kokkos_Code
+
+   BUILD_DIR=$(mktemp -d)
+   trap "rm -rf ${BUILD_DIR}" EXIT
+   cp ${SRC_DIR}/* ${BUILD_DIR}/
 
    # To run with managed memory
    export HSA_XNACK=1
 
-   rm -rf build
+   cd ${BUILD_DIR}
    mkdir build && cd build
-   CXX=hipcc cmake ..
+   # Pin OpenMP to the host libomp.so. find_package(Kokkos) pulls in
+   # OpenMP::OpenMP_CXX (the OpenMP-enabled Kokkos backend); under the Cray CC
+   # wrapper + ROCm clang CMake's FindOpenMP mis-resolves it to the amdgcn
+   # device archive libompdevice.a, which ld.lld then rejects on the host link
+   # ("incompatible with elf64-x86-64"). Feed host libomp.so to FindOpenMP.
+   if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+     OMP_CXX="${CXX:-$(command -v CC)}"
+   else
+     OMP_CXX="${CXX:-$(command -v amdclang++ || command -v clang++)}"
+   fi
+   OMP_HOST_LIB="$(${OMP_CXX} -print-file-name=libomp.so 2>/dev/null)"
+   OMP_HINTS=()
+   if [ -n "${OMP_HOST_LIB}" ] && [ -f "${OMP_HOST_LIB}" ]; then
+     OMP_HINTS=(
+       -DOpenMP_CXX_FLAGS="-fopenmp=libomp"
+       -DOpenMP_CXX_LIB_NAMES="omp"
+       -DOpenMP_omp_LIBRARY="${OMP_HOST_LIB}"
+     )
+   fi
+   # Pin the C++ compiler (amdclang++ non-Cray / CC wrapper Cray) so CMake does
+   # not auto-detect /usr/bin/c++ (GNU g++), which rejects the amdclang-only
+   # flags the HIP-enabled kokkos imported target injects.
+   CXX_HINTS=()
+   if [ -n "${OMP_CXX}" ]; then
+     CXX_HINTS=( -DCMAKE_CXX_COMPILER="${OMP_CXX}" )
+   fi
+   cmake .. "${CXX_HINTS[@]}" "${OMP_HINTS[@]}"
    make
    ./kokkos_code
 
-   cd ..
-   rm -rf build
-
-   cd ${PWDir}
-   rm -rf Kokkos_HIP Kokkos_build
-
-   rm -rf ${PROB_NAME}
-fi   
+fi

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 
 double some_computation(double x, int i){
   return(2.0*x);
@@ -22,22 +23,28 @@ int main(int argc, char *argv[]) {
   for (int i=0; i<N; i++)
     input[i]=1.0;
 
-#pragma omp target data device(0) map(alloc:tmp[:N]) map(to:input[:N]) map(from:res)
+#pragma omp target data map(alloc:tmp[:N]) map(to:input[:N])
   {
-#pragma omp target device(0)
-#pragma omp teams distribute parallel for simd
+#pragma omp target
+#pragma omp teams distribute parallel for
     for (int i=0; i<N; i++)
       tmp[i] = some_computation(input[i], i);
 
     update_input_array_on_the_host(input, N);
 
-#pragma omp target update device(0) to(input[:N])
+#pragma omp target update to(input[:N])
 
-#pragma omp target device(0)
-#pragma omp teams parallel for simd reduction(+:res)
+#pragma omp target teams distribute parallel for reduction(+:res)
     for (int i=0; i<N; i++)
       res += final_computation(input[i], tmp[i], i);
   }
 
+  if(fabs(res-300000.0)<1.e-14){
+     printf("PASS \n");
+  }
+  else{
+     printf("FAIL \n");
+  }
   printf("Target Update result is %lf\n",res);
+
 }

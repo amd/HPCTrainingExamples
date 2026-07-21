@@ -3,15 +3,22 @@
 # Test contributed by Corey Adams (corey.adams@amd.com)
 
 # This test checks that JAX
-# shows the expected performance 
+# shows the expected performance
 # for different data types
 
 # NOTE: this test assumes JAX has been installed according
 # to the instructions available in the model installation repo:
-# https://github.com/amd/HPCTrainingDock/blob/main/extras/sources/scripts/jax_setup.sh
+# https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/jax_setup.sh
 
-module purge
 
+REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
+
+module -t list 2>&1 | grep -q "^rocm"
+if [ $? -eq 1 ]; then
+  echo "rocm module is not loaded"
+  echo "loading default rocm module"
+  module load rocm
+fi
 module load jax
 
-python3 jax_check_performance.py
+python3 ${REPO_DIR}/tests/jax_check_performance.py

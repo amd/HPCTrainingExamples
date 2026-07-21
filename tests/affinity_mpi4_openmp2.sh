@@ -1,13 +1,62 @@
-#!/bin/sh
+#!/bin/bash
 
-module load gcc/11 rocm openmpi
+# Ensure a rocm module is loaded. Dependent modules declare `prereq rocm/<ver>`,
+# which is satisfied only by the `rocm/<ver>` alias -- not by the underlying
+# `rocm-new/<ver>` that PrgEnv-amd-new loads. An unanchored "^rocm" check is
+# wrong because it also matches "rocm-new/...". Match the alias name explicitly
+# and, if absent, load it (preferring the version of an already-loaded
+# rocm-new so we do not pull in a mismatched default).
+if ! module -t list 2>&1 | grep -q "^rocm/"; then
+  rocm_new=$(module -t list 2>&1 | grep -m1 "^rocm-new/")
+  if [ -n "${rocm_new}" ]; then
+    rocm_ver=${rocm_new#rocm-new/}
+    echo "rocm/ alias not loaded; loading rocm/${rocm_ver} to match ${rocm_new}"
+    module load rocm/${rocm_ver}
+  else
+    echo "rocm module is not loaded"
+    echo "loading default rocm module"
+    module load rocm
+  fi
+fi
 
-git clone https://code.ornl.gov/olcf/hello_mpi_omp.git
-cd hello_mpi_omp
-sed -i -e '/COMP/s/cc/mpicc/' Makefile
+# Prefer a GCC + OpenMPI stack when those modules exist (e.g. the bare-metal
+# training environment). In the Cray programming environments (PrgEnv-amd-new,
+# aac7-rocm-*) there is no gcc/openmpi module -- the env already provides a
+# compiler wrapper and (Cray/from-source) MPICH -- so a failed load here is
+# non-fatal: we fall back to whatever MPI is already active.
+module load gcc openmpi 2>/dev/null
+
+REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
+SRC_DIR=${REPO_DIR}/tests/hello_mpi_omp
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+cp -r ${SRC_DIR}/* ${BUILD_DIR}/
+cd ${BUILD_DIR}
 make
 
-OMP_NUM_THREADS=2 OMP_PROC_BIND=close mpirun -np 4 -mca btl ^openib --map-by L3cache ./hello_mpi_omp
+# The affinity launch flags are MPI-implementation specific:
+#   * OpenMPI uses the MCA framework (-mca ...) and capitalized hwloc object
+#     names (--map-by L3cache).
+#   * MPICH's Hydra launcher rejects -mca outright ("unrecognized argument
+#     mca") and uses lowercase hwloc object names (-map-by l3cache).
+# Detect the active launcher and choose compatible flags so the same test
+# runs in both the OpenMPI and MPICH programming environments.
+if ! command -v mpirun >/dev/null 2>&1; then
+  echo "ERROR: no mpirun found in PATH; cannot launch the MPI job" >&2
+  exit 1
+fi
 
-cd ..
-rm -rf hello_mpi_omp
+MPI_VERSION="$(mpirun --version 2>&1)"
+if echo "${MPI_VERSION}" | grep -qiE "open[ -]?mpi|openrte|open rte"; then
+  echo "Detected OpenMPI launcher"
+  MPI_LAUNCH_OPTS=(-mca btl ^openib --map-by L3cache)
+elif echo "${MPI_VERSION}" | grep -qiE "hydra|mpich|cray"; then
+  echo "Detected MPICH/Hydra launcher"
+  MPI_LAUNCH_OPTS=(-bind-to core -map-by l3cache)
+else
+  echo "Unrecognized MPI launcher; running without affinity flags:"
+  echo "${MPI_VERSION}" | head -1
+  MPI_LAUNCH_OPTS=()
+fi
+
+OMP_NUM_THREADS=2 OMP_PROC_BIND=close mpirun -np 4 "${MPI_LAUNCH_OPTS[@]}" ./hello_mpi_omp

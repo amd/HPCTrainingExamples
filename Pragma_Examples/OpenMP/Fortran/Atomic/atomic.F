@@ -1,0 +1,49 @@
+! Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+! This software is distributed under the MIT License
+!
+! This program is based on a reproducer created by Mahdieh Ghazimirsaeed
+program atomic_vs_reduction
+  use omp_lib
+  implicit none
+
+  !$omp requires unified_shared_memory
+
+  integer, parameter :: real8 = kind(0.0d0)
+  integer, parameter :: N = 10000
+  real(real8) :: a(N)
+  real(real8) :: sum_of_a, sum_of_a_tmp, tstart
+  integer :: i
+
+  !$omp target teams distribute parallel do
+  do i = 1, N
+     a(i) = 1.0_real8
+  end do
+  !$omp end target teams distribute parallel do
+
+  sum_of_a = 0.0_real8
+  tstart = omp_get_wtime()
+  !$omp target teams distribute parallel do map(tofrom:sum_of_a)
+  do i = 1, N
+     !$omp atomic
+     sum_of_a = sum_of_a + a(i)
+  end do
+  !$omp end target teams distribute parallel do
+  print *, '   Atomic result: ', sum_of_a, ' Runtime is: ', omp_get_wtime() - tstart, ' secs'
+
+  sum_of_a_tmp = sum_of_a
+  sum_of_a = 0.0_real8
+  tstart = omp_get_wtime()
+  !$omp target teams distribute parallel do reduction(+:sum_of_a)
+  do i = 1, N
+     sum_of_a = sum_of_a + a(i)
+  end do
+  !$omp end target teams distribute parallel do
+  print *, 'Reduction result: ', sum_of_a, ' Runtime is: ', omp_get_wtime() - tstart, ' secs'
+
+  if (abs(sum_of_a - sum_of_a_tmp) < 1.e-10) then
+     print*, 'PASS!'
+  else
+     print*, 'FAIL!'
+  end if
+
+end program atomic_vs_reduction

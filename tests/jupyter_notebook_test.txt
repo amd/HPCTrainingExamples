@@ -1,0 +1,8 @@
+ssh into cluster
+salloc or srun to get a node
+jupyter notebook --no-browser --port=8080
+
+From local ternminal 
+ssh -t -t aac6.amd.com -L 8080:localhost:8080 ssh ppac-pl1-s25-40 -L 8080:localhost:8080 
+
+Then open a local browser with localhost:8080

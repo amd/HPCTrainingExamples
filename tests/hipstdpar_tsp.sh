@@ -1,8 +1,32 @@
 #!/bin/bash
 
-mkdir tsp
-git clone https://github.com/pkestene/tsp
-cd tsp
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+else
+   module -t list 2>&1 | grep -q "^rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   module load amdflang-new >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load amdclang
+   fi
+fi
+
+CLONE_DIR=$(mktemp -d -p "$(pwd)" tsp_XXXXXX)
+trap "rm -rf ${CLONE_DIR}" EXIT
+git clone https://github.com/pkestene/tsp ${CLONE_DIR}
+pushd ${CLONE_DIR}
 git checkout 51587
 wget -q https://raw.githubusercontent.com/ROCm/roc-stdpar/main/data/patches/tsp/TSP.patch
 
@@ -11,15 +35,14 @@ patch -p1 < TSP.patch
 cd stdpar
 
 export HSA_XNACK=1
-module load amdclang
 export STDPAR_CXX=$CXX
 export ROCM_GPU=`rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'`
 export STDPAR_TARGET=${ROCM_GPU}
 
-export AMD_LOG_LEVEL=3
+#export AMD_LOG_LEVEL=3
 
 if [[ ${ROCM_GPU} =~ "gfx9" ]]; then
-   sed -i -e '/--hipstdpar/s/--hipstdpar /--hipstdpar -lstdc++ /' -e '/--hipstdpar-path=/s/--hipstdpar-path=//' Makefile
+   sed -i -e '/--hipstdpar/s/--hipstdpar /--hipstdpar -lstdc++ /' Makefile
 else
    sed -i -e '/--hipstdpar/s/--hipstdpar /--hipstdpar --hipstdpar-interpose-alloc -lstdc++ /' Makefile
 fi
@@ -28,5 +51,5 @@ make tsp_clang_stdpar_gpu
 ./tsp_clang_stdpar_gpu
 
 make clean
-cd ../..
-rm -rf tsp
+
+popd

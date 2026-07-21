@@ -1,6 +1,6 @@
 # Copyright AMD 2024, MIT License, contact Bob.Robey@amd.com
 
-Running the example 
+Running the example
 
 ```
 module load amdclang

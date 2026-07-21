@@ -131,7 +131,8 @@ int main(int argc, char *argv[])
    int rank, nprocs;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-   if (rank == 0) printf("Parallel run with no threads\n");
+   if (rank == 0) printf("------> Initializing the Problem\n");
+
    hipSetDevice(0);
 
    int imax = 2000, jmax = 2000;
@@ -201,10 +202,11 @@ int main(int argc, char *argv[])
    ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
    if (do_print == 1) {
-      if (rank == 0) printf("Initial State \n");
+      if (rank == 0) printf("------> Initial State\n");
       Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
    }
 
+   if (rank == 0) printf("------> Advancing the Solution\n");
    for (int iter = 0; iter < maxIter; iter++){
       cpu_timer_start(&tstart_stencil);
 
@@ -218,7 +220,7 @@ int main(int argc, char *argv[])
       boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
       ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
-      if (iter%10 == 0 && rank == 0) printf("Iter %d\n",iter);
+      if (iter%10 == 0 && rank == 0) printf("        Iter %d\n",iter);
       if (do_print == 1) {
          Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
       }

@@ -1,0 +1,15 @@
+number of parameters: 92.14M
+
+ppac-pl1-s24-16:36389:36389 [0] /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/out/ubuntu-24.04/24.04/build/rccl/hipify/src/init.cc:178 NCCL WARN Missing "iommu=pt" from kernel command line which can lead to system instablity or hang!
+
+ppac-pl1-s24-16:36389:36389 [0] /longer_pathname_so_that_rpms_can_support_packaging_the_debug_info_for_all_os_profiles/src/out/ubuntu-24.04/24.04/build/rccl/hipify/src/init.cc:178 NCCL WARN Missing "iommu=pt" from kernel command line which can lead to system instablity or hang!
+RCCL version : 2.22.3-HEAD:7d8d67c+
+HIP version  : 6.4.43484-123eb5128
+ROCm version : 6.4.3.0-128-e7d83f5
+Hostname     : ppac-pl1-s24-16
+Librccl path : /nfsapps/ubuntu-24.04/opt/rocm-6.4.3/lib/librccl.so.1
+/nfsapps/ubuntu-24.04/opt/rocmplus-6.4.3/pytorch-v2.12.0/pytorch/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)
+# upstream model: /shared/prerelease/home/bobrobey/pytorch_examples/distributed/minGPT-ddp/mingpt
+# world_size=1  params=169.7M  grad_allreduce=679MB/step  per_gpu_batch=8 block=512 amp=bf16
+RESULT world_size=1 step_sync_s=0.0551 step_nosync_s=0.0529 comm_s=0.0022 comm_pct=3.9 tokens_per_s=74380

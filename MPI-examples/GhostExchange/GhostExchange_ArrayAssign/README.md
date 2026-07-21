@@ -1,56 +1,141 @@
-# MPI Ghost Exchange Optimization Examples
 
-## Changes Between Example Versions
-This code contains several implementations of the same ghost exchange algorithm at varying stages 
-of optimization:
-- **Orig**: Shows a CPU-only implementation that uses MPI, and serves as the starting point for further optimizations. It is recommended to start here!
-- **Ver1**: Shows an OpenMP target offload implementation that uses the Managed memory model to port the code to GPUs using host allocated memory for MPI communication.
-- **Ver2**: Shows the usage and advantages of using `roctx` ranges to get more easily readable profiling output from Omnitrace.
-- **Ver3**: Under Construction, not expected to work at the moment
-- **Ver4**: Explores heap-allocating communication buffers once on host.
-- **Ver5**: Explores unrolling a 2D array to a 1D array.
-- **Ver6**: Explores using explicit memory management directives to specify when data movement should happen.
-- **Ver7**: Under Construction, not expected to work at this time.
+# MPI Example: Ghost Exchange with OpenMP
 
-<details>
-<summary><h3>Background Terminology: We're Exchanging <i>Ghosts?</i></h3></summary>
-<h4>Problem Decomposition</h4>
-In a context where the problem we're trying to solve is spread across many compute resources, 
-it is usually inefficient to store the entire data set on every compute node working to solve our problem.
-Thus, we "chop up" the problem into small pieces we assign to each node working on our problem.
-Typically, this is referred to as a <b>problem decomposition</b>.<br/>
-<h4>Ghosts, and Their Halos</h4>
-In problem decompositions, we may still need compute nodes to be aware of the work that other nodes 
-are currently doing, so we add an extra layer of data, referred to as a <b>halo</b> of <b>ghosts</b>.
-This region of extra data can also be referred to as a <b>domain boundary</b>, as it is the <b>boundary</b> 
-of the compute node's owned <b>domain</b> of data.
-We call it a <b>halo</b> because typically we need to know all the updates happening in the region surrounding a single compute node's data. 
-These values are called <b>ghosts</b> because they aren't really there: ghosts represent data another
- compute node controls, and the ghost values are usually set unilaterally through communication 
-between compute nodes. 
-This ensures each compute node has up-to-date values from the node that owns the underlying data.
-These updates can also be called <b>ghost exchanges</b>.
-</details>
+README.md from `HPCTrainingExamples/MPI-examples/GhostExchange/GhostExchange_ArrayAssign` from the Training Examples repository.
 
-## Overview of the Ghost Exchange Implementation
-The implementations presented in these examples follow the same basic algorithm.
-They each implement the same computation, and set up the same ghost exchange, we just change where computation happens, or specifics with data movement or location. 
+In this version of the Ghost Exchange example we use OpenMP to perform the necessary computations in parallel on GPUs.These computations are for instance data initialization and solution advancement. When running in parallel, each MPI process will execute the prescribed kernels in parallel, and these will execute in parallel on the GPU, thanks to OpenMP.
+We begin with an original implementation that can run in parallel thanks to MPI but is CPU only, meaning that the computations will run in serial on the CPU on a per process basis. Several improved versions are provided which are outlined in the next paragraph.
+
+## Features of the various versions
+The Ghost Exchange example with OpenMP contains several implementations at various stages
+of performance optimization. Generally speaking, however, the various versions follow the same basic algorithm, what changes is where the computation happens, or the data movement and location. See below a breakdown of the features of the various versions:
+
+- **Orig**: this is a CPU-only implementation that runs in parallel with MPI, and serves as the starting point for further optimizations. It is recommended to start here.
+- **Ver1**: this version is a variation of Orig that uses OpenMP and unified shared memory to offload the computations to the GPUs. Memory can be moved to the GPU using map clauses with OpenMP, however it is much easier to not have to worry about explicit memory management for an initial port, which is what the unified shared memory allows. Note that arrays allocated on the CPU are used for MPI communication, henche GPU aware MPI is not used in this version. To enable unified shared memory, `export HSA_XNACK=1` before running the example.
+- **Ver2**: this is a variation of Ver1, adding `roctx` ranges to get more easily readable profiling output. This change does not affect performance.
+- **Ver3**: this is a variation of Ver2, allocating the communication buffers on GPU using the OpenMP API.
+- **Ver4**: this is a variation of Ver2, exploring dynamically allocating communication buffers on the CPU using malloc.
+- **Ver5**: this is a variation of Ver4, where the solution array is unrolled from a 2D array into a 1D array.
+- **Ver6**: this is a variation of Ver5, using explicit memory management directives to specify when data movement should happen. In this context unified shared memory is not required and therefore one could `unset HSA_XNACK`.
+
+## Overview of the implementation
 
 The code is controlled with the following arguments:
-- `-i imax -j jmax`: set the total problem size to `imax*jmax` elements.
-- `-x nprocx -y nprocy`: set the number of MPI ranks in the x and y direction, with `nprocx*nprocy` total processes.
-- `-h nhalo`: number of halo layers, typically assumed to be 1 for our diagrams.
-- `-t (0|1)`: whether time synchronization should be performed.
-- `-c (0|1)`: whether corners of the ghost halos should also be communicated.
-- `-p (0|1)`: whether matrix, if small enough, should be printed. Used only for debugging.
+- `-i imax -j jmax`: set the total problem size to `imax*jmax` cells.
+- `-x nprocx -y nprocy`: set the number of MPI processes in the x and y direction respectively, with `nprocx*nprocy` total processes.
+- `-h nhalo`: number of halo layers, the minimum value dictated by the mathematical operator in this case is one, but it can be made bigger to increase the communication work, for experimentation.
+- `-t`: legacy argument used to include MPI barriers before the ghost exchange. Currently has no impact.
+- `-c`: include as input argument to include the ghost cells in the corners of the MPI subdomains during the ghost exchange.
+- `-p`: include as input argument to print the solution field (including values on the halo). Printing is limited above by the size of the problem.
 
-The computation done on each data element after setup is a blur kernel, that modifies the value of a
+The kernel used to advance the solution is a blur kernel, that modifies the value of a
 given element by averaging the values at a 5-point stencil location centered at the given element:
 
 `xnew[j][i] = (x[j][i] + x[j][i-1] + x[j][i+1] + x[j-1][i] + x[j+1][i])/5.0`
 
-The communication pattern used is best shown in a diagram that appears in [Parallel and high performance computing, by Robey and Zamora](https://www.manning.com/books/parallel-and-high-performance-computing):
+The halo exchange happens in a two-step fashion as shown in the image below, from the book [Parallel and high performance computing, by Robey and Zamora](https://www.manning.com/books/parallel-and-high-performance-computing):
 <p>
 <img src="ghost_exchange2.png" \>
 </p>
-In this diagram, a ghost on a process is represented with a dashed outline, while owned data on a process is represented with a solid line. Communication is represented with arrows and colors representing the original data, and the location that data is being communicated and copied to. We see that each process communicates based on the part of the problem it owns: the process that owns the central portion of data must communicate in all four directions, while processes on the corner only have to communicate in two directions.
+Above, a ghost cell on a process is delimited by a dashed outline, while cells owned by a process are marked with a solid line. Communication is represented with arrows and colors representing the original data, and the location that data is being communicated and copied to. We see that each process communicates based on the part of the problem it owns: the process that owns the central portion of data must communicate in all four directions, while processes on the corner only have to communicate in two directions only.
+
+We now describe how to compile and run some of the above versions. Note that the modules that will be loaded next rely on the model installation described in the HPCTrainingDock [repo](https://github.com/amd/HPCTrainingDock).
+
+## Original version of Ghost Exchange
+
+```
+module load openmpi amdclang
+```
+
+Setting `HSA_XNACK=1` now for all of the following runs, except for Ver6, for which it is not needed.
+
+```
+export HSA_XNACK=1
+export MAX_ITER=1000
+```
+
+Build the code
+
+```
+cd Orig
+mkdir build && cd build
+cmake ..
+make -j
+```
+
+Note: to enable writing the solution to a netCDF file called `solution.nc`, load the `netcdf-c` module and configure with:
+```
+cmake -DUSE_PNETCDF=ON ..
+```
+Then you can install the Python requirements using the `requirements.txt` file and then execute the `print_solution.py` file to print the initial solution and final solution.
+As part of the function to write the netCDF file, there is this call:
+```
+ncmpi_def_dim(ncid, "time", NC_UNLIMITED, &dimid_t);
+``` 
+that defines the "time" dimension as "unlimited", meaning that the last value defines the size. The last value is `maxIter-1` so space for the previous solutions is still allocated
+but the array is filled with zeros. 
+
+Run the example
+
+```
+echo "Orig Ver: Timing for CPU version with 4 ranks"
+mpirun -n 4  ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 1 -c -I ${MAX_ITER}
+```
+
+Note the time that it took to run and the time for each part of the application.
+
+Now we will try and run it with some simple affinity settings. These map the 4 process to separate NUMA regions and binds the process to the core
+
+```
+echo "Orig Ver: Timing for CPU version with 4 ranks with affinity"
+mpirun  -n 4  --bind-to core     -map-by ppr:1:numa  --report-bindings ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 1 -c -I ${MAX_ITER}
+```
+
+Here are other affinity settings that you can try. These are for larger number of ranks and GPUs. Note that the number of processes per resource (ppr)
+increases
+
+```
+echo "Orig Ver: Timing for CPU version with 16 ranks"
+mpirun -n 16  ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 1 -t -c -I ${MAX_ITER}
+echo "Orig Ver: Timing for CPU version with 16 ranks with affinity"
+mpirun -n 16  --bind-to core     -map-by ppr:2:numa  --report-bindings ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 1 -t -c -I ${MAX_ITER}
+mpirun -n 64  --bind-to core     -map-by ppr:8:numa  --report-bindings ./GhostExchange -x 8  -y 8  -i 20000 -j 20000 -h 1 -t -c -I ${MAX_ITER}
+mpirun -n 256 ./GhostExchange -x 16 -y 16 -i 20000 -j 20000 -h 1 -t -c
+mpirun -n 16  --bind-to core     -map-by ppr:2:numa  ./GhostExchange -x 4  -y 4  -i 20000 -j 20000 -h 1 -t -c
+mpirun -n 64  --bind-to core     -map-by ppr:8:numa  ./GhostExchange -x 8  -y 8  -i 20000 -j 20000 -h 1 -t -c
+mpirun -n 256 --bind-to hwthread -map-by ppr:32:numa ./GhostExchange -x 16 -y 16 -i 20000 -j 20000 -h 1 -t -c -I ${MAX_ITER}
+```
+
+## Version 1 -- Adding OpenMP target offload to original CPU code
+
+Build the example
+
+```
+cd ../../Ver1
+mkdir build && cd build
+cmake ..
+make -j
+```
+
+Now run the example
+
+```
+echo "Ver 1: Timing for GPU version with 4 ranks with compute pragmas"
+mpirun -n 4  --bind-to core     -map-by ppr:1:numa  --report-bindings ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 1 -t -c -I ${MAX_ITER}
+```
+
+Adding affinity script
+
+```
+echo "Ver 1: Timing for GPU version with 4 ranks with compute pragmas"
+mpirun -n 4  --bind-to core     -map-by ppr:1:numa  --report-bindings ../../affinity_script.sh ./GhostExchange -x 2  -y 2  -i 20000 -j 20000 -h 1 -t -c -I ${MAX_ITER}
+```
+
+You can export the environment variable below to check that the kernels are indeed executing on the GPU:
+
+```
+export LIBOMPTARGET_INFO=-1
+```
+
+Version 2 through 6 can be run similarly. For version 6, we recommend to `unset HSA_XNACK` since explicit memory management is implemented in this example. On MI300A, having `HSA_XNACK=1` set will make OpenMP ignore the map clauses.
+

@@ -3,6 +3,11 @@
 #include <unistd.h>
 #include <time.h>
 #include <mpi.h>
+#ifdef USE_PNETCDF
+#include <pnetcdf.h>
+#endif
+#include <vector>
+#include <cmath>
 #include <hip/hip_runtime.h>
 #include <roctx.h>
 
@@ -31,14 +36,15 @@ __global__ void init_core (double *x, int nhalo, int jsize, int isize, double va
     }
 }
 
-__global__ void init_core2 (double *x, int jmax, int jspan, int jbegin, int jend, int imax, int ispan, int ibegin, int iend, int rank, int jstride, int nhalo)
+__global__ void init_core2 (double *x, int nhalo, int jsize, int isize, int jbegin, int ibegin, double sigma, double x_center, double y_center, int jstride)
 {
-    int tidx = threadIdx.x + blockIdx.x * blockDim.x + imax/2 - ispan;
-    int tidy = threadIdx.y + blockIdx.y * blockDim.y + jmax/2 - jspan;
-    if (tidy < jmax/2 + jspan && tidx < imax/2 + ispan) {
-        if (tidy >= jbegin && tidy < jend && tidx >= ibegin && tidx < iend) {
-           xv(tidy-jbegin,tidx-ibegin) = 400.0 + 0.1 * (double)(rank + tidy);
-        }
+    int tidx = threadIdx.x + blockIdx.x * blockDim.x;
+    int tidy = threadIdx.y + blockIdx.y * blockDim.y;
+    if (tidy < jsize && tidx < isize) {
+           double x_phys = tidx + ibegin;
+           double y_phys = tidy + jbegin;
+           xv(tidy,tidx) = exp(-0.5 * ( ((x_phys - x_center)*(x_phys - x_center)/(sigma*sigma)
+                           + (y_phys - y_center)*(y_phys - y_center)/(sigma*sigma)) ));
     }
 }
 
@@ -132,48 +138,13 @@ __global__ void enforce_bcs_top (double *x, int nhalo, int jsize, int isize, int
     }
 }
 
-__global__ void ghost_left_send (double *xbuf_left_send, double *x, int jlow, int jhgh, int nhalo, int bufcount, int jstride)
-{
-    int tidx = threadIdx.x + blockIdx.x * blockDim.x;
-    int tidy = threadIdx.y + blockIdx.y * blockDim.y + jlow;
-    int offset = (tidy - jlow) * nhalo + tidx;
-    if (tidy < jhgh && tidx < nhalo && offset < bufcount) {
-        xbuf_left_send[offset] = xv(tidy,tidx);
-    }
-}
-
-__global__ void ghost_rght_send (double *xbuf_rght_send, double *x, int jlow, int jhgh, int isize, int nhalo, int bufcount, int jstride)
-{
-    int tidx = threadIdx.x + blockIdx.x * blockDim.x;
-    int tidy = threadIdx.y + blockIdx.y * blockDim.y + jlow;
-    int offset = (tidy - jlow) * nhalo + tidx;
-    if (tidy < jhgh && tidx < nhalo && offset < bufcount) {
-        xbuf_rght_send[offset] = xv(tidy,isize - nhalo + tidx);
-    }
-}
-
-__global__ void ghost_rght_recv (double *xbuf_rght_recv, double *x, int jlow, int jhgh, int isize, int nhalo, int bufcount, int jstride)
-{
-    int tidx = threadIdx.x + blockIdx.x * blockDim.x;
-    int tidy = threadIdx.y + blockIdx.y * blockDim.y + jlow;
-    int offset = (tidy - jlow) * nhalo + tidx;
-    if (tidy < jhgh && tidx < nhalo && offset < bufcount) {
-        xv(tidy,isize + tidx) = xbuf_rght_recv[offset];
-    }
-}
-
-__global__ void ghost_left_recv (double *xbuf_left_recv, double *x, int jlow, int jhgh, int nhalo, int bufcount, int jstride)
-{
-    int tidx = threadIdx.x + blockIdx.x * blockDim.x;
-    int tidy = threadIdx.y + blockIdx.y * blockDim.y + jlow;
-    int offset = (tidy - jlow) * nhalo + tidx;
-    if (tidy < jhgh && tidx < nhalo && offset < bufcount) {
-        xv(tidy,tidx - nhalo) = xbuf_left_recv[offset];
-    }
-}
-
 void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing, int &do_print);
 void Cartesian_print(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int jstride);
+#ifdef USE_PNETCDF
+void create_netcdf_file(const char *fname, int jmax, int imax, MPI_Comm comm, int *ncid, int *varid, int *varid_xcoord, int *varid_ycoord);
+void write_netcdf_soln(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int tstep, int ncid, int varid, int jstride);
+void write_netcdf_coords(int imax, int jmax, int nprocx, int nprocy, double Lx, double Ly, int ncid, int varid_xcoord, int varid_ycoord);
+#endif
 void boundarycondition_update(double *x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop);
 void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize,
       int nleft, int nrght, int nbot, int ntop, int do_timing);
@@ -191,7 +162,7 @@ int main(int argc, char *argv[])
    int rank, nprocs;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-   if (rank == 0) printf("Parallel run with no threads\n");
+   if (rank == 0) printf("------> Initializing the Problem\n");
    hipSetDevice(0);
 
    int imax = 2000, jmax = 2000;
@@ -222,6 +193,19 @@ int main(int argc, char *argv[])
    int jend   = jmax *(ycoord+1)/nprocy;
    int jsize  = jend - jbegin;
 
+   // physical domain dimensions (unit square)
+   double Lx = 1.0;
+   double Ly = 1.0;
+
+   // soln init params
+   double sigma = 0.01 / ( (Lx / imax) * (Ly / jmax) );
+   double x_center = imax / 2.0;
+   double y_center = jmax / 2.0;
+
+   // center of the Gaussian for initialization
+   double x0 = Lx / 2.0;
+   double y0 = Ly / 2.0;
+
    int jstride = isize+2*nhalo;
 
    int jlow=0, jhgh=jsize;
@@ -233,10 +217,10 @@ int main(int argc, char *argv[])
    int bufcount = jnum*nhalo;
 
    roctxRangePush("BufAlloc");
-   HIP_CHECK(hipMalloc(&xbuf_left_send, bufcount*sizeof(double)));
-   HIP_CHECK(hipMalloc(&xbuf_rght_send, bufcount*sizeof(double)));
-   HIP_CHECK(hipMalloc(&xbuf_rght_recv, bufcount*sizeof(double)));
-   HIP_CHECK(hipMalloc(&xbuf_left_recv, bufcount*sizeof(double)));
+   xbuf_left_send = (double *)malloc(bufcount*sizeof(double));
+   xbuf_rght_send = (double *)malloc(bufcount*sizeof(double));
+   xbuf_rght_recv = (double *)malloc(bufcount*sizeof(double));
+   xbuf_left_recv = (double *)malloc(bufcount*sizeof(double));
    roctxRangePop(); //BufAlloc
 
    /* The halo update both updates the ghost cells and the boundary halo cells. To be precise with terminology,
@@ -248,9 +232,8 @@ int main(int argc, char *argv[])
    double* xtmp;
    // Using 1D representation of a 2D array with nhalo offsets
    int totcells=(jsize+2*nhalo)*(isize+2*nhalo);
-   double *x=NULL, *xnew=NULL;
-   HIP_CHECK(hipMalloc(&x, totcells * sizeof(double)));
-   HIP_CHECK(hipMalloc(&xnew, totcells * sizeof(double)));
+   double *x    = (double *)malloc(totcells*sizeof(double));
+   double *xnew = (double *)malloc(totcells*sizeof(double));
 
    double *x_h=NULL;
    if (do_print) {
@@ -267,22 +250,13 @@ int main(int argc, char *argv[])
 
    dim3 grid((isize+63)/64, (jsize+3)/4, 1);
    dim3 block(64, 4, 1);
-   double val = static_cast<double>(rank) + 5.0;
-   init_core <<< grid, block >>> (x, nhalo, jsize, isize, val, jstride);
-   hipDeviceSynchronize();
-
-   int ispan=5, jspan=5;
-   if (ispan > imax/2) ispan = imax/2;
-   if (jspan > jmax/2) jspan = jmax/2;
-   dim3 grid2((2*ispan+63)/64, (2*jspan+3)/4, 1);
-   dim3 block2(64, 4, 1);
-   init_core2 <<< grid2, block2 >>> (x, jmax, jspan, jbegin, jend, imax, ispan, ibegin, iend, rank, jstride, nhalo);
+   init_core2 <<< grid, block >>> (x, nhalo, jsize, isize, jbegin, ibegin, sigma, x_center, y_center, jstride);
    hipDeviceSynchronize();
 
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
 
    if (do_print == 1) {
-      if (rank == 0) printf("Initial State \n");
+      if (rank == 0) printf("------> Initial State \n");
       // note: this ghostcell_update is only for printing purposes to show that the
       // solution matches the one produced by Orig also on the halo for debugging
       // the value of the solution on the halo does not matter as long as
@@ -294,6 +268,14 @@ int main(int argc, char *argv[])
 
    roctxMark("Starting main iteration loop");
 
+#ifdef USE_PNETCDF
+   int ncid, varid, varid_xcoord, varid_ycoord;
+     create_netcdf_file("solution.nc", jmax, imax, MPI_COMM_WORLD, &ncid, &varid, &varid_xcoord, &varid_ycoord);
+     write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, 0, ncid, varid, jstride);
+     write_netcdf_coords(imax, jmax, nprocx, nprocy, Lx, Ly, ncid, varid_xcoord, varid_ycoord);
+#endif
+
+   if (rank == 0) printf("------> Advancing the Solution\n");
    for (int iter = 0; iter < maxIter; iter++){
       cpu_timer_start(&tstart_stencil);
       roctxRangePush("InnerCellsUpdate");
@@ -333,11 +315,16 @@ int main(int argc, char *argv[])
 
       SWAP_PTR(xnew, x, xtmp);
 
-      if (iter%10 == 0 && rank == 0) printf("Iter %d\n",iter);
+      if (iter%10 == 0 && rank == 0) printf("        Iter %d\n",iter);
       if (do_print == 1) {
          HIP_CHECK(hipMemcpy(x_h, x, totcells * sizeof(double), hipMemcpyDefault));
          Cartesian_print(x_h, jmax, imax, nhalo, nprocy, nprocx, jstride);
       }
+#ifdef USE_PNETCDF
+      if(iter == maxIter - 1){
+         write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, iter+1, ncid, varid, jstride);
+      }
+#endif   
    }
 
    roctxMark("Stopping main iteration loop");
@@ -345,28 +332,33 @@ int main(int argc, char *argv[])
    total_time = cpu_timer_stop(tstart_total);
 
    if (rank == 0){
-      printf("GhostExchange_ArrayAssign_HIP Timing is stencil %f boundary condition %f ghost cell %lf total %f\n",
-             stencil_time,boundarycondition_time,ghostcell_time,total_time);
+      printf("------> Printing Timings\n");
+      printf("        Solution Advancement: %f \n", stencil_time);
+      printf("        Boundary Condition Enforcement:  %f \n", boundarycondition_time);
+      printf("        Ghost Cell Update:  %lf \n", ghostcell_time);
+      printf("        Total: %f\n",total_time);
    }
-
-   HIP_CHECK(hipFree(x));
-   HIP_CHECK(hipFree(xnew));
 
    if (do_print) {
       free(x_h);
    }
 
-   HIP_CHECK(hipFree(xbuf_left_send));
-   HIP_CHECK(hipFree(xbuf_rght_send));
-   HIP_CHECK(hipFree(xbuf_rght_recv));
-   HIP_CHECK(hipFree(xbuf_left_recv));
+   free(x);
+   free(xnew);
+
+   free(xbuf_left_send);
+   free(xbuf_rght_send);
+   free(xbuf_rght_recv);
+   free(xbuf_left_recv);
 
    MPI_Finalize();
    exit(0);
 }
 
-void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop)
+void boundarycondition_update(double *x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop)
 {
+   int jstride = isize+2*nhalo;
+
    struct timespec tstart_boundarycondition;
    cpu_timer_start(&tstart_boundarycondition);
 
@@ -378,28 +370,28 @@ void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int n
 // Boundary conditions -- constant
    if (nleft == MPI_PROC_NULL){
 
-      enforce_bcs_left <<< gridVrt, blockVrt >>> (x, nhalo, jsize);
+      enforce_bcs_left <<< gridVrt, blockVrt >>> (x, nhalo, jsize, jstride);
       hipDeviceSynchronize();
 
    }
 
    if (nrght == MPI_PROC_NULL){
 
-      enforce_bcs_rght <<< gridVrt, blockVrt >>> (x, nhalo, jsize, isize);
+      enforce_bcs_rght <<< gridVrt, blockVrt >>> (x, nhalo, jsize, isize, jstride);
       hipDeviceSynchronize();
 
    }
 
    if (nbot == MPI_PROC_NULL){
 
-      enforce_bcs_bot <<< gridHor, blockHor >>> (x, nhalo, isize);
+      enforce_bcs_bot <<< gridHor, blockHor >>> (x, nhalo, isize, jstride);
       hipDeviceSynchronize();
 
    }
       
    if (ntop == MPI_PROC_NULL){
 
-      enforce_bcs_top <<< gridHor, blockHor >>> (x, nhalo, jsize, isize);
+      enforce_bcs_top <<< gridHor, blockHor >>> (x, nhalo, jsize, isize, jstride);
       hipDeviceSynchronize();
 
    }
@@ -407,15 +399,19 @@ void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int n
    boundarycondition_time += cpu_timer_stop(tstart_boundarycondition);
 }
 
-void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, int nleft, int nrght, int nbot, int ntop, int do_timing)
+void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize, int nleft, int nrght, int nbot, int ntop, int do_timing)
 {
+   int jstride = isize+2*nhalo;
+
    //if (do_timing) MPI_Barrier(MPI_COMM_WORLD);
 
    struct timespec tstart_ghostcell;
    cpu_timer_start(&tstart_ghostcell);
 
-   MPI_Request request[4*nhalo];
-   MPI_Status status[4*nhalo];
+   roctxRangePush("MPIRequest");
+   std::vector<MPI_Request> request(4*nhalo);
+   std::vector<MPI_Status> status(4*nhalo);
+   roctxRangePop(); //MPIRequest
 
    int jlow=0, jhgh=jsize;
    if (corners) {
@@ -424,18 +420,14 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
    }
    int jnum = jhgh-jlow;
    int bufcount = jnum*nhalo;
-
-   double xbuf_left_send[bufcount];
-   double xbuf_rght_send[bufcount];
-   double xbuf_rght_recv[bufcount];
-   double xbuf_left_recv[bufcount];
    int offset = 0;
 
+   roctxRangePush("LoadLeftRight");
    if (nleft != MPI_PROC_NULL){
       for (int j = jlow; j < jhgh; j++){
          for (int ll = 0; ll < nhalo; ll++){
             offset = (j - jlow) * nhalo + ll;
-            xbuf_left_send[offset] = x[j][ll];
+            xbuf_left_send[offset] = xv(j,ll);
          }
       }
    }
@@ -443,27 +435,31 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
       for (int j = jlow; j < jhgh; j++){
          for (int ll = 0; ll < nhalo; ll++){
             offset = (j - jlow) * nhalo + ll;
-            xbuf_rght_send[offset] = x[j][isize-nhalo+ll];
+            xbuf_rght_send[offset] = xv(j,isize-nhalo+ll);
          }
       }
    }
-
-   MPI_Irecv(&xbuf_rght_recv, bufcount, MPI_DOUBLE, nrght, 1001,
+   roctxRangePop(); //LoadLeftRight
+                                                                                    
+   roctxRangePush("MPILeftRightExchange");
+   MPI_Irecv(xbuf_rght_recv, bufcount, MPI_DOUBLE, nrght, 1001,
              MPI_COMM_WORLD, &request[0]);
-   MPI_Isend(&xbuf_left_send, bufcount, MPI_DOUBLE, nleft, 1001,
+   MPI_Isend(xbuf_left_send, bufcount, MPI_DOUBLE, nleft, 1001,
              MPI_COMM_WORLD, &request[1]);
 
-   MPI_Irecv(&xbuf_left_recv, bufcount, MPI_DOUBLE, nleft, 1002,
+   MPI_Irecv(xbuf_left_recv, bufcount, MPI_DOUBLE, nleft, 1002,
              MPI_COMM_WORLD, &request[2]);
-   MPI_Isend(&xbuf_rght_send, bufcount, MPI_DOUBLE, nrght, 1002,
+   MPI_Isend(xbuf_rght_send, bufcount, MPI_DOUBLE, nrght, 1002,
              MPI_COMM_WORLD, &request[3]);
-   MPI_Waitall(4, request, status);
-
+   MPI_Waitall(4, request.data(), status.data());
+   roctxRangePop(); //MPILeftRightExchange
+                                                                                    
+   roctxRangePush("UnpackLeftRight");
    if (nrght != MPI_PROC_NULL){
       for (int j = jlow; j < jhgh; j++){
          for (int ll = 0; ll < nhalo; ll++){
             offset = (j - jlow) * nhalo + ll;
-            x[j][isize+ll] = xbuf_rght_recv[offset];
+            xv(j,isize+ll) = xbuf_rght_recv[offset];
          }
       }
    }
@@ -471,29 +467,32 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
       for (int j = jlow; j < jhgh; j++){
          for (int ll = 0; ll < nhalo; ll++){
             offset = (j - jlow) * nhalo + ll;
-            x[j][-nhalo+ll] = xbuf_left_recv[offset];
+            xv(j,-nhalo+ll) = xbuf_left_recv[offset];
          }
       }
    }
-
+   roctxRangePop(); //UnpackLeftRight
+ 
+   roctxRangePush("MPIUpDownExchange");
    if (corners) {
       bufcount = nhalo*(isize+2*nhalo);
-      MPI_Irecv(&x[jsize][-nhalo],   bufcount, MPI_DOUBLE, ntop, 1001, MPI_COMM_WORLD, &request[0]);
-      MPI_Isend(&x[0    ][-nhalo],   bufcount, MPI_DOUBLE, nbot, 1001, MPI_COMM_WORLD, &request[1]);
+      MPI_Irecv(&xv(jsize,-nhalo),   bufcount, MPI_DOUBLE, ntop, 1001, MPI_COMM_WORLD, &request[0]);
+      MPI_Isend(&xv(0    ,-nhalo),   bufcount, MPI_DOUBLE, nbot, 1001, MPI_COMM_WORLD, &request[1]);
 
-      MPI_Irecv(&x[     -nhalo][-nhalo], bufcount, MPI_DOUBLE, nbot, 1002, MPI_COMM_WORLD, &request[2]);
-      MPI_Isend(&x[jsize-nhalo][-nhalo], bufcount, MPI_DOUBLE, ntop, 1002, MPI_COMM_WORLD, &request[3]);
-      MPI_Waitall(4, request, status);
+      MPI_Irecv(&xv(     -nhalo,-nhalo), bufcount, MPI_DOUBLE, nbot, 1002, MPI_COMM_WORLD, &request[2]);
+      MPI_Isend(&xv(jsize-nhalo,-nhalo), bufcount, MPI_DOUBLE, ntop, 1002, MPI_COMM_WORLD, &request[3]);
+      MPI_Waitall(4, request.data(), status.data());
    } else {
       for (int j = 0; j<nhalo; j++){
-         MPI_Irecv(&x[jsize+j][0],   isize, MPI_DOUBLE, ntop, 1001+j*2, MPI_COMM_WORLD, &request[0+j*4]);
-         MPI_Isend(&x[0+j    ][0],   isize, MPI_DOUBLE, nbot, 1001+j*2, MPI_COMM_WORLD, &request[1+j*4]);
+         MPI_Irecv(&xv(jsize+j,0),   isize, MPI_DOUBLE, ntop, 1001+j*2, MPI_COMM_WORLD, &request[0+j*4]);
+         MPI_Isend(&xv(0+j    ,0),   isize, MPI_DOUBLE, nbot, 1001+j*2, MPI_COMM_WORLD, &request[1+j*4]);
 
-         MPI_Irecv(&x[     -nhalo+j][0], isize, MPI_DOUBLE, nbot, 1002+j*2, MPI_COMM_WORLD, &request[2+j*4]);
-         MPI_Isend(&x[jsize-nhalo+j][0], isize, MPI_DOUBLE, ntop, 1002+j*2, MPI_COMM_WORLD, &request[3+j*4]);
+         MPI_Irecv(&xv(     -nhalo+j,0), isize, MPI_DOUBLE, nbot, 1002+j*2, MPI_COMM_WORLD, &request[2+j*4]);
+         MPI_Isend(&xv(jsize-nhalo+j,0), isize, MPI_DOUBLE, ntop, 1002+j*2, MPI_COMM_WORLD, &request[3+j*4]);
          }
-      MPI_Waitall(4*nhalo, request, status);
+      MPI_Waitall(4*nhalo, request.data(), status.data());
    }
+   roctxRangePop(); //MPIUpDownExchange
 
    //if (do_timing) MPI_Barrier(MPI_COMM_WORLD);
 
@@ -503,30 +502,32 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
 void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, int nrght, int nbot, int ntop,
       int jmax, int imax, int nprocy, int nprocx, int do_timing, int do_print)
 {
+   int jstride = isize+2*nhalo;
 
-   // NOTE: this function has not been ported to HIP
    int rank;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-   double** x = malloc2D(jsize+2*nhalo, isize+2*nhalo, nhalo, nhalo);
+   int totcells=(jsize+2*nhalo)*(isize+2*nhalo);
+   double *x=NULL;
+   HIP_CHECK(hipMalloc(&x, totcells*sizeof(double)));
 
    if (jsize > 12 || isize > 12) return;
 
    for (int j = -nhalo; j < jsize+nhalo; j++){
       for (int i = -nhalo; i < isize+nhalo; i++){
-         x[j][i] = 0.0;
+         xv(j,i) = 0.0;
       }
    }
 
    for (int j = 0; j < jsize; j++){
       for (int i = 0; i < isize; i++){
-         x[j][i] = rank * 1000 + j*10 + i;
+         xv(j,i) = rank * 1000 + j*10 + i;
       }
    }
 
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
    ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
-   if (do_print) {
+   if (do_print == 1) {
       double *x_h = (double *) malloc (totcells*sizeof(double));
       HIP_CHECK(hipMemcpy(x_h, x, totcells*sizeof(double), hipMemcpyDefault));
       Cartesian_print(x_h, jmax, imax, nhalo, nprocy, nprocx, jstride);
@@ -534,7 +535,6 @@ void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, in
    }
 
    HIP_CHECK(hipFree(x));
-
 }
 
 void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing, int &do_print)
@@ -608,14 +608,14 @@ void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, 
    }
 }
 
-void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx)
+void Cartesian_print(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int jstride)
 {
    int rank, nprocs;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
    int isize_total=0;
-   int isizes[nprocx];
+   std::vector<int> isizes(nprocx);
    for (int ii = 0; ii < nprocx; ii++){
       int xcoord = ii%nprocx;
       int ycoord = ii/nprocx;
@@ -631,7 +631,7 @@ void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int 
       printf("     ");
       for (int ii = 0; ii < nprocx; ii++){
          for (int i = -nhalo; i < isizes[ii]+nhalo; i++){
-            printf("%6d   ",i);
+            printf("%8d   ",i);
          }
          printf("   ");
       }
@@ -666,12 +666,12 @@ void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int 
          ilen_displ[i] = ilen_displ[i-1] + ilen_global[i-1];
       }
       for (int j=jlen_max+nhalo-1; j>=-nhalo; j--){
-         MPI_Gatherv(&x[j][-nhalo],ilen,MPI_DOUBLE,xrow,ilen_global,ilen_displ,MPI_DOUBLE,0,MPI_COMM_WORLD);
+         MPI_Gatherv(&xv(j,-nhalo),ilen,MPI_DOUBLE,xrow,ilen_global,ilen_displ,MPI_DOUBLE,0,MPI_COMM_WORLD);
          if (rank == 0) {
             printf("%3d:",j);
             for (int ii = 0; ii < nprocx; ii++){
                for (int i = 0; i< isizes[ii]+2*nhalo; i++){
-                  printf("%8.1lf ",xrow[i+ii*(isizes[ii]+2*nhalo)]);
+                  printf("%12.6lf ",xrow[i+ii*(isizes[ii]+2*nhalo)]);
                }
                printf("   ");
             }
@@ -684,3 +684,124 @@ void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int 
    }
    free(xrow);
 }
+
+#ifdef USE_PNETCDF
+
+void create_netcdf_file(const char *fname, int jmax, int imax, MPI_Comm comm, int *ncid, int *varid, int *varid_xcoord, int *varid_ycoord)
+{
+    int dimid_t, dimid_y, dimid_x;
+    int dimids[3];
+
+    ncmpi_create(comm, fname, NC_CLOBBER | NC_64BIT_DATA, MPI_INFO_NULL, ncid);
+
+    ncmpi_def_dim(*ncid, "time", NC_UNLIMITED, &dimid_t);
+    ncmpi_def_dim(*ncid, "y", jmax, &dimid_y);
+    ncmpi_def_dim(*ncid, "x", imax, &dimid_x);
+
+    dimids[0] = dimid_t;
+    dimids[1] = dimid_y;
+    dimids[2] = dimid_x;
+
+    ncmpi_def_var(*ncid, "u", NC_DOUBLE, 3, dimids, varid);
+    ncmpi_def_var(*ncid, "xcoord", NC_DOUBLE, 1, &dimid_x, varid_xcoord);
+    ncmpi_def_var(*ncid, "ycoord", NC_DOUBLE, 1, &dimid_y, varid_ycoord);
+
+    ncmpi_put_att_text(*ncid, *varid, "u", 25, "solution field");
+    ncmpi_put_att_text(*ncid, *varid_xcoord, "x", 11, "x coordinate");
+    ncmpi_put_att_text(*ncid, *varid_ycoord, "y", 11, "y coordinate");
+
+    ncmpi_enddef(*ncid);
+}
+
+
+void write_netcdf_soln(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int tstep, int ncid, int varid, int jstride)
+{
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int xcoord = rank % nprocx;
+    int ycoord = rank / nprocx;
+
+    int ibegin = imax *  xcoord      / nprocx;
+    int iend   = imax * (xcoord + 1) / nprocx;
+    int isize  = iend - ibegin;
+
+    int jbegin = jmax *  ycoord      / nprocy;
+    int jend   = jmax * (ycoord + 1) / nprocy;
+    int jsize  = jend - jbegin;
+
+    MPI_Offset start[3], count[3];
+
+    start[0] = tstep;
+    start[1] = jmax - jend;
+    start[2] = ibegin;
+
+    count[0] = 1;
+    count[1] = jsize;
+    count[2] = isize;
+
+    double *buf = (double *)malloc(jsize * isize * sizeof(double));
+
+    for (int j = 0; j < jsize; j++) {
+        for (int i = 0; i < isize; i++) {
+            buf[(jsize-1-j)*isize + i] = xv(j,i);  // no halo cells included
+        }
+    }
+
+    ncmpi_put_vara_double_all(ncid, varid, start, count, buf);
+
+    free(buf);
+}
+
+void write_netcdf_coords(int imax, int jmax, int nprocx, int nprocy, double Lx, double Ly, int ncid, int varid_xcoord, int varid_ycoord)
+{
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int xcoord = rank % nprocx;
+    int ycoord = rank / nprocx;
+
+    int ibegin = imax *  xcoord      / nprocx;
+    int iend   = imax * (xcoord + 1) / nprocx;
+    int isize  = iend - ibegin;
+
+    int jbegin = jmax *  ycoord      / nprocy;
+    int jend   = jmax * (ycoord + 1) / nprocy;
+    int jsize  = jend - jbegin;
+
+    // x coordinates
+    double *xbuf = (double *)malloc(isize * sizeof(double));
+    for (int i = 0; i < isize; i++) {
+        int iglobal = ibegin + i;
+        xbuf[i] = (double)iglobal * Lx / imax;  // map to physical domain
+    }
+
+    MPI_Offset xstart = ibegin;
+    MPI_Offset xcount = isize;
+
+    ncmpi_put_vara_double_all(ncid, varid_xcoord, &xstart, &xcount, xbuf);
+
+    free(xbuf);
+
+    // y coordinates
+    double *ybuf = (double *)malloc(jsize * sizeof(double));
+    for (int j = 0; j < jsize; j++) {
+        int jglobal = jbegin + j;
+        ybuf[j] = (double)jglobal * Ly / jmax;  // map to physical domain
+    }
+
+    MPI_Offset ystart = jbegin;
+    MPI_Offset ycount = jsize;
+
+    ncmpi_put_vara_double_all(ncid, varid_ycoord, &ystart, &ycount, ybuf);
+
+    free(ybuf);
+}
+
+
+void close_netcdf(int ncid)
+{
+    ncmpi_close(ncid);
+}
+
+#endif

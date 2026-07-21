@@ -1,0 +1,650 @@
+{
+  "b2_s32_run1": [
+    {
+      "config": "b2_s32_run1",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 63.64365974421903,
+      "memory_mb": 184.17529296875,
+      "batch_time_ms": 31.42753601074219,
+      "loss": 33.310054779052734,
+      "fusion_enabled": true
+    }
+  ],
+  "b2_s32_run2": [
+    {
+      "config": "b2_s32_run2",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 63.7638225843364,
+      "memory_mb": 184.17529296875,
+      "batch_time_ms": 31.368889808654785,
+      "loss": 33.310054779052734,
+      "fusion_enabled": true
+    }
+  ],
+  "b2_s32_run3": [
+    {
+      "config": "b2_s32_run3",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 63.40649715670299,
+      "memory_mb": 184.17529296875,
+      "batch_time_ms": 31.545767784118656,
+      "loss": 33.310054779052734,
+      "fusion_enabled": true
+    }
+  ],
+  "b2_s64_run1": [
+    {
+      "config": "b2_s64_run1",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 63.163509398580366,
+      "memory_mb": 189.02685546875,
+      "batch_time_ms": 31.666979789733887,
+      "loss": 33.33092002868652,
+      "fusion_enabled": true
+    }
+  ],
+  "b2_s64_run2": [
+    {
+      "config": "b2_s64_run2",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 62.692390907322405,
+      "memory_mb": 189.02685546875,
+      "batch_time_ms": 31.90388202667236,
+      "loss": 33.33092002868652,
+      "fusion_enabled": true
+    }
+  ],
+  "b2_s64_run3": [
+    {
+      "config": "b2_s64_run3",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 62.96175657916876,
+      "memory_mb": 189.02685546875,
+      "batch_time_ms": 31.76812171936035,
+      "loss": 33.33092002868652,
+      "fusion_enabled": true
+    }
+  ],
+  "b2_s128_run1": [
+    {
+      "config": "b2_s128_run1",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 52.93817149325002,
+      "memory_mb": 207.91748046875,
+      "batch_time_ms": 37.78132915496826,
+      "loss": 33.36609390258789,
+      "fusion_enabled": true
+    }
+  ],
+  "b2_s128_run2": [
+    {
+      "config": "b2_s128_run2",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 52.838334452720225,
+      "memory_mb": 207.91748046875,
+      "batch_time_ms": 37.85205364227295,
+      "loss": 33.36609390258789,
+      "fusion_enabled": true
+    }
+  ],
+  "b2_s128_run3": [
+    {
+      "config": "b2_s128_run3",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 52.182648284435274,
+      "memory_mb": 207.91748046875,
+      "batch_time_ms": 38.33456516265869,
+      "loss": 33.36609390258789,
+      "fusion_enabled": true
+    }
+  ],
+  "b4_s32_run1": [
+    {
+      "config": "b4_s32_run1",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 124.62767637090164,
+      "memory_mb": 185.96435546875,
+      "batch_time_ms": 32.09806442260742,
+      "loss": 33.43812469482422,
+      "fusion_enabled": true
+    }
+  ],
+  "b4_s32_run2": [
+    {
+      "config": "b4_s32_run2",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 125.09511754299402,
+      "memory_mb": 185.96435546875,
+      "batch_time_ms": 31.977725028991696,
+      "loss": 33.43812469482422,
+      "fusion_enabled": true
+    }
+  ],
+  "b4_s32_run3": [
+    {
+      "config": "b4_s32_run3",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 125.21979999559595,
+      "memory_mb": 185.96435546875,
+      "batch_time_ms": 31.946592330932617,
+      "loss": 33.43812469482422,
+      "fusion_enabled": true
+    }
+  ],
+  "b4_s64_run1": [
+    {
+      "config": "b4_s64_run1",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 124.5219312837746,
+      "memory_mb": 195.66748046875,
+      "batch_time_ms": 32.126431465148926,
+      "loss": 33.28817756652832,
+      "fusion_enabled": true
+    }
+  ],
+  "b4_s64_run2": [
+    {
+      "config": "b4_s64_run2",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 124.2022001060767,
+      "memory_mb": 195.66748046875,
+      "batch_time_ms": 32.20683574676514,
+      "loss": 33.28817756652832,
+      "fusion_enabled": true
+    }
+  ],
+  "b4_s64_run3": [
+    {
+      "config": "b4_s64_run3",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 122.87180386195747,
+      "memory_mb": 195.66748046875,
+      "batch_time_ms": 32.55629539489746,
+      "loss": 33.28817756652832,
+      "fusion_enabled": true
+    }
+  ],
+  "b4_s128_run1": [
+    {
+      "config": "b4_s128_run1",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 67.49698042478985,
+      "memory_mb": 233.44873046875,
+      "batch_time_ms": 59.262309074401855,
+      "loss": 33.34043548583984,
+      "fusion_enabled": true
+    }
+  ],
+  "b4_s128_run2": [
+    {
+      "config": "b4_s128_run2",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 67.6690548647926,
+      "memory_mb": 233.44873046875,
+      "batch_time_ms": 59.111876487731934,
+      "loss": 33.34043548583984,
+      "fusion_enabled": true
+    }
+  ],
+  "b4_s128_run3": [
+    {
+      "config": "b4_s128_run3",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 67.59538258355016,
+      "memory_mb": 233.44873046875,
+      "batch_time_ms": 59.176268577575684,
+      "loss": 33.34043548583984,
+      "fusion_enabled": true
+    }
+  ],
+  "b8_s32_run1": [
+    {
+      "config": "b8_s32_run1",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 245.6459093677896,
+      "memory_mb": 189.54248046875,
+      "batch_time_ms": 32.56967544555664,
+      "loss": 33.424442749023434,
+      "fusion_enabled": true
+    }
+  ],
+  "b8_s32_run2": [
+    {
+      "config": "b8_s32_run2",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 247.40269128144845,
+      "memory_mb": 189.54248046875,
+      "batch_time_ms": 32.33790397644043,
+      "loss": 33.424442749023434,
+      "fusion_enabled": true
+    }
+  ],
+  "b8_s32_run3": [
+    {
+      "config": "b8_s32_run3",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 248.22603356007164,
+      "memory_mb": 189.54248046875,
+      "batch_time_ms": 32.230024337768555,
+      "loss": 33.424442749023434,
+      "fusion_enabled": true
+    }
+  ],
+  "b8_s64_run1": [
+    {
+      "config": "b8_s64_run1",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 213.39649148665103,
+      "memory_mb": 208.94873046875,
+      "batch_time_ms": 37.49000072479248,
+      "loss": 33.3198208618164,
+      "fusion_enabled": true
+    }
+  ],
+  "b8_s64_run2": [
+    {
+      "config": "b8_s64_run2",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 212.47488190743428,
+      "memory_mb": 208.94873046875,
+      "batch_time_ms": 37.65321731567383,
+      "loss": 33.3198208618164,
+      "fusion_enabled": true
+    }
+  ],
+  "b8_s64_run3": [
+    {
+      "config": "b8_s64_run3",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 212.51866807806022,
+      "memory_mb": 208.94873046875,
+      "batch_time_ms": 37.64515399932861,
+      "loss": 33.3198208618164,
+      "fusion_enabled": true
+    }
+  ],
+  "b8_s128_run1": [
+    {
+      "config": "b8_s128_run1",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 71.70693069863157,
+      "memory_mb": 284.51123046875,
+      "batch_time_ms": 111.56612396240234,
+      "loss": 33.34742805480957,
+      "fusion_enabled": true
+    }
+  ],
+  "b8_s128_run2": [
+    {
+      "config": "b8_s128_run2",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 71.81058615940674,
+      "memory_mb": 284.51123046875,
+      "batch_time_ms": 111.40459060668945,
+      "loss": 33.34742805480957,
+      "fusion_enabled": true
+    }
+  ],
+  "b8_s128_run3": [
+    {
+      "config": "b8_s128_run3",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 71.80075882715983,
+      "memory_mb": 284.51123046875,
+      "batch_time_ms": 111.41972541809082,
+      "loss": 33.34742805480957,
+      "fusion_enabled": true
+    }
+  ],
+  "b2_s32_baseline_run1": [
+    {
+      "config": "b2_s32_baseline_run1",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 47.85025881100107,
+      "memory_mb": 184.17529296875,
+      "batch_time_ms": 41.79922103881836,
+      "loss": 33.31003517150879,
+      "fusion_enabled": false
+    }
+  ],
+  "b2_s32_baseline_run2": [
+    {
+      "config": "b2_s32_baseline_run2",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 48.1511213297311,
+      "memory_mb": 184.17529296875,
+      "batch_time_ms": 41.5382719039917,
+      "loss": 33.31003517150879,
+      "fusion_enabled": false
+    }
+  ],
+  "b2_s32_baseline_run3": [
+    {
+      "config": "b2_s32_baseline_run3",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 48.04997391620931,
+      "memory_mb": 184.17529296875,
+      "batch_time_ms": 41.625752449035645,
+      "loss": 33.31003517150879,
+      "fusion_enabled": false
+    }
+  ],
+  "b2_s64_baseline_run1": [
+    {
+      "config": "b2_s64_baseline_run1",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 47.12115108722329,
+      "memory_mb": 189.02685546875,
+      "batch_time_ms": 42.4462890625,
+      "loss": 33.33120407104492,
+      "fusion_enabled": false
+    }
+  ],
+  "b2_s64_baseline_run2": [
+    {
+      "config": "b2_s64_baseline_run2",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 47.05219824020075,
+      "memory_mb": 189.02685546875,
+      "batch_time_ms": 42.50814914703369,
+      "loss": 33.33120407104492,
+      "fusion_enabled": false
+    }
+  ],
+  "b2_s64_baseline_run3": [
+    {
+      "config": "b2_s64_baseline_run3",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 46.9058087625667,
+      "memory_mb": 189.02685546875,
+      "batch_time_ms": 42.6411771774292,
+      "loss": 33.33120407104492,
+      "fusion_enabled": false
+    }
+  ],
+  "b2_s128_baseline_run1": [
+    {
+      "config": "b2_s128_baseline_run1",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 44.635516883276715,
+      "memory_mb": 207.91748046875,
+      "batch_time_ms": 44.809393882751465,
+      "loss": 33.366112594604495,
+      "fusion_enabled": false
+    }
+  ],
+  "b2_s128_baseline_run2": [
+    {
+      "config": "b2_s128_baseline_run2",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 45.010349981016255,
+      "memory_mb": 207.91748046875,
+      "batch_time_ms": 44.43601608276367,
+      "loss": 33.366112594604495,
+      "fusion_enabled": false
+    }
+  ],
+  "b2_s128_baseline_run3": [
+    {
+      "config": "b2_s128_baseline_run3",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 44.69709631214344,
+      "memory_mb": 207.91748046875,
+      "batch_time_ms": 44.74767208099365,
+      "loss": 33.366112594604495,
+      "fusion_enabled": false
+    }
+  ],
+  "b4_s32_baseline_run1": [
+    {
+      "config": "b4_s32_baseline_run1",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 93.84065055538025,
+      "memory_mb": 185.96435546875,
+      "batch_time_ms": 42.62770652770996,
+      "loss": 33.43859603881836,
+      "fusion_enabled": false
+    }
+  ],
+  "b4_s32_baseline_run2": [
+    {
+      "config": "b4_s32_baseline_run2",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 93.2398673390926,
+      "memory_mb": 185.96435546875,
+      "batch_time_ms": 42.90202617645264,
+      "loss": 33.43859603881836,
+      "fusion_enabled": false
+    }
+  ],
+  "b4_s32_baseline_run3": [
+    {
+      "config": "b4_s32_baseline_run3",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 94.14344463397425,
+      "memory_mb": 185.96435546875,
+      "batch_time_ms": 42.49120235443115,
+      "loss": 33.43859603881836,
+      "fusion_enabled": false
+    }
+  ],
+  "b4_s64_baseline_run1": [
+    {
+      "config": "b4_s64_baseline_run1",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 93.02223654440424,
+      "memory_mb": 195.66748046875,
+      "batch_time_ms": 43.003177642822266,
+      "loss": 33.288150024414065,
+      "fusion_enabled": false
+    }
+  ],
+  "b4_s64_baseline_run2": [
+    {
+      "config": "b4_s64_baseline_run2",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 92.25816076917452,
+      "memory_mb": 195.66748046875,
+      "batch_time_ms": 43.359341621398926,
+      "loss": 33.288150024414065,
+      "fusion_enabled": false
+    }
+  ],
+  "b4_s64_baseline_run3": [
+    {
+      "config": "b4_s64_baseline_run3",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 89.89430557958023,
+      "memory_mb": 195.66748046875,
+      "batch_time_ms": 44.60587024688721,
+      "loss": 33.288150024414065,
+      "fusion_enabled": false
+    }
+  ],
+  "b4_s128_baseline_run1": [
+    {
+      "config": "b4_s128_baseline_run1",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 60.44473782559924,
+      "memory_mb": 233.44873046875,
+      "batch_time_ms": 66.17673397064209,
+      "loss": 33.34043754577637,
+      "fusion_enabled": false
+    }
+  ],
+  "b4_s128_baseline_run2": [
+    {
+      "config": "b4_s128_baseline_run2",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 60.51498185449323,
+      "memory_mb": 233.44873046875,
+      "batch_time_ms": 66.09979152679443,
+      "loss": 33.34043754577637,
+      "fusion_enabled": false
+    }
+  ],
+  "b4_s128_baseline_run3": [
+    {
+      "config": "b4_s128_baseline_run3",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 60.09321090316696,
+      "memory_mb": 233.44873046875,
+      "batch_time_ms": 66.58796310424805,
+      "loss": 33.34043754577637,
+      "fusion_enabled": false
+    }
+  ],
+  "b8_s32_baseline_run1": [
+    {
+      "config": "b8_s32_baseline_run1",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 186.11675196494397,
+      "memory_mb": 189.54248046875,
+      "batch_time_ms": 42.98673629760742,
+      "loss": 33.4245125579834,
+      "fusion_enabled": false
+    }
+  ],
+  "b8_s32_baseline_run2": [
+    {
+      "config": "b8_s32_baseline_run2",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 187.88431953608662,
+      "memory_mb": 189.54248046875,
+      "batch_time_ms": 42.58065700531006,
+      "loss": 33.4245125579834,
+      "fusion_enabled": false
+    }
+  ],
+  "b8_s32_baseline_run3": [
+    {
+      "config": "b8_s32_baseline_run3",
+      "batch_size": 32,
+      "seq_len": 32,
+      "speed": 187.2447444645414,
+      "memory_mb": 189.54248046875,
+      "batch_time_ms": 42.72705078125,
+      "loss": 33.4245125579834,
+      "fusion_enabled": false
+    }
+  ],
+  "b8_s64_baseline_run1": [
+    {
+      "config": "b8_s64_baseline_run1",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 178.9684812136341,
+      "memory_mb": 208.94873046875,
+      "batch_time_ms": 44.702444076538086,
+      "loss": 33.31982734680176,
+      "fusion_enabled": false
+    }
+  ],
+  "b8_s64_baseline_run2": [
+    {
+      "config": "b8_s64_baseline_run2",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 173.938173238889,
+      "memory_mb": 208.94873046875,
+      "batch_time_ms": 46.13142490386963,
+      "loss": 33.31982734680176,
+      "fusion_enabled": false
+    }
+  ],
+  "b8_s64_baseline_run3": [
+    {
+      "config": "b8_s64_baseline_run3",
+      "batch_size": 64,
+      "seq_len": 64,
+      "speed": 175.48816714828502,
+      "memory_mb": 208.94873046875,
+      "batch_time_ms": 45.768680572509766,
+      "loss": 33.31982734680176,
+      "fusion_enabled": false
+    }
+  ],
+  "b8_s128_baseline_run1": [
+    {
+      "config": "b8_s128_baseline_run1",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 65.2981337004386,
+      "memory_mb": 284.51123046875,
+      "batch_time_ms": 122.51543998718262,
+      "loss": 33.34742553710937,
+      "fusion_enabled": false
+    }
+  ],
+  "b8_s128_baseline_run2": [
+    {
+      "config": "b8_s128_baseline_run2",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 65.2730328365861,
+      "memory_mb": 284.51123046875,
+      "batch_time_ms": 122.56243705749512,
+      "loss": 33.34742553710937,
+      "fusion_enabled": false
+    }
+  ],
+  "b8_s128_baseline_run3": [
+    {
+      "config": "b8_s128_baseline_run3",
+      "batch_size": 128,
+      "seq_len": 128,
+      "speed": 65.23465261765601,
+      "memory_mb": 284.51123046875,
+      "batch_time_ms": 122.63461589813232,
+      "loss": 33.34742553710937,
+      "fusion_enabled": false
+    }
+  ]
+}

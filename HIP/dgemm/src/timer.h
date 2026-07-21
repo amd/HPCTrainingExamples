@@ -23,7 +23,7 @@ public:
   }
 
 private:
-  using time_point = std::chrono::time_point<std::chrono::system_clock>;
+  using time_point = std::chrono::time_point<std::chrono::high_resolution_clock>;
   time_point m_t0;
   time_point m_t1;
 };

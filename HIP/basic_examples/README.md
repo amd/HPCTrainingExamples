@@ -1,6 +1,9 @@
-# HIP/basic_examples Documentation
 
-## Table of Contents
+# Introduction to HIP Exercises
+
+## HIP/basic_examples Documentation
+
+### Table of Contents
 
 1. `01_error_check`
 2. `02_add_d2h_data_transfer`

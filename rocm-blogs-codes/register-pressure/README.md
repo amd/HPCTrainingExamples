@@ -1,4 +1,5 @@
-# Register pressure in AMD CDNA™2 GPUs #
+
+## Register pressure in AMD CDNA™2 GPUs #
 
 Sample codes for the following blog:
 

@@ -1,0 +1,63 @@
+base_model: /app/models/Ministral-3-14B-Reasoning-2512
+flash_attention: true
+use_kernels: false
+model_kwargs:
+  attn_implementation: "flash_attention_2"
+
+# prevent oom by not putting model to GPU before sharding
+experimental_skip_move_to_device: true
+
+gradient_checkpointing: true
+gradient_checkpointing_kwargs:
+  use_reentrant: false
+
+datasets:
+  - path: /app/datasets/SFT_HEDP_dataset/hedp_dataset.jsonl
+    type: chat_template
+    chat_template: tokenizer_default
+    field_messages: conversations
+    message_property_mappings:
+      content: value
+      role: from
+    roles:
+      user: ["human"]
+      assistant: ["gpt"]
+
+val_set_size: 0
+output_dir: /app/models/ministral-3-14b-hedp
+
+sequence_len: 2048
+sample_packing: true
+pad_to_sequence_len: true
+
+dataset_num_proc: 128
+# XXX JB
+#dataloader_num_workers: 2
+#dataloader_num_workers: 1
+dataloader_num_workers: 8
+
+# batch size math: 4 * 4 * 4 (GPUs) = 64 global batch
+# XXX JB
+#micro_batch_size: 4
+micro_batch_size: 1
+gradient_accumulation_steps: 4
+num_epochs: 3
+max_steps: 100
+
+optimizer: adamw_torch
+lr_scheduler: constant_with_warmup
+learning_rate: 2e-5
+
+bf16: true
+tf32: false
+
+logging_steps: 1
+saves_per_epoch: 1
+warmup_ratio: 0.03
+
+deepspeed: /app/ministral-3-14B-fft-hedp.zero3.json
+
+save_safetensors: true
+push_to_hub: false
+ray_log_to_driver: false
+

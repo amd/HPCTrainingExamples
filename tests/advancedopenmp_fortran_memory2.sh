@@ -1,0 +1,49 @@
+#!/bin/bash
+
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+else
+   module -t list 2>&1 | grep -q "^rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   module load amdflang-new >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load amdclang
+   fi
+fi
+
+GFX_MODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`
+if [ "${GFX_MODEL}" = "gfx1030" ] ; then
+   echo "Skip"
+else
+
+   REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
+   cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/memory_pragmas
+
+   SRC_DIR=$(pwd)
+   BUILD_DIR=$(mktemp -d)
+   trap "rm -rf ${BUILD_DIR}" EXIT
+   cp * ${BUILD_DIR}
+
+   cd ${BUILD_DIR}
+
+   export LIBOMPTARGET_INFO=-1
+   export LIBOMPTARGET_INFO_SUPPORT=0
+   export SLURM_BATCH_WAIT=0
+   export OMP_TARGET_OFFLOAD=MANDATORY
+
+   cmake ${SRC_DIR}
+   make mem2
+   ./mem2
+fi

@@ -2,6 +2,18 @@
 ##* Copyright (c) 2022, Advanced Micro Devices, Inc. All rights reserved.
 ##**************************************************************************
 
+# Description of binaries
+BINDIR=.
+JACOBI_HIP=$(BINDIR)/Jacobi_hip
+BINARIES=$(JACOBI_HIP)
+
+.PHONY: all clean
+default: $(BINARIES)
+all: $(BINARIES)
+clean:
+	rm -rf *.o *~ $(BINARIES)
+
+
 ROCM_PATH?=/opt/rocm
 
 # Compilers
@@ -9,17 +21,41 @@ MPICC=$(PREP) mpic++
 MPILD=$(PREP) $(ROCM_PATH)/bin/hipcc
 HIPCC=$(PREP) $(ROCM_PATH)/bin/hipcc
 
-IS_OMPI=$(shell mpirun --version | grep "Open MPI")
-IS_MPICH=$(shell mpirun --version | grep mpich)
+USE_CRAYPE=$(shell mpic++ --version | grep "CrayPE is loaded")
+
+ifneq ($(USE_CRAYPE),)
+  MPICC=CC
+endif
+
+IS_OMPI=$(shell which ompi_info 2>/dev/null)
+# MPICH detection. The Cray cc/CC wrapper prints "CrayPE is loaded" (matched by
+# 'Cray' below). The standalone mpich-wrappers MPICH on a Cray, however, reports
+# the underlying compiler from `--version` (e.g. "AMD clang"), so grepping the
+# version string misses it -- fall back to a working MPICH-style `-compile_info`
+# (mpich-wrappers supports it; see the else branch), then to the `mpichversion`
+# tool. (Previously the second assignment clobbered the first, so only the
+# 'Cray' match survived and mpich-wrappers hit the "Unknown MPI version" error.)
+IS_MPICH=$(shell ${MPICC} --version 2>/dev/null | grep -iE 'mpich|cray')
+ifeq ($(strip $(IS_MPICH)),)
+  IS_MPICH=$(shell ${MPICC} -compile_info >/dev/null 2>&1 && echo mpich)
+endif
+ifeq ($(strip $(IS_MPICH)),)
+  IS_MPICH=$(shell which mpichversion 2>/dev/null)
+endif
 
 ifneq ($(IS_OMPI),)
-  MPICFLAGS=$(shell mpic++ --showme:compile)
-  MPILDFLAGS=$(shell mpic++ --showme:link)
+  MPICFLAGS=$(shell ${MPICC} --showme:compile)
+  MPILDFLAGS=$(shell ${MPICC} --showme:link)
 else ifneq ($(IS_MPICH),)
-  MPICFLAGS=$(shell mpic++ -compile_info | cut -d" " -f 2-)
-  MPILDFLAGS=$(shell mpic++ -link_info | cut -d" " -f 2-)
+    ifneq ($(USE_CRAYPE),)
+       MPICFLAGS=$(shell ${MPICC} --cray-print-opts=cflags)
+       MPILDFLAGS=$(shell ${MPICC} --cray-print-opts=libs)
+    else
+       MPICFLAGS=$(shell ${MPICC} -compile_info | cut -d" " -f 2-)
+       MPILDFLAGS=$(shell ${MPICC} -link_info | cut -d" " -f 2-)
+    endif
 else
-  $(error Unknown MPI version! Currently can detect mpich or open-mpi)
+    $(error Unknown MPI version! Currently can detect mpich or openmpi)
 endif
 
 # Flags
@@ -30,11 +66,6 @@ MPICFLAGS+=$(CFLAGS)
 MPILDFLAGS+=$(LDFLAGS)
 HIPFLAGS=-lamdhip64
 HIPCFLAGS=$(shell $(ROCM_PATH)/bin/hipconfig --cpp_config)
-
-# Description of binaries
-BINDIR=.
-JACOBI_HIP=$(BINDIR)/Jacobi_hip
-BINARIES=$(JACOBI_HIP)
 
 DEPS=Jacobi.hpp \
 		 defines.hpp \
@@ -49,8 +80,6 @@ OBJS=JacobiSetup.o  \
 		 Laplacian.o    \
 		 Norm.o
 
-# Commands
-all: $(BINARIES)
 
 HaloExchange.o: $(DEPS)  HaloExchange.hip
 	$(HIPCC) $(MPICFLAGS) $(HIPCFLAGS) $(CFLAGS) -c HaloExchange.hip -o HaloExchange.o
@@ -78,6 +107,3 @@ Norm.o: $(DEPS)  Norm.hip
 
 $(JACOBI_HIP): $(OBJS)
 	$(MPILD) $(MPICFLAGS) $(CFLAGS) -o $(JACOBI_HIP)  $(OBJS) $(MPILDFLAGS) $(LDFLAGS)
-
-clean:
-	rm -rf *.o *~ $(BINARIES)

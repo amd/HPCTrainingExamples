@@ -1,6 +1,11 @@
 #!/bin/bash
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
-sbatch --wait ${REPO_DIR}/HIP/vectorAdd/hip_makefile_batch.sh
+if [[ `sinfo | grep unk | wc -l` == 1 ]]; then
+   echo "SLURM not configured properly -- SKIPPING"
+else
+   cd ${REPO_DIR}/HIP/vectorAdd/
+   sbatch --wait hip_makefile_batch.sh
 
-grep PASSED! slurm-*.out
-rm  slurm-*.out
+   grep PASSED! slurm-*.out
+   rm  slurm-*.out
+fi

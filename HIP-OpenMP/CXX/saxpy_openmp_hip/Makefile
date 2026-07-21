@@ -5,18 +5,27 @@ all: $(EXECUTABLE) test
 
 OBJECTS = saxpy_openmp.o saxpy_hip.o
 
-CXXFLAGS = -g -O2 -fPIC -D__HOST_CODE__
-HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include
+ifdef CRAYPE_VERSION
+   OPENMP_FLAGS = -fopenmp
+   HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include
+else
+   ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
+   OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
+   HIPCC_FLAGS = -g -O2 -DNDEBUG -fPIC -I${ROCM_PATH}/include --offload-arch=${ROCM_GPU}
+endif
+
+CXXFLAGS = -g -O2 -fPIC ${OPENMP_FLAGS}
 
 HIPCC ?= hipcc
+HIPCC1=$(notdir $(HIPCC))
 
-ifeq ($(HIPCC), nvcc)
+ifneq ($(findstring hipcc,$(HIPCC1)),)
    HIPCC_FLAGS += -x cu
    LDFLAGS = -lcudadevrt -lcudart_static -lrt -lpthread -ldl
 endif
-ifeq ($(HIPCC), hipcc)
-   HIPCC_FLAGS += -munsafe-fp-atomics -D__DEVICE_CODE__
-   LDFLAGS = -L${ROCM_PATH}/lib -lamdhip64
+ifneq ($(findstring hipcc,$(HIPCC1)),)
+   HIPCC_FLAGS += -x hip -munsafe-fp-atomics
+   LDFLAGS = ${OPENMP_FLAGS} -L${ROCM_PATH}/lib -lamdhip64
 endif
 
 saxpy_hip.o: saxpy_hip.hip

@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     c = (float *)malloc(N*sizeof(float));
 
     #pragma omp target enter data \
-       map(alloc:tmp[:N], a[:N], b[:N], C[:N])
+       map(alloc:tmp[:N], a[:N], b[:N], c[:N])
     compute(N);
     #pragma omp target exit data map(delete:tmp, a, b, c)
     free(tmp); free(a); free(b); free(c);

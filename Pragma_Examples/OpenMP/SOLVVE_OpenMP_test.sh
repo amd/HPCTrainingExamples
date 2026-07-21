@@ -1,4 +1,4 @@
-#!/bin/bash
+--offload-arch=gfx942#!/bin/bash
 
 git clone https://github.com/SOLLVE/sollve_vv.git
 
