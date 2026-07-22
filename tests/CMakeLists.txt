@@ -1411,6 +1411,20 @@ set_property(TEST Pytorch_RCCL_Distributed_Regression PROPERTY SKIP_REGULAR_EXPR
 set_property(TEST Pytorch_RCCL_Distributed_Regression PROPERTY SKIP_RETURN_CODE 77)
 set_tests_properties(Pytorch_RCCL_Distributed_Regression PROPERTIES TIMEOUT 300)
 
+# Regression test for AMD's split "rocm-sdk" pip PyTorch wheels shipping only
+# VERSIONED shared libraries (e.g. libamdhip64.so.7) with no UNVERSIONED "dev"
+# symlink. Some system components dlopen() ROCm libraries by their unversioned
+# name at runtime (e.g. libfabric's CXI provider), which without the symlink
+# can resolve to a SECOND, independent HIP/HSA runtime instance elsewhere on
+# the system and silently corrupt GPU pointer/agent state. Complements
+# Pytorch_RCCL_Distributed_Regression by catching this specific defect class.
+add_test(NAME Pytorch_ROCmSDK_Dlopen_Duplicate_Regression COMMAND ../pytorch_rocmsdk_dlopen_duplicate_regression.sh )
+set_property(TEST Pytorch_ROCmSDK_Dlopen_Duplicate_Regression PROPERTY PASS_REGULAR_EXPRESSION "REGRESSION RESULT: PASS")
+set_property(TEST Pytorch_ROCmSDK_Dlopen_Duplicate_Regression PROPERTY FAIL_REGULAR_EXPRESSION "REGRESSION RESULT: FAIL")
+set_property(TEST Pytorch_ROCmSDK_Dlopen_Duplicate_Regression PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'" "REGRESSION RESULT: SKIPPED")
+set_property(TEST Pytorch_ROCmSDK_Dlopen_Duplicate_Regression PROPERTY SKIP_RETURN_CODE 77)
+set_tests_properties(Pytorch_ROCmSDK_Dlopen_Duplicate_Regression PROPERTIES TIMEOUT 300)
+
 # Reports the torch.distributed comm backends the loaded PyTorch build exposes
 # (nccl(=RCCL)/mpi/gloo/ucc), which one is the DEFAULT per device, and the
 # native RCCL / MPI / UCC / UCX libraries (soname + realpath + version) the
