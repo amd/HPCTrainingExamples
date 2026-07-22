@@ -269,6 +269,21 @@ For deeper insights into GPU utilization and kernel behavior, use rocprof-sys:
 # Look for: many short-lived kernels, poor occupancy on small operations
 ```
 
+**Narrowing a system trace to a phase (`--selected-regions`)**
+
+To restrict a `rocprof-sys` capture to specific phases (e.g. just forward/backward), the
+ROCTx regions must use **start/stop** markers (`torch.cuda.nvtx.range_start/range_end`), which
+`ROCPROFSYS_SELECTED_REGIONS` matches — the `nvtx.range()` context manager emits push/pop
+markers and is *not* matched. Use `tiny_openfold_v1_roctx.py` (a copy of the baseline whose
+forward/backward passes are annotated with start/stop markers):
+
+```bash
+ROCPROFSYS_SELECTED_REGIONS=forward_pass,backward_pass \
+  rocprof-sys-run --rocm=kernel,marker -T -o rsys_v1_sel -- \
+  python3 tiny_openfold_v1_roctx.py --batch-size 4 --seq-len 64 --num-seqs 16 --num-blocks 4 --num-steps 10 --device 0
+# → trace contains only the forward_pass and backward_pass regions.
+```
+
 ### Run Medium Problem
 
 ```bash
