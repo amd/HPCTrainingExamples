@@ -810,7 +810,8 @@ def train_tiny_openfold(
     learning_rate: float = 3e-4,
     use_amp: bool = False,
     device_id: Optional[int] = None,
-    use_data_parallel: bool = True
+    use_data_parallel: bool = True,
+    enable_torch_compile: bool = False
 ):
     """Train the Tiny OpenFold model with comprehensive profiling (single or multi-GPU)."""
 
@@ -862,6 +863,15 @@ def train_tiny_openfold(
         print(f"   Model wrapped with DataParallel")
     
     model = model.to(device)
+
+    # Optionally apply torch.compile (inductor auto-fusion). Falls back to eager
+    # if unavailable so the baseline still runs everywhere.
+    if enable_torch_compile:
+        if hasattr(torch, 'compile'):
+            print("   Applying torch.compile optimization...")
+            model = torch.compile(model)
+        else:
+            print("   torch.compile not available in this PyTorch build; running eager.")
 
     # Model summary
     total_params = sum(p.numel() for p in model.parameters())
@@ -1072,6 +1082,7 @@ def main():
     parser.add_argument('--use-amp', action='store_true', help='Use automatic mixed precision')
     parser.add_argument('--device', type=int, default=None, help='Single GPU device index (disables multi-GPU)')
     parser.add_argument('--no-data-parallel', action='store_true', help='Disable DataParallel even if multiple GPUs available')
+    parser.add_argument('--enable-torch-compile', action='store_true', help='Wrap the model in torch.compile (inductor auto-fusion)')
 
     # Profiling configuration
     parser.add_argument('--enable-pytorch-profiler', action='store_true', help='Enable PyTorch profiler')
@@ -1145,7 +1156,8 @@ def main():
             learning_rate=args.learning_rate,
             use_amp=args.use_amp,
             device_id=args.device,
-            use_data_parallel=not args.no_data_parallel
+            use_data_parallel=not args.no_data_parallel,
+            enable_torch_compile=args.enable_torch_compile
         )
 
         print(f"\nTraining completed successfully!")
