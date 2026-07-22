@@ -2,28 +2,21 @@
 #SBATCH --job-name=rpc-single-noprofile
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
 #SBATCH --gpus=1
-#SBATCH --partition=PPAC_MI300A_SPX
 #SBATCH --time=00:30:00
 #SBATCH --output=rpc_single_process_noprofile_%j.out
 #SBATCH --error=rpc_single_process_noprofile_%j.err
 
 # ---------------------------------------------------------------------------
-# SLURM script: run the single-process CIFAR-100 workload DIRECTLY with
-# python3, WITHOUT rocprof-compute.
-#
-# This is the no-profiler counterpart to slurm_single_process_profile.sh.
-# It sources the same environment (../setup_rocm.sh) and runs the same python3
-# command, which is useful for validating the ROCm + PyTorch environment before
-# profiling.
+# Run the single-process CIFAR-100 workload directly with python3 (no profiler).
+# Sources ../setup_rocm.sh to activate the ROCm PyTorch venv.
 # ---------------------------------------------------------------------------
 
 set -e
 
-# Resolve the directory of this script. Under sbatch, $0 points to a copy in
-# the SLURM spool dir, so prefer SLURM_SUBMIT_DIR (the directory from which the
-# job was submitted). Submit this script from
-# `MLExamples/PyTorch_Profiling/no-profiling/`.
+# Resolve this script's dir; under sbatch prefer SLURM_SUBMIT_DIR. Submit from
+# MLExamples/PyTorch_Profiling/no-profiling/.
 if [[ -n "${SLURM_SUBMIT_DIR}" ]]; then
     SCRIPT_DIR="${SLURM_SUBMIT_DIR}"
 else
@@ -33,20 +26,13 @@ PROFILER_TOP_DIR="$(dirname "${SCRIPT_DIR}")"
 echo "SCRIPT_DIR=${SCRIPT_DIR}"
 echo "PROFILER_TOP_DIR=${PROFILER_TOP_DIR}"
 
-# ---------------------------------------------------------------------------
-# Software environment.
-#
-# ../setup_rocm.sh (i.e. ${PROFILER_TOP_DIR}/setup_rocm.sh) activates the ROCm
-# PyTorch venv and exports the matching ROCm env vars, so python3 resolves from
-# the same install used by the profiling driver.
-# ---------------------------------------------------------------------------
+# ../setup_rocm.sh activates the ROCm PyTorch venv and exports ROCm env vars.
 source ${PROFILER_TOP_DIR}/setup_rocm.sh
 
 # Distributed bootstrap variables expected by train_cifar_100.py (single rank).
 export NPROCS=1
 export MASTER_ADDR=${MASTER_ADDR:-$(hostname)}
-# Derive a per-job port so concurrent/leftover jobs don't collide on a shared
-# node (a fixed port like 1234 can fail with EADDRINUSE).
+# Derive a per-job port so concurrent jobs don't collide.
 export MASTER_PORT=${MASTER_PORT:-$((20000 + SLURM_JOB_ID % 20000))}
 
 # Make sure the dataset is present.
@@ -57,14 +43,12 @@ fi
 
 cd ${SCRIPT_DIR}
 
-# ---------------------------------------------------------------------------
 # Run the workload directly (no profiler).
-# ---------------------------------------------------------------------------
 echo
 echo "==================================================================="
 echo "Running (no profiler): python3 train_cifar_100.py"
 echo "==================================================================="
-srun -n 1 --gpus=1 \
+srun -n 1 --gpus=1 --cpus-per-task=8 \
     python3 ${PROFILER_TOP_DIR}/train_cifar_100.py \
         --batch-size 32 --max-steps 5 \
         --data-path ${PROFILER_TOP_DIR}/data

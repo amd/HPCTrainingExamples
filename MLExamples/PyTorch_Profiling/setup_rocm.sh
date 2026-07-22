@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Source this to activate the ROCm venv and set ROCm env vars:
 #   source setup_rocm.sh
-VENV="${HOME}/venvs/rocm-pytorch-pip"
+VENV_BASE="${VENV_BASE:-$HOME}"
+VENV="${VENV_BASE}/venvs/rocm-pytorch-pip"
 source "${VENV}/bin/activate"
 # Derive site-packages from the active venv so this works regardless of the
 # venv's Python minor version (e.g. python3.12 vs python3.13).

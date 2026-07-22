@@ -15,17 +15,22 @@ copy and run.
 
 ## 1. Create and activate the venv
 
+First choose where the venv should live. Set `VENV_BASE` to the directory that
+will hold the `venvs` folder (defaults to your home directory). Keep this shell
+open for the remaining steps, which reuse the variable.
+
 ```bash
-mkdir -p ~/venvs
-python -m venv ~/venvs/rocm-pytorch-pip
-source ~/venvs/rocm-pytorch-pip/bin/activate
+VENV_BASE=~
+mkdir -p "${VENV_BASE}/venvs"
+python -m venv "${VENV_BASE}/venvs/rocm-pytorch-pip"
+source "${VENV_BASE}/venvs/rocm-pytorch-pip/bin/activate"
 ```
 
 ## 2. Install ROCm + PyTorch from the nightly multi-arch index
 
 ```bash
 # Pin the nightly ROCm version once and reuse it everywhere below.
-ROCM_VERSION=7.15.0a20260716
+ROCM_VERSION=7.15.0a20260721
 
 pip install --index-url https://rocm.nightlies.amd.com/whl-multi-arch/ \
     "rocm[profiler,devel,libraries,device-gfx942]==${ROCM_VERSION}" \
@@ -49,24 +54,15 @@ pip install transformers
 The training script builds its models with `transformers`, so this package is
 required.
 
-> **Note:** Do **not** install `rocprof-compute analyze`'s `requirements.txt`
-> into this shared venv. Those packages pin `numpy==1.26.4`, which conflicts
-> with the `numpy>=2.0` that PyTorch/transformers need and will break the
-> training/profiling runs. The analysis step
-> (`rocm-compute-profiler/slurm_single_process_analyze.sh`) provisions its own
-> isolated venv for those dependencies and reuses the ROCm install from this
-> venv, so this shared venv stays on `numpy>=2.0`.
-
 ## 4. Extract development headers and device code
 
 ```bash
-~/venvs/rocm-pytorch-pip/bin/rocm-sdk init
+"${VENV_BASE}/venvs/rocm-pytorch-pip/bin/rocm-sdk" init
 ```
 
-`rocm-sdk init` unpacks the `devel` payload (headers, LLVM device bitcode, etc.)
-into `_rocm_sdk_devel/` inside the venv. This provides the device bitcode that
-HIP needs to run GPU kernels, and the paths that `setup_rocm.sh` points to in the
-next step.
+`rocm-sdk init` unpacks the `devel` payload (headers, LLVM device bitcode) into
+`_rocm_sdk_devel/` inside the venv — the device bitcode HIP needs to run kernels,
+and the paths `setup_rocm.sh` points at next.
 
 ---
 
@@ -74,16 +70,16 @@ next step.
 
 The repo already ships `setup_rocm.sh` in `MLExamples/PyTorch_Profiling/` (the
 SLURM scripts source it as `../setup_rocm.sh`). It activates the venv and points
-the ROCm environment at the extracted `_rocm_sdk_devel` tree. Verify (and edit
-if needed) that its `VENV` matches the venv you built in step 1. The
-site-packages path is derived from the active venv's `python3`, so it works
-regardless of the Python minor version. Its contents are:
+the ROCm environment at the extracted `_rocm_sdk_devel` tree. It defaults
+`VENV_BASE` to your home directory; if you used a different `VENV_BASE` in
+step 1, export it before sourcing (or edit the default here). Its contents are:
 
 ```bash
 #!/usr/bin/env bash
 # Source this to activate the ROCm venv and set ROCm env vars:
 #   source setup_rocm.sh
-VENV="$HOME/venvs/rocm-pytorch-pip"
+VENV_BASE="${VENV_BASE:-$HOME}"
+VENV="$VENV_BASE/venvs/rocm-pytorch-pip"
 source "$VENV/bin/activate"
 DEVEL="$(python3 -c 'import site; print(site.getsitepackages()[0])')/_rocm_sdk_devel"
 export ROCM_PATH="$DEVEL"
@@ -119,7 +115,7 @@ Expected output resembles:
 
 ```
 ROCm venv active: /.../rocm-pytorch-pip
-torch 2.12.0+rocm7.15.0a20260716
+torch 2.12.0+rocm7.15.0a20260721
 device ok: 8.0
 ```
 

@@ -2,36 +2,24 @@
 #SBATCH --job-name=rpc-single-analyze
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --partition=PPAC_MI300A_SPX
+#SBATCH --cpus-per-task=8
 #SBATCH --time=00:15:00
 #SBATCH --output=rpc_single_process_analyze_%j.out
 #SBATCH --error=rpc_single_process_analyze_%j.err
 
 # ---------------------------------------------------------------------------
-# SLURM script: analyze the workload produced by slurm_single_process_profile.sh
-# with rocprofiler-compute (rocprof-compute analyze).
+# Analyze the profiled workload with rocprof-compute analyze.
 #
-# Instead of downgrading numpy inside the shared ROCm PyTorch venv (and
-# restoring it afterwards), this uses a SEPARATE, isolated virtual environment
-# that contains only rocprof-compute's own pinned requirements (numpy==1.26.4,
-# pandas, dash, textual, ...). The shared venv is never modified, so this can
-# run safely even while training/profiling jobs use the shared venv.
-#
-# rocprof-compute itself is NOT reinstalled into the analysis venv: the bundled
-# tool that ships inside the shared venv (the `_rocm_profiler` package) is
-# reused by pointing PATH / PYTHONPATH / LD_LIBRARY_PATH at it. Only the pure
-# Python analysis dependencies live in the dedicated venv.
-#
-# Analysis is CPU-only (it parses the counter database), so no GPU is requested.
-# Run this after slurm_single_process_profile.sh has completed.
+# rocprof-compute analyze needs numpy 1.26.x, which conflicts with the shared
+# venv's numpy 2.x. So we use a separate venv holding only rocprof-compute's
+# pinned requirements, while reusing the tool bundled in the shared venv (the
+# shared venv is never modified). CPU-only; run after the profile job finishes.
 # ---------------------------------------------------------------------------
 
 set -e
 
-# Resolve the directory of this script. Under sbatch, $0 points to a copy in
-# the SLURM spool dir, so prefer SLURM_SUBMIT_DIR (the directory from which the
-# job was submitted). Submit this script from
-# `MLExamples/PyTorch_Profiling/rocm-compute-profiler/`.
+# Resolve this script's dir; under sbatch prefer SLURM_SUBMIT_DIR. Submit from
+# MLExamples/PyTorch_Profiling/rocm-compute-profiler/.
 if [[ -n "${SLURM_SUBMIT_DIR}" ]]; then
     SCRIPT_DIR="${SLURM_SUBMIT_DIR}"
 else
@@ -41,12 +29,8 @@ PROFILER_TOP_DIR="$(dirname "${SCRIPT_DIR}")"
 echo "SCRIPT_DIR=${SCRIPT_DIR}"
 echo "PROFILER_TOP_DIR=${PROFILER_TOP_DIR}"
 
-# ---------------------------------------------------------------------------
-# Locate the shared ROCm PyTorch venv (built via ROCM_PYTORCH_PIP_VENV_SETUP.md
-# and activated by ../setup_rocm.sh) WITHOUT activating it. We only need the
-# ROCm install that lives inside it: the bundled rocprof-compute launcher and
-# the ROCm shared libraries.
-# ---------------------------------------------------------------------------
+# Locate the shared ROCm venv WITHOUT activating it; we only need the ROCm
+# install inside it (bundled rocprof-compute launcher + ROCm libraries).
 MAIN_VENV="${HOME}/venvs/rocm-pytorch-pip"
 if [[ ! -x "${MAIN_VENV}/bin/python3" ]]; then
     echo "ERROR: shared ROCm venv not found at ${MAIN_VENV}" >&2
@@ -68,19 +52,13 @@ for p in "${RPC}" "${REQ_FILE}" "${ROCM_CORE}" "${ROCM_DEVEL}"; do
     fi
 done
 
-# ---------------------------------------------------------------------------
-# Create / refresh the dedicated analysis venv with just rocprof-compute's
-# pinned requirements (numpy==1.26.4 etc.). This is isolated from the shared
-# venv (no --system-site-packages), so it can never be shadowed by the shared
-# venv's numpy 2.x. Re-installation is skipped unless requirements.txt changed.
-# ---------------------------------------------------------------------------
+# Create/refresh the dedicated analysis venv with rocprof-compute's pinned
+# requirements (numpy 1.26.x). Reinstalled only when requirements.txt changes.
 ANALYZE_VENV="${HOME}/venvs/rocprof-compute-analyze"
 if [[ ! -x "${ANALYZE_VENV}/bin/python3" ]]; then
     echo "Creating analysis venv at ${ANALYZE_VENV}"
-    # Use the shared venv's python3 (validated above) to create the analysis
-    # venv. A venv is isolated from its creator's site-packages, so this stays
-    # independent of the shared venv while avoiding a hard-coded /usr/bin/python3
-    # that may be absent or lack the venv module on some clusters.
+    # A venv stays isolated from its creator's site-packages, so using the
+    # shared venv's python3 keeps this independent while avoiding system python3.
     "${MAIN_VENV}/bin/python3" -m venv "${ANALYZE_VENV}"
 fi
 source "${ANALYZE_VENV}/bin/activate"
@@ -95,17 +73,9 @@ else
     echo "Analysis venv already satisfies ${REQ_FILE}"
 fi
 
-# ---------------------------------------------------------------------------
-# Point the isolated venv at the ROCm install in the shared venv so the bundled
-# rocprof-compute launcher and its shared libraries are found.
-#   * PYTHONPATH  -> the rocprofiler-compute python sources (libexec).
-#   * LD_LIBRARY_PATH -> ROCm core/devel libs (+ bundled sysdeps).
-#   * PATH        -> append the ROCm devel bin LAST so it can never shadow the
-#                    analysis venv's `python3` (isolation must be preserved).
-# The bundled launcher (${RPC}) is invoked by absolute path and re-execs with
-# `#!/usr/bin/env python3`, which resolves to the analysis venv's python since
-# its bin dir is first on PATH after activation -> numpy==1.26.4 is used.
-# ---------------------------------------------------------------------------
+# Point the isolated venv at the ROCm install in the shared venv (bundled
+# rocprof-compute + libs). ROCm bin goes LAST on PATH so it can't shadow the
+# analysis venv's python3, keeping numpy 1.26.x in effect.
 export PYTHONPATH="${COMPUTE_LIBEXEC}:${PYTHONPATH}"
 export LD_LIBRARY_PATH="${ROCM_CORE}/lib:${ROCM_CORE}/lib/rocm_sysdeps/lib:${ROCM_DEVEL}/lib:${ROCM_DEVEL}/lib/rocm_sysdeps/lib:${LD_LIBRARY_PATH}"
 export ROCM_PATH="${ROCM_DEVEL}"
@@ -115,10 +85,8 @@ export PATH="${PATH}:${ROCM_DEVEL}/bin"
 echo "Analysis python : $(which python3)  (numpy $(python3 -c 'import numpy; print(numpy.__version__)'))"
 "${RPC}" --version
 
-# ---------------------------------------------------------------------------
-# Locate the workload written by slurm_single_process_profile.sh. This must
-# match WORKLOAD_NAME / WORK_ROOT in that script.
-# ---------------------------------------------------------------------------
+# Locate the workload written by slurm_single_process_profile.sh (must match
+# WORKLOAD_NAME / WORK_ROOT there).
 WORKLOAD_NAME=cifar_100_single_proc
 WORK_ROOT=${SCRIPT_DIR}/workloads
 WORK_DIR=${WORK_ROOT}/${WORKLOAD_NAME}
@@ -140,13 +108,16 @@ fi
 # ---------------------------------------------------------------------------
 # Analyze.
 # ---------------------------------------------------------------------------
-echo
-echo "==================================================================="
-echo "rocprof-compute analyze --list-stats -p ${ARCH_DIR}"
-echo "==================================================================="
-STATS_FILE=${SCRIPT_DIR}/stats_${SLURM_JOB_ID}.txt
-"${RPC}" analyze --list-stats -p ${ARCH_DIR} >& ${STATS_FILE}
-echo "Stats and dispatch IDs written to ${STATS_FILE}"
+# Optional: list per-kernel stats and dispatch IDs. Uncomment only if you want
+# to narrow the analysis to a specific kernel/dispatch (see the NOTE at the
+# bottom of this file).
+# echo
+# echo "==================================================================="
+# echo "rocprof-compute analyze --list-stats -p ${ARCH_DIR}"
+# echo "==================================================================="
+# STATS_FILE=${SCRIPT_DIR}/stats_${SLURM_JOB_ID}.txt
+# "${RPC}" analyze --list-stats -p ${ARCH_DIR} >& ${STATS_FILE}
+# echo "Stats and dispatch IDs written to ${STATS_FILE}"
 
 echo
 echo "==================================================================="
@@ -159,10 +130,10 @@ echo "Analysis written to ${ANALYSIS_FILE}"
 echo
 echo "-------------------------------------------------------------------"
 echo "NOTE: The analysis above aggregates all kernels. To focus on a"
-echo "specific kernel, inspect ${STATS_FILE} for the kernel names and"
-echo "dispatch IDs, then re-run rocprof-compute analyze narrowing to that"
-echo "kernel with --kernel <kernel-id>, or to a specific invocation with"
-echo "--dispatch <dispatch-id> (you may pass either one, or both):"
+echo "specific kernel, uncomment the --list-stats block above to list the"
+echo "kernel names and dispatch IDs, then re-run rocprof-compute analyze"
+echo "narrowing to that kernel with --kernel <kernel-id>, or to a specific"
+echo "invocation with --dispatch <dispatch-id> (you may pass either, or both):"
 echo "  ${RPC} analyze -p ${ARCH_DIR} --kernel <kernel-id>"
 echo "  ${RPC} analyze -p ${ARCH_DIR} --dispatch <dispatch-id>"
 echo "-------------------------------------------------------------------"
