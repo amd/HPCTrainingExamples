@@ -57,16 +57,16 @@ set -u
 # "rocm-new/..." does not count.) If no module system is present (e.g. a plain
 # venv) these calls just no-op and the venv's python3/torch are used.
 # ---------------------------------------------------------------------------
-if ! (module -t list 2>&1 | grep -q "^rocm/") || ! (module -t list 2>&1 | grep -q "^pytorch/"); then
-  if ! module -t list 2>&1 | grep -q "^rocm/"; then
-    echo "rocm module is not loaded"
-    echo "loading default rocm module"
-    module load rocm
-  fi
-  if ! module -t list 2>&1 | grep -q "^pytorch/"; then
-    module load pytorch
-  fi
-fi
+#if ! (module -t list 2>&1 | grep -q "^rocm/") || ! (module -t list 2>&1 | grep -q "^pytorch/"); then
+#  if ! module -t list 2>&1 | grep -q "^rocm/"; then
+#    echo "rocm module is not loaded"
+#    echo "loading default rocm module"
+#    module load rocm
+#  fi
+#  if ! module -t list 2>&1 | grep -q "^pytorch/"; then
+#    module load pytorch
+#  fi
+#fi
 
 # ---------------------------------------------------------------------------
 # Determine the loaded openmpi module and its install prefix DIRECTLY from the
