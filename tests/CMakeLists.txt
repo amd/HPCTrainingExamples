@@ -1906,3 +1906,12 @@ set_tests_properties(IntelliKit_Check_Import PROPERTIES TIMEOUT 300)
 #    OpenMP_Fortran_5_Vecadd_Async_HSA_XNACK_1
 #    OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang
 #  PROPERTIES WILL_FAIL TRUE)
+
+# GPU thermal / throttle diagnostic. Soaks every visible GPU to thermal steady
+# state (plateau), so runtime is adaptive: healthy nodes plateau early (~2 min),
+# a throttling node soaks up to the AMDGPU_NREPS cap (default 20 x 25 s = ~500 s
+# load + build). TIMEOUT 900 covers that ceiling with margin.
+add_test(NAME GPU_Thermal_Throttle_Check COMMAND ../gpu_thermal_throttle_check.sh )
+set_property(TEST GPU_Thermal_Throttle_Check PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
+set_property(TEST GPU_Thermal_Throttle_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(GPU_Thermal_Throttle_Check PROPERTIES TIMEOUT 900)

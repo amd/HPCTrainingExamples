@@ -16,7 +16,11 @@
 # Run on an idle / exclusive node so the sampled temperature reflects this load.
 #
 # Tunables (env): AMDGPU_TEMP_MARGIN (C under crit, default 10), AMDGPU_DROOP_MAX
-# (fraction, default 0.08), AMDGPU_NREPS (default 6), AMDGPU_BURST_SEC (default 25).
+# (fraction, default 0.08), AMDGPU_NREPS (burst cap, default 20), AMDGPU_BURST_SEC
+# (default 25), AMDGPU_PLATEAU_C (stop once junction rises < this many C over two
+# bursts, default 1).  The load soaks to thermal steady state rather than a fixed
+# time, so the verdict does not depend on test duration or the node's starting
+# temperature -- a healthy node plateaus early (fast), a suspect one soaks longer.
 # Prints a per-burst table + one greppable "RESULT: ... verdict=<...>" line, and
 # "SUCCESS" only when healthy so it also plugs into the ctest harness.
 
@@ -79,11 +83,14 @@ SMP=${BUILD_DIR}/samples.csv
 ( while :; do echo "$(date +%s),$(read_temp)"; sleep 1; done ) > $SMP 2>/dev/null &
 SPID=$!; trap "kill $SPID 2>/dev/null; rm -rf ${BUILD_DIR}" EXIT
 
-# --- sustained-load bursts ---------------------------------------------------
-NREPS=${AMDGPU_NREPS:-6}; BURST=${AMDGPU_BURST_SEC:-25}; NODE=$(hostname)
+# --- sustained-load bursts: soak until junction plateaus (or NREPS cap) -------
+# NREPS is a CAP; the loop stops early once junction stops climbing (rise < PLATEAU
+# over two bursts), i.e. at thermal steady state -- so the verdict reflects where
+# the node settles under load, not how long the test ran or how warm it started.
+NREPS=${AMDGPU_NREPS:-20}; BURST=${AMDGPU_BURST_SEC:-25}; PLATEAU=${AMDGPU_PLATEAU_C:-1}; NODE=$(hostname)
 echo "node: ${NODE} | GPU: ${GPU_NAME:-$GPU_ARCH} (${GPU_ARCH}) | visible=${NGPU} | junction_crit=${TCRIT}C (device-reported)"
-echo "load: HIP-STREAM triad, ${NREPS} x ${BURST}s bursts on all ${NGPU} GPU(s)"
-declare -a BW TMAX
+echo "load: HIP-STREAM triad, up to ${NREPS} x ${BURST}s bursts on all ${NGPU} GPU(s), stop when junction plateaus (<${PLATEAU}C rise)"
+declare -a BW TMAX; last=0
 for ((r=1; r<=NREPS; r++)); do
    s=$(date +%s); sum=0; cnt=0
    while [ $(( $(date +%s) - s )) -lt $BURST ]; do
@@ -98,14 +105,20 @@ for ((r=1; r<=NREPS; r++)); do
    e=$(date +%s)
    BW[$r]=$(awk -v s=$sum -v c=$cnt 'BEGIN{printf "%.1f", c?s/c:0}')            # mean per-GPU Triad GiB/s
    TMAX[$r]=$(awk -F, -v a=$s -v b=$e '$1>=a&&$1<=b&&$2!=""{if($2>m)m=$2}END{print m+0}' $SMP)
+   last=$r
    printf "  burst %d: Triad=%s GiB/s/GPU | peak_junction=%s C\n" $r "${BW[$r]}" "${TMAX[$r]}"
+   # steady state: junction climbed < PLATEAU C over the last two bursts -> stop
+   if [ $r -ge 3 ]; then
+      awk "BEGIN{exit !(${TMAX[$r]}-${TMAX[$r-2]} < $PLATEAU)}" \
+         && { echo "  (junction plateaued -- steady state reached)"; break; }
+   fi
 done
 
 # --- verdict (thresholds device-derived or relative; nothing hard-coded) -----
 MARGIN=${AMDGPU_TEMP_MARGIN:-10}; DROOP_MAX=${AMDGPU_DROOP_MAX:-0.08}
 TLIMIT=$(( TCRIT - MARGIN ))
 PEAKT=$(printf '%s\n' "${TMAX[@]}" | sort -rn | head -1)
-DROOP=$(awk -v a="${BW[1]}" -v b="${BW[$NREPS]}" 'BEGIN{if(a>0) printf "%.3f",(a-b)/a; else print "0.000"}')
+DROOP=$(awk -v a="${BW[1]}" -v b="${BW[$last]}" 'BEGIN{if(a>0) printf "%.3f",(a-b)/a; else print "0.000"}')
 DROOP_PCT=$(awk -v d=$DROOP 'BEGIN{printf "%.1f",d*100}')
 printf "summary: peak_junction=%sC | crit=%sC margin=%sC -> flag>=%sC | droop=%s%% (limit %.1f%%)\n" \
    "$PEAKT" "$TCRIT" "$MARGIN" "$TLIMIT" "$DROOP_PCT" "$(awk -v d=$DROOP_MAX 'BEGIN{print d*100}')"
