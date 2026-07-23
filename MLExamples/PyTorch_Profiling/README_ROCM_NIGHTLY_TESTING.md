@@ -24,10 +24,15 @@ short so that a nightly build can be validated quickly.
 Follow [`ROCM_PYTORCH_PIP_VENV_SETUP.md`](./ROCM_PYTORCH_PIP_VENV_SETUP.md) to
 create the `rocm-pytorch-pip` venv. In short, it:
 
-- creates a venv at `~/venvs/rocm-pytorch-pip`,
+- creates a venv under `${VENV_BASE}/venvs/rocm-pytorch-pip` (`VENV_BASE`
+  defaults to your home directory),
 - installs nightly ROCm + PyTorch + profilers from the multi-arch nightly index,
 - installs `transformers` (required by the training script),
 - runs `rocm-sdk init` to extract the development headers and device code.
+
+> **Tip:** Point `VENV_BASE` at node-local/fast storage (not a shared NFS home).
+> The venv holds hundreds of MB of ROCm/PyTorch libraries, and loading them from
+> NFS on every job noticeably slows startup.
 
 To test a **specific nightly**, set the ROCm version pin in that guide, e.g.:
 
