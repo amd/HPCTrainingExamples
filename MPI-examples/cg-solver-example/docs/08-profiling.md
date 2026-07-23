@@ -21,6 +21,7 @@ bandwidth, FLOP/s) — for **both** the CPU reference and the GPU solver.
 | **rocprofv3** | GPU (`CG-GPU`) — kernels, transports, ATT | [`profilers/rocprofv3.md`](profilers/rocprofv3.md) |
 | **rocprof-compute** | GPU — roofline (HBM-bound SpMV) | [`profilers/rocprof-compute.md`](profilers/rocprof-compute.md) |
 | **rocprofiler-systems** | GPU + host — Perfetto timeline | [`profilers/rocprofiler-systems.md`](profilers/rocprofiler-systems.md) |
+| **ROCm Optiq** | GPU — GUI trace/roofline viewer | [`profilers/roc-optiq.md`](profilers/roc-optiq.md) |
 | **TAU** | MPI + GPU — communication matrix | [`profilers/tau.md`](profilers/tau.md) |
 | **HPCToolkit** | MPI + GPU — call-path sampling | [`profilers/hpctoolkit.md`](profilers/hpctoolkit.md) |
 | **likwid** | CPU (`CG-CPU`) — CPU roofline | [`profilers/likwid.md`](profilers/likwid.md) |

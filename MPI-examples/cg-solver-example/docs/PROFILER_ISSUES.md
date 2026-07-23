@@ -129,6 +129,31 @@ issues beyond those recorded above.
 
 ---
 
+## 5. roc-optiq module — stale Lmod cache after (re)install — **WORKAROUND** (2026-07-22)
+- **Symptom:** right after roc-optiq was (re)installed, `module load roc-optiq`
+  reports `Unable to find: "roc-optiq"` even though `rocm/7.2.4` is loaded — with
+  the Lmod hint *"your cache file is out-of-date … try `module --ignore_cache`"*.
+- **Cause:** the module is present and correct — the modulefile
+  `/nfsapps/ubuntu-24.04/modules/rocmplus-7.2.4/roc-optiq/0.5.0.lua` points at
+  `/nfsapps/ubuntu-24.04/opt/rocmplus-7.2.4/roc-optiq-v0.5.0` (binary v0.5.0.1) and
+  that dir **is** on `MODULEPATH`. The failure is a **stale system spider cache**:
+  Lmod trusts `/nfsapps/ubuntu-24.04/moduleData/cacheDir/spiderT.lua` (marked valid
+  by its `timestamp`), and the reinstall happened *after* the last cache rebuild, so
+  the new modulefile is not in the cache yet. Clearing the *user* cache
+  (`~/.lmod.d/.cache`) does not help — Lmod still honours the newer-marked system cache.
+- **Workaround (immediate):** bypass the cache —
+  `module --ignore_cache load roc-optiq` (verified: loads v0.5.0.1, sets
+  `ROC_OPTIQ_HOME`, puts `roc-optiq` on `PATH`).
+- **Self-heals:** the site backstop `/etc/cron.d/lmod-cache-refresh` runs
+  `refresh_module_cache.sh` **every 30 min on `aac6-fe1`** (conditional-on-change);
+  the first run after the install rebuilds `spiderT.lua`, after which plain
+  `module load roc-optiq` works for everyone. (The rocm/rocmplus deploy path also
+  refreshes the cache itself; the cron is the backstop for out-of-band installs.)
+- **Status:** module is correct and usable today via `--ignore_cache`; no repo
+  change needed. Documented in [`profilers/roc-optiq.md`](profilers/roc-optiq.md) §0.
+
+---
+
 ## Action-item checklist
 - [ ] **Score-P GPU capture on ROCm ≥7.2.x** (§1.1) — still open (re-confirmed 2026-07-18 on 7.2.4); track upstream fix; retest per release.
 - [ ] **`cube_dump` from a CubeLib module/AppImage** (§1.2) — optional; `cube_stat` covers the workflow.
@@ -136,3 +161,4 @@ issues beyond those recorded above.
 - [x] **JRE for paraprof/Java GUIs** (§2.1) — **installed** (OpenJDK 21, 2026-07-18).
 - [ ] **Native CubeGUI/Vampir modules** (§2.1) — nice-to-have; AppImage now covers it.
 - [ ] **rocSPARSE SpMV 7.x regression** (§3) — `rocprofv3` kernel trace + upstream report.
+- [x] **roc-optiq module** (§5) — published as `rocmplus-7.2.4/roc-optiq/0.5.0`; only a ≤30-min Lmod cache lag after (re)install (`module --ignore_cache load` meanwhile).
