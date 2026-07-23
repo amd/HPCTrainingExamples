@@ -58,6 +58,14 @@ except ImportError:
             from contextlib import nullcontext
             return nullcontext()
 
+        @staticmethod
+        def range_start(name):
+            return None
+
+        @staticmethod
+        def range_end(handle):
+            return None
+
 try:
     from deepspeed.profiling.flops_profiler import FlopsProfiler
     DEEPSPEED_AVAILABLE = True
@@ -1118,24 +1126,29 @@ def train_tiny_openfold_v2(
             target_distances = target_distances.to(device)
 
         # Forward pass timing
+        # Start/stop ROCTx markers (range_start/range_end) with names matched to V1/V3
+        # roctx variants so ROCPROFSYS_SELECTED_REGIONS=forward_pass,backward_pass narrows
+        # the trace identically across versions.
         monitor.start_timing()
-        with nvtx.range("forward_pass_fused"):
-            if use_amp:
-                with autocast():
-                    outputs = model(msa_tokens, pair_features, target_distances)
-                    loss = outputs['loss']
-            else:
+        _fwd_roctx = nvtx.range_start("forward_pass")
+        if use_amp:
+            with autocast():
                 outputs = model(msa_tokens, pair_features, target_distances)
                 loss = outputs['loss']
+        else:
+            outputs = model(msa_tokens, pair_features, target_distances)
+            loss = outputs['loss']
+        nvtx.range_end(_fwd_roctx)
         batch_timings['forward'] = monitor.end_timing()
 
         # Backward pass timing
         monitor.start_timing()
-        with nvtx.range("backward_pass_fused"):
-            if use_amp:
-                scaler.scale(loss).backward()
-            else:
-                loss.backward()
+        _bwd_roctx = nvtx.range_start("backward_pass")
+        if use_amp:
+            scaler.scale(loss).backward()
+        else:
+            loss.backward()
+        nvtx.range_end(_bwd_roctx)
         batch_timings['backward'] = monitor.end_timing()
 
         # Optimizer step timing
