@@ -1,4 +1,4 @@
-GPU_ARCH ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//')) 
+ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//')) 
 HSA_XNACK ?= 1
 OMP_TARGET_OFFLOAD ?= MANDATORY
 
