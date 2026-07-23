@@ -47,13 +47,13 @@ cd ${SCRIPT_DIR}
 # Remove any stale output directories from previous runs.
 rm -rf ${SCRIPT_DIR}/rocprofsys-python3-output
 
-# Profile with rocprof-sys-run (profiling + tracing).
+# Profile with rocprof-sys-run.
 echo
 echo "==================================================================="
-echo "rocprof-sys-run --profile --trace -- python3 train_cifar_100.py"
+echo "rocprof-sys-run --profile -- python3 train_cifar_100.py"
 echo "==================================================================="
 srun -n 1 --gpus=1 --cpus-per-task=8 \
-    rocprof-sys-run --profile --trace -- \
+    rocprof-sys-run --profile -- \
         python3 ${PROFILER_TOP_DIR}/train_cifar_100.py \
             --batch-size 32 --max-steps 5 \
             --data-path ${PROFILER_TOP_DIR}/data

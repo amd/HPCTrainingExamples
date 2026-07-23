@@ -19,6 +19,11 @@ First choose where the venv should live. Set `VENV_BASE` to the directory that
 will hold the `venvs` folder (defaults to your home directory). Keep this shell
 open for the remaining steps, which reuse the variable.
 
+> **Tip:** Prefer node-local/fast storage (e.g. a local NVMe scratch path) over
+> a shared NFS home directory. The venv holds hundreds of MB of ROCm/PyTorch
+> shared libraries, and loading them from NFS on every job noticeably slows
+> startup.
+
 ```bash
 VENV_BASE=~
 mkdir -p "${VENV_BASE}/venvs"
