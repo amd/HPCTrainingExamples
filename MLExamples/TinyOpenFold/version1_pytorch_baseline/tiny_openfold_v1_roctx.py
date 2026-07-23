@@ -284,7 +284,9 @@ class MSARowAttentionWithPairBias(nn.Module):
             batch_size, n_seqs, seq_len, _ = msa.shape
 
             # Project to Q, K, V
-            with record_function("msa_qkv_projection"):
+            # ROCTx range so rocprof-sys traces show the three separate q/k/v GEMM
+            # launches under one label (contrast with V2's single fused launch).
+            with record_function("msa_qkv_projection"), nvtx.range("msa_qkv"):
                 q = self.q_proj(msa).view(batch_size, n_seqs, seq_len, self.n_heads, self.head_dim)
                 k = self.k_proj(msa).view(batch_size, n_seqs, seq_len, self.n_heads, self.head_dim)
                 v = self.v_proj(msa).view(batch_size, n_seqs, seq_len, self.n_heads, self.head_dim)
