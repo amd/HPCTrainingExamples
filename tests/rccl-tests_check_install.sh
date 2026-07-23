@@ -7,8 +7,7 @@
 
 module -t list 2>&1 | grep -q "^rocm" || module load rocm
 
-ROCM_VER=$(module -t list 2>&1 | grep '^rocm/' | head -1 | cut -d/ -f2)
-if ! module load rccl-tests/${ROCM_VER} 2>/tmp/rccl_tests_check.$$.err; then
+if ! module load rccl-tests 2>/tmp/rccl_tests_check.$$.err; then
    cat /tmp/rccl_tests_check.$$.err
    rm -f /tmp/rccl_tests_check.$$.err
    echo "Unable to locate a modulefile for 'rccl-tests'"
