@@ -18,7 +18,8 @@
 # Tunables (env): AMDGPU_TEMP_MARGIN (C under crit, default 10), AMDGPU_DROOP_MAX
 # (fraction, default 0.08), AMDGPU_NREPS (burst cap, default 20), AMDGPU_BURST_SEC
 # (default 25), AMDGPU_PLATEAU_C (stop once junction rises < this many C over two
-# bursts, default 1).  The load soaks to thermal steady state rather than a fixed
+# bursts, default 1), AMDGPU_MINREPS (min bursts before a plateau exit, default 5).
+# The load soaks to thermal steady state rather than a fixed
 # time, so the verdict does not depend on test duration or the node's starting
 # temperature -- a healthy node plateaus early (fast), a suspect one soaks longer.
 # Prints a per-burst table + one greppable "RESULT: ... verdict=<...>" line, and
@@ -87,7 +88,7 @@ SPID=$!; trap "kill $SPID 2>/dev/null; rm -rf ${BUILD_DIR}" EXIT
 # NREPS is a CAP; the loop stops early once junction stops climbing (rise < PLATEAU
 # over two bursts), i.e. at thermal steady state -- so the verdict reflects where
 # the node settles under load, not how long the test ran or how warm it started.
-NREPS=${AMDGPU_NREPS:-20}; BURST=${AMDGPU_BURST_SEC:-25}; PLATEAU=${AMDGPU_PLATEAU_C:-1}; NODE=$(hostname)
+NREPS=${AMDGPU_NREPS:-20}; BURST=${AMDGPU_BURST_SEC:-25}; PLATEAU=${AMDGPU_PLATEAU_C:-1}; MINREPS=${AMDGPU_MINREPS:-5}; NODE=$(hostname)
 echo "node: ${NODE} | GPU: ${GPU_NAME:-$GPU_ARCH} (${GPU_ARCH}) | visible=${NGPU} | junction_crit=${TCRIT}C (device-reported)"
 echo "load: HIP-STREAM triad, up to ${NREPS} x ${BURST}s bursts on all ${NGPU} GPU(s), stop when junction plateaus (<${PLATEAU}C rise)"
 declare -a BW TMAX; last=0
@@ -107,9 +108,11 @@ for ((r=1; r<=NREPS; r++)); do
    TMAX[$r]=$(awk -F, -v a=$s -v b=$e '$1>=a&&$1<=b&&$2!=""{if($2>m)m=$2}END{print m+0}' $SMP)
    last=$r
    printf "  burst %d: Triad=%s GiB/s/GPU | peak_junction=%s C\n" $r "${BW[$r]}" "${TMAX[$r]}"
-   # steady state: junction climbed < PLATEAU C over the last two bursts -> stop
-   if [ $r -ge 3 ]; then
-      awk "BEGIN{exit !(${TMAX[$r]}-${TMAX[$r-2]} < $PLATEAU)}" \
+   # steady state: junction flat (< PLATEAU C rise) over the last TWO 2-burst
+   # windows, after >= MINREPS soak, with both current readings valid (a dropped
+   # 1 Hz sample makes TMAX 0, which must not be mistaken for a plateau).
+   if [ $r -ge $MINREPS ] && [ "${TMAX[$r]}" -gt 0 ] && [ "${TMAX[$r-2]}" -gt 0 ]; then
+      awk "BEGIN{exit !(${TMAX[$r]}-${TMAX[$r-2]} < $PLATEAU && ${TMAX[$r-1]}-${TMAX[$r-3]} < $PLATEAU)}" \
          && { echo "  (junction plateaued -- steady state reached)"; break; }
    fi
 done
