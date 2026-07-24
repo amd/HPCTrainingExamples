@@ -9,257 +9,255 @@ measurement methodology, but the gradient tensors are **transformer-shaped and
 much larger**, so the all-reduce is a bigger fraction of each step — closer to
 what you see training real language models.
 
-It builds on the upstream `pytorch/examples/distributed/minGPT-ddp` code:
+This README is a **hands-on walk-through**: you clone the upstream
+`pytorch/examples/distributed/minGPT-ddp` example and apply a handful of small,
+visible patches that take its **real training loop** (`mingpt/trainer.py`, a
+character-level GPT on tinyshakespeare) from the stock version to an
+**instrumented** one (throughput + peak memory), then add **profiling** and
+**optimizations** on top. The patches are deliberately tiny so the progression is
+clear in a session.
 
-- The **real training job** (`mingpt/main.py`) trains a character-level GPT on
-  tinyshakespeare via `torchrun` + hydra config.
-- The **benchmark added here** (`ddp_gpt_bench.py`) reuses the upstream `GPT`
-  model but drives it with synthetic tokens so we can measure the RCCL cost
-  precisely and cheaply, with no dataset download.
+> For the polished, synthetic-data benchmark (`ddp_gpt_bench.py`, which needs no
+> dataset and adds the `no_sync()` direct comm-isolation `comm_pct`), plus the
+> sweep driver, measured results, and batch jobs, see
+> **[`benchmarks/README_benchmark.md`](benchmarks/README_benchmark.md)**. For the
+> full profiling guide, see **[`profiling/PROFILING.md`](profiling/PROFILING.md)**.
 
 > On ROCm, PyTorch's `nccl` backend is **librccl**; all `NCCL_*` variables apply.
 
-## Contents
+## Repository layout
 
-| File | Purpose |
+| Path | Purpose |
 |------|---------|
-| `ddp_gpt_bench.py` | DDP benchmark of the upstream GPT; isolates all-reduce cost via `no_sync()` |
-| `rccl_scaling_sweep.sh` | Runs the benchmark at 1/2/4/8 GPUs; prints comm%, throughput, efficiency |
-| `pytorch_mingpt_ddp_venv.batch` | Slurm job: venv install + scaling sweep |
-| `pytorch_mingpt_ddp_module.batch` | Slurm job: `module load` variant |
-| `PROFILING.md` | Full profiling guide: torch.profiler, DeepSpeed FLOPs, TensorBoard, rocprofv3, rocprof-compute, rocprof-sys |
+| `README.md` (this file) | Hands-on: clone the upstream example, patch in instrumentation + optimizations |
+| `mingpt_speedup.sh` | Summarizes the manual sweep (`run_*.log` -> throughput / peak-mem / speedup / RCCL table) |
+| [`README_rccl_optimization.md`](README_rccl_optimization.md) | Hands-on exercises: optimize the gradient all-reduce (bf16 comm, `NCCL_*`, DDP bucketing/overlap) |
+| [`README_compute_optimization.md`](README_compute_optimization.md) | Hands-on exercises: optimize per-GPU compute (bf16, `torch.compile`, fused optimizer, SDPA) |
+| [`benchmarks/`](benchmarks/README_benchmark.md) | Polished `ddp_gpt_bench.py` (synthetic data, `no_sync()`), automated sweep, measured results, batch jobs |
+| [`profiling/`](profiling/PROFILING.md) | Compute-vs-communication attribution (torch.profiler, rocprofv3, rocprof-sys, ...) |
 
-## The key measurement: `no_sync()` isolates the all-reduce
+## 1. Get an allocation, load PyTorch, and clone the example
 
-DDP averages gradients across ranks with an **all-reduce** at the end of each
-backward pass. PyTorch DDP provides a `no_sync()` context that **skips** that
-all-reduce. So for the same model and batch:
-
-```
-comm_per_step  ~=  step_time(with all-reduce)  -  step_time(no_sync)
-comm_fraction  =   comm_per_step / step_time(with all-reduce)
-```
-
-`ddp_gpt_bench.py` times both and reports `comm_pct` directly. This is a cleaner
-signal than throughput alone because it separates the RCCL cost from compute.
-
-## 0. Setup
+DDP here needs at least 2 GPUs; grab a few:
 
 ```bash
-git clone --depth=1 https://github.com/pytorch/examples.git ~/pytorch_examples
 salloc --gpus=8 --ntasks=1 --time=01:00:00
+module load rocm openmpi pytorch      # or set up a venv/container as in ../mnist
+
+git clone --depth=1 https://github.com/pytorch/examples.git ~/pytorch_examples
+cd ~/pytorch_examples/distributed/minGPT-ddp
+pip install -r requirements.txt       # hydra, fsspec, boto3 for the real trainer
 ```
 
-Set up PyTorch as in the [mnist README](../mnist/README.md) (venv/container/module).
-The benchmark only needs `torch`; the upstream `main.py` additionally needs the
-packages in `pytorch_examples/distributed/minGPT-ddp/requirements.txt`
-(hydra, fsspec, etc.).
-
-Tell the benchmark where the upstream model lives (only needed if not in the
-default `~/pytorch_examples` location):
+Confirm the GPUs are visible:
 
 ```bash
-export UPSTREAM=~/pytorch_examples/distributed/minGPT-ddp/mingpt
+python3 -c 'import torch; print(torch.cuda.is_available(), torch.cuda.device_count())'
 ```
 
-## 1. Single run of the benchmark
+> **MI300A node requirement.** The node must be booted with `iommu=pt`
+> (`grep -o 'iommu=pt' /proc/cmdline`) so RCCL uses direct xGMI P2P; otherwise the
+> gradient all-reduce hangs. Details in
+> [`benchmarks/README_benchmark.md`](benchmarks/README_benchmark.md).
+
+## 2. Run the stock trainer once
+
+The upstream training job trains a character-level GPT on tinyshakespeare (hydra
+config in `mingpt/gpt2_train_cfg.yaml`). Run one short epoch to see it work:
 
 ```bash
-torchrun --standalone --nproc_per_node=8 ddp_gpt_bench.py
+torchrun --standalone --nproc_per_node=2 mingpt/main.py \
+  trainer_config.max_epochs=1 data_config.truncate=0.2
 ```
 
-Output (rank 0):
+The stock trainer prints periodic `Loss` lines but **no timing, throughput, or
+memory**. The patches below add exactly that.
 
+## 3. Patch the trainer: add measurement, then an optimization
+
+Each edit is a single `sed` you can read before running. Apply them to
+`mingpt/trainer.py` (keep a copy to diff/reset:
+`cp mingpt/trainer.py mingpt/trainer.orig.py`).
+
+### 3a. Time a fixed window and report throughput + peak memory
+
+Warm up a few steps, time the next `_iters` steps, print a `RESULT` line (step
+time, global tokens/s, per-GPU peak memory), then stop early so a "run" is quick.
+The `PROFILE=1`-gated block adds a `torch.profiler` that sums the `nccl*` kernel
+time as `RCCL_TOTAL_MS`.
+
+```bash
+# init the timer/profiler state just before the training loop in _run_epoch()
+sed -i '/^        for iter, (source, targets) in enumerate(dataloader):/i\
+        _warmup, _iters = 3, 20\
+        _prof = None; _t0 = _t1 = None' mingpt/trainer.py
+
+# start/stop the timer inside the loop (train only), print RESULT, then break
+sed -i '/^            step_type = "Train" if train else "Eval"/i\
+            if train and iter == _warmup:\
+                torch.cuda.synchronize(); torch.distributed.barrier()\
+                torch.cuda.reset_peak_memory_stats(self.local_rank)\
+                _t0 = torch.cuda.Event(enable_timing=True); _t1 = torch.cuda.Event(enable_timing=True); _t0.record()\
+                if os.environ.get("PROFILE") == "1":\
+                    import torch.profiler as _tp\
+                    _prof = _tp.profile(activities=[_tp.ProfilerActivity.CPU, _tp.ProfilerActivity.CUDA]); _prof.start()\
+            if train and _t0 is not None and iter == _warmup + _iters:\
+                _t1.record(); torch.cuda.synchronize()\
+                _step_s = _t0.elapsed_time(_t1) / _iters / 1e3\
+                _ws = torch.distributed.get_world_size()\
+                _tok = source.size(0) * source.size(1)\
+                if self.global_rank == 0:\
+                    print(f"RESULT world_size={_ws} step_s={_step_s:.4f} "\
+                          f"tokens_per_s={_tok * _ws / _step_s:.0f} "\
+                          f"peak_mem_mb={torch.cuda.max_memory_allocated(self.local_rank)/1e6:.0f}")\
+                if _prof is not None:\
+                    _prof.stop()\
+                    _rccl_ms = sum(e.self_device_time_total for e in _prof.key_averages()\
+                                   if "nccl" in e.key.lower()) / 1e3\
+                    if self.global_rank == 0:\
+                        print(f"RCCL_TOTAL_MS {_rccl_ms:.3f} world_size={_ws}")\
+                break' mingpt/trainer.py
 ```
-# upstream model: /.../minGPT-ddp/mingpt
-# world_size=8  params=124.4M  grad_allreduce=498MB/step  per_gpu_batch=8 block=512
-RESULT world_size=8 step_sync_s=0.0721 step_nosync_s=0.0605 comm_s=0.0116 comm_pct=16.1 tokens_per_s=454321
+
+### 3b. Add a `torch.compile` optimization (env-gated)
+
+Wrap the model in `torch.compile` when `COMPILE=1`, right after DDP wraps it, so
+you can compare against eager without a second copy of the script:
+
+```bash
+sed -i '/^        self.model = DDP(self.model, device_ids=\[self.local_rank\])/a\
+        if os.environ.get("COMPILE") == "1":\
+            self.model = torch.compile(self.model)' mingpt/trainer.py
 ```
 
-`comm_pct=16.1` means ~16% of each step is the RCCL gradient all-reduce at this
-scale/model size. `grad_allreduce=498MB/step` is how many bytes each rank
-contributes to the collective.
+Sanity-check the patched file, then run one instrumented pass:
 
-## 2. Confirm the RCCL topology
+```bash
+python3 -c 'import ast; ast.parse(open("mingpt/trainer.py").read()); print("syntax OK")'
+torchrun --standalone --nproc_per_node=2 mingpt/main.py \
+  trainer_config.max_epochs=1 data_config.truncate=0.2
+# -> RESULT world_size=2 step_s=... tokens_per_s=... peak_mem_mb=...
+```
+
+## 4. Confirm the RCCL topology
 
 ```bash
 NCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=INIT,COLL \
-  torchrun --standalone --nproc_per_node=8 ddp_gpt_bench.py 2>&1 \
+  torchrun --standalone --nproc_per_node=2 mingpt/main.py \
+  trainer_config.max_epochs=1 data_config.truncate=0.2 2>&1 \
   | grep -E 'NCCL|Ring|Channel|Tree' | head -40
 ```
 
 Prefer `via ... [xGMI]` / `P2P` (on-fabric) over `via SHM`/`via PCI`.
 
-## 3. Scaling sweep (the RCCL study)
+## 5. Scaling sweep by hand (the RCCL study)
+
+Run the instrumented trainer once per GPU count, teeing each to `run_<N>.log`.
+`truncate=0.2` keeps enough batches per rank even at 8 GPUs; DDP here needs ≥2:
 
 ```bash
-GPUS="1 2 4 8" ./rccl_scaling_sweep.sh
+for n in 2 4 8; do
+  torchrun --standalone --nproc_per_node=$n mingpt/main.py \
+    trainer_config.max_epochs=1 data_config.truncate=0.2 2>&1 | tee run_$n.log
+done
+```
+
+Summarize with the helper shipped in this directory:
+
+```bash
+/path/to/HPCTrainingExamples/MLExamples/Pytorch/minGPT-ddp/mingpt_speedup.sh
 ```
 
 Illustrative output:
 
 ```
-GPUs   step_s       nosync_s     comm%      tok_per_s      speedup    eff
-1      0.0602       0.0602       0.0        108900         1.00       100%
-2      0.0631       0.0605       4.1        207700         1.91       95%
-4      0.0662       0.0607       8.3        395600         3.63       91%
-8      0.0721       0.0605       16.1       454300         6.68       84%
+GPUs   step_s       tok_per_s      peak_mem_MB    speedup    eff      rccl_ms
+2      0.1061       77196          5200           1.00       100%     -
+4      0.1039       157722         5200           2.04       102%     -
+8      0.1080       303000         5200           3.93       98%      -
 ```
 
-At 1 GPU there are no peers, so `comm%`=0 (baseline). As GPUs increase, `comm%`
-rises and efficiency falls — that gap **is** the RCCL cost.
-
-**Amplify the communication signal:**
+As GPUs increase, the gap of `speedup`/`eff` from ideal is the RCCL gradient
+all-reduce cost. **Amplify the signal** with a bigger model (bigger gradients):
 
 ```bash
-# Bigger model => bigger gradients => larger all-reduce, higher comm%
-GPUS="1 2 4 8" N_LAYER=24 N_EMBD=1024 N_HEAD=16 ./rccl_scaling_sweep.sh
+for n in 2 4 8; do
+  torchrun --standalone --nproc_per_node=$n mingpt/main.py \
+    trainer_config.max_epochs=1 data_config.truncate=0.2 \
+    gpt_config.n_layer=12 gpt_config.n_head=12 gpt_config.n_embd=768 2>&1 | tee run_$n.log
+done
+./mingpt_speedup.sh
 ```
 
-## 3a. Optimization: bf16 autocast (`--amp`)
+## 6. Optimizations — compare against the baseline
 
-The GPT block is GEMM-bound, so bf16 autocast is the single biggest lever. Pass
-it through the sweep with `OPTS`:
+The upstream trainer already has a built-in mixed-precision path
+(`trainer_config.use_amp`); toggle it and the `torch.compile` patch from step 3b:
 
 ```bash
-GPUS="1 2 4" OPTS="--amp" ./rccl_scaling_sweep.sh
+# fp32 baseline
+torchrun --standalone --nproc_per_node=4 mingpt/main.py \
+  trainer_config.max_epochs=1 data_config.truncate=0.2 trainer_config.use_amp=False
+
+# mixed precision (built-in autocast)
+torchrun --standalone --nproc_per_node=4 mingpt/main.py \
+  trainer_config.max_epochs=1 data_config.truncate=0.2 trainer_config.use_amp=True
+
+# torch.compile the model (the step 3b patch)
+COMPILE=1 torchrun --standalone --nproc_per_node=4 mingpt/main.py \
+  trainer_config.max_epochs=1 data_config.truncate=0.2 trainer_config.use_amp=True
 ```
 
-Because the fp32 gradients are still all-reduced (498 MB/step for the 124M-param
-model), faster bf16 compute makes the fixed RCCL cost a **larger** share of each
-step — comm% rises even though wall-clock throughput ~1.8×.
+> **ROCm 7.2.x bf16 gotcha.** The bf16 path can stall for minutes in hipBLASLt on
+> ROCm 7.2.x. Run on ROCm 6.4.3, or `export TORCH_BLAS_PREFER_HIPBLASLT=0`. See
+> [`../common/hipblaslt-notes.md`](../common/hipblaslt-notes.md).
 
-> **ROCm 7.2.x bf16 gotcha.** On ROCm 7.2.x the bf16 (`--amp`) transformer path can
-> **stall for minutes in hipBLASLt**. Run these bf16 sweeps on ROCm 6.4.3, or force
-> rocBLAS with `export TORCH_BLAS_PREFER_HIPBLASLT=0` (then bf16 runs and is ~2.3×
-> faster than fp32). The `hipblaslt/patched` module does **not** fix this and makes
-> no measurable difference here — see [`../common/hipblaslt-notes.md`](../common/hipblaslt-notes.md).
+See [`README_compute_optimization.md`](README_compute_optimization.md) and
+[`README_rccl_optimization.md`](README_rccl_optimization.md) for the full set of
+by-hand optimization exercises.
 
-## 3b. Optimization: `torch.compile` (`--compile`)
+## 7. Profiling — measure the all-reduce
 
-`torch.compile` captures the GPT block into a fused graph. It stacks with
-`--amp`, and (like TunableOp) is a large lever for these GEMM-bound transformers:
+Turn on the profiler patch (step 3a) to get the total RCCL kernel time; it grows
+with GPU count because there is more gradient all-reduce to do:
 
 ```bash
-GPUS="1 2 4" OPTS="--compile" ./rccl_scaling_sweep.sh
-GPUS="1 2 4" OPTS="--amp --compile" ./rccl_scaling_sweep.sh
+PROFILE=1 torchrun --standalone --nproc_per_node=4 mingpt/main.py \
+  trainer_config.max_epochs=1 data_config.truncate=0.2 2>&1 | tee prof_4.log
+grep RCCL_TOTAL_MS prof_4.log
 ```
 
-The first (warm-up) step pays a one-time compilation cost; the benchmark warms
-both the sync and `no_sync()` graphs before timing so the comm measurement stays
-clean. Faster compute again makes the fixed all-reduce a larger share, so `comm%`
-rises even as throughput climbs.
-
-## 3c. Zero-copy host→GPU input staging (`--migrate`, MI300A)
-
-`--migrate` stages each token batch from the host with **zero-copy `migrate()`**
-(unified-memory aliasing) instead of a `.to()` copy; `--migrate-method
-managed|register` picks the mechanism (`register` works on any pageable tensor),
-and `--host-copy` is the copy baseline. Requires `HSA_XNACK=1`. **Note:** minGPT
-batches are token IDs (~2 MB), far too small for this to move end-to-end
-throughput — it is included for completeness and to exercise the API. The raw
-100×–1000× transfer win and the memory saving (the device-resident duplicate is
-eliminated — measured 100%) are documented in
-[`../common/README.md`](../common/README.md).
-
-## 3d. Runtime, version, and affinity
-
-See [`../common/PERFORMANCE_NOTES.md`](../common/PERFORMANCE_NOTES.md) for the
-cross-cutting, measured MI300A results: **ROCm/PyTorch version selection**
-(ROCm 6.4 is ~30% faster than 7.2.3 on this GEMM-bound transformer; TunableOp on
-7.2.3 recovers it; the pip **wheel vs. site module is a wash** at matched ROCm),
-and **NUMA affinity** (negligible here — enable with `AFFINITY=1
-./rccl_scaling_sweep.sh` for CPU-heavy/host-staged paths).
-
-## Measured results (MI300A, AAC6 `PPAC_MI300A_SPX`, ROCm 6.4.3 / PyTorch 2.12)
-
-GPT2-small (12 layers, 768 embd, 124M params, block 512, per-GPU batch 8).
-
-> **Cluster requirement:** the PPAC MI300A nodes must be booted with `iommu=pt`
-> (verify: `grep -o 'iommu=pt' /proc/cmdline`) so RCCL uses direct xGMI P2P — no
-> `NCCL_P2P_LEVEL`/`NCCL_P2P_DISABLE` override is needed. Without it the gradient
-> all-reduce hangs; the host-staged fallback is `NCCL_P2P_DISABLE=1`. The numbers
-> below predate the passthrough reboot, so `comm%` should now be lower — re-run
-> the sweep to refresh them.
-
-Baseline (fp32):
-
-```
-GPUs   step_s     nosync_s   comm%   tok_per_s   speedup   eff
-1      0.0993     0.0959     3.4     41266       1.00      100%
-2      0.1061     0.0969     8.7     77196       1.87      94%
-4      0.1039     0.0977     6.0     157722      3.82      96%
-```
-
-Optimized (`--amp`, bf16 autocast):
-
-```
-GPUs   step_s     nosync_s   comm%   tok_per_s   speedup   eff
-1      0.0551     0.0529     3.9     74380       1.00      100%
-2      0.0616     0.0529     14.0    133093      1.79      90%
-4      0.0580     0.0530     8.7     282279      3.80      95%
-```
-
-Takeaways: bf16 autocast gives ~**1.8× throughput** at every GPU count; DDP weak
-scaling stays 90–96% to 4 GPUs; comm% roughly **doubles** under AMP (14% at 2
-GPUs) because the 498 MB all-reduce is unchanged while compute got cheaper.
-
-## 4. Precise kernel attribution (optional)
-
-The benchmark exposes the PyTorch-native profilers directly:
-
-```bash
-# torch.profiler: per-op/kernel + RCCL all_reduce table, trace per rank
-torchrun --standalone --nproc_per_node=2 ddp_gpt_bench.py \
-  --profile --profile-dir ./torch_prof
-
-# DeepSpeed FlopsProfiler: FLOPs / MACs / params (compute ceiling)
-torchrun --standalone --nproc_per_node=1 ddp_gpt_bench.py --flops
-```
-
-For a framework-independent kernel trace:
+For a framework-independent kernel trace (no code change), run under `rocprofv3`:
 
 ```bash
 rocprofv3 --kernel-trace --stats --truncate-kernels -- \
-  torchrun --standalone --nproc_per_node=8 ddp_gpt_bench.py --warmup 5 --iters 10
+  torchrun --standalone --nproc_per_node=4 mingpt/main.py \
+  trainer_config.max_epochs=1 data_config.truncate=0.2 2>&1 | grep -i AllReduce
 ```
 
-RCCL collectives appear as `ncclDevKernel_AllReduce*`; their total confirms the
-`no_sync()` estimate. `rocprof-sys` gives a timeline showing how much of the
-all-reduce overlaps backward compute (DDP overlaps by default).
+RCCL collectives appear as `ncclDevKernel_AllReduce_*`. For the full guide
+(torch.profiler tables, TensorBoard, rocprof-compute roofline, rocprof-sys
+timeline), see [`profiling/PROFILING.md`](profiling/PROFILING.md).
 
-**See [`PROFILING.md`](PROFILING.md)** for the full guide covering torch.profiler,
-the DeepSpeed FlopsProfiler, TensorBoard, rocprofv3, rocprof-compute (roofline),
-rocprofiler-systems (timeline), and multi-node TAU/HPCToolkit.
-
-## 5. Run the real training job (optional)
-
-To train the actual character-level GPT on tinyshakespeare:
+## 8. Cleanup
 
 ```bash
-cd ~/pytorch_examples/distributed/minGPT-ddp
-pip install -r requirements.txt
-torchrun --standalone --nproc_per_node=8 mingpt/main.py \
-  trainer_config.max_epochs=1 gpt_config.n_layer=8
+rm -f run_*.log prof_*.log *snapshot*.pt
 ```
 
-(Config is hydra-driven from `mingpt/gpt2_train_cfg.yaml`; override on the CLI.)
+## Next steps
 
-## 6. Batch jobs
-
-```bash
-sbatch pytorch_mingpt_ddp_venv.batch
-sbatch pytorch_mingpt_ddp_module.batch
-```
-
-## How this differs from the other examples here
-
-| Example | Collective | Comm isolation method | Signal |
-|---------|-----------|-----------------------|--------|
-| [imagenet](../imagenet) | DDP all-reduce | weak/strong scaling of step time | CNN gradients |
-| **minGPT-ddp** (this) | DDP all-reduce | **`no_sync()`** direct subtraction | large transformer gradients |
-| [FSDP2](../FSDP2) | all-gather + reduce-scatter | throughput + peak-memory scaling | sharded params/grads |
-
-Use `imagenet` for the easiest DDP scaling intro, this example when you want an
-**LLM-shaped all-reduce** and a direct comm-cost measurement, and `FSDP2` when
-the model is too large to replicate per GPU and you need sharding.
+- **[`README_rccl_optimization.md`](README_rccl_optimization.md)** — hands-on
+  exercises that optimize the DDP gradient all-reduce by editing the upstream
+  code directly (bf16 gradient-compression comm hook, `NCCL_ALGO`/`PROTO`/channels,
+  DDP bucketing/overlap).
+- **[`README_compute_optimization.md`](README_compute_optimization.md)** —
+  hands-on exercises that optimize per-GPU compute by editing the code directly
+  (bf16 autocast, `torch.compile`, fused optimizer, SDPA backend).
+- **[`benchmarks/README_benchmark.md`](benchmarks/README_benchmark.md)** — the
+  polished `ddp_gpt_bench.py` drives the same GPT on **synthetic tokens** (no
+  dataset), adds the `no_sync()` direct `comm_pct` measurement, and provides an
+  automated sweep driver, measured results, and batch jobs.
+- **[`profiling/PROFILING.md`](profiling/PROFILING.md)** — splitting a step into
+  compute vs. communication with torch.profiler, the DeepSpeed FlopsProfiler,
+  TensorBoard, rocprofv3, rocprof-compute (roofline), and rocprof-sys (timeline).

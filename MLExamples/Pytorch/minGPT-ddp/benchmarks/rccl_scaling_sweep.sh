@@ -17,7 +17,7 @@
 #   BENCH       path to ddp_gpt_bench.py (default alongside this script)
 #   NCCL_DEBUG  set INFO to log RCCL rings/trees (default WARN)
 #   AFFINITY=1  bind each rank to its GPU's local NUMA node (via numactl); effect
-#               is within noise here (see ../common/PERFORMANCE_NOTES.md)
+#               is within noise here (see ../../common/PERFORMANCE_NOTES.md)
 set -euo pipefail
 
 GPUS=${GPUS:-"1 2 4 8"}
@@ -42,7 +42,7 @@ BENCH=${BENCH:-"$here/ddp_gpt_bench.py"}
 # local node. Empty by default (no behavior change).
 AFFIN=""
 if [[ "${AFFINITY:-0}" == "1" ]]; then
-  LAUNCHER="$here/../common/affinity_launcher.py"
+  LAUNCHER="$here/../../common/affinity_launcher.py"
   if [[ -f "$LAUNCHER" ]]; then AFFIN="$LAUNCHER"; echo "AFFINITY=1: binding ranks to local NUMA nodes";
   else echo "WARN: $LAUNCHER not found; AFFINITY ignored" >&2; fi
 fi
