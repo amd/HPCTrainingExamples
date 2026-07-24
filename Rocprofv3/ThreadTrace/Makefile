@@ -1,11 +1,11 @@
 HIPCC ?= hipcc
 TARGET ?= matmul
 SRC ?= main.hip
-ARCH ?= gfx942
+ARCH ?= gfx90a,gfx942
 
 # -g -gdwarf-4: source correlation in rocprofv3 ATT / stats CSV (see README).
 CXXFLAGS ?= -O3 -std=c++17 -g -gdwarf-4 --offload-arch=$(ARCH) \
-            -mllvm -amdgpu-early-inline-all=true
+            -mllvm -amdgpu-early-inline-all=true -lrocblas
 
 .PHONY: all clean run trace
 
