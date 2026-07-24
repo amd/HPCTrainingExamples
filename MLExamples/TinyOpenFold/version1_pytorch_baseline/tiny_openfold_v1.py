@@ -46,18 +46,6 @@ from typing import Optional, Tuple, Dict, Any
 from dataclasses import dataclass, asdict
 from datetime import datetime
 
-# Optional imports with graceful fallbacks
-try:
-    import torch.cuda.nvtx as nvtx
-    NVTX_AVAILABLE = True
-except ImportError:
-    NVTX_AVAILABLE = False
-    class nvtx:
-        @staticmethod
-        def range(name):
-            from contextlib import nullcontext
-            return nullcontext()
-
 
 @dataclass
 class TinyOpenFoldConfig:
@@ -952,42 +940,38 @@ def train_tiny_openfold(
         monitor.start_timing()
 
         # Get batch
-        with nvtx.range("data_loading"):
-            msa_tokens, pair_features, target_distances = dataset.get_batch(batch_size)
-            msa_tokens = msa_tokens.to(device)
-            pair_features = pair_features.to(device)
-            target_distances = target_distances.to(device)
+        msa_tokens, pair_features, target_distances = dataset.get_batch(batch_size)
+        msa_tokens = msa_tokens.to(device)
+        pair_features = pair_features.to(device)
+        target_distances = target_distances.to(device)
 
         # Forward pass timing
         monitor.start_timing()
-        with nvtx.range("forward_pass"):
-            if use_amp:
-                with autocast():
-                    outputs = model(msa_tokens, pair_features, target_distances)
-                    loss = outputs['loss'].mean()  # Average loss across GPUs for DataParallel
-            else:
+        if use_amp:
+            with autocast():
                 outputs = model(msa_tokens, pair_features, target_distances)
                 loss = outputs['loss'].mean()  # Average loss across GPUs for DataParallel
+        else:
+            outputs = model(msa_tokens, pair_features, target_distances)
+            loss = outputs['loss'].mean()  # Average loss across GPUs for DataParallel
         batch_timings['forward'] = monitor.end_timing()
 
         # Backward pass timing
         monitor.start_timing()
-        with nvtx.range("backward_pass"):
-            if use_amp:
-                scaler.scale(loss).backward()
-            else:
-                loss.backward()
+        if use_amp:
+            scaler.scale(loss).backward()
+        else:
+            loss.backward()
         batch_timings['backward'] = monitor.end_timing()
 
         # Optimizer step timing
         monitor.start_timing()
-        with nvtx.range("optimizer_step"):
-            if use_amp:
-                scaler.step(optimizer)
-                scaler.update()
-            else:
-                optimizer.step()
-            optimizer.zero_grad()
+        if use_amp:
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            optimizer.step()
+        optimizer.zero_grad()
         batch_timings['optimizer'] = monitor.end_timing()
 
         # Total batch time
