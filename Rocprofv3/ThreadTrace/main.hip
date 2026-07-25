@@ -1,5 +1,7 @@
-// Minimal HIP example: three FP64 GEMM kernels (naive / mid / LDS-tiled) for rocprofv3 --att.
+// Minimal HIP example: three FP64 GEMM kernels (naive / mid / LDS-tiled) plus a
+// rocBLAS reference, for rocprofv3 --att.
 #include <hip/hip_runtime.h>
+#include <rocblas/rocblas.h>
 
 #include <chrono>
 #include <cmath>
@@ -18,6 +20,16 @@ constexpr int kSpotChecks = 16;
         if (err != hipSuccess) {                                              \
             std::fprintf(stderr, "HIP error %s:%d: %s\n", __FILE__, __LINE__, \
                          hipGetErrorString(err));                             \
+            std::exit(EXIT_FAILURE);                                          \
+        }                                                                     \
+    } while (0)
+
+#define ROCBLAS_CHECK(call)                                                     \
+    do {                                                                      \
+        rocblas_status status = (call);                                       \
+        if (status != rocblas_status_success) {                               \
+            std::fprintf(stderr, "rocBLAS error %s:%d: %s\n", __FILE__,        \
+                         __LINE__, rocblas_status_to_string(status));         \
             std::exit(EXIT_FAILURE);                                          \
         }                                                                     \
     } while (0)
@@ -145,6 +157,38 @@ double bench_kernel(Kernel kernel,
     return (2.0 * static_cast<double>(N) * N * N) / (sec * 1.0e9);
 }
 
+// rocBLAS is column-major. Our A, B, C buffers are row-major, so a stored
+// row-major matrix X is seen by rocBLAS as X^T. Computing (col-major)
+// R = B * A with the stored buffers therefore yields R = (A*B)^T in
+// column-major, which read back as row-major is exactly C = A*B.
+double bench_rocblas(rocblas_handle handle,
+                     const double* d_A,
+                     const double* d_B,
+                     double* d_C,
+                     int N,
+                     int warmup,
+                     int iters) {
+    const double alpha = 1.0;
+    const double beta = 0.0;
+    for (int i = 0; i < warmup; ++i) {
+        ROCBLAS_CHECK(rocblas_dgemm(handle, rocblas_operation_none,
+                                    rocblas_operation_none, N, N, N, &alpha,
+                                    d_B, N, d_A, N, &beta, d_C, N));
+        HIP_CHECK(hipDeviceSynchronize());
+    }
+    const auto t0 = std::chrono::steady_clock::now();
+    for (int i = 0; i < iters; ++i) {
+        ROCBLAS_CHECK(rocblas_dgemm(handle, rocblas_operation_none,
+                                    rocblas_operation_none, N, N, N, &alpha,
+                                    d_B, N, d_A, N, &beta, d_C, N));
+    }
+    HIP_CHECK(hipDeviceSynchronize());
+    const auto t1 = std::chrono::steady_clock::now();
+    const double sec =
+        std::chrono::duration<double>(t1 - t0).count() / static_cast<double>(iters);
+    return (2.0 * static_cast<double>(N) * N * N) / (sec * 1.0e9);
+}
+
 int main() {
     const int N = kN;
     const size_t bytes = static_cast<size_t>(N) * N * sizeof(double);
@@ -205,6 +249,19 @@ int main() {
     const bool ok_fast = spot_check(h_A, h_B, h_C, N, tol);
     std::printf("matmul_fast: %8.2f GFLOPS  %s\n", g_fast, ok_fast ? "PASS" : "FAIL");
     if (!ok_fast) {
+        return EXIT_FAILURE;
+    }
+
+    rocblas_handle handle;
+    ROCBLAS_CHECK(rocblas_create_handle(&handle));
+    const double g_rocblas =
+        bench_rocblas(handle, d_A, d_B, d_C, N, warmup, iters);
+    HIP_CHECK(hipMemcpy(h_C.data(), d_C, bytes, hipMemcpyDeviceToHost));
+    const bool ok_rocblas = spot_check(h_A, h_B, h_C, N, tol);
+    std::printf("rocblas_dgemm: %8.2f GFLOPS  %s\n", g_rocblas,
+                ok_rocblas ? "PASS" : "FAIL");
+    ROCBLAS_CHECK(rocblas_destroy_handle(handle));
+    if (!ok_rocblas) {
         return EXIT_FAILURE;
     }
 
