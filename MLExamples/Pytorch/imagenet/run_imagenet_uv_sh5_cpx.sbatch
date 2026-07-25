@@ -137,14 +137,14 @@ for N in $GPU_LIST; do
   echo "=== $N GPU(s) [$DEV]  global_batch=$GLOBAL  per_gpu=$PERGPU_BATCH ==="
   HIP_VISIBLE_DEVICES=$DEV python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
 	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 \
-	-b $GLOBAL -p 20 --epochs 1 2>&1 | tee run_${N}.log
+	-b $GLOBAL -p 20 --epochs 1 |& tee run_${N}.log
 done
 
 # .to (copy) vs migrate staging comparison on a SINGLE partition: compare STAGE_MS_PER_STEP
 STAGE=copy    HIP_VISIBLE_DEVICES=0 python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
-	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b $PERGPU_BATCH -p 20 --epochs 1 2>&1 | tee stage_copy.log
+	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b $PERGPU_BATCH -p 20 --epochs 1 |& tee stage_copy.log
 STAGE=migrate HIP_VISIBLE_DEVICES=0 python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
-	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b $PERGPU_BATCH -p 20 --epochs 1 2>&1 | tee stage_migrate.log
+	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b $PERGPU_BATCH -p 20 --epochs 1 |& tee stage_migrate.log
 
 # Scaling runs are run_<N>.log; staging runs are stage_{copy,migrate}.log, so a
 # plain glob keeps the two reports separate. Lines are self-describing (gpus=N).

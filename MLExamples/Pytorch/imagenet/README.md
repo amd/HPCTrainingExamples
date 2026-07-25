@@ -59,6 +59,14 @@ cp pytorch_examples/imagenet/* .
 
 ## 3. Optional modifications to the example source code
 
+These are the basic edits to the example to get the instrumentation in place
+for the optimizations exercises. All of these edits can be applied by running
+the script below or going through the individual edits and applying them one-by-one.
+
+```bash
+./apply_basic_edits.sh
+```
+
 ### 3a. Fix warning `destroy_process_group`
 
 > Upstream main.py inits the NCCL process group but never destroys it, so PyTorch
@@ -225,11 +233,11 @@ Run the benchmark once per GPU count by changing `HIP_VISIBLE_DEVICES`.
 
 ```bash
 HIP_VISIBLE_DEVICES=0       python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
-        --dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 128  -p 20 --epochs 1 2>&1 | tee run_1.log
+        --dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 128  -p 20 --epochs 1 |& tee run_1.log
 HIP_VISIBLE_DEVICES=0,1     python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
-        --dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 256  -p 20 --epochs 1 2>&1 | tee run_2.log
+        --dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 256  -p 20 --epochs 1 |& tee run_2.log
 HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
-        --dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 512  -p 20 --epochs 1 2>&1 | tee run_4.log
+        --dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 512  -p 20 --epochs 1 |& tee run_4.log
 ```
 
 ## 6. APU programming model (MI300A)
@@ -248,10 +256,10 @@ HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy --dist-url 'tcp:/
 # .to() copy vs zero-copy migrate (single GPU) -- compare STAGE_MS_PER_STEP
 STAGE=copy    HIP_VISIBLE_DEVICES=0 python main.py -a resnet50 --dummy \
   --dist-url 'tcp://127.0.0.1:23456' --dist-backend nccl \
-  --multiprocessing-distributed --world-size 1 --rank 0 -b 128 -p 20 --epochs 1 2>&1 | tee stage_copy.log
+  --multiprocessing-distributed --world-size 1 --rank 0 -b 128 -p 20 --epochs 1 |& tee stage_copy.log
 STAGE=migrate HIP_VISIBLE_DEVICES=0 python main.py -a resnet50 --dummy \
   --dist-url 'tcp://127.0.0.1:23456' --dist-backend nccl \
-  --multiprocessing-distributed --world-size 1 --rank 0 -b 128 -p 20 --epochs 1 2>&1 | tee stage_migrate.log
+  --multiprocessing-distributed --world-size 1 --rank 0 -b 128 -p 20 --epochs 1 |& tee stage_migrate.log
 ```
 
 The `.to()` path pays a `hipMemcpy` every step; `migrate` aliases the batch, so

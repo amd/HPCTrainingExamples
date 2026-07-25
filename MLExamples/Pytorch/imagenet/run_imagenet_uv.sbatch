@@ -127,19 +127,19 @@ HIP_VISIBLE_DEVICES=0 python -c "import torch,torchvision.models as M; \
 
 # Run the three jobs for the scaling study on 1, 2, and 4 GPUs. The number of GPUS is determined by HIP_VISIBLE_DEVICES
 HIP_VISIBLE_DEVICES=0       python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
-	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 128  -p 20 --epochs 1 2>&1 | tee run_1.log
+	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 128  -p 20 --epochs 1 |& tee run_1.log
 HIP_VISIBLE_DEVICES=0,1     python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
-	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 256  -p 20 --epochs 1 2>&1 | tee run_2.log
+	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 256  -p 20 --epochs 1 |& tee run_2.log
 HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
-	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 512  -p 20 --epochs 1 2>&1 | tee run_4.log
+	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 512  -p 20 --epochs 1 |& tee run_4.log
 
 # The MI300A APU has a unified memory and does not need to copy the data, just the pointer. Other GPUS can emulate APU behavior
 #   Requires HSA_XNACK 1 to be set. Set earlier in script
 #   .to (copy) vs .migrate staging comparison (4 GPUs): compare STAGE_MS_PER_STEP in final report
 STAGE=copy    HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
-	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 128  -p 20 --epochs 1 2>&1 | tee stage_copy.log
+	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 128  -p 20 --epochs 1 |& tee stage_copy.log
 STAGE=migrate HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
-	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 128  -p 20 --epochs 1 2>&1 | tee stage_migrate.log
+	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 128  -p 20 --epochs 1 |& tee stage_migrate.log
 
 # Scaling runs are run_<N>.log; staging runs are stage_{copy,migrate}.log, so a
 # plain glob keeps the two reports separate. Lines are self-describing (gpus=N).
