@@ -2,14 +2,14 @@
 
 README.md from `HPCTrainingExamples/MLExamples/Pytorch/imagenet` in the Training Examples repository
 
-The [mnist](../mnist) example is deliberately tiny: the dataset is small and its
-"multi-GPU" batch uses `torch.nn.DataParallel`, which is single-process and does
-**not** scale well. This example steps up to a **larger workload** (ResNet on
-ImageNet-sized 224x224x3 images, 1000 classes) trained with **true
-`DistributedDataParallel` (DDP)**, one process per GPU, using the **RCCL**
-(ROCm Collective Communication Library) backend.
+The **mnist** (at ../mnist) example is deliberately tiny: the dataset is 
+small and its "multi-GPU" batch uses `torch.nn.DataParallel`, which is 
+single-process and does **not** scale well. This example steps up to a 
+**larger workload** (ResNet on ImageNet-sized 224x224x3 images, 1000 classes)
+trained with **true `DistributedDataParallel` (DDP)**, one process per GPU,
+using the **RCCL** (ROCm Collective Communication Library) backend.
 
-The key idea: synthetic (`--dummy`-style) data means **no 150 GB ImageNet
+The key idea: synthetic (`--dummy`) data means **no 150 GB ImageNet
 download is needed**. The input pipeline is essentially free, so each training
 step is dominated by
 
@@ -20,9 +20,9 @@ By comparing step time across GPU counts we isolate and quantify the RCCL
 communication cost.
 
 > This README is the **quick start**. For the required MI300A settings, the
-> scaling-sweep drivers, optimization levers, measured results, profiling, and
-> the pure-RCCL bandwidth micro-benchmark, see
-> **[`benchmarks/README_benchmark.md`](benchmarks/README_benchmark.md)**.
+> scaling-sweep drivers, optimization levers, measured results, profiling,
+> and the pure-RCCL bandwidth micro-benchmark, see
+> **`benchmarks/README_benchmark.md`**.
 
 > On ROCm, PyTorch's `nccl` backend is provided by **librccl**, so all the
 > `NCCL_*` environment variables are honored by RCCL.
@@ -59,6 +59,8 @@ cp pytorch_examples/imagenet/* .
 
 ## 3. Optional modifications to the example source code
 
+### 3a. Fix warning `destroy_process_group`
+
 > Upstream main.py inits the NCCL process group but never destroys it, so PyTorch
 > warns at exit ("`destroy_process_group()` was not called ... can leak resources").
 > Register an atexit handler right after `init_process_group` so every worker
@@ -68,37 +70,82 @@ cp pytorch_examples/imagenet/* .
 sed -i '/world_size=args.world_size, rank=args.rank)/a\        import atexit as _ax, torch.distributed as _d; _ax.register(lambda: _d.destroy_process_group() if _d.is_initialized() else None)' main.py
 ```
 
+### 3b) Keep the demo (and the profiler trace) short.
+
+```bash
+sed -i '/^        data_time.update(time.time() - end)/a\
+        if i >= 100: break' main.py
+```
+
+### 3c) Add GPU peak memory instrumentation
+
 > Print per-GPU peak memory once at the end of train() (matches README `peak_mem_mb`)
 ```bash
 sed -i '/^def validate(/i\    torch.cuda.is_available() and getattr(args,"rank",0)<=0 and print(f"PEAK_MEM_MB {torch.cuda.max_memory_allocated()/1e6:.0f}")' main.py
 ```
 
-> --- Demo instrumentation: total RCCL time + .to vs .migrate staging time ---
-> The migrate path (STAGE=migrate) aliases the batch instead of copying it; it
-> needs these and HSA_XNACK=1 (exported below).
+The two demo measurements below are now independent, self-contained changes:
+**3d** adds the profiler and the total-RCCL-time print; **3e** adds the
+`.to` vs `.migrate` staging comparison. Each stands alone (neither references
+the other's variables), so you can apply either one, and in either order.
+
+### 3d. Enable the profiler and print total RCCL time
+
+> Start a `torch.profiler` at the top of `train()` and stop it just before
+> `validate()`. The on-GPU time of the `nccl*` collective kernels is summed and
+> printed as `RCCL_TOTAL_MS` (~0 at 1 GPU, growing with GPU count). The `break`
+> from step 3b keeps the captured trace short.
+
+Start the profiler at the top of `train()`:
+
+```bash
+sed -i '/^    model.train()/a\
+    import torch.profiler as _tp\
+    _prof = _tp.profile(activities=[_tp.ProfilerActivity.CPU, _tp.ProfilerActivity.CUDA], acc_events=True); _prof.start()' main.py
+```
+
+Stop the profiler and print the total RCCL kernel time (inserted at the end of `train()`, right before `def validate(`):
+
+```bash
+sed -i '/^def validate(/i\
+    _prof.stop()\
+    _rccl_ms = sum(e.self_device_time_total for e in _prof.key_averages() if "nccl" in e.key.lower())/1e3\
+    _ws = getattr(args,"world_size","?")\
+    getattr(args,"rank",0)<=0 and print(f"RCCL_TOTAL_MS {_rccl_ms:.3f} gpus={_ws}")' main.py
+```
+
+### 3e. Compare `.to` (copy) vs `.migrate` (zero-copy) staging
+
+> The migrate path (`STAGE=migrate`) aliases the batch instead of copying it; it
+> needs `COMMON_DIR` (for `zerocopy.Stager`), `HSA_XNACK=1`, and pageable
+> (non-pinned) host memory. When `STAGE` is unset these edits are inert, so the
+> plain scaling runs are unaffected.
+
+Point `COMMON_DIR` at the shared helpers and enable XNACK:
+
 ```bash
 export COMMON_DIR="../common"
 export HSA_XNACK=1
 ```
 
-### 1) Start a profiler and set up staging counters at the top of train().
+Set up the staging counters and (for `STAGE=migrate`) the zero-copy `Stager` at the top of `train()`:
+
 ```bash
 sed -i '/^    model.train()/a\
-    import torch.profiler as _tp\
-    _prof = _tp.profile(activities=[_tp.ProfilerActivity.CPU, _tp.ProfilerActivity.CUDA]); _prof.start()\
     _stage_ms = 0.0; _stage_n = 0; _stager = None\
     if os.environ.get("STAGE") == "migrate":\
         import sys; sys.path.insert(0, os.environ["COMMON_DIR"]); from zerocopy import Stager\
         _stager = Stager(device, method="register")' main.py
 ```
 
-### 2) Keep the demo (and the profiler trace) short.
+register-migrate needs pageable (non-pinned) host memory:
+
 ```bash
-sed -i '/^        data_time.update(time.time() - end)/a\
-        if i >= 100: break' main.py
+sed -i 's/pin_memory=True/pin_memory=False/g' main.py
 ```
 
-### 3) Time the host->device staging, but only when STAGE is set (copy vs migrate).
+Time the host->device staging, but only when `STAGE` is set (copy vs migrate):
+
 ```bash
 sed -i '/^        images = images.to(device, non_blocking=True)/c\
         if os.environ.get("STAGE"):\
@@ -111,19 +158,12 @@ sed -i '/^        images = images.to(device, non_blocking=True)/c\
             images = images.to(device, non_blocking=True)' main.py
 ```
 
-### 4) register-migrate needs pageable (non-pinned) host memory.
-```bash
-sed -i 's/pin_memory=True/pin_memory=False/g' main.py
-```
+Print the per-step staging time (inserted at the end of `train()`, right before `def validate(`):
 
-### 5) Stop the profiler and print total RCCL kernel time (+ staging time if timed).
 ```bash
 sed -i '/^def validate(/i\
-    _prof.stop()\
-    _rccl_ms = sum(e.self_device_time_total for e in _prof.key_averages() if "nccl" in e.key.lower())/1e3\
-    _ws = getattr(args,"world_size","?"); _stg = os.environ.get("STAGE","")\
-    getattr(args,"rank",0)<=0 and print(f"RCCL_TOTAL_MS {_rccl_ms:.3f} gpus={_ws}")\
-    getattr(args,"rank",0)<=0 and _stage_n and print(f"STAGE_MS_PER_STEP {_stage_ms/_stage_n:.4f} gpus={_ws} stage={_stg}")' main.py
+    _stg = os.environ.get("STAGE",""); _ws2 = getattr(args,"world_size","?")\
+    getattr(args,"rank",0)<=0 and _stage_n and print(f"STAGE_MS_PER_STEP {_stage_ms/_stage_n:.4f} gpus={_ws2} stage={_stg}")' main.py
 ```
 
 Notes:
@@ -146,7 +186,7 @@ export MIOPEN_LOG_LEVEL=3
 export KINETO_LOG_LEVEL=3
 ```
 
-> `MIOPEN_USER_DB_PATH` and `MIOPEN_CUSTOM_CACHE_DIR` are set in the python module to a `/tmp` directory
+> `MIOPEN_USER_DB_PATH` and `MIOPEN_CUSTOM_CACHE_DIR` are set in the PyTorch module to a `/tmp` directory
 > Create the directory and set the automatic removal at end of job
 
 ```bash
@@ -159,7 +199,7 @@ Confirm the GPUs are visible:
 python3 -c 'import torch; print(torch.cuda.is_available(), torch.cuda.device_count())'
 ```
 
-## 3. Warm the MIOpen cache (once per allocation)
+## 4. Warm the MIOpen cache (once per allocation)
 
 > **Warm once per allocation.** A new `salloc`/`sbatch` gets a fresh job ID (and
 > thus a fresh empty cache). Warming single-process first matters: inside one
@@ -179,7 +219,7 @@ HIP_VISIBLE_DEVICES=0  python -c "import torch,torchvision.models as M; \
    print('warm done')"
 ```
 
-## 4. Run the scaling sweep (one line per GPU count)
+## 5. Run the scaling sweep (one line per GPU count)
 
 Run the benchmark once per GPU count by changing `HIP_VISIBLE_DEVICES`.
 
@@ -192,7 +232,7 @@ HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy --dist-url 'tcp:/
         --dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 512  -p 20 --epochs 1 2>&1 | tee run_4.log
 ```
 
-## 4. APU programming model (MI300A)
+## 6. APU programming model (MI300A)
 
 > The MI300A APU has a unified memory and does not need to copy the data, just the pointer. Other GPUS can emulate APU behavior
 >   Requires `HSA_XNACK 1` to be set. Set earlier in script
@@ -221,7 +261,7 @@ and `COMMON_DIR` pointing at [`../common`](../common) (both exported by
 and the two numbers will match.
 
 
-## 5. Measure RCCL time and compare `.to` vs `.migrate` staging
+## 7. Measure RCCL time and compare `.to` vs `.migrate` staging
 
 The [`main.py`](main.py) driver runs the sweep above **and** adds two extra
 numbers with a handful of small `sed` patches to the (freshly cloned) `main.py`.
@@ -246,7 +286,7 @@ echo "=== Host->device staging: .to (copy) vs .migrate ==="
 grep -h STAGE_MS_PER_STEP stage_*.log
 ```
 
-### 6. Calculating the performance
+### 8. Calculating the performance
 
 ```bash
 echo "=== Calculating the performance =="
@@ -279,14 +319,14 @@ run_4.log  img/s=3720  step=0.1376s  batch=512  peak_mem_mb=...  speedup=3.84x
 > `ddp_resnet_bench.py`'s `--rccl-time`, `--host-copy`, and `--migrate` flags,
 > documented in [`benchmarks/README_benchmark.md`](benchmarks/README_benchmark.md).
 
-## 7. Cleanup
+## 9. Cleanup
 
 ```
 deactivate
 rm -rf imagenet_test
 ```
 
-## 8. Run on CPX partitions (`SH5_MI300A_CPX`, `PPAC_MI300A_CPX`)
+## 10. Run on CPX partitions (`SH5_MI300A_CPX`, `PPAC_MI300A_CPX`)
 
 The sweep above assumes **SPX** mode, where each MI300A APU is one HIP device
 (so `PPAC_MI300A_SPX --gpus=4` = 4 devices). When SPX nodes are scarce, the same
