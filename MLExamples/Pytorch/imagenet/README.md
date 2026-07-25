@@ -382,10 +382,350 @@ same `img/s` / `speedup` lines (speedup is relative to the smallest `N`).
   RCCL cost should visibly rise. This is the CPX sweep that best reproduces the
   real communication behavior the example is built to expose.
 
-So CPX is a fine substitute for running the *scaling mechanics*, but tell
-attendees that intra-chip CPX scaling understates RCCL cost — the interesting
+So CPX is a fine substitute for running the *scaling mechanics*, but 
+the intra-chip CPX scaling understates RCCL cost — the interesting
 communication behavior only appears once the rank count crosses physical APUs
 (i.e. on the 24-GPU `PPAC_MI300A_CPX` node).
+
+## 11. Featured RCCL optimization: tune the all-reduce with environment variables
+
+The [`README_rccl_optimization.md`](README_rccl_optimization.md) exercises tune the
+RCCL all-reduce by editing `os.environ[...]` *inside* `main.py`, before
+`init_process_group`. You don't actually have to touch the source: because
+`--multiprocessing-distributed` launches the ranks with `mp.spawn`, every worker
+**inherits the shell environment**, and RCCL reads its `NCCL_*` settings when the
+communicator is built (at `init_process_group`). So exporting the variables in the
+shell is equivalent to the §2 in-code edits — with the bonus that you can sweep a
+value without re-editing the file.
+
+> This reuses the `RCCL_TOTAL_MS` instrumentation added in §3 and the warmed
+> MIOpen cache from §4. Run the 4-GPU case (`-b 512`) so there is an all-reduce to
+> tune (there is none at 1 GPU).
+
+### Most effective transport/algorithm (section 2)
+
+Pin the two settings that most affect the ResNet50 all-reduce on the coherent
+MI300A fabric:
+
+```bash
+export NCCL_ALGO=Tree     # 2a: latency-optimized; best once the all-reduce crosses APUs
+export NCCL_PROTO=LL128   # 2b: sweet spot for medium messages on high-bandwidth coherent links
+```
+
+### Vary the number of channels from 1 to 32 (section 2c)
+
+Force an exact channel count by setting the min and max to the same value, then
+sweep. More channels drive the copy with more compute units (higher effective
+bandwidth) until the fabric saturates:
+
+```bash
+for NCH in 1 2 4 8 16 32; do
+  NCCL_MIN_NCHANNELS=$NCH NCCL_MAX_NCHANNELS=$NCH \
+  HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy \
+    --dist-url 'tcp://127.0.0.1:23456' --dist-backend nccl \
+    --multiprocessing-distributed --world-size 1 --rank 0 -b 512 -p 20 --epochs 1 \
+    |& tee run_nch_${NCH}.log
+done
+```
+
+Report `RCCL_TOTAL_MS` for each channel count and pick the knee of the curve:
+
+```bash
+echo "=== RCCL total time by channel count ==="
+for NCH in 1 2 4 8 16 32; do
+  printf "channels=%-3s " "$NCH"; grep -h RCCL_TOTAL_MS run_nch_${NCH}.log | tail -1
+done
+```
+
+**Expect:** `RCCL_TOTAL_MS` falls as channels increase, then flattens (or ticks
+back up) once the fabric saturates — often around 8-16 channels on one APU. On a
+single MI300A the signal is small; the sweep is far more dramatic on the 12-/24-GPU
+`PPAC_MI300A_CPX` runs, where the all-reduce crosses physical APUs.
+
+### Stack the DDP overlap knobs (section 3)
+
+The §3 levers (`gradient_as_bucket_view`, `bucket_cap_mb`, `static_graph`) are DDP
+**constructor arguments**, not env vars, so they need a one-line edit. Apply the
+stacked "most effective" combination with the same `sed` style as §3:
+
+```bash
+sed -i 's/model = torch.nn.parallel.DistributedDataParallel(model, device_ids=\[args.gpu\])/model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], gradient_as_bucket_view=True, bucket_cap_mb=100, static_graph=True)/' main.py
+```
+
+With the env vars above still exported, rerun the 4-GPU baseline and watch the
+per-step `Time` drop as the all-reduce overlaps better with the backward pass
+(`RCCL_TOTAL_MS`, the bytes moved, stays about the same). Reset with
+`git checkout -- main.py` (then re-apply the §3 instrumentation) before moving on.
+
+## 12. Featured compute optimization: `torch.compile`
+
+From [`README_compute_optimization.md`](README_compute_optimization.md) §3a:
+`torch.compile` captures the model into a fused graph, cutting Python/launch
+overhead. Add it right after the model is wrapped in DDP (same `sed` style as §3):
+
+```bash
+sed -i '/model = torch.nn.parallel.DistributedDataParallel(model, device_ids=\[args.gpu\])/a\                model = torch.compile(model)' main.py
+```
+
+Rerun the single-GPU compute baseline and compare per-step `Time` against the
+un-compiled `run_1.log`:
+
+```bash
+HIP_VISIBLE_DEVICES=0 python main.py -a resnet50 --dummy \
+  --dist-url 'tcp://127.0.0.1:23456' --dist-backend nccl \
+  --multiprocessing-distributed --world-size 1 --rank 0 -b 128 -p 20 --epochs 1 |& tee run_compile.log
+```
+
+**Expect:** the **first** step is much slower (one-time compile), then per-step
+`Time` improves versus the un-compiled baseline. Try
+`torch.compile(model, mode="max-autotune")` for more aggressive tuning at a longer
+compile cost. Reset with `git checkout -- main.py` (then re-apply the §3
+instrumentation) before moving on.
+
+## 13. Featured profiling exercise: a measured timeline of compute vs communication (4×MI300A)
+
+This hands-on exercise captures a **real GPU timeline** of the 4-GPU run and reads
+the **compute vs. communication** story straight off it. Both `torch.profiler` and
+**TAU** record every GPU kernel with a timestamp, so the **compute** kernels
+(`Conv`/`GEMM`/batchnorm from forward & backward) and the **RCCL all-reduce**
+kernels (`ncclDevKernel*`) fall into visually distinct bands — the same split §7
+measures numerically as `RCCL_TOTAL_MS`, now laid out in time across all four ranks.
+
+The figure below is **measured on 4×MI300A (`PPAC_MI300A_SPX`)** — one lane per
+GPU, blue = compute, orange = the RCCL all-reduce, white = idle (data-loader /
+Python between steps):
+
+![Measured 4×MI300A GPU timeline (torch.profiler): compute (blue) vs RCCL all-reduce (orange), ~700 ms steady-state window](figs/timeline_4gpu.png)
+
+Read it like this:
+
+- **Per-step structure** — each blue block is a step's forward+backward compute,
+  ended by an orange RCCL all-reduce of the gradients.
+- **Exposed communication** — on the leader (GPU 0) the all-reduce is thin, but on
+  GPU 1-3 it widens into long orange blocks: those ranks finish compute early and
+  **spin-wait inside `ncclDevKernel`** for the collective to complete. This exposed,
+  imbalanced all-reduce is exactly what the §11 RCCL optimizations
+  (`NCCL_ALGO`/channels, `gradient_as_bucket_view`, `bucket_cap_mb`, `static_graph`)
+  attack — the timeline makes the cost visible, not just the `RCCL_TOTAL_MS` number.
+- **Gaps between steps** = per-step overhead (Python / launch / dummy data-loader),
+  the target of the §12 `torch.compile` optimization.
+
+> **Where the two figures in this section come from.** Both are generated from the
+> **same measured 4-GPU run** captured by
+> [`profiling/capture_timeline.sbatch`](profiling/capture_timeline.sbatch); neither
+> is hand-drawn.
+>
+> | Figure | Tool it comes from | How it was produced |
+> |---|---|---|
+> | [`figs/timeline_4gpu.png`](figs/timeline_4gpu.png) (above) | `torch.profiler` Chrome traces | [`profiling/render_timeline.py`](profiling/render_timeline.py) parses the per-rank `torch_trace_rank*.json` and draws the Gantt headlessly with matplotlib (`Agg`) — no display, browser, or Java needed. |
+> | [`figs/perfetto_4gpu.png`](figs/perfetto_4gpu.png) (§13.3) | `torch.profiler` Chrome traces, viewed in Perfetto | The four per-rank traces are merged into one 4-lane trace by [`profiling/merge_perfetto.py`](profiling/merge_perfetto.py) → `imagenet_4gpu.perfetto.json.gz`, loaded in [`ui.perfetto.org`](https://ui.perfetto.org), and screenshotted. |
+> | [`figs/tau_profile_4gpu.png`](figs/tau_profile_4gpu.png) (§13.4) | **TAU** ParaProf profile | A 4-rank `mpirun -n 4 tau_exec` run ([`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch)); `pprof` dumps the per-rank GPU-kernel profile, and [`profiling/render_tau_profile.py`](profiling/render_tau_profile.py) draws the compute-vs-RCCL split headlessly (no ParaProf GUI/Java). |
+>
+> The first two derive from the **`torch.profiler`** capture (Path A, §13.3); the
+> third is from the **TAU** capture (Path B, §13.4). TAU's Jumpshot/Vampir *timeline*
+> converters fail on this build (see §13.4), so the TAU figure is drawn from its
+> ParaProf profile rather than a timeline screenshot.
+
+### 13.1 One-shot capture (automated)
+
+The whole pipeline — capture with both tools, drop the raw traces, and render this
+PNG **headlessly** (no X server, browser, or Java) — is one batch job:
+
+```bash
+sbatch profiling/capture_timeline.sbatch      # 4-GPU PPAC_MI300A_SPX, ~6 min
+```
+
+It produces:
+
+- `figs/timeline_4gpu.png` — the committed figure above (rendered by
+  [`profiling/render_timeline.py`](profiling/render_timeline.py) with matplotlib's
+  `Agg` backend).
+- `profiling/traces/torch_trace_rank{0..3}.json` — per-rank `torch.profiler` traces
+  in **Chrome/Perfetto Trace Event format** (valid Perfetto input; ~60 MB each).
+- `profiling/traces/imagenet_4gpu.perfetto.json.gz` — those four merged into **one
+  4-lane Perfetto trace** (GPU 0-3 as separate process lanes), gzipped to ~1.5 MB —
+  the easy file to download and open in the Perfetto UI (built by
+  [`profiling/merge_perfetto.py`](profiling/merge_perfetto.py)).
+- `profiling/traces/traces.otf2` — the TAU trace in OTF2 (for **Vampir**), when the
+  TAU run and `tau2otf2` succeed.
+
+> **Perfetto only ingests** Perfetto protobuf (`.pftrace`/`.pb`) or Chrome JSON
+> Trace Event format (`{"traceEvents":[...]}` or a bare event array). The
+> `torch.profiler` exports above are Chrome JSON and load directly. TAU's own
+> `tau_trace2json` emits a *TAU-specific* JSON schema (`event-type`/`node-id`/…)
+> that Perfetto does **not** understand — so the TAU trace is for Jumpshot/Vampir,
+> and the Perfetto artifact comes from `torch.profiler` (§13.3).
+
+To re-render a different window from the captured traces (no GPU needed):
+
+```bash
+python3 profiling/render_timeline.py --glob 'profiling/traces/torch_trace_rank*.json' \
+    --out figs/timeline_4gpu.png --start-ms 10850 --end-ms 11550
+```
+
+The rest of this section breaks the job into the manual steps for a hands-on run.
+
+### 13.2 Get a 4-GPU SPX allocation
+
+```bash
+salloc -p PPAC_MI300A_SPX -N1 --gpus=4 --exclusive -t 00:40:00
+source .venv/bin/activate            # the uv venv from §1
+module load rocm/6.4.3 openmpi pytorch/2.12.0 tau
+```
+
+Reuse the instrumented `main.py` (§2-3) and the **warmed MIOpen cache** (§4), and
+shorten the run to ~20 steps so the trace stays small:
+
+```bash
+sed -i 's/if i >= 100: break/if i >= 20: break/' main.py
+```
+
+### 13.3 Path A — `torch.profiler` (Chrome/Perfetto JSON)
+
+The §3d profiler already runs; add one line so it also writes a **per-rank**
+Chrome/Perfetto trace when it stops (insert right after `_prof.stop()`):
+
+```python
+    _prof.stop()
+    _prof.export_chrome_trace(f"torch_trace_rank{getattr(args,'rank',0)}.json")
+```
+
+Run the standard 4-GPU case (§5); each of the four `mp.spawn` workers writes its
+own `torch_trace_rank{0..3}.json`:
+
+```bash
+HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy \
+  --dist-url 'tcp://127.0.0.1:23456' --dist-backend nccl \
+  --multiprocessing-distributed --world-size 1 --rank 0 -b 512 -p 20 --epochs 1
+```
+
+**View it graphically — no Perfetto module needed.** Perfetto is just a viewer:
+open [`https://ui.perfetto.org`](https://ui.perfetto.org) in a browser and load a
+`torch_trace_rank*.json` (one GPU), or the merged
+`imagenet_4gpu.perfetto.json.gz` (all four GPUs as lanes). Merge them yourself with:
+
+```bash
+python3 profiling/merge_perfetto.py --glob 'profiling/traces/torch_trace_rank*.json' \
+    --out profiling/traces/imagenet_4gpu.perfetto.json.gz
+```
+
+The merged trace opens in the Perfetto UI as four GPU process lanes. Within each
+GPU, the compute stream (`Thread 1`, running `DistributedDataParallel.forward` and
+the colored conv/GEMM kernels) is separate from the RCCL stream (`Thread 4`), where
+the `nccl:broadcast` at startup and the periodic `nccl:all_reduce` →
+`ncclDevKernel_Generic` slices are the communication:
+
+![Merged 4-GPU torch.profiler trace in the Perfetto UI: per-GPU compute stream (Thread 1) vs the RCCL nccl:all_reduce / ncclDevKernel stream (Thread 4)](figs/perfetto_4gpu.png)
+
+Or render the headless PNG with
+[`profiling/render_timeline.py`](profiling/render_timeline.py) (as in §13.1).
+
+### 13.4 Path B — TAU (`tau_exec`) → Jumpshot / Vampir
+
+TAU intercepts ROCm via `LD_PRELOAD`, which is inherited by the four `mp.spawn`
+workers, so each rank writes its own trace with **no source edit**. On ROCm > 6.1.9
+use the `rocprofsdk` configuration:
+
+```bash
+export TAU_TRACE=1 TAU_PROFILE=1
+export TRACEDIR=$PWD/tau_trace PROFILEDIR=$PWD/tau_trace
+mkdir -p tau_trace
+HIP_VISIBLE_DEVICES=0,1,2,3 tau_exec -T rocm,rocprofsdk -rocm \
+  python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23457' \
+    --dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 \
+    -b 512 -p 20 --epochs 1
+```
+
+Merge the per-rank traces, then view in a **TAU-native** timeline:
+
+```bash
+cd tau_trace
+tau_treemerge.pl                              # -> tau.trc + tau.edf (all ranks)
+tau2slog2 tau.trc tau.edf -o imagenet_4gpu.slog2 && jumpshot imagenet_4gpu.slog2   # timeline
+tau2otf2  tau.trc tau.edf traces.otf2         # -> open traces.otf2 in Vampir
+pprof ; paraprof &                            # flat per-rank compute/comm profile
+```
+
+(`jumpshot`/`paraprof` are Java apps; `java` is available on AAC6 — see §13.5 for
+running them on a desktop.)
+
+> **Do not** feed TAU output to Perfetto. On this build `tau_trace2json` writes a
+> *TAU-specific* JSON schema (`{"event-type":…,"node-id":…}`), which the Perfetto UI
+> cannot parse. For a Perfetto timeline use the `torch.profiler` Chrome JSON from
+> Path A; TAU's traces go to Jumpshot (slog2) or Vampir (OTF2). TAU may also return
+> a nonzero exit at ROCm teardown — the trace files are still written and usable.
+
+**The TAU profile (ParaProf) below is real measured data from a 4-rank
+`mpirun -n 4 tau_exec` run** ([`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch),
+node `ppac-pl1-s24-30`). The `pprof` per-rank breakdown separates the RCCL all-reduce
+(`[ROCm Kernel] ncclDevKernel_Generic`) from the ResNet-50 compute kernels
+(conv / GEMM / batch-norm / elementwise):
+
+![TAU ParaProf per-rank GPU-kernel breakdown: ResNet-50 compute (blue) vs RCCL ncclDevKernel all-reduce (orange), from a 4-rank tau_exec run on MI300A](figs/tau_profile_4gpu.png)
+
+Note the **communication imbalance** TAU exposes: exclusive RCCL kernel time ranges
+from 2.7 % (rank 3) to 37.4 % (rank 1) — the busy-wait a rank spends inside the
+collective while others finish compute, i.e. the load imbalance a real tuning
+exercise would chase.
+
+> **Converter caveat on this build.** `tau2slog2` and `tau2otf2` both fail on the
+> merged trace here (`tau2slog2` throws a Java `LineIDMap` NPE; `tau2otf2` writes an
+> empty `traces.otf2/`), so Jumpshot/Vampir *timelines* are currently unavailable —
+> but the raw `tau.trc`/`tau.edf` and the ParaProf profiles (`profile.*`) are intact.
+> The figure above is therefore rendered **headlessly from the ParaProf profile**
+> with [`profiling/render_tau_profile.py`](profiling/render_tau_profile.py) (no Java,
+> ParaProf GUI, or display needed):
+>
+> ```bash
+> pprof -s > profiling/tau/tau_pprof.txt        # dump per-rank profile as text
+> python3 profiling/render_tau_profile.py profiling/tau/tau_pprof.txt \
+>     --out figs/tau_profile_4gpu.png
+> ```
+
+### 13.5 Viewing without a local display
+
+The capture job **always drops the raw traces** to `profiling/traces/` regardless
+of whether the automated screenshot works, so if you can't open a browser on the
+node you can download and view them yourself:
+
+- **No Perfetto module is required** — `ui.perfetto.org` runs entirely in your
+  browser. Copy the merged trace to your laptop and open it there:
+
+```bash
+scp <you>@aac6.amd.com:.../imagenet/profiling/traces/imagenet_4gpu.perfetto.json.gz .
+# then drag it into https://ui.perfetto.org
+# (merged 4-GPU trace is ~1.5 MB; the per-rank torch_trace_rank*.json are ~60 MB each)
+```
+
+- Or use a cluster desktop and open the browser there: `man aac6_vnc` (TurboVNC),
+  `man aac6_novnc` (browser), `man aac6_x11` (`ssh -X`).
+
+> A best-effort headless Perfetto screenshot
+> ([`profiling/perfetto_shot.py`](profiling/perfetto_shot.py)) is attempted by the
+> capture job; it needs a bundled Chromium download and outbound network from the
+> compute node, so it may be skipped — the committed figure always comes from the
+> reliable matplotlib render, and the JSON traces are always available to screenshot
+> yourself.
+
+### 13.6 Close the loop with the optimizations
+
+Re-capture after applying the featured optimizations and compare:
+
+- After the §11 **channel tuning** (`NCCL_MIN/MAX_NCHANNELS`, `NCCL_ALGO=Tree`) and
+  the DDP overlap knobs, the orange all-reduce blocks on GPU 1-3 shrink.
+- After §12 **`torch.compile`**, the blue compute bands fuse into fewer, longer
+  kernels and the inter-step white gaps shrink.
+
+Reset when done:
+
+```bash
+sed -i 's/if i >= 20: break/if i >= 100: break/' main.py   # restore the §3b break
+unset TAU_TRACE TAU_PROFILE TRACEDIR PROFILEDIR
+```
+
+> For the full menu of profilers on this example (torch.profiler, rocprofv3,
+> rocprof-compute, rocprofiler-systems, Score-P, and TAU/HPCToolkit) see
+> [`profiling/PROFILING.md`](profiling/PROFILING.md).
 
 ## Next steps
 
