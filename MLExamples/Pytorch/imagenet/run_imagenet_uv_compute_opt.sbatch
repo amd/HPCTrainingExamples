@@ -74,8 +74,10 @@ HIP_VISIBLE_DEVICES=0 python -c "import torch,torchvision.models as M; \
    print('warm done')"
 
 # Baseline (eager) run.  Keep its own log so it is not clobbered by the compiled run.
+# Print every 10 steps (-p 10) so the steady-state median below has enough samples
+# once the first (warmup) step is dropped.
 HIP_VISIBLE_DEVICES=0 python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
-	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 512  -p 20 --epochs 1 |& tee run_baseline.log
+	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 512  -p 10 --epochs 1 |& tee run_baseline.log
 
 # Apply the torch compile compute optimizations
 sed -i '/model = torch.nn.parallel.DistributedDataParallel(model, device_ids=\[args.gpu\])/a\                model = torch.compile(model)' main.py
@@ -86,16 +88,32 @@ grep -q 'model = torch.compile(model)' main.py || {
 
 # torch.compile run (own log for comparison against the baseline).
 HIP_VISIBLE_DEVICES=0 python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
-	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 512  -p 20 --epochs 1 |& tee run_compile.log
+	--dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 -b 512  -p 10 --epochs 1 |& tee run_compile.log
 
-# Compare eager vs torch.compile: img/s (global batch / avg per-step Time from the
-# last Epoch line), avg step time, and peak memory.  Both runs are 1 GPU, b=512.
+# Compare eager vs torch.compile on a STEADY-STATE median, not the running average.
+#   The upstream "Epoch:" line prints two numbers after "Time": the instantaneous
+#   per-step time and a running average in parentheses.  The running average folds
+#   in the very first step, which for torch.compile includes the one-time graph
+#   compile (tens of seconds) -- so averaging over a short (100-iter) run makes
+#   compile look slower than eager.  Instead we collect the *instantaneous* times,
+#   drop the first (warmup / compile) sample, and report the median.  img/s is the
+#   global batch (b) divided by that median step time.  Both runs are 1 GPU, b=512.
 summarize () {  # $1=label  $2=logfile
   awk -v label="$1" -v b=512 '
-    /^Epoch:/      { gsub(/[()]/," "); for (i=1;i<=NF;i++) if ($i=="Time") a=$(i+2) }
+    /^Epoch:/ {
+      line=$0; gsub(/[()]/," ",line); nf=split(line,f," ");
+      for (i=1;i<=nf;i++) if (f[i]=="Time") { t[++n]=f[i+1]; break }
+    }
     /^PEAK_MEM_MB/ { m=$2 }
-    END { if (a>0) printf "%-10s img/s=%.0f  step=%.4fs  peak_mem_mb=%s\n", label, b/a, a, m;
-          else     printf "%-10s (no Epoch timing found in log)\n", label }
+    END {
+      if (n<=1) { printf "%-10s (no steady-state Time samples in log)\n", label; exit }
+      # drop the first sample (iteration 1: warmup / one-time torch.compile build)
+      k=0; for (i=2;i<=n;i++) s[++k]=t[i];
+      asort(s);
+      med = (k%2) ? s[(k+1)/2] : (s[k/2]+s[k/2+1])/2;
+      printf "%-10s img/s=%.0f  step=%.4fs  peak_mem_mb=%s  (steady-state median of %d steps, warmup dropped)\n", \
+             label, b/med, med, m, k;
+    }
   ' "$2"
 }
 echo "=== compute optimization: eager vs torch.compile (1 GPU, b=512) ==="

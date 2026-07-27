@@ -1,6 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --gpus=4
+#SBATCH --ntasks-per-node=4
 #SBATCH --partition=PPAC_MI300A_SPX
 #SBATCH --exclusive
 #SBATCH --time=00:40:00
@@ -8,16 +9,12 @@
 #SBATCH --output=capture_tau-%j.out
 #SBATCH --error=capture_tau-%j.out
 #
-# Produce REAL TAU artifacts for the 4-GPU run, viewable in Jumpshot / Vampir /
-# ParaProf. Unlike the torch path, TAU wants distinct MPI ranks, so we launch one
-# process per GPU with `mpirun -n 4` (env-less tcp:// rendezvous) rather than the
-# README's `mp.spawn`; that gives TAU a proper 4-rank trace instead of collapsing
-# every worker onto node 0.
+# Produce REAL TAU ParaProf profiles for the 4-GPU run. Unlike the torch path, TAU
+# wants distinct MPI ranks, so we launch one process per GPU with `mpirun -n 4`
+# (env-less tcp:// rendezvous) rather than the README's `mp.spawn`; that gives TAU a
+# proper 4-rank profile instead of collapsing every worker onto node 0.
 #
 # Artifacts are written to a PERSISTENT dir (profiling/tau/), not the /tmp work dir:
-#   tau.trc / tau.edf         merged TAU trace
-#   traces.otf2 (+ *.def)     OTF2 -> open in Vampir
-#   imagenet_4gpu.slog2       SLOG2 -> open in Jumpshot
 #   profile.* + tau_pprof.txt ParaProf profile (+ text summary)
 #
 # Submit from the imagenet dir:  sbatch profiling/capture_tau.sbatch
@@ -35,7 +32,7 @@ cd imagenet_test || exit 1
 uv venv --system-site-packages
 source .venv/bin/activate
 
-module load rocm/6.4.3 openmpi pytorch/2.12.0
+module load rocm openmpi pytorch
 module load tau || { echo "ERROR: tau module failed to load"; exit 1; }
 command -v tau_exec >/dev/null 2>&1 || { echo "ERROR: tau_exec not on PATH"; exit 1; }
 
@@ -74,29 +71,27 @@ HIP_VISIBLE_DEVICES=0 python -c "import torch,torchvision.models as M; \
    x=torch.randn(256,3,224,224,device=d); y=torch.randint(0,1000,(256,),device=d); \
    [c(n(x),y).backward() for _ in range(3)]; torch.cuda.synchronize(); print('warm done')"
 
-# TAU tracing + profiling into the persistent dir.
-export TAU_TRACE=1
+# TAU profiling into the persistent dir. TAU_PROFILE default is 1, so not really necessary
 export TAU_PROFILE=1
-export TRACEDIR="${TAU_OUT}"
 export PROFILEDIR="${TAU_OUT}"
 
 echo "=== TAU 4-rank run (mpirun -n 4 tau_exec -rocm) ==="
-mpirun -n 4 --oversubscribe tau_exec -T rocm,rocprofsdk -rocm ./tau_wrapper.sh \
+# One rank per MI300A APU (each APU is its own NUMA domain: GPU + 24 cores), bound
+# to that NUMA node so it matches HIP_VISIBLE_DEVICES=local_rank. Under mpirun the
+# binding comes from these --map-by/--bind-to flags, NOT Slurm --cpus-per-task.
+# --report-bindings prints the per-rank core mask so you can confirm rank i -> APU i.
+mpirun -n 4 --map-by numa --bind-to numa --report-bindings \
+  tau_exec -T rocm,rocprofsdk -rocm ./tau_wrapper.sh \
   |& tee "${OUT_DIR}/capture_tau_run.log" \
   || echo "WARN: TAU run returned nonzero (trace may still be usable)"
 
-echo "=== Merge + convert TAU artifacts in ${TAU_OUT} ==="
+echo "=== TAU ParaProf profile in ${TAU_OUT} ==="
 cd "${TAU_OUT}" || exit 1
 ls -la
-tau_treemerge.pl || echo "WARN: tau_treemerge.pl failed"
-if [ -f tau.trc ] && [ -f tau.edf ]; then
-  tau2otf2  tau.trc tau.edf traces.otf2        && echo "OTF2 (Vampir)  -> ${TAU_OUT}/traces.otf2"   || echo "WARN: tau2otf2 failed"
-  tau2slog2 tau.trc tau.edf imagenet_4gpu.slog2 && echo "SLOG2 (Jumpshot)-> ${TAU_OUT}/imagenet_4gpu.slog2" || echo "WARN: tau2slog2 failed"
-fi
 # ParaProf profile: profile.* files are already here from TAU_PROFILE=1.
 pprof -a > tau_pprof.txt 2>/dev/null && echo "pprof text summary -> ${TAU_OUT}/tau_pprof.txt" || echo "WARN: pprof failed"
 
 echo "=== DONE. TAU artifacts: ==="
 ls -la "${TAU_OUT}"
-echo "View: Jumpshot on imagenet_4gpu.slog2, Vampir on traces.otf2, or 'paraprof' on profile.* (see README 13.5 for VNC)."
+echo "View: 'paraprof' on profile.* (see README 13.5 for VNC), or render figs/tau_profile_4gpu.png from tau_pprof.txt with profiling/render_tau_profile.py."
 deactivate 2>/dev/null || true

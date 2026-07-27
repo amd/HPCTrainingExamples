@@ -29,9 +29,40 @@ communication cost.
 
 ## 1. Get an allocation and load PyTorch
 
+Pick whichever partition is free — the step-by-step example runs on all of them.
+**SPX** gives each rank a whole MI300A APU; **CPX** splits each APU into 6 smaller
+GPU partitions, so a CPX node exposes more (smaller) GPUs and leaves more room for
+interactive experimentation. The `PPAC_MI300A_SPX` nodes are scarce, so the CPX
+partitions are good fallbacks for the tutorial.
+
 ```bash
+# 4 full-APU GPUs on a PPAC SPX node (whole node; DefCpuPerGPU=48 -> 192 CPUs)
 salloc -p PPAC_MI300A_SPX -N1 --gpus=4 -t 00:40:00
+
+# 4 CPX partitions on the PPAC CPX node (24 GPUs/node; DefCpuPerGPU=8 -> 32 CPUs)
+salloc -p PPAC_MI300A_CPX -N1 --gpus=4 -t 00:40:00
+
+# 4 CPX partitions on an SH5 CPX node (6 GPUs/node; DefCpuPerGPU=8 -> 32 CPUs)
+salloc -p SH5_MI300A_CPX  -N1 --gpus=4 -t 00:40:00
 ```
+
+> CPX partitions carve one APU's 128 GB HBM into 6 (~21 GB each), so if you hit an
+> OOM on CPX, drop the per-GPU batch size (e.g. `-b 128`).
+
+> **Optional — CPU/GPU affinity.** To bind each rank to the cores nearest its GPU,
+> add task/affinity flags to the allocation (or to `srun`):
+>
+> ```bash
+> salloc -p PPAC_MI300A_SPX -N1 --gpus=4 --ntasks-per-node=4 \
+>        --cpus-per-task=48 --gpu-bind=closest --cpu-bind=cores -t 00:40:00
+> # On a CPX partition use --cpus-per-task=8 (matches DefCpuPerGPU=8, since the
+> # 6 CPX GPUs share one APU's 48 cores).
+> ```
+>
+> These matter most when you launch ranks with **`srun`**, where Slurm places and
+> binds each task. The README's default path uses `mp.spawn` and the TAU path uses
+> `mpirun` (§13.4), which do their own binding, so there the Slurm flags are only
+> advisory.
 
 > Set up virtual environment to avod scattering python packages across system
 >    and for more repeatability
@@ -48,6 +79,12 @@ source .venv/bin/activate
 
 ```bash
 module load rocm openmpi pytorch
+```
+
+Confirm the GPUs are visible:
+
+```bash
+python3 -c 'import torch; print(torch.cuda.is_available(), torch.cuda.device_count())'
 ```
 
 ## 2. Get the examples
@@ -80,6 +117,8 @@ sed -i '/world_size=args.world_size, rank=args.rank)/a\        import atexit as 
 
 ### 3b) Keep the demo (and the profiler trace) short.
 
+This shortens the demo to 100 iterations for quicker runs and to accomodate more users.
+
 ```bash
 sed -i '/^        data_time.update(time.time() - end)/a\
         if i >= 100: break' main.py
@@ -87,12 +126,15 @@ sed -i '/^        data_time.update(time.time() - end)/a\
 
 ### 3c) Add GPU peak memory instrumentation
 
+Understanding how much memory is being used relative to the available memory
+is important in optimizing a job.
+
 > Print per-GPU peak memory once at the end of train() (matches README `peak_mem_mb`)
 ```bash
 sed -i '/^def validate(/i\    torch.cuda.is_available() and getattr(args,"rank",0)<=0 and print(f"PEAK_MEM_MB {torch.cuda.max_memory_allocated()/1e6:.0f}")' main.py
 ```
 
-The two demo measurements below are now independent, self-contained changes:
+The two demo measurements below are independent, self-contained changes:
 **3d** adds the profiler and the total-RCCL-time print; **3e** adds the
 `.to` vs `.migrate` staging comparison. Each stands alone (neither references
 the other's variables), so you can apply either one, and in either order.
@@ -124,6 +166,9 @@ sed -i '/^def validate(/i\
 
 ### 3e. Compare `.to` (copy) vs `.migrate` (zero-copy) staging
 
+The MI300A is a true APU with a single address space. Many other GPUs emulate the single address
+space with managed memory that copies arrays from host to device and back when needed.
+
 > The migrate path (`STAGE=migrate`) aliases the batch instead of copying it; it
 > needs `COMMON_DIR` (for `zerocopy.Stager`), `HSA_XNACK=1`, and pageable
 > (non-pinned) host memory. When `STAGE` is unset these edits are inert, so the
@@ -152,7 +197,7 @@ register-migrate needs pageable (non-pinned) host memory:
 sed -i 's/pin_memory=True/pin_memory=False/g' main.py
 ```
 
-Time the host->device staging, but only when `STAGE` is set (copy vs migrate):
+Time the `host->device` staging, but only when `STAGE` is set (copy vs migrate):
 
 ```bash
 sed -i '/^        images = images.to(device, non_blocking=True)/c\
@@ -174,18 +219,29 @@ sed -i '/^def validate(/i\
     getattr(args,"rank",0)<=0 and _stage_n and print(f"STAGE_MS_PER_STEP {_stage_ms/_stage_n:.4f} gpus={_ws2} stage={_stg}")' main.py
 ```
 
+## 4. Warm the MIOpen cache (once per allocation)
+
 Notes:
 
 > MIOpen's default solver search can take **>10 minutes** cold for ResNet
 > convolutions. Set fast selection, then warm the cache by running the warmup script
 > or the **1-GPU `main.py` case** (the same run the sweep uses) for a few steps:
-
-> The pytorch module already set `MIOPEN_USER_DB_PATH` / `MIOPEN_CUSTOM_CACHE_DIR`
-> at a stable per-allocation dir (e.g. /tmp/$USER/miopen-cache/jobs/<jobid>), so
-> DON'T override them -- just inherit them. Only ensure fast solver selection:
+> **Warm once per allocation.** A new `salloc`/`sbatch` gets a fresh job ID (and
+> thus a fresh empty cache). Warming single-process first matters: inside one
+> allocation all N ranks share that one cache dir, so a cold multi-rank run would
+> contend on the SQLite db; after warming, ranks just read it (with
+> `MIOPEN_FIND_MODE=FAST`).
 
 ```bash
 export MIOPEN_FIND_MODE=FAST
+```
+
+> The pytorch module already sets `MIOPEN_USER_DB_PATH` / `MIOPEN_CUSTOM_CACHE_DIR`
+> at a stable per-allocation dir (e.g. /tmp/$USER/miopen-cache/jobs/<jobid>), so
+> DON'T override them -- just inherit them.  Create the directory
+
+```bash
+mkdir -p "$MIOPEN_USER_DB_PATH"
 ```
 
 > Suppress some warning noise
@@ -193,27 +249,6 @@ export MIOPEN_FIND_MODE=FAST
 export MIOPEN_LOG_LEVEL=3
 export KINETO_LOG_LEVEL=3
 ```
-
-> `MIOPEN_USER_DB_PATH` and `MIOPEN_CUSTOM_CACHE_DIR` are set in the PyTorch module to a `/tmp` directory
-> Create the directory and set the automatic removal at end of job
-
-```bash
-mkdir -p "$MIOPEN_USER_DB_PATH"
-```
-
-Confirm the GPUs are visible:
-
-```bash
-python3 -c 'import torch; print(torch.cuda.is_available(), torch.cuda.device_count())'
-```
-
-## 4. Warm the MIOpen cache (once per allocation)
-
-> **Warm once per allocation.** A new `salloc`/`sbatch` gets a fresh job ID (and
-> thus a fresh empty cache). Warming single-process first matters: inside one
-> allocation all N ranks share that one cache dir, so a cold multi-rank run would
-> contend on the SQLite db; after warming, ranks just read it (with
-> `MIOPEN_FIND_MODE=FAST`).
 
 ```bash
 HIP_VISIBLE_DEVICES=0  python -c "import torch,torchvision.models as M; \
@@ -331,14 +366,17 @@ run_4.log  img/s=3720  step=0.1376s  batch=512  peak_mem_mb=...  speedup=3.84x
 
 ```
 deactivate
+cd ..
 rm -rf imagenet_test
 ```
 
 ## 10. Run on CPX partitions (`SH5_MI300A_CPX`, `PPAC_MI300A_CPX`)
 
 The sweep above assumes **SPX** mode, where each MI300A APU is one HIP device
-(so `PPAC_MI300A_SPX --gpus=4` = 4 devices). When SPX nodes are scarce, the same
-study runs on **CPX** partitions, where each of an APU's **6 XCDs** is exposed as
+(so `PPAC_MI300A_SPX --gpus=4` = 4 devices). The same study runs on **CPX** 
+partitions with just some small changes to mimic running
+on larger systems with multiple nodes.  The CPX compute mode subdivides
+the MI300A node where each of an APU's **6 XCDs** is exposed as
 its own HIP device:
 
 | Partition | Physical APUs | HIP devices | What one device is |
@@ -510,10 +548,10 @@ Read it like this:
 - **Gaps between steps** = per-step overhead (Python / launch / dummy data-loader),
   the target of the §12 `torch.compile` optimization.
 
-> **Where the two figures in this section come from.** Both are generated from the
-> **same measured 4-GPU run** captured by
-> [`profiling/capture_timeline.sbatch`](profiling/capture_timeline.sbatch); neither
-> is hand-drawn.
+> **Where the figures in this section come from.** None are hand-drawn. The two
+> `torch.profiler` figures come from one measured 4-GPU run captured by
+> [`profiling/capture_torch.sbatch`](profiling/capture_torch.sbatch); the TAU figure
+> comes from the separate [`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch).
 >
 > | Figure | Tool it comes from | How it was produced |
 > |---|---|---|
@@ -522,17 +560,18 @@ Read it like this:
 > | [`figs/tau_profile_4gpu.png`](figs/tau_profile_4gpu.png) (§13.4) | **TAU** ParaProf profile | A 4-rank `mpirun -n 4 tau_exec` run ([`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch)); `pprof` dumps the per-rank GPU-kernel profile, and [`profiling/render_tau_profile.py`](profiling/render_tau_profile.py) draws the compute-vs-RCCL split headlessly (no ParaProf GUI/Java). |
 >
 > The first two derive from the **`torch.profiler`** capture (Path A, §13.3); the
-> third is from the **TAU** capture (Path B, §13.4). TAU's Jumpshot/Vampir *timeline*
-> converters fail on this build (see §13.4), so the TAU figure is drawn from its
-> ParaProf profile rather than a timeline screenshot.
+> third is from the **TAU** capture (Path B, §13.4), rendered headlessly from its
+> ParaProf profile.
 
 ### 13.1 One-shot capture (automated)
 
-The whole pipeline — capture with both tools, drop the raw traces, and render this
-PNG **headlessly** (no X server, browser, or Java) — is one batch job:
+The whole `torch.profiler` pipeline — capture, merge the per-rank traces, drop the
+raw traces, and render this PNG **headlessly** (no X server, browser, or Java) — is
+one batch job. (The TAU path is a separate job, `profiling/capture_tau.sbatch`; see
+§13.4.)
 
 ```bash
-sbatch profiling/capture_timeline.sbatch      # 4-GPU PPAC_MI300A_SPX, ~6 min
+sbatch profiling/capture_torch.sbatch         # 4-GPU PPAC_MI300A_SPX, ~6 min
 ```
 
 It produces:
@@ -546,15 +585,13 @@ It produces:
   4-lane Perfetto trace** (GPU 0-3 as separate process lanes), gzipped to ~1.5 MB —
   the easy file to download and open in the Perfetto UI (built by
   [`profiling/merge_perfetto.py`](profiling/merge_perfetto.py)).
-- `profiling/traces/traces.otf2` — the TAU trace in OTF2 (for **Vampir**), when the
-  TAU run and `tau2otf2` succeed.
+
+(TAU's ParaProf profile comes from the separate `capture_tau.sbatch`; see §13.4.)
 
 > **Perfetto only ingests** Perfetto protobuf (`.pftrace`/`.pb`) or Chrome JSON
 > Trace Event format (`{"traceEvents":[...]}` or a bare event array). The
-> `torch.profiler` exports above are Chrome JSON and load directly. TAU's own
-> `tau_trace2json` emits a *TAU-specific* JSON schema (`event-type`/`node-id`/…)
-> that Perfetto does **not** understand — so the TAU trace is for Jumpshot/Vampir,
-> and the Perfetto artifact comes from `torch.profiler` (§13.3).
+> `torch.profiler` exports above are Chrome JSON and load directly, so the Perfetto
+> artifact comes from `torch.profiler` (§13.3).
 
 To re-render a different window from the captured traces (no GPU needed):
 
@@ -570,7 +607,7 @@ The rest of this section breaks the job into the manual steps for a hands-on run
 ```bash
 salloc -p PPAC_MI300A_SPX -N1 --gpus=4 --exclusive -t 00:40:00
 source .venv/bin/activate            # the uv venv from §1
-module load rocm/6.4.3 openmpi pytorch/2.12.0 tau
+module load rocm openmpi pytorch tau
 ```
 
 Reuse the instrumented `main.py` (§2-3) and the **warmed MIOpen cache** (§4), and
@@ -620,15 +657,15 @@ the `nccl:broadcast` at startup and the periodic `nccl:all_reduce` →
 Or render the headless PNG with
 [`profiling/render_timeline.py`](profiling/render_timeline.py) (as in §13.1).
 
-### 13.4 Path B — TAU (`tau_exec`) → Jumpshot / Vampir
+### 13.4 Path B — TAU (`tau_exec`) → ParaProf profile
 
 TAU intercepts ROCm via `LD_PRELOAD`, which is inherited by the four `mp.spawn`
-workers, so each rank writes its own trace with **no source edit**. On ROCm > 6.1.9
+workers, so each rank writes its own profile with **no source edit**. On ROCm > 6.1.9
 use the `rocprofsdk` configuration:
 
 ```bash
-export TAU_TRACE=1 TAU_PROFILE=1
-export TRACEDIR=$PWD/tau_trace PROFILEDIR=$PWD/tau_trace
+export TAU_PROFILE=1
+export PROFILEDIR=$PWD/tau_trace
 mkdir -p tau_trace
 HIP_VISIBLE_DEVICES=0,1,2,3 tau_exec -T rocm,rocprofsdk -rocm \
   python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23457' \
@@ -636,44 +673,39 @@ HIP_VISIBLE_DEVICES=0,1,2,3 tau_exec -T rocm,rocprofsdk -rocm \
     -b 512 -p 20 --epochs 1
 ```
 
-Merge the per-rank traces, then view in a **TAU-native** timeline:
+> **OpenMPI binding note:** under `mpirun`, per-rank core placement comes from
+> OpenMPI's `--map-by numa --bind-to numa` (one rank per MI300A APU, matching
+> `HIP_VISIBLE_DEVICES=local_rank`), **not** Slurm's `--cpus-per-task`; add
+> `--report-bindings` to confirm rank *i* landed on APU *i*.
+
+Merge the per-rank profiles, then inspect the flat per-rank compute/comm profile:
 
 ```bash
 cd tau_trace
-tau_treemerge.pl                              # -> tau.trc + tau.edf (all ranks)
-tau2slog2 tau.trc tau.edf -o imagenet_4gpu.slog2 && jumpshot imagenet_4gpu.slog2   # timeline
-tau2otf2  tau.trc tau.edf traces.otf2         # -> open traces.otf2 in Vampir
-pprof ; paraprof &                            # flat per-rank compute/comm profile
+pprof            # text per-rank profile (exclusive time per GPU kernel)
+paraprof &       # GUI per-rank profile browser
 ```
 
-(`jumpshot`/`paraprof` are Java apps; `java` is available on AAC6 — see §13.5 for
-running them on a desktop.)
+(`paraprof` is a Java app; `java` is available on AAC6 — see §13.5 for running it
+on a desktop.)
 
-> **Do not** feed TAU output to Perfetto. On this build `tau_trace2json` writes a
-> *TAU-specific* JSON schema (`{"event-type":…,"node-id":…}`), which the Perfetto UI
-> cannot parse. For a Perfetto timeline use the `torch.profiler` Chrome JSON from
-> Path A; TAU's traces go to Jumpshot (slog2) or Vampir (OTF2). TAU may also return
-> a nonzero exit at ROCm teardown — the trace files are still written and usable.
+> For a Perfetto timeline use the `torch.profiler` Chrome JSON from Path A.
 
 **The TAU profile (ParaProf) below is real measured data from a 4-rank
 `mpirun -n 4 tau_exec` run** ([`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch),
-node `ppac-pl1-s24-30`). The `pprof` per-rank breakdown separates the RCCL all-reduce
+node `ppac-pl1-s24-26`). The `pprof` per-rank breakdown separates the RCCL all-reduce
 (`[ROCm Kernel] ncclDevKernel_Generic`) from the ResNet-50 compute kernels
 (conv / GEMM / batch-norm / elementwise):
 
 ![TAU ParaProf per-rank GPU-kernel breakdown: ResNet-50 compute (blue) vs RCCL ncclDevKernel all-reduce (orange), from a 4-rank tau_exec run on MI300A](figs/tau_profile_4gpu.png)
 
 Note the **communication imbalance** TAU exposes: exclusive RCCL kernel time ranges
-from 2.7 % (rank 3) to 37.4 % (rank 1) — the busy-wait a rank spends inside the
+from 11.6 % (rank 3) to 34.3 % (rank 1) — the busy-wait a rank spends inside the
 collective while others finish compute, i.e. the load imbalance a real tuning
 exercise would chase.
 
-> **Converter caveat on this build.** `tau2slog2` and `tau2otf2` both fail on the
-> merged trace here (`tau2slog2` throws a Java `LineIDMap` NPE; `tau2otf2` writes an
-> empty `traces.otf2/`), so Jumpshot/Vampir *timelines* are currently unavailable —
-> but the raw `tau.trc`/`tau.edf` and the ParaProf profiles (`profile.*`) are intact.
-> The figure above is therefore rendered **headlessly from the ParaProf profile**
-> with [`profiling/render_tau_profile.py`](profiling/render_tau_profile.py) (no Java,
+> The figure above is rendered **headlessly from the ParaProf profile** with
+> [`profiling/render_tau_profile.py`](profiling/render_tau_profile.py) (no Java,
 > ParaProf GUI, or display needed):
 >
 > ```bash
@@ -684,28 +716,27 @@ exercise would chase.
 
 ### 13.5 Viewing without a local display
 
-The capture job **always drops the raw traces** to `profiling/traces/` regardless
-of whether the automated screenshot works, so if you can't open a browser on the
-node you can download and view them yourself:
+The capture job **always drops the raw traces** to `profiling/traces/`, so if you
+can't open a browser on the node you can download and view them yourself:
 
 - **No Perfetto module is required** — `ui.perfetto.org` runs entirely in your
   browser. Copy the merged trace to your laptop and open it there:
 
 ```bash
 scp <you>@aac6.amd.com:.../imagenet/profiling/traces/imagenet_4gpu.perfetto.json.gz .
-# then drag it into https://ui.perfetto.org
-# (merged 4-GPU trace is ~1.5 MB; the per-rank torch_trace_rank*.json are ~60 MB each)
 ```
+# then drag it into https://ui.perfetto.org
+# (merged 4-GPU trace is ~1.5 MB; the per-rank `torch_trace_rank*.json` are ~60 MB each)
 
 - Or use a cluster desktop and open the browser there: `man aac6_vnc` (TurboVNC),
   `man aac6_novnc` (browser), `man aac6_x11` (`ssh -X`).
 
-> A best-effort headless Perfetto screenshot
-> ([`profiling/perfetto_shot.py`](profiling/perfetto_shot.py)) is attempted by the
-> capture job; it needs a bundled Chromium download and outbound network from the
-> compute node, so it may be skipped — the committed figure always comes from the
-> reliable matplotlib render, and the JSON traces are always available to screenshot
-> yourself.
+> The committed figures always come from the reliable headless matplotlib render;
+> the Perfetto view is a manual screenshot of the merged trace in `ui.perfetto.org`.
+> An optional helper [`profiling/perfetto_shot.py`](profiling/perfetto_shot.py) can
+> automate that screenshot **where a browser is available** (it needs Playwright +
+> a bundled Chromium download), e.g. on a login/desktop node — it is intentionally
+> **not** run by the capture job, since the compute nodes lack Chromium.
 
 ### 13.6 Close the loop with the optimizations
 
@@ -720,12 +751,270 @@ Reset when done:
 
 ```bash
 sed -i 's/if i >= 20: break/if i >= 100: break/' main.py   # restore the §3b break
-unset TAU_TRACE TAU_PROFILE TRACEDIR PROFILEDIR
+unset TAU_PROFILE PROFILEDIR
 ```
 
 > For the full menu of profilers on this example (torch.profiler, rocprofv3,
 > rocprof-compute, rocprofiler-systems, Score-P, and TAU/HPCToolkit) see
 > [`profiling/PROFILING.md`](profiling/PROFILING.md).
+
+### 13.7 Create a noVNC desktop (view GUIs like ParaProf/Perfetto in the browser)
+
+Some tools (ParaProf, ParaView, or just a browser for `ui.perfetto.org`) need a
+graphical desktop. noVNC gives you the compute node's XFCE desktop **in your local
+browser** — no VNC client install — proxied through the control node's nginx (TLS +
+TOTP). Full details are in `man aac6_novnc` and `man aac6_vnc`; the short version:
+
+1. **Open an SSH tunnel** from your laptop/workstation to the nginx proxy (port 6443),
+   and enter your TOTP when prompted:
+
+```bash
+ssh -L 6443:10.194.42.31:6443 <username>@aac6.amd.com
+```
+
+2. **Get a node allocation** and note the node name from the output:
+
+```bash
+salloc -p PPAC_MI300A_SPX -N1 --gpus=4 -t 08:00:00
+# salloc: Nodes ppac-pl1-s24-16 are ready for job
+```
+
+   The Slurm prolog automatically starts a TurboVNC desktop (display `:1`, 1920×1080)
+   and the websockify bridge on that node — no manual `vncserver` needed.
+
+3. **Open the noVNC URL** in your local browser, substituting your node name:
+
+```
+https://localhost:6443/novnc/<node name>/vnc.html
+# e.g. https://localhost:6443/novnc/ppac-pl1-s24-16/vnc.html
+```
+
+   The proxy uses a self-signed certificate, so your browser shows a one-time
+   security warning — approve it to continue (the connection is still TLS-encrypted;
+   see `man aac6_novnc` to import the cert and silence the warning).
+
+4. **Log in** with your cluster **username** and current 6-digit **TOTP** code (this
+   is the *only* login — there is no separate VNC password; the desktop is started
+   with security type `None` and is protected by the TOTP proxy):
+
+![noVNC login page: enter your cluster username and 6-digit TOTP code](figs/novnc_login_screen.png)
+
+5. **Click Connect** to open the XFCE desktop:
+
+![noVNC connect screen](figs/novnc_connect_screen.png)
+
+A signed session cookie is issued, so you only log in once per 24-hour browser
+session. From the desktop you can launch `paraprof &` on the TAU `profile.*`, open a
+browser on `ui.perfetto.org`, or run any other GUI tool.
+
+**Navigating the XFCE desktop (a few hints):**
+
+- **Launch apps:** the **Applications** menu is at the top-left of the panel —
+  *Terminal Emulator*, *File Manager*, a web browser, and *Settings* live there. You
+  can also **right-click the desktop** for a quick app menu and *Open Terminal Here*.
+- **Panel & clock:** the top panel lists open windows and holds the clock and the
+  **workspace switcher**; XFCE has several virtual desktops — click a square to switch,
+  or drag a window onto one to move it.
+- **Windows:** drag the title bar to move, double-click it to maximize, and use
+  `Alt`+drag to move a window that's larger than the screen.
+- **Copy/paste & fullscreen (noVNC):** hover the small **tab on the left edge** of the
+  browser window to open the noVNC control bar. It has a **Clipboard** panel (paste
+  text between your laptop and the remote desktop), a **Fullscreen** button, and
+  **Settings → Scaling Mode → Local Scaling** so the 1920×1080 desktop fits your
+  browser window.
+- **Files:** your `$HOME` on the cluster is shared, so `profiling/tau/`, `figs/`, etc.
+  are the same paths you see over SSH.
+
+**Run TAU and open its profile in the desktop.** Open a terminal inside the XFCE
+desktop (Applications → *Terminal Emulator*, or right-click the desktop → *Open
+Terminal Here*), then load the modules and either reuse or capture a TAU profile:
+
+```bash
+cd <path-to>/HPCTrainingExamples/MLExamples/Pytorch/imagenet
+module load rocm openmpi pytorch tau
+
+# (a) Reuse profiles already captured by §13.4 / capture_tau.sbatch — they live in
+#     profiling/tau/ (persistent), copied out of the job's /tmp work dir:
+cd profiling/tau
+
+# (b) …or capture a fresh 4-rank profile now (from within your allocation):
+#     sbatch profiling/capture_tau.sbatch    # then: cd profiling/tau
+```
+
+With the `profile.*` files in the current directory, view them two ways:
+
+```bash
+pprof            # text summary: exclusive time per GPU kernel, per rank
+paraprof &       # GUI profile browser (needs the desktop)
+```
+
+In ParaProf, the main window shows one bar per rank; double-click a rank (thread) to
+drill into the per-kernel breakdown — the RCCL all-reduce
+(`[ROCm Kernel] ncclDevKernel_Generic`) versus the ResNet-50 conv / GEMM /
+batch-norm / elementwise compute. That's the same compute-vs-communication split the
+headless [`figs/tau_profile_4gpu.png`](figs/tau_profile_4gpu.png) (§13.4) is rendered
+from — ParaProf just lets you explore it interactively.
+
+> **Shut down in order** (`man aac6_vnc`): close the noVNC browser **tab first**,
+> then release the Slurm job (`exit`/`scancel`), then exit the SSH session. The
+> WebSocket is forwarded through the tunnel, so leaving the tab open makes the SSH
+> logout hang. If it hangs, close the tab, or press `Enter` `~` `.` to force-close SSH.
+
+> **Only one TOTP prompt is expected.** If a *second* page asks for a password, the
+> node's VNC server is advertising PAM auth types instead of `None`; restart it with
+> `vncserver -kill :1 && vncserver :1 -geometry 1920x1080 -securitytypes None -localhost`
+> on the node, or report it to the admins.
+
+## 14. Batch-driven optimization studies and measured performance impacts
+
+The hands-on levers in §11 (RCCL) and §12 (`torch.compile`) are also packaged as
+two self-contained SLURM batch scripts. Each one builds a disposable `uv` venv,
+clones the upstream example, applies the §3 instrumentation, warms the MIOpen
+cache, runs the study, and prints a summary at the **end of its `.out` file** —
+so you can reproduce the numbers below with a single `sbatch`.
+
+### 14.1 Submitting the studies
+
+```bash
+# Compute study: eager vs torch.compile (1 GPU, SPX, b=512)
+sbatch run_imagenet_uv_compute_opt.sbatch
+
+# RCCL study: NCCL algorithm / protocol / channel-count sweep (4 GPUs, SPX, b=512)
+sbatch run_imagenet_uv_rccl_opt_sweep.sbatch
+```
+
+Read the summary block that each job appends to `run_imagenet_uv_spx-<jobid>.out`:
+
+```bash
+# compute study
+sed -n '/=== compute optimization/,$p' run_imagenet_uv_spx-<jobid>.out
+# RCCL study
+sed -n '/=== RCCL total time by NCCL algorithm/,$p' run_imagenet_uv_spx-<jobid>.out
+```
+
+### 14.2 Expected run times
+
+Measured on `PPAC_MI300A_SPX` (walltimes include the venv build, upstream clone,
+MIOpen warmup, and every phase of the study — not just the timed steps):
+
+| Study | Script | GPUs | Phases | Wall time (SBATCH request) |
+|---|---|---|---|---|
+| Compute (`torch.compile`) | `run_imagenet_uv_compute_opt.sbatch` | 1 | 2 (eager, compile) | **~14 min** (`--time=02:00:00`) |
+| RCCL sweep | `run_imagenet_uv_rccl_opt_sweep.sbatch` | 4 | 11 (2 algo + 3 proto + 6 channel) | **~44 min** (`--time=08:00:00`) |
+
+> Each phase re-pays MIOpen/allocator warmup, and the compile phase additionally
+> pays a one-time `torch.compile` graph build, so wall time is dominated by
+> per-phase startup rather than the ~100 timed steps. The time requests are
+> deliberately generous headroom; the studies finish well inside them.
+
+### 14.3 Compute optimization: `torch.compile` (1 GPU, b=512)
+
+Throughput is reported as a **steady-state median**, not a running average. The
+script's `summarize()` collects the instantaneous per-step `Time`, **drops the
+first (warmup / one-time graph-compile) step**, and takes the median; `img/s` is
+the global batch divided by that median. This is the fix for the earlier quick
+summary, which averaged `Time` over the 100-iteration cap and — because the first
+`torch.compile` step alone costs tens of seconds — reported a *misleading*
+`eager 563 / compile 420 img/s` that made `torch.compile` look like a regression.
+
+The script prints (steady-state median over its 100-iteration capped
+run, ~9 samples after the warmup step is dropped):
+
+| Metric | eager | `torch.compile` | Impact |
+|---|---|---|---|
+| **Steady-state median step** | 0.416 s | 0.384 s | **-7.7 %** (faster) |
+| **Steady-state img/s** | 1232 | 1335 | **+8.3 %** |
+| Peak memory (`PEAK_MEM_MB`) | 44874 MB | 42329 MB | **-5.7 %** |
+
+**Sustained rate (longer run).** A 100-iteration window samples only the fast
+early steps, so it reads slightly optimistic. Re-measuring the same median over a
+**full epoch** (2503 steps, ~116 samples per phase — see §14.5) gives the
+sustained figures **eager 0.445 s / 1151 img/s** and **compile 0.421 s /
+1216 img/s**, i.e. a steadier **+5.4 %**. Either way the ranking is the same.
+
+**Takeaway:** once the one-time compile is amortized, `torch.compile` gives a
+solid throughput gain (~5-8 %) **and** lower peak memory for ResNet-50 on a single
+MI300A. Try `torch.compile(model, mode="max-autotune")` for a larger gain at a
+longer compile cost.
+
+### 14.4 RCCL optimization: NCCL algorithm / protocol / channels (4 GPUs, b=512)
+
+`RCCL_TOTAL_MS` is the summed on-GPU time of the `nccl*` collective kernels over
+the run (lower is better). In each phase only the swept knob is set; the others
+stay at their NCCL defaults (§14.6).
+
+**Algorithm** (protocol + channels = default):
+
+| `NCCL_ALGO` | RCCL_TOTAL_MS |
+|---|---|
+| **Tree** | **42630** |
+| Ring | 45848 |
+
+**Protocol** (algorithm + channels = default):
+
+| `NCCL_PROTO` | RCCL_TOTAL_MS |
+|---|---|
+| **LL** | **4111** |
+| Simple | 10819 |
+| LL128 | 37944 |
+
+**Channel count** (algorithm + protocol = default):
+
+| `NCCL_MIN/MAX_NCHANNELS` | RCCL_TOTAL_MS |
+|---|---|
+| **1** | **30821** |
+| 8 | 37725 |
+| 16 | 40134 |
+| 2 | 41681 |
+| 32 | 44286 |
+| 4 | 45877 |
+
+**Takeaway:** `NCCL_PROTO=LL` is the dominant lever here — **~9-10x** less
+collective time than the LL128/auto baseline for this ~102 MB gradient all-reduce;
+`Tree` edges out `Ring` (~7 %); and on a single APU **fewer channels win** (1 is
+best, extra channels add CUDA-block overhead without a bandwidth payoff).
+
+> **Single-APU caveat.** On one SPX APU the all-reduce stays on the on-package
+> Infinity Fabric, so these are relative signals on a small, fast collective. The
+> ranking (especially the protocol effect) is far more pronounced once the
+> collective crosses **physical APUs** — rerun the sweep on the 12-/24-GPU
+> `PPAC_MI300A_CPX` node (§10) to see the large-message behavior.
+
+### 14.5 Note: use longer runs when resources allow
+
+The compute study is capped at 100 iterations so it finishes quickly and stays a
+polite neighbor on a shared system. Reporting a **steady-state median with the
+first step dropped** (§14.3) already keeps the **first-iteration overheads of some
+compute optimizations** — most notably the one-time `torch.compile` graph build —
+out of the headline number, so `torch.compile` no longer looks like a regression.
+But a 100-iteration window still samples only the fast early steps, so the median
+reads slightly optimistic versus the sustained rate.
+
+**When you have more compute resources and fewer users on the system**, raise the
+iteration cap (edit the §3b `if i >= 100: break` to a larger value, or run full
+epochs) and/or increase the number of phases. More steps let the one-time compile
+cost amortize and pull the median toward the true **sustained** throughput (the
+full-epoch figures in §14.3), which is the number to quote for real training. The
+RCCL sweep is far less sensitive to this (each config re-pays only MIOpen/allocator
+warmup, not a graph compile), but longer per-config runs still tighten its
+`RCCL_TOTAL_MS` numbers.
+
+### 14.6 NCCL/RCCL variable defaults
+
+On ROCm, `librccl` honors the `NCCL_*` names. Unless you set them, RCCL
+auto-selects; the sweep's "default" columns above reflect those auto choices:
+
+| Variable | Default | Behavior when unset |
+|---|---|---|
+| `NCCL_ALGO` | auto | Internal performance model picks per collective/size & topology (typically Ring or Tree). |
+| `NCCL_PROTO` | auto | Chooses per message size from the allowed set — `LL,LL128,Simple` on supported platforms (`LL,Simple` otherwise). LL for small, LL128 for medium, Simple for large messages. |
+| `NCCL_MIN_NCHANNELS` | platform-dependent | Auto-tuned lower bound on channels (CUDA blocks) from topology. |
+| `NCCL_MAX_NCHANNELS` | platform-dependent (max capped at **32** in recent NCCL/RCCL) | Auto-tuned upper bound; RCCL picks the actual count within `[min,max]`. |
+
+> Upstream guidance is that these are **best left unset** — manual values only win
+> for a specific message size / topology, which is exactly what this sweep
+> demonstrates (`NCCL_PROTO=LL` beats the auto choice for this particular
+> all-reduce size).
 
 ## Next steps
 
