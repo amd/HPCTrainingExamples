@@ -64,6 +64,7 @@ measurements and will vary by hardware and stack.
 |------|------------|----------|-------|--------|----------|
 | **Small** | 64 | 16 | 4 | ~196 MB | Quick demos; V2 fusion ~2.4x, compile stacks on V1/V3 |
 | **Medium** | 128 | 32 | 2 | ~209 MB | Realistic workload; V2 fusion ~1.9x |
+| **Large** | 128 | 32 | 4 | ~235 MB | Medium seq-len at batch 4 (isolates batch); V2 fusion ~1.7x |
 
 ---
 
@@ -829,6 +830,21 @@ eager (s/s)          47            89            45
 +torch.compile       73            89            77
 ──────────────────────────────────────────────────────────────
 Best:  V2 fused (89 s/s, ~1.9x over eager V1)
+```
+
+#### Large Problem (128 residues, 32 MSA, batch=4)
+
+Same seq-len/MSA as Medium but **batch 4** (matching Small) instead of 2 — isolates the
+batch dimension. Peak memory ~235 MB (vs Medium's ~209 MB) from the doubled batch.
+
+```
+Mode              V1 Baseline    V2 Fused      V3 Triton
+──────────────────────────────────────────────────────────────
+eager (s/s)          62.7         105.7          63.8
++torch.compile       94.9         106.1          91.2
+peak memory (MB)     235           235           235
+──────────────────────────────────────────────────────────────
+Best:  V2 fused (105.7 s/s, ~1.7x over eager V1)
 ```
 
 ### Where Do the Gains Come From?
