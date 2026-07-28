@@ -16,8 +16,10 @@
 #
 # Artifacts are written to a PERSISTENT dir (profiling/tau/), not the /tmp work dir:
 #   profile.* + tau_pprof.txt      ParaProf profile (+ text summary)
-#   tautrace.*.trc / events.*.edf  raw TAU event trace (TAU_TRACE=1)
-#   imagenet_4gpu.slog2            Jumpshot timeline (tau_treemerge.pl + tau2slog2)
+#
+# The ParaProf profile is what README section 13.4 uses: it drives the headless
+# compute-imbalance / communication-wait figure (profiling/render_tau_profile.py ->
+# figs/tau_profile_4gpu.png).
 #
 # Submit from the imagenet dir:  sbatch profiling/capture_tau.sbatch
 
@@ -73,13 +75,10 @@ HIP_VISIBLE_DEVICES=0 python -c "import torch,torchvision.models as M; \
    x=torch.randn(256,3,224,224,device=d); y=torch.randint(0,1000,(256,),device=d); \
    [c(n(x),y).backward() for _ in range(3)]; torch.cuda.synchronize(); print('warm done')"
 
-# TAU profiling AND tracing into the persistent dir. TAU_PROFILE default is 1;
-# TAU_TRACE=1 additionally emits the per-rank event trace needed for the Jumpshot
-# timeline. PROFILEDIR gets the profile.* files; TRACEDIR gets tautrace.*/events.*.
+# TAU profiling into the persistent dir. TAU_PROFILE=1 emits the per-rank profile.*
+# files (the ParaProf profile); PROFILEDIR is where they land.
 export TAU_PROFILE=1
-export TAU_TRACE=1
 export PROFILEDIR="${TAU_OUT}"
-export TRACEDIR="${TAU_OUT}"
 
 echo "=== TAU 4-rank run (mpirun -n 4 tau_exec -rocm) ==="
 # One rank per MI300A APU (each APU is its own NUMA domain: GPU + 24 cores), bound
@@ -97,25 +96,9 @@ ls -la
 # ParaProf profile: profile.* files are already here from TAU_PROFILE=1.
 pprof -a > tau_pprof.txt 2>/dev/null && echo "pprof text summary -> ${TAU_OUT}/tau_pprof.txt" || echo "WARN: pprof failed"
 
-# ---------------------------------------------------------------------------
-# Jumpshot timeline: merge the per-rank event traces and convert to SLOG-2.
-# (These converters work on the tau/dev ROCm 7.2.4 module; older ROCm builds
-# produced empty .slog2 files.) The raw tautrace.*/events.* are kept so the
-# conversion can be re-run; the large merged tau.trc intermediate is removed.
-# ---------------------------------------------------------------------------
-echo "=== Merge TAU traces + convert to SLOG-2 (Jumpshot) ==="
-if ls tautrace.*.trc >/dev/null 2>&1; then
-  tau_treemerge.pl && \
-  tau2slog2 tau.trc tau.edf -o imagenet_4gpu.slog2 && \
-  echo "Jumpshot trace -> ${TAU_OUT}/imagenet_4gpu.slog2" || \
-  echo "WARN: tau_treemerge.pl / tau2slog2 failed"
-  rm -f tau.trc   # drop the large merged intermediate; raw traces remain
-else
-  echo "WARN: no tautrace.*.trc found (was TAU_TRACE=1 honored?)"
-fi
-
 echo "=== DONE. TAU artifacts: ==="
 ls -la "${TAU_OUT}"
-echo "View: 'paraprof' on profile.* or 'jumpshot imagenet_4gpu.slog2' (see README 13.5/13.7 for VNC),"
-echo "      or render figs/tau_profile_4gpu.png from tau_pprof.txt with profiling/render_tau_profile.py."
+echo "View: 'paraprof' on profile.* (GUI; see README 13.7 for VNC),"
+echo "      or render the headless compute-imbalance / comm-wait figure with:"
+echo "      python3 profiling/render_tau_profile.py ${TAU_OUT}/tau_pprof.txt --out figs/tau_profile_4gpu.png"
 deactivate 2>/dev/null || true

@@ -557,12 +557,11 @@ Read it like this:
 > |---|---|---|
 > | [`figs/timeline_4gpu.png`](figs/timeline_4gpu.png) (above) | `torch.profiler` Chrome traces | [`profiling/render_timeline.py`](profiling/render_timeline.py) parses the per-rank `torch_trace_rank*.json` and draws the Gantt headlessly with matplotlib (`Agg`) — no display, browser, or Java needed. |
 > | [`figs/perfetto_4gpu.png`](figs/perfetto_4gpu.png) (§13.3) | `torch.profiler` Chrome traces, viewed in Perfetto | The four per-rank traces are merged into one 4-lane trace by [`profiling/merge_perfetto.py`](profiling/merge_perfetto.py) → `imagenet_4gpu.perfetto.json.gz`, loaded in [`ui.perfetto.org`](https://ui.perfetto.org), and screenshotted. |
-> | [`figs/tau_profile_4gpu.png`](figs/tau_profile_4gpu.png) (§13.4) | **TAU** ParaProf profile | A 4-rank `mpirun -n 4 tau_exec` run ([`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch)); `pprof` dumps the per-rank GPU-kernel profile, and [`profiling/render_tau_profile.py`](profiling/render_tau_profile.py) draws the compute-vs-RCCL split headlessly (no ParaProf GUI/Java). |
-> | [`figs/tau_jumpshot_4gpu.png`](figs/tau_jumpshot_4gpu.png) (§13.4) | **TAU** event trace, viewed in Jumpshot | The same `tau_exec` run with `TAU_TRACE=1`; [`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch) merges the per-rank traces (`tau_treemerge.pl`) and converts to SLOG-2 (`tau2slog2`) → `imagenet_4gpu.slog2`, opened in **Jumpshot** and screenshotted (the TimeLine Thread View). |
+> | [`figs/tau_profile_4gpu.png`](figs/tau_profile_4gpu.png) (§13.4) | **TAU** ParaProf profile | A 4-rank `mpirun -n 4 tau_exec` run ([`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch)); `pprof` dumps the per-rank GPU-kernel profile, and [`profiling/render_tau_profile.py`](profiling/render_tau_profile.py) draws a two-panel **compute-imbalance / exposed-communication-wait** chart headlessly (no ParaProf GUI/Java). |
 >
 > The first two derive from the **`torch.profiler`** capture (Path A, §13.3); the
-> last two are from the **TAU** capture (Path B, §13.4) — the ParaProf profile
-> rendered headlessly, and the event trace shown as a Jumpshot timeline.
+> last is from the **TAU** capture (Path B, §13.4) — the ParaProf profile rendered
+> headlessly as a compute-imbalance / communication-wait chart.
 
 ### 13.1 One-shot capture (automated)
 
@@ -696,14 +695,21 @@ on a desktop.)
 `mpirun -n 4 tau_exec` run** ([`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch),
 node `ppac-pl1-s24-26`). The `pprof` per-rank breakdown separates the RCCL all-reduce
 (`[ROCm Kernel] ncclDevKernel_Generic`) from the ResNet-50 compute kernels
-(conv / GEMM / batch-norm / elementwise):
+(conv / GEMM / batch-norm / elementwise), which we render as two panels — **compute
+imbalance** (left) and **exposed communication wait** (right):
 
-![TAU ParaProf per-rank GPU-kernel breakdown: ResNet-50 compute (blue) vs RCCL ncclDevKernel all-reduce (orange), from a 4-rank tau_exec run on MI300A](figs/tau_profile_4gpu.png)
+![TAU ParaProf two-panel per-rank GPU-kernel breakdown on MI300A: panel A stacks ResNet-50 compute (blue) plus exposed RCCL all-reduce wait (orange) per rank with the compute-imbalance band; panel B shows the per-rank ncclDevKernel all-reduce wait and its imbalance](figs/tau_profile_4gpu.png)
 
-Note the **communication imbalance** TAU exposes: exclusive RCCL kernel time ranges
-from 11.6 % (rank 3) to 34.3 % (rank 1) — the busy-wait a rank spends inside the
-collective while others finish compute, i.e. the load imbalance a real tuning
-exercise would chase.
+Read it as the two costs a real tuning exercise would chase:
+
+- **Compute imbalance (panel A):** per-rank GPU compute ranges 3.65 s (rank 0) to
+  4.70 s (rank 2) — a **1.05 s spread (22 % of max)**. Ranks that finish compute early
+  then wait for the stragglers.
+- **Exposed communication wait (panel B):** exclusive RCCL all-reduce time ranges
+  **0.61 s (rank 3) to 2.33 s (rank 1)** — 11.6 % to 34.3 % of each rank's GPU time.
+  That is the busy-wait a rank spends inside `ncclDevKernel` while others finish
+  compute; its cross-rank spread (**1.72 s**) is the exposed, imbalanced all-reduce the
+  §11 RCCL optimizations attack.
 
 > The figure above is rendered **headlessly from the ParaProf profile** with
 > [`profiling/render_tau_profile.py`](profiling/render_tau_profile.py) (no Java,
@@ -714,31 +720,6 @@ exercise would chase.
 > python3 profiling/render_tau_profile.py profiling/tau/tau_pprof.txt \
 >     --out figs/tau_profile_4gpu.png
 > ```
-
-**TAU timeline (Jumpshot).** With `TAU_TRACE=1` the same 4-rank run also emits a
-per-rank event **trace**; [`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch)
-merges it (`tau_treemerge.pl`) and converts it to SLOG-2 (`tau2slog2`) →
-`profiling/tau/imagenet_4gpu.slog2`. Open that in **Jumpshot** on the §13.7 desktop:
-
-```bash
-module load rocm openmpi tau
-jumpshot profiling/tau/imagenet_4gpu.slog2
-```
-
-Jumpshot opens the **TimeLine `<Thread View>`**: all four ranks (SLOG-2 nodes 0-3)
-laid out in time, each TAU state colored. The long blue blocks on the left are the
-one-time MIOpen/allocator startup; the repeating pink/olive bands are the per-step
-compute, with the RCCL all-reduce between steps — the same compute-vs-communication
-split as the ParaProf profile and the §13.3 torch.profiler timeline, but as an
-interactive, zoomable trace you can drill into per rank:
-
-![Jumpshot TimeLine Thread View of the 4-rank ImageNet run on MI300A: four per-rank rows of colored TAU states over a 5-55 s x-axis, showing per-step compute bands and the RCCL all-reduce](figs/tau_jumpshot_4gpu.png)
-
-> **Converter note.** `tau2slog2` (and `tau2otf2`) produce a **valid** trace on the
-> current `tau/dev` (ROCm 7.2.4) module; some earlier ROCm builds emitted an empty
-> ~100-byte `.slog2`. The figure above is a screenshot of Jumpshot rendering
-> `imagenet_4gpu.slog2` (~250 MB, ~5.3M drawables) — a Java GUI, so view it on the
-> §13.7 noVNC desktop.
 
 ### 13.5 Viewing without a local display
 
@@ -785,7 +766,7 @@ unset TAU_PROFILE PROFILEDIR
 > example (torch.profiler, rocprofv3, rocprof-compute, rocprofiler-systems, Score-P,
 > and TAU/HPCToolkit) see [`profiling/PROFILING.md`](profiling/PROFILING.md).
 
-### 13.7 Create a noVNC desktop (view GUIs like ParaProf/Jumpshot/Perfetto in the browser)
+### 13.7 Create a noVNC desktop (view GUIs like ParaProf/Perfetto in the browser)
 
 Some tools (ParaProf, ParaView, or just a browser for `ui.perfetto.org`) need a
 graphical desktop. noVNC gives you the compute node's XFCE desktop **in your local
@@ -878,20 +859,11 @@ paraprof &       # GUI profile browser (needs the desktop)
 In ParaProf, the main window shows one bar per rank; double-click a rank (thread) to
 drill into the per-kernel breakdown — the RCCL all-reduce
 (`[ROCm Kernel] ncclDevKernel_Generic`) versus the ResNet-50 conv / GEMM /
-batch-norm / elementwise compute. That's the same compute-vs-communication split the
-headless [`figs/tau_profile_4gpu.png`](figs/tau_profile_4gpu.png) (§13.4) is rendered
-from — ParaProf just lets you explore it interactively.
-
-For the **timeline** view, open the converted trace in Jumpshot (also a Java GUI,
-so it needs this desktop):
-
-```bash
-jumpshot imagenet_4gpu.slog2   # dismiss the two first-run dialogs; the TimeLine opens automatically
-```
-
-Jumpshot shows the four ranks stacked in time with each TAU state colored — the
-per-step compute bands and the RCCL all-reduce between them — the interactive
-source of [`figs/tau_jumpshot_4gpu.png`](figs/tau_jumpshot_4gpu.png) (§13.4).
+batch-norm / elementwise compute. Select `ncclDevKernel_Generic` and open its
+per-rank **Bar Chart** to see the communication-wait imbalance directly; the main
+stacked-bar window (with mean / std-dev) shows the compute imbalance. That is the same
+data the headless two-panel [`figs/tau_profile_4gpu.png`](figs/tau_profile_4gpu.png)
+(§13.4) is rendered from — ParaProf just lets you explore it interactively.
 
 > **Shut down in order** (`man aac6_vnc`): close the noVNC browser **tab first**,
 > then release the Slurm job (`exit`/`scancel`), then exit the SSH session. The
