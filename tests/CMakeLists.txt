@@ -853,6 +853,18 @@ add_test(NAME ROCm_rocBLAS_GEMM_Check COMMAND ../rocblas_gemm_check.sh )
 set_property(TEST ROCm_rocBLAS_GEMM_Check PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
 set_property(TEST ROCm_rocBLAS_GEMM_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
+# rocBLAS complex packed Level-2 (chpmv/ctpmv/ztpsv) unified-memory corruption
+# regression (MI300A / gfx942, HSA_XNACK=1). Launches the reproducer many times
+# and FAILs if any launch returns wrong numbers; also runs the device-buffer
+# control. Prints the per-routine worst relative error (representative pass
+# criterion) so a standalone run is informative. Runtime scales with
+# ROCBLAS_PACKED_USM_LAUNCHES (default 100); TIMEOUT 600 covers that default.
+add_test(NAME ROCm_rocBLAS_Packed_USM_Regression_Check COMMAND ../rocblas_packed_usm_regression_check.sh )
+set_property(TEST ROCm_rocBLAS_Packed_USM_Regression_Check PROPERTY PASS_REGULAR_EXPRESSION "ROCBLAS PACKED USM REGRESSION CHECK: PASSED")
+set_property(TEST ROCm_rocBLAS_Packed_USM_Regression_Check PROPERTY FAIL_REGULAR_EXPRESSION "ROCBLAS PACKED USM REGRESSION CHECK: FAILED")
+set_property(TEST ROCm_rocBLAS_Packed_USM_Regression_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "ROCBLAS PACKED USM REGRESSION CHECK: SKIPPED")
+set_tests_properties(ROCm_rocBLAS_Packed_USM_Regression_Check PROPERTIES TIMEOUT 600)
+
 add_test(NAME HIPFort_ROCm_Check_hipfc_2003 COMMAND ../hipfort_rocm_check_hipfc_2003.sh )
 set_property(TEST HIPFort_ROCm_Check_hipfc_2003 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST HIPFort_ROCm_Check_hipfc_2003 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
