@@ -659,24 +659,38 @@ Or render the headless PNG with
 
 ### 13.4 Path B — TAU (`tau_exec`) → ParaProf profile
 
-TAU intercepts ROCm via `LD_PRELOAD`, which is inherited by the four `mp.spawn`
-workers, so each rank writes its own profile with **no source edit**. On ROCm > 6.1.9
-use the `rocprofsdk` configuration:
+TAU intercepts ROCm via `LD_PRELOAD` (**no source edit**). Unlike Path A, TAU wants
+**distinct MPI ranks**, so instead of the README's single `mp.spawn` launch, run
+**one process per GPU** with `mpirun -n 4` — that gives TAU a proper 4-rank profile
+instead of collapsing every worker onto node 0. A tiny per-rank wrapper pins one
+MI300A APU per rank and starts the launched (non-spawn) path; on ROCm > 6.1.9 use the
+`rocprofsdk` configuration:
 
 ```bash
 export TAU_PROFILE=1
 export PROFILEDIR=$PWD/tau_trace
 mkdir -p tau_trace
-HIP_VISIBLE_DEVICES=0,1,2,3 tau_exec -T rocm,rocprofsdk -rocm \
-  python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23457' \
-    --dist-backend nccl --multiprocessing-distributed --world-size 1 --rank 0 \
-    -b 512 -p 20 --epochs 1
+
+# One APU per rank; OMPI_COMM_WORLD_* is set per rank by mpirun.
+cat > tau_wrapper.sh <<'EOF'
+#!/bin/bash
+export HIP_VISIBLE_DEVICES=${OMPI_COMM_WORLD_LOCAL_RANK}
+exec python main.py -a resnet50 --dummy \
+  --dist-url 'tcp://127.0.0.1:23457' --dist-backend nccl \
+  --world-size ${OMPI_COMM_WORLD_SIZE} --rank ${OMPI_COMM_WORLD_RANK} \
+  --gpu 0 -b 512 -p 20 --epochs 1
+EOF
+chmod +x tau_wrapper.sh
+
+mpirun -n 4 --map-by numa --bind-to numa --report-bindings \
+  tau_exec -T rocm,rocprofsdk -rocm ./tau_wrapper.sh
 ```
 
 > **OpenMPI binding note:** under `mpirun`, per-rank core placement comes from
 > OpenMPI's `--map-by numa --bind-to numa` (one rank per MI300A APU, matching
 > `HIP_VISIBLE_DEVICES=local_rank`), **not** Slurm's `--cpus-per-task`; add
-> `--report-bindings` to confirm rank *i* landed on APU *i*.
+> `--report-bindings` to confirm rank *i* landed on APU *i*. This is exactly the
+> command [`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch) runs.
 
 Merge the per-rank profiles, then inspect the flat per-rank compute/comm profile:
 
