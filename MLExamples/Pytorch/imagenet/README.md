@@ -558,10 +558,11 @@ Read it like this:
 > | [`figs/timeline_4gpu.png`](figs/timeline_4gpu.png) (above) | `torch.profiler` Chrome traces | [`profiling/render_timeline.py`](profiling/render_timeline.py) parses the per-rank `torch_trace_rank*.json` and draws the Gantt headlessly with matplotlib (`Agg`) — no display, browser, or Java needed. |
 > | [`figs/perfetto_4gpu.png`](figs/perfetto_4gpu.png) (§13.3) | `torch.profiler` Chrome traces, viewed in Perfetto | The four per-rank traces are merged into one 4-lane trace by [`profiling/merge_perfetto.py`](profiling/merge_perfetto.py) → `imagenet_4gpu.perfetto.json.gz`, loaded in [`ui.perfetto.org`](https://ui.perfetto.org), and screenshotted. |
 > | [`figs/tau_profile_4gpu.png`](figs/tau_profile_4gpu.png) (§13.4) | **TAU** ParaProf profile | A 4-rank `mpirun -n 4 tau_exec` run ([`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch)); `pprof` dumps the per-rank GPU-kernel profile, and [`profiling/render_tau_profile.py`](profiling/render_tau_profile.py) draws the compute-vs-RCCL split headlessly (no ParaProf GUI/Java). |
+> | [`figs/tau_jumpshot_4gpu.png`](figs/tau_jumpshot_4gpu.png) (§13.4) | **TAU** event trace, viewed in Jumpshot | The same `tau_exec` run with `TAU_TRACE=1`; [`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch) merges the per-rank traces (`tau_treemerge.pl`) and converts to SLOG-2 (`tau2slog2`) → `imagenet_4gpu.slog2`, opened in **Jumpshot** and screenshotted (the TimeLine Thread View). |
 >
 > The first two derive from the **`torch.profiler`** capture (Path A, §13.3); the
-> third is from the **TAU** capture (Path B, §13.4), rendered headlessly from its
-> ParaProf profile.
+> last two are from the **TAU** capture (Path B, §13.4) — the ParaProf profile
+> rendered headlessly, and the event trace shown as a Jumpshot timeline.
 
 ### 13.1 One-shot capture (automated)
 
@@ -714,6 +715,31 @@ exercise would chase.
 >     --out figs/tau_profile_4gpu.png
 > ```
 
+**TAU timeline (Jumpshot).** With `TAU_TRACE=1` the same 4-rank run also emits a
+per-rank event **trace**; [`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch)
+merges it (`tau_treemerge.pl`) and converts it to SLOG-2 (`tau2slog2`) →
+`profiling/tau/imagenet_4gpu.slog2`. Open that in **Jumpshot** on the §13.7 desktop:
+
+```bash
+module load rocm openmpi tau
+jumpshot profiling/tau/imagenet_4gpu.slog2
+```
+
+Jumpshot opens the **TimeLine `<Thread View>`**: all four ranks (SLOG-2 nodes 0-3)
+laid out in time, each TAU state colored. The long blue blocks on the left are the
+one-time MIOpen/allocator startup; the repeating pink/olive bands are the per-step
+compute, with the RCCL all-reduce between steps — the same compute-vs-communication
+split as the ParaProf profile and the §13.3 torch.profiler timeline, but as an
+interactive, zoomable trace you can drill into per rank:
+
+![Jumpshot TimeLine Thread View of the 4-rank ImageNet run on MI300A: four per-rank rows of colored TAU states over a 5-55 s x-axis, showing per-step compute bands and the RCCL all-reduce](figs/tau_jumpshot_4gpu.png)
+
+> **Converter note.** `tau2slog2` (and `tau2otf2`) produce a **valid** trace on the
+> current `tau/dev` (ROCm 7.2.4) module; some earlier ROCm builds emitted an empty
+> ~100-byte `.slog2`. The figure above is a screenshot of Jumpshot rendering
+> `imagenet_4gpu.slog2` (~250 MB, ~5.3M drawables) — a Java GUI, so view it on the
+> §13.7 noVNC desktop.
+
 ### 13.5 Viewing without a local display
 
 The capture job **always drops the raw traces** to `profiling/traces/`, so if you
@@ -754,11 +780,12 @@ sed -i 's/if i >= 20: break/if i >= 100: break/' main.py   # restore the §3b br
 unset TAU_PROFILE PROFILEDIR
 ```
 
-> For the full menu of profilers on this example (torch.profiler, rocprofv3,
-> rocprof-compute, rocprofiler-systems, Score-P, and TAU/HPCToolkit) see
-> [`profiling/PROFILING.md`](profiling/PROFILING.md).
+> For a **per-kernel roofline** (compute- vs. memory-bound, % of MI300A peak) see
+> the roofline-extractor walkthrough in §15. For the full menu of profilers on this
+> example (torch.profiler, rocprofv3, rocprof-compute, rocprofiler-systems, Score-P,
+> and TAU/HPCToolkit) see [`profiling/PROFILING.md`](profiling/PROFILING.md).
 
-### 13.7 Create a noVNC desktop (view GUIs like ParaProf/Perfetto in the browser)
+### 13.7 Create a noVNC desktop (view GUIs like ParaProf/Jumpshot/Perfetto in the browser)
 
 Some tools (ParaProf, ParaView, or just a browser for `ui.perfetto.org`) need a
 graphical desktop. noVNC gives you the compute node's XFCE desktop **in your local
@@ -854,6 +881,17 @@ drill into the per-kernel breakdown — the RCCL all-reduce
 batch-norm / elementwise compute. That's the same compute-vs-communication split the
 headless [`figs/tau_profile_4gpu.png`](figs/tau_profile_4gpu.png) (§13.4) is rendered
 from — ParaProf just lets you explore it interactively.
+
+For the **timeline** view, open the converted trace in Jumpshot (also a Java GUI,
+so it needs this desktop):
+
+```bash
+jumpshot imagenet_4gpu.slog2   # dismiss the two first-run dialogs; the TimeLine opens automatically
+```
+
+Jumpshot shows the four ranks stacked in time with each TAU state colored — the
+per-step compute bands and the RCCL all-reduce between them — the interactive
+source of [`figs/tau_jumpshot_4gpu.png`](figs/tau_jumpshot_4gpu.png) (§13.4).
 
 > **Shut down in order** (`man aac6_vnc`): close the noVNC browser **tab first**,
 > then release the Slurm job (`exit`/`scancel`), then exit the SSH session. The
@@ -1016,6 +1054,99 @@ auto-selects; the sweep's "default" columns above reflect those auto choices:
 > demonstrates (`NCCL_PROTO=LL` beats the auto choice for this particular
 > all-reduce size).
 
+## 15. Featured profiling tool: roofline extractor (per-kernel compute vs. memory)
+
+The §13 timeline shows **where** time goes (compute vs. the RCCL all-reduce). A
+**roofline** answers the next question — for each GPU kernel, **is it compute-bound
+or memory-bound, and how close is it to the hardware peak?** — so you know *which*
+kernel to optimize and *how*. The system `roofline-extractor` module (by Andrew
+Chisolm and Noah Wolfe) automates this: it drives `rocprofv3` to collect the FLOP
+and byte-movement counters per kernel, computes each kernel's **arithmetic
+intensity** (FLOP per byte) and **achieved throughput**, and plots every kernel
+against the MI300A bandwidth/compute ceilings.
+
+A roofline is a **per-kernel, per-GPU** compute analysis, so this profiles a
+**single-GPU, short ResNet-50 `--dummy` run** (not the 4-GPU DDP job). The
+[`profiling/capture_roofline.sbatch`](profiling/capture_roofline.sbatch) script
+packages the whole flow — build a disposable `uv` venv, load
+`rocm pytorch roofline-extractor`, warm the MIOpen cache, then run the extractor:
+
+```bash
+# From the imagenet dir, on a node with a GPU:
+sbatch profiling/capture_roofline.sbatch
+```
+
+Under the hood it just calls the module's wrapper (five `rocprofv3` passes: four
+for counters, one for the kernel trace), which you can also run by hand inside an
+allocation:
+
+```bash
+module load rocm pytorch roofline-extractor          # puts roofline-extractor-* on $PATH
+HIP_VISIBLE_DEVICES=0 roofline-extractor-profile -o profiling/roofline --arch MI300A -- \
+  python main.py -a resnet50 --dummy --gpu 0 -b 256 -p 10 --epochs 1
+```
+
+> Always invoke the tool through the `roofline-extractor-profile` /
+> `roofline-extractor-extract` wrappers (not `python rooflineExtractor.py`): they
+> set the `PYTHONPATH` for the module's vendored dependencies. `--arch MI300A`
+> skips auto-detection; `-f csv` needs ROCm 7+ (the default stack here) and is
+> auto-dropped on older ROCm.
+
+The measured roofline for this run (log-log: **arithmetic intensity** on x,
+**throughput** on y; the sloped lines are the HBM/L2/L1/LDS **bandwidth** roofs
+rising to the flat **compute** ceiling; each dot is a kernel):
+
+![Measured single-MI300A ResNet-50 roofline: each dot is a GPU kernel, plotted by arithmetic intensity vs. achieved throughput against the MI300A bandwidth and compute ceilings](figs/roofline_1gpu.png)
+
+The run covers **93 unique kernels / 52,001 dispatches / ~14.0 s of GPU time**,
+achieving on average **68 % of the (linear) roofline**. The kernels that dominate
+the time split cleanly into the two roofline regimes:
+
+| Kernel (ResNet-50 role) | % GPU time | Arith. intensity (FLOP/byte) | Achieved (TFLOP/s) | % of roofline |
+|---|---:|---:|---:|---:|
+| `miopenSp3AsmConv…f2x3` (Winograd conv) | 17.4 % | 38.2 | 36.4 | 49 % |
+| `Cijk_…MT128x32x32…` (rocBLAS GEMM) | 4.8 % | 69.0 | 67.2 | 65 % |
+| `Cijk_…MT64x64x32…` (rocBLAS GEMM) | 6.3 % | 20.9 | 53.7 | 70 % |
+| `MIOpenBatchNormFwdInferSpatialEst` (batch norm) | 14.4 % | 0.54 | 1.23 | 62 % |
+| `vectorized_elementwise_kernel` (clamp/ReLU) | 9.0 % | 0.78 | 2.49 | 87 % |
+| `vectorized_elementwise_kernel` (add) | 7.8 % | 0.18 | 0.62 | 91 % |
+
+Read the roofline like this:
+
+- **High arithmetic intensity → compute-bound (right side, up against the flat
+  ceiling).** The conv and GEMM kernels (AI 21-69 FLOP/byte) sit near the FP32
+  compute roof (~74 TFLOP/s linear) and already reach tens of TFLOP/s. More HBM
+  bandwidth would not help them; the levers are better matrix-engine utilization
+  or **lower precision** — bf16 autocast (§12) moves them toward the far higher
+  MFMA ceiling. (This run is FP32: main.py uses no AMP.)
+- **Low arithmetic intensity → memory-bound (left side, on the sloped roof).**
+  Batch norm and the elementwise ops (AI 0.18-0.78) run at ~1-2 TFLOP/s because
+  they are limited by **HBM bandwidth**, not FLOPs. Their lever is **fusion** —
+  fewer passes over HBM — which is exactly what `torch.compile` (§12) does by
+  folding elementwise/BN work into the conv/GEMM epilogues.
+
+**Viewing the interactive plot.** `roofline-extractor-profile` writes everything to
+`profiling/roofline/`:
+
+| Artifact | What it is |
+|---|---|
+| `counters.html` | interactive D3 roofline plot (hover a dot for the kernel; toggle HBM/LDS roofs) |
+| `counters_EXTRACTED_AGG.csv` | per-kernel aggregated metrics (AI, throughput, % of roofline, limiter) |
+| `counters_EXTRACTED.csv` | per-dispatch metrics |
+| `profile_*.log` | the guided per-kernel text analysis (source of the table above) |
+
+The plot is an **interactive HTML file**, so the figure above is a **screenshot**
+of `counters.html` opened in a browser — the easiest way on a headless node is the
+§13.7 noVNC/XFCE desktop (or `scp` the file and open it locally). For the terminal
+summary without any display, read the `profile_*.log` or the `*_AGG.csv`. To fold
+several runs/phases into one combined roofline, use the wrapper's `-D`/`--directory`
+mode; `--dump` writes the CSVs and `--send NAME` renames the HTML.
+
+> **Where this figure comes from.** [`figs/roofline_1gpu.png`](figs/roofline_1gpu.png)
+> is a screenshot of the `profiling/roofline/counters.html` produced by one measured
+> single-MI300A run of [`profiling/capture_roofline.sbatch`](profiling/capture_roofline.sbatch);
+> the numbers in the table are quoted verbatim from that run's `profile_*.log`.
+
 ## Next steps
 
 - **[`README_rccl_optimization.md`](README_rccl_optimization.md)** — hands-on
@@ -1031,6 +1162,10 @@ auto-selects; the sweep's "default" columns above reflect those auto choices:
   this compares to the other distributed examples.
 - **[`profiling/`](profiling/PROFILING.md)** — splitting a step into compute vs.
   communication with torch.profiler, rocprofv3, and rocprof-sys.
+- **Per-kernel roofline (§15)** — [`profiling/capture_roofline.sbatch`](profiling/capture_roofline.sbatch)
+  drives the `roofline-extractor` module to plot every GPU kernel by arithmetic
+  intensity vs. achieved throughput against the MI300A ceilings (which kernels are
+  compute- vs. memory-bound, and how close to peak).
 - **Self-contained runs** — `run_imagenet_uv.sh` (and `submit_imagenet_uv.batch`)
   build a disposable **uv** venv, clone the upstream example, warm, sweep, and
   clean up automatically. See [`benchmarks/README_benchmark.md`](benchmarks/README_benchmark.md).
