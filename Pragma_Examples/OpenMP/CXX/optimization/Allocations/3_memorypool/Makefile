@@ -14,7 +14,7 @@ else ifneq ($(findstring CC,$(CXX1)),)
   OPENMP_FLAGS = -fopenmp
 endif
 
-CXXFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS} -D__HIP_PLATFORM_AMD__ -I${UMPIRE_PATH}/include
+CXXFLAGS = -std=c++20 -g -O3 -fstrict-aliasing ${OPENMP_FLAGS} -D__HIP_PLATFORM_AMD__ -I${UMPIRE_PATH}/include
 LDFLAGS = ${OPENMP_FLAGS} -fno-lto -lm -L${UMPIRE_PATH}/lib64 -L${UMPIRE_PATH}/lib -lumpire -lcamp -lfmt -L${ROCM_PATH}/lib -lamdhip64 -lstdc++
 
 memorypool: memorypool.o
