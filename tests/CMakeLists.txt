@@ -1342,7 +1342,7 @@ set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY RESOURCE_LOCK affi
 #set_property(TEST Rocprofv3_TraceDecoder PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Rocprofv3_Rocpd COMMAND ../rocpd_check_version.sh )
-set_property(TEST Rocprofv3_Rocpd PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST Rocprofv3_Rocpd PROPERTY PASS_REGULAR_EXPRESSION "version:")
 set_property(TEST Rocprofv3_Rocpd PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # PyTorch tests
