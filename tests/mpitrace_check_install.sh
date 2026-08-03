@@ -14,8 +14,7 @@ if [ $? -eq 1 ]; then
    module load rocm
 fi
 
-ROCM_VER=$(module -t list 2>&1 | grep '^rocm/' | head -1 | cut -d/ -f2)
-if ! module load mpitrace/${ROCM_VER} 2>/tmp/mpitrace_check.$$.err; then
+if ! module load mpitrace 2>/tmp/mpitrace_check.$$.err; then
    cat /tmp/mpitrace_check.$$.err
    rm -f /tmp/mpitrace_check.$$.err
    # Canonical token so CTest's SKIP_REGULAR_EXPRESSION marks this SKIPPED
@@ -26,7 +25,6 @@ fi
 rm -f /tmp/mpitrace_check.$$.err
 
 echo "=== mpitrace install check ==="
-echo "ROCM_VER:      ${ROCM_VER}"
 echo "MPITRACE_PATH: ${MPITRACE_PATH}"
 echo "MPITRACE_LIB:  ${MPITRACE_LIB}"
 echo "LD_PRELOAD:    ${LD_PRELOAD}"
