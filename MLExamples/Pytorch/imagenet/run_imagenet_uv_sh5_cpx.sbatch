@@ -41,73 +41,18 @@ module load rocm openmpi pytorch
 git clone --depth=1 https://github.com/pytorch/examples.git ./pytorch_examples
 cp pytorch_examples/imagenet/* .
 
-# Upstream main.py inits the NCCL process group but never destroys it, so PyTorch
-# warns at exit ("destroy_process_group() was not called ... can leak resources").
-# Register an atexit handler right after init_process_group so every worker
-# (incl. mp.spawn children) cleans up on a normal exit.
-sed -i '/world_size=args.world_size, rank=args.rank)/a\        import atexit as _ax, torch.distributed as _d; _ax.register(lambda: _d.destroy_process_group() if _d.is_initialized() else None)' main.py
+# Modifications to the example source code -- single source of truth in
+# apply_basic_edits.sh (sourced so its COMMON_DIR/HSA_XNACK exports propagate to
+# the runs below, and its sed commands operate on main.py in the current work
+# dir). Relies on $BASE_DIR (set above) to locate helpers via $BASE_DIR/../common.
+source "$BASE_DIR/apply_basic_edits.sh"
 
-# Print per-GPU peak memory once at the end of train() (matches README peak_mem_mb)
-sed -i '/^def validate(/i\    torch.cuda.is_available() and getattr(args,"rank",0)<=0 and print(f"PEAK_MEM_MB {torch.cuda.max_memory_allocated()/1e6:.0f}")' main.py
-
-# Keep the demo (and the profiler trace) short.
-sed -i '/^        data_time.update(time.time() - end)/a\
-        if i >= 100: break' main.py
-
-# ============================================================================
-# 3d. Enable the profiler and print total RCCL time (self-contained change)
-# ============================================================================
-# Start a torch.profiler at the top of train(); stop it just before validate()
-# and print the summed on-GPU nccl* kernel time as RCCL_TOTAL_MS (~0 at 1 GPU,
-# growing with GPU count).
-
-# Start the profiler at the top of train().
-sed -i '/^    model.train()/a\
-    import torch.profiler as _tp\
-    _prof = _tp.profile(activities=[_tp.ProfilerActivity.CPU, _tp.ProfilerActivity.CUDA], acc_events=True); _prof.start()' main.py
-
-# Stop the profiler and print total RCCL kernel time (end of train(), before def validate).
-sed -i '/^def validate(/i\
-    _prof.stop()\
-    _rccl_ms = sum(e.self_device_time_total for e in _prof.key_averages() if "nccl" in e.key.lower())/1e3\
-    _ws = getattr(args,"world_size","?")\
-    getattr(args,"rank",0)<=0 and print(f"RCCL_TOTAL_MS {_rccl_ms:.3f} gpus={_ws}")' main.py
-
-# ============================================================================
-# 3e. Compare .to (copy) vs .migrate (zero-copy) staging (self-contained change)
-# ============================================================================
-# The migrate path (STAGE=migrate) aliases the batch instead of copying it; it
-# needs COMMON_DIR (for zerocopy.Stager), HSA_XNACK=1, and pageable (non-pinned)
-# host memory. When STAGE is unset these edits are inert, so the plain scaling
-# runs are unaffected.
-export COMMON_DIR="$BASE_DIR/../common"
-export HSA_XNACK=1
-
-# Set up staging counters and (for STAGE=migrate) the zero-copy Stager at the top of train().
-sed -i '/^    model.train()/a\
-    _stage_ms = 0.0; _stage_n = 0; _stager = None\
-    if os.environ.get("STAGE") == "migrate":\
-        import sys; sys.path.insert(0, os.environ["COMMON_DIR"]); from zerocopy import Stager\
-        _stager = Stager(device, method="register")' main.py
-
-# register-migrate needs pageable (non-pinned) host memory.
-sed -i 's/pin_memory=True/pin_memory=False/g' main.py
-
-# Time the host->device staging, but only when STAGE is set (copy vs migrate).
-sed -i '/^        images = images.to(device, non_blocking=True)/c\
-        if os.environ.get("STAGE"):\
-            _e0 = torch.cuda.Event(enable_timing=True); _e1 = torch.cuda.Event(enable_timing=True)\
-            _e0.record()\
-            images = _stager.to_device(images) if _stager is not None else images.to(device, non_blocking=True)\
-            _e1.record(); torch.cuda.synchronize()\
-            _stage_ms += _e0.elapsed_time(_e1); _stage_n += 1\
-        else:\
-            images = images.to(device, non_blocking=True)' main.py
-
-# Print the per-step staging time (end of train(), before def validate).
-sed -i '/^def validate(/i\
-    _stg = os.environ.get("STAGE",""); _ws2 = getattr(args,"world_size","?")\
-    getattr(args,"rank",0)<=0 and _stage_n and print(f"STAGE_MS_PER_STEP {_stage_ms/_stage_n:.4f} gpus={_ws2} stage={_stg}")' main.py
+# Verify the edits actually landed and abort loudly if they did not (guards
+# against a silently-unmodified upstream main.py running the full epoch).
+grep -q 'i >= 100' main.py && grep -q 'PEAK_MEM_MB' main.py || {
+  echo "ERROR: apply_basic_edits.sh did not instrument main.py; aborting." >&2
+  exit 1
+}
 
 export MIOPEN_FIND_MODE=${MIOPEN_FIND_MODE:-FAST}
 export MIOPEN_LOG_LEVEL=3

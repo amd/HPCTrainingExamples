@@ -112,10 +112,10 @@ the script below or going through the individual edits and applying them one-by-
 
 ### 3a. Fix warning `destroy_process_group`
 
-> Upstream main.py inits the NCCL process group but never destroys it, so PyTorch
-> warns at exit ("`destroy_process_group()` was not called ... can leak resources").
-> Register an atexit handler right after `init_process_group` so every worker
-> (incl. mp.spawn children) cleans up on a normal exit.
+Upstream main.py inits the NCCL process group but never destroys it, so PyTorch
+warns at exit ("`destroy_process_group()` was not called ... can leak resources").
+Register an atexit handler right after `init_process_group` so every worker
+(incl. mp.spawn children) cleans up on a normal exit.
 
 ```bash
 sed -i '/world_size=args.world_size, rank=args.rank)/a\        import atexit as _ax, torch.distributed as _d; _ax.register(lambda: _d.destroy_process_group() if _d.is_initialized() else None)' main.py
@@ -135,22 +135,22 @@ sed -i '/^        data_time.update(time.time() - end)/a\
 Understanding how much memory is being used relative to the available memory
 is important in optimizing a job.
 
-> Print per-GPU peak memory once at the end of train()
+Print per-GPU peak memory once at the end of train():
 ```bash
 sed -i '/^def validate(/i\    torch.cuda.is_available() and getattr(args,"rank",0)<=0 and print(f"PEAK_MEM_MB {torch.cuda.max_memory_allocated()/1e6:.0f}")' main.py
 ```
 
-The two demo measurements below are independent, self-contained changes:
+***NOTE***: the next two measurements below are independent, self-contained changes:
 **3d** adds the profiler and the total-RCCL-time print; **3e** adds the
 `.to` vs `.migrate` staging comparison. Each stands alone (neither references
 the other's variables), so you can apply either one, and in either order.
 
 ### 3d. Enable the profiler and print total RCCL time
 
-> Start a `torch.profiler` at the top of `train()` and stop it just before
-> `validate()`. The on-GPU time of the `nccl*` collective kernels is summed and
-> printed as `RCCL_TOTAL_MS` (~0 at 1 GPU, growing with GPU count). The `break`
-> from step 3b keeps the captured trace short.
+Start a `torch.profiler` at the top of `train()` and stop it just before
+`validate()`. The on-GPU time of the `nccl*` collective kernels is summed and
+printed as `RCCL_TOTAL_MS` (~0 at 1 GPU, growing with GPU count). The `break`
+from step 3b keeps the captured trace short.
 
 Start the profiler at the top of `train()`:
 
@@ -175,10 +175,10 @@ sed -i '/^def validate(/i\
 The MI300A is a true APU with a single address space. Many other GPUs emulate the single address
 space with managed memory that copies arrays from host to device and back when needed.
 
-> The migrate path (`STAGE=migrate`) aliases the batch instead of copying it; it
-> needs `COMMON_DIR` (for `zerocopy.Stager`), `HSA_XNACK=1`, and pageable
-> (non-pinned) host memory. When `STAGE` is unset these edits are inert, so the
-> plain scaling runs are unaffected.
+The migrate path (`STAGE=migrate`) aliases the batch instead of copying it; it
+needs `COMMON_DIR` in the `sys.path` to find `zerocopy.Stager`, `HSA_XNACK=1`, and pageable
+(non-pinned) host memory. When `STAGE` is unset these edits are inert, so the
+plain scaling runs are unaffected.
 
 Point `COMMON_DIR` at the shared helpers and enable XNACK:
 
@@ -195,12 +195,6 @@ sed -i '/^    model.train()/a\
     if os.environ.get("STAGE") == "migrate":\
         import sys; sys.path.insert(0, os.environ["COMMON_DIR"]); from zerocopy import Stager\
         _stager = Stager(device, method="register")' main.py
-```
-
-register-migrate needs pageable (non-pinned) host memory:
-
-```bash
-sed -i 's/pin_memory=True/pin_memory=False/g' main.py
 ```
 
 Time the `host->device` staging, but only when `STAGE` is set (copy vs migrate):
@@ -225,37 +219,68 @@ sed -i '/^def validate(/i\
     getattr(args,"rank",0)<=0 and _stage_n and print(f"STAGE_MS_PER_STEP {_stage_ms/_stage_n:.4f} gpus={_ws2} stage={_stg}")' main.py
 ```
 
+### 3f. Make `pin_memory` graceful for the fallback path
+
+The `register` staging path needs **pageable** (non-pinned) host memory, because
+`hipHostRegister` fails on already-pinned buffers. But the plain `.to()` fallback
+(discrete GPU, `HSA_XNACK != 1`, or the extension failing to build) copies faster
+from **pinned** memory. So rather than forcing `pin_memory=False` unconditionally,
+gate it on whether the zero-copy `register` path is actually available -- exactly
+mirroring `Stager`'s own graceful fallback (`zerocopy.unified_memory_available()`).
+When `STAGE` is unset this is inert: `pin_memory` stays `True` (upstream behavior),
+so the plain scaling runs keep fast pinned copies.
+
+Inject the gate helper right after the imports:
+
+```bash
+sed -i '/^from torch.utils.data import Subset/a\
+def _zero_copy_active():\
+    """pin_memory gate: pageable only when the STAGE=migrate register path is live."""\
+    if os.environ.get("STAGE") != "migrate":\
+        return False\
+    try:\
+        import sys; sys.path.insert(0, os.environ["COMMON_DIR"]); from zerocopy import unified_memory_available\
+        return unified_memory_available()\
+    except Exception:\
+        return False' main.py
+```
+
+Use pageable buffers only when zero-copy is active, pinned otherwise:
+
+```bash
+sed -i 's/pin_memory=True/pin_memory=not _zero_copy_active()/g' main.py
+```
+
 ## 4. Warm the MIOpen cache (once per allocation)
 
-Notes:
-
-> MIOpen's default solver search can take **>10 minutes** cold for ResNet
-> convolutions. Set fast selection, then warm the cache by running the warmup script
-> or the **1-GPU `main.py` case** (the same run the sweep uses) for a few steps:
-> **Warm once per allocation.** A new `salloc`/`sbatch` gets a fresh job ID (and
-> thus a fresh empty cache). Warming single-process first matters: inside one
-> allocation all N ranks share that one cache dir, so a cold multi-rank run would
-> contend on the SQLite db; after warming, ranks just read it (with
-> `MIOPEN_FIND_MODE=FAST`).
+ MIOpen's default solver search can take **>10 minutes** cold for ResNet
+ convolutions. Set fast selection, then warm the cache by running the warmup script
+ or the **1-GPU `main.py` case** (the same run the sweep uses) for a few steps:
+ **Warm once per allocation.** A new `salloc`/`sbatch` gets a fresh job ID (and
+ thus a fresh empty cache). Warming single-process first matters: inside one
+ allocation all N ranks share that one cache dir, so a cold multi-rank run would
+ contend on the SQLite db; after warming, ranks just read it (with
+ `MIOPEN_FIND_MODE=FAST`).
 
 ```bash
 export MIOPEN_FIND_MODE=FAST
 ```
 
-> The pytorch module already sets `MIOPEN_USER_DB_PATH` / `MIOPEN_CUSTOM_CACHE_DIR`
-> at a stable per-allocation dir (e.g. /tmp/$USER/miopen-cache/jobs/<jobid>), so
-> DON'T override them -- just inherit them.  Create the directory
+The pytorch module on AAC6 already sets `MIOPEN_USER_DB_PATH` / `MIOPEN_CUSTOM_CACHE_DIR`
+at a stable per-allocation dir (e.g. /tmp/$USER/miopen-cache/jobs/<jobid>), so
+DON'T override them -- just inherit them.  Create the directory
 
 ```bash
 mkdir -p "$MIOPEN_USER_DB_PATH"
 ```
 
-> Suppress some warning noise
+Suppress some warning noise
 ```bash
 export MIOPEN_LOG_LEVEL=3
 export KINETO_LOG_LEVEL=3
 ```
 
+Then proceed to warm up the cache:
 ```bash
 HIP_VISIBLE_DEVICES=0  python -c "import torch,torchvision.models as M; \
    d=torch.device('cuda'); \
