@@ -90,19 +90,9 @@ int main(int argc, char *argv[])
     HIPCHECK(hipMalloc(&d_buf,bufsize*sizeof(int)));
 
     //initialize
-    if (rank == 0)
-    {
-        for (i=0; i<bufsize; i++)
-            h_buf[i] = i;
-        HIPCHECK(hipMemcpy(d_buf, h_buf, (bufsize) * sizeof(int), hipMemcpyHostToDevice));
-    }
-
-    if (rank == 1)
-    {
-        for (i=0; i<bufsize; i++)
-            h_buf[i] = -1;
-        HIPCHECK(hipMemcpy(d_buf, h_buf, (bufsize) * sizeof(int), hipMemcpyHostToDevice));
-    }
+    if (rank == 0) { for (i=0; i<bufsize; i++) h_buf[i] = i; }
+    if (rank == 1) { for (i=0; i<bufsize; i++) h_buf[i] = -1; }
+    HIPCHECK(hipMemcpy(d_buf, h_buf, (bufsize) * sizeof(int), hipMemcpyHostToDevice));
 
     // communication
     if (rank == 0) {
@@ -118,13 +108,7 @@ int main(int argc, char *argv[])
     {
         int flag=0;
         HIPCHECK(hipMemcpy(h_buf, d_buf, (bufsize) * sizeof(int), hipMemcpyDeviceToHost));
-        for (i=0; i<bufsize; i++)
-        {
-            if (h_buf[i] != i){
-                flag++;
-                printf("Error: buffer[%d] = %d but is expected to be %d\n", i, h_buf[i], i);
-            }
-        }
+        for (i=0; i<bufsize; i++) { if (h_buf[i] != i) flag++; }
         if(flag==0) printf("Run successful: received buffer has the right value\n");
         fflush(stdout);
     }
