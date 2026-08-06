@@ -1,39 +1,38 @@
 # ImageNet DDP: measuring RCCL communication at scale
 
-README.md from `HPCTrainingExamples/MLExamples/Pytorch/imagenet` in the Training Examples repository
+> README.md from `HPCTrainingExamples/MLExamples/Pytorch/imagenet` in the HPCTrainingExamples repository
 
-The **mnist** (at ../mnist) example is deliberately tiny: the dataset is 
-small and its "multi-GPU" batch uses `torch.nn.DataParallel`, which is 
-single-process and does **not** scale well. This example steps up to a 
-**larger workload** (ResNet on ImageNet-sized 224x224x3 images, 1000 classes)
+This example sets up a **large workload** (ResNet on ImageNet-sized 224x224x3 images, 1000 classes)
 trained with **true `DistributedDataParallel` (DDP)**, one process per GPU,
 using the **RCCL** (ROCm Collective Communication Library) backend.
+Recall that On ROCm, PyTorch's `nccl` backend is provided by **librccl**, so all the
+`NCCL_*` environment variables are honored by RCCL.
 
-The key idea: synthetic (`--dummy`) data means **no 150 GB ImageNet
+Note that we use synthetic data so that **no 150 GB ImageNet
 download is needed**. The input pipeline is essentially free, so each training
 step is dominated by
 
 1. GPU **compute** (the forward/backward of the CNN), and
 2. the **RCCL all-reduce** of gradients across GPUs at the end of each step.
 
+Synthetic data is enabled with the `--dummy` flag.
 By comparing step time across GPU counts we isolate and quantify the RCCL
 communication cost.
 
-> This README is the **quick start**. For the required MI300A settings, the
+> For the required MI300A settings, the
 > scaling-sweep drivers, optimization levers, measured results, profiling,
 > and the pure-RCCL bandwidth micro-benchmark, see
 > **`benchmarks/README_benchmark.md`**.
 
-> On ROCm, PyTorch's `nccl` backend is provided by **librccl**, so all the
-> `NCCL_*` environment variables are honored by RCCL.
 
 ## 1. Get an allocation and load PyTorch
 
+These instructions assume you are running this example on AMD's AAC6 cluster, which has MI300A APUs.
 Pick whichever partition is free — the step-by-step example runs on all of them.
 **SPX** gives each rank a whole MI300A APU; **CPX** splits each APU into 6 smaller
-GPU partitions, so a CPX node exposes more (smaller) GPUs and leaves more room for
+GPU partitions, so a CPX node exposes the single XCDs leaves more room for
 interactive experimentation. The `PPAC_MI300A_SPX` nodes are scarce, so the CPX
-partitions are good fallbacks for the tutorial.
+partitions are good fallbacks.
 
 ```bash
 # 4 full-APU GPUs on a PPAC SPX node (whole node; DefCpuPerGPU=48 -> 192 CPUs)
@@ -67,6 +66,7 @@ salloc -p SH5_MI300A_CPX  -N1 --gpus=4 -t 00:40:00
 > Set up virtual environment to avod scattering python packages across system
 >    and for more repeatability
 
+Check `uv` is installed by doing `which uv`. If not, install it and then do:
 ```bash
 uv init imagenet_test
 cd imagenet_test
@@ -77,6 +77,7 @@ source .venv/bin/activate
 > Use pre-installed module versions to avoid downloading large wheels.
 > uv pip install -r requirements.txt # installs nvidia packages, so skip
 
+The command below will load the default version of ROCm, make sure it matches the one you intend to use:
 ```bash
 module load rocm openmpi pytorch
 ```
@@ -86,6 +87,11 @@ Confirm the GPUs are visible:
 ```bash
 python3 -c 'import torch; print(torch.cuda.is_available(), torch.cuda.device_count())'
 ```
+You should also make sure that the PyTorch you are importing is the one that comes from the module you loaded:
+```bash
+ python3 -c 'import torch;print(torch.__file__)'
+```
+check that the above path matches the path shown when doing `module show pytorch`.
 
 ## 2. Get the examples
 
@@ -101,7 +107,7 @@ for the optimizations exercises. All of these edits can be applied by running
 the script below or going through the individual edits and applying them one-by-one.
 
 ```bash
-./apply_basic_edits.sh
+../apply_basic_edits.sh
 ```
 
 ### 3a. Fix warning `destroy_process_group`
@@ -129,7 +135,7 @@ sed -i '/^        data_time.update(time.time() - end)/a\
 Understanding how much memory is being used relative to the available memory
 is important in optimizing a job.
 
-> Print per-GPU peak memory once at the end of train() (matches README `peak_mem_mb`)
+> Print per-GPU peak memory once at the end of train()
 ```bash
 sed -i '/^def validate(/i\    torch.cuda.is_available() and getattr(args,"rank",0)<=0 and print(f"PEAK_MEM_MB {torch.cuda.max_memory_allocated()/1e6:.0f}")' main.py
 ```
