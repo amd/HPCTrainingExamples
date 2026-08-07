@@ -102,9 +102,11 @@ cp pytorch_examples/imagenet/* .
 
 ## 3. Optional modifications to the example source code
 
-These are the basic edits to the example to get the instrumentation in place
-for the optimizations exercises. All of these edits can be applied by running
-the script below or going through the individual edits and applying them one-by-one.
+Below there are some basic edits to the example to get the instrumentation in place
+for the optimizations exercises. We advise users going through this document to apply the
+changes one by one, to monitor what each does to the original code. However, for the sake of time
+one could run the script below to apply all the changes at once. This is recommended for users that
+have gone through these instructions already at least once:
 
 ```bash
 ../apply_basic_edits.sh
@@ -180,10 +182,13 @@ needs `COMMON_DIR` in the `sys.path` to find `zerocopy.Stager`, `HSA_XNACK=1`, a
 (non-pinned) host memory. When `STAGE` is unset these edits are inert, so the
 plain scaling runs are unaffected.
 
-Point `COMMON_DIR` at the shared helpers and enable XNACK:
+Point `COMMON_DIR` at the shared helpers and enable XNACK. Anchoring to the repo
+root makes the export work from any directory (the manual flow above leaves you
+in `imagenet_test`, two levels below `common/`, so a bare `../common` would not
+resolve):
 
 ```bash
-export COMMON_DIR="../common"
+export COMMON_DIR="$(git rev-parse --show-toplevel)/MLExamples/Pytorch/common"
 export HSA_XNACK=1
 ```
 
