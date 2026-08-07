@@ -25,6 +25,26 @@ communication cost.
 > **`benchmarks/README_benchmark.md`**.
 
 
+## Contents
+
+1. [Get an allocation and load PyTorch](#1-get-an-allocation-and-load-pytorch)
+2. [Get the examples](#2-get-the-examples)
+3. [Optional modifications to the example source code](#3-optional-modifications-to-the-example-source-code)
+4. [Warm the MIOpen cache (once per allocation)](#4-warm-the-miopen-cache-once-per-allocation)
+5. [Run the scaling sweep (assumes an SPX partition)](#5-run-the-scaling-sweep-assumes-an-spx-partition)
+6. [APU programming model (MI300A)](#6-apu-programming-model-mi300a)
+7. [Read the two numbers (RCCL time, staging)](#7-read-the-two-numbers-rccl-time-staging)
+8. [Calculating the performance](#8-calculating-the-performance)
+9. [Cleanup](#9-cleanup)
+10. [Run on CPX partitions (`SH5_MI300A_CPX`, `PPAC_MI300A_CPX`)](#10-run-on-cpx-partitions-sh5_mi300a_cpx-ppac_mi300a_cpx)
+11. [Featured RCCL optimization: tune the all-reduce with environment variables](#11-featured-rccl-optimization-tune-the-all-reduce-with-environment-variables)
+12. [Featured compute optimization: `torch.compile`](#12-featured-compute-optimization-torchcompile)
+13. [Featured profiling exercise: a measured timeline of compute vs communication (4×MI300A)](#13-featured-profiling-exercise-a-measured-timeline-of-compute-vs-communication-4mi300a)
+14. [Batch-driven optimization studies and measured performance impacts](#14-batch-driven-optimization-studies-and-measured-performance-impacts)
+15. [Featured profiling tool: roofline extractor (per-kernel compute vs. memory)](#15-featured-profiling-tool-roofline-extractor-per-kernel-compute-vs-memory)
+- [Next steps](#next-steps)
+
+
 ## 1. Get an allocation and load PyTorch
 
 These instructions assume you are running this example on AMD's AAC6 cluster, which has MI300A APUs.
@@ -357,11 +377,11 @@ echo "=== Host->device staging: .to (copy) vs .migrate ==="
 grep -h STAGE_MS_PER_STEP stage_*.log
 ```
 
-### 8. Calculating the performance
+## 8. Calculating the performance
 
 ```bash
 echo "=== Calculating the performance =="
-./images_per_sec.sh
+../images_per_sec.sh
 ```
 
 Stock upstream `main.py` prints periodic `Epoch:` progress lines that include the
@@ -455,34 +475,26 @@ communication behavior only appears once the rank count crosses physical APUs
 
 ## 11. Featured RCCL optimization: tune the all-reduce with environment variables
 
-The [`README_rccl_optimization.md`](README_rccl_optimization.md) exercises tune the
-RCCL all-reduce by editing `os.environ[...]` *inside* `main.py`, before
-`init_process_group`. You don't actually have to touch the source: because
-`--multiprocessing-distributed` launches the ranks with `mp.spawn`, every worker
+Full rationale and the by-hand `main.py` edits live in
+[`README_rccl_optimization.md`](README_rccl_optimization.md) §2-§3. The point worth
+repeating here: you don't have to edit the source at all. Because
+`--multiprocessing-distributed` launches ranks with `mp.spawn`, every worker
 **inherits the shell environment**, and RCCL reads its `NCCL_*` settings when the
-communicator is built (at `init_process_group`). So exporting the variables in the
-shell is equivalent to the §2 in-code edits — with the bonus that you can sweep a
-value without re-editing the file.
+communicator is built. So exporting the variables is equivalent to the in-code
+edits — and lets you sweep a value without re-editing the file.
 
-> This reuses the `RCCL_TOTAL_MS` instrumentation added in §3 and the warmed
-> MIOpen cache from §4. Run the 4-GPU case (`-b 512`) so there is an all-reduce to
-> tune (there is none at 1 GPU).
+> Reuses the `RCCL_TOTAL_MS` instrumentation from §3 and the warmed MIOpen cache
+> from §4. Run the 4-GPU case (`-b 512`) so there is an all-reduce to tune.
 
-### Most effective transport/algorithm (section 2)
-
-Pin the two settings that most affect the ResNet50 all-reduce on the coherent
-MI300A fabric:
+The two settings that matter most (README_rccl §2a/§2b):
 
 ```bash
-export NCCL_ALGO=Tree     # 2a: latency-optimized; best once the all-reduce crosses APUs
-export NCCL_PROTO=LL128   # 2b: sweet spot for medium messages on high-bandwidth coherent links
+export NCCL_ALGO=Tree     # latency-optimized once the all-reduce crosses APUs
+export NCCL_PROTO=LL128   # sweet spot for medium messages on coherent links
 ```
 
-### Vary the number of channels from 1 to 32 (section 2c)
-
-Force an exact channel count by setting the min and max to the same value, then
-sweep. More channels drive the copy with more compute units (higher effective
-bandwidth) until the fabric saturates:
+Sweep the channel count (README_rccl §2c) — the export form makes this a one-liner
+loop with no source edits:
 
 ```bash
 for NCH in 1 2 4 8 16 32; do
@@ -492,56 +504,35 @@ for NCH in 1 2 4 8 16 32; do
     --multiprocessing-distributed --world-size 1 --rank 0 -b 512 -p 20 --epochs 1 \
     |& tee run_nch_${NCH}.log
 done
-```
-
-Report `RCCL_TOTAL_MS` for each channel count and pick the knee of the curve:
-
-```bash
 echo "=== RCCL total time by channel count ==="
 for NCH in 1 2 4 8 16 32; do
   printf "channels=%-3s " "$NCH"; grep -h RCCL_TOTAL_MS run_nch_${NCH}.log | tail -1
 done
 ```
 
-**Expect:** `RCCL_TOTAL_MS` falls as channels increase, then flattens (or ticks
-back up) once the fabric saturates — often around 8-16 channels on one APU. On a
-single MI300A the signal is small; the sweep is far more dramatic on the 12-/24-GPU
-`PPAC_MI300A_CPX` runs, where the all-reduce crosses physical APUs.
-
-### Stack the DDP overlap knobs (section 3)
-
-The §3 levers (`gradient_as_bucket_view`, `bucket_cap_mb`, `static_graph`) are DDP
-**constructor arguments**, not env vars, so they need a one-line edit. Apply the
-stacked "most effective" combination with the same `sed` style as §3:
-
-```bash
-sed -i 's/model = torch.nn.parallel.DistributedDataParallel(model, device_ids=\[args.gpu\])/model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], gradient_as_bucket_view=True, bucket_cap_mb=100, static_graph=True)/' main.py
-```
-
-With the env vars above still exported, rerun the 4-GPU baseline and watch the
-per-step `Time` drop as the all-reduce overlaps better with the backward pass
-(`RCCL_TOTAL_MS`, the bytes moved, stays about the same). Reset with
-`git checkout -- main.py` (then re-apply the §3 instrumentation) before moving on.
+**Expect:** `RCCL_TOTAL_MS` falls as channels increase, then flattens once the
+fabric saturates (often ~8-16 channels on one APU). The signal is small on a single
+MI300A and far more dramatic on the 12-/24-GPU `PPAC_MI300A_CPX` runs. The DDP
+overlap knobs (`gradient_as_bucket_view`, `bucket_cap_mb`, `static_graph`) are DDP
+constructor arguments, not env vars — see README_rccl §3 for that edit.
 
 ## 12. Featured compute optimization: `torch.compile`
 
-From [`README_compute_optimization.md`](README_compute_optimization.md) §3a:
-`torch.compile` captures the model into a fused graph, cutting Python/launch
-overhead. Add it right after the model is wrapped in DDP (same `sed` style as §3):
+The full compute-optimization curriculum (bf16 autocast, `channels_last`,
+`cudnn.benchmark`, fused optimizer, `torch.compile`) is in
+[`README_compute_optimization.md`](README_compute_optimization.md). The featured
+one: `torch.compile` captures the model into a fused graph, cutting Python/launch
+overhead. Add it right after the DDP wrap (same `sed` style as §3):
 
 ```bash
 sed -i '/model = torch.nn.parallel.DistributedDataParallel(model, device_ids=\[args.gpu\])/a\                model = torch.compile(model)' main.py
 ```
 
-Rerun the §5 single-GPU baseline (the `run_1` command) with the edit applied,
-teeing to `run_compile.log` instead, then compare its per-step `Time` against the
-un-compiled `run_1.log`.
+Rerun the §5 single-GPU baseline with the edit applied (tee to `run_compile.log`)
+and compare per-step `Time` against `run_1.log`.
 
-**Expect:** the **first** step is much slower (one-time compile), then per-step
-`Time` improves versus the un-compiled baseline. Try
-`torch.compile(model, mode="max-autotune")` for more aggressive tuning at a longer
-compile cost. Reset with `git checkout -- main.py` (then re-apply the §3
-instrumentation) before moving on.
+**Expect:** the first step is much slower (one-time compile), then per-step `Time`
+improves. Reset with `git checkout -- main.py` (then re-apply §3) before moving on.
 
 ## 13. Featured profiling exercise: a measured timeline of compute vs communication (4×MI300A)
 
