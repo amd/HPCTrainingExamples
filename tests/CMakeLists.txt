@@ -1740,6 +1740,26 @@ set_property(TEST TAU_Check_MPI_Profile PROPERTY PASS_REGULAR_EXPRESSION "MPI_Al
 set_property(TEST TAU_Check_MPI_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider tau" "Unable to locate a modulefile for 'tau'")
 set_property(TEST TAU_Check_MPI_Profile PROPERTY TIMEOUT 600)
 
+# TAU + RCCL PC-sampling tests (from the TAU author's examples): run the
+# rccl-tests all_gather_perf benchmark under `tau_exec -rocm_pc [-ebs]` and check
+# the pprof profile for host-side RCCL routines, GPU PC samples, and GPU kernels.
+set(TAU_RCCL_SKIP "module spider" "Unable to locate a modulefile for 'tau'" "Unable to locate a modulefile for 'rccl-tests'" "Skip")
+
+add_test(NAME TAU_RCCL_Routines_Check COMMAND ../tau_rccl_pc_check.sh --rccl-routines)
+set_property(TEST TAU_RCCL_Routines_Check PROPERTY PASS_REGULAR_EXPRESSION "ncclAllGather")
+set_property(TEST TAU_RCCL_Routines_Check PROPERTY SKIP_REGULAR_EXPRESSION ${TAU_RCCL_SKIP})
+set_tests_properties(TAU_RCCL_Routines_Check PROPERTIES TIMEOUT 600)
+
+add_test(NAME TAU_RCCL_PC_Sampling_Check COMMAND ../tau_rccl_pc_check.sh --pc-sampling)
+set_property(TEST TAU_RCCL_PC_Sampling_Check PROPERTY PASS_REGULAR_EXPRESSION "rocm sample")
+set_property(TEST TAU_RCCL_PC_Sampling_Check PROPERTY SKIP_REGULAR_EXPRESSION ${TAU_RCCL_SKIP})
+set_tests_properties(TAU_RCCL_PC_Sampling_Check PROPERTIES TIMEOUT 600)
+
+add_test(NAME TAU_RCCL_Kernel_Check COMMAND ../tau_rccl_pc_check.sh --pc-sampling)
+set_property(TEST TAU_RCCL_Kernel_Check PROPERTY PASS_REGULAR_EXPRESSION "ROCm Kernel")
+set_property(TEST TAU_RCCL_Kernel_Check PROPERTY SKIP_REGULAR_EXPRESSION ${TAU_RCCL_SKIP})
+set_tests_properties(TAU_RCCL_Kernel_Check PROPERTIES TIMEOUT 600)
+
 
 # Score-P Tests
 add_test(NAME Score-P_Check_Version COMMAND ../scorep_check_version.sh)
