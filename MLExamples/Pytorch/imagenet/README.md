@@ -298,7 +298,7 @@ HIP_VISIBLE_DEVICES=0  python -c "import torch,torchvision.models as M; \
    print('warm done')"
 ```
 
-## 5. Run the scaling sweep (one line per GPU count)
+## 5. Run the scaling sweep (assumes an SPX partition)
 
 Run the benchmark once per GPU count by changing `HIP_VISIBLE_DEVICES`:
 
@@ -339,26 +339,19 @@ and `COMMON_DIR` pointing at [`../common`](../common) (both exported by
 and the two numbers will match.
 
 
-## 7. Measure RCCL time and compare `.to` vs `.migrate` staging
+## 7. Read the two numbers (RCCL time, staging)
 
-The [`main.py`](main.py) driver runs the sweep above **and** adds two extra
-numbers with a handful of small `sed` patches to the (freshly cloned) `main.py`.
-The patches are deliberately tiny so they are clear in a hands-on session:
+The scaling sweep (§5) and staging runs (§6) already wrote the logs; 
+read back the two instrumented numbers — `RCCL_TOTAL_MS` (the profiler from §3d)
+and `STAGE_MS_PER_STEP` (the staging timing from §3e/§6).
 
-- **Total RCCL time** — a `torch.profiler` is started at the top of `train()` and
-  stopped at the end; the on-GPU time of the `nccl*` collective kernels is summed
-  and printed as `RCCL_TOTAL_MS`. This is the total RCCL communication time for
-  the run (it is ~0 at 1 GPU, since there is no all-reduce, and grows with GPU
-  count).
-
-> Get the RCCL total time for each run sorted by the number of GPUs
+RCCL total time per run, sorted by GPU count (`run_<N>.log`):
 ```bash
 echo "=== RCCL total time (per GPU count) ==="
 grep -h RCCL_TOTAL_MS run_*.log | sort -t= -k2 -n
 ```
 
-> Scaling runs are run_<N>.log; staging runs are stage_{copy,migrate}.log, so a
-> grep keeps the two reports separate. Lines are self-describing (gpus=N).
+`.to` (copy) vs `.migrate` staging (`stage_{copy,migrate}.log`):
 ```bash
 echo "=== Host->device staging: .to (copy) vs .migrate ==="
 grep -h STAGE_MS_PER_STEP stage_*.log
@@ -540,14 +533,9 @@ overhead. Add it right after the model is wrapped in DDP (same `sed` style as §
 sed -i '/model = torch.nn.parallel.DistributedDataParallel(model, device_ids=\[args.gpu\])/a\                model = torch.compile(model)' main.py
 ```
 
-Rerun the single-GPU compute baseline and compare per-step `Time` against the
-un-compiled `run_1.log`:
-
-```bash
-HIP_VISIBLE_DEVICES=0 python main.py -a resnet50 --dummy \
-  --dist-url 'tcp://127.0.0.1:23456' --dist-backend nccl \
-  --multiprocessing-distributed --world-size 1 --rank 0 -b 128 -p 20 --epochs 1 |& tee run_compile.log
-```
+Rerun the §5 single-GPU baseline (the `run_1` command) with the edit applied,
+teeing to `run_compile.log` instead, then compare its per-step `Time` against the
+un-compiled `run_1.log`.
 
 **Expect:** the **first** step is much slower (one-time compile), then per-step
 `Time` improves versus the un-compiled baseline. Try
@@ -662,14 +650,8 @@ Chrome/Perfetto trace when it stops (insert right after `_prof.stop()`):
     _prof.export_chrome_trace(f"torch_trace_rank{getattr(args,'rank',0)}.json")
 ```
 
-Run the standard 4-GPU case (§5); each of the four `mp.spawn` workers writes its
-own `torch_trace_rank{0..3}.json`:
-
-```bash
-HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy \
-  --dist-url 'tcp://127.0.0.1:23456' --dist-backend nccl \
-  --multiprocessing-distributed --world-size 1 --rank 0 -b 512 -p 20 --epochs 1
-```
+Run the standard 4-GPU case (§5, `run_4`); each of the four `mp.spawn` workers
+writes its own `torch_trace_rank{0..3}.json`.
 
 **View it graphically — no Perfetto module needed.** Perfetto is just a viewer:
 open [`https://ui.perfetto.org`](https://ui.perfetto.org) in a browser and load a
@@ -998,9 +980,8 @@ longer compile cost.
 
 ### 14.4 RCCL optimization: NCCL algorithm / protocol / channels (4 GPUs, b=512)
 
-`RCCL_TOTAL_MS` is the summed on-GPU time of the `nccl*` collective kernels over
-the run (lower is better). In each phase only the swept knob is set; the others
-stay at their NCCL defaults (§14.6).
+`RCCL_TOTAL_MS` (defined in §3d/§7; lower is better). In each phase only the swept
+knob is set; the others stay at their NCCL defaults (§14.6).
 
 **Algorithm** (protocol + channels = default):
 
