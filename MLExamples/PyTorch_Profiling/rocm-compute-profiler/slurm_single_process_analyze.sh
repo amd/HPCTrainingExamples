@@ -1,5 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=rpc-single-analyze
+# Charge account and partition come from SBATCH_ACCOUNT / SBATCH_PARTITION,
+# which env.sh exports from local.env (#SBATCH lines cannot expand variables).
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
@@ -11,9 +13,12 @@
 # Analyze the profiled workload with rocprof-compute analyze.
 #
 # rocprof-compute analyze needs numpy 1.26.x, which conflicts with the shared
-# venv's numpy 2.x. So we use a separate venv holding only rocprof-compute's
-# pinned requirements, while reusing the tool bundled in the shared venv (the
-# shared venv is never modified). CPU-only; run after the profile job finishes.
+# venv's numpy 2.x, so it runs from a separate venv holding only its pinned
+# requirements, reusing the tool bundled in the shared venv without modifying
+# it. CPU-only; run after the profile job finishes.
+#
+# Both venvs live under VENV_BASE (see local.env). install_rocm_pytorch.sh
+# populates the analysis venv on a login node, so this job needs no network.
 # ---------------------------------------------------------------------------
 
 set -e
@@ -29,9 +34,13 @@ PROFILER_TOP_DIR="$(dirname "${SCRIPT_DIR}")"
 echo "SCRIPT_DIR=${SCRIPT_DIR}"
 echo "PROFILER_TOP_DIR=${PROFILER_TOP_DIR}"
 
-# Locate the shared ROCm venv WITHOUT activating it; we only need the ROCm
-# install inside it (bundled rocprof-compute launcher + ROCm libraries).
-MAIN_VENV="${HOME}/venvs/rocm-pytorch-pip"
+# Site config (VENV_BASE, PROXY, ...).
+source ${PROFILER_TOP_DIR}/env.sh
+export_proxy
+
+# Locate the shared ROCm venv WITHOUT activating it; only the ROCm install
+# inside it is needed (bundled rocprof-compute launcher + ROCm libraries).
+MAIN_VENV="${VENV:-${VENV_BASE}/venvs/rocm-pytorch-pip}"
 if [[ ! -x "${MAIN_VENV}/bin/python3" ]]; then
     echo "ERROR: shared ROCm venv not found at ${MAIN_VENV}" >&2
     exit 1
@@ -53,8 +62,9 @@ for p in "${RPC}" "${REQ_FILE}" "${ROCM_CORE}" "${ROCM_DEVEL}"; do
 done
 
 # Create/refresh the dedicated analysis venv with rocprof-compute's pinned
-# requirements (numpy 1.26.x). Reinstalled only when requirements.txt changes.
-ANALYZE_VENV="${HOME}/venvs/rocprof-compute-analyze"
+# requirements (numpy 1.26.x). Reinstalled only when requirements.txt changes,
+# so this is a no-op where install_rocm_pytorch.sh already created it.
+ANALYZE_VENV="${ANALYZE_VENV:-${VENV_BASE}/venvs/rocprof-compute-analyze}"
 if [[ ! -x "${ANALYZE_VENV}/bin/python3" ]]; then
     echo "Creating analysis venv at ${ANALYZE_VENV}"
     # A venv stays isolated from its creator's site-packages, so using the

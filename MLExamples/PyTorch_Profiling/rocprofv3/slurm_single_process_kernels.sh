@@ -1,5 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=rpv3-single-kernels
+# Charge account and partition come from SBATCH_ACCOUNT / SBATCH_PARTITION,
+# which env.sh exports from local.env (#SBATCH lines cannot expand variables).
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
@@ -43,7 +45,7 @@ if [ ! -d ${PROFILER_TOP_DIR}/data/cifar-100-python ]; then
 fi
 
 OUT_DIR=${SCRIPT_DIR}/single_process
-rm -rf ${OUT_DIR}
+rm -f ${OUT_DIR}/kernels*
 cd ${SCRIPT_DIR}
 
 # Profile kernels with rocprofv3.
