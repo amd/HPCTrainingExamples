@@ -1,70 +1,33 @@
 # RCCL optimization exercises (hands-on `main.py` edits)
 
-A set of small, self-contained exercises for optimizing the **RCCL gradient
-all-reduce** in the upstream PyTorch imagenet example. You apply every change **by
-hand in `main.py`** — not by flipping shell flags — so you can see exactly *where*
-each optimization lives and copy the same pattern into your own workload.
+Here we present a set of small, self-contained tips for optimizing the **RCCL gradient
+all-reduce** in the upstream PyTorch imagenet example. You will apply every change **by
+hand in `main.py`** so you can see exactly where
+each optimization lives and copy the same pattern into your own workload as needed.
 
-These build on the scaling study in [`README.md`](README.md). The workshop nodes
-all have **`iommu=pt`** set, so RCCL already uses the direct xGMI / Infinity
-Fabric path — you don't need to touch the transport for correctness, only to
-*tune* it.
-
-> Keep it simple: do one edit, rerun the **same** baseline command, compare the
-> numbers, then move to the next. Undo an edit before the next one unless a
-> section says to stack them.
+These build on the scaling study in [`README.md`](README.md). We assume that the nodes
+you are running on all have **`iommu=pt`** set (it is the case for the nodes on AAC6), 
+so RCCL already uses the direct xGMI / Infinity Fabric path — you don't need to touch
+ the transport for correctness, only to tune it.
 
 ---
 
-## Setup: make `main.py` editable and measurable
+## Setup
 
-Inside your allocation, with the PyTorch module loaded and the MIOpen cache warmed
-(see [`README.md`](README.md) §2-3):
+These exercises assume you have already worked through **§1-8 of
+[`README.md`](README.md)**. If not, please go through those steps and come back.
 
-```bash
-git clone --depth=1 https://github.com/pytorch/examples.git
-cd examples/imagenet
-```
-
-To *see* the effect of each change, add a tiny profiler that prints the total time
-spent in RCCL kernels. (This is the same instrumentation `run_imagenet_uv.sh`
-applies for you with `sed` — here you do it by hand once.)
-
-**Edit A** — at the start of `train()`, right after `model.train()`, add:
-
-```python
-    # switch to train mode
-    model.train()
-
-    import torch.profiler as _tp
-    _prof = _tp.profile(activities=[_tp.ProfilerActivity.CPU, _tp.ProfilerActivity.CUDA]); _prof.start()
-```
-
-**Edit B** — keep each run short. Find `data_time.update(time.time() - end)` in
-the training loop and add a break right after it:
-
-```python
-        # measure data loading time
-        data_time.update(time.time() - end)
-        if i >= 100: break
-```
-
-**Edit C** — at the **end** of `train()` (the blank line just before
-`def validate(`), add:
-
-```python
-    _prof.stop()
-    _rccl_ms = sum(e.self_device_time_total for e in _prof.key_averages() if "nccl" in e.key.lower())/1e3
-    getattr(args, "rank", 0) <= 0 and print(f"RCCL_TOTAL_MS {_rccl_ms:.3f} gpus={getattr(args,'world_size','?')}")
-```
-
-### Baseline command (reuse this for every exercise)
+### Baseline command (reuse this to assess the impact of each tip)
 
 ```bash
 HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy \
   --dist-url 'tcp://127.0.0.1:23456' --dist-backend nccl \
   --multiprocessing-distributed --world-size 1 --rank 0 -b 512 -p 20 --epochs 1
 ```
+
+We suggest you keep it simple: do one edit, rerun the **same** baseline command, compare the
+numbers, then move to the next. Undo an edit before the next one unless a
+section says to stack them, so you can isolate each contribution.
 
 Record two numbers each time:
 
@@ -85,7 +48,7 @@ biggest single win.
 
 ### 1a. bf16 gradient compression
 
-`--amp` casts *compute* to bf16, but DDP still all-reduces **fp32** gradients. A
+`--amp` casts compute to bf16, but DDP still all-reduces **fp32** gradients. A
 communication hook halves the bytes by compressing gradients to bf16 for the
 all-reduce only.
 
@@ -112,7 +75,7 @@ comparison.
 ## Section 2 — Tune the RCCL transport / algorithm
 
 RCCL reads its `NCCL_*` settings **when the communicator is built** — i.e. at
-`dist.init_process_group(...)`. So these must be set in `main.py` *before* that
+`dist.init_process_group(...)`. So these must be set in `main.py` before that
 call. That ordering is the whole point of doing it here rather than exporting a
 shell variable after the fact.
 
@@ -165,7 +128,7 @@ message size and whether ranks span APUs. Change **one** variable at a time.
 
 ## Section 3 — Overlap and shrink the collectives (DDP knobs)
 
-These don't change the bytes; they change how well the all-reduce is *hidden*
+These don't change the bytes; they change how well the all-reduce is hidden
 behind the backward pass and how many separate collectives are launched. Watch the
 per-step **`Time`** here more than `RCCL_TOTAL_MS`.
 
@@ -231,10 +194,8 @@ compute; `RCCL_TOTAL_MS` (the bytes) stays about the same.
 | 3b `bucket_cap_mb` | `DistributedDataParallel(...)` args | step `Time` |
 | 3c `static_graph` | `DistributedDataParallel(...)` args | step `Time` |
 
-**Reset between exercises:** undo your edit, or `git checkout -- main.py` (this
-also removes the Setup instrumentation, so re-add Edits A-C afterward).
 
 **Apply to your own workload:** the two lines that matter everywhere are the
 communication hook (Section 1, right after you wrap your model in DDP) and the DDP
 constructor arguments (Section 3). The `NCCL_*` settings (Section 2) are workload-
-and topology-dependent — always re-measure rather than assuming.
+and topology-dependent — always re-measure to be safe.

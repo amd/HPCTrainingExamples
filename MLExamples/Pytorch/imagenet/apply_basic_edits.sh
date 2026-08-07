@@ -65,10 +65,6 @@ sed -i '/^    model.train()/a\
         import sys; sys.path.insert(0, os.environ["COMMON_DIR"]); from zerocopy import Stager\
         _stager = Stager(device, method="register")' main.py
 
-# register-migrate needs pageable (non-pinned) host memory:
-
-sed -i 's/pin_memory=True/pin_memory=False/g' main.py
-
 # Time the host->device staging, but only when `STAGE` is set (copy vs migrate):
 
 sed -i '/^        images = images.to(device, non_blocking=True)/c\
@@ -86,3 +82,30 @@ sed -i '/^        images = images.to(device, non_blocking=True)/c\
 sed -i '/^def validate(/i\
     _stg = os.environ.get("STAGE",""); _ws2 = getattr(args,"world_size","?")\
     getattr(args,"rank",0)<=0 and _stage_n and print(f"STAGE_MS_PER_STEP {_stage_ms/_stage_n:.4f} gpus={_ws2} stage={_stg}")' main.py
+
+# Make pin_memory graceful (pageable only when zero-copy is actually live)
+
+# The register path needs *pageable* host memory (hipHostRegister fails on
+# already-pinned buffers), but the plain `.to()` fallback (discrete GPU,
+# HSA_XNACK!=1, or the extension failing to build) copies faster from *pinned*
+# memory. So instead of forcing pin_memory=False unconditionally, gate it on
+# whether the zero-copy register path is actually available -- mirroring the
+# Stager's own graceful fallback. When STAGE is unset this is inert: pin_memory
+# stays True (upstream behavior), so the plain scaling runs get fast pinned copies.
+
+# Inject the gate helper right after the imports:
+
+sed -i '/^from torch.utils.data import Subset/a\
+def _zero_copy_active():\
+    """pin_memory gate: pageable only when the STAGE=migrate register path is live."""\
+    if os.environ.get("STAGE") != "migrate":\
+        return False\
+    try:\
+        import sys; sys.path.insert(0, os.environ["COMMON_DIR"]); from zerocopy import unified_memory_available\
+        return unified_memory_available()\
+    except Exception:\
+        return False' main.py
+
+# Use pageable buffers only when zero-copy is active, pinned otherwise:
+
+sed -i 's/pin_memory=True/pin_memory=not _zero_copy_active()/g' main.py

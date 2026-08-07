@@ -25,6 +25,26 @@ communication cost.
 > **`benchmarks/README_benchmark.md`**.
 
 
+## Contents
+
+1. [Get an allocation and load PyTorch](#1-get-an-allocation-and-load-pytorch)
+2. [Get the examples](#2-get-the-examples)
+3. [Optional modifications to the example source code](#3-optional-modifications-to-the-example-source-code)
+4. [Warm the MIOpen cache (once per allocation)](#4-warm-the-miopen-cache-once-per-allocation)
+5. [Run the scaling sweep (assumes an SPX partition)](#5-run-the-scaling-sweep-assumes-an-spx-partition)
+6. [APU programming model (MI300A)](#6-apu-programming-model-mi300a)
+7. [Read the two numbers (RCCL time, staging)](#7-read-the-two-numbers-rccl-time-staging)
+8. [Calculating the performance](#8-calculating-the-performance)
+9. [Cleanup](#9-cleanup)
+10. [Run on CPX partitions (`SH5_MI300A_CPX`, `PPAC_MI300A_CPX`)](#10-run-on-cpx-partitions-sh5_mi300a_cpx-ppac_mi300a_cpx)
+11. [Featured RCCL optimization: tune the all-reduce with environment variables](#11-featured-rccl-optimization-tune-the-all-reduce-with-environment-variables)
+12. [Featured compute optimization: hands-on `main.py` edits](#12-featured-compute-optimization-hands-on-mainpy-edits)
+13. [Featured profiling exercise: a measured timeline of compute vs communication (4×MI300A)](#13-featured-profiling-exercise-a-measured-timeline-of-compute-vs-communication-4mi300a)
+14. [Batch-driven optimization studies and measured performance impacts](#14-batch-driven-optimization-studies-and-measured-performance-impacts)
+15. [Featured profiling tool: roofline extractor (per-kernel compute vs. memory)](#15-featured-profiling-tool-roofline-extractor-per-kernel-compute-vs-memory)
+- [Next steps](#next-steps)
+
+
 ## 1. Get an allocation and load PyTorch
 
 These instructions assume you are running this example on AMD's AAC6 cluster, which has MI300A APUs.
@@ -45,8 +65,8 @@ salloc -p PPAC_MI300A_CPX -N1 --gpus=4 -t 00:40:00
 salloc -p SH5_MI300A_CPX  -N1 --gpus=4 -t 00:40:00
 ```
 
-> CPX partitions carve one APU's 128 GB HBM into 6 (~21 GB each), so if you hit an
-> OOM on CPX, drop the per-GPU batch size (e.g. `-b 128`).
+CPX partitions carve one APU's 128 GB HBM into 6 (~21 GB each), so if you hit an
+OOM on CPX, drop the per-GPU batch size (e.g. `-b 128`).
 
 > **Optional — CPU/GPU affinity.** To bind each rank to the cores nearest its GPU,
 > add task/affinity flags to the allocation (or to `srun`):
@@ -63,8 +83,8 @@ salloc -p SH5_MI300A_CPX  -N1 --gpus=4 -t 00:40:00
 > `mpirun` (§13.4), which do their own binding, so there the Slurm flags are only
 > advisory.
 
-> Set up virtual environment to avod scattering python packages across system
->    and for more repeatability
+Set up virtual environment to avod scattering python packages across system
+and for more repeatability
 
 Check `uv` is installed by doing `which uv`. If not, install it and then do:
 ```bash
@@ -74,8 +94,8 @@ uv venv --system-site-packages
 source .venv/bin/activate
 ```
 
-> Use pre-installed module versions to avoid downloading large wheels.
-> uv pip install -r requirements.txt # installs nvidia packages, so skip
+Use pre-installed module versions to avoid downloading large wheels.
+`uv pip install -r requirements.txt` installs nvidia packages, so we skip it.
 
 The command below will load the default version of ROCm, make sure it matches the one you intend to use:
 ```bash
@@ -102,9 +122,11 @@ cp pytorch_examples/imagenet/* .
 
 ## 3. Optional modifications to the example source code
 
-These are the basic edits to the example to get the instrumentation in place
-for the optimizations exercises. All of these edits can be applied by running
-the script below or going through the individual edits and applying them one-by-one.
+Below there are some basic edits to the example to get the instrumentation in place
+for the optimizations exercises. We advise users going through this document to apply the
+changes one by one, to monitor what each does to the original code. However, for the sake of time
+one could run the script below to apply all the changes at once. This is recommended for users that
+have gone through these instructions already at least once:
 
 ```bash
 ../apply_basic_edits.sh
@@ -112,10 +134,10 @@ the script below or going through the individual edits and applying them one-by-
 
 ### 3a. Fix warning `destroy_process_group`
 
-> Upstream main.py inits the NCCL process group but never destroys it, so PyTorch
-> warns at exit ("`destroy_process_group()` was not called ... can leak resources").
-> Register an atexit handler right after `init_process_group` so every worker
-> (incl. mp.spawn children) cleans up on a normal exit.
+Upstream main.py inits the NCCL process group but never destroys it, so PyTorch
+warns at exit ("`destroy_process_group()` was not called ... can leak resources").
+Register an atexit handler right after `init_process_group` so every worker
+(incl. mp.spawn children) cleans up on a normal exit.
 
 ```bash
 sed -i '/world_size=args.world_size, rank=args.rank)/a\        import atexit as _ax, torch.distributed as _d; _ax.register(lambda: _d.destroy_process_group() if _d.is_initialized() else None)' main.py
@@ -135,22 +157,22 @@ sed -i '/^        data_time.update(time.time() - end)/a\
 Understanding how much memory is being used relative to the available memory
 is important in optimizing a job.
 
-> Print per-GPU peak memory once at the end of train()
+Print per-GPU peak memory once at the end of train():
 ```bash
 sed -i '/^def validate(/i\    torch.cuda.is_available() and getattr(args,"rank",0)<=0 and print(f"PEAK_MEM_MB {torch.cuda.max_memory_allocated()/1e6:.0f}")' main.py
 ```
 
-The two demo measurements below are independent, self-contained changes:
+***NOTE***: the next two measurements below are independent, self-contained changes:
 **3d** adds the profiler and the total-RCCL-time print; **3e** adds the
 `.to` vs `.migrate` staging comparison. Each stands alone (neither references
 the other's variables), so you can apply either one, and in either order.
 
 ### 3d. Enable the profiler and print total RCCL time
 
-> Start a `torch.profiler` at the top of `train()` and stop it just before
-> `validate()`. The on-GPU time of the `nccl*` collective kernels is summed and
-> printed as `RCCL_TOTAL_MS` (~0 at 1 GPU, growing with GPU count). The `break`
-> from step 3b keeps the captured trace short.
+Start a `torch.profiler` at the top of `train()` and stop it just before
+`validate()`. The on-GPU time of the `nccl*` collective kernels is summed and
+printed as `RCCL_TOTAL_MS` (~0 at 1 GPU, growing with GPU count). The `break`
+from step 3b keeps the captured trace short.
 
 Start the profiler at the top of `train()`:
 
@@ -175,15 +197,18 @@ sed -i '/^def validate(/i\
 The MI300A is a true APU with a single address space. Many other GPUs emulate the single address
 space with managed memory that copies arrays from host to device and back when needed.
 
-> The migrate path (`STAGE=migrate`) aliases the batch instead of copying it; it
-> needs `COMMON_DIR` (for `zerocopy.Stager`), `HSA_XNACK=1`, and pageable
-> (non-pinned) host memory. When `STAGE` is unset these edits are inert, so the
-> plain scaling runs are unaffected.
+The migrate path (`STAGE=migrate`) aliases the batch instead of copying it; it
+needs `COMMON_DIR` in the `sys.path` to find `zerocopy.Stager`, `HSA_XNACK=1`, and pageable
+(non-pinned) host memory. When `STAGE` is unset these edits are inert, so the
+plain scaling runs are unaffected.
 
-Point `COMMON_DIR` at the shared helpers and enable XNACK:
+Point `COMMON_DIR` at the shared helpers and enable XNACK. Anchoring to the repo
+root makes the export work from any directory (the manual flow above leaves you
+in `imagenet_test`, two levels below `common/`, so a bare `../common` would not
+resolve):
 
 ```bash
-export COMMON_DIR="../common"
+export COMMON_DIR="$(git rev-parse --show-toplevel)/MLExamples/Pytorch/common"
 export HSA_XNACK=1
 ```
 
@@ -195,12 +220,6 @@ sed -i '/^    model.train()/a\
     if os.environ.get("STAGE") == "migrate":\
         import sys; sys.path.insert(0, os.environ["COMMON_DIR"]); from zerocopy import Stager\
         _stager = Stager(device, method="register")' main.py
-```
-
-register-migrate needs pageable (non-pinned) host memory:
-
-```bash
-sed -i 's/pin_memory=True/pin_memory=False/g' main.py
 ```
 
 Time the `host->device` staging, but only when `STAGE` is set (copy vs migrate):
@@ -225,37 +244,68 @@ sed -i '/^def validate(/i\
     getattr(args,"rank",0)<=0 and _stage_n and print(f"STAGE_MS_PER_STEP {_stage_ms/_stage_n:.4f} gpus={_ws2} stage={_stg}")' main.py
 ```
 
+### 3f. Make `pin_memory` graceful for the fallback path
+
+The `register` staging path needs **pageable** (non-pinned) host memory, because
+`hipHostRegister` fails on already-pinned buffers. But the plain `.to()` fallback
+(discrete GPU, `HSA_XNACK != 1`, or the extension failing to build) copies faster
+from **pinned** memory. So rather than forcing `pin_memory=False` unconditionally,
+gate it on whether the zero-copy `register` path is actually available -- exactly
+mirroring `Stager`'s own graceful fallback (`zerocopy.unified_memory_available()`).
+When `STAGE` is unset this is inert: `pin_memory` stays `True` (upstream behavior),
+so the plain scaling runs keep fast pinned copies.
+
+Inject the gate helper right after the imports:
+
+```bash
+sed -i '/^from torch.utils.data import Subset/a\
+def _zero_copy_active():\
+    """pin_memory gate: pageable only when the STAGE=migrate register path is live."""\
+    if os.environ.get("STAGE") != "migrate":\
+        return False\
+    try:\
+        import sys; sys.path.insert(0, os.environ["COMMON_DIR"]); from zerocopy import unified_memory_available\
+        return unified_memory_available()\
+    except Exception:\
+        return False' main.py
+```
+
+Use pageable buffers only when zero-copy is active, pinned otherwise:
+
+```bash
+sed -i 's/pin_memory=True/pin_memory=not _zero_copy_active()/g' main.py
+```
+
 ## 4. Warm the MIOpen cache (once per allocation)
 
-Notes:
-
-> MIOpen's default solver search can take **>10 minutes** cold for ResNet
-> convolutions. Set fast selection, then warm the cache by running the warmup script
-> or the **1-GPU `main.py` case** (the same run the sweep uses) for a few steps:
-> **Warm once per allocation.** A new `salloc`/`sbatch` gets a fresh job ID (and
-> thus a fresh empty cache). Warming single-process first matters: inside one
-> allocation all N ranks share that one cache dir, so a cold multi-rank run would
-> contend on the SQLite db; after warming, ranks just read it (with
-> `MIOPEN_FIND_MODE=FAST`).
+ MIOpen's default solver search can take **>10 minutes** cold for ResNet
+ convolutions. Set fast selection, then warm the cache by running the warmup script
+ or the **1-GPU `main.py` case** (the same run the sweep uses) for a few steps:
+ **Warm once per allocation.** A new `salloc`/`sbatch` gets a fresh job ID (and
+ thus a fresh empty cache). Warming single-process first matters: inside one
+ allocation all N ranks share that one cache dir, so a cold multi-rank run would
+ contend on the SQLite db; after warming, ranks just read it (with
+ `MIOPEN_FIND_MODE=FAST`).
 
 ```bash
 export MIOPEN_FIND_MODE=FAST
 ```
 
-> The pytorch module already sets `MIOPEN_USER_DB_PATH` / `MIOPEN_CUSTOM_CACHE_DIR`
-> at a stable per-allocation dir (e.g. /tmp/$USER/miopen-cache/jobs/<jobid>), so
-> DON'T override them -- just inherit them.  Create the directory
+The pytorch module on AAC6 already sets `MIOPEN_USER_DB_PATH` / `MIOPEN_CUSTOM_CACHE_DIR`
+at a stable per-allocation dir (e.g. /tmp/$USER/miopen-cache/jobs/<jobid>), so
+DON'T override them -- just inherit them.  Create the directory
 
 ```bash
 mkdir -p "$MIOPEN_USER_DB_PATH"
 ```
 
-> Suppress some warning noise
+Suppress some warning noise
 ```bash
 export MIOPEN_LOG_LEVEL=3
 export KINETO_LOG_LEVEL=3
 ```
 
+Then proceed to warm up the cache:
 ```bash
 HIP_VISIBLE_DEVICES=0  python -c "import torch,torchvision.models as M; \
    d=torch.device('cuda'); \
@@ -268,9 +318,9 @@ HIP_VISIBLE_DEVICES=0  python -c "import torch,torchvision.models as M; \
    print('warm done')"
 ```
 
-## 5. Run the scaling sweep (one line per GPU count)
+## 5. Run the scaling sweep (assumes an SPX partition)
 
-Run the benchmark once per GPU count by changing `HIP_VISIBLE_DEVICES`.
+Run the benchmark once per GPU count by changing `HIP_VISIBLE_DEVICES`:
 
 ```bash
 HIP_VISIBLE_DEVICES=0       python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
@@ -283,9 +333,8 @@ HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy --dist-url 'tcp:/
 
 ## 6. APU programming model (MI300A)
 
-> The MI300A APU has a unified memory and does not need to copy the data, just the pointer. Other GPUS can emulate APU behavior
->   Requires `HSA_XNACK 1` to be set. Set earlier in script
->   `.to` (copy) vs `.migrate` staging comparison (4 GPUs): compare `STAGE_MS_PER_STEP` in final report
+The MI300A APU has a unified memory and does not need to copy the data, just the pointer. Other GPUS can emulate APU behavior leveraging the APU programming model. The APU programming model requires `HSA_XNACK 1` to be set (you also need it on MI300A).
+We will compare `.to` (copy) vs `.migrate` staging looking at `STAGE_MS_PER_STEP` in the final report.
 
 - **Host-to-device staging time** — the per-step `images.to(device)` copy is
   wrapped in CUDA events and printed as `STAGE_MS_PER_STEP`, but **only when the
@@ -310,36 +359,29 @@ and `COMMON_DIR` pointing at [`../common`](../common) (both exported by
 and the two numbers will match.
 
 
-## 7. Measure RCCL time and compare `.to` vs `.migrate` staging
+## 7. Read the two numbers (RCCL time, staging)
 
-The [`main.py`](main.py) driver runs the sweep above **and** adds two extra
-numbers with a handful of small `sed` patches to the (freshly cloned) `main.py`.
-The patches are deliberately tiny so they are clear in a hands-on session:
+The scaling sweep (§5) and staging runs (§6) already wrote the logs; 
+read back the two instrumented numbers — `RCCL_TOTAL_MS` (the profiler from §3d)
+and `STAGE_MS_PER_STEP` (the staging timing from §3e/§6).
 
-- **Total RCCL time** — a `torch.profiler` is started at the top of `train()` and
-  stopped at the end; the on-GPU time of the `nccl*` collective kernels is summed
-  and printed as `RCCL_TOTAL_MS`. This is the total RCCL communication time for
-  the run (it is ~0 at 1 GPU, since there is no all-reduce, and grows with GPU
-  count).
-
-> Get the RCCL total time for each run sorted by the number of GPUs
+RCCL total time per run, sorted by GPU count (`run_<N>.log`):
 ```bash
 echo "=== RCCL total time (per GPU count) ==="
 grep -h RCCL_TOTAL_MS run_*.log | sort -t= -k2 -n
 ```
 
-> Scaling runs are run_<N>.log; staging runs are stage_{copy,migrate}.log, so a
-> grep keeps the two reports separate. Lines are self-describing (gpus=N).
+`.to` (copy) vs `.migrate` staging (`stage_{copy,migrate}.log`):
 ```bash
 echo "=== Host->device staging: .to (copy) vs .migrate ==="
 grep -h STAGE_MS_PER_STEP stage_*.log
 ```
 
-### 8. Calculating the performance
+## 8. Calculating the performance
 
 ```bash
 echo "=== Calculating the performance =="
-./images_per_sec.sh
+../images_per_sec.sh
 ```
 
 Stock upstream `main.py` prints periodic `Epoch:` progress lines that include the
@@ -433,98 +475,20 @@ communication behavior only appears once the rank count crosses physical APUs
 
 ## 11. Featured RCCL optimization: tune the all-reduce with environment variables
 
-The [`README_rccl_optimization.md`](README_rccl_optimization.md) exercises tune the
-RCCL all-reduce by editing `os.environ[...]` *inside* `main.py`, before
-`init_process_group`. You don't actually have to touch the source: because
-`--multiprocessing-distributed` launches the ranks with `mp.spawn`, every worker
-**inherits the shell environment**, and RCCL reads its `NCCL_*` settings when the
-communicator is built (at `init_process_group`). So exporting the variables in the
-shell is equivalent to the §2 in-code edits — with the bonus that you can sweep a
-value without re-editing the file.
+We have collected some tips and tricks on how to improve RCCL performance in
+[`README_rccl_optimization.md`](README_rccl_optimization.md). Those exercises are
+applied **by editing `main.py`**, and they come in three flavors: a bf16 gradient-compression hook (§1), `NCCL_*`
+transport/algorithm settings (§2), and DDP constructor knobs (§3).
 
-> This reuses the `RCCL_TOTAL_MS` instrumentation added in §3 and the warmed
-> MIOpen cache from §4. Run the 4-GPU case (`-b 512`) so there is an all-reduce to
-> tune (there is none at 1 GPU).
+## 12. Featured compute optimization: hands-on `main.py` edits
 
-### Most effective transport/algorithm (section 2)
-
-Pin the two settings that most affect the ResNet50 all-reduce on the coherent
-MI300A fabric:
-
-```bash
-export NCCL_ALGO=Tree     # 2a: latency-optimized; best once the all-reduce crosses APUs
-export NCCL_PROTO=LL128   # 2b: sweet spot for medium messages on high-bandwidth coherent links
-```
-
-### Vary the number of channels from 1 to 32 (section 2c)
-
-Force an exact channel count by setting the min and max to the same value, then
-sweep. More channels drive the copy with more compute units (higher effective
-bandwidth) until the fabric saturates:
-
-```bash
-for NCH in 1 2 4 8 16 32; do
-  NCCL_MIN_NCHANNELS=$NCH NCCL_MAX_NCHANNELS=$NCH \
-  HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy \
-    --dist-url 'tcp://127.0.0.1:23456' --dist-backend nccl \
-    --multiprocessing-distributed --world-size 1 --rank 0 -b 512 -p 20 --epochs 1 \
-    |& tee run_nch_${NCH}.log
-done
-```
-
-Report `RCCL_TOTAL_MS` for each channel count and pick the knee of the curve:
-
-```bash
-echo "=== RCCL total time by channel count ==="
-for NCH in 1 2 4 8 16 32; do
-  printf "channels=%-3s " "$NCH"; grep -h RCCL_TOTAL_MS run_nch_${NCH}.log | tail -1
-done
-```
-
-**Expect:** `RCCL_TOTAL_MS` falls as channels increase, then flattens (or ticks
-back up) once the fabric saturates — often around 8-16 channels on one APU. On a
-single MI300A the signal is small; the sweep is far more dramatic on the 12-/24-GPU
-`PPAC_MI300A_CPX` runs, where the all-reduce crosses physical APUs.
-
-### Stack the DDP overlap knobs (section 3)
-
-The §3 levers (`gradient_as_bucket_view`, `bucket_cap_mb`, `static_graph`) are DDP
-**constructor arguments**, not env vars, so they need a one-line edit. Apply the
-stacked "most effective" combination with the same `sed` style as §3:
-
-```bash
-sed -i 's/model = torch.nn.parallel.DistributedDataParallel(model, device_ids=\[args.gpu\])/model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], gradient_as_bucket_view=True, bucket_cap_mb=100, static_graph=True)/' main.py
-```
-
-With the env vars above still exported, rerun the 4-GPU baseline and watch the
-per-step `Time` drop as the all-reduce overlaps better with the backward pass
-(`RCCL_TOTAL_MS`, the bytes moved, stays about the same). Reset with
-`git checkout -- main.py` (then re-apply the §3 instrumentation) before moving on.
-
-## 12. Featured compute optimization: `torch.compile`
-
-From [`README_compute_optimization.md`](README_compute_optimization.md) §3a:
-`torch.compile` captures the model into a fused graph, cutting Python/launch
-overhead. Add it right after the model is wrapped in DDP (same `sed` style as §3):
-
-```bash
-sed -i '/model = torch.nn.parallel.DistributedDataParallel(model, device_ids=\[args.gpu\])/a\                model = torch.compile(model)' main.py
-```
-
-Rerun the single-GPU compute baseline and compare per-step `Time` against the
-un-compiled `run_1.log`:
-
-```bash
-HIP_VISIBLE_DEVICES=0 python main.py -a resnet50 --dummy \
-  --dist-url 'tcp://127.0.0.1:23456' --dist-backend nccl \
-  --multiprocessing-distributed --world-size 1 --rank 0 -b 128 -p 20 --epochs 1 |& tee run_compile.log
-```
-
-**Expect:** the **first** step is much slower (one-time compile), then per-step
-`Time` improves versus the un-compiled baseline. Try
-`torch.compile(model, mode="max-autotune")` for more aggressive tuning at a longer
-compile cost. Reset with `git checkout -- main.py` (then re-apply the §3
-instrumentation) before moving on.
+There are also some examples of how to speed up the per-GPU compute
+(ResNet50 forward/backward) in
+[`README_compute_optimization.md`](README_compute_optimization.md). Those exercises
+are applied **by editing `main.py`**, and they come in three flavors: lower-precision
+math (bf16 autocast, fp32 matmul precision, §1), memory layout & kernel selection
+(`channels_last`, `cudnn.benchmark`, §2), and kernel fusion / launch-overhead cuts
+(`torch.compile`, fused optimizer, §3).
 
 ## 13. Featured profiling exercise: a measured timeline of compute vs communication (4×MI300A)
 
@@ -633,14 +597,8 @@ Chrome/Perfetto trace when it stops (insert right after `_prof.stop()`):
     _prof.export_chrome_trace(f"torch_trace_rank{getattr(args,'rank',0)}.json")
 ```
 
-Run the standard 4-GPU case (§5); each of the four `mp.spawn` workers writes its
-own `torch_trace_rank{0..3}.json`:
-
-```bash
-HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy \
-  --dist-url 'tcp://127.0.0.1:23456' --dist-backend nccl \
-  --multiprocessing-distributed --world-size 1 --rank 0 -b 512 -p 20 --epochs 1
-```
+Run the standard 4-GPU case (§5, `run_4`); each of the four `mp.spawn` workers
+writes its own `torch_trace_rank{0..3}.json`.
 
 **View it graphically — no Perfetto module needed.** Perfetto is just a viewer:
 open [`https://ui.perfetto.org`](https://ui.perfetto.org) in a browser and load a
@@ -969,9 +927,8 @@ longer compile cost.
 
 ### 14.4 RCCL optimization: NCCL algorithm / protocol / channels (4 GPUs, b=512)
 
-`RCCL_TOTAL_MS` is the summed on-GPU time of the `nccl*` collective kernels over
-the run (lower is better). In each phase only the swept knob is set; the others
-stay at their NCCL defaults (§14.6).
+`RCCL_TOTAL_MS` (defined in §3d/§7; lower is better). In each phase only the swept
+knob is set; the others stay at their NCCL defaults (§14.6).
 
 **Algorithm** (protocol + channels = default):
 
