@@ -475,46 +475,10 @@ communication behavior only appears once the rank count crosses physical APUs
 
 ## 11. Featured RCCL optimization: tune the all-reduce with environment variables
 
-Full rationale and the by-hand `main.py` edits live in
-[`README_rccl_optimization.md`](README_rccl_optimization.md) §2-§3. The point worth
-repeating here: you don't have to edit the source at all. Because
-`--multiprocessing-distributed` launches ranks with `mp.spawn`, every worker
-**inherits the shell environment**, and RCCL reads its `NCCL_*` settings when the
-communicator is built. So exporting the variables is equivalent to the in-code
-edits — and lets you sweep a value without re-editing the file.
-
-> Reuses the `RCCL_TOTAL_MS` instrumentation from §3 and the warmed MIOpen cache
-> from §4. Run the 4-GPU case (`-b 512`) so there is an all-reduce to tune.
-
-The two settings that matter most (README_rccl §2a/§2b):
-
-```bash
-export NCCL_ALGO=Tree     # latency-optimized once the all-reduce crosses APUs
-export NCCL_PROTO=LL128   # sweet spot for medium messages on coherent links
-```
-
-Sweep the channel count (README_rccl §2c) — the export form makes this a one-liner
-loop with no source edits:
-
-```bash
-for NCH in 1 2 4 8 16 32; do
-  NCCL_MIN_NCHANNELS=$NCH NCCL_MAX_NCHANNELS=$NCH \
-  HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy \
-    --dist-url 'tcp://127.0.0.1:23456' --dist-backend nccl \
-    --multiprocessing-distributed --world-size 1 --rank 0 -b 512 -p 20 --epochs 1 \
-    |& tee run_nch_${NCH}.log
-done
-echo "=== RCCL total time by channel count ==="
-for NCH in 1 2 4 8 16 32; do
-  printf "channels=%-3s " "$NCH"; grep -h RCCL_TOTAL_MS run_nch_${NCH}.log | tail -1
-done
-```
-
-**Expect:** `RCCL_TOTAL_MS` falls as channels increase, then flattens once the
-fabric saturates (often ~8-16 channels on one APU). The signal is small on a single
-MI300A and far more dramatic on the 12-/24-GPU `PPAC_MI300A_CPX` runs. The DDP
-overlap knobs (`gradient_as_bucket_view`, `bucket_cap_mb`, `static_graph`) are DDP
-constructor arguments, not env vars — see README_rccl §3 for that edit.
+We have collected some tips and tricks on how to improve RCCL performance in
+[`README_rccl_optimization.md`](README_rccl_optimization.md). Those exercises are
+applied **by editing `main.py`**, and they come in three flavors: a bf16 gradient-compression hook (§1), `NCCL_*`
+transport/algorithm settings (§2), and DDP constructor knobs (§3).
 
 ## 12. Featured compute optimization: `torch.compile`
 
