@@ -45,8 +45,8 @@ salloc -p PPAC_MI300A_CPX -N1 --gpus=4 -t 00:40:00
 salloc -p SH5_MI300A_CPX  -N1 --gpus=4 -t 00:40:00
 ```
 
-> CPX partitions carve one APU's 128 GB HBM into 6 (~21 GB each), so if you hit an
-> OOM on CPX, drop the per-GPU batch size (e.g. `-b 128`).
+CPX partitions carve one APU's 128 GB HBM into 6 (~21 GB each), so if you hit an
+OOM on CPX, drop the per-GPU batch size (e.g. `-b 128`).
 
 > **Optional — CPU/GPU affinity.** To bind each rank to the cores nearest its GPU,
 > add task/affinity flags to the allocation (or to `srun`):
@@ -63,8 +63,8 @@ salloc -p SH5_MI300A_CPX  -N1 --gpus=4 -t 00:40:00
 > `mpirun` (§13.4), which do their own binding, so there the Slurm flags are only
 > advisory.
 
-> Set up virtual environment to avod scattering python packages across system
->    and for more repeatability
+Set up virtual environment to avod scattering python packages across system
+and for more repeatability
 
 Check `uv` is installed by doing `which uv`. If not, install it and then do:
 ```bash
@@ -74,8 +74,8 @@ uv venv --system-site-packages
 source .venv/bin/activate
 ```
 
-> Use pre-installed module versions to avoid downloading large wheels.
-> uv pip install -r requirements.txt # installs nvidia packages, so skip
+Use pre-installed module versions to avoid downloading large wheels.
+`uv pip install -r requirements.txt` installs nvidia packages, so we skip it.
 
 The command below will load the default version of ROCm, make sure it matches the one you intend to use:
 ```bash
@@ -300,7 +300,7 @@ HIP_VISIBLE_DEVICES=0  python -c "import torch,torchvision.models as M; \
 
 ## 5. Run the scaling sweep (one line per GPU count)
 
-Run the benchmark once per GPU count by changing `HIP_VISIBLE_DEVICES`.
+Run the benchmark once per GPU count by changing `HIP_VISIBLE_DEVICES`:
 
 ```bash
 HIP_VISIBLE_DEVICES=0       python main.py -a resnet50 --dummy --dist-url 'tcp://127.0.0.1:23456' \
@@ -313,9 +313,8 @@ HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy --dist-url 'tcp:/
 
 ## 6. APU programming model (MI300A)
 
-> The MI300A APU has a unified memory and does not need to copy the data, just the pointer. Other GPUS can emulate APU behavior
->   Requires `HSA_XNACK 1` to be set. Set earlier in script
->   `.to` (copy) vs `.migrate` staging comparison (4 GPUs): compare `STAGE_MS_PER_STEP` in final report
+The MI300A APU has a unified memory and does not need to copy the data, just the pointer. Other GPUS can emulate APU behavior leveraging the APU programming model. The APU programming model requires `HSA_XNACK 1` to be set (you also need it on MI300A).
+We will compare `.to` (copy) vs `.migrate` staging looking at `STAGE_MS_PER_STEP` in the final report.
 
 - **Host-to-device staging time** — the per-step `images.to(device)` copy is
   wrapped in CUDA events and printed as `STAGE_MS_PER_STEP`, but **only when the
