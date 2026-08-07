@@ -1,48 +1,34 @@
 # Compute optimization exercises (hands-on `main.py` edits)
 
-A set of small, self-contained exercises for speeding up the **per-GPU compute**
-of the upstream PyTorch imagenet example (ResNet50 forward/backward). As with the
-[RCCL exercises](README_rccl_optimization.md), you apply every change **by hand in
-`main.py`** so you can see where each optimization lives and copy the pattern into
-your own workload.
+Here we present a set of small, self-contained tips for speeding up the **per-GPU
+compute** of the upstream PyTorch imagenet example (ResNet50 forward/backward). You will apply every change
+**by hand in `main.py`** so you can see exactly where each optimization lives and
+copy the same pattern into your own workload as needed.
 
-These target *compute*, not communication, so the exercises use a **single-GPU**
-baseline — that isolates kernel/precision/overhead effects from the RCCL
-all-reduce. (Once you've picked the fast compute settings, rerun the multi-GPU
-scaling sweep in [`README.md`](README.md) to see the combined effect.)
-
-> Keep it simple: do one edit, rerun the **same** baseline command, compare the
-> per-step time, then move on. Undo an edit before the next unless a section says
-> to stack them.
+These build on the scaling study in [`README.md`](README.md), but target *compute*,
+not communication, so the exercises use a **single-GPU** baseline — that isolates
+kernel/precision/overhead effects from the RCCL all-reduce. Once you've picked the
+fast compute settings, rerun the multi-GPU scaling sweep in [`README.md`](README.md)
+to see the combined effect.
 
 ---
 
-## Setup: make `main.py` editable and measurable
+## Setup
 
-Inside your allocation, with the PyTorch module loaded and the MIOpen cache warmed
-(see [`README.md`](README.md) §2-3):
+These exercises assume you have already worked through **§1-8 of
+[`README.md`](README.md)**. If not, please go through those steps and come back.
 
-```bash
-git clone --depth=1 https://github.com/pytorch/examples.git
-cd examples/imagenet
-```
-
-Keep each run short — find `data_time.update(time.time() - end)` in the training
-loop of `train()` and add a break right after it:
-
-```python
-        # measure data loading time
-        data_time.update(time.time() - end)
-        if i >= 100: break
-```
-
-### Baseline command (reuse this for every exercise)
+### Baseline command (reuse this to assess the impact of each tip)
 
 ```bash
 HIP_VISIBLE_DEVICES=0 python main.py -a resnet50 --dummy \
   --dist-url 'tcp://127.0.0.1:23456' --dist-backend nccl \
   --multiprocessing-distributed --world-size 1 --rank 0 -b 128 -p 20 --epochs 1
 ```
+
+We suggest you keep it simple: do one edit, rerun the **same** baseline command,
+compare the per-step time, then move to the next. Undo an edit before the next one
+unless a section says to stack them, so you can isolate each contribution.
 
 Watch the **`Time`** value in the `Epoch:` lines — the average per-step time (lower
 is better). Throughput is roughly **img/s = 128 / Time**. Optionally watch memory
@@ -220,9 +206,6 @@ compute.
 | 2b `cudnn.benchmark` | top of `main_worker()` | `Time` ↓ after warm-up |
 | 3a `torch.compile` | after `DistributedDataParallel(...)` | `Time` ↓ (slow 1st step) |
 | 3b fused optimizer | SGD args + `zero_grad` in loop | `Time` (small) |
-
-**Reset between exercises:** undo your edit, or `git checkout -- main.py` (this
-also removes the Setup break, so re-add it afterward).
 
 **Apply to your own workload:** the portable patterns are the autocast context
 around your forward/loss (1a), the `channels_last` conversion of model + inputs

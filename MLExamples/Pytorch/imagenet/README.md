@@ -38,7 +38,7 @@ communication cost.
 9. [Cleanup](#9-cleanup)
 10. [Run on CPX partitions (`SH5_MI300A_CPX`, `PPAC_MI300A_CPX`)](#10-run-on-cpx-partitions-sh5_mi300a_cpx-ppac_mi300a_cpx)
 11. [Featured RCCL optimization: tune the all-reduce with environment variables](#11-featured-rccl-optimization-tune-the-all-reduce-with-environment-variables)
-12. [Featured compute optimization: `torch.compile`](#12-featured-compute-optimization-torchcompile)
+12. [Featured compute optimization: hands-on `main.py` edits](#12-featured-compute-optimization-hands-on-mainpy-edits)
 13. [Featured profiling exercise: a measured timeline of compute vs communication (4×MI300A)](#13-featured-profiling-exercise-a-measured-timeline-of-compute-vs-communication-4mi300a)
 14. [Batch-driven optimization studies and measured performance impacts](#14-batch-driven-optimization-studies-and-measured-performance-impacts)
 15. [Featured profiling tool: roofline extractor (per-kernel compute vs. memory)](#15-featured-profiling-tool-roofline-extractor-per-kernel-compute-vs-memory)
@@ -480,23 +480,15 @@ We have collected some tips and tricks on how to improve RCCL performance in
 applied **by editing `main.py`**, and they come in three flavors: a bf16 gradient-compression hook (§1), `NCCL_*`
 transport/algorithm settings (§2), and DDP constructor knobs (§3).
 
-## 12. Featured compute optimization: `torch.compile`
+## 12. Featured compute optimization: hands-on `main.py` edits
 
-The full compute-optimization curriculum (bf16 autocast, `channels_last`,
-`cudnn.benchmark`, fused optimizer, `torch.compile`) is in
-[`README_compute_optimization.md`](README_compute_optimization.md). The featured
-one: `torch.compile` captures the model into a fused graph, cutting Python/launch
-overhead. Add it right after the DDP wrap (same `sed` style as §3):
-
-```bash
-sed -i '/model = torch.nn.parallel.DistributedDataParallel(model, device_ids=\[args.gpu\])/a\                model = torch.compile(model)' main.py
-```
-
-Rerun the §5 single-GPU baseline with the edit applied (tee to `run_compile.log`)
-and compare per-step `Time` against `run_1.log`.
-
-**Expect:** the first step is much slower (one-time compile), then per-step `Time`
-improves. Reset with `git checkout -- main.py` (then re-apply §3) before moving on.
+There are also some examples of how to speed up the per-GPU compute
+(ResNet50 forward/backward) in
+[`README_compute_optimization.md`](README_compute_optimization.md). Those exercises
+are applied **by editing `main.py`**, and they come in three flavors: lower-precision
+math (bf16 autocast, fp32 matmul precision, §1), memory layout & kernel selection
+(`channels_last`, `cudnn.benchmark`, §2), and kernel fusion / launch-overhead cuts
+(`torch.compile`, fused optimizer, §3).
 
 ## 13. Featured profiling exercise: a measured timeline of compute vs communication (4×MI300A)
 
