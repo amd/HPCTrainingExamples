@@ -13,6 +13,7 @@ allocation).
 ## 1. Counter summary + hotspots
 
 ```bash
+salloc --nodes=1 --ntasks=4 --cpus-per-task=1 --time=00:15:00   # 4 cores → one per rank, uncontended counters
 cd CG-CPU && make CXXFLAGS="-O3 -g -std=c++17"   # -g for symbol resolution
 # Per-rank counter summary (IPC + cache behaviour), one file per rank:
 mpirun -n 4 bash -c 'perf stat -o perf_r${OMPI_COMM_WORLD_RANK}.txt \
@@ -22,6 +23,10 @@ mpirun -n 4 bash -c 'perf stat -o perf_r${OMPI_COMM_WORLD_RANK}.txt \
 mpirun -n 1 perf record -g -o perf.data ./cg_cpu src/Dubcova2.pm 12345
 perf report -i perf.data        # interactive TUI; or `perf annotate` for source+asm
 ```
+
+> The `12345` is the RHS seed (or set `CG_SEED=12345`), which fixes the random
+> right-hand side so the iteration count — and therefore the absolute cycle/instruction
+> totals — are reproducible run-to-run. Without it `cg_cpu` seeds from `time(NULL)`.
 
 Verified single-rank on MI300A (`perf stat`):
 

@@ -8,7 +8,7 @@
 # =============================================================================
 
 CXX      = mpicxx
-CXXFLAGS = -O3 -std=c++17
+CXXFLAGS = -g -O3 -std=c++17
 INCLUDES = -Isrc
 
 TARGET = cg_cpu

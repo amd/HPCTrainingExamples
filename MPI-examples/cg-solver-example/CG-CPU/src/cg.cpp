@@ -123,8 +123,23 @@ int main(int argc, char* argv[])
     std::vector<double> b(A.local_rows);
     std::vector<double> res;
 
+    // Random seed for the RHS.  For reproducible runs (identical system across
+    // invocations) fix the base seed via the CG_SEED env var or argv[2];
+    // otherwise fall back to a time-based seed.
+    unsigned int base_seed;
+    const char* seed_env = getenv("CG_SEED");
+    if (seed_env && *seed_env)
+        base_seed = (unsigned int)strtoul(seed_env, nullptr, 10);
+    else if (argc > 2)
+        base_seed = (unsigned int)strtoul(argv[2], nullptr, 10);
+    else
+        base_seed = (unsigned int)time(NULL);
+    if (rank == 0)
+        printf("RHS seed: %u  (%s)\n", base_seed,
+               (seed_env && *seed_env) ? "CG_SEED" : (argc > 2 ? "argv[2]" : "time-based"));
+
     // Set b to random values, x to 0
-    srand(time(NULL) + rank);
+    srand(base_seed + rank);
     std::generate(x.begin(), x.end(), 
             [&](){ return (double)(rand()) / RAND_MAX; });
     spmv(1.0, A, x, 0.0, b);
