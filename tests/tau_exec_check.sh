@@ -72,6 +72,14 @@ if [[ -z "$CRAYPE_VERSION" && ! -f /etc/cray-release ]]; then
 fi
 module load tau
 
+# The TAU modulefile sets TAU_PROFILE_FORMAT=merged (requested by the TAU
+# author) so interactive users get a single tauprofile.xml instead of many
+# profile.<node>.<ctx>.<thread> files. The pprof post-processing below (and the
+# "profile.0" file the TAU_Profile_Check looks for) only understands the
+# per-rank/thread profile.* text format, so this check requests that format for
+# its own scratch run. The user-facing default (merged) is left untouched.
+export TAU_PROFILE_FORMAT=profile
+
 export TAU_PROFILE=${TAU_PROFILE}
 export TAU_TRACE=${TAU_TRACE}
 
