@@ -473,14 +473,59 @@ math (bf16 autocast, fp32 matmul precision, §1), memory layout & kernel selecti
 (`torch.compile`, fused optimizer, §3).
 
 <a id="sec-profiling-exercise"></a>
-## 11. Featured profiling exercise: a measured timeline of compute vs communication (4×MI300A)
+## 11. Featured profiling exercise: a measured timeline of compute vs communication
 
-This hands-on exercise captures a **real GPU timeline** of the 4-GPU run and reads
-the **compute vs. communication** story straight off it. Both `torch.profiler` and
-**TAU** record every GPU kernel with a timestamp, so the **compute** kernels
-(`Conv`/`GEMM`/batchnorm from forward & backward) and the **RCCL all-reduce**
-kernels (`ncclDevKernel*`) fall into visually distinct bands — the same split that the [two-numbers readout](#sec-read-numbers)
+In this section, we will look at how to profile our workload to measure the time taken for
+communication and computation. Note that as before we are assuming we are on an SPX node with 4 MI300A APUs.
+We will be using both `torch.profiler` and
+**TAU** to record every GPU kernel with a timestamp, so the **compute** kernels
+(Conv/GEMM/batchnorm from forward & backward) and the **RCCL all-reduce**
+kernels (ncclDevKernel) fall into visually distinct bands — the same split that the [two-numbers readout](#sec-read-numbers)
 measures numerically as `RCCL_TOTAL_MS`, now laid out in time across all four ranks.
+
+<a id="sec-prof-torch"></a>
+### 11.1 `torch.profiler`
+
+We begin by considering the profiling output produced by `torch.profiler`: this will be displayed next as Chrome traces as well as Perfetto traces (using JSON files).
+
+First, add `matplotlib` to your environment:
+```
+uv pip install matplotlib
+```
+
+Then, modify the `main.py` to make profiling faster by shortening the run to ~20 steps so the trace stays small:
+
+```bash
+sed -i 's/if i >= 100: break/if i >= 20: break/' main.py
+```
+
+and write per-rank Chrome/Perfetto traces when the profiler stops:
+
+```bash
+sed -i '/^    _prof.stop()/a\
+    _rk = getattr(args, "rank", 0)\
+    _prof.export_chrome_trace(f"torch_trace_rank{_rk}.json")' main.py
+```
+
+Next, we run to produce the profiling output:
+
+```bash
+OUT_DIR="${SLURM_SUBMIT_DIR:-$PWD}"
+HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy \
+  --dist-url 'tcp://127.0.0.1:23456' --dist-backend nccl \
+  --multiprocessing-distributed --world-size 1 --rank 0 -b 512 -p 20 --epochs 1 \
+  |& tee "${OUT_DIR}/capture_run_torch.log"
+```
+
+Then merge the per-rank torch traces into ONE 4-lane Perfetto trace (Chrome JSON, gzipped):
+
+```bash
+mkdir -p "${OUT_DIR}/traces"
+cp -f torch_trace_rank*.json "${OUT_DIR}/traces/" 2>/dev/null
+python3 "${OUT_DIR}/profiling/merge_perfetto.py" \
+  --glob 'torch_trace_rank*.json' \
+  --out "${OUT_DIR}/traces/imagenet_4gpu.perfetto.json.gz"
+```
 
 The figure below is **measured on 4×MI300A (`PPAC_MI300A_SPX`)** — one lane per
 GPU, blue = compute, orange = the RCCL all-reduce, white = idle (data-loader /
@@ -492,10 +537,14 @@ Read it like this:
 
 - **Per-step structure** — each blue block is a step's forward+backward compute,
   ended by an orange RCCL all-reduce of the gradients.
-- **Exposed communication** — on the leader (GPU 0) the all-reduce is thin, but on
-  GPU 1-3 it widens into long orange blocks: those ranks finish compute early and
-  **spin-wait inside `ncclDevKernel`** for the collective to complete. This exposed,
-  imbalanced all-reduce is exactly what the [RCCL optimizations](#sec-rccl-opt)
+- **Exposed communication** — the long orange blocks are a rank stuck inside
+  `ncclDevKernel`, **spin-waiting** for the all-reduce to complete. In this run
+  **GPU 0** has the longest orange stretches — notably the ~125 ms block spanning
+  ~38,720-38,840 ms — because it finishes its compute earliest and then waits on the
+  slower ranks, which are still busy with compute (blue) or briefly idle (white).
+  Which rank waits longest is set by the per-step compute imbalance, not by being
+  rank 0. This exposed, imbalanced all-reduce is exactly what the
+  [RCCL optimizations](#sec-rccl-opt)
   (`NCCL_ALGO`/channels, `gradient_as_bucket_view`, `bucket_cap_mb`, `static_graph`)
   attack — the timeline makes the cost visible, not just the `RCCL_TOTAL_MS` number.
 - **Gaps between steps** = per-step overhead (Python / launch / dummy data-loader),
@@ -556,7 +605,6 @@ python3 profiling/render_timeline.py --glob 'profiling/traces/torch_trace_rank*.
 
 The rest of this section breaks the job into the manual steps for a hands-on run.
 
-<a id="sec-prof-alloc"></a>
 ### 11.2 Get a 4-GPU SPX allocation
 
 ```bash
