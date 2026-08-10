@@ -34,8 +34,15 @@ submit() {
     # submit <subdir> <script> [extra sbatch args...]
     local subdir="$1"; shift
     local script="$1"; shift
-    ( cd "${EXAMPLES_TOP}/${subdir}" && sbatch "$@" "${script}" ) \
-        | grep -oE '[0-9]+' | tail -1
+    local out id
+    out="$( cd "${EXAMPLES_TOP}/${subdir}" && sbatch --parsable "$@" "${script}" )" || return 1
+    # --parsable prints "<jobid>", or "<jobid>;<cluster>" on a federation.
+    id="${out%%;*}"
+    if [[ ! "${id}" =~ ^[0-9]+$ ]]; then
+        echo "ERROR: could not parse a job id from sbatch: ${out}" >&2
+        return 1
+    fi
+    printf '%s\n' "${id}"
 }
 
 echo "Submitting from ${EXAMPLES_TOP}"

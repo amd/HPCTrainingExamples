@@ -1,7 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=rpc-single-noprofile
-# Charge account and partition come from SBATCH_ACCOUNT / SBATCH_PARTITION,
-# which env.sh exports from local.env (#SBATCH lines cannot expand variables).
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8

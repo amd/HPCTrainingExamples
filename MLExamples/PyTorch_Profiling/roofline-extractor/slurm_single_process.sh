@@ -1,7 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name=roofline-single
-# Charge account and partition come from SBATCH_ACCOUNT / SBATCH_PARTITION,
-# which env.sh exports from local.env (#SBATCH lines cannot expand variables).
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
@@ -53,8 +51,10 @@ RE_DIR=${SCRIPT_DIR}/rooflineExtractor
 if [ ! -d ${RE_DIR} ]; then
     echo "rooflineExtractor not pre-staged; cloning (requires internet on this node)"
     git clone https://github.com/AMD-HPC/rooflineExtractor.git ${RE_DIR}
-    python3 -m pip install -r ${RE_DIR}/requirements.txt
 fi
+# Where install_rocm_pytorch.sh already installed these, pip resolves every
+# requirement as satisfied and makes no network request.
+python3 -m pip install -r ${RE_DIR}/requirements.txt
 
 # Distributed bootstrap variables expected by train_cifar_100.py (single rank).
 export NPROCS=1

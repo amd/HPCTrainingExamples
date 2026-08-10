@@ -30,9 +30,13 @@ PARTITION="${PARTITION:-}"
 # --account/--partition, since #SBATCH directives cannot expand variables.
 if [[ -n "${PROJECT}" ]]; then
     export SBATCH_ACCOUNT="${PROJECT}"
+else
+    unset SBATCH_ACCOUNT
 fi
 if [[ -n "${PARTITION}" ]]; then
     export SBATCH_PARTITION="${PARTITION}"
+else
+    unset SBATCH_PARTITION
 fi
 
 # --- storage ---------------------------------------------------------------
