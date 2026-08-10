@@ -66,6 +66,14 @@ if [ $? -eq 1 ]; then
 fi
 
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
+
+# Version-sorted comparison so two-digit majors (10.x, 11.x, ...) order
+# correctly. The old `awk '$1>6.2.9'` compared version strings lexically, so
+# "10.1.0" tested as LESS THAN "6.2.9" and the ROCm-era tool names
+# (rocprof-sys) were never selected -- the script then called the retired
+# omnitrace-* commands, which do not exist in ROCm >= 10.
+ver_gt() { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -n1)" = "$1" ]; }
+
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 pushd ${REPO_DIR}/HIP/Stream_Overlap/0-Orig/
 BUILD_DIR=$(mktemp -d $PWD/build_XXXXXX)
@@ -73,11 +81,11 @@ cd ${BUILD_DIR}
 cmake ../
 make -j
 
-result=`echo ${ROCM_VERSION} | awk '$1>6.1.2'` && echo $result
+result=""; ver_gt "${ROCM_VERSION}" 6.1.2 && result="${ROCM_VERSION}"; echo $result
 if [[ "${result}" ]]; then
    TOOL_ORIGIN="ROCm"
 fi
-result=`echo ${ROCM_VERSION} | awk '$1>6.2.9'` && echo $result
+result=""; ver_gt "${ROCM_VERSION}" 6.2.9 && result="${ROCM_VERSION}"; echo $result
 if [[ "${result}" ]]; then
    TOOL_NAME="rocprofiler-systems"
    TOOL_COMMAND="rocprof-sys"

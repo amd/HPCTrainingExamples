@@ -121,6 +121,11 @@ fi
 WORKDIR=$(mktemp -d)
 export PROFILEDIR="${WORKDIR}"
 export TAU_PROFILE=1
+# The tau modulefile defaults TAU_PROFILE_FORMAT=merged (single tauprofile.xml,
+# requested by the TAU author). pprof below only reads the per-rank/thread
+# profile.* text format, so request it for this check's scratch run; the users'
+# merged default is unaffected.
+export TAU_PROFILE_FORMAT=profile
 trap 'cd /; rm -rf "${WORKDIR}"' EXIT
 cd "${WORKDIR}" || exit 1
 

@@ -72,6 +72,14 @@ if [[ -z "$CRAYPE_VERSION" && ! -f /etc/cray-release ]]; then
 fi
 module load tau
 
+# The TAU modulefile sets TAU_PROFILE_FORMAT=merged (requested by the TAU
+# author) so interactive users get a single tauprofile.xml instead of many
+# profile.<node>.<ctx>.<thread> files. The pprof post-processing below (and the
+# "profile.0" file the TAU_Profile_Check looks for) only understands the
+# per-rank/thread profile.* text format, so this check requests that format for
+# its own scratch run. The user-facing default (merged) is left untouched.
+export TAU_PROFILE_FORMAT=profile
+
 export TAU_PROFILE=${TAU_PROFILE}
 export TAU_TRACE=${TAU_TRACE}
 
@@ -82,7 +90,14 @@ cd ${WORKDIR}
 make
 
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
-result=`echo ${ROCM_VERSION} | awk '$1>6.1.9'` && echo $result
+
+# Version-sorted comparison so two-digit majors (10.x, 11.x, ...) order
+# correctly. The old `awk '$1>6.1.9'` compared version strings lexically, so
+# "10.1.0" tested as LESS THAN "6.1.9" and the else-branch selected the retired
+# `-T rocm,roctracer,rocprofiler` binding (removed in ROCm >= 10 in favour of
+# rocprofiler-sdk), yielding "No matching binding".
+ver_gt() { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -n1)" = "$1" ]; }
+result=""; ver_gt "${ROCM_VERSION}" 6.1.9 && result="${ROCM_VERSION}"; echo $result
 
 # MPI launcher: use the launcher that MATCHES the MPI the binary was linked
 # against. This Jacobi is built by its Makefile with mpic++/mpicc from whatever
