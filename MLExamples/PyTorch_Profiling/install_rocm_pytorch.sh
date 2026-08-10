@@ -104,7 +104,7 @@ sed -e "s#@MODULE_NAME@#${MODULE_NAME}#g" \
     -e "s#@GPU_ARCH@#${GPU_ARCH}#g" \
     -e "s#@VENV@#${VENV}#g" \
     -e "s#@DEVEL@#${DEVEL}#g" \
-    "${OVERLAY_DIR}/modulefiles/${MODULE_NAME}/TEMPLATE.lua" > "${MODFILE}"
+    "${OVERLAY_DIR}/modulefiles/TEMPLATE.lua" > "${MODFILE}"
 echo "Wrote modulefile: ${MODFILE}"
 echo "  ( module use ${MODULEROOT} && module load ${MODULE_NAME}/${MODULE_VERSION} )"
 
