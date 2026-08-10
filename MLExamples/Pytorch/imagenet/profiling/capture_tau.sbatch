@@ -34,11 +34,12 @@ cd "${WORK_DIR}" || exit 1
 uv init imagenet_test >/dev/null 2>&1
 cd imagenet_test || exit 1
 uv venv --system-site-packages
-source .venv/bin/activate
 
 module load rocm openmpi pytorch
 module load tau || { echo "ERROR: tau module failed to load"; exit 1; }
 command -v tau_exec >/dev/null 2>&1 || { echo "ERROR: tau_exec not on PATH"; exit 1; }
+# Activate AFTER module load so .venv/bin is first on PATH (module load prepends its own python).
+source .venv/bin/activate
 
 export MIOPEN_FIND_MODE=${MIOPEN_FIND_MODE:-FAST}
 export MIOPEN_LOG_LEVEL=3

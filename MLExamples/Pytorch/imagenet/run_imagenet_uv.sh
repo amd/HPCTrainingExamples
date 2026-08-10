@@ -18,9 +18,10 @@ cp ${BASE_DIR}/* .
 uv init imagenet_test
 cd imagenet_test
 uv venv --system-site-packages
-source .venv/bin/activate
 # Use pre-installed module versions to avoid downloading large wheels.
 module load rocm openmpi pytorch
+# Activate AFTER module load so .venv/bin is first on PATH (module load prepends its own python).
+source .venv/bin/activate
 
 # Get example and copy to current working directory
 git clone --depth=1 https://github.com/pytorch/examples.git ./pytorch_examples

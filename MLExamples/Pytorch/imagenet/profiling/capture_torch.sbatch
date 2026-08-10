@@ -36,11 +36,13 @@ cd "${WORK_DIR}" || exit 1
 uv init imagenet_test >/dev/null 2>&1
 cd imagenet_test || exit 1
 uv venv --system-site-packages
-source .venv/bin/activate
 
 # Match run_imagenet_uv.sbatch: use the default rocm (and pytorch) so the profiled
 # run reflects the tutorial's actual software stack.
 module load rocm openmpi pytorch
+# Activate AFTER module load so .venv/bin is first on PATH (module load prepends its own
+# python); otherwise the venv's matplotlib below is shadowed and the render fails.
+source .venv/bin/activate
 
 # The system matplotlib is built against NumPy 1.x but the pytorch module ships
 # NumPy 2.x, which crashes on import. Install a NumPy-2-compatible matplotlib into

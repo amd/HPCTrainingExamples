@@ -35,8 +35,9 @@ cp ${BASE_DIR}/* .
 uv init imagenet_test
 cd imagenet_test
 uv venv --system-site-packages
-source .venv/bin/activate
 module load rocm openmpi pytorch
+# Activate AFTER module load so .venv/bin is first on PATH (module load prepends its own python).
+source .venv/bin/activate
 
 git clone --depth=1 https://github.com/pytorch/examples.git ./pytorch_examples
 cp pytorch_examples/imagenet/* .
