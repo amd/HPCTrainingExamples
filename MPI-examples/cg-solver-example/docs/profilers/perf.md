@@ -115,15 +115,29 @@ perf report -i perf.data        # interactive TUI; or `perf annotate` for source
 ## 2. Viewing the results remotely
 
 `perf report`/`perf annotate` are terminal (TUI) tools — they work over plain SSH,
-no graphical session needed. For a **flame graph** of the hotspots:
+no graphical session needed. For a **flame graph** of the hotspots you need Brendan
+Gregg's FlameGraph scripts (`stackcollapse-perf.pl` / `flamegraph.pl`), which are
+*not* part of `perf`. Clone them once and add them to your `PATH`:
+
+```bash
+git clone --depth 1 https://github.com/brendangregg/FlameGraph.git
+export PATH="$PWD/FlameGraph:$PATH"
+```
+
+Then build the SVG:
 
 ```bash
 perf script -i perf.data | stackcollapse-perf.pl | flamegraph.pl > cg_cpu_flame.svg
 ```
 
-View the SVG in a graphical session:
+> If you'd rather not touch `PATH`, call the scripts by their full path, e.g.
+> `perf script -i perf.data | ./FlameGraph/stackcollapse-perf.pl | ./FlameGraph/flamegraph.pl > cg_cpu_flame.svg`.
+> The scripts are plain Perl, so `perl` is the only dependency.
 
-[Flame Graph](figs/cg_cpu_flame.svg)
+The result looks like this (click to open the full, interactive SVG — search and
+click-to-zoom work when opened directly in a browser):
+
+[![Flame Graph](figs/cg_cpu_flame.svg)](figs/cg_cpu_flame.svg)
 
 To get your own image of the graphic on the HPC system, use the following graphical session tools.
 
