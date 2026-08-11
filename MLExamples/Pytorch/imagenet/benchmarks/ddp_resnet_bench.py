@@ -176,7 +176,7 @@ def main():
                    help="set NCCL_PROTO before init (e.g. Simple, LL, LL128)")
     p.add_argument("--nccl-min-nchannels", default=None,
                    help="set NCCL_MIN_NCHANNELS before init (e.g. 8)")
-    # --- DDP knobs (see ../README_rccl_optimization.md, Section 3) ---
+    # --- DDP knobs (see ../README_rccl_optimization.md) ---
     p.add_argument("--grad-as-bucket-view", action="store_true",
                    help="DDP gradient_as_bucket_view=True (skip a gradient copy)")
     p.add_argument("--bucket-cap-mb", type=int, default=None,

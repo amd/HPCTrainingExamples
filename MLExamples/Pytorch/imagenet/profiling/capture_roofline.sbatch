@@ -8,7 +8,7 @@
 #SBATCH --output=capture_roofline-%j.out
 #SBATCH --error=capture_roofline-%j.out
 #
-# Capture a REAL per-kernel roofline for README section 15 using the system
+# Capture a REAL per-kernel roofline for the README's roofline section using the system
 # roofline-extractor module (by Andrew Chisolm / Noah Wolfe).
 #
 # A roofline is a per-kernel / per-GPU compute analysis, so this profiles a

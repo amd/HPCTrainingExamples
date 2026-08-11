@@ -525,18 +525,22 @@ HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy \
 ```
 
 We can now create a figure with `matplotlib` to show the duration of communication and compute for each
-of the 4 GPUs involved in the run:
-```
-python3 "../profiling/render_timeline.py" \
-  --out "$PWD/figs/timeline_4gpu.png" \
-  --glob 'torch_trace_rank*.json'
+of the 4 GPUs involved in the run. `render_timeline.py` reads the **per-rank** traces
+directly (one lane per rank) — no merge step is needed here (`merge_perfetto.py` is only
+for the Perfetto UI):
+```bash
+# run from imagenet_test (where torch_trace_rank*.json were written)
+IMAGENET=$(git rev-parse --show-toplevel)/MLExamples/Pytorch/imagenet
+python3 "$IMAGENET/profiling/render_timeline.py" \
+  --glob 'torch_trace_rank*.json' \
+  --out "$IMAGENET/figs/timeline_4gpu.png"
 ```
 
 An example of such a figure is reported below:
 
 ![Measured 4×MI300A GPU timeline (torch.profiler): compute (blue) vs RCCL all-reduce (orange), ~700 ms steady-state window](figs/timeline_4gpu.png)
 
-Regarding the legend, blue = compute, orange = the RCCL all-reduce, white = idle (data-loader / Python between steps).
+Regarding the legend: blue = compute, orange = the RCCL all-reduce, white = idle (data-loader / Python between steps).
 The data in the figure tells the following story:
 
 - **Per-step structure** — each blue block is a step's forward+backward compute,
@@ -565,48 +569,27 @@ python3 ../profiling/merge_perfetto.py \
   --out traces/imagenet_4gpu.perfetto.json.gz
 ```
 
-From your browser of choice, open [`https://ui.perfetto.org`](https://ui.perfetto.org) and load a
+From your browser of choice, open [`https://ui.perfetto.dev`](https://ui.perfetto.dev) and load a
 `torch_trace_rank*.json` (one GPU), or the merged
 `imagenet_4gpu.perfetto.json.gz` (all four GPUs as lanes).
-The merged trace opens in the Perfetto UI as four GPU process lanesi, see example below. Within each
-GPU, the compute stream (`Thread 1`, running `DistributedDataParallel.forward` and
+The merged trace opens in the Perfetto UI as four GPU process lanes, see example picture below:
+
+![Merged 4-GPU torch.profiler trace in the Perfetto UI: per-GPU compute stream (Thread 1) vs the RCCL nccl:all_reduce / ncclDevKernel stream (Thread 4)](figs/perfetto_4gpu.png)
+
+Within each GPU, the compute stream (`Thread 1`, running `DistributedDataParallel.forward` and
 the colored conv/GEMM kernels) is separate from the RCCL stream (`Thread 4`), where
 the `nccl:broadcast` at startup and the periodic `nccl:all_reduce` →
 `ncclDevKernel_Generic` slices are the communication:
 
-![Merged 4-GPU torch.profiler trace in the Perfetto UI: per-GPU compute stream (Thread 1) vs the RCCL nccl:all_reduce / ncclDevKernel stream (Thread 4)](figs/perfetto_4gpu.png)
-
-
-> | Figure | Tool it comes from | How it was produced |
-> |---|---|---|
-> | [`figs/tau_profile_4gpu.png`](figs/tau_profile_4gpu.png) ([Path B (TAU)](#sec-prof-tau)) | **TAU** ParaProf profile | A 4-rank `mpirun -n 4 tau_exec` run ([`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch)); `pprof` dumps the per-rank GPU-kernel profile, and [`profiling/render_tau_profile.py`](profiling/render_tau_profile.py) draws a two-panel **compute-imbalance / exposed-communication-wait** chart headlessly (no ParaProf GUI/Java). |
->
-> last is from the **TAU** capture ([Path B (TAU)](#sec-prof-tau)) — the ParaProf profile rendered
-> headlessly as a compute-imbalance / communication-wait chart.
-
-<a id="sec-prof-oneshot"></a>
 ### 11.2 `torch.profiler` automated flow
 
-The whole `torch.profiler` pipeline — capture, merge the per-rank traces, drop the
-raw traces, and render this PNG **headlessly** (no X server, browser, or Java) — is
-one batch job. (The TAU path is a separate job, `profiling/capture_tau.sbatch`; see
-[Path B (TAU)](#sec-prof-tau).)
+The whole `torch.profiler` pipeline (capture, merge the per-rank traces, drop the
+raw traces, and render the `matplotlib` PNG) can be carried out submitting a sbatch script from the imagenet directory:
 
 ```bash
-sbatch profiling/capture_torch.sbatch         # 4-GPU PPAC_MI300A_SPX, ~6 min
+cd "$(git rev-parse --show-toplevel)/MLExamples/Pytorch/imagenet"
+sbatch profiling/capture_torch.sbatch         # it considers a 4-APU SPX node on AAC6, partition PPAC_MI300A_SPX
 ```
-
-It produces:
-
-- `figs/timeline_4gpu.png` — the committed figure above (rendered by
-  [`profiling/render_timeline.py`](profiling/render_timeline.py) with matplotlib's
-  `Agg` backend).
-- `profiling/traces/torch_trace_rank{0..3}.json` — per-rank `torch.profiler` traces
-  in **Chrome/Perfetto Trace Event format** (valid Perfetto input; ~60 MB each).
-- `profiling/traces/imagenet_4gpu.perfetto.json.gz` — those four merged into **one
-  4-lane Perfetto trace** (GPU 0-3 as separate process lanes), gzipped to ~1.5 MB —
-  the easy file to download and open in the Perfetto UI (built by
-  [`profiling/merge_perfetto.py`](profiling/merge_perfetto.py)).
 
 (TAU's ParaProf profile comes from the separate `capture_tau.sbatch`; see [Path B (TAU)](#sec-prof-tau).)
 
@@ -617,21 +600,20 @@ It produces:
 
 
 <a id="sec-prof-tau"></a>
-### 11.4 Path B — TAU (`tau_exec`) → ParaProf profile
+### 11.3 `TAU` manual flow 
 
-TAU intercepts ROCm via `LD_PRELOAD` (**no source edit**). Unlike Path A, TAU wants
-**distinct MPI ranks**, so instead of the README's single `mp.spawn` launch, run
-**one process per GPU** with `mpirun -n 4` — that gives TAU a proper 4-rank profile
-instead of collapsing every worker onto node 0. A tiny per-rank wrapper pins one
-MI300A APU per rank and starts the launched (non-spawn) path; on ROCm > 6.1.9 use the
-`rocprofsdk` configuration:
+Unlike `torch.profiler`, TAU wants
+distinct MPI ranks, so we will
+run one process per GPU with `mpirun -n 4` to give TAU a proper 4-rank profile
+together with a tiny per-rank wrapper (`tau_wrapper.sh`) that pins a single
+MI300A APU per rank: the four ranks will be each pinned to their own APU.
 
 ```bash
+module load tau                  # adds tau_exec / pprof (on top of rocm openmpi pytorch from setup)
 export TAU_PROFILE=1
 export PROFILEDIR=$PWD/tau_trace
 mkdir -p tau_trace
 
-# One APU per rank; OMPI_COMM_WORLD_* is set per rank by mpirun.
 cat > tau_wrapper.sh <<'EOF'
 #!/bin/bash
 export HIP_VISIBLE_DEVICES=${OMPI_COMM_WORLD_LOCAL_RANK}
@@ -641,36 +623,44 @@ exec python main.py -a resnet50 --dummy \
   --gpu 0 -b 512 -p 20 --epochs 1
 EOF
 chmod +x tau_wrapper.sh
-
-mpirun -n 4 --map-by numa --bind-to numa --report-bindings \
-  tau_exec -T rocm,rocprofsdk -rocm ./tau_wrapper.sh
 ```
 
-> **OpenMPI binding note:** under `mpirun`, per-rank core placement comes from
-> OpenMPI's `--map-by numa --bind-to numa` (one rank per MI300A APU, matching
-> `HIP_VISIBLE_DEVICES=local_rank`), **not** Slurm's `--cpus-per-task`; add
-> `--report-bindings` to confirm rank *i* landed on APU *i*. This is exactly the
-> command [`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch) runs.
+For ROCm > 6.1.9, we supply for TAU the `rocprofsdk` option instead of the separate
+`rocprofiler` and `roctracer` options. Run the 4-rank capture — TAU writes one
+`profile.*` per rank into `$PROFILEDIR` (`tau_trace`):
 
-Merge the per-rank profiles, then inspect the flat per-rank compute/comm profile:
+```bash
+mpirun -n 4 --map-by numa --bind-to numa --report-bindings \
+  tau_exec -T rocm,rocprofsdk -rocm ./tau_wrapper.sh
+
+ls tau_trace/profile.*     # sanity: four per-rank profiles must exist before pprof
+```
+
+
+> **Binding note** The GPU is pinned by the
+> wrapper (`HIP_VISIBLE_DEVICES=${OMPI_COMM_WORLD_LOCAL_RANK}`, so rank *i* → GPU *i*).
+> The CPU/core placement is what `mpirun --map-by numa --bind-to numa` controls:
+> each rank is bound to one NUMA domain's cores.
+> Since each MI300A APU is its own NUMA node (its GPU + its cores), these two align so
+> rank *i* runs on APU *i*'s cores *and* its GPU; add `--report-bindings` to print the
+> per-rank core mask and confirm. 
+
+Dump the per-rank profile as text, then let's produce a figure we can analyze:
 
 ```bash
 cd tau_trace
-pprof            # text per-rank profile (exclusive time per GPU kernel)
-paraprof &       # GUI per-rank profile browser
+pprof -a > tau_pprof.txt          # per-rank profile as text; -a keeps the per-rank detail the renderer needs
+IMAGENET=$(git rev-parse --show-toplevel)/MLExamples/Pytorch/imagenet
+python3 "$IMAGENET/profiling/render_tau_profile.py" tau_pprof.txt \
+  --out "$IMAGENET/figs/tau_profile_4gpu.png"
 ```
 
-(`paraprof` is a Java app; `java` is available on AAC6 — see [headless viewing](#sec-prof-nodisplay) for running it
-on a desktop.)
-
-> For a Perfetto timeline use the `torch.profiler` Chrome JSON from Path A.
-
-**The TAU profile (ParaProf) below is real measured data from a 4-rank
-`mpirun -n 4 tau_exec` run** ([`profiling/capture_tau.sbatch`](profiling/capture_tau.sbatch),
-node `ppac-pl1-s24-26`). The `pprof` per-rank breakdown separates the RCCL all-reduce
-(`[ROCm Kernel] ncclDevKernel_Generic`) from the ResNet-50 compute kernels
-(conv / GEMM / batch-norm / elementwise), which we render as two panels — **compute
-imbalance** (left) and **exposed communication wait** (right):
+In the image below, the `pprof` per-rank breakdown splits each rank's GPU-kernel
+time into two buckets — the RCCL all-reduce (`[ROCm Kernel] ncclDevKernel*`) and the
+ResNet-50 compute kernels (conv / GEMM / batch-norm / elementwise) — which we render as
+two panels: **compute imbalance** (left: per-rank compute time, whose fastest→slowest
+spread is the load imbalance) and **exposed communication wait** (right: per-rank time
+*inside* the all-reduce, i.e. spin-wait for the slowest rank):
 
 ![TAU ParaProf two-panel per-rank GPU-kernel breakdown on MI300A: panel A stacks ResNet-50 compute (blue) plus exposed RCCL all-reduce wait (orange) per rank with the compute-imbalance band; panel B shows the per-rank ncclDevKernel all-reduce wait and its imbalance](figs/tau_profile_4gpu.png)
 
@@ -685,15 +675,17 @@ Read it as the two costs a real tuning exercise would chase:
   compute; its cross-rank spread (**1.72 s**) is the exposed, imbalanced all-reduce the
   [RCCL optimizations](#sec-rccl-opt) attack.
 
-> The figure above is rendered **headlessly from the ParaProf profile** with
-> [`profiling/render_tau_profile.py`](profiling/render_tau_profile.py) (no Java,
-> ParaProf GUI, or display needed):
->
-> ```bash
-> pprof -s > profiling/tau/tau_pprof.txt        # dump per-rank profile as text
-> python3 profiling/render_tau_profile.py profiling/tau/tau_pprof.txt \
->     --out figs/tau_profile_4gpu.png
-> ```
+<a id="sec-prof-tau-auto"></a>
+### 11.4 `TAU` automated flow
+
+The whole `TAU` pipeline (capture with `mpirun -n 4 tau_exec`, dump the per-rank
+`pprof` text, and render the `matplotlib` PNG headlessly — no Java, ParaProf GUI, or
+display needed) can be carried out submitting a sbatch script from the imagenet directory:
+
+```bash
+cd "$(git rev-parse --show-toplevel)/MLExamples/Pytorch/imagenet"
+sbatch profiling/capture_tau.sbatch           # it considers a 4-APU SPX node on AAC6, partition PPAC_MI300A_SPX
+```
 
 <a id="sec-prof-nodisplay"></a>
 ### 11.5 Viewing without a local display
@@ -701,12 +693,12 @@ Read it as the two costs a real tuning exercise would chase:
 The capture job **always drops the raw traces** to `profiling/traces/`, so if you
 can't open a browser on the node you can download and view them yourself:
 
-- **No Perfetto module is required** — `ui.perfetto.org` runs entirely in your
+- **No Perfetto module is required** — `ui.perfetto.dev` runs entirely in your
   browser. Copy the merged trace to your laptop and open it there:
 
 ```bash
 scp <you>@aac6.amd.com:.../imagenet/profiling/traces/imagenet_4gpu.perfetto.json.gz .
-# then drag it into https://ui.perfetto.org
+# then drag it into https://ui.perfetto.dev
 # (merged 4-GPU trace is ~1.5 MB; the per-rank torch_trace_rank*.json are ~60 MB each)
 ```
 
@@ -714,7 +706,7 @@ scp <you>@aac6.amd.com:.../imagenet/profiling/traces/imagenet_4gpu.perfetto.json
   `man aac6_novnc` (browser), `man aac6_x11` (`ssh -X`).
 
 > The committed figures always come from the reliable headless matplotlib render;
-> the Perfetto view is a manual screenshot of the merged trace in `ui.perfetto.org`.
+> the Perfetto view is a manual screenshot of the merged trace in `ui.perfetto.dev`.
 > An optional helper [`profiling/perfetto_shot.py`](profiling/perfetto_shot.py) can
 > automate that screenshot **where a browser is available** (it needs Playwright +
 > a bundled Chromium download), e.g. on a login/desktop node — it is intentionally
@@ -745,7 +737,7 @@ unset TAU_PROFILE PROFILEDIR
 <a id="sec-prof-novnc"></a>
 ### 11.7 Create a noVNC desktop (view GUIs like ParaProf/Perfetto in the browser)
 
-Some tools (ParaProf, ParaView, or just a browser for `ui.perfetto.org`) need a
+Some tools (ParaProf, ParaView, or just a browser for `ui.perfetto.dev`) need a
 graphical desktop. noVNC gives you the compute node's XFCE desktop **in your local
 browser** — no VNC client install — proxied through the control node's nginx (TLS +
 TOTP). Full details are in `man aac6_novnc` and `man aac6_vnc`; the short version:
@@ -790,7 +782,7 @@ https://localhost:6443/novnc/<node name>/vnc.html
 
 A signed session cookie is issued, so you only log in once per 24-hour browser
 session. From the desktop you can launch `paraprof &` on the TAU `profile.*`, open a
-browser on `ui.perfetto.org`, or run any other GUI tool.
+browser on `ui.perfetto.dev`, or run any other GUI tool.
 
 **Navigating the XFCE desktop (a few hints):**
 

@@ -2,7 +2,7 @@
 """Render the per-rank compute-imbalance / communication-wait figure from TAU.
 
 Fully headless (matplotlib 'Agg') -- no Java, ParaProf, or X server needed.
-Input is the output of `pprof -s` (see profiling/tau/tau_pprof.txt), which lists,
+Input is the output of `pprof -a` (see profiling/tau/tau_pprof.txt), which lists,
 per NODE;CONTEXT;THREAD, the exclusive time of every GPU kernel. We aggregate the
 GPU-device kernels ("[ROCm Kernel] ...") per rank (NODE) and split them into:
   * communication : RCCL/NCCL collectives (ncclDevKernel*)

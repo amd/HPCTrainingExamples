@@ -17,7 +17,7 @@
 # Artifacts are written to a PERSISTENT dir (profiling/tau/), not the /tmp work dir:
 #   profile.* + tau_pprof.txt      ParaProf profile (+ text summary)
 #
-# The ParaProf profile is what README section 13.4 uses: it drives the headless
+# The ParaProf profile is what the README's TAU profiling section uses: it drives the headless
 # compute-imbalance / communication-wait figure (profiling/render_tau_profile.py ->
 # figs/tau_profile_4gpu.png).
 #
@@ -40,6 +40,9 @@ module load tau || { echo "ERROR: tau module failed to load"; exit 1; }
 command -v tau_exec >/dev/null 2>&1 || { echo "ERROR: tau_exec not on PATH"; exit 1; }
 # Activate AFTER module load so .venv/bin is first on PATH (module load prepends its own python).
 source .venv/bin/activate
+
+# matplotlib for the headless figure render at the end (NumPy-2-compatible, into the venv).
+uv pip install --quiet matplotlib || echo "WARN: matplotlib install failed (render may fail)"
 
 export MIOPEN_FIND_MODE=${MIOPEN_FIND_MODE:-FAST}
 export MIOPEN_LOG_LEVEL=3
@@ -97,9 +100,14 @@ ls -la
 # ParaProf profile: profile.* files are already here from TAU_PROFILE=1.
 pprof -a > tau_pprof.txt 2>/dev/null && echo "pprof text summary -> ${TAU_OUT}/tau_pprof.txt" || echo "WARN: pprof failed"
 
+# Render the headless compute-imbalance / comm-wait figure into the repo figs dir.
+echo "=== Render TAU figure -> figs/tau_profile_4gpu.png ==="
+mkdir -p "${OUT_DIR}/figs"
+python3 "${OUT_DIR}/profiling/render_tau_profile.py" "${TAU_OUT}/tau_pprof.txt" \
+  --out "${OUT_DIR}/figs/tau_profile_4gpu.png" || echo "WARN: TAU render failed"
+
 echo "=== DONE. TAU artifacts: ==="
 ls -la "${TAU_OUT}"
-echo "View: 'paraprof' on profile.* (GUI; see README 13.7 for VNC),"
-echo "      or render the headless compute-imbalance / comm-wait figure with:"
-echo "      python3 profiling/render_tau_profile.py ${TAU_OUT}/tau_pprof.txt --out figs/tau_profile_4gpu.png"
+echo "Figure: ${OUT_DIR}/figs/tau_profile_4gpu.png"
+echo "Raw profile: 'paraprof' on profile.* (GUI; see the README's remote-GUI/VNC notes)."
 deactivate 2>/dev/null || true

@@ -5,7 +5,7 @@ Each input JSON is one rank (a valid Chrome/Perfetto Trace Event file). We remap
 every event's pid to the rank index so Perfetto shows one process lane per GPU,
 keep only the GPU-side slices (device kernels, GPU annotations, memcpy) to stay
 small, and emit a single gzipped {"traceEvents":[...]} that loads directly in
-https://ui.perfetto.org.
+https://ui.perfetto.dev.
 
 Usage:
   merge_perfetto.py --out traces/imagenet_4gpu.perfetto.json.gz \
