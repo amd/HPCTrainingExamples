@@ -155,7 +155,7 @@ sed -i '/world_size=args.world_size, rank=args.rank)/a\        import atexit as 
 ```
 
 <a id="sec-edit-break"></a>
-### 3b) Keep the demo (and the profiler trace) short.
+### 3b. Keep the demo (and the profiler trace) short.
 
 This shortens the demo to 100 iterations for quicker runs and to accomodate more users.
 
@@ -165,7 +165,7 @@ sed -i '/^        data_time.update(time.time() - end)/a\
 ```
 
 <a id="sec-edit-peakmem"></a>
-### 3c) Add GPU peak memory instrumentation
+### 3c. Add GPU peak memory instrumentation
 
 Understanding how much memory is being used relative to the available memory
 is important in optimizing a job.
@@ -629,8 +629,8 @@ sed -i '/^        data_time.update(time.time() - end)/a\
 Unlike `torch.profiler`, TAU wants
 distinct MPI ranks, so we will
 run one process per GPU with `mpirun -n 4` to give TAU a proper 4-rank profile
-together with a tiny per-rank wrapper (`tau_wrapper.sh`) that pins a single
-MI300A APU per rank: the four ranks will be each pinned to their own APU:
+together with a tiny per-rank wrapper (`tau_wrapper.sh`) that pins one
+MI300A APU per rank, so each of the four ranks runs on its own APU:
 ```
 cat > tau_wrapper.sh <<'EOF'
 #!/bin/bash
@@ -660,7 +660,7 @@ ls tau_trace/profile.*     # sanity: per-rank profiles must exist before pprof
 > `tau_exec_launch --np 4 --mode comm --outdir tau_trace -- ./tau_wrapper.sh`.
 
 
-> **Binding note** The GPU is pinned by the
+> **Binding note.** The GPU is pinned by the
 > wrapper (`HIP_VISIBLE_DEVICES=${OMPI_COMM_WORLD_LOCAL_RANK}`, so rank *i* → GPU *i*).
 > The CPU/core placement is what `mpirun --map-by numa --bind-to numa` controls:
 > each rank is bound to one NUMA domain's cores.
@@ -678,32 +678,38 @@ python3 "$IMAGENET/profiling/render_tau_profile.py" tau_pprof.txt \
   --out "$IMAGENET/figs/tau_profile_4gpu.png"
 ```
 
-In the image below, the `pprof` per-rank breakdown splits each rank's GPU-kernel
-time into two buckets — the RCCL all-reduce (`ncclDevKernel`) and the
-ResNet-50 compute kernels (conv / GEMM / batch-norm / elementwise) — which we render as
-two panels: compute imbalance (left: per-rank compute time, whose fastest→slowest
-spread is the load imbalance) and exposed communication wait (right: per-rank time
-inside the all-reduce, i.e. spin-wait for the slowest rank):
+The `pprof -a` per-rank breakdown splits each rank's GPU-kernel exclusive time into two
+buckets — the RCCL all-reduce (`ncclDevKernel`) and the ResNet-50 compute kernels
+(conv / GEMM / batch-norm / elementwise). We render this as one stacked bar per rank
+(blue = compute, orange = all-reduce), with a shaded band spanning the fastest→slowest
+rank's compute:
 
-![TAU ParaProf two-panel per-rank GPU-kernel breakdown on MI300A: panel A stacks ResNet-50 compute (blue) plus exposed RCCL all-reduce wait (orange) per rank with the compute-imbalance band; panel B shows the per-rank ncclDevKernel all-reduce wait and its imbalance](figs/tau_profile_4gpu.png)
+![TAU ParaProf per-rank GPU-kernel breakdown on MI300A: one stacked bar per rank, blue ResNet-50 compute plus orange RCCL all-reduce, with a band marking the compute spread across ranks](figs/tau_profile_4gpu.png)
 
-Read it as the two costs a real tuning exercise would chase:
+How to read it:
 
-- **Compute imbalance (panel A):** per-rank GPU compute ranges 3.65 s (rank 0) to
-  4.70 s (rank 2) — a **1.05 s spread (22 % of max)**. Ranks that finish compute early
-  then wait for the stragglers.
-- **Exposed communication wait (panel B):** exclusive RCCL all-reduce time ranges
-  **0.61 s (rank 3) to 2.33 s (rank 1)** — 11.6 % to 34.3 % of each rank's GPU time.
-  That is the busy-wait a rank spends inside `ncclDevKernel` while others finish
-  compute; its cross-rank spread (**1.72 s**) is the exposed, imbalanced all-reduce the
-  [RCCL optimizations](#sec-rccl-opt) attack.
+- **Compute (blue).** Per-rank GPU compute ranges 3.65 s (rank 0) to 4.70 s (rank 2) —
+  a 1.05 s spread (22 % of max). All four ranks run the identical ResNet-50 on identical
+  MI300A APUs with the same dummy batch, so there is no genuine per-rank load imbalance:
+  this modest spread is run-to-run scheduling and measurement variation, not an
+  algorithmic straggler.
+- **All-reduce (orange).** Exclusive `ncclDevKernel` time is 0.61–2.33 s — 12 % to 34 %
+  of each rank's GPU time. This is a *synchronizing* collective, so the number blends the
+  actual reduction with time blocked waiting on peers; the two cannot be separated from
+  this profile, and here the per-rank values do not track the compute spread, so do not
+  read them as "waiting for the slowest compute rank".
+
+The takeaway is the **communication fraction** — 12–34 % of per-rank GPU time goes to the
+all-reduce — which is what the [RCCL optimizations](#sec-rccl-opt) target. To quantify the
+true collective cost (as opposed to exposed wait), measure achieved bandwidth with
+`rccl-tests` or inspect compute/comm overlap in the Perfetto timeline.
 
 <a id="sec-prof-tau-auto"></a>
 ### 11.4 `TAU` automated flow
 
 The whole `TAU` pipeline (capture with `mpirun -n 4 tau_exec`, dump the per-rank
 `pprof` text, and render the `matplotlib` PNG headlessly — no Java, ParaProf GUI, or
-display needed) can be carried out submitting a sbatch script from the imagenet directory:
+display needed) can be carried out by submitting an sbatch script from the imagenet directory:
 
 ```bash
 cd "$(git rev-parse --show-toplevel)/MLExamples/Pytorch/imagenet"
@@ -854,7 +860,7 @@ drill into the per-kernel breakdown — the RCCL all-reduce
 batch-norm / elementwise compute. Select `ncclDevKernel_Generic` and open its
 per-rank **Bar Chart** to see the communication-wait imbalance directly; the main
 stacked-bar window (with mean / std-dev) shows the compute imbalance. That is the same
-data the headless two-panel [`figs/tau_profile_4gpu.png`](figs/tau_profile_4gpu.png)
+data the headless single-panel [`figs/tau_profile_4gpu.png`](figs/tau_profile_4gpu.png)
 ([Path B (TAU)](#sec-prof-tau)) is rendered from — ParaProf just lets you explore it interactively.
 
 > **Shut down in order** (`man aac6_vnc`): close the noVNC browser **tab first**,
