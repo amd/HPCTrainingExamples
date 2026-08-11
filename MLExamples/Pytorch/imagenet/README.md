@@ -602,22 +602,38 @@ sbatch profiling/capture_torch.sbatch         # it considers a 4-APU SPX node on
 <a id="sec-prof-tau"></a>
 ### 11.3 `TAU` manual flow 
 
-Unlike `torch.profiler`, TAU wants
-distinct MPI ranks, so we will
-run one process per GPU with `mpirun -n 4` to give TAU a proper 4-rank profile
-together with a tiny per-rank wrapper (`tau_wrapper.sh`) that pins a single
-MI300A APU per rank: the four ranks will be each pinned to their own APU.
-
-```bash
+Let's begin setting up for TAU:
+```
 module load tau                  # adds tau_exec / pprof (on top of rocm openmpi pytorch from setup)
 export TAU_PROFILE=1
 export PROFILEDIR=$PWD/tau_trace
 mkdir -p tau_trace
+```
 
+**IMPORTANT**: TAU's rocprofsdk and torch.profiler (Kineto) both claim the ROCm profiler
+ interface, so if main.py still has the torch.profiler edits, TAU attaches to nothing
+ and writes NO profile.* files. We will build a clean `main_tau.py` from the upstream clone with
+ only the teardown + short-run edits (no torch.profiler):
+```bash
+# Re-fetch a pristine upstream main.py if the clone from setup isn't present, so this
+# never depends on your edited ./main.py (and survives a Cleanup that removed it):
+[ -f pytorch_examples/imagenet/main.py ] || git clone --depth=1 https://github.com/pytorch/examples.git pytorch_examples
+cp pytorch_examples/imagenet/main.py main_tau.py
+sed -i '/world_size=args.world_size, rank=args.rank)/a\        import atexit as _ax, torch.distributed as _d; _ax.register(lambda: _d.destroy_process_group() if _d.is_initialized() else None)' main_tau.py
+sed -i '/^        data_time.update(time.time() - end)/a\
+        if i >= 20: break' main_tau.py
+```
+
+Unlike `torch.profiler`, TAU wants
+distinct MPI ranks, so we will
+run one process per GPU with `mpirun -n 4` to give TAU a proper 4-rank profile
+together with a tiny per-rank wrapper (`tau_wrapper.sh`) that pins a single
+MI300A APU per rank: the four ranks will be each pinned to their own APU:
+```
 cat > tau_wrapper.sh <<'EOF'
 #!/bin/bash
 export HIP_VISIBLE_DEVICES=${OMPI_COMM_WORLD_LOCAL_RANK}
-exec python main.py -a resnet50 --dummy \
+exec python main_tau.py -a resnet50 --dummy \
   --dist-url 'tcp://127.0.0.1:23457' --dist-backend nccl \
   --world-size ${OMPI_COMM_WORLD_SIZE} --rank ${OMPI_COMM_WORLD_RANK} \
   --gpu 0 -b 512 -p 20 --epochs 1
