@@ -584,7 +584,7 @@ the `nccl:broadcast` at startup and the periodic `nccl:all_reduce` →
 ### 11.2 `torch.profiler` automated flow
 
 The whole `torch.profiler` pipeline (capture, merge the per-rank traces, drop the
-raw traces, and render the `matplotlib` PNG) can be carried out submitting a sbatch script from the imagenet directory:
+raw traces, and render the `matplotlib` PNG) can be carried out by submitting an sbatch script from the imagenet directory:
 
 ```bash
 cd "$(git rev-parse --show-toplevel)/MLExamples/Pytorch/imagenet"
@@ -592,6 +592,15 @@ sbatch profiling/capture_torch.sbatch         # it considers a 4-APU SPX node on
 ```
 
 (TAU's ParaProf profile comes from the separate `capture_tau.sbatch`; see [Path B (TAU)](#sec-prof-tau).)
+
+The job also drops the raw per-rank traces and the merged Perfetto trace under
+`profiling/traces/`, so with no local display you can `scp` them to your laptop and open
+the merged trace in `ui.perfetto.dev` exactly as in the [manual flow](#sec-prof-torch)
+above; for GUI viewers (ParaProf) or an on-node browser, use the
+[noVNC desktop](#sec-prof-novnc). The committed PNGs come from the headless `matplotlib`
+render, while the Perfetto view is a manual screenshot — optionally automated by
+[`profiling/perfetto_shot.py`](profiling/perfetto_shot.py) where a browser is available
+(Playwright + Chromium), which the capture job does not run.
 
 > **Perfetto only ingests** Perfetto protobuf (`.pftrace`/`.pb`) or Chrome JSON
 > Trace Event format (`{"traceEvents":[...]}` or a bare event array). The
@@ -716,33 +725,8 @@ cd "$(git rev-parse --show-toplevel)/MLExamples/Pytorch/imagenet"
 sbatch profiling/capture_tau.sbatch           # it considers a 4-APU SPX node on AAC6, partition PPAC_MI300A_SPX
 ```
 
-<a id="sec-prof-nodisplay"></a>
-### 11.5 Viewing without a local display
-
-The capture job **always drops the raw traces** to `profiling/traces/`, so if you
-can't open a browser on the node you can download and view them yourself:
-
-- **No Perfetto module is required** — `ui.perfetto.dev` runs entirely in your
-  browser. Copy the merged trace to your laptop and open it there:
-
-```bash
-scp <you>@aac6.amd.com:.../imagenet/profiling/traces/imagenet_4gpu.perfetto.json.gz .
-# then drag it into https://ui.perfetto.dev
-# (merged 4-GPU trace is ~1.5 MB; the per-rank torch_trace_rank*.json are ~60 MB each)
-```
-
-- Or use a cluster desktop and open the browser there: `man aac6_vnc` (TurboVNC),
-  `man aac6_novnc` (browser), `man aac6_x11` (`ssh -X`).
-
-> The committed figures always come from the reliable headless matplotlib render;
-> the Perfetto view is a manual screenshot of the merged trace in `ui.perfetto.dev`.
-> An optional helper [`profiling/perfetto_shot.py`](profiling/perfetto_shot.py) can
-> automate that screenshot **where a browser is available** (it needs Playwright +
-> a bundled Chromium download), e.g. on a login/desktop node — it is intentionally
-> **not** run by the capture job, since the compute nodes lack Chromium.
-
 <a id="sec-prof-closeloop"></a>
-### 11.6 Close the loop with the optimizations
+### 11.5 Close the loop with the optimizations
 
 Re-capture after applying the featured optimizations and compare:
 
@@ -764,7 +748,7 @@ unset TAU_PROFILE PROFILEDIR
 > and TAU/HPCToolkit) see [`profiling/PROFILING.md`](profiling/PROFILING.md).
 
 <a id="sec-prof-novnc"></a>
-### 11.7 Create a noVNC desktop (view GUIs like ParaProf/Perfetto in the browser)
+### 11.6 Create a noVNC desktop (view GUIs like ParaProf/Perfetto in the browser)
 
 Some tools (ParaProf, ParaView, or just a browser for `ui.perfetto.dev`) need a
 graphical desktop. noVNC gives you the compute node's XFCE desktop **in your local
@@ -831,37 +815,20 @@ browser on `ui.perfetto.dev`, or run any other GUI tool.
 - **Files:** your `$HOME` on the cluster is shared, so `profiling/tau/`, `figs/`, etc.
   are the same paths you see over SSH.
 
-**Run TAU and open its profile in the desktop.** Open a terminal inside the XFCE
-desktop (Applications → *Terminal Emulator*, or right-click the desktop → *Open
-Terminal Here*), then load the modules and either reuse or capture a TAU profile:
+**Open a TAU profile in the desktop.** In a desktop terminal (Applications →
+*Terminal Emulator*, or right-click the desktop → *Open Terminal Here*), capture or
+reuse a profile as in the [TAU manual flow](#sec-prof-tau) / [automated flow](#sec-prof-tau-auto),
+then from its `profile.*` directory (`profiling/tau/`) launch the GUI browser:
 
 ```bash
-cd <path-to>/HPCTrainingExamples/MLExamples/Pytorch/imagenet
-module load rocm openmpi pytorch tau
-
-# (a) Reuse profiles already captured by [Path B (TAU)](#sec-prof-tau) / capture_tau.sbatch — they live in
-#     profiling/tau/ (persistent), copied out of the job's /tmp work dir:
 cd profiling/tau
-
-# (b) …or capture a fresh 4-rank profile now (from within your allocation):
-#     sbatch profiling/capture_tau.sbatch    # then: cd profiling/tau
+paraprof &       # GUI profile browser (needs the desktop); `pprof` gives the text summary
 ```
 
-With the `profile.*` files in the current directory, view them two ways:
-
-```bash
-pprof            # text summary: exclusive time per GPU kernel, per rank
-paraprof &       # GUI profile browser (needs the desktop)
-```
-
-In ParaProf, the main window shows one bar per rank; double-click a rank (thread) to
-drill into the per-kernel breakdown — the RCCL all-reduce
-(`[ROCm Kernel] ncclDevKernel_Generic`) versus the ResNet-50 conv / GEMM /
-batch-norm / elementwise compute. Select `ncclDevKernel_Generic` and open its
-per-rank **Bar Chart** to see the communication-wait imbalance directly; the main
-stacked-bar window (with mean / std-dev) shows the compute imbalance. That is the same
-data the headless single-panel [`figs/tau_profile_4gpu.png`](figs/tau_profile_4gpu.png)
-([Path B (TAU)](#sec-prof-tau)) is rendered from — ParaProf just lets you explore it interactively.
+ParaProf shows one bar per rank; double-click a rank to drill into the per-kernel
+breakdown (RCCL all-reduce vs. ResNet-50 compute). It explores interactively the same
+per-rank data rendered headless in [`figs/tau_profile_4gpu.png`](figs/tau_profile_4gpu.png)
+— see the [TAU manual flow](#sec-prof-tau) for what that split means.
 
 > **Shut down in order** (`man aac6_vnc`): close the noVNC browser **tab first**,
 > then release the Slurm job (`exit`/`scancel`), then exit the SSH session. The
@@ -993,27 +960,23 @@ best, extra channels add CUDA-block overhead without a bandwidth payoff).
 > `PPAC_MI300A_CPX` node ([CPX partitions](#sec-cpx)) to see the large-message behavior.
 
 <a id="sec-batch-longruns"></a>
-### 12.5 Note: use longer runs when resources allow
-
-The compute study is capped at 100 iterations so it finishes quickly and stays a
-polite neighbor on a shared system. Reporting a **steady-state median with the
-first step dropped** ([compute study](#sec-batch-compute)) already keeps the **first-iteration overheads of some
-compute optimizations** — most notably the one-time `torch.compile` graph build —
-out of the headline number, so `torch.compile` no longer looks like a regression.
-But a 100-iteration window still samples only the fast early steps, so the median
-reads slightly optimistic versus the sustained rate.
-
-**When you have more compute resources and fewer users on the system**, raise the
-iteration cap (edit the [demo-length edit](#sec-edit-break) `if i >= 100: break` to a larger value, or run full
-epochs) and/or increase the number of phases. More steps let the one-time compile
-cost amortize and pull the median toward the true **sustained** throughput (the
-full-epoch figures in [compute study](#sec-batch-compute)), which is the number to quote for real training. The
-RCCL sweep is far less sensitive to this (each config re-pays only MIOpen/allocator
-warmup, not a graph compile), but longer per-config runs still tighten its
-`RCCL_TOTAL_MS` numbers.
+> **Note — use longer runs when resources allow.** The compute study is capped at
+> 100 iterations so it finishes quickly and stays a polite neighbor on a shared
+> system. As the [compute study](#sec-batch-compute) explains, the steady-state
+> median (first step dropped) already keeps the one-time `torch.compile` graph build
+> out of the headline number, but a 100-iteration window still reads slightly
+> optimistic versus the sustained rate. When you have more compute and fewer users
+> on the system, raise the iteration cap (edit the [demo-length edit](#sec-edit-break)
+> `if i >= 100: break` to a larger value, or run full epochs) and/or increase the
+> number of phases. More steps let the one-time compile cost amortize and pull the
+> median toward the true **sustained** throughput (the full-epoch figures in the
+> [compute study](#sec-batch-compute)), which is the number to quote for real
+> training. The RCCL sweep is far less sensitive to this (each config re-pays only
+> MIOpen/allocator warmup, not a graph compile), but longer per-config runs still
+> tighten its `RCCL_TOTAL_MS` numbers.
 
 <a id="sec-batch-defaults"></a>
-### 12.6 NCCL/RCCL variable defaults
+### 12.5 NCCL/RCCL variable defaults
 
 On ROCm, `librccl` honors the `NCCL_*` names. Unless you set them, RCCL
 auto-selects; the sweep's "default" columns above reflect those auto choices:
@@ -1045,8 +1008,9 @@ against the MI300A bandwidth/compute ceilings.
 A roofline is a **per-kernel, per-GPU** compute analysis, so this profiles a
 **single-GPU, short ResNet-50 `--dummy` run** (not the 4-GPU DDP job). The
 [`profiling/capture_roofline.sbatch`](profiling/capture_roofline.sbatch) script
-packages the whole flow — build a disposable `uv` venv, load
-`rocm pytorch roofline-extractor`, warm the MIOpen cache, then run the extractor:
+packages the whole flow with the same self-contained pattern as the
+[batch studies](#sec-batch-studies), but loading `rocm pytorch roofline-extractor` and
+running the extractor:
 
 ```bash
 # From the imagenet dir, on a node with a GPU:
@@ -1209,6 +1173,7 @@ communication behavior only appears once the rank count crosses physical APUs
   drives the `roofline-extractor` module to plot every GPU kernel by arithmetic
   intensity vs. achieved throughput against the MI300A ceilings (which kernels are
   compute- vs. memory-bound, and how close to peak).
-- **Self-contained runs** — `run_imagenet_uv.sh` (and `submit_imagenet_uv.batch`)
-  build a disposable **uv** venv, clone the upstream example, warm, sweep, and
-  clean up automatically. See [`benchmarks/README_benchmark.md`](benchmarks/README_benchmark.md).
+- **Self-contained runs** — `run_imagenet_uv.sh` (and `submit_imagenet_uv.batch`) run
+  the whole scaling sweep end-to-end with the same self-contained pattern as the
+  [batch studies](#sec-batch-studies), with automatic cleanup. See
+  [`benchmarks/README_benchmark.md`](benchmarks/README_benchmark.md).
