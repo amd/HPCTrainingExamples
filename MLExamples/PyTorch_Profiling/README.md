@@ -85,6 +85,17 @@ Single process scripts are the simplest, as they are using a single GPU to show 
 Although these bash scripts should work on most system setups without any modifications, we encourage readers to carefully study them, especially the last commands which is profiling the execution.
 
 
+## Two Environment Setups: Site Modules or a ROCm Nightly Wheel
+
+Two families of scripts live side by side in the exercise folders. They differ in which environment setup script they source:
+
+- `single_process.sh`, `mpi.sh`, `slurm.sh`, `kernels.sh`, `traces.sh`, and similar scripts source `setup.sh`, which loads the ROCm, PyTorch, and profiler modules provided by your cluster. Use these if your site ships those modules. They cover single-process, MPI, and multi-GPU runs.
+
+- `slurm_single_process*.sh` scripts source `setup_rocm.sh`, which activates a self-contained pip virtual environment holding a ROCm *nightly* build together with PyTorch and the ROCm profilers, so no site modules are needed. Each one profiles a single GPU with one tool and runs a deliberately short workload (`--batch-size 32 --max-steps 5`) so that a nightly build can be validated quickly.
+
+For the second path, start with [`README_ROCM_NIGHTLY_TESTING.md`](./README_ROCM_NIGHTLY_TESTING.md): it walks through building the virtual environment (detailed in [`ROCM_PYTORCH_PIP_VENV_SETUP.md`](./ROCM_PYTORCH_PIP_VENV_SETUP.md)), verifying it on a GPU node, and submitting one script per profiling tool.
+
+
 ## Running the Scripts
 
 This repository is meant as a development repository for profiling examples. To simplify portability, please export this environment variable at the top level of the repository:
