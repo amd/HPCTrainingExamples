@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the per-rank compute-imbalance / communication-wait figure from TAU.
+"""Render the per-rank GPU-time figure (compute vs RCCL all-reduce) from TAU.
 
 Fully headless (matplotlib 'Agg') -- no Java, ParaProf, or X server needed.
 Input is the output of `pprof -a` (see profiling/tau/tau_pprof.txt), which lists,
@@ -10,8 +10,8 @@ GPU-device kernels ("[ROCm Kernel] ...") per rank (NODE) and split them into:
 
 The figure is a single panel: per-rank stacked bars of GPU-kernel exclusive time,
 split into compute (blue) and the RCCL all-reduce (orange, ncclDevKernel). A shaded
-band spans the fastest->slowest rank's compute so the compute spread is visible, and
-each bar is annotated with the communication fraction of that rank's GPU time.
+band spans the fastest-to-slowest rank's compute so the compute-time spread is visible,
+and each bar is annotated with the all-reduce fraction of that rank's GPU time.
 
 Usage:
   render_tau_profile.py tau/tau_pprof.txt --out figs/tau_profile_4gpu.png
@@ -96,7 +96,7 @@ def main():
     axA.bar(labels, compute, color=COMPUTE_COLOR,
             label="GPU compute (conv/gemm/bn/elementwise)")
     axA.bar(labels, comm, bottom=compute, color=COMM_COLOR,
-            label="exposed communication wait\n(RCCL all-reduce, ncclDevKernel)")
+            label="RCCL all-reduce time\n(reduction + wait, ncclDevKernel)")
 
     # Shade the compute-imbalance band [min compute, max compute] across all ranks.
     # The band is covered by the (taller) bars, so label it in the empty top strip
@@ -107,7 +107,7 @@ def main():
     axA.axhline(cmax, color=COMPUTE_COLOR, ls="--", lw=1.2, alpha=0.9)
     tot_max = max(compute[i] + comm[i] for i in range(len(xs)))
     axA.text(len(xs) - 1, tot_max * 1.16,
-             f"compute imbalance:\n\u0394 = {cspread:.2f}s ({cspread_pct:.0f}% of max)",
+             f"compute-kernel time spread:\n\u0394 = {cspread:.2f}s ({cspread_pct:.0f}% of max)",
              ha="center", va="center", fontsize=9.5, color=COMPUTE_COLOR,
              bbox=dict(boxstyle="round,pad=0.3", fc="white", ec=COMPUTE_COLOR, alpha=0.9))
 
@@ -132,7 +132,7 @@ def main():
     print("wrote", args.out)
     for r, c, m in zip(xs, compute, comm):
         print(f"  rank {r}: compute={c:.3f}s comm={m:.3f}s comm%={100*m/(c+m):.1f}")
-    print(f"  compute imbalance: min={cmin:.3f}s max={cmax:.3f}s "
+    print(f"  compute-kernel spread: min={cmin:.3f}s max={cmax:.3f}s "
           f"spread={cspread:.3f}s ({cspread_pct:.1f}% of max)")
 
 

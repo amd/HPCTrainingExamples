@@ -2,18 +2,18 @@
 
 > README.md from `HPCTrainingExamples/MLExamples/Pytorch/imagenet` in the HPCTrainingExamples repository
 
-This example sets up a **large workload** (ResNet on ImageNet-sized 224x224x3 images, 1000 classes)
-trained with **true `DistributedDataParallel` (DDP)**, one process per GPU,
-using the **RCCL** (ROCm Collective Communication Library) backend.
-Recall that On ROCm, PyTorch's `nccl` backend is provided by **librccl**, so all the
+This example sets up a large workload (ResNet on ImageNet-sized 224x224x3 images, 1000 classes)
+trained with true `DistributedDataParallel` (DDP), one process per GPU,
+using the RCCL (ROCm Collective Communication Library) backend.
+Recall that On ROCm, PyTorch's `nccl` backend is provided by librccl, so all the
 `NCCL_*` environment variables are honored by RCCL.
 
-Note that we use synthetic data so that **no 150 GB ImageNet
-download is needed**. The input pipeline is essentially free, so each training
+Note that we use synthetic data so that no 150 GB ImageNet
+download is needed. The input pipeline is essentially free, so each training
 step is dominated by
 
-1. GPU **compute** (the forward/backward of the CNN), and
-2. the **RCCL all-reduce** of gradients across GPUs at the end of each step.
+1. GPU compute (the forward/backward of the CNN), and
+2. the RCCL all-reduce of gradients across GPUs at the end of each step.
 
 Synthetic data is enabled with the `--dummy` flag.
 By comparing step time across GPU counts we isolate and quantify the RCCL
@@ -22,7 +22,7 @@ communication cost.
 > For the required MI300A settings, the
 > scaling-sweep drivers, optimization levers, measured results, profiling,
 > and the pure-RCCL bandwidth micro-benchmark, see
-> **`benchmarks/README_benchmark.md`**.
+> `benchmarks/README_benchmark.md`.
 
 
 ## Contents
@@ -38,11 +38,11 @@ communication cost.
 9. [Featured RCCL optimization: tune the all-reduce with environment variables](#sec-rccl-opt)
 10. [Featured compute optimization: hands-on `main.py` edits](#sec-compute-opt)
 11. [Featured profiling exercise: a measured timeline of compute vs communication (4×MI300A)](#sec-profiling-exercise)
-12. [Batch-driven optimization studies and measured performance impacts](#sec-batch-studies)
-13. [Featured profiling tool: roofline extractor (per-kernel compute vs. memory)](#sec-roofline)
-14. [Cleanup](#sec-cleanup)
-15. [Run on CPX partitions (`SH5_MI300A_CPX`, `PPAC_MI300A_CPX`)](#sec-cpx)
+12. [Featured profiling tool: roofline extractor (per-kernel compute vs. memory)](#sec-roofline)
+13. [Cleanup](#sec-cleanup)
+14. [Run on CPX partitions (`SH5_MI300A_CPX`, `PPAC_MI300A_CPX`)](#sec-cpx)
 - [Next steps](#sec-next-steps)
+- [Appendix A: noVNC desktop (view GUIs like ParaProf/Perfetto in the browser)](#sec-prof-novnc)
 
 
 <a id="sec-alloc"></a>
@@ -50,7 +50,7 @@ communication cost.
 
 These instructions assume you are running this example on AMD's AAC6 cluster, which has MI300A APUs.
 Pick whichever partition is free — the step-by-step example runs on all of them.
-**SPX** gives each rank a whole MI300A APU; **CPX** splits each APU into 6 smaller
+SPX gives each rank a whole MI300A APU; CPX splits each APU into 6 smaller
 GPU partitions, so a CPX node exposes the single XCDs leaves more room for
 interactive experimentation. The `PPAC_MI300A_SPX` nodes are scarce, so the CPX
 partitions are good fallbacks.
@@ -69,7 +69,7 @@ salloc -p SH5_MI300A_CPX  -N1 --gpus=4 -t 00:40:00
 CPX partitions carve one APU's 128 GB HBM into 6 (~21 GB each), so if you hit an
 OOM on CPX, drop the per-GPU batch size (e.g. `-b 128`).
 
-> **Optional — CPU/GPU affinity.** To bind each rank to the cores nearest its GPU,
+> Optional — CPU/GPU affinity. To bind each rank to the cores nearest its GPU,
 > add task/affinity flags to the allocation (or to `srun`):
 >
 > ```bash
@@ -79,7 +79,7 @@ OOM on CPX, drop the per-GPU batch size (e.g. `-b 128`).
 > # 6 CPX GPUs share one APU's 48 cores).
 > ```
 >
-> These matter most when you launch ranks with **`srun`**, where Slurm places and
+> These matter most when you launch ranks with `srun`, where Slurm places and
 > binds each task. The README's default path uses `mp.spawn` and the TAU path uses
 > `mpirun` ([Path B (TAU)](#sec-prof-tau)), which do their own binding, so there the Slurm flags are only
 > advisory.
@@ -102,7 +102,7 @@ The command below will load the default version of ROCm, make sure it matches th
 module load rocm openmpi pytorch
 ```
 
-Activate the venv **after** `module load` (loading a module *prepends* its own
+Activate the venv after `module load` (loading a module *prepends* its own
 `python` to `PATH`, so activating first would let the module's Python shadow the
 venv's). Then confirm `python3` really is the venv's:
 ```bash
@@ -175,8 +175,8 @@ Print per-GPU peak memory once at the end of train():
 sed -i '/^def validate(/i\    torch.cuda.is_available() and getattr(args,"rank",0)<=0 and print(f"PEAK_MEM_MB {torch.cuda.max_memory_allocated()/1e6:.0f}")' main.py
 ```
 
-***NOTE***: the next two measurements below are independent, self-contained changes:
-**3d** adds the profiler and the total-RCCL-time print; **3e** adds the
+NOTE: the next two measurements below are independent, self-contained changes:
+3d adds the profiler and the total-RCCL-time print; 3e adds the
 `.to` vs `.migrate` staging comparison. Each stands alone (neither references
 the other's variables), so you can apply either one, and in either order.
 
@@ -237,7 +237,7 @@ sed -i '/^    model.train()/a\
         _stager = Stager(device, method="register")' main.py
 ```
 
-Time the `host->device` staging, but only when `STAGE` is set (copy vs migrate):
+Time the host-to-device staging, but only when `STAGE` is set (copy vs migrate):
 
 ```bash
 sed -i '/^        images = images.to(device, non_blocking=True)/c\
@@ -262,10 +262,10 @@ sed -i '/^def validate(/i\
 <a id="sec-edit-pinmem"></a>
 ### 3f. Make `pin_memory` graceful for the fallback path
 
-The `register` staging path needs **pageable** (non-pinned) host memory, because
+The `register` staging path needs pageable (non-pinned) host memory, because
 `hipHostRegister` fails on already-pinned buffers. But the plain `.to()` fallback
 (discrete GPU, `HSA_XNACK != 1`, or the extension failing to build) copies faster
-from **pinned** memory. So rather than forcing `pin_memory=False` unconditionally,
+from pinned memory. So rather than forcing `pin_memory=False` unconditionally,
 gate it on whether the zero-copy `register` path is actually available -- exactly
 mirroring `Stager`'s own graceful fallback (`zerocopy.unified_memory_available()`).
 When `STAGE` is unset this is inert: `pin_memory` stays `True` (upstream behavior),
@@ -295,10 +295,10 @@ sed -i 's/pin_memory=True/pin_memory=not _zero_copy_active()/g' main.py
 <a id="sec-miopen"></a>
 ## 4. Warm the MIOpen cache (once per allocation)
 
- MIOpen's default solver search can take **>10 minutes** cold for ResNet
+ MIOpen's default solver search can take >10 minutes cold for ResNet
  convolutions. Set fast selection, then warm the cache by running the warmup script
- or the **1-GPU `main.py` case** (the same run the sweep uses) for a few steps:
- **Warm once per allocation.** A new `salloc`/`sbatch` gets a fresh job ID (and
+ or the 1-GPU `main.py` case (the same run the sweep uses) for a few steps:
+ Warm once per allocation. A new `salloc`/`sbatch` gets a fresh job ID (and
  thus a fresh empty cache). Warming single-process first matters: inside one
  allocation all N ranks share that one cache dir, so a cold multi-rank run would
  contend on the SQLite db; after warming, ranks just read it (with
@@ -355,9 +355,9 @@ HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy --dist-url 'tcp:/
 The MI300A APU has a unified memory and does not need to copy the data, just the pointer. Other GPUS can emulate APU behavior leveraging the APU programming model. The APU programming model requires `HSA_XNACK 1` to be set (you also need it on MI300A).
 We will compare `.to` (copy) vs `.migrate` staging looking at `STAGE_MS_PER_STEP` in the final report.
 
-- **Host-to-device staging time** — the per-step `images.to(device)` copy is
-  wrapped in CUDA events and printed as `STAGE_MS_PER_STEP`, but **only when the
-  `STAGE` environment variable is set**, so the plain scaling runs are not
+- Host-to-device staging time — the per-step `images.to(device)` copy is
+  wrapped in CUDA events and printed as `STAGE_MS_PER_STEP`, but only when the
+  `STAGE` environment variable is set, so the plain scaling runs are not
   perturbed. Setting `STAGE=migrate` swaps the `.to()` copy for the zero-copy
   `migrate()` path (MI300A unified memory), so you can compare the two directly:
 
@@ -400,16 +400,16 @@ grep -h STAGE_MS_PER_STEP stage_*.log
 <a id="sec-performance"></a>
 ## 8. Calculating the performance
 
-This sweep is a **weak-scaling** study: the per-GPU batch (`-b`) is held fixed at
-128 images, so **every GPU always does the same work as in the single-GPU run** —
-it is the *total* (node-wide) batch that grows with GPU count (128 → 256 → 512), not
+This sweep is a weak-scaling study: the per-GPU batch (`-b`) is held fixed at
+128 images, so every GPU always does the same work as in the single-GPU run —
+it is the *total* (node-wide) batch that grows with GPU count (128 to 256 to 512), not
 the work per GPU. Because per-GPU compute is constant, the per-step `Time` should
-ideally stay **flat** as GPUs are added, and throughput should grow **linearly**
+ideally stay flat as GPUs are added, and throughput should grow linearly
 (≈ N× the 1-GPU rate). The only new cost at ≥ 2 GPUs is the gradient all-reduce, so
 whatever the step time creeps up — and whatever throughput falls short of linear —
 is the (exposed) RCCL communication.
 
-> Contrast **strong scaling**, where the *total* problem size is fixed and per-GPU
+> Contrast strong scaling, where the *total* problem size is fixed and per-GPU
 > work shrinks as you add GPUs; there you'd expect the step time itself to drop.
 > This demo does the opposite: more GPUs = more total work at (ideally) the same
 > step time, so the payoff shows up as higher throughput, not a shorter step.
@@ -430,30 +430,30 @@ run_2.log  img/s=1901  step=0.1347s  batch=256  peak_mem_mb=...  speedup=1.96x
 run_4.log  img/s=3720  step=0.1376s  batch=512  peak_mem_mb=...  speedup=3.84x
 ```
 
-- **`img/s`** — global throughput: the **global batch** divided by the **average
-  per-step `Time`**, i.e. images processed per second across the whole node.
+- `img/s` — global throughput: the global batch divided by the average
+  per-step `Time`, i.e. images processed per second across the whole node.
   - *global batch* = per-GPU `-b` × number of GPUs, e.g. 128 × 4 = 512 images per
     step summed across the node.
   - *average per-step `Time`* = the running-average seconds-per-step that `main.py`
-    prints **in parentheses** on its `Epoch:` lines (one full step: forward +
+    prints in parentheses on its `Epoch:` lines (one full step: forward +
     backward + all-reduce + optimizer).
 
   Per the weak-scaling note above, the ideal is linear growth with GPU count; the
-  shortfall from linear is mostly the **exposed** (un-overlapped) all-reduce.
+  shortfall from linear is mostly the exposed (un-overlapped) all-reduce.
   Compare with `RCCL_TOTAL_MS` ([profiler edit](#sec-edit-profiler)/[two-numbers readout](#sec-read-numbers)), the *total* RCCL time, to see how much is
   hidden behind compute.
-- **`speedup`** — a **throughput speedup**, *not* a time speedup. It is the ratio of
+- `speedup` — a throughput speedup, *not* a time speedup. It is the ratio of
   throughputs to the 1-GPU baseline, `img/s(N) / img/s(1)` (so `run_1` reads
-  `1.00x`) — i.e. "how many times more images/sec than one GPU". It is **not** the
+  `1.00x`) — i.e. "how many times more images/sec than one GPU". It is not the
   strong-scaling runtime speedup `T(1)/T(N)` (how many times *faster* the same job
   finishes); in this weak-scaling demo the step time stays roughly flat, so a *time*
   speedup would be ~`1x` and is not the point. Since each added GPU takes on an extra
-  128-image share, the ideal *throughput* speedup here is **linear, `N×`**
-  (4 GPUs → `4.00x`). How close you get is the weak-scaling **efficiency** =
+  128-image share, the ideal *throughput* speedup here is linear, `N×`
+  (4 GPUs gives `4.00x`). How close you get is the weak-scaling efficiency =
   `speedup / N` (e.g. `3.84x / 4 ≈ 96%`).
-- **`step`** — the average per-step time (the value `img/s` divides into). Flat
+- `step` — the average per-step time (the value `img/s` divides into). Flat
   across GPU counts = ideal weak scaling; any growth is the exposed all-reduce.
-- **`peak_mem_mb`** — per-GPU peak allocated memory (`PEAK_MEM_MB`).
+- `peak_mem_mb` — per-GPU peak allocated memory (`PEAK_MEM_MB`).
 
 > This is the simple, demo-friendly version. For the robust, per-step, per-rank
 > instrumentation (with a fair pinned-memory baseline) use
@@ -463,30 +463,25 @@ run_4.log  img/s=3720  step=0.1376s  batch=512  peak_mem_mb=...  speedup=3.84x
 <a id="sec-rccl-opt"></a>
 ## 9. Featured RCCL optimization: tune the all-reduce with environment variables
 
-We have collected some tips and tricks on how to improve RCCL performance in
-[`README_rccl_optimization.md`](README_rccl_optimization.md). Those exercises are
-applied **by editing `main.py`**, and they come in three flavors: a bf16 gradient-compression hook (§1), `NCCL_*`
-transport/algorithm settings (§2), and DDP constructor knobs (§3).
+Hands-on `main.py` edits for improving the RCCL all-reduce, together with a reproducible
+batch sweep and measured `RCCL_TOTAL_MS` numbers, are collected in
+[`README_rccl_optimization.md`](README_rccl_optimization.md).
 
 <a id="sec-compute-opt"></a>
 ## 10. Featured compute optimization: hands-on `main.py` edits
 
-There are also some examples of how to speed up the per-GPU compute
-(ResNet50 forward/backward) in
-[`README_compute_optimization.md`](README_compute_optimization.md). Those exercises
-are applied **by editing `main.py`**, and they come in three flavors: lower-precision
-math (bf16 autocast, fp32 matmul precision, §1), memory layout & kernel selection
-(`channels_last`, `cudnn.benchmark`, §2), and kernel fusion / launch-overhead cuts
-(`torch.compile`, fused optimizer, §3).
+Hands-on `main.py` edits for speeding up per-GPU compute (ResNet-50 forward/backward),
+together with a reproducible batch study and measured `torch.compile` throughput numbers,
+are collected in [`README_compute_optimization.md`](README_compute_optimization.md).
 
 <a id="sec-profiling-exercise"></a>
 ## 11. Featured profiling exercise: a measured timeline of compute vs communication
 
 In this section, we will look at how to profile our workload to measure the time taken for
 communication and computation. Note that as before we are assuming we are on an SPX node with 4 MI300A APUs.
-We will be using both **torch.profiler** and
-**TAU** to record every GPU kernel with a timestamp, so the **compute** kernels
-(Conv/GEMM/batchnorm from forward & backward) and the **RCCL all-reduce**
+We will be using both torch.profiler and
+TAU to record every GPU kernel with a timestamp, so the compute kernels
+(Conv/GEMM/batchnorm from forward & backward) and the RCCL all-reduce
 kernels (ncclDevKernel) fall into visually distinct bands — the same split that the [two-numbers readout](#sec-read-numbers)
 measures numerically as `RCCL_TOTAL_MS`, now laid out in time across all four ranks.
 
@@ -525,7 +520,7 @@ HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy \
 ```
 
 We can now create a figure with `matplotlib` to show the duration of communication and compute for each
-of the 4 GPUs involved in the run. `render_timeline.py` reads the **per-rank** traces
+of the 4 GPUs involved in the run. `render_timeline.py` reads the per-rank traces
 directly (one lane per rank) — no merge step is needed here (`merge_perfetto.py` is only
 for the Perfetto UI):
 ```bash
@@ -543,11 +538,11 @@ An example of such a figure is reported below:
 Regarding the legend: blue = compute, orange = the RCCL all-reduce, white = idle (data-loader / Python between steps).
 The data in the figure tells the following story:
 
-- **Per-step structure** — each blue block is a step's forward+backward compute,
+- Per-step structure — each blue block is a step's forward+backward compute,
   ended by an orange RCCL all-reduce of the gradients.
-- **Exposed communication** — the long orange blocks are a rank stuck inside
-  `ncclDevKernel`, **spin-waiting** for the all-reduce to complete. In this run
-  **GPU 0** has the longest orange stretches — notably the ~125 ms block spanning
+- Exposed communication — the long orange blocks are a rank stuck inside
+  `ncclDevKernel`, spin-waiting for the all-reduce to complete. In this run
+  GPU 0 has the longest orange stretches — notably the ~125 ms block spanning
   ~38,720-38,840 ms — because it finishes its compute earliest and then waits on the
   slower ranks, which are still busy with compute (blue) or briefly idle (white).
   Which rank waits longest is set by the per-step compute imbalance, not by being
@@ -555,7 +550,7 @@ The data in the figure tells the following story:
   [RCCL optimizations](#sec-rccl-opt)
   (`NCCL_ALGO`/channels, `gradient_as_bucket_view`, `bucket_cap_mb`, `static_graph`)
   attack — the timeline makes the cost visible, not just the `RCCL_TOTAL_MS` number.
-- **Gaps between steps** = per-step overhead (Python / launch / dummy data-loader),
+- Gaps between steps = per-step overhead (Python / launch / dummy data-loader),
   the target of the [`torch.compile`](#sec-compute-opt) compute optimization.
 
 We can also open the traces using the Perfetto UI: this works from any browser and while disconnected from the internet.
@@ -578,8 +573,8 @@ The merged trace opens in the Perfetto UI as four GPU process lanes, see example
 
 Within each GPU, the compute stream (`Thread 1`, running `DistributedDataParallel.forward` and
 the colored conv/GEMM kernels) is separate from the RCCL stream (`Thread 4`), where
-the `nccl:broadcast` at startup and the periodic `nccl:all_reduce` →
-`ncclDevKernel_Generic` slices are the communication:
+the `nccl:broadcast` at startup and the periodic `nccl:all_reduce`, which runs as
+`ncclDevKernel_Generic` slices, are the communication:
 
 ### 11.2 `torch.profiler` automated flow
 
@@ -602,7 +597,7 @@ render, while the Perfetto view is a manual screenshot — optionally automated 
 [`profiling/perfetto_shot.py`](profiling/perfetto_shot.py) where a browser is available
 (Playwright + Chromium), which the capture job does not run.
 
-> **Perfetto only ingests** Perfetto protobuf (`.pftrace`/`.pb`) or Chrome JSON
+> Perfetto only ingests Perfetto protobuf (`.pftrace`/`.pb`) or Chrome JSON
 > Trace Event format (`{"traceEvents":[...]}` or a bare event array). The
 > `torch.profiler` exports above are Chrome JSON and load directly, so the Perfetto
 > artifact comes from `torch.profiler` ([Path A (torch.profiler)](#sec-prof-torch)).
@@ -622,7 +617,7 @@ mkdir -p tau_trace                # create it before the run
 The MPI-enabled TAU library assigns each rank from the launcher, so profiles are written
 only when the job runs under `mpirun`; a single, non-`mpirun` process produces none.
 
-**IMPORTANT**: TAU's rocprofsdk and torch.profiler (Kineto) both claim the ROCm profiler
+IMPORTANT: TAU's rocprofsdk and torch.profiler (Kineto) both claim the ROCm profiler
  interface, so if main.py still has the torch.profiler edits, TAU attaches to nothing
  and writes NO profile.* files. We will build a clean `main_tau.py` from the upstream clone with
  only the teardown + short-run edits (no torch.profiler):
@@ -664,14 +659,14 @@ mpirun -n 4 --map-by numa --bind-to numa --report-bindings \
 ls tau_trace/profile.*     # sanity: per-rank profiles must exist before pprof
 ```
 
-> **Shortcut:** the `tau` module also ships `tau_exec_launch`, which wraps the whole
+> Shortcut: the `tau` module also ships `tau_exec_launch`, which wraps the whole
 > `mpirun … tau_exec …` capture and runs `pprof` for you (it keeps the module default
 > `merged` format, so it emits a single `tauprofile.xml` rather than per-rank `profile.*`):
 > `tau_exec_launch --np 4 --mode comm --outdir tau_trace -- ./tau_wrapper.sh`.
 
 
-> **Binding note.** The GPU is pinned by the
-> wrapper (`HIP_VISIBLE_DEVICES=${OMPI_COMM_WORLD_LOCAL_RANK}`, so rank *i* → GPU *i*).
+> Binding note. The GPU is pinned by the
+> wrapper (`HIP_VISIBLE_DEVICES=${OMPI_COMM_WORLD_LOCAL_RANK}`, so rank *i* maps to GPU *i*).
 > The CPU/core placement is what `mpirun --map-by numa --bind-to numa` controls:
 > each rank is bound to one NUMA domain's cores.
 > Since each MI300A APU is its own NUMA node (its GPU + its cores), these two align so
@@ -691,28 +686,29 @@ python3 "$IMAGENET/profiling/render_tau_profile.py" tau_pprof.txt \
 The `pprof -a` per-rank breakdown splits each rank's GPU-kernel exclusive time into two
 buckets — the RCCL all-reduce (`ncclDevKernel`) and the ResNet-50 compute kernels
 (conv / GEMM / batch-norm / elementwise). We render this as one stacked bar per rank
-(blue = compute, orange = all-reduce), with a shaded band spanning the fastest→slowest
+(blue = compute, orange = all-reduce), with a shaded band spanning the fastest-to-slowest
 rank's compute:
 
 ![TAU ParaProf per-rank GPU-kernel breakdown on MI300A: one stacked bar per rank, blue ResNet-50 compute plus orange RCCL all-reduce, with a band marking the compute spread across ranks](figs/tau_profile_4gpu.png)
 
 How to read it:
 
-- **Compute (blue).** Per-rank GPU compute ranges 8.38 s (rank 0) to 10.23 s (rank 2) —
-  a 1.86 s spread (18 % of max). All four ranks run the identical ResNet-50 on identical
-  MI300A APUs with the same dummy batch, so there is no genuine per-rank load imbalance:
-  this modest spread is run-to-run scheduling and measurement variation, not an
+- The blue bars are per-rank GPU compute time, ranging 8.38 s (rank 0) to 10.23 s
+  (rank 2): a 1.86 s spread, 18 % of the max. All four ranks run the identical ResNet-50
+  on identical MI300A APUs with the same dummy batch, so this is not genuine load
+  imbalance. Treat it as run-to-run scheduling variation plus profiler timing noise
+  (this capture logged repeated rocprofsdk timestamp-ordering warnings), not an
   algorithmic straggler.
-- **All-reduce (orange).** Exclusive `ncclDevKernel` time is 0.60–2.53 s — 7 % to 21 %
-  of each rank's GPU time. This is a *synchronizing* collective, so the number blends the
-  actual reduction with time blocked waiting on peers; the two cannot be separated from
-  this profile, and here the per-rank values do not track the compute spread, so do not
-  read them as "waiting for the slowest compute rank".
+- The orange bars are the RCCL all-reduce (`ncclDevKernel`), 0.60–2.53 s, or 7 % to 21 %
+  of each rank's GPU time. Because the collective synchronizes, this blends the actual
+  reduction with time blocked waiting on peers; the two cannot be separated from this
+  profile. The per-rank values also do not track the compute spread, so they are not
+  "waiting for the slowest compute rank" times.
 
-The takeaway is the **communication fraction** — 7–21 % of per-rank GPU time goes to the
-all-reduce — which is what the [RCCL optimizations](#sec-rccl-opt) target. To quantify the
-true collective cost (as opposed to exposed wait), measure achieved bandwidth with
-`rccl-tests` or inspect compute/comm overlap in the Perfetto timeline.
+The headline is the all-reduce fraction, 7–21 % of per-rank GPU time, which is what the
+[RCCL optimizations](#sec-rccl-opt) target. To quantify the true collective cost (as
+opposed to exposed wait), measure achieved bandwidth with `rccl-tests` or inspect
+compute/comm overlap in the Perfetto timeline.
 
 <a id="sec-prof-tau-auto"></a>
 ### 11.4 `TAU` automated flow
@@ -726,292 +722,45 @@ cd "$(git rev-parse --show-toplevel)/MLExamples/Pytorch/imagenet"
 sbatch profiling/capture_tau.sbatch           # it considers a 4-APU SPX node on AAC6, partition PPAC_MI300A_SPX
 ```
 
-<a id="sec-prof-closeloop"></a>
-### 11.5 Close the loop with the optimizations
-
-Re-capture after applying the featured optimizations and compare:
-
-- After the [RCCL optimizations](#sec-rccl-opt) **channel tuning** (`NCCL_MIN/MAX_NCHANNELS`, `NCCL_ALGO=Tree`) and
-  the DDP overlap knobs, the orange all-reduce blocks on GPU 1-3 shrink.
-- After [compute optimizations](#sec-compute-opt) **`torch.compile`**, the blue compute bands fuse into fewer, longer
-  kernels and the inter-step white gaps shrink.
-
-Reset when done:
+Once the featured optimizations are applied, re-run either capture to see the effect:
+the RCCL all-reduce blocks shrink after the [RCCL optimizations](#sec-rccl-opt) (channel
+tuning and the DDP overlap knobs), and the compute kernels fuse into fewer, longer ones
+after [`torch.compile`](#sec-compute-opt). Reset the demo-length edit and the TAU
+variables when done:
 
 ```bash
 sed -i 's/if i >= 20: break/if i >= 100: break/' main.py   # restore the [demo-length break](#sec-edit-break)
 unset TAU_PROFILE PROFILEDIR
 ```
 
-> For a **per-kernel roofline** (compute- vs. memory-bound, % of MI300A peak) see
-> the roofline-extractor walkthrough in [roofline extractor](#sec-roofline). For the full menu of profilers on this
-> example (torch.profiler, rocprofv3, rocprof-compute, rocprofiler-systems, Score-P,
-> and TAU/HPCToolkit) see [`profiling/PROFILING.md`](profiling/PROFILING.md).
+> For a per-kernel roofline (compute- vs. memory-bound, % of MI300A peak) see the
+> roofline-extractor walkthrough in [roofline extractor](#sec-roofline). For the full menu
+> of profilers on this example (torch.profiler, rocprofv3, rocprof-compute,
+> rocprofiler-systems, Score-P, and TAU/HPCToolkit) see
+> [`profiling/PROFILING.md`](profiling/PROFILING.md).
 
-<a id="sec-prof-novnc"></a>
-### 11.6 Create a noVNC desktop (view GUIs like ParaProf/Perfetto in the browser)
-
-Some tools (ParaProf, ParaView, or just a browser for `ui.perfetto.dev`) need a
-graphical desktop. noVNC gives you the compute node's XFCE desktop **in your local
-browser** — no VNC client install — proxied through the control node's nginx (TLS +
-TOTP). Full details are in `man aac6_novnc` and `man aac6_vnc`; the short version:
-
-1. **Open an SSH tunnel** from your laptop/workstation to the nginx proxy (port 6443),
-   and enter your TOTP when prompted:
-
-```bash
-ssh -L 6443:10.194.42.31:6443 <username>@aac6.amd.com
-```
-
-2. **Get a node allocation** and note the node name from the output:
-
-```bash
-salloc -p PPAC_MI300A_SPX -N1 --gpus=4 -t 08:00:00
-# salloc: Nodes ppac-pl1-s24-16 are ready for job
-```
-
-   The Slurm prolog automatically starts a TurboVNC desktop (display `:1`, 1920×1080)
-   and the websockify bridge on that node — no manual `vncserver` needed.
-
-3. **Open the noVNC URL** in your local browser, substituting your node name:
-
-```
-https://localhost:6443/novnc/<node name>/vnc.html
-# e.g. https://localhost:6443/novnc/ppac-pl1-s24-16/vnc.html
-```
-
-   The proxy uses a self-signed certificate, so your browser shows a one-time
-   security warning — approve it to continue (the connection is still TLS-encrypted;
-   see `man aac6_novnc` to import the cert and silence the warning).
-
-4. **Log in** with your cluster **username** and current 6-digit **TOTP** code (this
-   is the *only* login — there is no separate VNC password; the desktop is started
-   with security type `None` and is protected by the TOTP proxy):
-
-![noVNC login page: enter your cluster username and 6-digit TOTP code](figs/novnc_login_screen.png)
-
-5. **Click Connect** to open the XFCE desktop:
-
-![noVNC connect screen](figs/novnc_connect_screen.png)
-
-A signed session cookie is issued, so you only log in once per 24-hour browser
-session. From the desktop you can launch `paraprof &` on the TAU `profile.*`, open a
-browser on `ui.perfetto.dev`, or run any other GUI tool.
-
-**Navigating the XFCE desktop (a few hints):**
-
-- **Launch apps:** the **Applications** menu is at the top-left of the panel —
-  *Terminal Emulator*, *File Manager*, a web browser, and *Settings* live there. You
-  can also **right-click the desktop** for a quick app menu and *Open Terminal Here*.
-- **Panel & clock:** the top panel lists open windows and holds the clock and the
-  **workspace switcher**; XFCE has several virtual desktops — click a square to switch,
-  or drag a window onto one to move it.
-- **Windows:** drag the title bar to move, double-click it to maximize, and use
-  `Alt`+drag to move a window that's larger than the screen.
-- **Copy/paste & fullscreen (noVNC):** hover the small **tab on the left edge** of the
-  browser window to open the noVNC control bar. It has a **Clipboard** panel (paste
-  text between your laptop and the remote desktop), a **Fullscreen** button, and
-  **Settings → Scaling Mode → Local Scaling** so the 1920×1080 desktop fits your
-  browser window.
-- **Files:** your `$HOME` on the cluster is shared, so `profiling/tau/`, `figs/`, etc.
-  are the same paths you see over SSH.
-
-**Open a TAU profile in the desktop.** In a desktop terminal (Applications →
-*Terminal Emulator*, or right-click the desktop → *Open Terminal Here*), capture or
-reuse a profile as in the [TAU manual flow](#sec-prof-tau) / [automated flow](#sec-prof-tau-auto),
-then from its `profile.*` directory (`profiling/tau/`) launch the GUI browser:
-
-```bash
-cd profiling/tau
-paraprof &       # GUI profile browser (needs the desktop); `pprof` gives the text summary
-```
-
-ParaProf shows one bar per rank; double-click a rank to drill into the per-kernel
-breakdown (RCCL all-reduce vs. ResNet-50 compute). It explores interactively the same
-per-rank data rendered headless in [`figs/tau_profile_4gpu.png`](figs/tau_profile_4gpu.png)
-— see the [TAU manual flow](#sec-prof-tau) for what that split means.
-
-> **Shut down in order** (`man aac6_vnc`): close the noVNC browser **tab first**,
-> then release the Slurm job (`exit`/`scancel`), then exit the SSH session. The
-> WebSocket is forwarded through the tunnel, so leaving the tab open makes the SSH
-> logout hang. If it hangs, close the tab, or press `Enter` `~` `.` to force-close SSH.
-
-> **Only one TOTP prompt is expected.** If a *second* page asks for a password, the
-> node's VNC server is advertising PAM auth types instead of `None`; restart it with
-> `vncserver -kill :1 && vncserver :1 -geometry 1920x1080 -securitytypes None -localhost`
-> on the node, or report it to the admins.
-
-<a id="sec-batch-studies"></a>
-## 12. Batch-driven optimization studies and measured performance impacts
-
-The hands-on levers in [RCCL optimizations](#sec-rccl-opt) and [compute optimizations](#sec-compute-opt) (`torch.compile`) are also packaged as
-two self-contained SLURM batch scripts. Each one builds a disposable `uv` venv,
-clones the upstream example, applies the [source-code instrumentation](#sec-edits), warms the MIOpen
-cache, runs the study, and prints a summary at the **end of its `.out` file** —
-so you can reproduce the numbers below with a single `sbatch`.
-
-<a id="sec-batch-submit"></a>
-### 12.1 Submitting the studies
-
-```bash
-# Compute study: eager vs torch.compile (1 GPU, SPX, b=512)
-sbatch run_imagenet_uv_compute_opt.sbatch
-
-# RCCL study: NCCL algorithm / protocol / channel-count sweep (4 GPUs, SPX, b=512)
-sbatch run_imagenet_uv_rccl_opt_sweep.sbatch
-```
-
-Read the summary block that each job appends to `run_imagenet_uv_spx-<jobid>.out`:
-
-```bash
-# compute study
-sed -n '/=== compute optimization/,$p' run_imagenet_uv_spx-<jobid>.out
-# RCCL study
-sed -n '/=== RCCL total time by NCCL algorithm/,$p' run_imagenet_uv_spx-<jobid>.out
-```
-
-<a id="sec-batch-times"></a>
-### 12.2 Expected run times
-
-Measured on `PPAC_MI300A_SPX` (walltimes include the venv build, upstream clone,
-MIOpen warmup, and every phase of the study — not just the timed steps):
-
-| Study | Script | GPUs | Phases | Wall time (SBATCH request) |
-|---|---|---|---|---|
-| Compute (`torch.compile`) | `run_imagenet_uv_compute_opt.sbatch` | 1 | 2 (eager, compile) | **~14 min** (`--time=02:00:00`) |
-| RCCL sweep | `run_imagenet_uv_rccl_opt_sweep.sbatch` | 4 | 11 (2 algo + 3 proto + 6 channel) | **~44 min** (`--time=08:00:00`) |
-
-> Each phase re-pays MIOpen/allocator warmup, and the compile phase additionally
-> pays a one-time `torch.compile` graph build, so wall time is dominated by
-> per-phase startup rather than the ~100 timed steps. The time requests are
-> deliberately generous headroom; the studies finish well inside them.
-
-<a id="sec-batch-compute"></a>
-### 12.3 Compute optimization: `torch.compile` (1 GPU, b=512)
-
-Throughput is reported as a **steady-state median**, not a running average. The
-script's `summarize()` collects the instantaneous per-step `Time`, **drops the
-first (warmup / one-time graph-compile) step**, and takes the median; `img/s` is
-the global batch divided by that median. This is the fix for the earlier quick
-summary, which averaged `Time` over the 100-iteration cap and — because the first
-`torch.compile` step alone costs tens of seconds — reported a *misleading*
-`eager 563 / compile 420 img/s` that made `torch.compile` look like a regression.
-
-The script prints (steady-state median over its 100-iteration capped
-run, ~9 samples after the warmup step is dropped):
-
-| Metric | eager | `torch.compile` | Impact |
-|---|---|---|---|
-| **Steady-state median step** | 0.416 s | 0.384 s | **-7.7 %** (faster) |
-| **Steady-state img/s** | 1232 | 1335 | **+8.3 %** |
-| Peak memory (`PEAK_MEM_MB`) | 44874 MB | 42329 MB | **-5.7 %** |
-
-**Sustained rate (longer run).** A 100-iteration window samples only the fast
-early steps, so it reads slightly optimistic. Re-measuring the same median over a
-**full epoch** (2503 steps, ~116 samples per phase — see [longer-runs note](#sec-batch-longruns)) gives the
-sustained figures **eager 0.445 s / 1151 img/s** and **compile 0.421 s /
-1216 img/s**, i.e. a steadier **+5.4 %**. Either way the ranking is the same.
-
-**Takeaway:** once the one-time compile is amortized, `torch.compile` gives a
-solid throughput gain (~5-8 %) **and** lower peak memory for ResNet-50 on a single
-MI300A. Try `torch.compile(model, mode="max-autotune")` for a larger gain at a
-longer compile cost.
-
-<a id="sec-batch-rccl"></a>
-### 12.4 RCCL optimization: NCCL algorithm / protocol / channels (4 GPUs, b=512)
-
-`RCCL_TOTAL_MS` (defined in [profiler edit](#sec-edit-profiler)/[two-numbers readout](#sec-read-numbers); lower is better). In each phase only the swept
-knob is set; the others stay at their NCCL defaults ([NCCL defaults](#sec-batch-defaults)).
-
-**Algorithm** (protocol + channels = default):
-
-| `NCCL_ALGO` | RCCL_TOTAL_MS |
-|---|---|
-| **Tree** | **42630** |
-| Ring | 45848 |
-
-**Protocol** (algorithm + channels = default):
-
-| `NCCL_PROTO` | RCCL_TOTAL_MS |
-|---|---|
-| **LL** | **4111** |
-| Simple | 10819 |
-| LL128 | 37944 |
-
-**Channel count** (algorithm + protocol = default):
-
-| `NCCL_MIN/MAX_NCHANNELS` | RCCL_TOTAL_MS |
-|---|---|
-| **1** | **30821** |
-| 8 | 37725 |
-| 16 | 40134 |
-| 2 | 41681 |
-| 32 | 44286 |
-| 4 | 45877 |
-
-**Takeaway:** `NCCL_PROTO=LL` is the dominant lever here — **~9-10x** less
-collective time than the LL128/auto baseline for this ~102 MB gradient all-reduce;
-`Tree` edges out `Ring` (~7 %); and on a single APU **fewer channels win** (1 is
-best, extra channels add CUDA-block overhead without a bandwidth payoff).
-
-> **Single-APU caveat.** On one SPX APU the all-reduce stays on the on-package
-> Infinity Fabric, so these are relative signals on a small, fast collective. The
-> ranking (especially the protocol effect) is far more pronounced once the
-> collective crosses **physical APUs** — rerun the sweep on the 12-/24-GPU
-> `PPAC_MI300A_CPX` node ([CPX partitions](#sec-cpx)) to see the large-message behavior.
-
-<a id="sec-batch-longruns"></a>
-> **Note — use longer runs when resources allow.** The compute study is capped at
-> 100 iterations so it finishes quickly and stays a polite neighbor on a shared
-> system. As the [compute study](#sec-batch-compute) explains, the steady-state
-> median (first step dropped) already keeps the one-time `torch.compile` graph build
-> out of the headline number, but a 100-iteration window still reads slightly
-> optimistic versus the sustained rate. When you have more compute and fewer users
-> on the system, raise the iteration cap (edit the [demo-length edit](#sec-edit-break)
-> `if i >= 100: break` to a larger value, or run full epochs) and/or increase the
-> number of phases. More steps let the one-time compile cost amortize and pull the
-> median toward the true **sustained** throughput (the full-epoch figures in the
-> [compute study](#sec-batch-compute)), which is the number to quote for real
-> training. The RCCL sweep is far less sensitive to this (each config re-pays only
-> MIOpen/allocator warmup, not a graph compile), but longer per-config runs still
-> tighten its `RCCL_TOTAL_MS` numbers.
-
-<a id="sec-batch-defaults"></a>
-### 12.5 NCCL/RCCL variable defaults
-
-On ROCm, `librccl` honors the `NCCL_*` names. Unless you set them, RCCL
-auto-selects; the sweep's "default" columns above reflect those auto choices:
-
-| Variable | Default | Behavior when unset |
-|---|---|---|
-| `NCCL_ALGO` | auto | Internal performance model picks per collective/size & topology (typically Ring or Tree). |
-| `NCCL_PROTO` | auto | Chooses per message size from the allowed set — `LL,LL128,Simple` on supported platforms (`LL,Simple` otherwise). LL for small, LL128 for medium, Simple for large messages. |
-| `NCCL_MIN_NCHANNELS` | platform-dependent | Auto-tuned lower bound on channels (CUDA blocks) from topology. |
-| `NCCL_MAX_NCHANNELS` | platform-dependent (max capped at **32** in recent NCCL/RCCL) | Auto-tuned upper bound; RCCL picks the actual count within `[min,max]`. |
-
-> Upstream guidance is that these are **best left unset** — manual values only win
-> for a specific message size / topology, which is exactly what this sweep
-> demonstrates (`NCCL_PROTO=LL` beats the auto choice for this particular
-> all-reduce size).
+To browse the `profile.*` in the ParaProf GUI, or run any other graphical tool on the
+node, see [Appendix A: noVNC desktop](#sec-prof-novnc).
 
 <a id="sec-roofline"></a>
-## 13. Featured profiling tool: roofline extractor (per-kernel compute vs. memory)
+## 12. Featured profiling tool: roofline extractor (per-kernel compute vs. memory)
 
-The [profiling exercise](#sec-profiling-exercise) timeline shows **where** time goes (compute vs. the RCCL all-reduce). A
-**roofline** answers the next question — for each GPU kernel, **is it compute-bound
-or memory-bound, and how close is it to the hardware peak?** — so you know *which*
+The [profiling exercise](#sec-profiling-exercise) timeline shows where time goes (compute vs. the RCCL all-reduce). A
+roofline answers the next question — for each GPU kernel, is it compute-bound
+or memory-bound, and how close is it to the hardware peak? — so you know *which*
 kernel to optimize and *how*. The system `roofline-extractor` module (by Andrew
 Chisolm and Noah Wolfe) automates this: it drives `rocprofv3` to collect the FLOP
-and byte-movement counters per kernel, computes each kernel's **arithmetic
-intensity** (FLOP per byte) and **achieved throughput**, and plots every kernel
+and byte-movement counters per kernel, computes each kernel's arithmetic
+intensity (FLOP per byte) and achieved throughput, and plots every kernel
 against the MI300A bandwidth/compute ceilings.
 
-A roofline is a **per-kernel, per-GPU** compute analysis, so this profiles a
-**single-GPU, short ResNet-50 `--dummy` run** (not the 4-GPU DDP job). The
+A roofline is a per-kernel, per-GPU compute analysis, so this profiles a
+single-GPU, short ResNet-50 `--dummy` run (not the 4-GPU DDP job). The
 [`profiling/capture_roofline.sbatch`](profiling/capture_roofline.sbatch) script
-packages the whole flow with the same self-contained pattern as the
-[batch studies](#sec-batch-studies), but loading `rocm pytorch roofline-extractor` and
-running the extractor:
+packages the whole flow with the same self-contained pattern as the optimization batch
+studies (see [`README_rccl_optimization.md`](README_rccl_optimization.md) and
+[`README_compute_optimization.md`](README_compute_optimization.md)), but loading
+`rocm pytorch roofline-extractor` and running the extractor:
 
 ```bash
 # From the imagenet dir, on a node with a GPU:
@@ -1034,14 +783,14 @@ HIP_VISIBLE_DEVICES=0 roofline-extractor-profile -o profiling/roofline --arch MI
 > skips auto-detection; `-f csv` needs ROCm 7+ (the default stack here) and is
 > auto-dropped on older ROCm.
 
-The measured roofline for this run (log-log: **arithmetic intensity** on x,
-**throughput** on y; the sloped lines are the HBM/L2/L1/LDS **bandwidth** roofs
-rising to the flat **compute** ceiling; each dot is a kernel):
+The measured roofline for this run (log-log: arithmetic intensity on x,
+throughput on y; the sloped lines are the HBM/L2/L1/LDS bandwidth roofs
+rising to the flat compute ceiling; each dot is a kernel):
 
 ![Measured single-MI300A ResNet-50 roofline: each dot is a GPU kernel, plotted by arithmetic intensity vs. achieved throughput against the MI300A bandwidth and compute ceilings](figs/roofline_1gpu.png)
 
-The run covers **93 unique kernels / 52,001 dispatches / ~14.0 s of GPU time**,
-achieving on average **68 % of the (linear) roofline**. The kernels that dominate
+The run covers 93 unique kernels / 52,001 dispatches / ~14.0 s of GPU time,
+achieving on average 68 % of the (linear) roofline. The kernels that dominate
 the time split cleanly into the two roofline regimes:
 
 | Kernel (ResNet-50 role) | % GPU time | Arith. intensity (FLOP/byte) | Achieved (TFLOP/s) | % of roofline |
@@ -1055,19 +804,19 @@ the time split cleanly into the two roofline regimes:
 
 Read the roofline like this:
 
-- **High arithmetic intensity → compute-bound (right side, up against the flat
-  ceiling).** The conv and GEMM kernels (AI 21-69 FLOP/byte) sit near the FP32
+- High arithmetic intensity means compute-bound (right side, up against the flat
+  ceiling). The conv and GEMM kernels (AI 21-69 FLOP/byte) sit near the FP32
   compute roof (~74 TFLOP/s linear) and already reach tens of TFLOP/s. More HBM
   bandwidth would not help them; the levers are better matrix-engine utilization
-  or **lower precision** — bf16 autocast ([compute optimizations](#sec-compute-opt)) moves them toward the far higher
+  or lower precision — bf16 autocast ([compute optimizations](#sec-compute-opt)) moves them toward the far higher
   MFMA ceiling. (This run is FP32: main.py uses no AMP.)
-- **Low arithmetic intensity → memory-bound (left side, on the sloped roof).**
+- Low arithmetic intensity means memory-bound (left side, on the sloped roof).
   Batch norm and the elementwise ops (AI 0.18-0.78) run at ~1-2 TFLOP/s because
-  they are limited by **HBM bandwidth**, not FLOPs. Their lever is **fusion** —
+  they are limited by HBM bandwidth, not FLOPs. Their lever is fusion —
   fewer passes over HBM — which is exactly what `torch.compile` ([compute optimizations](#sec-compute-opt)) does by
   folding elementwise/BN work into the conv/GEMM epilogues.
 
-**Viewing the interactive plot.** `roofline-extractor-profile` writes everything to
+Viewing the interactive plot. `roofline-extractor-profile` writes everything to
 `profiling/roofline/`:
 
 | Artifact | What it is |
@@ -1077,20 +826,20 @@ Read the roofline like this:
 | `counters_EXTRACTED.csv` | per-dispatch metrics |
 | `profile_*.log` | the guided per-kernel text analysis (source of the table above) |
 
-The plot is an **interactive HTML file**, so the figure above is a **screenshot**
+The plot is an interactive HTML file, so the figure above is a screenshot
 of `counters.html` opened in a browser — the easiest way on a headless node is the
 [noVNC/XFCE desktop](#sec-prof-novnc) (or `scp` the file and open it locally). For the terminal
 summary without any display, read the `profile_*.log` or the `*_AGG.csv`. To fold
 several runs/phases into one combined roofline, use the wrapper's `-D`/`--directory`
 mode; `--dump` writes the CSVs and `--send NAME` renames the HTML.
 
-> **Where this figure comes from.** [`figs/roofline_1gpu.png`](figs/roofline_1gpu.png)
+> Where this figure comes from. [`figs/roofline_1gpu.png`](figs/roofline_1gpu.png)
 > is a screenshot of the `profiling/roofline/counters.html` produced by one measured
 > single-MI300A run of [`profiling/capture_roofline.sbatch`](profiling/capture_roofline.sbatch);
 > the numbers in the table are quoted verbatim from that run's `profile_*.log`.
 
 <a id="sec-cleanup"></a>
-## 14. Cleanup
+## 13. Cleanup
 
 ```
 deactivate
@@ -1099,13 +848,13 @@ rm -rf imagenet_test
 ```
 
 <a id="sec-cpx"></a>
-## 15. Run on CPX partitions (`SH5_MI300A_CPX`, `PPAC_MI300A_CPX`)
+## 14. Run on CPX partitions (`SH5_MI300A_CPX`, `PPAC_MI300A_CPX`)
 
-The sweep above assumes **SPX** mode, where each MI300A APU is one HIP device
-(so `PPAC_MI300A_SPX --gpus=4` = 4 devices). The same study runs on **CPX** 
+The sweep above assumes SPX mode, where each MI300A APU is one HIP device
+(so `PPAC_MI300A_SPX --gpus=4` = 4 devices). The same study runs on CPX 
 partitions with just some small changes to mimic running
 on larger systems with multiple nodes.  The CPX compute mode subdivides
-the MI300A node where each of an APU's **6 XCDs** is exposed as
+the MI300A node where each of an APU's 6 XCDs is exposed as
 its own HIP device:
 
 | Partition | Physical APUs | HIP devices | What one device is |
@@ -1123,7 +872,7 @@ sbatch run_imagenet_uv_ppac_cpx.sbatch   # 4 APUs, GPU_LIST="1 2 4 6 12 24"
 Both are like the SPX driver but with the sweep written as a loop over a
 GPU-count list, and two CPX-specific adjustments:
 
-- **Smaller per-GPU batch.** A CPX partition has ~1/6 the compute and memory of a
+- Smaller per-GPU batch. A CPX partition has ~1/6 the compute and memory of a
   full APU, so the SPX per-GPU batch of 128 can OOM or crawl. The scripts default
   to `PERGPU_BATCH=32`; the global batch is `N * PERGPU_BATCH` (weak scaling).
   Both `GPU_LIST` and `PERGPU_BATCH` are overridable at submit time, e.g.
@@ -1131,20 +880,20 @@ GPU-count list, and two CPX-specific adjustments:
   until `peak_mem_mb` approaches the partition's memory limit (which depends on
   whether the node uses shared (NPS1) or split (NPS4) memory — check `rocm-smi`).
 
-- **Extended GPU-count list.** `SH5` goes up to 6 (one XCD → the whole chip);
+- Extended GPU-count list. `SH5` goes up to 6 (one XCD up to the whole chip);
   `PPAC` continues to 12 and 24.
 
 `images_per_sec.sh` handles either sweep: it derives the GPU count `N` from each
 `run_<N>.log` name and reads `PERGPU_BATCH` from the environment, printing the
 same `img/s` / `speedup` lines (speedup is relative to the smallest `N`).
 
-**Interpreting CPX results.** The RCCL story differs sharply between the two:
+Interpreting CPX results. The RCCL story differs sharply between the two:
 
-- On **`SH5_MI300A_CPX`** all ranks live on one APU, so the gradient all-reduce
+- On `SH5_MI300A_CPX` all ranks live on one APU, so the gradient all-reduce
   travels over the on-package Infinity Fabric. It is extremely fast, so
   `RCCL_TOTAL_MS` / `comm` cost stays near zero even at 6 GPUs — communication
   looks almost free.
-- On **`PPAC_MI300A_CPX`** up to 6 ranks stay intra-APU (cheap), but at `N=12`
+- On `PPAC_MI300A_CPX` up to 6 ranks stay intra-APU (cheap), but at `N=12`
   and `N=24` the collective crosses physical APUs (socket-to-socket links), so
   RCCL cost should visibly rise. This is the CPX sweep that best reproduces the
   real communication behavior the example is built to expose.
@@ -1157,24 +906,117 @@ communication behavior only appears once the rank count crosses physical APUs
 <a id="sec-next-steps"></a>
 ## Next steps
 
-- **[`README_rccl_optimization.md`](README_rccl_optimization.md)** — hands-on
+- [`README_rccl_optimization.md`](README_rccl_optimization.md) — hands-on
   exercises that optimize the RCCL all-reduce by editing `main.py` directly
   (bf16 gradient compression, `NCCL_ALGO`/`PROTO`/channels, DDP bucketing/overlap).
-- **[`README_compute_optimization.md`](README_compute_optimization.md)** — hands-on
+- [`README_compute_optimization.md`](README_compute_optimization.md) — hands-on
   exercises that optimize per-GPU compute by editing `main.py` directly (bf16
   autocast, `channels_last`, `cudnn.benchmark`, `torch.compile`, fused optimizer).
-- **[`benchmarks/`](benchmarks/README_benchmark.md)** — the rigorous study:
+- [`benchmarks/`](benchmarks/README_benchmark.md) — the rigorous study:
   automated sweep drivers (`benchmarks/ddp_bench_sweep.sh`), optimization levers
   (`--channels-last`, `--amp`, `--compile`), the required MI300A/RCCL settings,
   measured results, batch jobs, the pure-RCCL bandwidth micro-benchmark, and how
   this compares to the other distributed examples.
-- **[`profiling/`](profiling/PROFILING.md)** — splitting a step into compute vs.
+- [`profiling/`](profiling/PROFILING.md) — splitting a step into compute vs.
   communication with torch.profiler, rocprofv3, and rocprof-sys.
-- **Per-kernel roofline ([roofline extractor](#sec-roofline))** — [`profiling/capture_roofline.sbatch`](profiling/capture_roofline.sbatch)
+- Per-kernel roofline ([roofline extractor](#sec-roofline)) — [`profiling/capture_roofline.sbatch`](profiling/capture_roofline.sbatch)
   drives the `roofline-extractor` module to plot every GPU kernel by arithmetic
   intensity vs. achieved throughput against the MI300A ceilings (which kernels are
   compute- vs. memory-bound, and how close to peak).
-- **Self-contained runs** — `run_imagenet_uv.sh` (and `submit_imagenet_uv.batch`) run
+- Self-contained runs — `run_imagenet_uv.sh` (and `submit_imagenet_uv.batch`) run
   the whole scaling sweep end-to-end with the same self-contained pattern as the
-  [batch studies](#sec-batch-studies), with automatic cleanup. See
+  optimization batch studies, with automatic cleanup. See
   [`benchmarks/README_benchmark.md`](benchmarks/README_benchmark.md).
+
+<a id="sec-prof-novnc"></a>
+## Appendix A: noVNC desktop (view GUIs like ParaProf/Perfetto in the browser)
+
+Some tools (ParaProf, ParaView, or just a browser for `ui.perfetto.dev`) need a
+graphical desktop. noVNC gives you the compute node's XFCE desktop in your local
+browser — no VNC client install — proxied through the control node's nginx (TLS +
+TOTP). Full details are in `man aac6_novnc` and `man aac6_vnc`; the short version:
+
+1. Open an SSH tunnel from your laptop/workstation to the nginx proxy (port 6443),
+   and enter your TOTP when prompted:
+
+```bash
+ssh -L 6443:10.194.42.31:6443 <username>@aac6.amd.com
+```
+
+2. Get a node allocation and note the node name from the output:
+
+```bash
+salloc -p PPAC_MI300A_SPX -N1 --gpus=4 -t 08:00:00
+# salloc: Nodes ppac-pl1-s24-16 are ready for job
+```
+
+   The Slurm prolog automatically starts a TurboVNC desktop (display `:1`, 1920×1080)
+   and the websockify bridge on that node — no manual `vncserver` needed.
+
+3. Open the noVNC URL in your local browser, substituting your node name:
+
+```
+https://localhost:6443/novnc/<node name>/vnc.html
+# e.g. https://localhost:6443/novnc/ppac-pl1-s24-16/vnc.html
+```
+
+   The proxy uses a self-signed certificate, so your browser shows a one-time
+   security warning — approve it to continue (the connection is still TLS-encrypted;
+   see `man aac6_novnc` to import the cert and silence the warning).
+
+4. Log in with your cluster username and current 6-digit TOTP code (this
+   is the *only* login — there is no separate VNC password; the desktop is started
+   with security type `None` and is protected by the TOTP proxy):
+
+![noVNC login page: enter your cluster username and 6-digit TOTP code](figs/novnc_login_screen.png)
+
+5. Click Connect to open the XFCE desktop:
+
+![noVNC connect screen](figs/novnc_connect_screen.png)
+
+A signed session cookie is issued, so you only log in once per 24-hour browser
+session. From the desktop you can launch `paraprof &` on the TAU `profile.*`, open a
+browser on `ui.perfetto.dev`, or run any other GUI tool.
+
+Navigating the XFCE desktop (a few hints):
+
+- Launch apps: the Applications menu is at the top-left of the panel —
+  *Terminal Emulator*, *File Manager*, a web browser, and *Settings* live there. You
+  can also right-click the desktop for a quick app menu and *Open Terminal Here*.
+- Panel & clock: the top panel lists open windows and holds the clock and the
+  workspace switcher; XFCE has several virtual desktops — click a square to switch,
+  or drag a window onto one to move it.
+- Windows: drag the title bar to move, double-click it to maximize, and use
+  `Alt`+drag to move a window that's larger than the screen.
+- Copy/paste & fullscreen (noVNC): hover the small tab on the left edge of the
+  browser window to open the noVNC control bar. It has a Clipboard panel (paste
+  text between your laptop and the remote desktop), a Fullscreen button, and
+  Settings, then Scaling Mode, then Local Scaling, so the 1920×1080 desktop
+  fits your browser window.
+- Files: your `$HOME` on the cluster is shared, so `profiling/tau/`, `figs/`, etc.
+  are the same paths you see over SSH.
+
+Open a TAU profile in the desktop. In a desktop terminal (Applications menu, then
+*Terminal Emulator*, or right-click the desktop and select *Open Terminal Here*), capture or
+reuse a profile as in the [TAU manual flow](#sec-prof-tau) / [automated flow](#sec-prof-tau-auto),
+then from its `profile.*` directory (`profiling/tau/`) launch the GUI browser:
+
+```bash
+cd profiling/tau
+paraprof &       # GUI profile browser (needs the desktop); `pprof` gives the text summary
+```
+
+ParaProf shows one bar per rank; double-click a rank to drill into the per-kernel
+breakdown (RCCL all-reduce vs. ResNet-50 compute). It explores interactively the same
+per-rank data rendered headless in [`figs/tau_profile_4gpu.png`](figs/tau_profile_4gpu.png)
+— see the [TAU manual flow](#sec-prof-tau) for what that split means.
+
+> Shut down in order (`man aac6_vnc`): close the noVNC browser tab first,
+> then release the Slurm job (`exit`/`scancel`), then exit the SSH session. The
+> WebSocket is forwarded through the tunnel, so leaving the tab open makes the SSH
+> logout hang. If it hangs, close the tab, or press `Enter` `~` `.` to force-close SSH.
+
+> Only one TOTP prompt is expected. If a *second* page asks for a password, the
+> node's VNC server is advertising PAM auth types instead of `None`; restart it with
+> `vncserver -kill :1 && vncserver :1 -geometry 1920x1080 -securitytypes None -localhost`
+> on the node, or report it to the admins.
