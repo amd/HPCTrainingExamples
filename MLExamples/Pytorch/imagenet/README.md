@@ -613,13 +613,14 @@ render, while the Perfetto view is a manual screenshot — optionally automated 
 
 Let's begin setting up for TAU:
 ```
-module load tau                  # adds tau_exec / pprof (on top of rocm openmpi pytorch from setup)
-export TAU_PROFILE=1
-unset TAU_PROFILE_FORMAT         # the tau module defaults this to "merged" (one tauprofile.xml);
-                                 # unset it to get classic per-rank profile.<node>.<ctx>.<thread> files
-export PROFILEDIR=$PWD/tau_trace
-mkdir -p tau_trace
+module load tau                   # adds tau_exec / pprof (on top of rocm openmpi pytorch)
+unset TAU_PROFILE_FORMAT          # tau module defaults to "merged" (one tauprofile.xml); unset -> per-rank profile.<node>.<ctx>.<thread>
+export PROFILEDIR=$PWD/tau_trace  # directory the per-rank profile.* files are written to
+mkdir -p tau_trace                # create it before the run
 ```
+
+The MPI-enabled TAU library assigns each rank from the launcher, so profiles are written
+only when the job runs under `mpirun`; a single, non-`mpirun` process produces none.
 
 **IMPORTANT**: TAU's rocprofsdk and torch.profiler (Kineto) both claim the ROCm profiler
  interface, so if main.py still has the torch.profiler edits, TAU attaches to nothing
@@ -653,8 +654,8 @@ chmod +x tau_wrapper.sh
 ```
 
 Run the 4-rank capture with `tau_exec -rocm`. The `-rocm` flag turns on TAU's built-in
-rocprofiler-sdk GPU tracing. TAU writes one
-`profile.*` per rank into `$PROFILEDIR` (`tau_trace`):
+rocprofiler-sdk GPU tracing. TAU writes `profile.<rank>.0.<thread>` files into
+`$PROFILEDIR` (`tau_trace`) — one per rank per thread, so expect several files per rank:
 
 ```bash
 mpirun -n 4 --map-by numa --bind-to numa --report-bindings \
@@ -697,18 +698,18 @@ rank's compute:
 
 How to read it:
 
-- **Compute (blue).** Per-rank GPU compute ranges 3.65 s (rank 0) to 4.70 s (rank 2) —
-  a 1.05 s spread (22 % of max). All four ranks run the identical ResNet-50 on identical
+- **Compute (blue).** Per-rank GPU compute ranges 8.38 s (rank 0) to 10.23 s (rank 2) —
+  a 1.86 s spread (18 % of max). All four ranks run the identical ResNet-50 on identical
   MI300A APUs with the same dummy batch, so there is no genuine per-rank load imbalance:
   this modest spread is run-to-run scheduling and measurement variation, not an
   algorithmic straggler.
-- **All-reduce (orange).** Exclusive `ncclDevKernel` time is 0.61–2.33 s — 12 % to 34 %
+- **All-reduce (orange).** Exclusive `ncclDevKernel` time is 0.60–2.53 s — 7 % to 21 %
   of each rank's GPU time. This is a *synchronizing* collective, so the number blends the
   actual reduction with time blocked waiting on peers; the two cannot be separated from
   this profile, and here the per-rank values do not track the compute spread, so do not
   read them as "waiting for the slowest compute rank".
 
-The takeaway is the **communication fraction** — 12–34 % of per-rank GPU time goes to the
+The takeaway is the **communication fraction** — 7–21 % of per-rank GPU time goes to the
 all-reduce — which is what the [RCCL optimizations](#sec-rccl-opt) target. To quantify the
 true collective cost (as opposed to exposed wait), measure achieved bandwidth with
 `rccl-tests` or inspect compute/comm overlap in the Perfetto timeline.

@@ -79,11 +79,10 @@ HIP_VISIBLE_DEVICES=0 python -c "import torch,torchvision.models as M; \
    x=torch.randn(256,3,224,224,device=d); y=torch.randint(0,1000,(256,),device=d); \
    [c(n(x),y).backward() for _ in range(3)]; torch.cuda.synchronize(); print('warm done')"
 
-# TAU profiling into the persistent dir. TAU_PROFILE=1 emits the per-rank profile.*
-# files (the ParaProf profile); PROFILEDIR is where they land. The tau module defaults
-# TAU_PROFILE_FORMAT=merged (one tauprofile.xml); unset it so we get the classic
-# per-rank profile.* files that pprof -a and render_tau_profile.py expect.
-export TAU_PROFILE=1
+# TAU profiling into the persistent dir. PROFILEDIR is where the per-rank profile.*
+# files land. The tau module defaults TAU_PROFILE_FORMAT=merged (one tauprofile.xml);
+# unset it so we get the classic per-rank profile.* files that pprof -a and
+# render_tau_profile.py expect.
 unset TAU_PROFILE_FORMAT
 export PROFILEDIR="${TAU_OUT}"
 
