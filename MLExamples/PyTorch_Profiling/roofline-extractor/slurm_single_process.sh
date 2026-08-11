@@ -14,6 +14,12 @@
 # Its profile_app.py runs rocprofv3 several times to collect counters + a kernel
 # trace, then produces the per-kernel roofline analysis and an HTML plot.
 # Sources ../setup_rocm.sh to activate the ROCm venv.
+#
+# Notes:
+#  * --arch comes from ROOFLINE_ARCH in local.env and selects the counter set
+#    matching this cluster's GPU (e.g. MI250X for gfx90a, MI300A for gfx942).
+#  * rooflineExtractor and its pip deps are PRE-STAGED by install_rocm_pytorch.sh
+#    on a login node, for sites whose compute nodes have no direct internet.
 # ---------------------------------------------------------------------------
 
 set -e
@@ -29,15 +35,25 @@ PROFILER_TOP_DIR="$(dirname "${SCRIPT_DIR}")"
 echo "SCRIPT_DIR=${SCRIPT_DIR}"
 echo "PROFILER_TOP_DIR=${PROFILER_TOP_DIR}"
 
-# ../setup_rocm.sh activates the ROCm PyTorch venv and exports ROCm env vars.
+# ../setup_rocm.sh activates the ROCm PyTorch venv and exports ROCm env vars
+# (and, via env.sh, sets ROOFLINE_ARCH from local.env).
 source ${PROFILER_TOP_DIR}/setup_rocm.sh
 rocprofv3 --version
 
-# Fetch rooflineExtractor and install its Python dependencies (into the venv).
+if [[ -z "${ROOFLINE_ARCH}" ]]; then
+    echo "ERROR: ROOFLINE_ARCH is not set; define it in local.env." >&2
+    exit 1
+fi
+
+# Use the copy pre-staged by install_rocm_pytorch.sh on a login node; fall back
+# to cloning here, which requires internet on the compute node.
 RE_DIR=${SCRIPT_DIR}/rooflineExtractor
 if [ ! -d ${RE_DIR} ]; then
+    echo "rooflineExtractor not pre-staged; cloning (requires internet on this node)"
     git clone https://github.com/AMD-HPC/rooflineExtractor.git ${RE_DIR}
 fi
+# Where install_rocm_pytorch.sh already installed these, pip resolves every
+# requirement as satisfied and makes no network request.
 python3 -m pip install -r ${RE_DIR}/requirements.txt
 
 # Distributed bootstrap variables expected by train_cifar_100.py (single rank).
@@ -57,15 +73,15 @@ OUT_DIR=${SCRIPT_DIR}/output
 rm -rf ${OUT_DIR}
 cd ${SCRIPT_DIR}
 
-# Collect roofline data and generate plots. --arch MI300A selects the gfx942
+# Collect roofline data and generate plots. --arch selects this cluster's
 # counter set; profile_app.py runs rocprofv3 itself, so it is the target.
 echo
 echo "==================================================================="
-echo "profile_app.py --arch MI300A -- python3 train_cifar_100.py"
+echo "profile_app.py --arch ${ROOFLINE_ARCH} -- python3 train_cifar_100.py"
 echo "==================================================================="
 srun -n 1 --gpus=1 --cpus-per-task=8 \
     python3 ${RE_DIR}/profile_app.py \
-        --arch MI300A \
+        --arch ${ROOFLINE_ARCH} \
         -o ${OUT_DIR} \
         -- \
         python3 ${PROFILER_TOP_DIR}/train_cifar_100.py \

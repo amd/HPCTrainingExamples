@@ -43,7 +43,7 @@ if [ ! -d ${PROFILER_TOP_DIR}/data/cifar-100-python ]; then
 fi
 
 OUT_DIR=${SCRIPT_DIR}/single_process
-rm -rf ${OUT_DIR}
+rm -f ${OUT_DIR}/traces*
 cd ${SCRIPT_DIR}
 
 # Collect GPU timeline traces with rocprofv3.

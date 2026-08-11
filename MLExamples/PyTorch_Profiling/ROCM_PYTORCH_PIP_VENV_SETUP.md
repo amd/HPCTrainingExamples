@@ -1,46 +1,47 @@
-# Creating the `rocm-pytorch-pip` venv (nightly ROCm + PyTorch, MI300A / gfx942)
+# Creating the `rocm-pytorch-pip` venv (nightly ROCm + PyTorch)
 
-This guide walks you through building a Python virtual environment with ROCm,
-PyTorch, and the ROCm profiling tools, so you can train and profile a model on
-an AMD GPU. Follow the steps in order.
-
+This guide builds a Python virtual environment holding ROCm, PyTorch, and the
+ROCm profiling tools, so you can train and profile a model on an AMD GPU.
 Everything installs from pip into one self-contained venv, so PyTorch and the
-profilers use the same ROCm. Each step below is a single command block you can
-copy and run.
+profilers use the same ROCm.
 
-> This guide targets an AMD MI300A GPU (`gfx942`). If you have a different GPU,
-> change `device-gfx942` to your architecture.
+> `install_rocm_pytorch.sh` performs every step below and pre-stages the test
+> jobs. Follow the steps by hand only to adapt the build or debug a failure; see
+> [`README_ROCM_NIGHTLY_TESTING.md`](./README_ROCM_NIGHTLY_TESTING.md) for the
+> scripted path.
+
+The commands use the settings from `local.env`, so create one first and let
+`env.sh` load it. Nothing below is specific to a cluster or a GPU:
+
+```bash
+cp local.env.example local.env
+$EDITOR local.env          # VENV_BASE, GPU_ARCH, ROCM_VERSION at minimum
+source env.sh
+```
 
 ---
 
 ## 1. Create and activate the venv
 
-First choose where the venv should live. Set `VENV_BASE` to the directory that
-will hold the `venvs` folder (defaults to your home directory). Keep this shell
-open for the remaining steps, which reuse the variable.
-
-> **Tip:** Prefer node-local/fast storage (e.g. a local NVMe scratch path) over
-> a shared NFS home directory. The venv holds hundreds of MB of ROCm/PyTorch
-> shared libraries, and loading them from NFS on every job noticeably slows
-> startup.
+`VENV_BASE` holds the `venvs` folder. It must be visible from **both** the login
+node that builds the venv and the compute nodes that run the jobs, so use the
+fastest *shared* filesystem available (a parallel filesystem where there is one).
+Node-local paths such as `/tmp` or `/dev/shm` cannot work here, however fast they
+are: the compute node would not see what the login node wrote.
 
 ```bash
-VENV_BASE=~
 mkdir -p "${VENV_BASE}/venvs"
-python -m venv "${VENV_BASE}/venvs/rocm-pytorch-pip"
-source "${VENV_BASE}/venvs/rocm-pytorch-pip/bin/activate"
+python3 -m venv "${VENV}"
+source "${VENV}/bin/activate"
 ```
 
 ## 2. Install ROCm + PyTorch from the nightly multi-arch index
 
 ```bash
-# Pin the nightly ROCm version once and reuse it everywhere below.
-ROCM_VERSION=7.15.0a20260721
-
-pip install --index-url https://rocm.nightlies.amd.com/whl-multi-arch/ \
-    "rocm[profiler,devel,libraries,device-gfx942]==${ROCM_VERSION}" \
-    "torch[device-gfx942]" \
-    "torchvision[device-gfx942]"
+pip install --index-url "${ROCM_INDEX_URL}" \
+    "rocm[profiler,devel,libraries,device-${GPU_ARCH}]==${ROCM_VERSION}" \
+    "torch[device-${GPU_ARCH}]" \
+    "torchvision[device-${GPU_ARCH}]"
 ```
 
 The `rocm[...]` extras pull in the pieces this workflow needs:
@@ -48,7 +49,12 @@ The `rocm[...]` extras pull in the pieces this workflow needs:
   `rocprof-sys` (bundled `_rocm_profiler`)
 - `devel`     — development package (headers/device code, extracted in step 4)
 - `libraries` — math libraries (hipBLAS, rocBLAS, ...)
-- `device-gfx942` — the GPU-arch kernels for MI300A
+- `device-${GPU_ARCH}` — the GPU-arch kernels (`gfx942` for MI300A, `gfx90a` for
+  MI250X); see the index for the architectures a given nightly ships
+
+To validate a different nightly, change `ROCM_VERSION` in `local.env` and
+rebuild. Available versions are listed at the index URL itself,
+<https://rocm.nightlies.amd.com/whl-multi-arch/>.
 
 ## 3. Install `transformers` (required by the training script)
 
@@ -62,7 +68,7 @@ required.
 ## 4. Extract development headers and device code
 
 ```bash
-"${VENV_BASE}/venvs/rocm-pytorch-pip/bin/rocm-sdk" init
+"${VENV}/bin/rocm-sdk" init
 ```
 
 `rocm-sdk init` unpacks the `devel` payload (headers, LLVM device bitcode) into
@@ -71,44 +77,24 @@ and the paths `setup_rocm.sh` points at next.
 
 ---
 
-## 5. Verify `setup_rocm.sh`
+## 5. Activate with `setup_rocm.sh`
 
-The repo already ships `setup_rocm.sh` in `MLExamples/PyTorch_Profiling/` (the
-SLURM scripts source it as `../setup_rocm.sh`). It activates the venv and points
-the ROCm environment at the extracted `_rocm_sdk_devel` tree. It defaults
-`VENV_BASE` to your home directory; if you used a different `VENV_BASE` in
-step 1, export it before sourcing (or edit the default here). Its contents are:
-
-```bash
-#!/usr/bin/env bash
-# Source this to activate the ROCm venv and set ROCm env vars:
-#   source setup_rocm.sh
-VENV_BASE="${VENV_BASE:-$HOME}"
-VENV="$VENV_BASE/venvs/rocm-pytorch-pip"
-source "$VENV/bin/activate"
-DEVEL="$(python3 -c 'import site; print(site.getsitepackages()[0])')/_rocm_sdk_devel"
-export ROCM_PATH="$DEVEL"
-export HIP_PATH="$DEVEL"
-export HIP_DEVICE_LIB_PATH="$DEVEL/lib/llvm/amdgcn/bitcode"
-export PATH="$DEVEL/bin:$PATH"
-export LD_LIBRARY_PATH="$DEVEL/lib:$DEVEL/lib/rocm_sysdeps/lib:$LD_LIBRARY_PATH"
-echo "ROCm venv active: $VENV"
-```
-
-## 6. Re-source to pick up the ROCm env vars
-
-If the venv is already active from step 1, deactivate and source the script so
-the `ROCM_PATH` / `LD_LIBRARY_PATH` exports take effect (run from
-`MLExamples/PyTorch_Profiling/`):
+The repo ships `setup_rocm.sh` in `MLExamples/PyTorch_Profiling/` (the SLURM
+scripts source it as `../setup_rocm.sh`). It reads `local.env` through `env.sh`,
+activates the venv, points the ROCm environment at the extracted
+`_rocm_sdk_devel` tree, and keeps MIOpen's databases on node-local storage.
+There is nothing in it to edit:
 
 ```bash
-deactivate
+deactivate                 # if the venv is still active from step 1
 source setup_rocm.sh
 ```
 
----
+Where `install_rocm_pytorch.sh` has generated an Lmod modulefile under
+`${VENV_BASE}/modulefiles`, `setup_rocm.sh` loads that module instead of
+activating the venv directly. Either way the resulting environment is the same.
 
-## 7. Verify (on a GPU node)
+## 6. Verify (on a GPU node)
 
 ```bash
 source setup_rocm.sh
@@ -119,7 +105,7 @@ x = torch.ones(4, device='cuda:0'); print('device ok:', (x+1).sum().item())"
 Expected output resembles:
 
 ```
-ROCm venv active: /.../rocm-pytorch-pip
+setup_rocm.sh: ROCm venv active: /.../rocm-pytorch-pip
 torch 2.12.0+rocm7.15.0a20260721
 device ok: 8.0
 ```
