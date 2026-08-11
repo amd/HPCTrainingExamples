@@ -136,12 +136,10 @@ def main():
     axB.axhspan(mmin, mmax, color=COMM_COLOR, alpha=0.12, zorder=0)
     axB.axhline(mmin, color=COMM_COLOR, ls="--", lw=1.2, alpha=0.9,
                 label=f"fastest rank wait = {mmin:.2f}s")
-    axB.annotate(
-        f"wait imbalance\n\u0394 = {mspread:.2f}s",
-        xy=(len(xs) - 0.5, (mmin + mmax) / 2.0),
-        xytext=(len(xs) - 0.5, mmax + 0.05 * mmax),
-        ha="right", va="bottom", fontsize=9, color=COMM_COLOR,
-        arrowprops=dict(arrowstyle="-[, widthB=1.6", color=COMM_COLOR, lw=1.2))
+    axB.text(len(xs) - 1, mmax * 1.12,
+             f"wait imbalance\n\u0394 = {mspread:.2f}s",
+             ha="center", va="center", fontsize=9.5, color=COMM_COLOR,
+             bbox=dict(boxstyle="round,pad=0.3", fc="white", ec=COMM_COLOR, alpha=0.9))
 
     for i in range(len(xs)):
         axB.text(i, comm[i], f"{comm[i]:.2f}s", ha="center", va="bottom", fontsize=8)

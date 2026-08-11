@@ -606,6 +606,8 @@ Let's begin setting up for TAU:
 ```
 module load tau                  # adds tau_exec / pprof (on top of rocm openmpi pytorch from setup)
 export TAU_PROFILE=1
+unset TAU_PROFILE_FORMAT         # the tau module defaults this to "merged" (one tauprofile.xml);
+                                 # unset it to get classic per-rank profile.<node>.<ctx>.<thread> files
 export PROFILEDIR=$PWD/tau_trace
 mkdir -p tau_trace
 ```
@@ -641,16 +643,21 @@ EOF
 chmod +x tau_wrapper.sh
 ```
 
-For ROCm > 6.1.9, we supply for TAU the `rocprofsdk` option instead of the separate
-`rocprofiler` and `roctracer` options. Run the 4-rank capture — TAU writes one
+Run the 4-rank capture with `tau_exec -rocm`. The `-rocm` flag turns on TAU's built-in
+rocprofiler-sdk GPU tracing. TAU writes one
 `profile.*` per rank into `$PROFILEDIR` (`tau_trace`):
 
 ```bash
 mpirun -n 4 --map-by numa --bind-to numa --report-bindings \
-  tau_exec -T rocm,rocprofsdk -rocm ./tau_wrapper.sh
+  tau_exec -rocm ./tau_wrapper.sh
 
-ls tau_trace/profile.*     # sanity: four per-rank profiles must exist before pprof
+ls tau_trace/profile.*     # sanity: per-rank profiles must exist before pprof
 ```
+
+> **Shortcut:** the `tau` module also ships `tau_exec_launch`, which wraps the whole
+> `mpirun … tau_exec …` capture and runs `pprof` for you (it keeps the module default
+> `merged` format, so it emits a single `tauprofile.xml` rather than per-rank `profile.*`):
+> `tau_exec_launch --np 4 --mode comm --outdir tau_trace -- ./tau_wrapper.sh`.
 
 
 > **Binding note** The GPU is pinned by the
@@ -672,11 +679,11 @@ python3 "$IMAGENET/profiling/render_tau_profile.py" tau_pprof.txt \
 ```
 
 In the image below, the `pprof` per-rank breakdown splits each rank's GPU-kernel
-time into two buckets — the RCCL all-reduce (`[ROCm Kernel] ncclDevKernel*`) and the
+time into two buckets — the RCCL all-reduce (`ncclDevKernel`) and the
 ResNet-50 compute kernels (conv / GEMM / batch-norm / elementwise) — which we render as
-two panels: **compute imbalance** (left: per-rank compute time, whose fastest→slowest
-spread is the load imbalance) and **exposed communication wait** (right: per-rank time
-*inside* the all-reduce, i.e. spin-wait for the slowest rank):
+two panels: compute imbalance (left: per-rank compute time, whose fastest→slowest
+spread is the load imbalance) and exposed communication wait (right: per-rank time
+inside the all-reduce, i.e. spin-wait for the slowest rank):
 
 ![TAU ParaProf two-panel per-rank GPU-kernel breakdown on MI300A: panel A stacks ResNet-50 compute (blue) plus exposed RCCL all-reduce wait (orange) per rank with the compute-imbalance band; panel B shows the per-rank ncclDevKernel all-reduce wait and its imbalance](figs/tau_profile_4gpu.png)
 
