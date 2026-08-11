@@ -19,12 +19,6 @@ Synthetic data is enabled with the `--dummy` flag.
 By comparing step time across GPU counts we isolate and quantify the RCCL
 communication cost.
 
-> For the required MI300A settings, the
-> scaling-sweep drivers, optimization levers, measured results, profiling,
-> and the pure-RCCL bandwidth micro-benchmark, see
-> `benchmarks/README_benchmark.md`.
-
-
 ## Contents
 
 1. [Get an allocation and load PyTorch](#sec-alloc)
@@ -906,23 +900,11 @@ communication behavior only appears once the rank count crosses physical APUs
 <a id="sec-next-steps"></a>
 ## Next steps
 
-- [`README_rccl_optimization.md`](README_rccl_optimization.md) — hands-on
-  exercises that optimize the RCCL all-reduce by editing `main.py` directly
-  (bf16 gradient compression, `NCCL_ALGO`/`PROTO`/channels, DDP bucketing/overlap).
-- [`README_compute_optimization.md`](README_compute_optimization.md) — hands-on
-  exercises that optimize per-GPU compute by editing `main.py` directly (bf16
-  autocast, `channels_last`, `cudnn.benchmark`, `torch.compile`, fused optimizer).
 - [`benchmarks/`](benchmarks/README_benchmark.md) — the rigorous study:
   automated sweep drivers (`benchmarks/ddp_bench_sweep.sh`), optimization levers
   (`--channels-last`, `--amp`, `--compile`), the required MI300A/RCCL settings,
   measured results, batch jobs, the pure-RCCL bandwidth micro-benchmark, and how
   this compares to the other distributed examples.
-- [`profiling/`](profiling/PROFILING.md) — splitting a step into compute vs.
-  communication with torch.profiler, rocprofv3, and rocprof-sys.
-- Per-kernel roofline ([roofline extractor](#sec-roofline)) — [`profiling/capture_roofline.sbatch`](profiling/capture_roofline.sbatch)
-  drives the `roofline-extractor` module to plot every GPU kernel by arithmetic
-  intensity vs. achieved throughput against the MI300A ceilings (which kernels are
-  compute- vs. memory-bound, and how close to peak).
 - Self-contained runs — `run_imagenet_uv.sh` (and `submit_imagenet_uv.batch`) run
   the whole scaling sweep end-to-end with the same self-contained pattern as the
   optimization batch studies, with automatic cleanup. See
