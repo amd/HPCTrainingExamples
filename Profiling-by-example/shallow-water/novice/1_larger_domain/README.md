@@ -94,12 +94,13 @@ rocprof-compute analyze -p workloads/second_roof/0
 Both are explained in [Roofline plots](../README.md#roofline-plots).
 
 <p>
-<img src="images/roofline_2048.png" alt="Roofline of compute_rhs at 2048x2048" />
+<img src="../0_baseline/images/roofline_512.png" alt="Roofline of compute_rhs at 512x512, before this stage" width="49%" />
+<img src="images/roofline_2048.png" alt="Roofline of compute_rhs at 2048x2048, after this stage" width="49%" />
 </p>
 
-Compared with the stage 0 plot, `compute_rhs` has moved up toward the memory ceiling. Arithmetic
-intensity is unchanged, since we did not touch the arithmetic, but we are now much closer to
-extracting the bandwidth the hardware can deliver.
+Stage 0 at 512x512 is on the left, this stage at 2048x2048 on the right. `compute_rhs` has moved up
+toward the memory ceiling. Arithmetic intensity is unchanged, since we did not touch the arithmetic,
+but we are now much closer to extracting the bandwidth the hardware can deliver.
 
 ## Step 2: Where is the remaining time going?
 

@@ -76,7 +76,7 @@ in the two streaming kernels, which are the ones that care most about contiguous
 
 ```bash
 module load rocm roofline-extractor
-AMD_SERIALIZE_KERNEL=3 roofline-extractor-profile -o roofline_out --arch MI300A -- ./shallow
+roofline-extractor-profile -o roofline_out --arch MI300A -- ./shallow
 ```
 
 The equivalent in `rocprof-compute`:
@@ -88,15 +88,13 @@ rocprof-compute analyze -p workloads/block_64x4_roof/0
 
 Both are explained in [Roofline plots](../README.md#roofline-plots).
 
-`AMD_SERIALIZE_KERNEL=3` is needed for the same reason as in
-[stage 2](../2_no_device_sync/README.md#step-2-check-the-roofline-again): with no synchronization in
-the time loop, counter collection stalls on the queued backlog.
-
 <p>
-<img src="images/roofline_block_64x4.png" alt="Roofline of compute_rhs with 64x4 blocks" />
+<img src="../3_block_32x32/images/roofline_block_32x32.png" alt="Roofline of compute_rhs with 32x32 blocks, before this stage" width="49%" />
+<img src="images/roofline_block_64x4.png" alt="Roofline of compute_rhs with 64x4 blocks, after this stage" width="49%" />
 </p>
 
-The plot shows no visible change from stage 3, even though the code is 18 percent faster. As in
+With 32x32 on the left and 64x4 on the right, the plots show no visible change, even though the code
+is 18 percent faster. As in
 stage 2, this is a reminder that a roofline summarizes arithmetic intensity and achieved bandwidth,
 and a change can be worth having without moving either enough to see on a log-log plot.
 

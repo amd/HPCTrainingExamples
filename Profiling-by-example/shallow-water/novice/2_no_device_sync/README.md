@@ -69,7 +69,7 @@ The kernels now abut one another instead of being separated by host round trips.
 
 ```bash
 module load rocm roofline-extractor
-AMD_SERIALIZE_KERNEL=3 roofline-extractor-profile -o roofline_out --arch MI300A -- ./shallow
+roofline-extractor-profile -o roofline_out --arch MI300A -- ./shallow
 ```
 
 The equivalent in `rocprof-compute`:
@@ -81,20 +81,12 @@ rocprof-compute analyze -p workloads/third_roof/0
 
 Both are explained in [Roofline plots](../README.md#roofline-plots).
 
-`AMD_SERIALIZE_KERNEL=3` is new here, and it is a direct consequence of the change this stage made.
-Now that nothing in the time loop waits on the device, the host runs ahead and leaves thousands of
-dispatches queued. Counter collection cannot keep up with that backlog: `rocprofv3` starts
-reporting `Timeout while waiting for queue sync: N kernels still active` and never finishes.
-Setting the variable makes the runtime wait for each kernel to complete before launching the next,
-which keeps the queue shallow enough to profile. It costs launch-to-launch overlap, but the
-per-kernel counters and durations that the roofline is built from are unchanged, so the plot is the
-same one you would have measured without it. Every stage from here on needs it.
-
 <p>
-<img src="images/roofline_no_sync.png" alt="Roofline of compute_rhs after removing synchronization" />
+<img src="../1_larger_domain/images/roofline_2048.png" alt="Roofline of compute_rhs before removing synchronization" width="49%" />
+<img src="images/roofline_no_sync.png" alt="Roofline of compute_rhs after removing synchronization" width="49%" />
 </p>
 
-This one is worth dwelling on, because the plot looks essentially identical to stage 1. That is not
+This one is worth dwelling on, because the two plots look essentially identical. That is not
 a disappointment, it is a correct reading: the roofline characterizes what happens *inside* a kernel,
 and we did not change any kernel. We removed dead time *between* kernels, which the wall clock sees
 and the roofline does not.

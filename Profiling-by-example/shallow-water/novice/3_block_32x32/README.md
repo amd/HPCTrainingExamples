@@ -103,7 +103,7 @@ Always validate against the wall clock.
 
 ```bash
 module load rocm roofline-extractor
-AMD_SERIALIZE_KERNEL=3 roofline-extractor-profile -o roofline_out --arch MI300A -- ./shallow
+roofline-extractor-profile -o roofline_out --arch MI300A -- ./shallow
 ```
 
 The equivalent in `rocprof-compute`:
@@ -115,16 +115,13 @@ rocprof-compute analyze -p workloads/block_32x32_roof/0
 
 Both are explained in [Roofline plots](../README.md#roofline-plots).
 
-`AMD_SERIALIZE_KERNEL=3` is needed for the same reason as in
-[stage 2](../2_no_device_sync/README.md#step-2-check-the-roofline-again): with no synchronization in
-the time loop, counter collection stalls on the queued backlog.
-
 <p>
-<img src="images/roofline_block_32x32.png" alt="Roofline of compute_rhs with 32x32 blocks" />
+<img src="../2_no_device_sync/images/roofline_no_sync.png" alt="Roofline of compute_rhs with 16x16 blocks, before this stage" width="49%" />
+<img src="images/roofline_block_32x32.png" alt="Roofline of compute_rhs with 32x32 blocks, after this stage" width="49%" />
 </p>
 
-The kernel has moved closer to the memory bandwidth ceilings, consistent with more of its traffic
-being served from cache.
+With the 16x16 blocks of stage 2 on the left and 32x32 on the right, the kernel has moved closer to
+the memory bandwidth ceilings, consistent with more of its traffic being served from cache.
 
 ## What we learned, and what to do about it
 

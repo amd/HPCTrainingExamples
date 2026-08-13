@@ -156,13 +156,11 @@ which is precisely why the wall clock is the arbiter.
 
 ## The roofline
 
-The Roofline Extractor profiles every kernel, so `compute_rhs_vec4x4` appears alongside
-`update_stage` and `final_update`, which this stage did not touch and which therefore act as fixed
-reference points:
+Profile this stage the same way as the previous ones, so its plot can be put next to stage 4's:
 
 ```bash
 module load rocm roofline-extractor
-AMD_SERIALIZE_KERNEL=3 roofline-extractor-profile -o roofline_out --arch MI300A -- ./shallow
+roofline-extractor-profile -o roofline_out --arch MI300A -- ./shallow
 ```
 
 The equivalent in `rocprof-compute`, restricted to the vectorized kernel:
@@ -174,13 +172,15 @@ rocprof-compute analyze -p workloads/vectorized_roof/0
 
 Both are explained in [Roofline plots](../README.md#roofline-plots).
 
-`AMD_SERIALIZE_KERNEL=3` is needed for the same reason as in
-[stage 2](../2_no_device_sync/README.md#step-2-check-the-roofline-again): with no synchronization in
-the time loop, counter collection stalls on the queued backlog.
-
 <p>
-<img src="images/roofline_vectorized.png" alt="Roofline of compute_rhs_vec4x4" />
+<img src="../4_block_64x4/images/roofline_block_64x4.png" alt="Roofline of compute_rhs with 64x4 blocks, before vectorization" width="49%" />
+<img src="images/roofline_vectorized.png" alt="Roofline of compute_rhs_vec4x4, after vectorization" width="49%" />
 </p>
+
+Stage 4's `compute_rhs` is on the left, this stage's `compute_rhs_vec4x4` on the right, and this is
+the one pair in the tutorial where the point moves a long way. Arithmetic intensity falls from 6.7 to
+3.0 flops per byte of HBM traffic while achieved bandwidth barely changes, 3.36 TB/s against
+3.32 TB/s, so the kernel now moves roughly twice the traffic for the same work.
 
 ## Things to try
 
