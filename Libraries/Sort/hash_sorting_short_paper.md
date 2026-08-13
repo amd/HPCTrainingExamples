@@ -30,7 +30,26 @@ number of radix bits per pass.
 Modern implementations avoid the classic weakness — a separate global reduction
 per pass — using a **decoupled look-back** scan, where thread blocks publish
 partial sums and adaptively look back at their predecessors to compute their
-prefix in a single pass. This is a big part of why rocPRIM's radix sort is fast.
+prefix in a single pass. Concretely, each block first exposes its *local sum* and
+later its *prefix sum*; a follower whose direct predecessor has not yet published a
+prefix simply consumes that predecessor's local sum and keeps walking back, so no
+block is held hostage by a single neighbor. The status flag is packed together with
+the sum in one 32/64-bit word (updated atomically) and marked `volatile` so the
+value is visible to other blocks immediately. This is a big part of why rocPRIM's
+radix sort is fast.
+
+The **Onesweep** algorithm (Adinets & Merrill) takes this further, fusing the scan
+and reorder stages so the keys are read only once per pass. Onesweep is the current
+fast-radix baseline, but it carries a subtle cost that is worth dwelling on: its
+look-back needs a *temporal buffer whose size grows in proportion to n*. A recent
+AMD result (Kao & Yoshimura, *GPU Zen 3*, 2025) removes that dependence with a
+**constant-size circular buffer** — roughly 2 MB regardless of the number of keys —
+governed by a "tail iterator" that marks which buffer slots are safe to overwrite
+(with the look-back distance bounded below the buffer size). It is worth flagging
+this now because it previews the paper's central theme: *even the general-purpose
+radix sort runs into "memory scales with the wrong thing," and the fix is to
+decouple the buffer size from the input.* The data-aware sorts below hit the same
+wall against the key *range* and answer it the same way.
 
 The residual cost is structural: radix rereads the keys once per digit pass, and
 that pass count is fixed regardless of how the data is actually distributed. If we
@@ -61,6 +80,12 @@ grows with it, and performance erodes. In practice the hash sort stays competiti
 until that ratio reaches about 16 (equivalent to ~16 levels of adaptive mesh
 refinement); beyond that, radix regains the lead. The lesson is not "hashing is
 always faster" — it is "knowing your data is a performance lever."
+
+Notice the symmetry with the radix side. Onesweep's temporal buffer grew with the
+number of keys and was tamed by a fixed-size circular buffer; the perfect-hash
+table grows with the key *range* and, as we will see next, is tamed by the compact
+hash. Same disease — memory tracking the wrong quantity — treated the same way, by
+decoupling the allocation from the thing that blows up.
 
 ### Example: the nationwide mailer
 
@@ -183,3 +208,10 @@ easy to communicate.
    Data.*
 2. R. Tumblin, P. Ahrens, S. Hartse, R. W. Robey. *Compact Hash Algorithms for
    Computational Meshes.*
+3. C.-C. Kao, A. Yoshimura. *Boosting GPU Radix Sort performance: A memory-efficient
+   extension to Onesweep with circular buffers.* AMD GPUOpen, 2025 (also in *GPU Zen
+   3: Advanced Rendering Techniques*). Source: GPUOpen-LibrariesAndSDKs/Orochi
+   (`ParallelPrimitives`). https://gpuopen.com/learn/boosting_gpu_radix_sort/
+4. A. Adinets, D. Merrill. *Onesweep: A Faster Least Significant Digit Radix Sort.*
+   D. Merrill, M. Garland. *Single-pass Parallel Prefix Scan with Decoupled
+   Look-back.*
