@@ -14,7 +14,14 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load vllm
+# Do not override an already-loaded vllm: for a given rocm there are multiple
+# vllm modules (one per bound pytorch version), so respect the user's choice.
+module -t list 2>&1 | grep -q "^vllm"
+if [ $? -eq 1 ]; then
+  echo "vllm module is not loaded"
+  echo "loading default vllm module"
+  module load vllm
+fi
 
 python3 <<EOF
 import sys
