@@ -1,9 +1,7 @@
 #!/bin/bash
 
-# This test checks that vLLM has been built with ROCm support and
-# resolves to the ROCm platform at runtime (RocmPlatform / is_rocm),
-# rather than silently falling back to UnspecifiedPlatform (which would
-# import fine but never select the AMD GPU backend).
+# This test checks that vLLM is ROCm-enabled: it resolves to the ROCm
+# platform (RocmPlatform / is_rocm) and its compiled kernels load.
 
 # NOTE: this test assumes vLLM has been installed according
 # to the instructions available in the model installation repo:
@@ -16,7 +14,6 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-# The vllm modulefile prereqs rocm and loads its bound pytorch itself.
 module load vllm
 
 python3 <<EOF
@@ -39,18 +36,31 @@ except Exception:
 print("vLLM platform class : %s" % name)
 print("vLLM is_rocm        : %s" % is_rocm)
 
-# Best-effort device name so a manual runner sees the actual GPU vLLM will use.
 try:
     print("vLLM device name    : %s" % current_platform.get_device_name(0))
 except Exception as e:
     print("vLLM device name    : (unavailable: %s)" % e)
 
-# vLLM resolves the ROCm backend via the amdsmi plugin; if that is missing it
-# silently falls back to UnspecifiedPlatform -- imports fine but never uses the
-# AMD GPU. is_rocm / RocmPlatform is the canonical "ROCm-enabled" signal.
-if is_rocm or name == "RocmPlatform":
+# Compiled kernels are ABI-locked to torch; import them so a mismatch fails
+# the test instead of being a non-fatal warning inside vLLM.
+compiled_ok = True
+for mod in ("vllm._C", "vllm._rocm_C"):
+    try:
+        __import__(mod)
+        print("vLLM compiled ops   : %s loaded OK" % mod)
+    except Exception as e:
+        compiled_ok = False
+        print("vLLM compiled ops   : %s FAILED to load: %s" % (mod, e))
+
+rocm_platform = is_rocm or name == "RocmPlatform"
+
+if rocm_platform and compiled_ok:
     print("RESULT: vLLM is ROCm-enabled (%s)" % name)
 else:
-    print("RESULT: vLLM is NOT ROCm-enabled -- fell back to %s (no AMD GPU backend)" % name)
+    if not rocm_platform:
+        print("RESULT: vLLM is NOT ROCm-enabled -- fell back to %s (no AMD GPU backend)" % name)
+    else:
+        print("RESULT: vLLM is NOT ROCm-enabled -- %s selected but its compiled ROCm kernels "
+              "failed to load (torch/vLLM ABI mismatch)" % name)
     sys.exit(1)
 EOF
