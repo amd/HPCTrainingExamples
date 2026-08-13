@@ -956,6 +956,11 @@ set_property(TEST GPUAwareOpenMPI_UCC_OpenMP_AllReduce PROPERTY PASS_REGULAR_EXP
 set_property(TEST GPUAwareOpenMPI_UCC_OpenMP_AllReduce PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip" "Skip -- Cray MPICH does not use UCC")
 set_tests_properties(GPUAwareOpenMPI_UCC_OpenMP_AllReduce PROPERTIES TIMEOUT 600)
 
+add_test(NAME GPUAwareMPI_DeviceManaged_Probe COMMAND ../gpuaware_mpi_probe.sh )
+set_property(TEST GPUAwareMPI_DeviceManaged_Probe PROPERTY PASS_REGULAR_EXPRESSION "GPUAWARE_PROBE: PASS")
+set_property(TEST GPUAwareMPI_DeviceManaged_Probe PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_tests_properties(GPUAwareMPI_DeviceManaged_Probe PROPERTIES TIMEOUT 300)
+
 add_test(NAME OpenMPI_Hello_World_Run COMMAND ../openmpi_hello_world_run.sh )
 set_property(TEST OpenMPI_Hello_World_Run PROPERTY PASS_REGULAR_EXPRESSION "Hello world from processor")
 set_property(TEST OpenMPI_Hello_World_Run PROPERTY SKIP_REGULAR_EXPRESSION "module spider")

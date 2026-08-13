@@ -60,6 +60,10 @@ tests/build*/
 # ML training data
 MLExamples/PyTorch_Profiling/data/
 
+# Profiler run configs emitted alongside the workload
+rocprofiler-systems_*.cfg
+MLExamples/PyTorch_Profiling/rocm-system-profiler/
+
 # HIP compiler temporaries (--save-temps)
 *.bc
 *.hipi
