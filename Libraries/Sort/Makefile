@@ -20,7 +20,7 @@ NCOUNT  ?= 5000
 
 DOC     = hip_hash_sort_demo_MI300A.md
 PDF     = hip_hash_sort_demo_MI300A.pdf
-BINS    = zip_sort name_sort multinode_zip_sort
+BINS    = zip_sort name_sort multinode_zip_sort rocprim_tempsize
 
 .PHONY: all pdf clean
 all: $(BINS) names.txt
@@ -33,6 +33,10 @@ name_sort: name_sort.hip
 
 multinode_zip_sort: multinode_zip_sort.hip
 	$(HIPCC) $(HIPFLAGS) -I$(MPI_INC) -L$(MPI_LIB) $< -lmpi -o $@
+
+# sec 3.5: measures rocPRIM Onesweep temporary-storage growth vs. n
+rocprim_tempsize: rocprim_tempsize.hip
+	$(HIPCC) $(HIPFLAGS) $< -o $@
 
 names.txt: gen_names.py
 	$(PYTHON) gen_names.py $(NCOUNT) > names.txt

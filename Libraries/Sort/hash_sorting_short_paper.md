@@ -51,6 +51,15 @@ radix sort runs into "memory scales with the wrong thing," and the fix is to
 decouple the buffer size from the input.* The data-aware sorts below hit the same
 wall against the key *range* and answer it the same way.
 
+A clarification on where this lives: the circular-buffer variant is part of
+**Orochi's `ParallelPrimitives`** (a GPUOpen library that loads HIP or CUDA at
+runtime), *not* rocPRIM. What ships in ROCm — the `device_radix_sort` you get
+through rocThrust or rocPRIM — is the standard Onesweep with decoupled look-back
+(its look-back buffer still grows with n), continuously tuned for MI300 (for
+example in ROCm 6.4 and again in ROCm 7.2 / rocPRIM 4.2.0). So the circular-buffer
+optimization is a separate, buildable-from-source implementation, not a flag on the
+stock library.
+
 The residual cost is structural: radix rereads the keys once per digit pass, and
 that pass count is fixed regardless of how the data is actually distributed. If we
 know something about the distribution, we can do less work.

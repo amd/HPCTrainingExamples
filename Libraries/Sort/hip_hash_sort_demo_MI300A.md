@@ -600,6 +600,96 @@ no-op (verified seams + global offsets).
 
 ---
 
+## 3.5 (Optional, advanced) The radix memory story: rocPRIM Onesweep vs. Orochi's circular buffer
+
+This ties the data-aware hash-sort memory trade-off back to the *general-purpose*
+radix sort. Recall the throughline: a fast sort often pays for speed with memory
+that scales with the wrong quantity, and the fix is to decouple the allocation.
+
+**Part A — measure it on the stock ROCm stack (`rocprim_tempsize.hip`).**
+rocPRIM's `device_radix_sort` uses Onesweep with decoupled look-back; its
+temporary buffer (the look-back state) grows with the number of keys `n`. You can
+see this *without sorting* by asking rocPRIM for its required temporary storage
+(pass a null `temporary_storage` pointer):
+
+```cpp
+size_t temp_bytes = 0;
+rocprim::radix_sort_keys(nullptr, temp_bytes, d_in, d_out, n);  // query only
+printf("n=%zu  temp=%zu B  (%.3f B/key)\n", n, temp_bytes, (double)temp_bytes/n);
+```
+
+Build and run:
+
+```bash
+hipcc -O3 --offload-arch=gfx942 rocprim_tempsize.hip -o rocprim_tempsize
+srun -p PPAC_MI300A_SPX -N1 -n1 --gpus=1 -t 4 ./rocprim_tempsize
+```
+
+Measured on MI300A (ROCm 7.2.4):
+
+```
+      n (keys)  temp_storage (B)   bytes/key
+       1000000           4003912       4.004
+      10000000          41260548       4.126
+     100000000         412511236       4.125
+     500000000        2062511108       4.125
+    1000000000        4125010948       4.125
+```
+
+The scratch grows **linearly at ~4.125 bytes/key** — a billion keys needs ~4.1 GB
+of temporary storage on top of the data itself.
+
+**Part B — read the fix in Orochi (`ParallelPrimitives`).**
+The GPUOpen circular-buffer extension (Kao & Yoshimura, *GPU Zen 3*, 2025) holds
+that look-back buffer at a **constant ~2 MB regardless of `n`**. Clone Orochi and
+read the mechanism — the `tail iterator`, `L_lookback`, and `N_table` in:
+
+```bash
+git clone --depth 1 https://github.com/GPUOpen-LibrariesAndSDKs/Orochi.git
+$EDITOR Orochi/ParallelPrimitives/RadixSortKernels.h   # circular-buffer look-back
+$EDITOR Orochi/ParallelPrimitives/RadixSort.cpp        # host driver + tail iterator
+```
+
+> **Build note (validated on this testbed).** Orochi is *not* a ROCm library; it is
+> host-side driver-API code that loads HIP at runtime and compiles its kernels with
+> hiprtc. It builds cleanly with plain `g++` (no `hipcc`), e.g.:
+> ```bash
+> g++ -O3 -std=c++17 -I. "-D__debugbreak()=abort()" -include cstdlib \
+>     Orochi/Orochi.cpp Orochi/OrochiUtils.cpp \
+>     contrib/hipew/src/hipew.cpp contrib/cuew/src/cuew.cpp \
+>     ParallelPrimitives/RadixSort.cpp Test/RadixSort/main.cpp \
+>     -ldl -lpthread -o build/RadixSortTest
+> ```
+> It links and initializes correctly on MI300A (`gfx942`) under both ROCm 7.2.4 and
+> 6.3.0. **But the featured circular-buffer Onesweep path does not run correctly on
+> MI300A**, and this is *not* a ROCm-version issue:
+>
+> | ROCm | small n (< 3072, single-pass kernel) | large n (Onesweep circular buffer) |
+> |------|--------------------------------------|------------------------------------|
+> | 7.2.4 | kernels don't launch (0.00 ms, fails) | fails |
+> | 6.3.0 | **sorts correctly** (`n=1000` ✓) | **GPU memory fault / wrong result** (`n≥100k`) |
+>
+> Root cause: `ParallelPrimitives/RadixSortConfigs.h` hardcodes `WARP_SIZE = 32`
+> and the reorder kernels divide the per-block work by 32. This is **correct on
+> RDNA** — the AMD Radeon workstation/consumer GPUs run a **32-lane wavefront**, and
+> Orochi's radix sort originates on that rendering/ray-tracing side, so it works as
+> intended there. The **CDNA Instinct data-center GPUs (MI300A = CDNA3) use a
+> 64-lane wavefront**, so the hardcoded 32 makes the multi-pass reorder index out of
+> bounds. It is a **wave32-vs-wave64 portability gap, not a bug and not a ROCm
+> version issue**: it would run on an RDNA workstation card but not on today's
+> Instinct parts without a wave64 port (e.g. keying the constant off `warpSize` /
+> `__AMDGCN_WAVEFRONT_SIZE__`). **Treat Part B as source study on MI300A**; the
+> measurable takeaway is Part A.
+
+**Exercises**
+- **E3.5** Plot `temp_storage(n)` from Part A and fit the slope; confirm it is O(n).
+  At what `n` does the scratch exceed your per-APU HBM budget alongside the data?
+- **E3.6** In `RadixSortKernels.h`, identify where the circular buffer bounds the
+  look-back distance (`L_lookback < N_table`) and explain, in two sentences, why
+  that makes the temporal memory independent of `n`.
+
+---
+
 ## 4. What "good" looks like
 
 - Single APU, `zip_sort` at 100M records: dominated by the histogram/scatter
@@ -718,6 +808,7 @@ assume-place-adjust.
 | `zip_sort.hip` | Example 1: perfect-hash / counting sort by ZIP (unified memory) |
 | `name_sort.hip` | Example 2: LDS histogram + radix sort + compact hash (complete) |
 | `multinode_zip_sort.hip` | Example 3: MPI range-partition + local sort (complete) |
+| `rocprim_tempsize.hip` | §3.5: measures rocPRIM Onesweep temp-storage growth (validated) |
 | `run_multinode.sbatch` | SLURM launcher (mpirun), 1 rank/APU on MI300A |
 | `gen_names.py` | Generates `names.txt` with realistic surname-initial frequencies |
 | `names.txt` | Sample attendee last names (default 5000) |
@@ -727,3 +818,7 @@ assume-place-adjust.
 
 1. Robey, Nicholaeff & Robey, *Hash-Based Algorithms for Discretized Data.*
 2. Tumblin, Ahrens, Hartse & Robey, *Compact Hash Algorithms for Computational Meshes.*
+3. Kao & Yoshimura, *Boosting GPU Radix Sort performance: A memory-efficient
+   extension to Onesweep with circular buffers*, AMD GPUOpen, 2025 (*GPU Zen 3*).
+   https://gpuopen.com/learn/boosting_gpu_radix_sort/ — source:
+   GPUOpen-LibrariesAndSDKs/Orochi (`ParallelPrimitives`).
