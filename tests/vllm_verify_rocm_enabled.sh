@@ -32,6 +32,17 @@ except Exception as e:
     print("ERROR: could not import vllm.platforms:", e)
     sys.exit(1)
 
+try:
+    import vllm
+    print("vLLM version        : %s" % getattr(vllm, "__version__", "unknown"))
+except Exception as e:
+    print("vLLM version        : (unavailable: %s)" % e)
+try:
+    import torch
+    print("torch version       : %s" % torch.__version__)
+except Exception as e:
+    print("torch version       : (unavailable: %s)" % e)
+
 name = type(current_platform).__name__
 
 is_rocm_attr = getattr(current_platform, "is_rocm", None)
