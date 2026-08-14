@@ -7,11 +7,3 @@ prof/
 
 # rocprof-compute workload directories
 workloads/
-
-# Raw counter data, regenerate rather than commit
-measurements/
-
-# Local data collection and analysis helpers, not part of the tutorial
-collect_all.sh
-analyze_counters.py
-IMAGES_TODO.md
