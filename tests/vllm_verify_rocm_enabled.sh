@@ -70,6 +70,18 @@ for mod in ("vllm._C", "vllm._rocm_C"):
         compiled_ok = False
         print("vLLM compiled ops   : %s FAILED to load: %s" % (mod, e))
 
+# AITER (AMD AI Tensor Engine for ROCm) is an optional accelerated-kernel
+# backend. vLLM uses it only when the standalone "aiter" package is importable,
+# so its presence indicates vLLM can be run with AITER support.
+try:
+    import aiter
+    aiter_available = True
+    aiter_version = getattr(aiter, "__version__", "unknown")
+    print("vLLM AITER support  : available (aiter %s)" % aiter_version)
+except Exception as e:
+    aiter_available = False
+    print("vLLM AITER support  : NOT available (%s)" % e)
+
 rocm_platform = is_rocm or name == "RocmPlatform"
 
 if rocm_platform and compiled_ok:
