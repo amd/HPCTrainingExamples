@@ -1,7 +1,9 @@
 // zip_sort.hip  —  Example 1: perfect-hash / counting sort of records by 5-digit ZIP
 // Build: hipcc -O3 --offload-arch=gfx942 zip_sort.hip -o zip_sort
 // Run:   ./zip_sort [n]
+#include <cstring>   // global ::memset visible before rocprim headers
 #include <hip/hip_runtime.h>
+#include <rocprim/rocprim.hpp>
 #include <thrust/execution_policy.h>
 #include <thrust/scan.h>
 #include <cstdio>
@@ -44,13 +46,20 @@ int main(int argc, char** argv){
     int dev = 0; HIP_CHECK(hipGetDevice(&dev));
     (void)hipMemPrefetchAsync(zip, (size_t)n*sizeof(int), dev);   // best-effort locality hint
 
+    int T = 256, B = (n + T - 1)/T;
+
+    // Warm-up: run the histogram once so the timed sort below (and the library
+    // baseline) both exclude one-time GPU/context initialization -> fair compare.
+    histogram<<<B,T>>>(zip, n, counts);
+    HIP_CHECK(hipDeviceSynchronize());
+    for (int i = 0; i < NBUCKETS; ++i) counts[i] = 0;   // reset for the timed run
+
     // Time only the sort itself (histogram + scan + scatter), not setup/allocation.
     hipEvent_t start, stop;
     HIP_CHECK(hipEventCreate(&start));
     HIP_CHECK(hipEventCreate(&stop));
     HIP_CHECK(hipEventRecord(start));
 
-    int T = 256, B = (n + T - 1)/T;
     histogram<<<B,T>>>(zip, n, counts);
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -72,6 +81,33 @@ int main(int argc, char** argv){
     printf("n=%d  sorted=%s  first ZIP=%05d  last ZIP=%05d  sort_time=%.3f ms\n",
            n, ok ? "YES" : "NO", zip[out_id[0]], zip[out_id[n-1]], sort_ms);
 
+    // --- Library baseline: general radix sort of the SAME keys, for comparison.
+    // The custom counting sort above exploits the bounded ZIP range [0,100000);
+    // a general-purpose radix sort makes no such assumption. Sort a COPY so the
+    // custom result stays intact, and time it the same way (hipEvent).
+    int *zip_in, *zip_out; void* tmp = nullptr; size_t tb = 0;
+    HIP_CHECK(hipMalloc(&zip_in,  (size_t)n*sizeof(int)));
+    HIP_CHECK(hipMalloc(&zip_out, (size_t)n*sizeof(int)));
+    memcpy(zip_in, zip, (size_t)n*sizeof(int));
+    HIP_CHECK((hipError_t)rocprim::radix_sort_keys(nullptr, tb, zip_in, zip_out, n));
+    HIP_CHECK(hipMalloc(&tmp, tb ? tb : 1));
+    (void)rocprim::radix_sort_keys(tmp, tb, zip_in, zip_out, n); HIP_CHECK(hipDeviceSynchronize()); // warm-up
+    memcpy(zip_in, zip, (size_t)n*sizeof(int));
+
+    hipEvent_t ls, le; HIP_CHECK(hipEventCreate(&ls)); HIP_CHECK(hipEventCreate(&le));
+    HIP_CHECK(hipEventRecord(ls));
+    (void)rocprim::radix_sort_keys(tmp, tb, zip_in, zip_out, n);
+    HIP_CHECK(hipEventRecord(le)); HIP_CHECK(hipEventSynchronize(le));
+    float lib_ms = 0.0f; HIP_CHECK(hipEventElapsedTime(&lib_ms, ls, le));
+    HIP_CHECK(hipEventDestroy(ls)); HIP_CHECK(hipEventDestroy(le));
+    bool lib_ok = true;
+    for (int i = 1; i < n; ++i) if (zip_out[i-1] > zip_out[i]){ lib_ok = false; break; }
+    printf("  custom counting sort: %.3f ms (%.1f Mkeys/s)\n", sort_ms, n/(sort_ms*1.0e3));
+    printf("  library radix  sort : %.3f ms (%.1f Mkeys/s)  sorted=%s  temp=%zuB\n",
+           lib_ms, n/(lib_ms*1.0e3), lib_ok ? "YES" : "NO", tb);
+    printf("  library/custom time ratio = %.2f  (<1 => library faster)\n", lib_ms/sort_ms);
+
+    (void)hipFree(tmp); (void)hipFree(zip_in); (void)hipFree(zip_out);
     (void)hipFree(zip); (void)hipFree(counts); (void)hipFree(offsets); (void)hipFree(out_id);
     return 0;
 }

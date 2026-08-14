@@ -21,10 +21,11 @@ NCOUNT  ?= 5000
 
 DOC     = hip_hash_sort_demo_MI300A.md
 PDF     = hip_hash_sort_demo_MI300A.pdf
-BINS    = zip_sort name_sort multinode_zip_sort rocprim_tempsize
+BINS    = zip_sort name_sort multinode_zip_sort rocprim_tempsize sort_apis index_sort id_sort email_sort
+ECOUNT  ?= 200000
 
 .PHONY: all pdf clean
-all: $(BINS) names.txt
+all: $(BINS) names.txt emails.txt
 
 zip_sort: zip_sort.hip
 	$(HIPCC) $(HIPFLAGS) $< -o $@
@@ -39,8 +40,27 @@ multinode_zip_sort: multinode_zip_sort.hip
 rocprim_tempsize: rocprim_tempsize.hip
 	$(HIPCC) $(HIPFLAGS) $< -o $@
 
+# library sort APIs side by side (thrust / rocPRIM / hipCUB; header-only)
+sort_apis: sort_apis.hip
+	$(HIPCC) $(HIPFLAGS) $< -o $@
+
+# index sort (argsort) vs. sorting the data itself
+index_sort: index_sort.hip
+	$(HIPCC) $(HIPFLAGS) $< -o $@
+
+# true perfect-hash sort: unique dense keys -> single scatter, no atomics/scan
+id_sort: id_sort.hip
+	$(HIPCC) $(HIPFLAGS) $< -o $@
+
+# emails: unique but sparse keys -> compact hash (load-factor / probe sweep)
+email_sort: email_sort.hip
+	$(HIPCC) $(HIPFLAGS) $< -o $@
+
 names.txt: gen_names.py
 	$(PYTHON) gen_names.py $(NCOUNT) > names.txt
+
+emails.txt: gen_emails.py
+	$(PYTHON) gen_emails.py $(ECOUNT) > emails.txt
 
 pdf: $(PDF)
 $(PDF): $(DOC)

@@ -14,14 +14,17 @@ This exercise builds the two sorting examples from the libraries session as
 runnable HIP code and scales them from a single MI300A APU up to a multi-node
 run. You will:
 
-1. Sort a **nationwide mailer by ZIP code** with a perfect-hash (counting) sort.
+1. Sort a **nationwide mailer by ZIP code** with a **counting sort** (non-unique
+   keys), then contrast with a **true perfect hash** on **unique dense serials**.
 2. Scale to **ZIP+4 / last names** where the key range is large or sparse, using a
    **compact hash**.
 3. Run a **merge-free multi-node sort** (MPI + HIP) with distribution-aware
    partitioning.
 4. **Exploit the MI300A APU's shared/unified memory** to eliminate host↔device
    copies (extra credit).
-5. Profile everything (Appendix A).
+5. Compare the custom sorts against **library baselines** (thrust, rocPRIM, hipCUB)
+   and learn the supported sort calls, including index sort / argsort (§3.7).
+6. Profile everything (Appendix A).
 
 > Build/PDF note: render with `pandoc hip_hash_sort_demo_MI300A.md -o demo.pdf`.
 
@@ -101,17 +104,25 @@ share a ZIP, keys are **not unique**, so the "one index per bucket" perfect hash
 generalizes to a **counting (bucket) sort**: histogram → exclusive-scan offsets →
 scatter. This is a single O(n) pass plus one scan — the pattern from the paper.
 
-### 1.1 Starter code — `zip_sort.hip`
+### 1.1 Reference code — `zip_sort.hip`
+
+The custom counting sort (histogram → `thrust::exclusive_scan` → scatter) runs on
+unified memory, and the program then sorts a **copy** of the same keys with the
+`rocprim::radix_sort_keys` **library baseline** so you get a fair custom-vs-library
+comparison in one run (both timed *warm*; measured numbers in §3.7.5). This is the
+complete shipped file:
 
 ```cpp
-// zip_sort.hip  —  perfect-hash / counting sort of records by 5-digit ZIP
+// zip_sort.hip  —  Example 1: perfect-hash / counting sort of records by 5-digit ZIP
 // Build: hipcc -O3 --offload-arch=gfx942 zip_sort.hip -o zip_sort
+// Run:   ./zip_sort [n]
+#include <cstring>   // global ::memset visible before rocprim headers
 #include <hip/hip_runtime.h>
+#include <rocprim/rocprim.hpp>
 #include <thrust/execution_policy.h>
 #include <thrust/scan.h>
 #include <cstdio>
 #include <cstdlib>
-#include <cstdint>
 
 #define HIP_CHECK(x) do { hipError_t e=(x); if(e){ \
   fprintf(stderr,"HIP error %s:%d: %s\n",__FILE__,__LINE__,hipGetErrorString(e)); \
@@ -119,40 +130,44 @@ scatter. This is a single O(n) pass plus one scan — the pattern from the paper
 
 static const int NBUCKETS = 100000;   // 00000..99999
 
-// Histogram: count records per ZIP. (Exercise: try an LDS-privatized version.)
 __global__ void histogram(const int* __restrict__ zip, int n, int* __restrict__ counts){
     int i = blockIdx.x*blockDim.x + threadIdx.x;
     if (i < n) atomicAdd(&counts[zip[i]], 1);
 }
 
-// Scatter each record's id into its ZIP's slice using a running offset.
 __global__ void scatter(const int* __restrict__ zip, int n,
-                         int* __restrict__ offsets, int* __restrict__ out_id){
+                        int* __restrict__ offsets, int* __restrict__ out_id){
     int i = blockIdx.x*blockDim.x + threadIdx.x;
     if (i < n){
         int pos = atomicAdd(&offsets[zip[i]], 1);
-        out_id[pos] = i;                 // sorted order = ids grouped by ascending ZIP
+        out_id[pos] = i;
     }
 }
 
 int main(int argc, char** argv){
-    int n = (argc > 1) ? atoi(argv[1]) : (1<<20);   // start small, scale via argv
+    int n = (argc > 1) ? atoi(argv[1]) : (1<<20);
 
     // --- APU EXTRA CREDIT: unified memory, no hipMemcpy anywhere ---
     int *zip, *counts, *offsets, *out_id;
-    HIP_CHECK(hipMalloc(&zip,     n*sizeof(int)));
+    HIP_CHECK(hipMalloc(&zip,     (size_t)n*sizeof(int)));
     HIP_CHECK(hipMalloc(&counts,  NBUCKETS*sizeof(int)));
     HIP_CHECK(hipMalloc(&offsets, NBUCKETS*sizeof(int)));
-    HIP_CHECK(hipMalloc(&out_id,  n*sizeof(int)));
+    HIP_CHECK(hipMalloc(&out_id,  (size_t)n*sizeof(int)));
 
-    // CPU fills the SAME physical memory the GPU will read (APU: zero-copy).
     srand(12345);
-    for (int i=0;i<n;i++) zip[i] = rand() % NBUCKETS;
-    for (int i=0;i<NBUCKETS;i++) counts[i]=0;
+    for (int i = 0; i < n; ++i) zip[i] = rand() % NBUCKETS;
+    for (int i = 0; i < NBUCKETS; ++i) counts[i] = 0;
 
-    // Optional on APU; on a discrete GPU you'd prefetch instead of copy.
-    int dev=0; HIP_CHECK(hipGetDevice(&dev));
-    (void)hipMemPrefetchAsync(zip, n*sizeof(int), dev); // best-effort locality hint
+    int dev = 0; HIP_CHECK(hipGetDevice(&dev));
+    (void)hipMemPrefetchAsync(zip, (size_t)n*sizeof(int), dev);   // best-effort locality hint
+
+    int T = 256, B = (n + T - 1)/T;
+
+    // Warm-up: run the histogram once so the timed sort below (and the library
+    // baseline) both exclude one-time GPU/context initialization -> fair compare.
+    histogram<<<B,T>>>(zip, n, counts);
+    HIP_CHECK(hipDeviceSynchronize());
+    for (int i = 0; i < NBUCKETS; ++i) counts[i] = 0;   // reset for the timed run
 
     // Time only the sort itself (histogram + scan + scatter), not setup/allocation.
     hipEvent_t start, stop;
@@ -160,12 +175,10 @@ int main(int argc, char** argv){
     HIP_CHECK(hipEventCreate(&stop));
     HIP_CHECK(hipEventRecord(start));
 
-    int T=256, B=(n+T-1)/T;
     histogram<<<B,T>>>(zip, n, counts);
     HIP_CHECK(hipDeviceSynchronize());
 
-    // Exclusive scan of counts -> offsets (start of each ZIP's slice).
-    thrust::exclusive_scan(thrust::device, counts, counts+NBUCKETS, offsets);
+    thrust::exclusive_scan(thrust::device, counts, counts + NBUCKETS, offsets);
     HIP_CHECK(hipDeviceSynchronize());
 
     scatter<<<B,T>>>(zip, n, offsets, out_id);
@@ -178,12 +191,39 @@ int main(int argc, char** argv){
     HIP_CHECK(hipEventDestroy(start));
     HIP_CHECK(hipEventDestroy(stop));
 
-    // CPU reads results directly — no copy back.
-    bool ok=true;
-    for (int i=1;i<n;i++) if (zip[out_id[i-1]] > zip[out_id[i]]){ ok=false; break; }
+    bool ok = true;
+    for (int i = 1; i < n; ++i) if (zip[out_id[i-1]] > zip[out_id[i]]){ ok = false; break; }
     printf("n=%d  sorted=%s  first ZIP=%05d  last ZIP=%05d  sort_time=%.3f ms\n",
            n, ok ? "YES" : "NO", zip[out_id[0]], zip[out_id[n-1]], sort_ms);
 
+    // --- Library baseline: general radix sort of the SAME keys, for comparison.
+    // The custom counting sort above exploits the bounded ZIP range [0,100000);
+    // a general-purpose radix sort makes no such assumption. Sort a COPY so the
+    // custom result stays intact, and time it the same way (hipEvent).
+    // rocPRIM uses the two-call temp-storage pattern: query size, then run.
+    int *zip_in, *zip_out; void* tmp = nullptr; size_t tb = 0;
+    HIP_CHECK(hipMalloc(&zip_in,  (size_t)n*sizeof(int)));
+    HIP_CHECK(hipMalloc(&zip_out, (size_t)n*sizeof(int)));
+    memcpy(zip_in, zip, (size_t)n*sizeof(int));
+    HIP_CHECK((hipError_t)rocprim::radix_sort_keys(nullptr, tb, zip_in, zip_out, n)); // 1) query temp
+    HIP_CHECK(hipMalloc(&tmp, tb ? tb : 1));
+    (void)rocprim::radix_sort_keys(tmp, tb, zip_in, zip_out, n); HIP_CHECK(hipDeviceSynchronize()); // warm-up
+    memcpy(zip_in, zip, (size_t)n*sizeof(int));
+
+    hipEvent_t ls, le; HIP_CHECK(hipEventCreate(&ls)); HIP_CHECK(hipEventCreate(&le));
+    HIP_CHECK(hipEventRecord(ls));
+    (void)rocprim::radix_sort_keys(tmp, tb, zip_in, zip_out, n);                       // 2) run
+    HIP_CHECK(hipEventRecord(le)); HIP_CHECK(hipEventSynchronize(le));
+    float lib_ms = 0.0f; HIP_CHECK(hipEventElapsedTime(&lib_ms, ls, le));
+    HIP_CHECK(hipEventDestroy(ls)); HIP_CHECK(hipEventDestroy(le));
+    bool lib_ok = true;
+    for (int i = 1; i < n; ++i) if (zip_out[i-1] > zip_out[i]){ lib_ok = false; break; }
+    printf("  custom counting sort: %.3f ms (%.1f Mkeys/s)\n", sort_ms, n/(sort_ms*1.0e3));
+    printf("  library radix  sort : %.3f ms (%.1f Mkeys/s)  sorted=%s  temp=%zuB\n",
+           lib_ms, n/(lib_ms*1.0e3), lib_ok ? "YES" : "NO", tb);
+    printf("  library/custom time ratio = %.2f  (<1 => library faster)\n", lib_ms/sort_ms);
+
+    (void)hipFree(tmp); (void)hipFree(zip_in); (void)hipFree(zip_out);
     (void)hipFree(zip); (void)hipFree(counts); (void)hipFree(offsets); (void)hipFree(out_id);
     return 0;
 }
@@ -208,6 +248,87 @@ hipcc -O3 --offload-arch=gfx942 zip_sort.hip -o zip_sort
   low 3 digits and combine — where does contention actually hurt?
 - **E1.3** Make the sort carry a payload (weight/route) and produce a per-ZIP count
   report for the mail run.
+- **E1.4 (baseline)** `zip_sort` now also prints a `rocprim::radix_sort_keys` time on
+  the same keys. Compare it to the counting-sort time and explain the gap (see
+  §3.7 and E-lib.2).
+
+---
+
+## 1b. Example 1b — a *true* perfect hash: unique, dense keys
+
+Example 1 is honestly a **counting sort**, not a perfect hash: many addresses share
+a ZIP, so keys are not unique and we need histogram → scan → **atomic** scatter. A
+genuine **perfect hash** (the paper's "one index per bucket") needs two guarantees:
+
+1. a **dense, bounded** key range, `key ∈ [BASE, BASE+n)` with range `≈ n`, and
+2. **unique** keys — each occurs **exactly once** (a bijection).
+
+When both hold, placement is a **single write per element with no atomics, no
+histogram, and no scan**:
+
+```cpp
+slot[key[i] - BASE] = i;   // every destination slot has exactly one writer
+```
+
+**Why not emails?** Emails are unique per recipient (guarantee 2) but live in an
+enormous, sparse string space (they fail guarantee 1). Hashing an email to an
+integer and compressing to a table of size `≈ n` reintroduces collisions, so emails
+belong to the **compact-hash** family of Example 2 (`distinct == n`), not to a dense
+perfect-hash scatter. To get guarantee 1 you need a key that is already a dense
+integer — e.g. a **unique sequential serial number** assigned to each item.
+
+### 1b.1 Reference solution — `id_sort.hip`
+
+Real-world framing: a mailing batch where each mailpiece carries a **unique
+sequential serial** (think USPS Intelligent Mail serial). The pieces come back from
+the sorter shuffled; we reassemble canonical order by serial. `id_sort.hip` builds a
+shuffled permutation of `[BASE, BASE+n)`, reorders it with the perfect-hash scatter,
+compares against a general library radix sort, and verifies the result is an exact
+permutation. Pass `dup=1` to inject a duplicate key and watch a record get lost.
+
+```bash
+hipcc -O3 --offload-arch=gfx942 id_sort.hip -o id_sort
+./id_sort 1000000        # unique dense keys -> exact permutation
+./id_sort 100000000      # 100M pieces
+./id_sort 1000000 1      # inject a duplicate: uniqueness violated
+```
+
+### 1b.2 What it shows (validated on MI300A, ROCm 7.2.4)
+
+Because the perfect hash skips the histogram, the exclusive scan, **and** the
+atomics, it beats even a tuned library radix sort when the structure is known:
+
+```text
+# ./id_sort 100000000
+  perfect-hash scatter : 2.891 ms (34588.7 Mkeys/s)  no atomics/scan
+  library radix sort   : 7.652 ms (13068.0 Mkeys/s)  temp=816676868B
+  library/perfect time ratio = 2.65  (>1 => perfect hash faster)
+  result: exact permutation  (all 100000000 slots written, order verified)
+
+# ./id_sort 1000000 1   (duplicate injected)
+  result: NOT a bijection  unwritten_slots=1  order_ok=YES
+  -> a duplicate key overwrote a slot and left another empty;
+     this is exactly why the perfect hash requires UNIQUE keys.
+```
+
+The `dup=1` case is the whole lesson: with duplicate keys two writers target the
+same slot, one write wins, and another slot is never written — a **silently lost
+record**. That is precisely why ZIP (non-unique) must fall back to the counting sort
+while unique serials can use the faster bijective scatter.
+
+### 1b.3 Exercises
+
+- **E1b.1** Compare `id_sort` and `zip_sort` at 1M / 100M. The perfect hash avoids
+  the scan and the atomic scatter — quantify how much each of those costs by
+  disabling them in `zip_sort`.
+- **E1b.2** Run `./id_sort 1000000 1` and confirm exactly one slot is left unwritten.
+  Add a device-side duplicate detector (e.g. `atomicCAS` on a per-slot "written"
+  flag) that reports which serials collided.
+- **E1b.3** Carry a payload: change `slot[d] = i` to also gather a record field, so
+  the output is the fully reordered mailing (not just the permutation).
+- **E1b.4 (discussion)** Emails are unique but sparse. Sketch how you would build a
+  **minimal perfect hash function** offline to map a fixed email set bijectively to
+  `[0,n)`, then reuse this exact scatter. What breaks if the set changes?
 
 ---
 
@@ -225,21 +346,25 @@ probing**.
 The complete program runs three parts on the same unified-memory data:
 **(A)** an LDS-privatized first-letter histogram for registration-desk balancing,
 **(B)** the actual alphabetical sort via `thrust::sort_by_key` (rocPRIM radix under
-the hood — the library workhorse), and **(C)** a compact hash (open addressing +
-quadratic probing) built and verified over the large, sparse 64-bit name-key
-space. Names are packed base-27 into a 64-bit key so numeric order equals
-lexicographic order.
+the hood — the library workhorse), plus a **library baseline** that calls
+`rocprim::radix_sort_pairs` and `hipcub::DeviceRadixSort::SortPairs` directly on the
+same keys for a head-to-head timing, and **(C)** a compact hash (open addressing +
+quadratic probing) built and verified over the large, sparse 64-bit name-key space.
+Names are packed base-27 into a 64-bit key so numeric order equals lexicographic
+order.
 
 ```cpp
 // name_sort.hip  —  Example 2 reference solution (MI300A / gfx942)
 // Build: hipcc -O3 --offload-arch=gfx942 name_sort.hip -o name_sort
 // Run:   ./name_sort names.txt
+#include <cstring>   // global ::memset visible before rocprim/hipcub headers
 #include <hip/hip_runtime.h>
+#include <rocprim/rocprim.hpp>
+#include <hipcub/hipcub.hpp>
 #include <thrust/execution_policy.h>
 #include <thrust/sort.h>
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -375,6 +500,52 @@ int main(int argc, char** argv){
            nbuf+(size_t)id[0]*MAXLEN, nbuf+(size_t)id[n-1]*MAXLEN);
     printf("  sort time: %.3f ms  (%.2f Mkeys/s)\n", sort_ms, n / (sort_ms * 1.0e3));
 
+    // Part B baseline — the SAME 64-bit keys via all three libraries, timed the
+    // same way (fresh copy + one warm-up). thrust::sort_by_key dispatches to
+    // rocPRIM but allocates its scratch inside every call; rocPRIM and hipCUB use
+    // the two-call temp-storage pattern (query size, allocate once, reuse).
+    {
+        uint64_t *kin,*kout; int *iin,*iout; void* tmp=nullptr; size_t tb=0;
+        HIP_CHECK(hipMalloc(&kin,(size_t)n*sizeof(uint64_t)));
+        HIP_CHECK(hipMalloc(&kout,(size_t)n*sizeof(uint64_t)));
+        HIP_CHECK(hipMalloc(&iin,(size_t)n*sizeof(int)));
+        HIP_CHECK(hipMalloc(&iout,(size_t)n*sizeof(int)));
+        auto reset=[&]{ memcpy(kin,keys,(size_t)n*sizeof(uint64_t)); for(int i=0;i<n;++i) iin[i]=i; };
+        auto el=[&](hipEvent_t a,hipEvent_t b){ float m=0.f; HIP_CHECK(hipEventElapsedTime(&m,a,b)); return m; };
+
+        // thrust::sort_by_key (in-place on kin/iin), warmed up
+        reset(); thrust::sort_by_key(thrust::device,kin,kin+n,iin); HIP_CHECK(hipDeviceSynchronize());
+        reset(); hipEvent_t ta,t2; HIP_CHECK(hipEventCreate(&ta)); HIP_CHECK(hipEventCreate(&t2));
+        HIP_CHECK(hipEventRecord(ta)); thrust::sort_by_key(thrust::device,kin,kin+n,iin);
+        HIP_CHECK(hipEventRecord(t2)); HIP_CHECK(hipEventSynchronize(t2));
+        float thr_ms=el(ta,t2); HIP_CHECK(hipEventDestroy(ta)); HIP_CHECK(hipEventDestroy(t2));
+
+        // rocprim::radix_sort_pairs — two-call temp storage, warmed up
+        reset(); HIP_CHECK((hipError_t)rocprim::radix_sort_pairs(nullptr,tb,kin,kout,iin,iout,n));
+        HIP_CHECK(hipMalloc(&tmp,tb?tb:1));
+        (void)rocprim::radix_sort_pairs(tmp,tb,kin,kout,iin,iout,n); HIP_CHECK(hipDeviceSynchronize());
+        reset(); hipEvent_t ra,rb; HIP_CHECK(hipEventCreate(&ra)); HIP_CHECK(hipEventCreate(&rb));
+        HIP_CHECK(hipEventRecord(ra)); (void)rocprim::radix_sort_pairs(tmp,tb,kin,kout,iin,iout,n);
+        HIP_CHECK(hipEventRecord(rb)); HIP_CHECK(hipEventSynchronize(rb));
+        float rocp_ms=el(ra,rb); HIP_CHECK(hipEventDestroy(ra)); HIP_CHECK(hipEventDestroy(rb)); HIP_CHECK(hipFree(tmp));
+
+        // hipcub::DeviceRadixSort::SortPairs — two-call temp storage, warmed up
+        tmp=nullptr; tb=0; reset();
+        HIP_CHECK(hipcub::DeviceRadixSort::SortPairs(nullptr,tb,kin,kout,iin,iout,n));
+        HIP_CHECK(hipMalloc(&tmp,tb?tb:1));
+        HIP_CHECK(hipcub::DeviceRadixSort::SortPairs(tmp,tb,kin,kout,iin,iout,n)); HIP_CHECK(hipDeviceSynchronize());
+        reset(); hipEvent_t ha,hb; HIP_CHECK(hipEventCreate(&ha)); HIP_CHECK(hipEventCreate(&hb));
+        HIP_CHECK(hipEventRecord(ha)); HIP_CHECK(hipcub::DeviceRadixSort::SortPairs(tmp,tb,kin,kout,iin,iout,n));
+        HIP_CHECK(hipEventRecord(hb)); HIP_CHECK(hipEventSynchronize(hb));
+        float cub_ms=el(ha,hb); HIP_CHECK(hipEventDestroy(ha)); HIP_CHECK(hipEventDestroy(hb)); HIP_CHECK(hipFree(tmp));
+
+        printf("Library baseline (same keys, key-value radix sort, warmed):\n");
+        printf("  thrust::sort_by_key      : %.3f ms  (%.2f Mkeys/s)  (scratch alloc'd internally)\n", thr_ms, n/(thr_ms*1.0e3));
+        printf("  rocprim::radix_sort_pairs: %.3f ms  (%.2f Mkeys/s)\n", rocp_ms, n/(rocp_ms*1.0e3));
+        printf("  hipcub::DeviceRadixSort  : %.3f ms  (%.2f Mkeys/s)\n", cub_ms, n/(cub_ms*1.0e3));
+        (void)hipFree(kin);(void)hipFree(kout);(void)hipFree(iin);(void)hipFree(iout);
+    }
+
     // Part C — compact hash build + verify
     int tableSize=(int)next_prime((long)(2*n+1));
     uint64_t* tkey; int* tcnt; unsigned long long* probe; int* notfound;
@@ -396,6 +567,10 @@ int main(int argc, char** argv){
 }
 ```
 
+> The three-library baseline between Part B and Part C prints
+> `thrust::sort_by_key`, `rocprim::radix_sort_pairs`, and `hipcub::DeviceRadixSort`
+> timings on the same 64-bit keys (measured numbers in §3.7.5, exercise E2.5).
+
 ### 2.2 Build & run
 
 ```bash
@@ -416,6 +591,87 @@ hipcc -O3 --offload-arch=gfx942 name_sort.hip -o name_sort
 - **E2.4 (discussion)** For `k=1` (26 keys) a dense counting sort wins; for the
   full 64-bit key the space is enormous and sparse so the compact hash is the
   memory-efficient structure. Explain the crossover in terms of load factor.
+- **E2.5 (baseline)** Part B now prints `thrust::sort_by_key`,
+  `rocprim::radix_sort_pairs`, and `hipcub::DeviceRadixSort` timings on the same
+  64-bit keys. With the default 5000-name list these are microsecond-scale and
+  launch-overhead-bound, so regenerate a large list first
+  (`make names.txt NCOUNT=2000000`) to compare steady-state throughput (see §3.7).
+
+---
+
+## 2b. Example 2b — emails: unique but *sparse* keys (compact hash)
+
+This is the case people usually reach for when they hear "unique keys" — and it is
+exactly why a perfect hash does **not** apply. An email is **unique** per recipient
+(guarantee 2 from §1b) but lives in a huge, sparse **string** space, so it fails the
+**dense-range** guarantee 1. There is no `[0,n)` array to scatter into. Instead:
+
+1. reduce each email string to a 64-bit key with a cheap device hash (FNV-1a), then
+2. store the keys in a **compact hash** table sized `≈ n` (not `≈` the key range),
+   resolving the collisions that the size-`n` compression creates by open addressing.
+
+The crucial lesson: **even with 100% unique emails you still get collisions after
+compression**, so you still probe. Uniqueness buys you `distinct == n` (no lost
+records), *not* a collision-free perfect hash.
+
+### 2b.1 Reference solution — `email_sort.hip`
+
+`email_sort.hip` hashes each email to 64-bit (FNV-1a), builds the compact hash, and
+**sweeps the load factor** to show probes vs. load. It also radix-sorts the hashes
+as a bulk-dedup baseline (sorting by hash groups duplicates, but is *not*
+alphabetical).
+
+```bash
+make emails.txt                 # gen_emails.py, 200k unique emails (ECOUNT to change)
+hipcc -O3 --offload-arch=gfx942 email_sort.hip -o email_sort
+./email_sort emails.txt
+```
+
+### 2b.2 What it shows (validated on MI300A, ROCm 7.2.4)
+
+```text
+Compact hash (open addressing + quadratic probing), unique keys:
+  factor     tableSize    load      avg_probes/ins   distinct  miss
+  1.10       220009       0.909     3.007            200000    0
+  1.30       260003       0.769     2.080            200000    0
+  1.50       300007       0.667     1.752            200000    0
+  2.00       400009       0.500     1.437            200000    0
+  3.00       600011       0.333     1.237            200000    0
+  4.00       800011       0.250     1.161            200000    0
+```
+
+- `distinct == n` (200000) confirms the keys are unique and that **FNV-1a produced
+  no 64-bit collisions** for this set (had two emails hashed equal, `distinct` would
+  drop below `n`).
+- `avg_probes/ins` climbs from ~1.16 at load 0.25 to ~3.0 at load 0.91 — the
+  size-`n` compression collides, so you probe. This is the compact-hash cost curve
+  that a dense perfect hash (id_sort, `key-base`) simply does not have.
+
+### 2b.3 Where "a highly optimized hash" fits (and where it does not)
+
+- The **dense perfect hash** (§1b) is `key - base` — a subtraction. It is
+  **memory-bound on the scatter**, so a faster hash function changes nothing there.
+- Here, in the **compact hash**, the *hash function* matters: a better-distributed
+  hash lowers collisions/probes, and a cheaper one lowers per-key compute. FNV-1a is
+  a fine cheap default; Murmur/xxHash-style finalizers are common alternatives.
+- Google's fast hashing is mostly the wrong shape for this device path: Abseil
+  **SwissTable** is a **CPU-SIMD hash *table***, not a GPU device hash, and
+  FarmHash/HighwayHash are CPU-SIMD hash *functions*. They shine as a **CPU-side**
+  dedup on the APU's Zen4 cores (shared memory, no copy), not as a substitute for
+  the GPU compact hash. The GPU-native table comparison would be cuCollections
+  (CUDA), which has no first-class ROCm drop-in — an instructive portability gap.
+
+### 2b.4 Exercises
+
+- **E2b.1** Read off the probes-vs-load curve above. Which load factor is the best
+  memory/probe trade-off for your query mix?
+- **E2b.2** Swap FNV-1a for a Murmur/xxHash-style 64-bit finalizer and compare
+  `avg_probes/ins` and `distinct` (watch for any 64-bit collisions).
+- **E2b.3** Replace quadratic probing with linear probing and observe primary
+  clustering at high load factors on the email keys.
+- **E2b.4 (APU)** Dedup the emails **on the CPU** with `std::unordered_map` (or
+  `absl::flat_hash_map` if available) over the same unified buffer, and compare
+  wall-clock and energy against the GPU compact hash. When is each the right tool?
 
 ---
 
@@ -815,6 +1071,187 @@ n=1000  1e5  1e6  1e7   -> sorted=YES, mismatches=0 (all)
 
 ---
 
+## 3.7 Library sort APIs — thrust, rocPRIM, hipCUB (baseline & reference)
+
+The custom sorts above are *data-aware*: `zip_sort` exploits the bounded ZIP range
+with a counting sort, and the multi-node code range-partitions so the merge is
+free. To know whether that hand-written work is worth it, you need a **baseline**:
+what does a stock library radix sort do on the same keys? ROCm ships three ways to
+call one:
+
+- **thrust** — the portable C++ STL-like API (`thrust::sort`, `thrust::sort_by_key`).
+  On ROCm it dispatches to rocPRIM under the hood.
+- **rocPRIM** — the AMD device-primitive library (`rocprim::radix_sort_keys`,
+  `rocprim::radix_sort_pairs`). Lowest-level, most tuning knobs.
+- **hipCUB** — a CUB-compatible wrapper over rocPRIM
+  (`hipcub::DeviceRadixSort::SortKeys`/`SortPairs`). Use it when porting CUDA code
+  that already calls CUB.
+
+### 3.7.1 The two-call temporary-storage pattern (rocPRIM & hipCUB)
+
+Unlike thrust, rocPRIM and hipCUB do not allocate scratch for you. You call the
+function **twice**: first with a null storage pointer to learn the size, then with
+a real allocation to do the work.
+
+```cpp
+size_t temp_bytes = 0; void* d_temp = nullptr;
+// 1) query: temporary_storage == nullptr just fills temp_bytes
+rocprim::radix_sort_keys(nullptr, temp_bytes, d_in, d_out, n);
+hipMalloc(&d_temp, temp_bytes);
+// 2) run: same arguments, real storage
+rocprim::radix_sort_keys(d_temp, temp_bytes, d_in, d_out, n);
+```
+
+hipCUB is identical (`hipcub::DeviceRadixSort::SortKeys(nullptr, temp_bytes, ...)`
+then again with `d_temp`). thrust needs neither call — it manages scratch
+internally (which is why it is the easiest but least controllable).
+
+### 3.7.2 Side-by-side example — `sort_apis.hip`
+
+`sort_apis.hip` sorts a **copy of the same array** with all three libraries
+(keys-only, key-value pairs, and descending), verifies they agree bit-for-bit, and
+prints hipEvent timings so you can compare them directly:
+
+```bash
+hipcc -O3 --offload-arch=gfx942 sort_apis.hip -o sort_apis
+./sort_apis 4194304
+```
+
+Measured on MI300A (ROCm 7.2.4), `./sort_apis 1000000`:
+
+```text
+operation / library                  time(ms)      Mkeys/s
+keys  thrust::sort                      0.753      1327.37
+keys  rocprim::radix_sort_keys          0.260      3852.63   temp=4003912B
+keys  hipcub::DeviceRadixSort           0.256      3899.49   temp=4003912B
+
+pairs thrust::sort_by_key               0.977      1023.36
+pairs rocprim::radix_sort_pairs         0.486      2057.93   temp=8003912B
+pairs hipcub::DeviceRadixSort           0.497      2011.07   temp=8003912B
+
+keys  thrust::sort (descending)         0.561      1782.13
+keys  rocprim::radix_sort_keys_desc     0.293      3411.99   temp=4003912B
+keys  hipcub::...SortKeysDescending     0.356      2808.01   temp=4003912B
+```
+
+All three agree bit-for-bit. rocPRIM and hipCUB (which wraps rocPRIM) are ~3x faster
+than thrust here because thrust allocates its scratch inside every call while the
+rocPRIM/hipCUB temp buffer is allocated once and reused — the same effect you see in
+the name baseline below.
+
+### 3.7.3 Supported sort calls (quick reference)
+
+| Operation | thrust | rocPRIM | hipCUB |
+|---|---|---|---|
+| Keys, ascending | `thrust::sort` | `rocprim::radix_sort_keys` | `hipcub::DeviceRadixSort::SortKeys` |
+| Keys, descending | `thrust::sort(..., thrust::greater<>())` | `rocprim::radix_sort_keys_desc` | `hipcub::DeviceRadixSort::SortKeysDescending` |
+| Key+value pairs | `thrust::sort_by_key` | `rocprim::radix_sort_pairs` | `hipcub::DeviceRadixSort::SortPairs` |
+| Pairs, descending | `thrust::sort_by_key(..., thrust::greater<>())` | `rocprim::radix_sort_pairs_desc` | `hipcub::DeviceRadixSort::SortPairsDescending` |
+| Stable / comparison sort | `thrust::stable_sort` | `rocprim::merge_sort` | `hipcub::DeviceMergeSort::SortKeys` |
+| Segmented (per-segment) | — (do it per range) | `rocprim::segmented_radix_sort_keys` | `hipcub::DeviceSegmentedRadixSort::SortKeys` |
+| Bit-range subset | — | `begin_bit` / `end_bit` args | `begin_bit` / `end_bit` args |
+| Temp storage | managed internally | two-call (`nullptr` then alloc) | two-call (`nullptr` then alloc) |
+
+Notes:
+
+- Radix sorts (`radix_sort_*` / `DeviceRadixSort`) are for unsigned/signed integer
+  and floating-point keys; they are stable and usually fastest. Use the merge-sort
+  variants for a custom comparator on arbitrary types.
+- Restricting `begin_bit`/`end_bit` to only the significant bits (e.g. a ZIP fits
+  in 17 bits, not 32) can cut radix passes — a cheap win (exercise E-lib.3).
+- rocPRIM and hipCUB are **header-only** here: `#include <rocprim/rocprim.hpp>` /
+  `#include <hipcub/hipcub.hpp>` and build with plain `hipcc`, no extra `-l` flag.
+
+### 3.7.4 Index sort (argsort) vs. sorting the data — `index_sort.hip`
+
+Frequently you do **not** want to move the records — you want a *permutation* that
+orders them. That is an **index sort** (argsort): sort an index array `[0,1,2,...]`
+by the keys, leave the payload in place, then either read records indirectly or
+**gather** once to materialize a sorted copy. `name_sort.hip` already does this
+implicitly (`thrust::sort_by_key(keys, keys+n, id)` sorts `id[]`, not the names).
+
+`index_sort.hip` makes the trade-off explicit and measured:
+
+```bash
+hipcc -O3 --offload-arch=gfx942 index_sort.hip -o index_sort
+./index_sort 4194304 8      # 4M records, 8-word (32 B) payload
+```
+
+- **Index sort**: sort `(key, 4-byte index)` pairs (rocPRIM / hipCUB / thrust),
+  then a `gather` kernel copies each record once into sorted order.
+- **Data sort**: sort `(key, payload)` directly, dragging the payload through every
+  radix pass.
+
+Measured on MI300A (ROCm 7.2.4), `./index_sort 1000000 8` (8-word / 32 B payload):
+
+```text
+strategy                                   time(ms)      Mkeys/s
+1a idx rocprim pairs (sort only)             0.524        1908.38
+   + gather payload = total                   0.677        1477.88
+1b idx hipcub pairs (sort only)               0.482        2075.36
+1c idx thrust::sort_by_key (sort only)        0.951        1051.51
+
+2  data rocprim pairs (1 word payload)        0.321        3119.51
+```
+
+With a wide payload the index-sort + single gather wins because only 4 B/key move
+through the passes; with a one-word payload, sorting the data directly is simplest.
+Sweep the payload size to find the crossover (exercise E-lib.4).
+
+### 3.7.5 Baselines already built into Examples 1 & 2
+
+You do not need a separate program to see custom-vs-library — both reference
+solutions now print a library baseline on the same data:
+
+- `zip_sort` prints its **counting-sort** time and then a `rocprim::radix_sort_keys`
+  time on a copy of the ZIP keys, plus the time ratio (both measured *warm*, after a
+  histogram warm-up, so the comparison is fair). Measured on MI300A (ROCm 7.2.4):
+
+```text
+        n     custom counting    library radix   ratio (lib/custom)
+  1000000     0.314 ms            0.266 ms        0.85   (library a bit faster)
+  4000000     0.431 ms            0.431 ms        1.00   (tie)
+100000000     7.494 ms            2.786 ms        0.37   (library ~2.7x faster)
+```
+
+  The result is instructive: on *uniformly random* ZIPs over 100k buckets the general
+  radix sort is competitive at small `n` and actually **faster** at large `n`,
+  because the counting sort's scatter is a storm of atomics into 100k HBM buckets. The
+  custom sort pays off when the range is small (few buckets, atomics stay cheap) or
+  when you also need the per-bucket histogram/offsets it produces for free — exactly
+  the multi-node partitioning in §3.
+- `name_sort` Part B prints all three library timings on the same 64-bit name keys,
+  measured the same way (fresh copy + warm-up). Measured on MI300A (ROCm 7.2.4) with a
+  2M-name list (`make names.txt NCOUNT=2000000`):
+
+```text
+  thrust::sort_by_key      : 1.831 ms  (1092.33 Mkeys/s)   (scratch alloc'd internally)
+  rocprim::radix_sort_pairs: 0.675 ms  (2965.04 Mkeys/s)
+  hipcub::DeviceRadixSort  : 0.619 ms  (3233.28 Mkeys/s)
+```
+
+  thrust is ~2.7x slower not because its sort is worse (it dispatches to rocPRIM) but
+  because it allocates its temporary scratch inside every call; rocPRIM/hipCUB let you
+  allocate the temp once and reuse it.
+
+### 3.7.6 Exercises
+
+- **E-lib.1** Run `./sort_apis` at 1M, 16M, 64M keys. Do the three libraries agree?
+  Which is fastest, and does the ranking change with `n`?
+- **E-lib.2** In `zip_sort`, compare the counting-sort time to the
+  `rocprim::radix_sort_keys` baseline across `n` = 1M, 4M, 100M. At what `n` does the
+  general radix sort overtake the counting sort, and why? (Hint: the scatter is
+  atomic-bound into 100k HBM buckets.) When would the counting sort still be the
+  right choice despite being slower here?
+- **E-lib.3** In `sort_apis`, add `begin_bit=0, end_bit=17` to the rocPRIM/hipCUB
+  ZIP-range call (keys < 2^17) and measure the speedup from fewer radix passes.
+- **E-lib.4** In `index_sort`, sweep the payload from 1 to 64 words and plot
+  index-sort+gather vs. data-sort time; identify the crossover.
+- **E-lib.5** Swap `name_sort`'s `thrust::sort_by_key` for the direct
+  `rocprim::radix_sort_pairs` baseline and confirm identical alphabetical output.
+
+---
+
 ## 4. What "good" looks like
 
 - Single APU, `zip_sort` at 100M records: dominated by the histogram/scatter
@@ -930,14 +1367,19 @@ assume-place-adjust.
 
 | File | Purpose |
 |---|---|
-| `zip_sort.hip` | Example 1: perfect-hash / counting sort by ZIP (unified memory) |
+| `zip_sort.hip` | Example 1: counting sort by ZIP (non-unique keys) + library baseline |
+| `id_sort.hip` | Example 1b: true perfect-hash scatter for unique dense keys (+ dup detection) |
 | `name_sort.hip` | Example 2: LDS histogram + radix sort + compact hash (complete) |
+| `email_sort.hip` | Example 2b: unique-but-sparse emails -> compact hash, load-factor/probe sweep |
 | `multinode_zip_sort.hip` | Example 3: MPI range-partition + local sort (complete) |
 | `rocprim_tempsize.hip` | §3.5: measures rocPRIM Onesweep temp-storage growth (validated) |
+| `sort_apis.hip` | §3.7: same array sorted via thrust / rocPRIM / hipCUB (keys, pairs, descending) |
+| `index_sort.hip` | §3.7.4: index sort (argsort) + gather vs. sorting the data directly |
 | `orochi_wave64.patch` | §3.5 Part B: wave32→wave64 port of Orochi's radix sort (validated on MI300A, ROCm 7.2.4) |
 | `run_multinode.sbatch` | SLURM launcher (mpirun), 1 rank/APU on MI300A |
 | `gen_names.py` | Generates `names.txt` with realistic surname-initial frequencies |
 | `names.txt` | Sample attendee last names (default 5000) |
+| `gen_emails.py` | Generates `emails.txt` with guaranteed-unique addresses (default 200k) |
 | `Makefile` | Builds all binaries, generates data, renders the PDF |
 
 ## References

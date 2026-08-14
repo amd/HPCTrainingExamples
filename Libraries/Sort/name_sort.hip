@@ -8,12 +8,14 @@
 //
 // Build: hipcc -O3 --offload-arch=gfx942 name_sort.hip -o name_sort
 // Run:   ./name_sort names.txt
+#include <cstring>   // global ::memset visible before rocprim/hipcub headers
 #include <hip/hip_runtime.h>
+#include <rocprim/rocprim.hpp>
+#include <hipcub/hipcub.hpp>
 #include <thrust/execution_policy.h>
 #include <thrust/sort.h>
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -187,6 +189,75 @@ int main(int argc, char** argv){
            sorted ? "OK" : "FAILED",
            nbuf + (size_t)id[0]*MAXLEN, nbuf + (size_t)id[n-1]*MAXLEN);
     printf("  sort time: %.3f ms  (%.2f Mkeys/s)\n", sort_ms, n / (sort_ms * 1.0e3));
+
+    // ---- Part B baseline: the SAME 64-bit key sort via all three libraries ----
+    // thrust::sort_by_key above dispatches to rocPRIM under the hood; here we time
+    // all three the SAME way (fresh copy + one warm-up) so they are directly
+    // comparable. Note: thrust allocates its own scratch INSIDE each call, so its
+    // time includes that allocation; rocPRIM/hipCUB let you allocate temp once and
+    // reuse it (that difference is a real reason to drop to them in hot loops).
+    {
+        uint64_t *kin,*kout; int *iin,*iout; void* tmp=nullptr; size_t tb=0;
+        HIP_CHECK(hipMalloc(&kin,  (size_t)n*sizeof(uint64_t)));
+        HIP_CHECK(hipMalloc(&kout, (size_t)n*sizeof(uint64_t)));
+        HIP_CHECK(hipMalloc(&iin,  (size_t)n*sizeof(int)));
+        HIP_CHECK(hipMalloc(&iout, (size_t)n*sizeof(int)));
+
+        auto reset = [&]{ memcpy(kin, keys, (size_t)n*sizeof(uint64_t));
+                          for (int i=0;i<n;++i) iin[i]=i; };
+        auto elapsed = [&](hipEvent_t a, hipEvent_t b){ float m=0.f;
+                          HIP_CHECK(hipEventElapsedTime(&m,a,b)); return m; };
+
+        // thrust::sort_by_key on a fresh copy, warmed up (in-place on kin/iin)
+        reset(); thrust::sort_by_key(thrust::device, kin, kin+n, iin);
+        HIP_CHECK(hipDeviceSynchronize()); // warm-up
+        reset();
+        hipEvent_t ta,tb2; HIP_CHECK(hipEventCreate(&ta)); HIP_CHECK(hipEventCreate(&tb2));
+        HIP_CHECK(hipEventRecord(ta));
+        thrust::sort_by_key(thrust::device, kin, kin+n, iin);
+        HIP_CHECK(hipEventRecord(tb2)); HIP_CHECK(hipEventSynchronize(tb2));
+        float thr_ms = elapsed(ta,tb2);
+        HIP_CHECK(hipEventDestroy(ta)); HIP_CHECK(hipEventDestroy(tb2));
+
+        // rocPRIM radix_sort_pairs (uint64 keys, int values)
+        reset();
+        HIP_CHECK((hipError_t)rocprim::radix_sort_pairs(nullptr,tb,kin,kout,iin,iout,n));
+        HIP_CHECK(hipMalloc(&tmp, tb ? tb : 1));
+        (void)rocprim::radix_sort_pairs(tmp,tb,kin,kout,iin,iout,n); HIP_CHECK(hipDeviceSynchronize()); // warm-up
+        reset();
+        hipEvent_t ra,rb; HIP_CHECK(hipEventCreate(&ra)); HIP_CHECK(hipEventCreate(&rb));
+        HIP_CHECK(hipEventRecord(ra));
+        (void)rocprim::radix_sort_pairs(tmp,tb,kin,kout,iin,iout,n);
+        HIP_CHECK(hipEventRecord(rb)); HIP_CHECK(hipEventSynchronize(rb));
+        float rocp_ms = elapsed(ra,rb);
+        bool rocp_ok=true; for(int i=1;i<n&&rocp_ok;++i) if(kout[i-1]>kout[i]) rocp_ok=false;
+        HIP_CHECK(hipEventDestroy(ra)); HIP_CHECK(hipEventDestroy(rb)); HIP_CHECK(hipFree(tmp));
+
+        // hipCUB DeviceRadixSort::SortPairs
+        tmp=nullptr; tb=0; reset();
+        HIP_CHECK(hipcub::DeviceRadixSort::SortPairs(nullptr,tb,kin,kout,iin,iout,n));
+        HIP_CHECK(hipMalloc(&tmp, tb ? tb : 1));
+        HIP_CHECK(hipcub::DeviceRadixSort::SortPairs(tmp,tb,kin,kout,iin,iout,n));
+        HIP_CHECK(hipDeviceSynchronize()); // warm-up
+        reset();
+        hipEvent_t ha,hb; HIP_CHECK(hipEventCreate(&ha)); HIP_CHECK(hipEventCreate(&hb));
+        HIP_CHECK(hipEventRecord(ha));
+        HIP_CHECK(hipcub::DeviceRadixSort::SortPairs(tmp,tb,kin,kout,iin,iout,n));
+        HIP_CHECK(hipEventRecord(hb)); HIP_CHECK(hipEventSynchronize(hb));
+        float cub_ms = elapsed(ha,hb);
+        bool cub_ok=true; for(int i=1;i<n&&cub_ok;++i) if(kout[i-1]>kout[i]) cub_ok=false;
+        HIP_CHECK(hipEventDestroy(ha)); HIP_CHECK(hipEventDestroy(hb)); HIP_CHECK(hipFree(tmp));
+
+        printf("Library baseline (same keys, key-value radix sort, warmed):\n");
+        printf("  thrust::sort_by_key      : %.3f ms  (%.2f Mkeys/s)  (scratch alloc'd internally)\n",
+               thr_ms, n/(thr_ms*1.0e3));
+        printf("  rocprim::radix_sort_pairs: %.3f ms  (%.2f Mkeys/s)  sorted=%s\n",
+               rocp_ms, n/(rocp_ms*1.0e3), rocp_ok?"YES":"NO");
+        printf("  hipcub::DeviceRadixSort  : %.3f ms  (%.2f Mkeys/s)  sorted=%s\n",
+               cub_ms, n/(cub_ms*1.0e3), cub_ok?"YES":"NO");
+
+        (void)hipFree(kin);(void)hipFree(kout);(void)hipFree(iin);(void)hipFree(iout);
+    }
 
     // ---- Part C: compact hash build + verify ----
     int tableSize = (int)next_prime((long)(2*n + 1));   // load factor ~0.5
