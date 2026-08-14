@@ -11,7 +11,10 @@
 #
 # Launch with mpirun (NOT srun). The batch script runs on the first allocated
 # compute node; mpirun places SLURM_NTASKS ranks (ppr:4:node -> one APU each).
-# Each rank binds to device (rank % ndev) in the code.
+# No GPU-binding wrapper is needed: the code derives a node-local rank from an
+# MPI_COMM_TYPE_SHARED sub-communicator and binds hipSetDevice(local_rank % ndev),
+# so the 4 ranks on each node land on distinct APUs (verify via the startup line
+# that prints each rank's device + PCI-bus id).
 
 module load rocm/7.2.4 openmpi
 export HSA_XNACK=1                 # unified/managed memory on the APU

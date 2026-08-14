@@ -1,0 +1,95 @@
+diff --git a/ParallelPrimitives/RadixSortConfigs.h b/ParallelPrimitives/RadixSortConfigs.h
+index d06cde5..ae40096 100644
+--- a/ParallelPrimitives/RadixSortConfigs.h
++++ b/ParallelPrimitives/RadixSortConfigs.h
+@@ -42,7 +42,18 @@ constexpr auto SINGLE_SORT_WG_SIZE{ 128 };
+ 
+ static_assert( BIN_SIZE % 2 == 0 );
+ 
+-constexpr int WARP_SIZE = 32;
++// Wavefront width of the target GPU. RDNA (Radeon workstation/consumer) is 32;
++// CDNA Instinct data-center parts (e.g. MI300A / gfx942) are 64. The Onesweep
++// reorder kernel is wavefront-synchronous, so this MUST match the hardware wave.
++//
++// This header is shared by the host (which sets the kernel launch block size)
++// and the runtime-compiled device kernels, so the value must be identical on
++// both sides -- we cannot key it off a device-only arch macro. Set it for the
++// target GPU here (64 for CDNA Instinct / MI300A). Override with -DWARP_SIZE=32
++// on both host and hiprtc options to build for RDNA wave32.
++#ifndef WARP_SIZE
++#define WARP_SIZE 64
++#endif
+ 
+ constexpr int RADIX_SORT_BLOCK_SIZE = 4096;
+ 
+@@ -53,7 +64,10 @@ constexpr int GHISTOGRAM_ITEMS_PER_THREAD = GHISTOGRAM_ITEM_PER_BLOCK / GHISTOGR
+ constexpr int REORDER_NUMBER_OF_WARPS = 8;
+ constexpr int REORDER_NUMBER_OF_THREADS_PER_BLOCK = WARP_SIZE * REORDER_NUMBER_OF_WARPS;
+ constexpr int REORDER_NUMBER_OF_ITEM_PER_WARP = RADIX_SORT_BLOCK_SIZE / REORDER_NUMBER_OF_WARPS;
+-constexpr int REORDER_NUMBER_OF_ITEM_PER_THREAD = REORDER_NUMBER_OF_ITEM_PER_WARP / 32;
++// Items each lane owns = items-per-warp / lanes-per-warp. Must use WARP_SIZE
++// (not a hardcoded 32) so the per-thread arrays and loop trip counts match the
++// wave width -- otherwise wave64 over-allocates and mis-iterates.
++constexpr int REORDER_NUMBER_OF_ITEM_PER_THREAD = REORDER_NUMBER_OF_ITEM_PER_WARP / WARP_SIZE;
+ 
+ constexpr int LOOKBACK_TABLE_SIZE = 1024;
+ constexpr int MAX_LOOK_BACK = 64;
+diff --git a/ParallelPrimitives/RadixSortKernels.h b/ParallelPrimitives/RadixSortKernels.h
+index 3fe3729..84fcd40 100644
+--- a/ParallelPrimitives/RadixSortKernels.h
++++ b/ParallelPrimitives/RadixSortKernels.h
+@@ -462,9 +462,12 @@ __device__ __forceinline__ void OnesweepReorder( RADIX_SORT_KEY_TYPE* inputKeys,
+ 		u32 bucketIndex = extractDigit( getKeyBits( keys[k] ), bitLocation );
+ 
+ 		// check the attendees
+-		u32 broThreads =
++		// NOTE: __ballot returns a wavefront-wide lane mask -- 64 bits on CDNA
++		// (wave64, e.g. MI300A / gfx942) and 32 bits on RDNA (wave32). Keep the
++		// mask, popcount and ffs 64-bit wide so this is correct on both waves.
++		u64 broThreads =
+ #if defined( ITS )
+-			__ballot_sync( 0xFFFFFFFF,
++			__ballot_sync( ~0ull,
+ #else
+ 			__ballot(
+ #endif
+@@ -473,31 +476,31 @@ __device__ __forceinline__ void OnesweepReorder( RADIX_SORT_KEY_TYPE* inputKeys,
+ 		for( int j = 0; j < N_RADIX; ++j )
+ 		{
+ 			u32 bit = ( bucketIndex >> j ) & 0x1;
+-			u32 difference = ( 0xFFFFFFFF * bit ) ^
++			u64 difference = ( bit ? ~0ull : 0ull ) ^
+ #if defined( ITS )
+-								__ballot_sync( 0xFFFFFFFF, bit != 0 );
++								__ballot_sync( ~0ull, bit != 0 );
+ #else
+ 								__ballot( bit != 0 );
+ #endif
+ 			broThreads &= ~difference;
+ 		}
+ 
+-		u32 lowerMask = ( 1u << lane ) - 1;
++		u64 lowerMask = ( (u64)1 << lane ) - 1;
+ 		auto digitCount = smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp];
+-		warpOffsets[k] = digitCount + __popc( broThreads & lowerMask );
++		warpOffsets[k] = digitCount + __popcll( broThreads & lowerMask );
+ 		
+ #if defined( ITS )
+-		__syncwarp( 0xFFFFFFFF );
++		__syncwarp( ~0ull );
+ #else
+ 		__syncthreads();
+ #endif
+-		u32 leaderIdx = __ffs( broThreads ) - 1;
++		u32 leaderIdx = __ffsll( (unsigned long long)broThreads ) - 1;
+ 		if( lane == leaderIdx )
+ 		{
+-			smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp] = digitCount + __popc( broThreads );
++			smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp] = digitCount + __popcll( broThreads );
+ 		}
+ #if defined( ITS )
+-		__syncwarp( 0xFFFFFFFF );
++		__syncwarp( ~0ull );
+ #else
+ 		__syncthreads();
+ #endif

@@ -6,13 +6,14 @@
 #   make clean
 
 HIPCC   ?= hipcc
-OFFLOAD ?= gfx942
-HIPFLAGS ?= -O3 --offload-arch=$(OFFLOAD)
+ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
+HIPFLAGS ?= -O3 --offload-arch=${ROCM_GPU}
 
-# ROCm-aware MPI (set MPI_HOME in your environment, e.g. `module load cray-mpich`)
-MPI_HOME ?= /opt/mpi
-MPI_INC  ?= $(MPI_HOME)/include
-MPI_LIB  ?= $(MPI_HOME)/lib
+# ROCm-aware MPI: auto-detect compile/link flags from mpicxx in PATH
+# (OpenMPI supports --showme; override MPI_CFLAGS/MPI_LDFLAGS to customize).
+MPICXX      ?= mpicxx
+MPI_CFLAGS  ?= $(shell $(MPICXX) --showme:compile 2>/dev/null)
+MPI_LDFLAGS ?= $(shell $(MPICXX) --showme:link 2>/dev/null)
 
 PYTHON  ?= python3
 PANDOC  ?= pandoc
@@ -32,7 +33,7 @@ name_sort: name_sort.hip
 	$(HIPCC) $(HIPFLAGS) $< -o $@
 
 multinode_zip_sort: multinode_zip_sort.hip
-	$(HIPCC) $(HIPFLAGS) -I$(MPI_INC) -L$(MPI_LIB) $< -lmpi -o $@
+	$(HIPCC) $(HIPFLAGS) $< -o $@ -lmpi
 
 # sec 3.5: measures rocPRIM Onesweep temporary-storage growth vs. n
 rocprim_tempsize: rocprim_tempsize.hip

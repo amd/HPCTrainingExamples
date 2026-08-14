@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <chrono>
 
 #define HIP_CHECK(x) do { hipError_t e=(x); if(e){ \
   fprintf(stderr,"HIP error %s:%d: %s\n",__FILE__,__LINE__,hipGetErrorString(e)); \
@@ -134,12 +135,12 @@ int main(int argc, char** argv){
     if (n == 0){ fprintf(stderr, "no names in %s\n", path); return 1; }
 
     // --- unified memory: CPU fills, GPU reads, no hipMemcpy ---
-    char*     nbuf;   HIP_CHECK(hipMallocManaged(&nbuf, (size_t)n*MAXLEN));
-    uint64_t* keys;   HIP_CHECK(hipMallocManaged(&keys, (size_t)n*sizeof(uint64_t)));
-    uint64_t* keys2;  HIP_CHECK(hipMallocManaged(&keys2,(size_t)n*sizeof(uint64_t)));
-    int*      letter; HIP_CHECK(hipMallocManaged(&letter,(size_t)n*sizeof(int)));
-    int*      id;     HIP_CHECK(hipMallocManaged(&id,   (size_t)n*sizeof(int)));
-    int*      gcount; HIP_CHECK(hipMallocManaged(&gcount, 26*sizeof(int)));
+    char*     nbuf;   HIP_CHECK(hipMalloc(&nbuf, (size_t)n*MAXLEN));
+    uint64_t* keys;   HIP_CHECK(hipMalloc(&keys, (size_t)n*sizeof(uint64_t)));
+    uint64_t* keys2;  HIP_CHECK(hipMalloc(&keys2,(size_t)n*sizeof(uint64_t)));
+    int*      letter; HIP_CHECK(hipMalloc(&letter,(size_t)n*sizeof(int)));
+    int*      id;     HIP_CHECK(hipMalloc(&id,   (size_t)n*sizeof(int)));
+    int*      gcount; HIP_CHECK(hipMalloc(&gcount, 26*sizeof(int)));
 
     memset(nbuf, 0, (size_t)n*MAXLEN);
     for (int i = 0; i < n; ++i){
@@ -174,20 +175,25 @@ int main(int argc, char** argv){
     }
 
     // ---- Part B: alphabetical sort (rocPRIM radix via thrust) ----
+    // Time only the sort itself (setup/allocation above is excluded).
+    auto t0 = std::chrono::steady_clock::now();
     thrust::sort_by_key(thrust::device, keys2, keys2 + n, id);
     HIP_CHECK(hipDeviceSynchronize());
+    auto t1 = std::chrono::steady_clock::now();
+    double sort_ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
     bool sorted = true;
     for (int i = 1; i < n; ++i) if (keys2[i-1] > keys2[i]){ sorted = false; break; }
     printf("Alphabetical sort: %s  first=%s  last=%s\n",
            sorted ? "OK" : "FAILED",
            nbuf + (size_t)id[0]*MAXLEN, nbuf + (size_t)id[n-1]*MAXLEN);
+    printf("  sort time: %.3f ms  (%.2f Mkeys/s)\n", sort_ms, n / (sort_ms * 1.0e3));
 
     // ---- Part C: compact hash build + verify ----
     int tableSize = (int)next_prime((long)(2*n + 1));   // load factor ~0.5
-    uint64_t* tkey; HIP_CHECK(hipMallocManaged(&tkey, (size_t)tableSize*sizeof(uint64_t)));
-    int*      tcnt; HIP_CHECK(hipMallocManaged(&tcnt, (size_t)tableSize*sizeof(int)));
-    unsigned long long* probe; HIP_CHECK(hipMallocManaged(&probe, sizeof(unsigned long long)));
-    int*      notfound; HIP_CHECK(hipMallocManaged(&notfound, sizeof(int)));
+    uint64_t* tkey; HIP_CHECK(hipMalloc(&tkey, (size_t)tableSize*sizeof(uint64_t)));
+    int*      tcnt; HIP_CHECK(hipMalloc(&tcnt, (size_t)tableSize*sizeof(int)));
+    unsigned long long* probe; HIP_CHECK(hipMalloc(&probe, sizeof(unsigned long long)));
+    int*      notfound; HIP_CHECK(hipMalloc(&notfound, sizeof(int)));
     for (int i = 0; i < tableSize; ++i){ tkey[i] = EMPTY; tcnt[i] = 0; }
     *probe = 0; *notfound = 0;
 

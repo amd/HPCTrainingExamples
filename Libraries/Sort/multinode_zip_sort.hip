@@ -47,19 +47,40 @@ int main(int argc, char** argv){
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nranks);
 
+    // ---- bind one GPU (APU) per rank using the NODE-LOCAL rank ----
+    // rank%ndev only works if the global ranks are block-mapped onto nodes and
+    // every rank sees all GPUs. Deriving a node-local rank from a shared-memory
+    // sub-communicator is robust to any launch mapping and removes the need for
+    // an external GPU-binding wrapper (e.g. setting ROCR_VISIBLE_DEVICES).
+    MPI_Comm nodecomm;
+    MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rank,
+                        MPI_INFO_NULL, &nodecomm);
+    int local_rank; MPI_Comm_rank(nodecomm, &local_rank);
+    MPI_Comm_free(&nodecomm);
+
     int ndev = 1; (void)hipGetDeviceCount(&ndev);
-    HIP_CHECK(hipSetDevice(rank % ndev));   // one APU per rank (see sbatch)
+    int mydev = local_rank % ndev;
+    HIP_CHECK(hipSetDevice(mydev));         // one APU per rank (node-local)
+    char pcibus[64] = {0};
+    (void)hipDeviceGetPCIBusId(pcibus, (int)sizeof(pcibus), mydev);
+    printf("[rank %d] local_rank=%d device=%d pci=%s (ndev=%d)\n",
+           rank, local_rank, mydev, pcibus, ndev);
 
     long n_local = (argc > 1) ? atol(argv[1]) : (1L<<22);
     int  skew    = (argc > 2) ? atoi(argv[2]) : 0;   // 1 = skewed input (demo imbalance)
 
-    int* zip; HIP_CHECK(hipMallocManaged(&zip, (size_t)n_local*sizeof(int)));
+    int* zip; HIP_CHECK(hipMalloc(&zip, (size_t)n_local*sizeof(int)));
     srand(1000 + rank);
     for (long i = 0; i < n_local; ++i){
         if (skew) zip[i] = (rand() % 100 < 80) ? (rand() % 10000)          // 80% in low band
                                                : (rand() % NB);
         else      zip[i] = rand() % NB;
     }
+
+    // ---- timers (per rank, MPI_Wtime). Barrier aligns the start so the
+    //      distributed-sort total is comparable across ranks. ----
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t_dist0 = MPI_Wtime();
 
     // ---- 1) assume-place-adjust boundaries from a 10% sample ----
     long sample = n_local / 10; if (sample < 1) sample = n_local;
@@ -80,6 +101,7 @@ int main(int argc, char** argv){
     }
 
     // ---- 2) partition ALL local records by owner; MPI_Alltoallv ----
+    double t_shuf0 = MPI_Wtime();
     std::vector<int> sendcounts(nranks, 0);
     for (long i = 0; i < n_local; ++i) sendcounts[owner_of(zip[i], bnd, nranks)]++;
     std::vector<int> sdispls(nranks, 0);
@@ -98,15 +120,17 @@ int main(int argc, char** argv){
     for (int r = 1; r < nranks; ++r) rdispls[r] = rdispls[r-1] + recvcounts[r-1];
     long n_recv = (long)rdispls[nranks-1] + recvcounts[nranks-1];
 
-    int* recvbuf; HIP_CHECK(hipMallocManaged(&recvbuf, (size_t)(n_recv>0?n_recv:1)*sizeof(int)));
+    int* recvbuf; HIP_CHECK(hipMalloc(&recvbuf, (size_t)(n_recv>0?n_recv:1)*sizeof(int)));
     MPI_Alltoallv(sendbuf.data(), sendcounts.data(), sdispls.data(), MPI_INT,
                   recvbuf,        recvcounts.data(), rdispls.data(), MPI_INT, MPI_COMM_WORLD);
+    double t_shuffle = MPI_Wtime() - t_shuf0;   // data-shuffle time (this rank)
 
     // ---- 3) local GPU counting sort of received records ----
+    double t_ls0 = MPI_Wtime();
     int *counts, *offsets, *out;
-    HIP_CHECK(hipMallocManaged(&counts,  NB*sizeof(int)));
-    HIP_CHECK(hipMallocManaged(&offsets, NB*sizeof(int)));
-    HIP_CHECK(hipMallocManaged(&out, (size_t)(n_recv>0?n_recv:1)*sizeof(int)));
+    HIP_CHECK(hipMalloc(&counts,  NB*sizeof(int)));
+    HIP_CHECK(hipMalloc(&offsets, NB*sizeof(int)));
+    HIP_CHECK(hipMalloc(&out, (size_t)(n_recv>0?n_recv:1)*sizeof(int)));
     for (int b = 0; b < NB; ++b) counts[b] = 0;
     if (n_recv > 0){
         int T = 256, B = (int)((n_recv + T - 1)/T);
@@ -117,6 +141,7 @@ int main(int argc, char** argv){
         scatter_vals<<<B,T>>>(recvbuf, (int)n_recv, offsets, out);
         HIP_CHECK(hipDeviceSynchronize());
     }
+    double t_local = MPI_Wtime() - t_ls0;       // local GPU sort time (this rank)
 
     bool local_ok = true;
     for (long i = 1; i < n_recv; ++i) if (out[i-1] > out[i]){ local_ok = false; break; }
@@ -132,6 +157,7 @@ int main(int argc, char** argv){
     if (rank > 0)        MPI_Recv(&prev_max, 1, MPI_INT, rank-1, 7, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     if (rank < nranks-1) MPI_Send(&my_max,   1, MPI_INT, rank+1, 7, MPI_COMM_WORLD);
     bool seam_ok = (rank == 0) || (n_recv == 0) || (prev_max <= my_min);
+    double t_dist = MPI_Wtime() - t_dist0;      // full distributed sort (this rank)
 
     // per-rank balance + global validity report
     long imbalance_num = n_recv, gmax = 0, gsum = 0;
@@ -141,13 +167,23 @@ int main(int argc, char** argv){
     MPI_Reduce(&all_local_ok, &g_local, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&all_seam_ok,  &g_seam,  1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
 
-    printf("[rank %d] owns ZIP [%d,%d)  recv=%ld  global_offset=%ld  local_sorted=%s seam=%s\n",
+    // slowest rank per phase (max) => bounds the wall-clock of each phase
+    double gt_shuf, gt_local, gt_dist;
+    MPI_Reduce(&t_shuffle, &gt_shuf,  1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&t_local,   &gt_local, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&t_dist,    &gt_dist,  1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+
+    printf("[rank %d] owns ZIP [%d,%d)  recv=%ld  global_offset=%ld  local_sorted=%s seam=%s"
+           "  |  shuffle=%.3f ms  local_sort=%.3f ms  dist_total=%.3f ms\n",
            rank, bnd[rank], bnd[rank+1], n_recv, gofs,
-           local_ok?"YES":"NO", seam_ok?"YES":"NO");
+           local_ok?"YES":"NO", seam_ok?"YES":"NO",
+           t_shuffle*1e3, t_local*1e3, t_dist*1e3);
     if (rank == 0){
         double bal = (gsum>0) ? (double)gmax / ((double)gsum/nranks) : 1.0;
         printf("GLOBAL: total=%ld  imbalance(max/avg)=%.2f  local_sorted=%s  seams=%s  (skew=%d)\n",
                gsum, bal, g_local?"ALL-OK":"FAIL", g_seam?"ALL-OK":"FAIL", skew);
+        printf("GLOBAL: max times (ms): shuffle=%.3f  local_sort=%.3f  dist_total=%.3f\n",
+               gt_shuf*1e3, gt_local*1e3, gt_dist*1e3);
     }
 
     (void)hipFree(zip); (void)hipFree(recvbuf); (void)hipFree(counts);

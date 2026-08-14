@@ -32,10 +32,10 @@ int main(int argc, char** argv){
 
     // --- APU EXTRA CREDIT: unified memory, no hipMemcpy anywhere ---
     int *zip, *counts, *offsets, *out_id;
-    HIP_CHECK(hipMallocManaged(&zip,     (size_t)n*sizeof(int)));
-    HIP_CHECK(hipMallocManaged(&counts,  NBUCKETS*sizeof(int)));
-    HIP_CHECK(hipMallocManaged(&offsets, NBUCKETS*sizeof(int)));
-    HIP_CHECK(hipMallocManaged(&out_id,  (size_t)n*sizeof(int)));
+    HIP_CHECK(hipMalloc(&zip,     (size_t)n*sizeof(int)));
+    HIP_CHECK(hipMalloc(&counts,  NBUCKETS*sizeof(int)));
+    HIP_CHECK(hipMalloc(&offsets, NBUCKETS*sizeof(int)));
+    HIP_CHECK(hipMalloc(&out_id,  (size_t)n*sizeof(int)));
 
     srand(12345);
     for (int i = 0; i < n; ++i) zip[i] = rand() % NBUCKETS;
@@ -43,6 +43,12 @@ int main(int argc, char** argv){
 
     int dev = 0; HIP_CHECK(hipGetDevice(&dev));
     (void)hipMemPrefetchAsync(zip, (size_t)n*sizeof(int), dev);   // best-effort locality hint
+
+    // Time only the sort itself (histogram + scan + scatter), not setup/allocation.
+    hipEvent_t start, stop;
+    HIP_CHECK(hipEventCreate(&start));
+    HIP_CHECK(hipEventCreate(&stop));
+    HIP_CHECK(hipEventRecord(start));
 
     int T = 256, B = (n + T - 1)/T;
     histogram<<<B,T>>>(zip, n, counts);
@@ -54,10 +60,17 @@ int main(int argc, char** argv){
     scatter<<<B,T>>>(zip, n, offsets, out_id);
     HIP_CHECK(hipDeviceSynchronize());
 
+    HIP_CHECK(hipEventRecord(stop));
+    HIP_CHECK(hipEventSynchronize(stop));
+    float sort_ms = 0.0f;
+    HIP_CHECK(hipEventElapsedTime(&sort_ms, start, stop));
+    HIP_CHECK(hipEventDestroy(start));
+    HIP_CHECK(hipEventDestroy(stop));
+
     bool ok = true;
     for (int i = 1; i < n; ++i) if (zip[out_id[i-1]] > zip[out_id[i]]){ ok = false; break; }
-    printf("n=%d  sorted=%s  first ZIP=%05d  last ZIP=%05d\n",
-           n, ok ? "YES" : "NO", zip[out_id[0]], zip[out_id[n-1]]);
+    printf("n=%d  sorted=%s  first ZIP=%05d  last ZIP=%05d  sort_time=%.3f ms\n",
+           n, ok ? "YES" : "NO", zip[out_id[0]], zip[out_id[n-1]], sort_ms);
 
     (void)hipFree(zip); (void)hipFree(counts); (void)hipFree(offsets); (void)hipFree(out_id);
     return 0;

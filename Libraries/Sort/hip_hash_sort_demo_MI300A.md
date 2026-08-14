@@ -36,32 +36,33 @@ copy of your data**.
 
 Practical consequences for this exercise:
 
-- A pointer from `hipMallocManaged` (or even ordinary `malloc`/`new` with XNACK on)
+- A pointer from `hipMalloc` (or even ordinary `malloc`/`new` with XNACK on)
   is valid on **both** the CPU and the GPU. You generate data on the CPU and sort
   it on the GPU with **zero `hipMemcpy`**.
-- Enable page migration / unified addressing:
-
-```bash
-export HSA_XNACK=1          # allow GPU to fault on host pages (unified memory)
-```
-
-- Query the arch (MI300A is `gfx942`) and compile for it:
-
-```bash
-rocminfo | grep -m1 gfx      # expect gfx942
-export OFFLOAD_ARCH=gfx942
-```
 
 The **extra-credit** portions below show the copy-free pattern and mark where a
 discrete-GPU code would have needed explicit transfers.
 
-### Environment setup
+### Get an slurm allocation with a GPU
 
 ```bash
-module load rocm             # or: source /opt/rocm/env  (site-dependent)
+salloc -N 1 --ntasks=4 --cpus-per-task=1 --gpus=4 -t 01:00:00
+```
+
+# add `-p <slurm queue>` to request a particular 
+
+### Environment setup
+
+- Enable page migration / unified addressing:
+- Load ROCm and OpenMPI environments with module load
+- The makefile queries the arch (MI300A is `gfx942`) and compiles for it:
+- Checks for GPU and gpu type with rocminfo and hipcc toolchain
+
+```bash
+export HSA_XNACK=1           # allow GPU to fault on host pages (unified memory)
+module load rocm openmpi
+rocminfo | grep -m1 gfx
 hipcc --version              # confirm ROCm/clang toolchain
-export HSA_XNACK=1
-export OFFLOAD_ARCH=gfx942
 ```
 
 ### Build everything (Makefile provided)
@@ -77,11 +78,11 @@ make clean
 ```
 
 The multi-node target needs a ROCm-aware MPI. On AAC, `module load rocm/7.2.4
-openmpi` provides OpenMPI 5.0.10 and sets `$MPI_PATH`:
+openmpi` provides OpenMPI 5.0.10 and sets include and library paths:
 
 ```bash
 module load rocm/7.2.4 openmpi
-make multinode_zip_sort MPI_HOME=$MPI_PATH
+make multinode_zip_sort
 ```
 
 To produce the PDF directly without make:
@@ -139,10 +140,10 @@ int main(int argc, char** argv){
 
     // --- APU EXTRA CREDIT: unified memory, no hipMemcpy anywhere ---
     int *zip, *counts, *offsets, *out_id;
-    HIP_CHECK(hipMallocManaged(&zip,     n*sizeof(int)));
-    HIP_CHECK(hipMallocManaged(&counts,  NBUCKETS*sizeof(int)));
-    HIP_CHECK(hipMallocManaged(&offsets, NBUCKETS*sizeof(int)));
-    HIP_CHECK(hipMallocManaged(&out_id,  n*sizeof(int)));
+    HIP_CHECK(hipMalloc(&zip,     n*sizeof(int)));
+    HIP_CHECK(hipMalloc(&counts,  NBUCKETS*sizeof(int)));
+    HIP_CHECK(hipMalloc(&offsets, NBUCKETS*sizeof(int)));
+    HIP_CHECK(hipMalloc(&out_id,  n*sizeof(int)));
 
     // CPU fills the SAME physical memory the GPU will read (APU: zero-copy).
     srand(12345);
@@ -152,6 +153,12 @@ int main(int argc, char** argv){
     // Optional on APU; on a discrete GPU you'd prefetch instead of copy.
     int dev=0; HIP_CHECK(hipGetDevice(&dev));
     (void)hipMemPrefetchAsync(zip, n*sizeof(int), dev); // best-effort locality hint
+
+    // Time only the sort itself (histogram + scan + scatter), not setup/allocation.
+    hipEvent_t start, stop;
+    HIP_CHECK(hipEventCreate(&start));
+    HIP_CHECK(hipEventCreate(&stop));
+    HIP_CHECK(hipEventRecord(start));
 
     int T=256, B=(n+T-1)/T;
     histogram<<<B,T>>>(zip, n, counts);
@@ -164,11 +171,18 @@ int main(int argc, char** argv){
     scatter<<<B,T>>>(zip, n, offsets, out_id);
     HIP_CHECK(hipDeviceSynchronize());
 
+    HIP_CHECK(hipEventRecord(stop));
+    HIP_CHECK(hipEventSynchronize(stop));
+    float sort_ms = 0.0f;
+    HIP_CHECK(hipEventElapsedTime(&sort_ms, start, stop));
+    HIP_CHECK(hipEventDestroy(start));
+    HIP_CHECK(hipEventDestroy(stop));
+
     // CPU reads results directly — no copy back.
     bool ok=true;
     for (int i=1;i<n;i++) if (zip[out_id[i-1]] > zip[out_id[i]]){ ok=false; break; }
-    printf("n=%d  sorted=%s  first ZIP=%05d  last ZIP=%05d\n",
-           n, ok?"YES":"NO", zip[out_id[0]], zip[out_id[n-1]]);
+    printf("n=%d  sorted=%s  first ZIP=%05d  last ZIP=%05d  sort_time=%.3f ms\n",
+           n, ok ? "YES" : "NO", zip[out_id[0]], zip[out_id[n-1]], sort_ms);
 
     (void)hipFree(zip); (void)hipFree(counts); (void)hipFree(offsets); (void)hipFree(out_id);
     return 0;
@@ -230,6 +244,7 @@ lexicographic order.
 #include <string>
 #include <vector>
 #include <fstream>
+#include <chrono>
 
 #define HIP_CHECK(x) do { hipError_t e=(x); if(e){ \
   fprintf(stderr,"HIP error %s:%d: %s\n",__FILE__,__LINE__,hipGetErrorString(e)); \
@@ -321,12 +336,12 @@ int main(int argc, char** argv){
 
     // unified memory: CPU fills, GPU reads, no hipMemcpy
     char *nbuf; uint64_t *keys,*keys2; int *letter,*id,*gcount;
-    HIP_CHECK(hipMallocManaged(&nbuf,(size_t)n*MAXLEN));
-    HIP_CHECK(hipMallocManaged(&keys,(size_t)n*sizeof(uint64_t)));
-    HIP_CHECK(hipMallocManaged(&keys2,(size_t)n*sizeof(uint64_t)));
-    HIP_CHECK(hipMallocManaged(&letter,(size_t)n*sizeof(int)));
-    HIP_CHECK(hipMallocManaged(&id,(size_t)n*sizeof(int)));
-    HIP_CHECK(hipMallocManaged(&gcount,26*sizeof(int)));
+    HIP_CHECK(hipMalloc(&nbuf,(size_t)n*MAXLEN));
+    HIP_CHECK(hipMalloc(&keys,(size_t)n*sizeof(uint64_t)));
+    HIP_CHECK(hipMalloc(&keys2,(size_t)n*sizeof(uint64_t)));
+    HIP_CHECK(hipMalloc(&letter,(size_t)n*sizeof(int)));
+    HIP_CHECK(hipMalloc(&id,(size_t)n*sizeof(int)));
+    HIP_CHECK(hipMalloc(&gcount,26*sizeof(int)));
     memset(nbuf,0,(size_t)n*MAXLEN);
     for (int i=0;i<n;++i){ strncpy(nbuf+(size_t)i*MAXLEN,names[i].c_str(),MAXLEN-1); id[i]=i; }
     for (int b=0;b<26;++b) gcount[b]=0;
@@ -348,18 +363,25 @@ int main(int argc, char** argv){
             desk+1,'A'+start,'A'+b,run); run=0; start=b+1; if(++desk==NDESK)break; } } }
 
     // Part B — alphabetical sort (rocPRIM radix via thrust)
+    // Time only the sort itself (setup/allocation above is excluded).
+    auto t0 = std::chrono::steady_clock::now();
     thrust::sort_by_key(thrust::device,keys2,keys2+n,id); HIP_CHECK(hipDeviceSynchronize());
-    bool sorted=true; for(int i=1;i<n;++i) if(keys2[i-1]>keys2[i]){sorted=false;break;}
+    HIP_CHECK(hipDeviceSynchronize());
+    auto t1 = std::chrono::steady_clock::now();
+    double sort_ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
+    bool sorted=true;
+    for(int i=1;i<n;++i) if(keys2[i-1]>keys2[i]){sorted=false;break;}
     printf("Alphabetical sort: %s  first=%s  last=%s\n", sorted?"OK":"FAILED",
            nbuf+(size_t)id[0]*MAXLEN, nbuf+(size_t)id[n-1]*MAXLEN);
+    printf("  sort time: %.3f ms  (%.2f Mkeys/s)\n", sort_ms, n / (sort_ms * 1.0e3));
 
     // Part C — compact hash build + verify
     int tableSize=(int)next_prime((long)(2*n+1));
     uint64_t* tkey; int* tcnt; unsigned long long* probe; int* notfound;
-    HIP_CHECK(hipMallocManaged(&tkey,(size_t)tableSize*sizeof(uint64_t)));
-    HIP_CHECK(hipMallocManaged(&tcnt,(size_t)tableSize*sizeof(int)));
-    HIP_CHECK(hipMallocManaged(&probe,sizeof(unsigned long long)));
-    HIP_CHECK(hipMallocManaged(&notfound,sizeof(int)));
+    HIP_CHECK(hipMalloc(&tkey,(size_t)tableSize*sizeof(uint64_t)));
+    HIP_CHECK(hipMalloc(&tcnt,(size_t)tableSize*sizeof(int)));
+    HIP_CHECK(hipMalloc(&probe,sizeof(unsigned long long)));
+    HIP_CHECK(hipMalloc(&notfound,sizeof(int)));
     for(int i=0;i<tableSize;++i){ tkey[i]=EMPTY; tcnt[i]=0; } *probe=0; *notfound=0;
     ch_insert<<<B,T>>>(keys,n,tkey,tcnt,tableSize,probe); HIP_CHECK(hipDeviceSynchronize());
     ch_query<<<B,T>>>(keys,n,tkey,tableSize,notfound);    HIP_CHECK(hipDeviceSynchronize());
@@ -374,7 +396,14 @@ int main(int argc, char** argv){
 }
 ```
 
-### 2.2 Exercises (extend the reference)
+### 2.2 Build & run
+
+```bash
+hipcc -O3 --offload-arch=gfx942 name_sort.hip -o name_sort
+./name_sort
+```
+
+### 2.3 Exercises (extend the reference)
 
 - **E2.1** The provided `names.txt` (from `gen_names.py`) matches real U.S.
   surname-initial frequencies. Run `./name_sort names.txt` and read off the
@@ -410,7 +439,7 @@ Rather than a separate sampling pass:
 
 Complete MPI + HIP program. It samples the first 10% to adjust boundaries, shuffles
 with `MPI_Alltoallv`, sorts locally on the GPU, and validates the merge-free result
-(local order + seams + load balance). Managed pointers are host-accessible on the
+(local order + seams + load balance). hipMalloc pointers are host-accessible on the
 APU, so the MPI calls need no separate staging buffers. Pass `skew=1` as the second
 argument to force an imbalanced input and observe the failure/repair.
 
@@ -450,16 +479,28 @@ int main(int argc, char** argv){
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nranks);
 
+    // Bind one APU per rank using the NODE-LOCAL rank (robust to any launch
+    // mapping, and removes the need for an external ROCR_VISIBLE_DEVICES wrapper).
+    MPI_Comm nodecomm;
+    MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rank,
+                        MPI_INFO_NULL, &nodecomm);
+    int local_rank; MPI_Comm_rank(nodecomm, &local_rank); MPI_Comm_free(&nodecomm);
     int ndev = 1; (void)hipGetDeviceCount(&ndev);
-    HIP_CHECK(hipSetDevice(rank % ndev));          // one APU per rank
+    int mydev = local_rank % ndev; HIP_CHECK(hipSetDevice(mydev));
+    char pcibus[64]={0}; (void)hipDeviceGetPCIBusId(pcibus,(int)sizeof(pcibus),mydev);
+    printf("[rank %d] local_rank=%d device=%d pci=%s (ndev=%d)\n",
+           rank, local_rank, mydev, pcibus, ndev);
 
     long n_local = (argc > 1) ? atol(argv[1]) : (1L<<22);
     int  skew    = (argc > 2) ? atoi(argv[2]) : 0; // 1 => skewed input
 
-    int* zip; HIP_CHECK(hipMallocManaged(&zip, (size_t)n_local*sizeof(int)));
+    int* zip; HIP_CHECK(hipMalloc(&zip, (size_t)n_local*sizeof(int)));
     srand(1000 + rank);
     for (long i = 0; i < n_local; ++i)
         zip[i] = skew ? ((rand()%100 < 80) ? (rand()%10000) : (rand()%NB)) : (rand()%NB);
+
+    // per-rank timers; barrier aligns the distributed-sort start
+    MPI_Barrier(MPI_COMM_WORLD); double t_dist0 = MPI_Wtime();
 
     // 1) assume-place-adjust: build boundaries from a 10% global sample
     long sample = n_local/10; if (sample < 1) sample = n_local;
@@ -473,7 +514,8 @@ int main(int argc, char** argv){
       for (int b=0;b<NB && r<nranks;++b){ run+=gh[b]; if(run>=per){ bnd[r++]=b+1; run=0; } }
       for (; r<nranks; ++r) bnd[r]=NB; }
 
-    // 2) partition all local records by owner; MPI_Alltoallv
+    // 2) partition all local records by owner; MPI_Alltoallv (data shuffle)
+    double t_shuf0 = MPI_Wtime();
     std::vector<int> sendcounts(nranks,0);
     for (long i=0;i<n_local;++i) sendcounts[owner_of(zip[i],bnd,nranks)]++;
     std::vector<int> sdispls(nranks,0);
@@ -485,20 +527,23 @@ int main(int argc, char** argv){
     std::vector<int> rdispls(nranks,0);
     for (int r=1;r<nranks;++r) rdispls[r]=rdispls[r-1]+recvcounts[r-1];
     long n_recv=(long)rdispls[nranks-1]+recvcounts[nranks-1];
-    int* recvbuf; HIP_CHECK(hipMallocManaged(&recvbuf,(size_t)(n_recv>0?n_recv:1)*sizeof(int)));
+    int* recvbuf; HIP_CHECK(hipMalloc(&recvbuf,(size_t)(n_recv>0?n_recv:1)*sizeof(int)));
     MPI_Alltoallv(sendbuf.data(),sendcounts.data(),sdispls.data(),MPI_INT,
                   recvbuf,recvcounts.data(),rdispls.data(),MPI_INT,MPI_COMM_WORLD);
+    double t_shuffle = MPI_Wtime() - t_shuf0;
 
     // 3) local GPU counting sort of received records
+    double t_ls0 = MPI_Wtime();
     int *counts,*offsets,*out;
-    HIP_CHECK(hipMallocManaged(&counts,NB*sizeof(int)));
-    HIP_CHECK(hipMallocManaged(&offsets,NB*sizeof(int)));
-    HIP_CHECK(hipMallocManaged(&out,(size_t)(n_recv>0?n_recv:1)*sizeof(int)));
+    HIP_CHECK(hipMalloc(&counts,NB*sizeof(int)));
+    HIP_CHECK(hipMalloc(&offsets,NB*sizeof(int)));
+    HIP_CHECK(hipMalloc(&out,(size_t)(n_recv>0?n_recv:1)*sizeof(int)));
     for (int b=0;b<NB;++b) counts[b]=0;
     if (n_recv>0){ int T=256,B=(int)((n_recv+T-1)/T);
         histogram<<<B,T>>>(recvbuf,(int)n_recv,counts); HIP_CHECK(hipDeviceSynchronize());
         thrust::exclusive_scan(thrust::device,counts,counts+NB,offsets); HIP_CHECK(hipDeviceSynchronize());
         scatter_vals<<<B,T>>>(recvbuf,(int)n_recv,offsets,out); HIP_CHECK(hipDeviceSynchronize()); }
+    double t_local = MPI_Wtime() - t_ls0;
     bool local_ok=true; for(long i=1;i<n_recv;++i) if(out[i-1]>out[i]){local_ok=false;break;}
 
     // 4) merge-free: global offsets + seam check
@@ -508,17 +553,26 @@ int main(int argc, char** argv){
     if (rank>0)        MPI_Recv(&prev_max,1,MPI_INT,rank-1,7,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
     if (rank<nranks-1) MPI_Send(&my_max, 1,MPI_INT,rank+1,7,MPI_COMM_WORLD);
     bool seam_ok=(rank==0)||(n_recv==0)||(prev_max<=my_min);
+    double t_dist = MPI_Wtime() - t_dist0;
 
     long gmax=0,gsum=0; MPI_Reduce(&n_recv,&gmax,1,MPI_LONG,MPI_MAX,0,MPI_COMM_WORLD);
     MPI_Reduce(&n_recv,&gsum,1,MPI_LONG,MPI_SUM,0,MPI_COMM_WORLD);
     int lo=local_ok?1:0, so=seam_ok?1:0, glo,gso;
     MPI_Reduce(&lo,&glo,1,MPI_INT,MPI_MIN,0,MPI_COMM_WORLD);
     MPI_Reduce(&so,&gso,1,MPI_INT,MPI_MIN,0,MPI_COMM_WORLD);
-    printf("[rank %d] owns [%d,%d) recv=%ld goff=%ld local=%s seam=%s\n",
-           rank,bnd[rank],bnd[rank+1],n_recv,gofs,local_ok?"YES":"NO",seam_ok?"YES":"NO");
+    double gts,gtl,gtd;   // slowest rank per phase => phase wall-clock
+    MPI_Reduce(&t_shuffle,&gts,1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD);
+    MPI_Reduce(&t_local,  &gtl,1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD);
+    MPI_Reduce(&t_dist,   &gtd,1,MPI_DOUBLE,MPI_MAX,0,MPI_COMM_WORLD);
+    printf("[rank %d] owns [%d,%d) recv=%ld goff=%ld local=%s seam=%s"
+           " | shuffle=%.3f ms local_sort=%.3f ms dist_total=%.3f ms\n",
+           rank,bnd[rank],bnd[rank+1],n_recv,gofs,local_ok?"YES":"NO",seam_ok?"YES":"NO",
+           t_shuffle*1e3,t_local*1e3,t_dist*1e3);
     if (rank==0){ double bal=(gsum>0)?(double)gmax/((double)gsum/nranks):1.0;
         printf("GLOBAL: total=%ld imbalance(max/avg)=%.2f local=%s seams=%s (skew=%d)\n",
-               gsum,bal,glo?"ALL-OK":"FAIL",gso?"ALL-OK":"FAIL",skew); }
+               gsum,bal,glo?"ALL-OK":"FAIL",gso?"ALL-OK":"FAIL",skew);
+        printf("GLOBAL: max times (ms): shuffle=%.3f local_sort=%.3f dist_total=%.3f\n",
+               gts*1e3,gtl*1e3,gtd*1e3); }
 
     (void)hipFree(zip);(void)hipFree(recvbuf);(void)hipFree(counts);
     (void)hipFree(offsets);(void)hipFree(out);
@@ -526,13 +580,54 @@ int main(int argc, char** argv){
 }
 ```
 
-### 3.3 SLURM launch on MI300A — `run_multinode.sbatch`
+### 3.3 Interactive SLURM run — single node, 4 APUs
+
+For quick experiments (correctness checks, small sweeps) it is often easier to
+grab an **interactive** allocation than to submit the batch script. Request one
+MI300A node with all 4 APUs, then launch 4 ranks — one per APU — with `mpirun`
+directly from the interactive shell (again `mpirun`, **not** `srun`).
+
+```bash
+# 1) Grab one node with its 4 APUs for an hour (add -p <queue> as needed)
+salloc -N 1 --ntasks-per-node=4 --gpus-per-node=4 \
+       -p PPAC_MI300A_SPX --exclusive -t 01:00:00
+
+# 2) When the prompt returns on the allocated compute node:
+module load rocm/7.2.4 openmpi
+export HSA_XNACK=1
+
+# 3) 4 ranks, one per APU.  Args: [records_per_rank] [skew(0|1)]
+mpirun -np 4 --map-by ppr:4:node -x HSA_XNACK \
+       ./multinode_zip_sort 4000000 0      # uniform keys
+mpirun -np 4 --map-by ppr:4:node -x HSA_XNACK \
+       ./multinode_zip_sort 4000000 1      # skewed keys (watch the repair)
+```
+
+The same node-local binding logic used by the batch path applies here: each rank
+derives its `local_rank` from an `MPI_COMM_TYPE_SHARED` sub-communicator and calls
+`hipSetDevice(local_rank % ndev)`, so the four ranks bind to APUs `0,1,2,3` and
+print their device / PCI-bus id at startup — no `ROCR_VISIBLE_DEVICES` wrapper is
+needed. Because you stay on the allocated node, you can iterate quickly (rebuild
+with `make multinode_zip_sort`, rerun `mpirun`) without resubmitting. Type `exit`
+to release the allocation when you are done.
+
+### 3.4 SLURM launch on MI300A — `run_multinode.sbatch`
 
 MI300A nodes expose 4 APUs. Launch one rank per APU with **`mpirun`, not `srun`**
 (on this system the `srun --mpi=pmix` step launcher times out; `mpirun` is the
 supported path). The batch script runs on the first allocated compute node, so
-`mpirun` places the ranks from there. Each rank binds to device `rank % ndev` in
-the code.
+`mpirun` places the ranks from there.
+
+**Do the ranks land on different GPUs, and is a wrapper needed?** No wrapper is
+required. The program derives a **node-local rank** from an
+`MPI_COMM_TYPE_SHARED` sub-communicator and calls `hipSetDevice(local_rank %
+ndev)`, so on each node ranks bind to devices `0,1,2,3` (one APU each). It prints
+its device and PCI-bus id at startup so you can confirm the mapping — e.g. on
+one node the four APUs appear as `0000:01:00.0/.1/.2/.3`. This holds on 2 nodes ×
+4 ranks too: each node runs its own shared-memory communicator, so the 4 ranks
+per node get local ranks `0..3` regardless of the global rank numbering. (An
+external `ROCR_VISIBLE_DEVICES` wrapper is an alternative, but is unnecessary
+because the binding is done in code.)
 
 ```bash
 #!/bin/bash
@@ -586,7 +681,7 @@ partitions (rank 0 owns only `[0,3050)`) so per-rank counts stay balanced
 (imbalance ≈ 1.00), and the disjoint ordered ranges make the global merge a
 no-op (verified seams + global offsets).
 
-### 3.4 Exercises (extend the reference)
+### 3.5 Exercises (extend the reference)
 
 - **E3.1** Run with `skew=0` then `skew=1`; compare the reported
   `imbalance(max/avg)`. Then **disable** the boundary adjustment (force uniform
@@ -600,7 +695,7 @@ no-op (verified seams + global offsets).
 
 ---
 
-## 3.5 (Optional, advanced) The radix memory story: rocPRIM Onesweep vs. Orochi's circular buffer
+## 3.6 (Optional, advanced) The radix memory story: rocPRIM Onesweep vs. Orochi's circular buffer
 
 This ties the data-aware hash-sort memory trade-off back to the *general-purpose*
 radix sort. Recall the throughline: a fast sort often pays for speed with memory
@@ -639,7 +734,7 @@ Measured on MI300A (ROCm 7.2.4):
 The scratch grows **linearly at ~4.125 bytes/key** — a billion keys needs ~4.1 GB
 of temporary storage on top of the data itself.
 
-**Part B — read the fix in Orochi (`ParallelPrimitives`).**
+**Part B — read the fix in Orochi (`ParallelPrimitives`), and port it to wave64.**
 The GPUOpen circular-buffer extension (Kao & Yoshimura, *GPU Zen 3*, 2025) holds
 that look-back buffer at a **constant ~2 MB regardless of `n`**. Clone Orochi and
 read the mechanism — the `tail iterator`, `L_lookback`, and `N_table` in:
@@ -650,36 +745,61 @@ $EDITOR Orochi/ParallelPrimitives/RadixSortKernels.h   # circular-buffer look-ba
 $EDITOR Orochi/ParallelPrimitives/RadixSort.cpp        # host driver + tail iterator
 ```
 
-> **Build note (validated on this testbed).** Orochi is *not* a ROCm library; it is
-> host-side driver-API code that loads HIP at runtime and compiles its kernels with
-> hiprtc. It builds cleanly with plain `g++` (no `hipcc`), e.g.:
-> ```bash
-> g++ -O3 -std=c++17 -I. "-D__debugbreak()=abort()" -include cstdlib \
->     Orochi/Orochi.cpp Orochi/OrochiUtils.cpp \
->     contrib/hipew/src/hipew.cpp contrib/cuew/src/cuew.cpp \
->     ParallelPrimitives/RadixSort.cpp Test/RadixSort/main.cpp \
->     -ldl -lpthread -o build/RadixSortTest
-> ```
-> It links and initializes correctly on MI300A (`gfx942`) under both ROCm 7.2.4 and
-> 6.3.0. **But the featured circular-buffer Onesweep path does not run correctly on
-> MI300A**, and this is *not* a ROCm-version issue:
->
-> | ROCm | small n (< 3072, single-pass kernel) | large n (Onesweep circular buffer) |
-> |------|--------------------------------------|------------------------------------|
-> | 7.2.4 | kernels don't launch (0.00 ms, fails) | fails |
-> | 6.3.0 | **sorts correctly** (`n=1000` ✓) | **GPU memory fault / wrong result** (`n≥100k`) |
->
-> Root cause: `ParallelPrimitives/RadixSortConfigs.h` hardcodes `WARP_SIZE = 32`
-> and the reorder kernels divide the per-block work by 32. This is **correct on
-> RDNA** — the AMD Radeon workstation/consumer GPUs run a **32-lane wavefront**, and
-> Orochi's radix sort originates on that rendering/ray-tracing side, so it works as
-> intended there. The **CDNA Instinct data-center GPUs (MI300A = CDNA3) use a
-> 64-lane wavefront**, so the hardcoded 32 makes the multi-pass reorder index out of
-> bounds. It is a **wave32-vs-wave64 portability gap, not a bug and not a ROCm
-> version issue**: it would run on an RDNA workstation card but not on today's
-> Instinct parts without a wave64 port (e.g. keying the constant off `warpSize` /
-> `__AMDGCN_WAVEFRONT_SIZE__`). **Treat Part B as source study on MI300A**; the
-> measurable takeaway is Part A.
+Orochi is *not* a ROCm library; it is host-side driver-API code that loads HIP at
+runtime and compiles its kernels with hiprtc. It builds with plain `g++` (no
+`hipcc`):
+
+```bash
+g++ -O3 -std=c++17 -I. "-D__debugbreak()=abort()" -include cstdlib \
+    Orochi/Orochi.cpp Orochi/OrochiUtils.cpp \
+    contrib/hipew/src/hipew.cpp contrib/cuew/src/cuew.cpp \
+    ParallelPrimitives/RadixSort.cpp Test/RadixSort/main.cpp \
+    -ldl -lpthread -o build/RadixSortTest
+```
+
+**The instructive part: out of the box it is wave32-only.** Orochi's radix sort
+comes from the RDNA rendering/ray-tracing side, and `RadixSortConfigs.h` hardcodes
+`WARP_SIZE = 32`. That is correct on the **RDNA Radeon workstation/consumer GPUs
+(32-lane wavefront)** where it is designed to run. The **CDNA Instinct data-center
+parts (MI300A = CDNA3) use a 64-lane wavefront**, so the multi-pass Onesweep reorder
+indexes out of bounds (memory fault / wrong result for `n ≥ 3072`, the point at
+which it leaves the single-pass kernel). It is a **wave32-vs-wave64 portability
+gap, not a bug and not a ROCm-version issue.**
+
+**Porting it to wave64 (`orochi_wave64.patch`, provided).** The change is small and
+mechanical, and it is the whole lesson in miniature:
+
+1. `WARP_SIZE = 64` (and derive `REORDER_NUMBER_OF_ITEM_PER_THREAD` from
+   `WARP_SIZE`, not a hardcoded `/32`, so the per-lane arrays and loop counts match
+   the wave).
+2. In the reorder kernel's ballot-based warp match, widen the **lane mask to 64
+   bits**: `__ballot` returns a 64-bit mask on wave64, so `broThreads` becomes
+   `u64`, `(1u << lane)` becomes `((u64)1 << lane)`, and `__popc`/`__ffs` become
+   `__popcll`/`__ffsll`.
+
+That is it — no shuffle-scan iteration to add, because this implementation does its
+intra-warp ranking with `__ballot` + `popcount` rather than a log-step shuffle scan.
+
+Apply and rebuild:
+
+```bash
+cd Orochi && git apply orochi_wave64.patch
+# rebuild RadixSortTest as above; run from a dir where ../ParallelPrimitives resolves
+```
+
+**Validated on MI300A (`gfx942`), ROCm 7.2.4** — the circular-buffer Onesweep path
+now sorts correctly at every size and the bundled perf test passes:
+
+```
+n=1000  1e5  1e6  1e7   -> sorted=YES, mismatches=0 (all)
+16.0 Mkeys, 32-bit:  ~6.6 GKeys/s (key-value),  ~7.0 GKeys/s (key-only)
+16.0 Mkeys, 16-bit:  ~11.5 GKeys/s (key-value), ~12.1 GKeys/s (key-only)
+```
+
+> Caveat: this was validated under **ROCm 7.2.4** (the workshop stack), where hiprtc
+> compiles the kernels quickly. Under ROCm 6.3.0 the *runtime* hiprtc compile of the
+> patched kernels stalls (an unrelated JIT issue on that older driver); the offline
+> `hipcc` compile is clean. Use 7.2.4 for this exercise.
 
 **Exercises**
 - **E3.5** Plot `temp_storage(n)` from Part A and fit the slope; confirm it is O(n).
@@ -687,6 +807,11 @@ $EDITOR Orochi/ParallelPrimitives/RadixSort.cpp        # host driver + tail iter
 - **E3.6** In `RadixSortKernels.h`, identify where the circular buffer bounds the
   look-back distance (`L_lookback < N_table`) and explain, in two sentences, why
   that makes the temporal memory independent of `n`.
+- **E3.7 (port it yourself)** Starting from stock Orochi, reproduce the wave64 port:
+  find every place a 32-lane assumption hides (the `WARP_SIZE` constant, the `/32`
+  divisor, and the 32-bit `__ballot`/`__popc`/`__ffs`/`(1u<<lane)` in the reorder
+  kernel) and fix them. Confirm correctness with the bundled test. This is the
+  canonical "RDNA-tuned kernel → CDNA wave64" migration in ~30 lines.
 
 ---
 
@@ -809,6 +934,7 @@ assume-place-adjust.
 | `name_sort.hip` | Example 2: LDS histogram + radix sort + compact hash (complete) |
 | `multinode_zip_sort.hip` | Example 3: MPI range-partition + local sort (complete) |
 | `rocprim_tempsize.hip` | §3.5: measures rocPRIM Onesweep temp-storage growth (validated) |
+| `orochi_wave64.patch` | §3.5 Part B: wave32→wave64 port of Orochi's radix sort (validated on MI300A, ROCm 7.2.4) |
 | `run_multinode.sbatch` | SLURM launcher (mpirun), 1 rank/APU on MI300A |
 | `gen_names.py` | Generates `names.txt` with realistic surname-initial frequencies |
 | `names.txt` | Sample attendee last names (default 5000) |
