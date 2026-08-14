@@ -6,7 +6,7 @@ This is the starting point, before any optimization. The domain is 512x512, the 
 thread blocks.
 
 Nothing here is deliberately broken. It is the kind of first working version you would write after
-porting a solver to HIP, and our job over the next five stages is to let the profiler tell us what to
+porting a solver to HIP, and our job over the next four stages is to let the profiler tell us what to
 change.
 
 ## Build and run
@@ -125,8 +125,8 @@ The equivalent in `rocprof-compute`, whose `analyze` step needs its
 [Python environment](../README.md#a-python-environment-for-rocprof-compute-analyze) active:
 
 ```bash
-rocprof-compute profile -n first_roof --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow
-rocprof-compute analyze -p workloads/first_roof/0
+rocprof-compute profile -n 0_baseline --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow
+rocprof-compute analyze -p workloads/0_baseline/0
 ```
 
 Both are explained in [Roofline plots](../README.md#roofline-plots).

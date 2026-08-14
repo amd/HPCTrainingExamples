@@ -109,8 +109,8 @@ roofline-extractor-profile -o roofline_out --arch MI300A -- ./shallow
 The equivalent in `rocprof-compute`:
 
 ```bash
-rocprof-compute profile -n block_32x32_roof --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow
-rocprof-compute analyze -p workloads/block_32x32_roof/0
+rocprof-compute profile -n 3_block_32x32 --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow
+rocprof-compute analyze -p workloads/3_block_32x32/0
 ```
 
 Both are explained in [Roofline plots](../README.md#roofline-plots).

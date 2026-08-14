@@ -82,8 +82,8 @@ roofline-extractor-profile -o roofline_out --arch MI300A -- ./shallow
 The equivalent in `rocprof-compute`:
 
 ```bash
-rocprof-compute profile -n block_64x4_roof --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow
-rocprof-compute analyze -p workloads/block_64x4_roof/0
+rocprof-compute profile -n 4_block_64x4 --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow
+rocprof-compute analyze -p workloads/4_block_64x4/0
 ```
 
 Both are explained in [Roofline plots](../README.md#roofline-plots).
@@ -118,7 +118,9 @@ Some experiments worth running yourself, since the answers are hardware-dependen
 ## Where to go next
 
 The four iterations above only ever changed constants. The kernels themselves were never touched,
-which means there is a whole category of optimization still unexplored.
+which means there is a whole category of optimization still unexplored: rewriting `compute_rhs` to
+issue wider memory requests, staging a row of the grid in LDS, or fusing the streaming kernels. Those
+are larger edits than a one-line block size, and the profiler is less able to hand you the answer.
 
-Continue to [`5_vectorized_loads`](../5_vectorized_loads), which keeps this 64x4 block and rewrites
-`compute_rhs` itself to issue wider memory requests.
+Whichever you try, compare it against 34551 MCUPS and keep the mass and minimum-depth lines in view.
+A well-reasoned optimization can still lose, and only the clock decides.

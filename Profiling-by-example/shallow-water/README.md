@@ -6,7 +6,7 @@ README.md from `HPCTrainingExamples/Profiling-by-example/shallow-water` from the
 A guided, hands-on walkthrough of profiling and optimizing a HIP application on a single AMD
 Instinct&trade; GPU, in [`novice`](novice). It starts from a straightforward implementation and
 improves it a step at a time, where every change is motivated by something a profiling tool reported
-rather than by a rule of thumb. Six stages exercise `rocprofv3` kernel and HIP API traces, the
+rather than by a rule of thumb. Five stages exercise `rocprofv3` kernel and HIP API traces, the
 `OccupancyPercent` and `VALUBusy` counters, and rooflines from both `rocprof-compute` and the Roofline
 Extractor, for a cumulative 5.50x speedup. Every stage builds and runs on its own and prints its own
 throughput and correctness checks, so you can reproduce the whole progression without editing any

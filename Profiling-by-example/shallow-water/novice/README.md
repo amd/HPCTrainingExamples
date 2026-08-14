@@ -74,18 +74,14 @@ through them in order.
 | [`2_no_device_sync`](2_no_device_sync) | `rocprofv3` HIP API trace | Gaps between kernels caused by `hipDeviceSynchronize()` that a single stream already guarantees | Remove the redundant synchronizations | 21204.86 | 1.08x |
 | [`3_block_32x32`](3_block_32x32) | `rocprofv3` `VALUBusy` | Vector ALUs busy only 47 percent of the time; a larger tile caches the stencil better | Block size 16x16 to 32x32 | 29400.84 | 1.39x |
 | [`4_block_64x4`](4_block_64x4) | `rocprofv3` `VALUBusy`, `OccupancyPercent` | 32x32 raised `VALUBusy` but cost occupancy; a wide, short tile recovers both | Block size 32x32 to 64x4 | 34551.31 | 1.18x |
-| [`5_vectorized_loads`](5_vectorized_loads) | roofline, `VALUBusy` | Still memory bound, so widen each memory request | `float4` loads, four cells per thread | 22948.19 | 0.66x |
 
-Stages 0 through 4 follow the case study end to end, for a cumulative **5.50x** speedup from 6282 to
-34551 MCUPS. Stage 5 goes beyond it and rewrites `compute_rhs` itself, which is slower on this
-hardware.
+Together the five stages give a cumulative **5.50x** speedup, from 6282 to 34551 MCUPS.
 
 All numbers quoted in this tutorial, both timings and counters, were measured on a single
 **MI300A** in SPX mode, taking the median of three runs. Your
 absolute numbers will differ on other hardware, and part of the point of the exercise is that the
-best block size and the size of each speedup are architecture-dependent. Stage 5 in particular is
-a regression here but is reported as a gain on other GPUs. The relative trends should mostly hold,
-but treat every figure as something to re-measure rather than to expect.
+best block size and the size of each speedup are architecture-dependent. The relative trends should
+mostly hold, but treat every figure as something to re-measure rather than to expect.
 
 ## Setup
 
@@ -158,8 +154,8 @@ roofline-extractor-profile -o roofline_out --arch MI300A -- ./shallow
 and once with `rocprof-compute`, whose `analyze` step needs the Python environment below:
 
 ```bash
-rocprof-compute profile -n first_roof --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow
-rocprof-compute analyze -p workloads/first_roof/0
+rocprof-compute profile -n 0_baseline --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow
+rocprof-compute analyze -p workloads/0_baseline/0
 ```
 
 The extractor writes the plot itself, as `roofline_out/counters.html`; its options and outputs are
