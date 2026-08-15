@@ -230,7 +230,54 @@ frequency-weighted letter ranges for the conference. Framing a GPU-native sort a
 the shuffle-minimizing special case of a well-known pattern makes the design intent
 easy to communicate.
 
-## 7. Practical guidance
+## 7. Coming full circle: Orochi's circular-buffer radix sort
+
+We opened with the Orochi result and can now close the loop, because it turns out
+to be the *general-purpose* mirror image of the data-aware idea this paper has been
+building toward. Recall the problem from Section 2: Onesweep is a fast single-pass
+radix sort, but its decoupled look-back needs a temporal buffer whose size grows in
+proportion to `n`. Sort a billion keys and the scratch memory grows with them, even
+though at any instant only a bounded window of predecessors is actually being
+consulted. The allocation tracks the *total input* when it only needs to track the
+*active look-back distance*.
+
+Kao & Yoshimura's fix (in Orochi's `ParallelPrimitives`) is to replace the linear,
+n-sized buffer with a **fixed-size circular buffer** — on the order of 2 MB
+regardless of key count. A "tail iterator" tracks the oldest slot still needed and
+marks everything behind it as safe to overwrite, so blocks reuse a small ring of
+slots instead of appending to an ever-growing array. Because the look-back distance
+is bounded well below the buffer size, no block ever needs a slot that has already
+been recycled, and correctness is preserved while the memory footprint becomes
+**constant in `n`**.
+
+That is precisely the move the compact hash makes, in a different guise:
+
+- The **perfect spatial hash** allocates `range / Δmin` buckets — memory that tracks
+  the *key range*, a quantity that can blow up (ZIP+4, adaptive-mesh refinement)
+  even when the number of keys is modest. The **compact hash** decouples the table
+  from the range by compressing wide hash codes into a table sized to the *number of
+  entries*, absorbing the resulting collisions with quadratic probing.
+- **Onesweep** allocates look-back scratch that tracks the *number of keys*. The
+  **circular-buffer variant** decouples the buffer from `n` by recycling a small,
+  bounded ring of slots, absorbing the bounded look-back distance within it.
+
+Both are the same design pattern: *identify the quantity your memory is
+accidentally tracking, prove that only a bounded slice of it is ever live at once,
+and size the allocation to that bound instead.* The compact hash caps growth against
+the key range; the Orochi sort caps growth against the input size. One is data-aware
+and application-specific, the other is general-purpose and ships as a drop-in radix
+sort — but they reinforce the same lesson, and seeing the radix baseline arrive at
+it independently is the strongest evidence that "don't let memory scale with the
+wrong thing" is a principle, not a trick.
+
+There is a practical corollary. The circular-buffer sort is a separate,
+buildable-from-source implementation in Orochi, not a flag on stock rocPRIM/
+rocThrust (Section 2). If you are memory-bound on very large sorts — where the
+Onesweep look-back buffer itself becomes a meaningful fraction of your budget — it
+is worth reaching for, in the same spirit that you would reach for a compact hash
+when a perfect-hash table would not fit.
+
+## 8. Practical guidance
 
 - Reach for **rocThrust** to get running, **rocPRIM** for control and peak
   performance, **hipCUB** for CUDA portability.
