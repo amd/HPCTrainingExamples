@@ -22,7 +22,7 @@ PDF_ENGINE ?= $(shell for e in pdflatex xelatex lualatex tectonic $$HOME/bin/tec
 
 DOC     = sort_demo_MI300A.md
 PDF     = sort_demo_MI300A.pdf
-BINS    = zip_sort name_sort multinode_zip_sort rocprim_tempsize sort_apis index_sort id_sort email_sort
+BINS    = zip_sort name_sort multinode_zip_sort tuned_multinode_zip_sort rocprim_tempsize sort_apis index_sort id_sort email_sort
 ECOUNT  ?= 200000
 
 .PHONY: all pdf clean
@@ -58,6 +58,10 @@ email_sort: email_sort.hip
 
 # Scaling to multiple GPUs/nodes
 multinode_zip_sort: multinode_zip_sort.hip
+	$(HIPCC) $(HIPFLAGS) $(MPI_CXXFLAGS) $< $(MPI_LDFLAGS) -o $@
+
+# Recurring monthly-mailer design case (data-aware, imbalance-triggered rebalance)
+tuned_multinode_zip_sort: tuned_multinode_zip_sort.hip
 	$(HIPCC) $(HIPFLAGS) $(MPI_CXXFLAGS) $< $(MPI_LDFLAGS) -o $@
 
 # measures rocPRIM Onesweep temporary-storage growth vs. n

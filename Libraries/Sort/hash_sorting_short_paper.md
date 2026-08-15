@@ -186,15 +186,45 @@ There is no turnkey AMD multi-node sort, but the hash approach composes into one
 cleanly. Rather than "sort locally, then merge globally," we **range-partition up
 front** — a distributed bucket sort:
 
-1. Assign each rank a disjoint sub-range of the key space.
-2. Hash each key once to its owning rank and shuffle it there (a single all-to-all
-   over MPI or RCCL).
+1. Assign each rank a disjoint, **ordered** sub-range of the key space (rank 0 the
+   lowest keys, rank N-1 the highest).
+2. Move each key to its owning rank. What this costs depends entirely on where the
+   data already is (see "Redistribution is where knowing your data pays off," below).
 3. Sort locally on each rank (perfect or compact hash, or rocPRIM).
 
 Because the ranges are disjoint and ordered, the global result is just the
 **concatenation** of the rank outputs — the expensive distributed merge collapses
 to a prefix-sum of per-rank counts. This is the same "one reduction, not many"
 advantage the single-GPU hash sort enjoys, lifted to the cluster.
+
+### Redistribution is where knowing your data pays off
+
+The textbook move here is a single **all-to-all**: every rank ships each record
+straight to its owner. That is correct for *any* input, but it moves data
+regardless of where it started. In practice, distributed data is often already
+*near* its owner — regional records land on regional nodes, a prior stage left the
+array roughly range-partitioned, yesterday's run wrote it back in order. When that
+holds, the *ordered* ranks let us replace the all-to-all with a far cheaper
+**neighbor-to-neighbor exchange**: each rank keeps what it owns and ships only its
+out-of-range *stragglers* one hop to the adjacent rank (rank-1 or rank+1),
+forwarding anything that still overshoots on the next round. A close guess
+converges in one or two rounds and touches only the few percent of records that
+straddle a boundary.
+
+The safeguard is a budget. If the neighbor exchange has not converged after **two
+rounds**, the guess was wrong — the data is *not* near its owner — so we reset the
+boundaries from a full-data histogram and re-place from scratch. That pays for the
+two wasted rounds plus a global reduction, and the multi-hop diffusion then has to
+carry records across many ranks: the all-to-all's job, done the slow way.
+
+The gap is the lesson. On an MI300A node sorting 16M ZIP records, pre-partitioned
+input placed with a two-round neighbor exchange in **~44 ms**; the *same records*
+delivered in scrambled order tripped the reset and multi-hop path at **~340 ms** —
+roughly **8× more redistribution time for identical data**, decided entirely by
+its starting arrangement. (The local GPU sort was ~2 ms either way, so
+redistribution, not sorting, dominates.) Knowing your data does not just pick the
+local algorithm; at cluster scale it decides whether the shuffle is nearly free or
+the most expensive thing you do.
 
 ### Balancing the partition without a second read
 
@@ -203,18 +233,78 @@ gets this by reading the data to sample it, then reading again to place it — t
 touches of the data. We prefer a cheaper, single-pass scheme:
 
 1. Start from an **assumed distribution** (uniform, or a known prior).
-2. Place the **first ~10% of the data for real** under those boundaries — this is
-   committed placement, not a throwaway sample.
+2. Read the **first ~10% of the data** under those boundaries to see how it really
+   falls — a committed peek, not a throwaway second full pass.
 3. **Adjust the boundaries** using what that 10% actually revealed.
-4. **Move only the small misplaced fraction** of that early data, then stream the
-   remaining 90% straight to the corrected boundaries.
+4. **Move only the small misplaced fraction** with the neighbor-to-neighbor
+   exchange above; if that fraction turns out to be large — the guess was wrong —
+   the two-round budget trips a reset to corrected, full-histogram boundaries.
 
 The trade is deliberate: sampling pays a full extra read to mostly avoid data
 movement; this method pays a small, bounded movement to avoid the extra read — the
 better bet when re-reading and re-hashing the whole array is the expensive part and
 a partial reshuffle over the interconnect is comparatively cheap. The failure mode
 is instructive: skip the adjustment on skewed data (the conference last names, say)
-and everything piles onto one rank.
+and everything piles onto one rank — exactly the case the two-round-then-reset
+budget is there to catch and repair.
+
+### A design case: the monthly mailer that barely changes
+
+The 10%-sample rule above is the right default when each run is a stranger. But
+many production sorts are *recurring* and nearly identical to the last one. A
+monthly bulk mailing is the canonical example: the ZIP distribution is heavily
+northeast-weighted, and only about **10% of the records churn** month to month
+(addresses added or removed). The previous month already produced balanced range
+boundaries *and* a global histogram. Why re-sample 10% of an almost-unchanged
+dataset at all?
+
+The design pivots on three parameters, each of which we measured on an MI300A node
+(P = 4, 8, and 16 ranks, 16M ZIP records):
+
+1. **Sampling threshold → drop it to zero; use the prior.** Instead of reading 10%
+   of the data to rebuild boundaries, reuse last month's boundaries and *maintain*
+   the histogram incrementally (previous month + the known add/delete delta). The
+   trigger for doing any work at all becomes the **per-rank count imbalance**
+   `max/avg` — `P` numbers from one reduction, not a data histogram. Measured
+   month-over-month imbalance from 10% churn is only **≈ 1.02**, so a **5% trigger
+   (`τ_nbr = 1.05`)** means most months move *nothing*; the sort is the seam-checked
+   local sort and a scan. When drift does cross 1.05, one neighbor round restores it.
+
+2. **Number of rebalance loops → a budget of 2, because it recomputes globally.**
+   When we do rebalance, we recompute *all* boundaries from the maintained histogram
+   at once, so each boundary moves only slightly and every straggler crosses to an
+   *immediate* neighbor. Across churn from 2% to 20% and NE-bias from 1× to 8×, the
+   neighbor exchange converged in **exactly one round** at every rank count, landing
+   at `imbalance_out = 1.000`. A budget of **2** leaves a full round of headroom.
+
+3. **Imbalance tolerance for retriggering / reset → `τ_reset = 1 + 2/P`.** Pushing
+   the churn far past reality (a proxy for many un-rebalanced months) revealed how
+   loops grow: for NE-concentrated drift the neighbor rounds scale as
+   **`loops ≈ (imbalance − 1) × P`**. That is the whole projection to larger machines
+   in one line — the excess mass at one end must diffuse a distance proportional to
+   how far, in ranks, the balanced boundary has to travel.
+
+   | imbalance (in) | P = 4 | P = 8 | P = 16 |
+   |---|---|---|---|
+   | 1.02 (10% churn) | 1 | 1 | 1 |
+   | 1.12 (50% churn) | 1 | 1 | 2 |
+   | 1.24 (100% churn) | 1 | 2 | 3 |
+   | 1.36 (150% churn) | 1 | 2 | 4 |
+
+   To keep neighbor rounds within the budget of 2, reset once
+   `(imbalance − 1) × P > 2`, i.e. when imbalance exceeds **`1 + 2/P`** — 1.50 at
+   P = 4, 1.25 at P = 8, 1.125 at P = 16. **The reset threshold tightens as you add
+   ranks**: with more, thinner ranks a given imbalance implies mass must travel more
+   hops, so it is cheaper to rebuild once than to diffuse across many. Below
+   `τ_reset`, either accept (≤ `τ_nbr`) or take a bounded neighbor rebalance; above
+   it, rebuild boundaries in one shot.
+
+The payoff is the "know your data" lesson sharpened to a recurring workload: the
+generic method reads 10% of the data every run and budgets two neighbor rounds; the
+monthly design reads **0%** (a maintained histogram plus a `P`-value imbalance
+check), moves **nothing** in a typical month (`action = skip`), and reserves the
+neighbor exchange and the reset for the rare month that actually drifts — with a
+reset threshold that is itself a function of the machine size.
 
 ## 6. A familiar pattern: MapReduce
 
@@ -222,7 +312,9 @@ Stepping back, the multi-node sort is exactly MapReduce with a distribution-awar
 shuffle:
 
 - **map** — hash each key to its range/rank,
-- **shuffle** — the partition-driven all-to-all,
+- **shuffle** — the partition-driven redistribution (a cheap neighbor-to-neighbor
+  exchange when the data already sits near its owner, an all-to-all/rebalance only
+  when it does not),
 - **reduce** — the local (hash) sort.
 
 The same pattern serves both examples: regional ZIP ranges for the mailer,
@@ -286,7 +378,10 @@ when a perfect-hash table would not fit.
   letters), accepting a few probes per collision in exchange for memory that scales
   with the data.
 - For multi-node, **range-partition then concatenate**, and balance the partition
-  with **assume–place–adjust** rather than a separate sampling pass.
+  with **assume–place–adjust** rather than a separate sampling pass. Redistribute
+  with a **neighbor-to-neighbor exchange** when the data already sits near its owner
+  and reserve the **all-to-all** for scrambled input — at cluster scale that choice,
+  not the local sort, dominates the time.
 - For related transforms, **rocFFT/hipFFT** cover single-device FFTs and **heFFTe**
   (rocFFT backend) covers distributed multi-node FFTs.
 

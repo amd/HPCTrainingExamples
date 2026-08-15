@@ -523,7 +523,8 @@ Compact hash (open addressing + quadratic probing), unique keys:
 
 Range-partition the key space across ranks so the global result is a simple
 **concatenation** (no distributed merge): each rank owns a disjoint ZIP range,
-we shuffle each record to its owner with one all-to-all, then sort locally.
+we move each record to its owner with a **neighbor-to-neighbor exchange** (no
+all-to-all), then sort locally.
 
 ### 7.1 Distribution-aware partitioning (assume → place → adjust)
 
@@ -533,15 +534,51 @@ Rather than a separate sampling pass:
    ranks).
 2. Route the **first ~10%** of local records for real.
 3. **Adjust** boundaries from the observed histogram of that 10%.
-4. **Move** only the small misplaced fraction; stream the remaining 90%.
+4. **Move** records with a neighbor-to-neighbor sweep (below).
+
+### 7.1a Neighbor-to-neighbor redistribution (no all-to-all)
+
+The data is assumed to be **written to the processor that owns that ZIP portion**
+(pre-partitioned under the uniform assumption). Because the boundaries assign
+**ascending** ZIP ranges to **ascending** ranks, a record that ends up on the
+wrong rank belongs to one side, so the natural communication partner is the
+**adjacent** rank in that order. Each round every rank:
+
+1. Splits its buffer into *below-my-range* (→ left neighbor `rank-1`),
+   *in-my-range* (keep), and *at/above-my-range* (→ right neighbor `rank+1`).
+2. Exchanges those records with its two neighbors (`MPI_Sendrecv`; endpoints use
+   `MPI_PROC_NULL`). Anything still out of range is **forwarded** on the next
+   round, so records advance one hop per round toward their owner.
+3. Stops when an `MPI_Allreduce` shows no rank moved anything. The returned
+   `loops` count is the number of exchange rounds performed (`1` = a single
+   neighbor communication).
+
+When the guess is **close**, only the boundary stragglers move, so **one**
+neighbor communication usually suffices and **two** is the safe bound. If the
+guessed boundaries are **bad** — for example the 10% sample is unrepresentative
+and collapses most of the data onto one processor — the sweep needs more than two
+rounds; the code then **resets** the boundaries from a *full-data* histogram,
+restores the original local records, and **re-places from scratch** (the
+post-reset sweep is uncapped, so it always terminates in at most `nranks-1` hops
+and never falls back to an all-to-all). Running with `skew=1` writes
+badly-distributed input (80% of keys in the low band, not near their owner) to
+exercise exactly this reset path.
 
 ### 7.2 Reference solution — `multinode_zip_sort.hip`
 
-This example is a complete MPI + HIP program. It samples the first 10% to adjust boundaries, shuffles
-with `MPI_Alltoallv`, sorts locally on the GPU, and validates the merge-free result
+This example is a complete MPI + HIP program. It samples the first 10% to adjust boundaries,
+redistributes with an iterative **neighbor-to-neighbor** exchange (`MPI_Sendrecv` to
+`rank-1`/`rank+1`, with the two-loop-then-reset rule above — no `MPI_Alltoallv`),
+sorts locally on the GPU, and validates the merge-free result
 (local order + seams + load balance). hipMalloc pointers are host-accessible on the
 APU, so the MPI calls need no separate staging buffers. Pass `skew=1` as the second
-argument to force an imbalanced input and observe the failure/repair.
+argument to force badly-distributed input and observe the reset/repair. Each rank
+also reports `loops=` (neighbor-exchange rounds to converge) and `reset=` (whether
+the full-histogram boundary reset fired). A **tuned variant**,
+`tuned_multinode_zip_sort.hip`, keeps this same code and adds the recurring
+**monthly-mailer** design case (a NE-heavy dataset with only ~10% churn that reuses
+last month's boundaries and drives redistribution from the per-rank imbalance
+instead of a fresh sample) — see §7.6.
 
 ### 7.3 Interactive SLURM run — single node, 4 APUs
 
@@ -617,26 +654,45 @@ sbatch run_multinode.sbatch 4000000 0
 
 **Validated output (4 ranks × 4M records, MI300A / ROCm 7.2.4):**
 
-```text
-# UNIFORM (skew=0)
-[rank 0] owns ZIP [0,24983)     recv=3997879  global_offset=0         local_sorted=YES seam=YES
-[rank 1] owns ZIP [24983,49996) recv=4000001  global_offset=3997879   local_sorted=YES seam=YES
-[rank 2] owns ZIP [49996,75008) recv=4002866  global_offset=7997880   local_sorted=YES seam=YES
-[rank 3] owns ZIP [75008,100000)recv=3999254  global_offset=12000746  local_sorted=YES seam=YES
-GLOBAL: total=16000000  imbalance(max/avg)=1.00  local_sorted=ALL-OK  seams=ALL-OK  (skew=0)
+The program warms up the GPU once (so `local_sort` reflects steady state, not
+cold-start JIT/allocation), then reports five phase timers: `sample` (10% sample +
+boundary adjust), `exchange` (neighbor sweeps + staging), `rebalance` (the
+full-histogram reset overhead; `0` when no reset), `local_sort` (GPU counting
+sort), and `dist_total` (barrier to seam check). `wasted_rounds` counts exchange
+rounds thrown away before a reset.
 
-# SKEWED (skew=1): 80% of keys in the low ZIP band -> boundaries shrink there
-[rank 0] owns ZIP [0,3050)      recv=4004284  global_offset=0         local_sorted=YES seam=YES
-[rank 1] owns ZIP [3050,6099)   recv=3997214  global_offset=4004284   local_sorted=YES seam=YES
-[rank 2] owns ZIP [6099,9148)   recv=4002057  global_offset=8001498   local_sorted=YES seam=YES
-[rank 3] owns ZIP [9148,100000) recv=3996445  global_offset=12003555  local_sorted=YES seam=YES
-GLOBAL: total=16000000  imbalance(max/avg)=1.00  local_sorted=ALL-OK  seams=ALL-OK  (skew=1)
+```text
+# PRE-PARTITIONED (skew=0): data already near its owner -> neighbor exchange only
+[rank 0] owns ZIP [0,25581)     recv=3995451  ... loops=2 reset=0  |  sample=2.382  exchange=36.913  rebalance=0.000  local_sort=1.902  dist_total=62.119 ms
+[rank 1] owns ZIP [25581,49997) recv=4003941  ... loops=2 reset=0  |  sample=2.380  exchange=37.558  rebalance=0.000  local_sort=1.769  dist_total=62.128 ms
+[rank 2] owns ZIP [49997,74996) recv=3999788  ... loops=2 reset=0  |  sample=2.356  exchange=35.883  rebalance=0.000  local_sort=2.043  dist_total=62.200 ms
+[rank 3] owns ZIP [74996,100000)recv=4000820  ... loops=2 reset=0  |  sample=2.345  exchange=43.587  rebalance=0.000  local_sort=1.989  dist_total=62.192 ms
+GLOBAL: total=16000000  imbalance(max/avg)=1.00  local_sorted=ALL-OK  seams=ALL-OK  neighbor_loops=2 reset=NO wasted_rounds=0  (skew=0)
+GLOBAL: max times (ms): sample=2.382  exchange=43.587  rebalance=0.000  local_sort=2.043  dist_total=62.200
+
+# BADLY DISTRIBUTED (skew=1): 80% in the low band, not near owner -> reset path
+[rank 0] owns ZIP [0,3047)      recv=4000276  ... loops=3 reset=1  |  sample=3.586  exchange=332.945  rebalance=7.550  local_sort=1.778  dist_total=358.401 ms
+[rank 1] owns ZIP [3047,6099)   recv=4001222  ... loops=3 reset=1  |  sample=3.569  exchange=331.977  rebalance=7.523  local_sort=1.606  dist_total=358.431 ms
+[rank 2] owns ZIP [6099,9147)   recv=4000716  ... loops=3 reset=1  |  sample=3.526  exchange=332.744  rebalance=7.388  local_sort=1.826  dist_total=358.423 ms
+[rank 3] owns ZIP [9147,100000) recv=3997786  ... loops=3 reset=1  |  sample=3.550  exchange=325.667  rebalance=7.378  local_sort=1.981  dist_total=358.452 ms
+GLOBAL: total=16000000  imbalance(max/avg)=1.00  local_sorted=ALL-OK  seams=ALL-OK  neighbor_loops=3 reset=YES wasted_rounds=2  (skew=1)
+GLOBAL: max times (ms): sample=3.586  exchange=332.945  rebalance=7.550  local_sort=1.981  dist_total=358.452
 ```
 
-Note how under heavy skew the assume-place-adjust step shrinks the low-range
-partitions (rank 0 owns only `[0,3050)`) so per-rank counts stay balanced
-(imbalance ≈ 1.00), and the disjoint ordered ranges make the global merge a
-no-op (verified seams + global offsets).
+With pre-partitioned input (skew=0) the guess is close, so only the boundary
+stragglers move and the neighbor exchange converges in `loops=2` with **no reset**
+(`exchange≈44 ms`, dominated by the two host-side partition passes over the local
+buffer and the host→device staging, not the network). Under `skew=1` the data is
+not near its owner: the guessed-boundary sweep exceeds two rounds
+(`wasted_rounds=2`), the full-histogram **reset** fires (`rebalance≈7.5 ms`), and
+the uncapped post-reset sweep re-places everything in `loops=3` (3 hops for 4
+ranks) at `exchange≈333 ms`. The assume-place-adjust step still shrinks the
+low-range partitions (rank 0 owns only `[0,3047)`) so per-rank counts stay
+balanced (imbalance ≈ 1.00) and the disjoint ordered ranges make the global merge
+a no-op. Note the steady-state `local_sort` is only ≈2 ms — the redistribution,
+not the GPU sort, is what the neighbor-vs-reset choice governs. The gap between
+`dist_total` and the phase timers (~15 ms) is the host-side local-order
+verification and the seam exchange, which are intentionally left untimed.
 
 ### 7.5 Exercises (extend the reference)
 
@@ -644,15 +700,93 @@ no-op (verified seams + global offsets).
   `imbalance(max/avg)`. Then **disable** the boundary adjustment (force uniform
   `bnd[]`) and rerun `skew=1` to reproduce the **degenerate all-on-one-rank** case.
 - **E7.2** Log the number of records that changed owner after the 10% calibration
-  vs. the uniform assumption (add a counter around the `owner_of` reassignment).
+  vs. the uniform assumption (add a counter around the `dir_of` classification).
 - **E7.3** Swap the ZIP key for a **last-name** key and reuse the compact hash from
   Example 2 as the per-rank local sort.
 - **E7.4 (scaling study)** Run 1 → 2 → 4 → 8 nodes; report records/sec and the
-  fraction of wall time in `MPI_Alltoallv` (time it around the call).
+  fraction of wall time in each phase timer (`sample`, `exchange`, `rebalance`,
+  `local_sort`). How do `neighbor_loops`, `wasted_rounds`, and the number of hops
+  grow with `nranks`, and when does the two-round budget stop being enough? How
+  much of `exchange` is host-side partitioning/staging vs. actual MPI traffic?
 - **E7.5** Try changing the amount of data used for the sampling from 10% to another
   value. What is optimal? How would this change for the amount of skew in the data?
+- **E7.5a** With the default pre-partitioned input the sweep converges in `<=2`
+  rounds with no reset. Increase the boundary-spill fraction (or the spill
+  distance) in the generator until records must travel two ranks, and find the
+  point where the two-round budget is exceeded and the reset fires. How does that
+  threshold move as you change `nranks`?
 - **E7.6** (discussion) When would the multinode approach be better than doing
   a single GPU sort?
+- **E7.7 (monthly design case)** Build and run the tuned recurring-mailer variant
+  (`tuned_multinode_zip_sort N 0 <churn%>`, see §7.6). With `churn=10` confirm
+  `action=skip` (imbalance ≈ 1.02
+  < `τ_nbr=1.05`) at both 4 and 8 ranks. Then raise the churn until the action
+  becomes `neighbor` and then `reset`. Verify the crossover matches
+  `τ_reset = 1 + 2/P` (1.50 at P=4, 1.25 at P=8) and that neighbor rounds track
+  `loops ≈ (imbalance − 1) × P`.
+- **E7.8 (projection)** From your E7.7 numbers, project the churn (or number of
+  un-rebalanced months) at which a **16-** or **32-**rank job should reset rather
+  than diffuse. Why does the reset threshold *tighten* as you add ranks?
+
+***
+
+## 7.6 Design case — the monthly recurring mailer (`tuned_multinode_zip_sort.hip`)
+
+`skew=0/1` in `multinode_zip_sort` model a *cold* run: an unknown dataset sorted
+from a uniform guess. Many real sorts are *recurring* — a monthly bulk mailing
+re-sorts a database that is heavily northeast-weighted and changes only ~10% between
+runs. The prior month already produced balanced boundaries and a histogram, so
+re-sampling 10% of an almost-unchanged dataset is wasted work. The **tuned variant**
+`tuned_multinode_zip_sort.hip` (built with `make tuned_multinode_zip_sort`) keeps
+the original code intact and adds a third argument that turns on this mode:
+
+```bash
+./tuned_multinode_zip_sort <records/rank> 0 <churn%>   # e.g. 4000000 0 10  = 10% churn
+```
+
+In this mode the code (i) generates NE-heavy records already sitting under **last
+month's** boundaries, (ii) applies `churn%` (half deletions, half NE-biased
+additions), (iii) skips the 10% data sample and instead measures the **per-rank
+count imbalance** `max/avg` — `P` numbers, one reduction — and (iv) applies a
+tiered policy driven by two thresholds baked in near the top of the source:
+
+```
+TAU_NBR    = 1.05    // <= this: accept the drift, move nothing (action=skip)
+NBR_BUDGET = 2       // neighbor rounds; tau_reset = 1 + NBR_BUDGET/nranks
+```
+
+- `imbalance ≤ τ_nbr (1.05)` → **skip**: no data moves; just the local sort + seam check.
+- `τ_nbr < imbalance ≤ τ_reset (1 + 2/P)` → **neighbor** rebalance (budget ≈ `(imb−1)·P` rounds).
+- `imbalance > τ_reset` → **reset**: rebuild boundaries in one shot and re-place.
+
+Measured on one MI300A node (16M records):
+
+```text
+# 10% monthly churn — a typical month moves NOTHING
+GLOBAL: total=16000001  imbalance_in=1.021 -> out=1.02  action=skip  ... neighbor_loops=0 reset=NO  (monthly churn=10%, tau_nbr=1.05, tau_reset=1.500)   # P=4
+GLOBAL: total=16000002  imbalance_in=1.021 -> out=1.02  action=skip  ... neighbor_loops=0 reset=NO  (monthly churn=10%, tau_nbr=1.05, tau_reset=1.250)   # P=8
+
+# heavy drift (proxy for many un-rebalanced months) — a bounded neighbor rebalance
+GLOBAL: total=15999998  imbalance_in=1.207 -> out=1.00  action=neighbor  ... neighbor_loops=2 reset=NO  (monthly churn=100%, tau_nbr=1.05, tau_reset=1.250)  # P=8
+```
+
+The design numbers, from a P = 4/8/16 sweep:
+
+| imbalance (in) | P=4 loops | P=8 loops | P=16 loops |
+|---|---|---|---|
+| 1.02 (10% churn) | 1 | 1 | 1 |
+| 1.12 (50% churn) | 1 | 1 | 2 |
+| 1.24 (100% churn) | 1 | 2 | 3 |
+| 1.36 (150% churn) | 1 | 2 | 4 |
+
+Neighbor rounds scale as **`loops ≈ (imbalance − 1) × P`**, so to stay within the
+2-round budget the reset threshold is **`τ_reset = 1 + 2/P`** — it *tightens* as you
+add ranks (thinner ranks ⇒ a given imbalance means mass must travel more hops, so a
+one-shot rebuild beats a long diffusion). The takeaway: the generic path reads 10%
+every run and budgets two neighbor rounds; the monthly design reads **0%** (a
+maintained histogram + a `P`-value imbalance check), typically moves **nothing**,
+and escalates to a neighbor rebalance or a machine-size-aware reset only when the
+data actually drifts.
 
 ***
 
@@ -870,7 +1004,7 @@ mpirun -np "$NP" --map-by ppr:4:node -x HSA_XNACK ./multinode_zip_sort 4000000 0
 
 **Tasks:**
 - Sum node-level average power × wall time for a **whole-job energy** estimate.
-- Correlate power dips with the all-to-all shuffle phase (E3.4 timing).
+- Correlate power dips with the neighbor-exchange redistribution phase (E3.4 timing).
 
 ## A.6 CPU-side profiling (uProf / Linux tools)
 
@@ -890,7 +1024,7 @@ prefetch/`hipMemAdvise` hints change the balance on the APU?
 ## A.7 Profiling deliverable
 
 Produce a one-page summary: dominant kernel, roofline position, energy for the
-sort, and (multi-node) the shuffle fraction and per-rank balance after
+sort, and (multi-node) the neighbor-exchange fraction and per-rank balance after
 assume-place-adjust.
 
 ***
