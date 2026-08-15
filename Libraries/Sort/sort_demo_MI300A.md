@@ -28,9 +28,11 @@ The path we follow:
 - **thrust → rocPRIM / hipCUB** — begin with the drop-in library baselines. These
   comparison-free radix sorts are the right default and the yardstick everything
   else is measured against, including index sort / argsort (§3.7).
-- **perfect hash** — when keys are **unique and dense**, a hash *is* the sort:
-  each key maps to exactly one slot, so we place in one pass with no comparisons
-  and no collisions (counting/ZIP sort §1, dense serials §1b).
+- **perfect hash / direct address** — when keys are **unique** and land in a
+  **bounded** integer domain, the key *is* the sort: each key maps to one slot, placed
+  in one pass with no comparisons and no collisions. A fully dense domain is a *perfect
+  hash*; a gappy one just compacts out the holes (calendar/date sort §3, counting/ZIP
+  sort §4).
 - **collisions and hashing** — when keys are **sparse or non-unique**, the perfect
   mapping breaks down. We introduce a **compact hash** and confront collisions
   head-on (last names §2, emails §2b), and mark where a highly optimized hash
@@ -239,76 +241,144 @@ With a wide payload the index-sort + single gather wins because only 4 B/key mov
 through the passes; with a one-word payload, sorting the data directly is simplest.
 Sweep the payload size to find the crossover (exercise E-lib.4).
 
-## 3. *true* perfect hash: unique, dense keys
+## 3. bounded-domain direct-address sort: unique keys on a dense-ish range
 
-We start looking at examples where we can exploit unique charactistics of our
+We start looking at examples where we can exploit unique characteristics of our
 data array.
 
-A genuine **perfect hash** needs two guarantees:
+When keys are **unique** and land in a **bounded integer domain**, the key *is* its
+own sorted position — no comparisons, no histogram, no scan. This is the
+**direct-address** (bucket) idea in its cleanest form.
 
-1. a **dense, bounded** key range, `key ∈ [BASE, BASE+n)` with range `≈ n`, and
-2. **unique** keys — each occurs **exactly once** (a bijection).
-
-When both hold, placement is a **single write per element with no atomics, no
-histogram, and no scan**:
+**Framing — a NY daily-newspaper archive.** We have `n` scanned issues, each stamped
+with a **unique** publication date in the four-year window `2008-01-01 … 2011-12-31`.
+"One issue per date" gives uniqueness for free, and the date becomes a bounded
+integer index with a plain subtraction (0-based, C indexing):
 
 ```cpp
-slot[key[i] - BASE] = i;   // every destination slot has exactly one writer
+int day = date - 2008-01-01;   // 0 .. 1460   (DOMAIN = 1461 days; 2008 is a leap year)
+slot[day] = i;                 // one write, no atomics: unique => one writer per slot
 ```
 
-### 3.1 Reference solution — `id_sort.hip`
+Two guarantees make this work:
 
-Real-world framing: a mailing batch where each mailpiece carries a **unique
-sequential serial ID** (think USPS Intelligent Mail serial ID). The pieces come back from
-the sorter shuffled; we reassemble canonical order by serial ID. `id_sort.hip` builds a
-shuffled permutation of `[BASE, BASE+n)`, reorders it with the perfect-hash scatter,
-compares against a general library radix sort, and verifies the result is an exact
-permutation. Pass `dup=1` to inject a duplicate key and watch a record get lost.
+1. a **bounded** integer domain, `day ∈ [0, DOMAIN)` with a `DOMAIN` we can afford to
+   allocate, and
+2. **unique** keys — each date occurs **exactly once** (one issue per day).
 
-```bash
-make id_sort
-./id_sort 1000000        # unique dense keys -> exact permutation
-./id_sort 100000000      # 100M pieces
-./id_sort 1000000 1      # inject a duplicate: uniqueness violated
-```
-
-### 3.2 What it shows (validated on MI300A, ROCm 7.2.4)
-
-Because the perfect hash skips the histogram, the exclusive scan, **and** the
-atomics, it beats even a tuned library radix sort when the structure is known:
+The scatter leaves the array in calendar order but **not packed**: a 4-year archive
+of ~500 surviving issues fills only ~34% of the 1461 slots (missing issues, gaps in
+the collection). So we add the one step the *fully dense* case never needs — **stream-
+compact out the empty slots** — and the survivors emerge in sorted order:
 
 ```text
-# ./id_sort 100000000
-  perfect-hash scatter : 2.891 ms (34588.7 Mkeys/s)  no atomics/scan
-  library radix sort   : 7.652 ms (13068.0 Mkeys/s)  temp=816676868B
-  library/perfect time ratio = 2.65  (>1 => perfect hash faster)
-  result: exact permutation  (all 100000000 slots written, order verified)
-
-# ./id_sort 1000000 1   (duplicate injected)
-  result: NOT a bijection  unwritten_slots=1  order_ok=YES
-  -> a duplicate key overwrote a slot and left another empty;
-     this is exactly why the perfect hash requires UNIQUE keys.
+slot:  [ -1 , f7 , -1 , -1 , f3 , -1 , f9 , ... ]     scatter (calendar order, gappy)
+        └──────────────── compact out the -1 ─────────┘
+order: [ f7 , f3 , f9 , ... ]                          sorted issues, packed
 ```
 
-The `dup=1` case is the whole lesson: with duplicate keys two writers target the
-same slot, one write wins, and another slot is never written — a **silently lost
-record**. That is precisely why our next example, sorting by ZIP (non-unique),
-must fall back to the counting sort while unique serials can use the faster
-bijective scatter.
+> **The fully dense perfect hash is the special case.** Contiguous unique keys with
+> `range ≈ n` — e.g. if we had a file for every day during that time period
+> would fill the domain ~100%, so the compaction removes nothing and the scatter *is*
+> the sort. But whether a real serial stream is gap-free is an **assumption**:
+> The partially filled newspaper archive makes the gaps explicit instead of assuming them away.
+
+### 3.1 Reference solution — `date_sort.hip`
+
+`date_sort.hip` synthesizes `n` unique day-indices spread across the domain, shuffles
+them (issues come off the scanner in random order), sorts them by **direct-address
+scatter + stream compaction** (rocPRIM `select`), compares against a general library
+radix sort of the same keys, and verifies the compacted order is strictly increasing
+by date. Pass `dup=1` to give two issues the same date and watch a record get lost.
+
+```bash
+make date_sort
+./date_sort                 # 500 issues over the 1461-day calendar (~34% full)
+./date_sort 500 1461 1      # inject a duplicate date: uniqueness violated
+./date_sort 1000000         # scales the domain to keep ~34% density
+```
+
+### 3.2 What it shows (measured on MI300A, gfx942, ROCm 7.2.4)
+
+The direct-address sort does no comparisons and no atomics. Its cost is an `O(n)`
+scatter **plus** `O(DOMAIN)` to clear and compact the calendar array — so what you
+pay scales with the **domain**, not the input. Three runs (the domain scaled to hold
+the same ~34% density) show where that helps and where it hurts:
+
+```text
+         n        domain   density   direct-address (scatter+compact)   library radix   ratio lib/direct
+       500          1461     34.2%    0.112 ms (0.098 + 0.013)           0.011 ms        0.10
+   1000000       2923976     34.2%    0.043 ms (0.022 + 0.022)           0.257 ms        5.91
+ 100000000     292397660     34.2%    4.964 ms (3.526 + 1.438)           2.739 ms        0.55
+```
+
+- **n = 500 (the actual newspaper archive):** both are microseconds and the numbers
+  are dominated by kernel-launch latency, not the algorithm — effectively a tie. For
+  data this small, just call the library sort.
+- **n = 1M:** the direct-address sort is **~6× faster** — two cheap kernels (a
+  scattered write, then a compaction) beat a multi-pass radix.
+- **n = 100M:** with the domain scaled to ~292M slots (~1.2 GB), the `O(DOMAIN)`
+  scattered write and compaction over a large *sparse* array now cost more than a
+  bandwidth-optimized radix, and the **library wins**.
+
+That is the density lesson in numbers: direct-address is unbeatable when the domain is
+modest, but you pay for `O(DOMAIN)`, not `O(n)` — as the domain grows large and sparse,
+the general radix (or the compact **hash** of §6) becomes the better tool.
+
+Reference output for the default run and the duplicate-date case:
+
+```text
+# ./date_sort
+date_sort: n=500 issues  domain=1461 days  density=34.2%  dup=0
+  direct-address sort  : 0.112 ms  (scatter 0.098 + compact 0.013)  no atomics
+  library radix sort   : 0.011 ms  temp=256B
+  library/direct time ratio = 0.10  (>1 => direct-address faster)
+  result: 500 issues in date order  (961 empty days compacted out)
+    sorted[0]: file #183  ->  2008-01-02
+    sorted[1]: file #424  ->  2008-01-03
+    sorted[2]: file #109  ->  2008-01-06
+
+# ./date_sort 500 1461 1   (duplicate date injected)
+  result: NOT a clean bijection  selected=499 (expected 500)  order_ok=YES
+  -> two files shared a date; one scatter overwrote the other, so a record was dropped.
+```
+
+The `dup=1` case is the whole lesson: two issues with the same date target the same
+slot, one write wins, and a record is **silently lost**. That is precisely why the
+next example, sorting by ZIP (non-unique), must fall back to a **counting sort** —
+many records per bucket — instead of one-writer-per-slot placement.
 
 ### 3.3 Exercises
 
-- **E3.1** Run `./id_sort 1000000 1` and confirm exactly one slot is left unwritten.
-  Add a device-side duplicate detector (e.g. `atomicCAS` on a per-slot "written"
-  flag) that reports which serial IDs collided.
-- **E3.2** For a data set where we have just a few duplicates, how could you modify
-  the data set so you can use a **perfect hash function**?
-- **E3.3** Carry a payload: change `slot[d] = i` to also gather a record field, so
-  the output is the fully reordered mailing (not just the permutation).
-- **E3.4 (discussion)** Can we convert another data type to use a perfect hash 
-  function? Emails are unique but sparse. Sketch how you would build a
-  **perfect hash function** offline to map a fixed email set bijectively to
-  `[0,n)`, then reuse this exact scatter. What breaks if the set changes?
+- **E3.1** Run `./date_sort 500 1461 1` and confirm exactly one issue is dropped
+  (`selected=499`). Add a device-side duplicate detector (e.g. `atomicCAS` on a
+  per-slot "written" flag) that reports which dates collided.
+- **E3.2 (density sweep)** Fix `n` and grow the domain so the calendar gets sparser.
+  The `O(n)` scatter stays roughly flat while the `O(DOMAIN)` compaction grows, so the
+  `library/direct` ratio falls until the general radix wins. Measured at
+  `n = 1,000,000` on MI300A (gfx942, ROCm 7.2.4):
+
+```text
+  ./date_sort 1000000 <domain>
+        domain   density   direct-address (scatter+compact)   library radix   ratio lib/direct
+       1000000    100.0%    0.136 ms (0.116 + 0.019)           0.257 ms        1.89
+       3000000     33.3%    0.043 ms (0.022 + 0.021)           0.257 ms        6.05
+      10000000     10.0%    0.059 ms (0.022 + 0.037)           0.258 ms        4.36
+     100000000      1.0%    0.589 ms (0.029 + 0.560)           0.258 ms        0.44
+    1000000000      0.1%    6.165 ms (0.050 + 6.115)           0.256 ms        0.04
+```
+
+  The crossover sits between ~10% and ~1% density: below it the compaction over a
+  huge, mostly-empty array dominates and radix wins. The fully-dense (100%) row is the
+  perfect-hash special case — compaction removes nothing, and the scatter alone still
+  beats radix ~2×. Where does *your* crossover land, and how does it shift as you also
+  grow `n`?
+- **E3.3** Carry a payload: change `slot[day] = i` to also gather a record field, so
+  the output is the fully reordered archive (not just the permutation of indices).
+- **E3.4 (discussion)** When is a real key "dense enough" to direct-address? Compare
+  the partial newspaper archive (bounded, ~34% full), a full newspaper archive (contiguous, ~100%),
+  and an email address (unbounded string, effectively 0%). Where is the crossover to
+  the compact hash of §6?
 
 ***
 ## 4. nationwide mailer, sort by ZIP (single APU)
@@ -319,7 +389,7 @@ a ZIP, so keys are not unique and we need histogram → scan → **atomic** scat
 A 5-digit ZIP is a bounded, known range `[0, 100000)`. Because many addresses
 share a ZIP, keys are **not unique**, so the "one index per bucket" perfect hash
 generalizes to a **counting (bucket) sort**: histogram → exclusive-scan offsets →
-scatter. This is a single O(n) pass plus one scan — the pattern from the paper.
+scatter. This is a single O(n) pass plus one scan — still the pattern for the perfect hash.
 
 ### 4.1 Reference code — `zip_sort.hip`
 
@@ -360,8 +430,8 @@ make zip_sort
 
 ### 4.3 Exercises
 
-- **E4.1** Compare `id_sort` and `zip_sort` at 1M / 100M. The perfect hash avoids
-  the scan and the atomic scatter — quantify how much each of those costs by
+- **E4.1** Compare `date_sort` and `zip_sort` at 1M / 100M. The direct-address sort
+  avoids the scan and the atomic scatter — quantify how much each of those costs by
   disabling them in `zip_sort`.
 - **E4.1** Confirm zero `hipMemcpy` calls (Appendix A shows how to verify with a
   trace). Compare against a version that uses separate `hipMalloc` +
@@ -451,12 +521,30 @@ make name_sort
 
 This is the case people usually reach for when they hear "unique keys" — and it is
 exactly why a perfect hash does **not** apply. An email is **unique** per recipient
-(guarantee 2 from §1b) but lives in a huge, sparse **string** space, so it fails the
-**dense-range** guarantee 1. There is no `[0,n)` array to scatter into. Instead:
+(guarantee 2 from §3) but lives in a huge, sparse **string** space, so it fails the
+**bounded-domain** guarantee 1. There is no `[0,n)` array to scatter into. Instead:
 
 1. reduce each email string to a 64-bit key with a cheap device hash (FNV-1a), then
 2. store the keys in a **compact hash** table sized `≈ n` (not `≈` the key range),
    resolving the collisions that the size-`n` compression creates by open addressing.
+
+**FNV-1a** (Fowler–Noll–Vo, variant 1a) is a simple, fast, non-cryptographic
+string hash. It folds a string into a 64-bit key one byte at a time — for each
+byte it XORs the byte into the running hash, then multiplies by a fixed prime.
+It needs no table lookups and just one multiply/XOR per byte, so it runs cheaply
+on-device:
+
+```cpp
+// FNV-1a 64-bit string hash: cheap, good distribution, one multiply/xor per byte.
+__host__ __device__ inline uint64_t fnv1a(const char* s, int maxlen){
+    uint64_t h = 1469598103934665603ULL;   // FNV offset basis
+    for (int j = 0; j < maxlen && s[j]; ++j){
+        h ^= (uint64_t)(unsigned char)s[j];
+        h *= 1099511628211ULL;             // FNV prime
+    }
+    return h;
+}
+```
 
 The crucial lesson: **even with 100% unique emails you still get collisions after
 compression**, so you still probe. Uniqueness buys you `distinct == n` (no lost
@@ -493,11 +581,11 @@ Compact hash (open addressing + quadratic probing), unique keys:
   drop below `n`).
 - `avg_probes/ins` climbs from ~1.16 at load 0.25 to ~3.0 at load 0.91 — the
   size-`n` compression collides, so you probe. This is the compact-hash cost curve
-  that a dense perfect hash (id_sort, `key-base`) simply does not have.
+  that a direct-address sort (`date_sort`, `date - base`) simply does not have.
 
 ### 6.3 Where "a highly optimized hash" fits (and where it does not)
 
-- The **dense perfect hash** (§1) is `key - base` — a subtraction. It is
+- The **direct-address index** (§3) is `date - base` — a subtraction. It is
   **memory-bound on the scatter**, so a faster hash function changes nothing there.
 - Here, in the **compact hash**, the *hash function* matters: a better-distributed
   hash lowers collisions/probes, and a cheaper one lowers per-key compute. FNV-1a is
@@ -1034,7 +1122,7 @@ assume-place-adjust.
 | File | Purpose |
 |---|---|
 | `zip_sort.hip` | Example 1: counting sort by ZIP (non-unique keys) + library baseline |
-| `id_sort.hip` | Example 1b: true perfect-hash scatter for unique dense keys (+ dup detection) |
+| `date_sort.hip` | Example 1b: direct-address (calendar) sort — unique keys on a bounded, gappy domain; scatter + compaction (+ dup detection) |
 | `name_sort.hip` | Example 2: LDS histogram + radix sort + compact hash (complete) |
 | `email_sort.hip` | Example 2b: unique-but-sparse emails -> compact hash, load-factor/probe sweep |
 | `multinode_zip_sort.hip` | Example 3: MPI range-partition + local sort (complete) |

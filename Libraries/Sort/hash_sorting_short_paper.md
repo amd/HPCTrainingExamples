@@ -101,26 +101,37 @@ table grows with the key *range* and, as we will see next, is tamed by the compa
 hash. Same disease — memory tracking the wrong quantity — treated the same way, by
 decoupling the allocation from the thing that blows up.
 
-### Example: Unique ID sort -- a true perfect hash
+### Example: sorting by a bounded key -- direct address and the perfect hash
 
-The cleanest instance of a perfect hash is a set of keys that are both **dense**
-and **unique**. Consider a mailing batch where every mailpiece carries a unique
-sequential serial number (a USPS Intelligent Mail serial, say), so the keys form a
-permutation of a contiguous range `[BASE, BASE+n)`. Two guarantees hold at once:
-the range is dense (about `n` possible values for `n` keys) and each key occurs
-exactly once (the mapping is a true bijection).
-
-When both guarantees hold, sorting collapses to a single write per element with no
-atomics, no histogram, and no scan:
+The cleanest exploit of structure is a **direct-address sort**: when keys are
+**unique** and land in a **bounded** integer domain, the key *is* its sorted
+position, and placement collapses to a single write per element with no atomics, no
+histogram, and no scan:
 
 ```
 slot[key[i] - BASE] = i;
 ```
 
-Every destination slot is written exactly once, so there is no contention between
-threads and nothing to reduce afterward — not even the compaction pass the general
-spatial hash needs, because a dense unique range leaves no empty buckets to squeeze
-out. This is the perfect hash in its purest form: one O(n) scatter and you are done.
+Consider a New York daily-newspaper archive: `n` scanned issues, each stamped with a
+unique publication date in a four-year window (2008–2011, 1461 days). "One issue per
+date" gives uniqueness for free, and the date maps to an index by a plain
+subtraction, `day = date - 2008-01-01`. The scatter lands every issue in calendar
+order with no contention — but the domain is only partly filled (roughly 500 issues
+across 1461 days, about a third), so the array comes out sorted **but gappy**. One
+**stream-compaction** pass squeezes out the empty days and yields the packed sorted
+order.
+
+The **fully dense** case is the perfect hash in its purest form. If the keys form a
+permutation of a contiguous range `[BASE, BASE+n)` — a mailing batch numbered `1..n`
+by USPS Intelligent Mail serial, say — the domain is ~100% full, the compaction
+removes nothing, and one O(n) scatter *is* the sort. Whether a real serial stream is
+gap-free is an assumption, though: sequential campaign serials are dense, but voided
+or reserved pieces leave holes, and then even the "perfect" case falls back to the
+compaction pass. Crucially, the cost of a direct-address sort scales with the
+*domain*, not the input, so it wins decisively when the domain is modest and loses to
+a general radix once the domain is large and sparse — measured on MI300A, direct
+address beats rocPRIM radix by ~6× at one million keys over a one-third-full domain,
+but loses once the same density stretches the domain into the hundreds of millions.
 
 The uniqueness guarantee is load-bearing, not incidental. If two keys collide, they
 target the same slot: one write wins, another slot is never written, and a record is
@@ -130,10 +141,15 @@ the keys are *not* guaranteed unique and collisions must be handled explicitly.
 
 ### Example: the nationwide mailer
 
-A five-digit ZIP code lives in a known, bounded range (00000–99999). That is the
-textbook perfect-hash case: index directly by ZIP, one O(n) pass, about 100,000
-buckets — small and dense. Sorting a mail run by ZIP becomes a single scatter plus
-a compaction, no comparisons involved.
+A five-digit ZIP code lives in a known, bounded range (00000–99999), so it too is
+directly addressable — but ZIPs are **not unique** (many addresses share one), so
+this is a **counting (bucket) sort**, not a perfect hash. Rather than one writer per
+slot, each of the ~100,000 buckets collects many records: histogram the ZIPs,
+exclusive-scan the counts into bucket offsets, then scatter into place (the scatter
+now needs atomics, since multiple threads target the same bucket). It is still a
+single O(n) pass plus a scan, small and dense in the key range — and it is exactly the
+generalization of the perfect hash to non-unique keys, where counting replaces the
+one-to-one placement.
 
 ## 4. When the range explodes: the compact hash
 
