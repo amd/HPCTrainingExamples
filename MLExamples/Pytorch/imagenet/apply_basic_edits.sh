@@ -27,7 +27,7 @@ sed -i '/^def validate(/i\    torch.cuda.is_available() and getattr(args,"rank",
 # Start a `torch.profiler` at the top of `train()` and stop it just before
 # `validate()`. The on-GPU time of the `nccl*` collective kernels is summed and
 # printed as `RCCL_TOTAL_MS` (~0 at 1 GPU, growing with GPU count). The `break`
-# from step 3b keeps the captured trace short.
+# from the short-run edit keeps the captured trace short.
 
 # Start the profiler at the top of `train()`:
 

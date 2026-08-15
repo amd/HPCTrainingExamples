@@ -2,7 +2,7 @@
 """Best-effort headless screenshot of the Perfetto UI with a real trace loaded.
 
 This is intentionally fragile: it needs a bundled Chromium (installed via
-`playwright install chromium`) and outbound network to https://ui.perfetto.org.
+`playwright install chromium`) and outbound network to https://ui.perfetto.dev.
 It loads the trace into Perfetto using the documented postMessage "open trace"
 handshake, waits for the timeline to render, and screenshots it.
 
@@ -74,7 +74,7 @@ def main(argv=None):
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("trace", help="Chrome/Perfetto JSON trace to load")
     ap.add_argument("--out", required=True, help="output PNG path")
-    ap.add_argument("--ui", default="https://ui.perfetto.org",
+    ap.add_argument("--ui", default="https://ui.perfetto.dev",
                     help="Perfetto UI base URL")
     ap.add_argument("--wait", type=int, default=45,
                     help="seconds to wait for the timeline to render")

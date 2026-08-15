@@ -17,7 +17,7 @@
 # Artifacts are written to a PERSISTENT dir (profiling/tau/), not the /tmp work dir:
 #   profile.* + tau_pprof.txt      ParaProf profile (+ text summary)
 #
-# The ParaProf profile is what README section 13.4 uses: it drives the headless
+# The ParaProf profile is what the README's TAU profiling section uses: it drives the headless
 # compute-imbalance / communication-wait figure (profiling/render_tau_profile.py ->
 # figs/tau_profile_4gpu.png).
 #
@@ -34,11 +34,15 @@ cd "${WORK_DIR}" || exit 1
 uv init imagenet_test >/dev/null 2>&1
 cd imagenet_test || exit 1
 uv venv --system-site-packages
-source .venv/bin/activate
 
 module load rocm openmpi pytorch
 module load tau || { echo "ERROR: tau module failed to load"; exit 1; }
 command -v tau_exec >/dev/null 2>&1 || { echo "ERROR: tau_exec not on PATH"; exit 1; }
+# Activate AFTER module load so .venv/bin is first on PATH (module load prepends its own python).
+source .venv/bin/activate
+
+# matplotlib for the headless figure render at the end (NumPy-2-compatible, into the venv).
+uv pip install --quiet matplotlib || echo "WARN: matplotlib install failed (render may fail)"
 
 export MIOPEN_FIND_MODE=${MIOPEN_FIND_MODE:-FAST}
 export MIOPEN_LOG_LEVEL=3
@@ -75,9 +79,11 @@ HIP_VISIBLE_DEVICES=0 python -c "import torch,torchvision.models as M; \
    x=torch.randn(256,3,224,224,device=d); y=torch.randint(0,1000,(256,),device=d); \
    [c(n(x),y).backward() for _ in range(3)]; torch.cuda.synchronize(); print('warm done')"
 
-# TAU profiling into the persistent dir. TAU_PROFILE=1 emits the per-rank profile.*
-# files (the ParaProf profile); PROFILEDIR is where they land.
-export TAU_PROFILE=1
+# TAU profiling into the persistent dir. PROFILEDIR is where the per-rank profile.*
+# files land. The tau module defaults TAU_PROFILE_FORMAT=merged (one tauprofile.xml);
+# unset it so we get the classic per-rank profile.* files that pprof -a and
+# render_tau_profile.py expect.
+unset TAU_PROFILE_FORMAT
 export PROFILEDIR="${TAU_OUT}"
 
 echo "=== TAU 4-rank run (mpirun -n 4 tau_exec -rocm) ==="
@@ -86,7 +92,7 @@ echo "=== TAU 4-rank run (mpirun -n 4 tau_exec -rocm) ==="
 # binding comes from these --map-by/--bind-to flags, NOT Slurm --cpus-per-task.
 # --report-bindings prints the per-rank core mask so you can confirm rank i -> APU i.
 mpirun -n 4 --map-by numa --bind-to numa --report-bindings \
-  tau_exec -T rocm,rocprofsdk -rocm ./tau_wrapper.sh \
+  tau_exec -rocm ./tau_wrapper.sh \
   |& tee "${OUT_DIR}/capture_tau_run.log" \
   || echo "WARN: TAU run returned nonzero (trace may still be usable)"
 
@@ -96,9 +102,14 @@ ls -la
 # ParaProf profile: profile.* files are already here from TAU_PROFILE=1.
 pprof -a > tau_pprof.txt 2>/dev/null && echo "pprof text summary -> ${TAU_OUT}/tau_pprof.txt" || echo "WARN: pprof failed"
 
+# Render the headless compute-imbalance / comm-wait figure into the repo figs dir.
+echo "=== Render TAU figure -> figs/tau_profile_4gpu.png ==="
+mkdir -p "${OUT_DIR}/figs"
+python3 "${OUT_DIR}/profiling/render_tau_profile.py" "${TAU_OUT}/tau_pprof.txt" \
+  --out "${OUT_DIR}/figs/tau_profile_4gpu.png" || echo "WARN: TAU render failed"
+
 echo "=== DONE. TAU artifacts: ==="
 ls -la "${TAU_OUT}"
-echo "View: 'paraprof' on profile.* (GUI; see README 13.7 for VNC),"
-echo "      or render the headless compute-imbalance / comm-wait figure with:"
-echo "      python3 profiling/render_tau_profile.py ${TAU_OUT}/tau_pprof.txt --out figs/tau_profile_4gpu.png"
+echo "Figure: ${OUT_DIR}/figs/tau_profile_4gpu.png"
+echo "Raw profile: 'paraprof' on profile.* (GUI; see the README's remote-GUI/VNC notes)."
 deactivate 2>/dev/null || true

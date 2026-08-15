@@ -8,7 +8,7 @@
 #SBATCH --output=capture_torch-%j.out
 #SBATCH --error=capture_torch-%j.out
 #
-# Capture a REAL compute-vs-communication timeline for README section 13 using
+# Capture a REAL compute-vs-communication timeline for the README's profiling section using
 # torch.profiler (Path A). The TAU path (Path B) lives in its own dedicated
 # script, profiling/capture_tau.sbatch.
 #
@@ -36,11 +36,13 @@ cd "${WORK_DIR}" || exit 1
 uv init imagenet_test >/dev/null 2>&1
 cd imagenet_test || exit 1
 uv venv --system-site-packages
-source .venv/bin/activate
 
 # Match run_imagenet_uv.sbatch: use the default rocm (and pytorch) so the profiled
 # run reflects the tutorial's actual software stack.
 module load rocm openmpi pytorch
+# Activate AFTER module load so .venv/bin is first on PATH (module load prepends its own
+# python); otherwise the venv's matplotlib below is shadowed and the render fails.
+source .venv/bin/activate
 
 # The system matplotlib is built against NumPy 1.x but the pytorch module ships
 # NumPy 2.x, which crashes on import. Install a NumPy-2-compatible matplotlib into
@@ -120,9 +122,9 @@ python3 "${PROFILING_DIR}/render_timeline.py" \
   || echo "WARN: matplotlib render failed (traces are in ${TRACES_DIR}; render later)"
 
 # The Perfetto view is produced manually: download the merged trace below and open
-# it in https://ui.perfetto.org
+# it in https://ui.perfetto.dev
 
 echo "=== DONE ==="
 echo "Figures:"; ls -la "${FIGS_DIR}" 2>/dev/null
-echo "Traces (download imagenet_4gpu.perfetto.json.gz -> open in ui.perfetto.org):"; ls -la "${TRACES_DIR}" 2>/dev/null
+echo "Traces (download imagenet_4gpu.perfetto.json.gz -> open in ui.perfetto.dev):"; ls -la "${TRACES_DIR}" 2>/dev/null
 deactivate 2>/dev/null || true

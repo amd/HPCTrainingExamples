@@ -1,20 +1,17 @@
 #!/usr/bin/env python3
-"""Render the per-rank compute-imbalance / communication-wait figure from TAU.
+"""Render the per-rank GPU-time figure (compute vs RCCL all-reduce) from TAU.
 
 Fully headless (matplotlib 'Agg') -- no Java, ParaProf, or X server needed.
-Input is the output of `pprof -s` (see profiling/tau/tau_pprof.txt), which lists,
+Input is the output of `pprof -a` (see profiling/tau/tau_pprof.txt), which lists,
 per NODE;CONTEXT;THREAD, the exclusive time of every GPU kernel. We aggregate the
 GPU-device kernels ("[ROCm Kernel] ...") per rank (NODE) and split them into:
   * communication : RCCL/NCCL collectives (ncclDevKernel*)
   * compute       : every other GPU kernel (conv/gemm/batchnorm/elementwise/...)
 
-The figure has two panels that make the two effects explicit:
-  * Panel A -- compute imbalance: per-rank stacked bars (compute + exposed comm),
-    with a line at the fastest rank's compute and a shaded band up to the slowest,
-    so the compute spread (the load imbalance) is visible at a glance.
-  * Panel B -- exposed communication wait: per-rank RCCL all-reduce
-    (ncclDevKernel) time, i.e. the time each rank spends inside the collective
-    (largely spin-waiting for the slowest rank); its spread is the wait imbalance.
+The figure is a single panel: per-rank stacked bars of GPU-kernel exclusive time,
+split into compute (blue) and the RCCL all-reduce (orange, ncclDevKernel). A shaded
+band spans the fastest-to-slowest rank's compute so the compute-time spread is visible,
+and each bar is annotated with the all-reduce fraction of that rank's GPU time.
 
 Usage:
   render_tau_profile.py tau/tau_pprof.txt --out figs/tau_profile_4gpu.png
@@ -77,7 +74,7 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--title",
                     default="TAU (ParaProf profile): 4-rank ImageNet on MI300A -- "
-                            "compute imbalance and exposed RCCL communication wait")
+                            "per-rank GPU time (compute vs RCCL all-reduce)")
     args = ap.parse_args()
 
     ranks = parse(args.pprof)
@@ -92,16 +89,14 @@ def main():
     cmin, cmax = min(compute), max(compute)
     cspread = cmax - cmin
     cspread_pct = 100.0 * cspread / cmax if cmax else 0.0
-    mmin, mmax = min(comm), max(comm)
-    mspread = mmax - mmin
 
-    fig, (axA, axB) = plt.subplots(1, 2, figsize=(14, 5.5))
+    fig, axA = plt.subplots(1, 1, figsize=(9, 5.5))
 
-    # -- Panel A: compute imbalance (stacked compute + exposed comm per rank) -----
+    # -- Stacked compute + all-reduce per rank -----------------------------------
     axA.bar(labels, compute, color=COMPUTE_COLOR,
             label="GPU compute (conv/gemm/bn/elementwise)")
     axA.bar(labels, comm, bottom=compute, color=COMM_COLOR,
-            label="exposed communication wait\n(RCCL all-reduce, ncclDevKernel)")
+            label="RCCL all-reduce time\n(reduction + wait, ncclDevKernel)")
 
     # Shade the compute-imbalance band [min compute, max compute] across all ranks.
     # The band is covered by the (taller) bars, so label it in the empty top strip
@@ -112,7 +107,7 @@ def main():
     axA.axhline(cmax, color=COMPUTE_COLOR, ls="--", lw=1.2, alpha=0.9)
     tot_max = max(compute[i] + comm[i] for i in range(len(xs)))
     axA.text(len(xs) - 1, tot_max * 1.16,
-             f"compute imbalance:\n\u0394 = {cspread:.2f}s ({cspread_pct:.0f}% of max)",
+             f"compute-kernel time spread:\n\u0394 = {cspread:.2f}s ({cspread_pct:.0f}% of max)",
              ha="center", va="center", fontsize=9.5, color=COMPUTE_COLOR,
              bbox=dict(boxstyle="round,pad=0.3", fc="white", ec=COMPUTE_COLOR, alpha=0.9))
 
@@ -125,32 +120,10 @@ def main():
                  ha="center", va="bottom", fontsize=8)
 
     axA.set_ylabel("GPU kernel exclusive time (s)")
-    axA.set_title("A. Compute imbalance (per-rank GPU time)")
+    axA.set_title("Per-rank GPU time: compute vs RCCL all-reduce")
     axA.legend(loc="upper left", fontsize=8)
     axA.grid(axis="y", ls=":", alpha=0.5)
     axA.margins(y=0.30)
-
-    # -- Panel B: exposed communication wait (RCCL all-reduce per rank) -----------
-    axB.bar(labels, comm, color=COMM_COLOR,
-            label="RCCL all-reduce (ncclDevKernel)")
-    axB.axhspan(mmin, mmax, color=COMM_COLOR, alpha=0.12, zorder=0)
-    axB.axhline(mmin, color=COMM_COLOR, ls="--", lw=1.2, alpha=0.9,
-                label=f"fastest rank wait = {mmin:.2f}s")
-    axB.annotate(
-        f"wait imbalance\n\u0394 = {mspread:.2f}s",
-        xy=(len(xs) - 0.5, (mmin + mmax) / 2.0),
-        xytext=(len(xs) - 0.5, mmax + 0.05 * mmax),
-        ha="right", va="bottom", fontsize=9, color=COMM_COLOR,
-        arrowprops=dict(arrowstyle="-[, widthB=1.6", color=COMM_COLOR, lw=1.2))
-
-    for i in range(len(xs)):
-        axB.text(i, comm[i], f"{comm[i]:.2f}s", ha="center", va="bottom", fontsize=8)
-
-    axB.set_ylabel("RCCL all-reduce exclusive time (s)")
-    axB.set_title("B. Exposed communication wait (per-rank all-reduce)")
-    axB.legend(loc="upper right", fontsize=8)
-    axB.grid(axis="y", ls=":", alpha=0.5)
-    axB.margins(y=0.22)
 
     fig.suptitle(args.title, fontsize=12)
     fig.tight_layout(rect=(0, 0, 1, 0.96))
@@ -159,9 +132,8 @@ def main():
     print("wrote", args.out)
     for r, c, m in zip(xs, compute, comm):
         print(f"  rank {r}: compute={c:.3f}s comm={m:.3f}s comm%={100*m/(c+m):.1f}")
-    print(f"  compute imbalance: min={cmin:.3f}s max={cmax:.3f}s "
+    print(f"  compute-kernel spread: min={cmin:.3f}s max={cmax:.3f}s "
           f"spread={cspread:.3f}s ({cspread_pct:.1f}% of max)")
-    print(f"  comm wait imbalance: min={mmin:.3f}s max={mmax:.3f}s spread={mspread:.3f}s")
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@
 #SBATCH --output=capture_roofline-%j.out
 #SBATCH --error=capture_roofline-%j.out
 #
-# Capture a REAL per-kernel roofline for README section 15 using the system
+# Capture a REAL per-kernel roofline for the README's roofline section using the system
 # roofline-extractor module (by Andrew Chisolm / Noah Wolfe).
 #
 # A roofline is a per-kernel / per-GPU compute analysis, so this profiles a
@@ -40,11 +40,12 @@ cd "${WORK_DIR}" || exit 1
 uv init imagenet_test >/dev/null 2>&1
 cd imagenet_test || exit 1
 uv venv --system-site-packages
-source .venv/bin/activate
 
 # Default rocm + pytorch (the tutorial's actual stack) plus the roofline module,
 # which puts roofline-extractor-{profile,extract} on $PATH (prereq: rocm).
 module load rocm openmpi pytorch roofline-extractor
+# Activate AFTER module load so .venv/bin is first on PATH (module load prepends its own python).
+source .venv/bin/activate
 
 # MIOpen: fast solver + a writable cache dir; warm it before the counted passes so
 # autotuning is out of the rocprofv3 measurement window. Clean up at exit.
