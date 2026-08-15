@@ -1,3 +1,6 @@
+# Copyright AMD 2026, MIT License
+# Author: Bob Robey Bob.Robey@amd.com with AI tool help
+#
 # Makefile — MPO Training: data-aware hash sorting on MI300A
 #
 #   make            # build all binaries + generate names.txt
@@ -12,6 +15,10 @@ HIPFLAGS ?= -g -O3 --offload-arch=${ROCM_GPU}
 PYTHON  ?= python3
 PANDOC  ?= pandoc
 NCOUNT  ?= 5000
+
+# Pick the first available pandoc PDF engine (pdflatex may be absent on training nodes;
+# a user-local tectonic in ~/bin is a zero-root fallback).
+PDF_ENGINE ?= $(shell for e in pdflatex xelatex lualatex tectonic $$HOME/bin/tectonic; do command -v $$e >/dev/null 2>&1 && { echo $$e; break; }; done)
 
 DOC     = sort_demo_MI300A.md
 PDF     = sort_demo_MI300A.pdf
@@ -60,7 +67,8 @@ rocprim_tempsize: rocprim_tempsize.hip
 pdf: $(PDF)
 $(PDF): $(DOC)
 	$(PANDOC) $(DOC) -o $(PDF) --toc --highlight-style=tango \
-	  -V colorlinks=true -V geometry:margin=1in
+	  -V colorlinks=true -V geometry:margin=1in \
+	  $(if $(PDF_ENGINE),--pdf-engine=$(PDF_ENGINE),)
 
 clean:
-	rm -f $(BINS) email.txt names.txt
+	rm -f $(BINS) emails.txt names.txt

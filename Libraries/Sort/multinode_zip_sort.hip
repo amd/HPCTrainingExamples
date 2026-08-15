@@ -1,3 +1,6 @@
+// Copyright AMD 2026, MIT License
+// Author: Bob Robey Bob.Robey@amd.com with AI tool help
+//
 // multinode_zip_sort.hip  —  Example 3 reference solution (MPI + HIP, MI300A)
 //
 // Merge-free distributed sort by 5-digit ZIP:

@@ -8,6 +8,11 @@ fontsize: 11pt
 colorlinks: true
 ---
 
+<!--
+Copyright AMD 2026, MIT License
+Author: Bob Robey Bob.Robey@amd.com with AI tool help
+-->
+
 # Sorting on MI300A — Hands-On Exercises
 
 This exercise starts with simple sorting examples using existing libraries
@@ -39,7 +44,7 @@ The path we follow:
 
 > Build/PDF note: render with `pandoc sort_demo_MI300A.md -o demo.pdf`.
 
----
+***
 
 ## 0. The MI300A APU: why "shared memory" changes the code
 
@@ -69,7 +74,7 @@ discrete-GPU code would have needed explicit transfers.
 salloc -N 1 --ntasks=4 --cpus-per-task=1 --gpus=4 -t 01:00:00
 ```
 
-# add `-p <slurm queue>` to request a particular queue
+> add `-p <slurm queue>` to request a particular queue
 
 ### Environment setup
 
@@ -90,7 +95,7 @@ rocminfo | grep -m1 gfx
 hipcc --version              # confirm ROCm/clang toolchain
 ```
 
----
+***
 
 ## 1. Library sort APIs — thrust, rocPRIM, hipCUB (baseline & reference)
 
@@ -106,7 +111,7 @@ three ways to call library routines:
   (`hipcub::DeviceRadixSort::SortKeys`/`SortPairs`). Use it when porting CUDA code
   that already calls CUB.
 
-### 1.1 The two-call temporary-storage pattern (rocPRIM & hipCUB)
+### 1.1 Using thrust -- the simplest approach
 
 Thrust will allocate the temporary memory it needs and then perform the 
 sort using rocPRIM. this makes it the easiest to use but least controllable.
@@ -305,7 +310,7 @@ bijective scatter.
   **perfect hash function** offline to map a fixed email set bijectively to
   `[0,n)`, then reuse this exact scatter. What breaks if the set changes?
 
----
+***
 ## 4. nationwide mailer, sort by ZIP (single APU)
 
 Example 4 is honestly a **counting sort**, not a perfect hash: many addresses share
@@ -370,7 +375,7 @@ make zip_sort
 - **E4.4 (baseline)** `zip_sort` prints a `rocprim::radix_sort_keys` time on
   the same keys. Compare it to the counting-sort time and explain the gap.
 
----
+***
 
 
 ## 5. Conference last names (sparse keys → compact hash)
@@ -440,7 +445,7 @@ make name_sort
   launch-overhead-bound, so regenerate a large list first
   (`make names.txt NCOUNT=2000000`) to compare steady-state throughput.
 
----
+***
 
 ## 6. emails: unique but *sparse* keys (compact hash)
 
@@ -512,7 +517,7 @@ Compact hash (open addressing + quadratic probing), unique keys:
 - **E6.5** Instead of using a hash representation of the email address, is there
   another way that would allow using a **perfect hash** approach?
 
----
+***
 
 ## 7. Scaling out — merge-free multi-node sort (MPI + HIP)
 
@@ -649,9 +654,9 @@ no-op (verified seams + global offsets).
 - **E7.6** (discussion) When would the multinode approach be better than doing
   a single GPU sort?
 
----
+***
 
-## 8. (Optional, advanced) The radix memory story: rocPRIM Onesweep vs. Orochi's circular buffer
+## 8. The radix memory story: rocPRIM Onesweep vs. Orochi's circular buffer
 
 This alternative sort approach shows a memory trade-off versus the *general-purpose*
 radix sort. Can we save memory use and still use the general sort algorithm?
@@ -689,7 +694,7 @@ Measured on MI300A (ROCm 7.2.4):
 The scratch grows **linearly at ~4.125 bytes/key** — a billion keys needs ~4.1 GB
 of temporary storage on top of the data itself.
 
-### 8.1 **Part B — read the fix in Orochi (`ParallelPrimitives`), and port it to wave64.**
+### 8.1 Examine the circular-buffer in Orochi and port it to wave64.
 The GPUOpen circular-buffer extension (Kao & Yoshimura, *GPU Zen 3*, 2025) holds
 that look-back buffer at a **constant ~2 MB regardless of `n`**. Clone Orochi and
 read the mechanism — the `tail iterator`, `L_lookback`, and `N_table` in:
@@ -769,7 +774,7 @@ n=1000  1e5  1e6  1e7   -> sorted=YES, mismatches=0 (all)
   kernel) and fix them. Confirm correctness with the bundled test. This is the
   canonical "RDNA-tuned kernel → CDNA wave64" migration in ~30 lines.
 
----
+***
 
 ### 9. Closing Exercises
 
@@ -787,7 +792,7 @@ n=1000  1e5  1e6  1e7   -> sorted=YES, mismatches=0 (all)
 - **9.5** Swap `name_sort`'s `thrust::sort_by_key` for the direct
   `rocprim::radix_sort_pairs` baseline and confirm identical alphabetical output.
 
----
+***
 
 # Appendix A — On-Your-Own Profiling
 
@@ -888,7 +893,7 @@ Produce a one-page summary: dominant kernel, roofline position, energy for the
 sort, and (multi-node) the shuffle fraction and per-rank balance after
 assume-place-adjust.
 
----
+***
 
 ## Appendix B — File manifest
 

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright AMD 2026, MIT License
+# Author: Bob Robey Bob.Robey@amd.com with AI tool help
 """Generate a list of UNIQUE email addresses, one per line on stdout.
 
 Emails are unique per recipient (guarantee #2 for a perfect hash) but live in a

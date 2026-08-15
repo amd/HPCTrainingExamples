@@ -1,3 +1,8 @@
+<!--
+Copyright AMD 2026, MIT License
+Author: Bob Robey Bob.Robey@amd.com with AI tool help
+-->
+
 # Sorting on AMD GPUs: From General-Purpose Radix to Data-Aware Hash Sorts
 
 *A short companion paper for the MPO Training Workshop, Sept 8–9, 2026.*
@@ -95,6 +100,33 @@ number of keys and was tamed by a fixed-size circular buffer; the perfect-hash
 table grows with the key *range* and, as we will see next, is tamed by the compact
 hash. Same disease — memory tracking the wrong quantity — treated the same way, by
 decoupling the allocation from the thing that blows up.
+
+### Example: Unique ID sort -- a true perfect hash
+
+The cleanest instance of a perfect hash is a set of keys that are both **dense**
+and **unique**. Consider a mailing batch where every mailpiece carries a unique
+sequential serial number (a USPS Intelligent Mail serial, say), so the keys form a
+permutation of a contiguous range `[BASE, BASE+n)`. Two guarantees hold at once:
+the range is dense (about `n` possible values for `n` keys) and each key occurs
+exactly once (the mapping is a true bijection).
+
+When both guarantees hold, sorting collapses to a single write per element with no
+atomics, no histogram, and no scan:
+
+```
+slot[key[i] - BASE] = i;
+```
+
+Every destination slot is written exactly once, so there is no contention between
+threads and nothing to reduce afterward — not even the compaction pass the general
+spatial hash needs, because a dense unique range leaves no empty buckets to squeeze
+out. This is the perfect hash in its purest form: one O(n) scatter and you are done.
+
+The uniqueness guarantee is load-bearing, not incidental. If two keys collide, they
+target the same slot: one write wins, another slot is never written, and a record is
+silently lost — an outcome that a bijective input makes impossible but a violated
+one makes invisible. That fragility is precisely what motivates the next case, where
+the keys are *not* guaranteed unique and collisions must be handled explicitly.
 
 ### Example: the nationwide mailer
 
@@ -220,7 +252,7 @@ easy to communicate.
 3. C.-C. Kao, A. Yoshimura. *Boosting GPU Radix Sort performance: A memory-efficient
    extension to Onesweep with circular buffers.* AMD GPUOpen, 2025 (also in *GPU Zen
    3: Advanced Rendering Techniques*). Source: GPUOpen-LibrariesAndSDKs/Orochi
-   (`ParallelPrimitives`). https://gpuopen.com/learn/boosting_gpu_radix_sort/
+   (`ParallelPrimitives`). `https://gpuopen.com/learn/boosting_gpu_radix_sort/`
 4. A. Adinets, D. Merrill. *Onesweep: A Faster Least Significant Digit Radix Sort.*
    D. Merrill, M. Garland. *Single-pass Parallel Prefix Scan with Decoupled
    Look-back.*

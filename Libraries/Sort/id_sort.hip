@@ -1,13 +1,14 @@
+// Copyright AMD 2026, MIT License
+// Author: Bob Robey Bob.Robey@amd.com with AI tool help
+//
 // id_sort.hip  —  a TRUE perfect-hash sort: unique, dense keys => one scatter
 //
-// The ZIP example (zip_sort.hip) is really a COUNTING sort: many records share a
-// ZIP, so it needs histogram -> exclusive-scan -> atomic scatter. A *perfect hash*
-// needs two guarantees the ZIP data does not have:
+// A *perfect hash* needs two guarantees:
 //
 //   1) DENSE bounded key range:  key in [BASE, BASE+n)   (range ~ n)
 //   2) UNIQUE keys:              each key occurs exactly once  (bijection)
 //
-// With both, placement is a single write per element with NO atomics, NO
+// With both guarantees, placement is a single write per element with NO atomics, NO
 // histogram, NO scan:            slot[key[i]-BASE] = i;
 // Every destination slot is written exactly once, so there is no contention.
 //

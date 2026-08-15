@@ -1,3 +1,6 @@
+// Copyright AMD 2026, MIT License
+// Author: Bob Robey Bob.Robey@amd.com with AI tool help
+//
 // sort_apis.hip  —  the same array sorted three ways: thrust, rocPRIM, hipCUB
 //
 // Purpose: one place that shows the equivalent device-sort calls in the three

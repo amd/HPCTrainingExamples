@@ -1,4 +1,7 @@
-// zip_sort.hip  —  Example 1: perfect-hash / counting sort of records by 5-digit ZIP
+// Copyright AMD 2026, MIT License
+// Author: Bob Robey Bob.Robey@amd.com with AI tool help
+//
+// zip_sort.hip  —  Example 4: perfect-hash / counting sort of records by 5-digit ZIP
 // Build: hipcc -O3 --offload-arch=gfx942 zip_sort.hip -o zip_sort
 // Run:   ./zip_sort [n]
 #include <cstring>   // global ::memset visible before rocprim headers
