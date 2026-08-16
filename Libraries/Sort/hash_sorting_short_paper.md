@@ -21,8 +21,9 @@ But "general purpose" has a cost. A general sort assumes nothing about the data,
 and that assumption is exactly what we can exploit to go faster. This paper walks
 through two data-aware techniques — the **perfect spatial hash sort** and the
 **compact hash** — and shows how they extend naturally to a merge-free multi-node
-sort. Two everyday examples carry the discussion: a nationwide mailer sorted by
-ZIP code, and a conference registration table sorted by last name.
+sort. Several everyday examples carry the discussion: a sorting of newspaper files,
+a nationwide mailer sorted by ZIP code, and a conference registration table sorted 
+by last name.
 
 ## 2. The baseline: radix sort
 
@@ -227,20 +228,24 @@ forwarding anything that still overshoots on the next round. A close guess
 converges in one or two rounds and touches only the few percent of records that
 straddle a boundary.
 
-The safeguard is a budget. If the neighbor exchange has not converged after **two
+There needs to be a safeguard for poorly behaving distributions. If the neighbor 
+exchange has not converged after **two
 rounds**, the guess was wrong — the data is *not* near its owner — so we reset the
 boundaries from a full-data histogram and re-place from scratch. That pays for the
 two wasted rounds plus a global reduction, and the multi-hop diffusion then has to
 carry records across many ranks: the all-to-all's job, done the slow way.
 
-The gap is the lesson. On an MI300A node sorting 16M ZIP records, pre-partitioned
+Let's look at a comparison of the difference with good knowledge of the data
+distribution versus poor data distributions. On an MI300A node sorting 16M ZIP code records, pre-partitioned
 input placed with a two-round neighbor exchange in **~44 ms**; the *same records*
 delivered in scrambled order tripped the reset and multi-hop path at **~340 ms** —
 roughly **8× more redistribution time for identical data**, decided entirely by
 its starting arrangement. (The local GPU sort was ~2 ms either way, so
 redistribution, not sorting, dominates.) Knowing your data does not just pick the
 local algorithm; at cluster scale it decides whether the shuffle is nearly free or
-the most expensive thing you do.
+the most expensive thing you do. Understanding the relative costs of the different
+parts of the algorithm, we might allow a 10-20% load imbalance to reduce the
+number of communications that are performed.
 
 ### Balancing the partition without a second read
 
@@ -266,9 +271,10 @@ budget is there to catch and repair.
 
 ### A design case: the monthly mailer that barely changes
 
-The 10%-sample rule above is the right default when each run is a stranger. But
+The 10%-sample rule above is a reasonable default when nothing is known about
+the data in the run. But
 many production sorts are *recurring* and nearly identical to the last one. A
-monthly bulk mailing is the canonical example: the ZIP distribution is heavily
+monthly bulk mailing is the canonical example: the ZIP code distribution is heavily
 northeast-weighted, and only about **10% of the records churn** month to month
 (addresses added or removed). The previous month already produced balanced range
 boundaries *and* a global histogram. Why re-sample 10% of an almost-unchanged
@@ -333,7 +339,7 @@ shuffle:
   when it does not),
 - **reduce** — the local (hash) sort.
 
-The same pattern serves both examples: regional ZIP ranges for the mailer,
+The same pattern serves both examples: regional ZIP code ranges for the mailer,
 frequency-weighted letter ranges for the conference. Framing a GPU-native sort as
 the shuffle-minimizing special case of a well-known pattern makes the design intent
 easy to communicate.
@@ -384,6 +390,17 @@ rocThrust (Section 2). If you are memory-bound on very large sorts — where the
 Onesweep look-back buffer itself becomes a meaningful fraction of your budget — it
 is worth reaching for, in the same spirit that you would reach for a compact hash
 when a perfect-hash table would not fit.
+
+Another note is that improvements in algorithms have also been due to reducing
+data reads. The look-back approach in the current radix-sort algorithms is an
+example. We made a stab at that in the multi-node sort by just redistributing
+mis-placed data due to moving data ranges rather than re-reading the data. The best
+design choice on re-reading data and data movement is heavily dependent on the
+data patterns in the data being sorted, the relative costs of each type of operation
+on the current hardware, and the number of nodes/ranks/GPUs being used. The
+actual local sort cost becomes a secondary consideration. This leads us to the
+conclusion that it is difficult to create a general purpose multi-node sort that
+gives reasonably good performance in all situations.
 
 ## 8. Practical guidance
 

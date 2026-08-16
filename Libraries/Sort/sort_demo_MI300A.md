@@ -18,10 +18,11 @@ Author: Bob Robey Bob.Robey@amd.com with AI tool help
 This exercise starts with simple sorting examples using existing libraries
 for the AMD GPUs using HIP code. It then looks at custom sorting methods that
 exploit data charistics for higher performance. Moving beyond a single MI300A
-APU the examples show how to scale up to a multi-node run. The
-progression is deliberate: start from the library sorts you already reach for,
-then earn your way to custom hash sorts by understanding when — and why — knowing
-your data lets you beat the general-purpose primitive.
+APU the examples show how to scale up to a multi-node run. The progression 
+is deliberate: start with the library sorts that minimize the effort
+to implement. Then earn your way to higher performance with custom hash sorts 
+by understanding when — and why — knowing your data lets you beat the 
+general-purpose primitive.
 
 The path we follow:
 
@@ -30,7 +31,7 @@ The path we follow:
   else is measured against, including index sort / argsort (§3.7).
 - **perfect hash / direct address** — when keys are **unique** and land in a
   **bounded** integer domain, the key *is* the sort: each key maps to one slot, placed
-  in one pass with no comparisons and no collisions. A fully dense domain is a *perfect
+  in one pass with no comparisons and no collisions. A unique mapping is a *perfect
   hash*; a gappy one just compacts out the holes (calendar/date sort §3, counting/ZIP
   sort §4).
 - **collisions and hashing** — when keys are **sparse or non-unique**, the perfect
@@ -44,7 +45,7 @@ The path we follow:
   host↔device copies (extra credit throughout).
 - **profiling everything** — Appendix A.
 
-> Build/PDF note: render with `pandoc sort_demo_MI300A.md -o demo.pdf`.
+> Build/PDF note: render with `make pdf`.
 
 ***
 
@@ -58,22 +59,33 @@ hierarchy to be filled separately for the CPU and the GPU. Setting `HSA_XNACK=1`
 needed to enable the memory pages to be migrated. 
 
 While the MI300A is a true APU, most other data center GPUs support the APU 
-programming model. They will just have the data transfer cost between the host
-and device buffers that is done by the operating system.
+programming model. They will just have an additional data transfer cost between the host
+and device buffers that is done by the operating system. We use the APU programming
+model for these exercises because it simplifies the code for easier presentation
+and reading.
 
 Practical consequences for this exercise:
 
 - A pointer from `hipMalloc` (or even ordinary `malloc`/`new` with XNACK on)
   is valid on **both** the CPU and the GPU. You generate data on the CPU and sort
   it on the GPU with **zero `hipMemcpy`**.
+- For AMD Instinct (Data Center) GPUs, set `export HSA_XNACK=1` to turn this on.
 
 The **extra-credit** portions below show the copy-free pattern and mark where a
 discrete-GPU code would have needed explicit transfers.
 
 ### Get an slurm allocation with a GPU
 
+For the single GPU exercises, request just a single GPU
+
 ```bash
-salloc -N 1 --ntasks=4 --cpus-per-task=1 --gpus=4 -t 01:00:00
+salloc -N 1 --gpus=1 -t 01:00:00 [-p <slurm queue>]
+```
+
+For the multi-node, request 4 GPUs and CPUs for each MPI rank.
+
+```bash
+salloc -N 1 --ntasks=4 --cpus-per-task=1 --gpus=4 -t 01:00:00 [-p <slurm queue>]
 ```
 
 > add `-p <slurm queue>` to request a particular queue
@@ -103,7 +115,7 @@ hipcc --version              # confirm ROCm/clang toolchain
 
 We begin with looking at the library routines. They are the easiest to implement
 in an application. They will also establish a **baseline** performance. ROCm has
-three ways to call library routines:
+three sets of library routine interfaces:
 
 - **thrust** — the portable C++ STL-like API (`thrust::sort`, `thrust::sort_by_key`).
   On ROCm it dispatches to rocPRIM under the hood.
@@ -118,7 +130,7 @@ three ways to call library routines:
 Thrust will allocate the temporary memory it needs and then perform the 
 sort using rocPRIM. this makes it the easiest to use but least controllable.
 
-The thrust sort call sorts the array ka in-place on the default device. It is easy to call
+The thrust sort call sorts the array `data_array` in-place on the default device. It is easy to call
 in your routine just by including thrust header files and with a single line of code. 
 
 ```bash
@@ -126,7 +138,7 @@ in your routine just by including thrust header files and with a single line of 
 #include <thrust/sort.h>
 #include <thrust/functional.h>
 ....
-thrust::sort(thrust::device, ka, ka+n);
+thrust::sort(thrust::device, data_array, data_array+n);
 ```
 
 ### 1.2 The two-call temporary-storage pattern (rocPRIM & hipCUB)
@@ -144,7 +156,7 @@ hipMalloc(&d_temp, temp_bytes);
 rocprim::radix_sort_keys(d_temp, temp_bytes, d_in, d_out, n);
 ```
 
-hipCUB is identical (`hipcub::DeviceRadixSort::SortKeys(nullptr, temp_bytes, ...)`
+hipCUB is nearly identical (`hipcub::DeviceRadixSort::SortKeys(nullptr, temp_bytes, ...)`
 then again with `d_temp`). 
 
 ### 1.3 Side-by-side example — `sort_apis.hip`
@@ -178,7 +190,7 @@ keys  hipcub::...SortKeysDescending     0.356      2808.01   temp=4003912B
 All three agree bit-for-bit. rocPRIM and hipCUB (which wraps rocPRIM) are ~3x faster
 than thrust here because thrust allocates its scratch inside every call while the
 rocPRIM/hipCUB temp buffer is allocated once and reused — the same effect you see in
-the name baseline below. Since thrust calls the rocPRIM routine, the additional time
+the name example baseline below. Since thrust calls the rocPRIM routine, the additional time
 for the thrust can be assumed to be due to the time for the allocation. The sort time
 itself should be the same.
 
@@ -202,7 +214,7 @@ Notes:
   variants for a custom comparator on arbitrary types.
 - Restricting `begin_bit`/`end_bit` to only the significant bits (e.g. a ZIP fits
   in 17 bits, not 32) can cut radix passes — a cheap win (exercise E-lib.3).
-- rocPRIM and hipCUB are **header-only** here: `#include <rocprim/rocprim.hpp>` /
+- rocPRIM and hipCUB are **header-only** implementations: `#include <rocprim/rocprim.hpp>` /
   `#include <hipcub/hipcub.hpp>` and build with plain `hipcc`, no extra `-l` flag.
 
 ### 2. Index sort (argsort) vs. sorting the data — `index_sort.hip`
@@ -212,6 +224,8 @@ orders them. That is an **index sort** (argsort): sort an index array `[0,1,2,..
 by the keys, leave the payload in place, then either read records indirectly or
 **gather** once to materialize a sorted copy. `name_sort.hip` already does this
 implicitly (`thrust::sort_by_key(keys, keys+n, id)` sorts `id[]`, not the names).
+This approach is also used when there are multiple arrays that need to be reordered
+in the same manner.
 
 `index_sort.hip` makes the trade-off explicit and measured:
 
@@ -228,8 +242,8 @@ make index_sort
 Measured on MI300A (ROCm 7.2.4), `./index_sort 1000000 8` (8-word / 32 B payload):
 
 ```text
-strategy                                   time(ms)      Mkeys/s
-1a idx rocprim pairs (sort only)             0.524        1908.38
+strategy                                     time(ms)      Mkeys/s
+1a idx rocprim pairs (sort only)              0.524        1908.38
    + gather payload = total                   0.677        1477.88
 1b idx hipcub pairs (sort only)               0.482        2075.36
 1c idx thrust::sort_by_key (sort only)        0.951        1051.51
@@ -381,13 +395,13 @@ many records per bucket — instead of one-writer-per-slot placement.
   the compact hash of §6?
 
 ***
-## 4. nationwide mailer, sort by ZIP (single APU)
+## 4. nationwide mailer, sort by ZIP code (single APU)
 
 Example 4 is honestly a **counting sort**, not a perfect hash: many addresses share
-a ZIP, so keys are not unique and we need histogram → scan → **atomic** scatter. 
+a ZIP code, so keys are not unique and we need histogram → scan → **atomic** scatter. 
 
-A 5-digit ZIP is a bounded, known range `[0, 100000)`. Because many addresses
-share a ZIP, keys are **not unique**, so the "one index per bucket" perfect hash
+A 5-digit ZIP code is a bounded, known range `[0, 100000)`. Because many addresses
+share a ZIP code, keys are **not unique**, so the "one index per bucket" perfect hash
 generalizes to a **counting (bucket) sort**: histogram → exclusive-scan offsets →
 scatter. This is a single O(n) pass plus one scan — still the pattern for the perfect hash.
 
@@ -396,7 +410,7 @@ scatter. This is a single O(n) pass plus one scan — still the pattern for the 
 The custom counting sort (histogram → `thrust::exclusive_scan` → scatter) runs on
 unified memory, and the program then sorts a **copy** of the same keys with the
 `rocprim::radix_sort_keys` **library baseline** so you get a fair custom-vs-library
-comparison in one run (both timed *warm*; measured numbers in §3.7.5). See zip_sort.hip
+comparison in one run (both timed *warm*; measured numbers in §3.7.5). See `zip_sort.hip`
 for the source code.
 
 ### 4.2 Build & run (start small, then scale)
@@ -411,7 +425,7 @@ make zip_sort
 ### 3.7.5 Comparing the zip sort to library performance
 
 - `zip_sort` prints its **counting-sort** time and then a `rocprim::radix_sort_keys`
-  time on a copy of the ZIP keys, plus the time ratio (both measured *warm*, after a
+  time on a copy of the ZIP code keys, plus the time ratio (both measured *warm*, after a
   histogram warm-up, so the comparison is fair). Measured on MI300A (ROCm 7.2.4):
 
 ```text
@@ -421,7 +435,7 @@ make zip_sort
 100000000     7.494 ms            2.786 ms        0.37   (library ~2.7x faster)
 ```
 
-  The result is instructive: on *uniformly random* ZIPs over 100k buckets the general
+  The result is instructive: on *uniformly random* ZIP codes over 100k buckets the general
   radix sort is competitive at small `n` and actually **faster** at large `n`,
   because the counting sort's scatter is a storm of atomics into 100k HBM buckets. The
   custom sort pays off when the range is small (few buckets, atomics stay cheap) or
@@ -469,8 +483,8 @@ quadratic probing) built and verified over the large, sparse 64-bit name-key spa
 Names are packed base-27 into a 64-bit key so numeric order equals lexicographic
 order.
 
-> The three-library baseline during the run prints 
-> `thrust::sort_by_key`, `rocprim::radix_sort_pairs`, and `hipcub::DeviceRadixSort`
+> The three-library baseline during the run prints `thrust::sort_by_key`, 
+> `rocprim::radix_sort_pairs`, and `hipcub::DeviceRadixSort`
 > timings on the same 64-bit keys.
 
 ### 5.2 Build & run
@@ -500,7 +514,7 @@ make name_sort
 
 - **E5.1** The provided `names.txt` (from `gen_names.py`) matches real U.S.
   surname-initial frequencies. Run `./name_sort names.txt` and read off the
-  frequency-weighted desk boundaries — do the four desks balance?
+  frequency-weighted registration desk boundaries — do the four desks balance?
 - **E5.2** Sweep the load factor: change `tableSize` to `1.1*n`, `1.5*n`, `2*n`,
   `4*n` and plot average probes/insert. Where does quadratic probing start to
   struggle?
@@ -519,7 +533,7 @@ make name_sort
 
 ## 6. emails: unique but *sparse* keys (compact hash)
 
-This is the case people usually reach for when they hear "unique keys" — and it is
+This is the case people usually think of when they hear "unique keys" — and it is
 exactly why a perfect hash does **not** apply. An email is **unique** per recipient
 (guarantee 2 from §3) but lives in a huge, sparse **string** space, so it fails the
 **bounded-domain** guarantee 1. There is no `[0,n)` array to scatter into. Instead:
@@ -547,14 +561,14 @@ __host__ __device__ inline uint64_t fnv1a(const char* s, int maxlen){
 ```
 
 The crucial lesson: **even with 100% unique emails you still get collisions after
-compression**, so you still probe. Uniqueness buys you `distinct == n` (no lost
-records), *not* a collision-free perfect hash.
+compression**, so you still need to probe to accomodate the collisions. Uniqueness
+buys you `distinct == n` (no lost records), *not* a collision-free perfect hash.
 
 ### 6.1 Reference solution — `email_sort.hip`
 
 `email_sort.hip` hashes each email to 64-bit (FNV-1a), builds the compact hash, and
 **sweeps the load factor** to show probes vs. load. It also radix-sorts the hashes
-as a bulk-dedup baseline (sorting by hash groups duplicates, but is *not*
+as a bulk-dedup baseline (sorting by a hash groups duplicates, but is *not*
 alphabetical).
 
 ```bash
@@ -610,9 +624,10 @@ Compact hash (open addressing + quadratic probing), unique keys:
 ## 7. Scaling out — merge-free multi-node sort (MPI + HIP)
 
 Range-partition the key space across ranks so the global result is a simple
-**concatenation** (no distributed merge): each rank owns a disjoint ZIP range,
-we move each record to its owner with a **neighbor-to-neighbor exchange** (no
-all-to-all), then sort locally.
+**concatenation** (no distributed merge): each rank owns a disjoint ZIP code range,
+we move each record to its owner in the original distribution of data. We then
+balance and adjust the data on each processor with a 
+**neighbor-to-neighbor exchange**, then sort locally.
 
 ### 7.1 Distribution-aware partitioning (assume → place → adjust)
 
@@ -620,15 +635,15 @@ Rather than a separate sampling pass:
 
 1. Start with **assumed** range boundaries (uniform split of `[0,100000)` across
    ranks).
-2. Route the **first ~10%** of local records for real.
+2. Route the **first ~10%** of local records to the processor that owns that range.
 3. **Adjust** boundaries from the observed histogram of that 10%.
 4. **Move** records with a neighbor-to-neighbor sweep (below).
 
-### 7.1a Neighbor-to-neighbor redistribution (no all-to-all)
+### 7.1a Neighbor-to-neighbor redistribution
 
-The data is assumed to be **written to the processor that owns that ZIP portion**
+The data is assumed to be **written to the processor that owns that portion of the ZIP codes**
 (pre-partitioned under the uniform assumption). Because the boundaries assign
-**ascending** ZIP ranges to **ascending** ranks, a record that ends up on the
+**ascending** ZIP code ranges to **ascending** ranks, a record that ends up on the
 wrong rank belongs to one side, so the natural communication partner is the
 **adjacent** rank in that order. Each round every rank:
 
@@ -664,7 +679,7 @@ argument to force badly-distributed input and observe the reset/repair. Each ran
 also reports `loops=` (neighbor-exchange rounds to converge) and `reset=` (whether
 the full-histogram boundary reset fired). A **tuned variant**,
 `tuned_multinode_zip_sort.hip`, keeps this same code and adds the recurring
-**monthly-mailer** design case (a NE-heavy dataset with only ~10% churn that reuses
+**monthly-mailer** design case (a NorthEast US-heavy dataset with only ~10% churn that reuses
 last month's boundaries and drives redistribution from the per-rank imbalance
 instead of a fresh sample) — see §7.6.
 
@@ -678,7 +693,7 @@ directly from the interactive shell (again `mpirun`, **not** `srun`).
 ```bash
 # 1) Grab one node with its 4 APUs for an hour (add -p <queue> as needed)
 salloc -N 1 --ntasks-per-node=4 --gpus-per-node=4 \
-       -p PPAC_MI300A_SPX --exclusive -t 01:00:00
+       -t 01:00:00 -p PPAC_MI300A_SPX -t 01:00:00
 
 # 2) When the prompt returns on the allocated compute node:
 module load rocm/7.2.4 openmpi
@@ -705,7 +720,7 @@ to release the allocation when you are done.
 
 ### 7.4 SLURM launch on MI300A — `run_multinode.sbatch`
 
-MI300A nodes expose 4 APUs. Launch one rank per APU with **`mpirun`. The batch
+MI300A nodes SPX mode expose 4 APUs. Launch one rank per APU with **`mpirun`. The batch
 script runs on the first allocated compute node, so `mpirun` places the ranks from there.
 
 We use the same logic for setting the GPU devices for each MPI rank as was used
@@ -820,7 +835,7 @@ verification and the seam exchange, which are intentionally left untimed.
 
 ## 7.6 Design case — the monthly recurring mailer (`tuned_multinode_zip_sort.hip`)
 
-`skew=0/1` in `multinode_zip_sort` model a *cold* run: an unknown dataset sorted
+The previous `multinode_zip_sort` example is for an unknown dataset sorted
 from a uniform guess. Many real sorts are *recurring* — a monthly bulk mailing
 re-sorts a database that is heavily northeast-weighted and changes only ~10% between
 runs. The prior month already produced balanced boundaries and a histogram, so
