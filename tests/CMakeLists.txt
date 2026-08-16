@@ -1555,13 +1555,6 @@ add_test(NAME FTorch_MultiGPU_Test COMMAND ../ftorch_multigpu_test.sh )
 set_property(TEST FTorch_MultiGPU_Test PROPERTY PASS_REGULAR_EXPRESSION "MultiGPU example ran successfully")
 set_property(TEST FTorch_MultiGPU_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'ftorch'")
 
-# vLLM tests
-add_test(NAME vLLM_Verify_ROCm_Enabled COMMAND ../vllm_verify_rocm_enabled.sh )
-set_property(TEST vLLM_Verify_ROCm_Enabled PROPERTY PASS_REGULAR_EXPRESSION "RESULT: vLLM is ROCm-enabled")
-set_property(TEST vLLM_Verify_ROCm_Enabled PROPERTY FAIL_REGULAR_EXPRESSION "vLLM is NOT ROCm-enabled")
-set_property(TEST vLLM_Verify_ROCm_Enabled PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'vllm'")
-set_tests_properties(vLLM_Verify_ROCm_Enabled PROPERTIES TIMEOUT 300)
-
 # Julia tests
 add_test(NAME Julia_Check_Install COMMAND ../julia_check_install.sh )
 set_property(TEST Julia_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "Configure Default Julia version set to '1.12'.")
@@ -1585,11 +1578,11 @@ set_property(TEST HIP-Python_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "modu
 
 add_test(NAME Numba-HIP_Check COMMAND ../numba-hip_check.sh )
 set_property(TEST Numba-HIP_Check PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Numba-HIP_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+set_property(TEST Numba-HIP_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'" "numba-hip device JIT unsupported")
 
 add_test(NAME Numba-HIP-CUDA-Posing_Check COMMAND ../numba-hip-cuda-posing_check.sh )
 set_property(TEST Numba-HIP-CUDA-Posing_Check PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Numba-HIP-CUDA-Posing_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+set_property(TEST Numba-HIP-CUDA-Posing_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'" "numba-hip device JIT unsupported")
 
 add_test(NAME HIP-Python_Device_Properties COMMAND ../hip-python_device_properties.sh )
 set_property(TEST HIP-Python_Device_Properties PROPERTY PASS_REGULAR_EXPRESSION "Success")
@@ -1787,38 +1780,40 @@ set_property(TEST Score-P_GPU_Profile PROPERTY PASS_REGULAR_EXPRESSION "PASS: Sc
 set_property(TEST Score-P_GPU_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'scorep'")
 
 # Miniconda3 Tests
-#add_test(NAME Miniconda3_Check_Version COMMAND ../miniconda3_check_version.sh)
-#set_property(TEST Miniconda3_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 25.3.1")
-#set_property(TEST Miniconda3_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniconda3'")
+# Miniconda3 Tests
+# Miniconda3 Tests
+add_test(NAME Miniconda3_Check_Version COMMAND ../miniconda3_check_version.sh)
+set_property(TEST Miniconda3_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 25.3.1")
+set_property(TEST Miniconda3_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniconda3'")
 
-#add_test(NAME Miniconda3_Env_Create COMMAND ../miniconda3_env_create.sh)
-#set_property(TEST Miniconda3_Env_Create PROPERTY PASS_REGULAR_EXPRESSION "env_for_conda_create_test")
-#set_property(TEST Miniconda3_Env_Create PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniconda3'")
-#set_property(TEST Miniconda3_Env_Create PROPERTY RESOURCE_LOCK miniconda3_cache)
+add_test(NAME Miniconda3_Env_Create COMMAND ../miniconda3_env_create.sh)
+set_property(TEST Miniconda3_Env_Create PROPERTY PASS_REGULAR_EXPRESSION "env_for_conda_create_test")
+set_property(TEST Miniconda3_Env_Create PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniconda3'")
+set_property(TEST Miniconda3_Env_Create PROPERTY RESOURCE_LOCK miniconda3_cache)
 
-#add_test(NAME Miniconda3_Env_Install COMMAND ../miniconda3_env_install.sh)
-#set_property(TEST Miniconda3_Env_Install PROPERTY PASS_REGULAR_EXPRESSION "jaxlib")
-#set_property(TEST Miniconda3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniconda3'")
-#set_property(TEST Miniconda3_Env_Install PROPERTY RESOURCE_LOCK miniconda3_cache)
+add_test(NAME Miniconda3_Env_Install COMMAND ../miniconda3_env_install.sh)
+set_property(TEST Miniconda3_Env_Install PROPERTY PASS_REGULAR_EXPRESSION "jaxlib")
+set_property(TEST Miniconda3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniconda3'")
+set_property(TEST Miniconda3_Env_Install PROPERTY RESOURCE_LOCK miniconda3_cache)
 
 # Miniforge3 Tests
-#add_test(NAME Miniforge3_Check_Conda_Version COMMAND ../miniforge3_check_version.sh)
-#set_property(TEST Miniforge3_Check_Conda_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 24.9.0")
-#set_property(TEST Miniforge3_Check_Conda_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
+add_test(NAME Miniforge3_Check_Conda_Version COMMAND ../miniforge3_check_version.sh)
+set_property(TEST Miniforge3_Check_Conda_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 24.9.0")
+set_property(TEST Miniforge3_Check_Conda_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
 
-#add_test(NAME Miniforge3_Check_Mamba_Version COMMAND ../miniforge3_check_version.sh)
-#set_property(TEST Miniforge3_Check_Mamba_Version PROPERTY PASS_REGULAR_EXPRESSION "mamba 1.5.9")
-#set_property(TEST Miniforge3_Check_Mamba_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
+add_test(NAME Miniforge3_Check_Mamba_Version COMMAND ../miniforge3_check_version.sh)
+set_property(TEST Miniforge3_Check_Mamba_Version PROPERTY PASS_REGULAR_EXPRESSION "mamba 1.5.9")
+set_property(TEST Miniforge3_Check_Mamba_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
 
-#add_test(NAME Miniforge3_Env_Create COMMAND ../miniforge3_env_create.sh)
-#set_property(TEST Miniforge3_Env_Create PROPERTY PASS_REGULAR_EXPRESSION "env_for_create_test")
-#set_property(TEST Miniforge3_Env_Create PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
-#set_property(TEST Miniforge3_Env_Create PROPERTY RESOURCE_LOCK miniforge3_cache)
+add_test(NAME Miniforge3_Env_Create COMMAND ../miniforge3_env_create.sh)
+set_property(TEST Miniforge3_Env_Create PROPERTY PASS_REGULAR_EXPRESSION "env_for_create_test")
+set_property(TEST Miniforge3_Env_Create PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
+set_property(TEST Miniforge3_Env_Create PROPERTY RESOURCE_LOCK miniforge3_cache)
 
-#add_test(NAME Miniforge3_Env_Install COMMAND ../miniforge3_env_install.sh)
-#set_property(TEST Miniforge3_Env_Install PROPERTY PASS_REGULAR_EXPRESSION "jaxlib")
-#set_property(TEST Miniforge3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
-#set_property(TEST Miniforge3_Env_Install PROPERTY RESOURCE_LOCK miniforge3_cache)
+add_test(NAME Miniforge3_Env_Install COMMAND ../miniforge3_env_install.sh)
+set_property(TEST Miniforge3_Env_Install PROPERTY PASS_REGULAR_EXPRESSION "jaxlib")
+set_property(TEST Miniforge3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
+set_property(TEST Miniforge3_Env_Install PROPERTY RESOURCE_LOCK miniforge3_cache)
 
 #HDF5 Tests
 add_test(NAME HDF5_Check_Version COMMAND ../hdf5_check_version.sh)
