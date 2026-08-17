@@ -1,7 +1,9 @@
-# Profiling the HIP Jacobi code
+# Profiling the HIP Jacobi code on Frontier
 
 Here, we follow a sequence of steps to understand the Jacobi code better, each time
-using a specific profiler tool because we seek a particular type of information. We
+using a specific profiler tool because we seek a particular type of information. All
+commands below are written for OLCF's Frontier, so the module names and the `srun`
+options will need adapting on other machines. We
 have at our disposal three types of tools:
 
 - `rocprofv3` that can help get GPU hotspots, traces or counters

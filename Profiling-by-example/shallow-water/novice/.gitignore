@@ -1,0 +1,9 @@
+# Built executable
+shallow
+
+# rocprofv3 output, from the -d argument used in the stage READMEs
+outdir/
+prof/
+
+# rocprof-compute workload directories
+workloads/
