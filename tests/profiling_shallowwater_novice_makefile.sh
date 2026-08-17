@@ -25,10 +25,6 @@ else
      echo "loading default rocm module"
      module load rocm
    fi
-   module load amdflang-new >& /dev/null
-   if [ "$?" == "1" ]; then
-      module load amdclang
-   fi
 fi
 
 STAGE=$1
