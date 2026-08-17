@@ -19,9 +19,20 @@
 // compiled as C++ — with hipcc use `-x c++` (or name the file .cpp). The FFTW3
 // source itself is unchanged.
 //
-// Build: hipcc -O3 --offload-arch=gfx942 -x c++ fftw_c2c.c -lhipfftw -o fftw_c2c
+// Build (GPU / hipFFTW): hipcc -O3 --offload-arch=gfx942 -x c++ -DUSE_HIPFFTW \
+//                          fftw_c2c.c -lhipfftw -o fftw_c2c
+// Build (CPU / FFTW3):    gcc  -O3 fftw_c2c.c -lfftw3 -lm -o fftw_c2c_cpu
 // Run:   ./fftw_c2c [N] [batch]
-#include <hipfft/hipfftw.h>
+//
+// The GPU and CPU builds share this one source; only the include and the link
+// flag differ, selected here by the USE_HIPFFTW macro that the Makefile sets.
+#ifdef USE_HIPFFTW
+#include <hipfft/hipfftw.h>   // GPU: FFTW3 drop-in dispatched to rocFFT
+#define FFT_BACKEND "hipFFTW"
+#else
+#include <fftw3.h>           // CPU: reference FFTW3 (fftw/3.3.10 module)
+#define FFT_BACKEND "FFTW"
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -63,7 +74,7 @@ int main(int argc, char** argv){
         double d  = hypot(re - orig[i][0], im - orig[i][1]);
         if (d > max_err) max_err = d;
     }
-    printf("hipFFTW C2C  N=%d batch=%d  round-trip max_err=%.3e\n", N, batch, max_err);
+    printf("%s C2C  N=%d batch=%d  round-trip max_err=%.3e\n", FFT_BACKEND, N, batch, max_err);
 
     fftw_destroy_plan(fwd);
     fftw_destroy_plan(bwd);

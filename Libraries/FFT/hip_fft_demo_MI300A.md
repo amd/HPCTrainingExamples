@@ -207,9 +207,42 @@ export HSA_XNACK=1
 ```bash
 make fftw_c2c
 # equivalently:
-#   hipcc -O3 --offload-arch=gfx942 -x c++ fftw_c2c.c -lhipfftw -o fftw_c2c
+#   hipcc -O3 --offload-arch=gfx942 -x c++ -DUSE_HIPFFTW fftw_c2c.c -lhipfftw -o fftw_c2c
 ./fftw_c2c 1048576 1
 ./fftw_c2c 65536 64          # 64 batched transforms of length 65536
+```
+
+### 4a. CPU baseline — the *same* source on reference FFTW3
+
+The whole point of the FFTW3 API is portability, so `fftw_c2c.c` also builds as an
+ordinary CPU program against reference FFTW3 — **no HIP, no GPU**. The single source
+selects its backend with the `USE_HIPFFTW` macro (set by the Makefile): with it, the
+hipFFTW header + `-lhipfftw`; without it, `<fftw3.h>` + `-lfftw3`. Nothing else in
+the source changes. CPU FFTW3 ships as the `fftw/3.3.10` module, which becomes
+available once the `rocm` module is loaded:
+
+```bash
+module load rocm       # exposes the fftw module (and heffte)
+module load fftw       # fftw/3.3.10 — sets FFTW_ROOT / FFTW_PATH, include & lib paths
+export HSA_XNACK=1
+```
+
+```bash
+make fftw_c2c_cpu
+# equivalently:
+#   gcc -O3 -I$FFTW_ROOT/include fftw_c2c.c -L$FFTW_ROOT/lib -lfftw3 -lm -o fftw_c2c_cpu
+./fftw_c2c_cpu 1048576 1
+./fftw_c2c_cpu 65536 64          # 64 batched transforms of length 65536
+./fftw_c2c_cpu 1000003 1         # prime N
+```
+
+**Validated (MI300A host CPU, FFTW 3.3.10):** round-trip at the double-precision
+floor, matching the GPU hipFFTW run bit-for-bit in magnitude:
+
+```text
+FFTW C2C  N=1048576 batch=1   round-trip max_err=1.333e-15
+FFTW C2C  N=65536 batch=64    round-trip max_err=8.960e-16
+FFTW C2C  N=1000003 batch=1   round-trip max_err=2.740e-15
 ```
 
 **Validated (MI300A / ROCm 7.2.4, hipFFT 1.0.22):** round-trip `max_err` at the
@@ -222,7 +255,6 @@ hipFFTW C2C  N=65536 batch=64    round-trip max_err=1.460e-15
 hipFFTW C2C  N=1000003 batch=1   round-trip max_err=6.062e-15   # prime -> Bluestein
 ```
 
-> **Caveats worth teaching (hipFFTW is actively developed):**
 > - The header must be compiled as C++ (see the `-x c++` note above) — a genuinely
 >   C-only build (`gcc -lfftw3` -> `-lhipfftw`) does *not* compile as-is today.
 > - Only the **basic** plans ship in 7.2.4 (`fftw_plan_dft_1d/2d/3d`,
@@ -237,9 +269,10 @@ hipFFTW C2C  N=1000003 batch=1   round-trip max_err=6.062e-15   # prime -> Blues
 - **E4.1** Diff `fftw_c2c.c` against `hipfft_c2c.hip`: the FFTW source has no HIP or
   device code at all — hipFFTW hid the GPU entirely. What did you give up vs. the
   explicit hipFFT path (control over device buffers, streams, work areas)?
-- **E4.2 (portability)** Relink the *identical* source against CPU FFTW3
-  (`-lfftw3`, `#include <fftw3.h>`) and compare results and wall-clock on the APU.
-  Only the Makefile changes. (Needs an `fftw` module.)
+- **E4.2 (portability)** Build the CPU baseline (`make fftw_c2c_cpu`, §4a) from the
+  *identical* source against reference FFTW3 (`-lfftw3`, `#include <fftw3.h>`) and
+  compare results and wall-clock against the GPU hipFFTW run on the APU. Only the
+  Makefile/`USE_HIPFFTW` flag changes. (Uses the `fftw/3.3.10` module.)
 - **E4.3** Add an R2C/C2R variant (`fftw_plan_dft_r2c_1d` / `fftw_plan_dft_c2r_1d`)
   and account for the Hermitian-symmetry (~2×) memory savings.
 - **E4.4** Confirm `FFTW_MEASURE` is currently a no-op in hipFFTW (time plan
@@ -407,13 +440,20 @@ Get an interactive allocation
 salloc -N 1 --ntasks=4 --cpus-per-task=1 --gpus=4 -t 01:00:00 [-p <slurm queue>]
 ```
 
+Set up the environment
+
+```bash
+module load rocm heffte
+export HSA_XNACK=1
+```
+
 Build the `heffte_3d` example
 
 ```bash
 make heffte_3d
 ```
 
-Add the heFFTe library to the `LD_LIBRARY_PATH`
+Build heFFTe library and add the heFFTe library to the `LD_LIBRARY_PATH`. Done by the heffte module
 
 ```bash
 export LD_LIBRARY_PATH=$HOME/heffte-rocm/lib:$LD_LIBRARY_PATH
@@ -423,6 +463,12 @@ Run the example with the mpirun command on 4 MPI ranks
 
 ```bash
 mpirun -np 4 --map-by ppr:4:node ./heffte_3d 512
+```
+
+Validated on MI300A (`gfx942`), 4 ranks / 1 node:
+
+```
+heFFTe 3D  512x512x512  ranks=4  grid=1x2x2  fwd+bwd=0.2172 s  round-trip max_err=2.113e-15
 ```
 
 exit the allocation
@@ -449,10 +495,10 @@ mpirun -np "${SLURM_NTASKS}" --map-by ppr:4:node \
        -x HSA_XNACK -x LD_LIBRARY_PATH ./heffte_3d 512
 ```
 
-Validated on MI300A (`gfx942`), 4 ranks / 1 node:
+Submit batch job
 
 ```
-heFFTe 3D  512x512x512  ranks=4  grid=1x2x2  fwd+bwd=0.2172 s  round-trip max_err=2.113e-15
+sbatch run_heffte.sbatch
 ```
 
 Round-trip error stays at the ~1e-15 double-precision floor across all rank
@@ -563,7 +609,7 @@ rocprof-sys-run -- ./rocfft_3d 256    # with ROCPROFSYS_USE_ROCM_SMI=ON
 | `rocfft_c2c.hip` | 1D batched C2C, forward+inverse round-trip (validated ~1e-15) |
 | `rocfft_3d.hip`  | 3D C2C round-trip (validated ~1e-15) |
 | `hipfft_c2c.hip` | 1D C2C via portable hipFFT API (validated ~1e-15) |
-| `fftw_c2c.c` | 1D C2C in the plain FFTW3 API, run on the GPU by hipFFTW (drop-in) |
+| `fftw_c2c.c` | 1D C2C in the plain FFTW3 API; `make fftw_c2c` runs it on the GPU via hipFFTW, `make fftw_c2c_cpu` builds the same source on CPU FFTW3 (`fftw` module) |
 | `hipfftmp_3d.cpp` | Native distributed 3D FFT via hipFFT-MP (ROCm 7.2.4+, MPI) |
 | `run_hipfftmp.sbatch` | Single hipFFT-MP run (`sbatch run_hipfftmp.sbatch [N]`) |
 | `heffte_3d.cpp`  | Distributed 3D FFT, rocFFT backend (validated on 1/2/4/8 ranks) |
