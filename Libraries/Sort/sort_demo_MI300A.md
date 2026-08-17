@@ -8,24 +8,32 @@ fontsize: 11pt
 colorlinks: true
 ---
 
+<!--
+Copyright AMD 2026, MIT License
+Author: Bob Robey Bob.Robey@amd.com with AI tool help
+-->
+
 # Sorting on MI300A — Hands-On Exercises
 
 This exercise starts with simple sorting examples using existing libraries
 for the AMD GPUs using HIP code. It then looks at custom sorting methods that
 exploit data charistics for higher performance. Moving beyond a single MI300A
-APU the examples show how to scale up to a multi-node run. The
-progression is deliberate: start from the library sorts you already reach for,
-then earn your way to custom hash sorts by understanding when — and why — knowing
-your data lets you beat the general-purpose primitive.
+APU the examples show how to scale up to a multi-node run. The progression 
+is deliberate: start with the library sorts that minimize the effort
+to implement. Then earn your way to higher performance with custom hash sorts 
+by understanding when — and why — knowing your data lets you beat the 
+general-purpose primitive.
 
 The path we follow:
 
 - **thrust → rocPRIM / hipCUB** — begin with the drop-in library baselines. These
   comparison-free radix sorts are the right default and the yardstick everything
   else is measured against, including index sort / argsort (§3.7).
-- **perfect hash** — when keys are **unique and dense**, a hash *is* the sort:
-  each key maps to exactly one slot, so we place in one pass with no comparisons
-  and no collisions (counting/ZIP sort §1, dense serials §1b).
+- **perfect hash / direct address** — when keys are **unique** and land in a
+  **bounded** integer domain, the key *is* the sort: each key maps to one slot, placed
+  in one pass with no comparisons and no collisions. A unique mapping is a *perfect
+  hash*; a gappy one just compacts out the holes (calendar/date sort §3, counting/ZIP
+  sort §4).
 - **collisions and hashing** — when keys are **sparse or non-unique**, the perfect
   mapping breaks down. We introduce a **compact hash** and confront collisions
   head-on (last names §2, emails §2b), and mark where a highly optimized hash
@@ -37,9 +45,9 @@ The path we follow:
   host↔device copies (extra credit throughout).
 - **profiling everything** — Appendix A.
 
-> Build/PDF note: render with `pandoc sort_demo_MI300A.md -o demo.pdf`.
+> Build/PDF note: render with `make pdf`.
 
----
+***
 
 ## 0. The MI300A APU: why "shared memory" changes the code
 
@@ -51,25 +59,36 @@ hierarchy to be filled separately for the CPU and the GPU. Setting `HSA_XNACK=1`
 needed to enable the memory pages to be migrated. 
 
 While the MI300A is a true APU, most other data center GPUs support the APU 
-programming model. They will just have the data transfer cost between the host
-and device buffers that is done by the operating system.
+programming model. They will just have an additional data transfer cost between the host
+and device buffers that is done by the operating system. We use the APU programming
+model for these exercises because it simplifies the code for easier presentation
+and reading.
 
 Practical consequences for this exercise:
 
 - A pointer from `hipMalloc` (or even ordinary `malloc`/`new` with XNACK on)
   is valid on **both** the CPU and the GPU. You generate data on the CPU and sort
   it on the GPU with **zero `hipMemcpy`**.
+- For AMD Instinct (Data Center) GPUs, set `export HSA_XNACK=1` to turn this on.
 
 The **extra-credit** portions below show the copy-free pattern and mark where a
 discrete-GPU code would have needed explicit transfers.
 
 ### Get an slurm allocation with a GPU
 
+For the single GPU exercises, request just a single GPU
+
 ```bash
-salloc -N 1 --ntasks=4 --cpus-per-task=1 --gpus=4 -t 01:00:00
+salloc -N 1 --gpus=1 -t 01:00:00 [-p <slurm queue>]
 ```
 
-# add `-p <slurm queue>` to request a particular queue
+For the multi-node, request 4 GPUs and CPUs for each MPI rank.
+
+```bash
+salloc -N 1 --ntasks=4 --cpus-per-task=1 --gpus=4 -t 01:00:00 [-p <slurm queue>]
+```
+
+> add `-p <slurm queue>` to request a particular queue
 
 ### Environment setup
 
@@ -90,13 +109,13 @@ rocminfo | grep -m1 gfx
 hipcc --version              # confirm ROCm/clang toolchain
 ```
 
----
+***
 
 ## 1. Library sort APIs — thrust, rocPRIM, hipCUB (baseline & reference)
 
 We begin with looking at the library routines. They are the easiest to implement
 in an application. They will also establish a **baseline** performance. ROCm has
-three ways to call library routines:
+three sets of library routine interfaces:
 
 - **thrust** — the portable C++ STL-like API (`thrust::sort`, `thrust::sort_by_key`).
   On ROCm it dispatches to rocPRIM under the hood.
@@ -106,12 +125,12 @@ three ways to call library routines:
   (`hipcub::DeviceRadixSort::SortKeys`/`SortPairs`). Use it when porting CUDA code
   that already calls CUB.
 
-### 1.1 The two-call temporary-storage pattern (rocPRIM & hipCUB)
+### 1.1 Using thrust -- the simplest approach
 
 Thrust will allocate the temporary memory it needs and then perform the 
 sort using rocPRIM. this makes it the easiest to use but least controllable.
 
-The thrust sort call sorts the array ka in-place on the default device. It is easy to call
+The thrust sort call sorts the array `data_array` in-place on the default device. It is easy to call
 in your routine just by including thrust header files and with a single line of code. 
 
 ```bash
@@ -119,7 +138,7 @@ in your routine just by including thrust header files and with a single line of 
 #include <thrust/sort.h>
 #include <thrust/functional.h>
 ....
-thrust::sort(thrust::device, ka, ka+n);
+thrust::sort(thrust::device, data_array, data_array+n);
 ```
 
 ### 1.2 The two-call temporary-storage pattern (rocPRIM & hipCUB)
@@ -137,7 +156,7 @@ hipMalloc(&d_temp, temp_bytes);
 rocprim::radix_sort_keys(d_temp, temp_bytes, d_in, d_out, n);
 ```
 
-hipCUB is identical (`hipcub::DeviceRadixSort::SortKeys(nullptr, temp_bytes, ...)`
+hipCUB is nearly identical (`hipcub::DeviceRadixSort::SortKeys(nullptr, temp_bytes, ...)`
 then again with `d_temp`). 
 
 ### 1.3 Side-by-side example — `sort_apis.hip`
@@ -171,7 +190,7 @@ keys  hipcub::...SortKeysDescending     0.356      2808.01   temp=4003912B
 All three agree bit-for-bit. rocPRIM and hipCUB (which wraps rocPRIM) are ~3x faster
 than thrust here because thrust allocates its scratch inside every call while the
 rocPRIM/hipCUB temp buffer is allocated once and reused — the same effect you see in
-the name baseline below. Since thrust calls the rocPRIM routine, the additional time
+the name example baseline below. Since thrust calls the rocPRIM routine, the additional time
 for the thrust can be assumed to be due to the time for the allocation. The sort time
 itself should be the same.
 
@@ -195,7 +214,7 @@ Notes:
   variants for a custom comparator on arbitrary types.
 - Restricting `begin_bit`/`end_bit` to only the significant bits (e.g. a ZIP fits
   in 17 bits, not 32) can cut radix passes — a cheap win (exercise E-lib.3).
-- rocPRIM and hipCUB are **header-only** here: `#include <rocprim/rocprim.hpp>` /
+- rocPRIM and hipCUB are **header-only** implementations: `#include <rocprim/rocprim.hpp>` /
   `#include <hipcub/hipcub.hpp>` and build with plain `hipcc`, no extra `-l` flag.
 
 ### 2. Index sort (argsort) vs. sorting the data — `index_sort.hip`
@@ -205,6 +224,8 @@ orders them. That is an **index sort** (argsort): sort an index array `[0,1,2,..
 by the keys, leave the payload in place, then either read records indirectly or
 **gather** once to materialize a sorted copy. `name_sort.hip` already does this
 implicitly (`thrust::sort_by_key(keys, keys+n, id)` sorts `id[]`, not the names).
+This approach is also used when there are multiple arrays that need to be reordered
+in the same manner.
 
 `index_sort.hip` makes the trade-off explicit and measured:
 
@@ -221,8 +242,8 @@ make index_sort
 Measured on MI300A (ROCm 7.2.4), `./index_sort 1000000 8` (8-word / 32 B payload):
 
 ```text
-strategy                                   time(ms)      Mkeys/s
-1a idx rocprim pairs (sort only)             0.524        1908.38
+strategy                                     time(ms)      Mkeys/s
+1a idx rocprim pairs (sort only)              0.524        1908.38
    + gather payload = total                   0.677        1477.88
 1b idx hipcub pairs (sort only)               0.482        2075.36
 1c idx thrust::sort_by_key (sort only)        0.951        1051.51
@@ -234,94 +255,162 @@ With a wide payload the index-sort + single gather wins because only 4 B/key mov
 through the passes; with a one-word payload, sorting the data directly is simplest.
 Sweep the payload size to find the crossover (exercise E-lib.4).
 
-## 3. *true* perfect hash: unique, dense keys
+## 3. bounded-domain direct-address sort: unique keys on a dense-ish range
 
-We start looking at examples where we can exploit unique charactistics of our
+We start looking at examples where we can exploit unique characteristics of our
 data array.
 
-A genuine **perfect hash** needs two guarantees:
+When keys are **unique** and land in a **bounded integer domain**, the key *is* its
+own sorted position — no comparisons, no histogram, no scan. This is the
+**direct-address** (bucket) idea in its cleanest form.
 
-1. a **dense, bounded** key range, `key ∈ [BASE, BASE+n)` with range `≈ n`, and
-2. **unique** keys — each occurs **exactly once** (a bijection).
-
-When both hold, placement is a **single write per element with no atomics, no
-histogram, and no scan**:
+**Framing — a NY daily-newspaper archive.** We have `n` scanned issues, each stamped
+with a **unique** publication date in the four-year window `2008-01-01 … 2011-12-31`.
+"One issue per date" gives uniqueness for free, and the date becomes a bounded
+integer index with a plain subtraction (0-based, C indexing):
 
 ```cpp
-slot[key[i] - BASE] = i;   // every destination slot has exactly one writer
+int day = date - 2008-01-01;   // 0 .. 1460   (DOMAIN = 1461 days; 2008 is a leap year)
+slot[day] = i;                 // one write, no atomics: unique => one writer per slot
 ```
 
-### 3.1 Reference solution — `id_sort.hip`
+Two guarantees make this work:
 
-Real-world framing: a mailing batch where each mailpiece carries a **unique
-sequential serial ID** (think USPS Intelligent Mail serial ID). The pieces come back from
-the sorter shuffled; we reassemble canonical order by serial ID. `id_sort.hip` builds a
-shuffled permutation of `[BASE, BASE+n)`, reorders it with the perfect-hash scatter,
-compares against a general library radix sort, and verifies the result is an exact
-permutation. Pass `dup=1` to inject a duplicate key and watch a record get lost.
+1. a **bounded** integer domain, `day ∈ [0, DOMAIN)` with a `DOMAIN` we can afford to
+   allocate, and
+2. **unique** keys — each date occurs **exactly once** (one issue per day).
 
-```bash
-make id_sort
-./id_sort 1000000        # unique dense keys -> exact permutation
-./id_sort 100000000      # 100M pieces
-./id_sort 1000000 1      # inject a duplicate: uniqueness violated
-```
-
-### 3.2 What it shows (validated on MI300A, ROCm 7.2.4)
-
-Because the perfect hash skips the histogram, the exclusive scan, **and** the
-atomics, it beats even a tuned library radix sort when the structure is known:
+The scatter leaves the array in calendar order but **not packed**: a 4-year archive
+of ~500 surviving issues fills only ~34% of the 1461 slots (missing issues, gaps in
+the collection). So we add the one step the *fully dense* case never needs — **stream-
+compact out the empty slots** — and the survivors emerge in sorted order:
 
 ```text
-# ./id_sort 100000000
-  perfect-hash scatter : 2.891 ms (34588.7 Mkeys/s)  no atomics/scan
-  library radix sort   : 7.652 ms (13068.0 Mkeys/s)  temp=816676868B
-  library/perfect time ratio = 2.65  (>1 => perfect hash faster)
-  result: exact permutation  (all 100000000 slots written, order verified)
-
-# ./id_sort 1000000 1   (duplicate injected)
-  result: NOT a bijection  unwritten_slots=1  order_ok=YES
-  -> a duplicate key overwrote a slot and left another empty;
-     this is exactly why the perfect hash requires UNIQUE keys.
+slot:  [ -1 , f7 , -1 , -1 , f3 , -1 , f9 , ... ]     scatter (calendar order, gappy)
+        └──────────────── compact out the -1 ─────────┘
+order: [ f7 , f3 , f9 , ... ]                          sorted issues, packed
 ```
 
-The `dup=1` case is the whole lesson: with duplicate keys two writers target the
-same slot, one write wins, and another slot is never written — a **silently lost
-record**. That is precisely why our next example, sorting by ZIP (non-unique),
-must fall back to the counting sort while unique serials can use the faster
-bijective scatter.
+> **The fully dense perfect hash is the special case.** Contiguous unique keys with
+> `range ≈ n` — e.g. if we had a file for every day during that time period
+> would fill the domain ~100%, so the compaction removes nothing and the scatter *is*
+> the sort. But whether a real serial stream is gap-free is an **assumption**:
+> The partially filled newspaper archive makes the gaps explicit instead of assuming them away.
+
+### 3.1 Reference solution — `date_sort.hip`
+
+`date_sort.hip` synthesizes `n` unique day-indices spread across the domain, shuffles
+them (issues come off the scanner in random order), sorts them by **direct-address
+scatter + stream compaction** (rocPRIM `select`), compares against a general library
+radix sort of the same keys, and verifies the compacted order is strictly increasing
+by date. Pass `dup=1` to give two issues the same date and watch a record get lost.
+
+```bash
+make date_sort
+./date_sort                 # 500 issues over the 1461-day calendar (~34% full)
+./date_sort 500 1461 1      # inject a duplicate date: uniqueness violated
+./date_sort 1000000         # scales the domain to keep ~34% density
+```
+
+### 3.2 What it shows (measured on MI300A, gfx942, ROCm 7.2.4)
+
+The direct-address sort does no comparisons and no atomics. Its cost is an `O(n)`
+scatter **plus** `O(DOMAIN)` to clear and compact the calendar array — so what you
+pay scales with the **domain**, not the input. Three runs (the domain scaled to hold
+the same ~34% density) show where that helps and where it hurts:
+
+```text
+         n        domain   density   direct-address (scatter+compact)   library radix   ratio lib/direct
+       500          1461     34.2%    0.112 ms (0.098 + 0.013)           0.011 ms        0.10
+   1000000       2923976     34.2%    0.043 ms (0.022 + 0.022)           0.257 ms        5.91
+ 100000000     292397660     34.2%    4.964 ms (3.526 + 1.438)           2.739 ms        0.55
+```
+
+- **n = 500 (the actual newspaper archive):** both are microseconds and the numbers
+  are dominated by kernel-launch latency, not the algorithm — effectively a tie. For
+  data this small, just call the library sort.
+- **n = 1M:** the direct-address sort is **~6× faster** — two cheap kernels (a
+  scattered write, then a compaction) beat a multi-pass radix.
+- **n = 100M:** with the domain scaled to ~292M slots (~1.2 GB), the `O(DOMAIN)`
+  scattered write and compaction over a large *sparse* array now cost more than a
+  bandwidth-optimized radix, and the **library wins**.
+
+That is the density lesson in numbers: direct-address is unbeatable when the domain is
+modest, but you pay for `O(DOMAIN)`, not `O(n)` — as the domain grows large and sparse,
+the general radix (or the compact **hash** of §6) becomes the better tool.
+
+Reference output for the default run and the duplicate-date case:
+
+```text
+# ./date_sort
+date_sort: n=500 issues  domain=1461 days  density=34.2%  dup=0
+  direct-address sort  : 0.112 ms  (scatter 0.098 + compact 0.013)  no atomics
+  library radix sort   : 0.011 ms  temp=256B
+  library/direct time ratio = 0.10  (>1 => direct-address faster)
+  result: 500 issues in date order  (961 empty days compacted out)
+    sorted[0]: file #183  ->  2008-01-02
+    sorted[1]: file #424  ->  2008-01-03
+    sorted[2]: file #109  ->  2008-01-06
+
+# ./date_sort 500 1461 1   (duplicate date injected)
+  result: NOT a clean bijection  selected=499 (expected 500)  order_ok=YES
+  -> two files shared a date; one scatter overwrote the other, so a record was dropped.
+```
+
+The `dup=1` case is the whole lesson: two issues with the same date target the same
+slot, one write wins, and a record is **silently lost**. That is precisely why the
+next example, sorting by ZIP (non-unique), must fall back to a **counting sort** —
+many records per bucket — instead of one-writer-per-slot placement.
 
 ### 3.3 Exercises
 
-- **E3.1** Run `./id_sort 1000000 1` and confirm exactly one slot is left unwritten.
-  Add a device-side duplicate detector (e.g. `atomicCAS` on a per-slot "written"
-  flag) that reports which serial IDs collided.
-- **E3.2** For a data set where we have just a few duplicates, how could you modify
-  the data set so you can use a **perfect hash function**?
-- **E3.3** Carry a payload: change `slot[d] = i` to also gather a record field, so
-  the output is the fully reordered mailing (not just the permutation).
-- **E3.4 (discussion)** Can we convert another data type to use a perfect hash 
-  function? Emails are unique but sparse. Sketch how you would build a
-  **perfect hash function** offline to map a fixed email set bijectively to
-  `[0,n)`, then reuse this exact scatter. What breaks if the set changes?
+- **E3.1** Run `./date_sort 500 1461 1` and confirm exactly one issue is dropped
+  (`selected=499`). Add a device-side duplicate detector (e.g. `atomicCAS` on a
+  per-slot "written" flag) that reports which dates collided.
+- **E3.2 (density sweep)** Fix `n` and grow the domain so the calendar gets sparser.
+  The `O(n)` scatter stays roughly flat while the `O(DOMAIN)` compaction grows, so the
+  `library/direct` ratio falls until the general radix wins. Measured at
+  `n = 1,000,000` on MI300A (gfx942, ROCm 7.2.4):
 
----
-## 4. nationwide mailer, sort by ZIP (single APU)
+```text
+  ./date_sort 1000000 <domain>
+        domain   density   direct-address (scatter+compact)   library radix   ratio lib/direct
+       1000000    100.0%    0.136 ms (0.116 + 0.019)           0.257 ms        1.89
+       3000000     33.3%    0.043 ms (0.022 + 0.021)           0.257 ms        6.05
+      10000000     10.0%    0.059 ms (0.022 + 0.037)           0.258 ms        4.36
+     100000000      1.0%    0.589 ms (0.029 + 0.560)           0.258 ms        0.44
+    1000000000      0.1%    6.165 ms (0.050 + 6.115)           0.256 ms        0.04
+```
+
+  The crossover sits between ~10% and ~1% density: below it the compaction over a
+  huge, mostly-empty array dominates and radix wins. The fully-dense (100%) row is the
+  perfect-hash special case — compaction removes nothing, and the scatter alone still
+  beats radix ~2×. Where does *your* crossover land, and how does it shift as you also
+  grow `n`?
+- **E3.3** Carry a payload: change `slot[day] = i` to also gather a record field, so
+  the output is the fully reordered archive (not just the permutation of indices).
+- **E3.4 (discussion)** When is a real key "dense enough" to direct-address? Compare
+  the partial newspaper archive (bounded, ~34% full), a full newspaper archive (contiguous, ~100%),
+  and an email address (unbounded string, effectively 0%). Where is the crossover to
+  the compact hash of §6?
+
+***
+## 4. nationwide mailer, sort by ZIP code (single APU)
 
 Example 4 is honestly a **counting sort**, not a perfect hash: many addresses share
-a ZIP, so keys are not unique and we need histogram → scan → **atomic** scatter. 
+a ZIP code, so keys are not unique and we need histogram → scan → **atomic** scatter. 
 
-A 5-digit ZIP is a bounded, known range `[0, 100000)`. Because many addresses
-share a ZIP, keys are **not unique**, so the "one index per bucket" perfect hash
+A 5-digit ZIP code is a bounded, known range `[0, 100000)`. Because many addresses
+share a ZIP code, keys are **not unique**, so the "one index per bucket" perfect hash
 generalizes to a **counting (bucket) sort**: histogram → exclusive-scan offsets →
-scatter. This is a single O(n) pass plus one scan — the pattern from the paper.
+scatter. This is a single O(n) pass plus one scan — still the pattern for the perfect hash.
 
 ### 4.1 Reference code — `zip_sort.hip`
 
 The custom counting sort (histogram → `thrust::exclusive_scan` → scatter) runs on
 unified memory, and the program then sorts a **copy** of the same keys with the
 `rocprim::radix_sort_keys` **library baseline** so you get a fair custom-vs-library
-comparison in one run (both timed *warm*; measured numbers in §3.7.5). See zip_sort.hip
+comparison in one run (both timed *warm*; measured numbers in §3.7.5). See `zip_sort.hip`
 for the source code.
 
 ### 4.2 Build & run (start small, then scale)
@@ -336,7 +425,7 @@ make zip_sort
 ### 3.7.5 Comparing the zip sort to library performance
 
 - `zip_sort` prints its **counting-sort** time and then a `rocprim::radix_sort_keys`
-  time on a copy of the ZIP keys, plus the time ratio (both measured *warm*, after a
+  time on a copy of the ZIP code keys, plus the time ratio (both measured *warm*, after a
   histogram warm-up, so the comparison is fair). Measured on MI300A (ROCm 7.2.4):
 
 ```text
@@ -346,7 +435,7 @@ make zip_sort
 100000000     7.494 ms            2.786 ms        0.37   (library ~2.7x faster)
 ```
 
-  The result is instructive: on *uniformly random* ZIPs over 100k buckets the general
+  The result is instructive: on *uniformly random* ZIP codes over 100k buckets the general
   radix sort is competitive at small `n` and actually **faster** at large `n`,
   because the counting sort's scatter is a storm of atomics into 100k HBM buckets. The
   custom sort pays off when the range is small (few buckets, atomics stay cheap) or
@@ -355,8 +444,8 @@ make zip_sort
 
 ### 4.3 Exercises
 
-- **E4.1** Compare `id_sort` and `zip_sort` at 1M / 100M. The perfect hash avoids
-  the scan and the atomic scatter — quantify how much each of those costs by
+- **E4.1** Compare `date_sort` and `zip_sort` at 1M / 100M. The direct-address sort
+  avoids the scan and the atomic scatter — quantify how much each of those costs by
   disabling them in `zip_sort`.
 - **E4.1** Confirm zero `hipMemcpy` calls (Appendix A shows how to verify with a
   trace). Compare against a version that uses separate `hipMalloc` +
@@ -370,7 +459,7 @@ make zip_sort
 - **E4.4 (baseline)** `zip_sort` prints a `rocprim::radix_sort_keys` time on
   the same keys. Compare it to the counting-sort time and explain the gap.
 
----
+***
 
 
 ## 5. Conference last names (sparse keys → compact hash)
@@ -394,8 +483,8 @@ quadratic probing) built and verified over the large, sparse 64-bit name-key spa
 Names are packed base-27 into a 64-bit key so numeric order equals lexicographic
 order.
 
-> The three-library baseline during the run prints 
-> `thrust::sort_by_key`, `rocprim::radix_sort_pairs`, and `hipcub::DeviceRadixSort`
+> The three-library baseline during the run prints `thrust::sort_by_key`, 
+> `rocprim::radix_sort_pairs`, and `hipcub::DeviceRadixSort`
 > timings on the same 64-bit keys.
 
 ### 5.2 Build & run
@@ -425,7 +514,7 @@ make name_sort
 
 - **E5.1** The provided `names.txt` (from `gen_names.py`) matches real U.S.
   surname-initial frequencies. Run `./name_sort names.txt` and read off the
-  frequency-weighted desk boundaries — do the four desks balance?
+  frequency-weighted registration desk boundaries — do the four desks balance?
 - **E5.2** Sweep the load factor: change `tableSize` to `1.1*n`, `1.5*n`, `2*n`,
   `4*n` and plot average probes/insert. Where does quadratic probing start to
   struggle?
@@ -440,28 +529,46 @@ make name_sort
   launch-overhead-bound, so regenerate a large list first
   (`make names.txt NCOUNT=2000000`) to compare steady-state throughput.
 
----
+***
 
 ## 6. emails: unique but *sparse* keys (compact hash)
 
-This is the case people usually reach for when they hear "unique keys" — and it is
+This is the case people usually think of when they hear "unique keys" — and it is
 exactly why a perfect hash does **not** apply. An email is **unique** per recipient
-(guarantee 2 from §1b) but lives in a huge, sparse **string** space, so it fails the
-**dense-range** guarantee 1. There is no `[0,n)` array to scatter into. Instead:
+(guarantee 2 from §3) but lives in a huge, sparse **string** space, so it fails the
+**bounded-domain** guarantee 1. There is no `[0,n)` array to scatter into. Instead:
 
 1. reduce each email string to a 64-bit key with a cheap device hash (FNV-1a), then
 2. store the keys in a **compact hash** table sized `≈ n` (not `≈` the key range),
    resolving the collisions that the size-`n` compression creates by open addressing.
 
+**FNV-1a** (Fowler–Noll–Vo, variant 1a) is a simple, fast, non-cryptographic
+string hash. It folds a string into a 64-bit key one byte at a time — for each
+byte it XORs the byte into the running hash, then multiplies by a fixed prime.
+It needs no table lookups and just one multiply/XOR per byte, so it runs cheaply
+on-device:
+
+```cpp
+// FNV-1a 64-bit string hash: cheap, good distribution, one multiply/xor per byte.
+__host__ __device__ inline uint64_t fnv1a(const char* s, int maxlen){
+    uint64_t h = 1469598103934665603ULL;   // FNV offset basis
+    for (int j = 0; j < maxlen && s[j]; ++j){
+        h ^= (uint64_t)(unsigned char)s[j];
+        h *= 1099511628211ULL;             // FNV prime
+    }
+    return h;
+}
+```
+
 The crucial lesson: **even with 100% unique emails you still get collisions after
-compression**, so you still probe. Uniqueness buys you `distinct == n` (no lost
-records), *not* a collision-free perfect hash.
+compression**, so you still need to probe to accomodate the collisions. Uniqueness
+buys you `distinct == n` (no lost records), *not* a collision-free perfect hash.
 
 ### 6.1 Reference solution — `email_sort.hip`
 
 `email_sort.hip` hashes each email to 64-bit (FNV-1a), builds the compact hash, and
 **sweeps the load factor** to show probes vs. load. It also radix-sorts the hashes
-as a bulk-dedup baseline (sorting by hash groups duplicates, but is *not*
+as a bulk-dedup baseline (sorting by a hash groups duplicates, but is *not*
 alphabetical).
 
 ```bash
@@ -488,11 +595,11 @@ Compact hash (open addressing + quadratic probing), unique keys:
   drop below `n`).
 - `avg_probes/ins` climbs from ~1.16 at load 0.25 to ~3.0 at load 0.91 — the
   size-`n` compression collides, so you probe. This is the compact-hash cost curve
-  that a dense perfect hash (id_sort, `key-base`) simply does not have.
+  that a direct-address sort (`date_sort`, `date - base`) simply does not have.
 
 ### 6.3 Where "a highly optimized hash" fits (and where it does not)
 
-- The **dense perfect hash** (§1) is `key - base` — a subtraction. It is
+- The **direct-address index** (§3) is `date - base` — a subtraction. It is
   **memory-bound on the scatter**, so a faster hash function changes nothing there.
 - Here, in the **compact hash**, the *hash function* matters: a better-distributed
   hash lowers collisions/probes, and a cheaper one lowers per-key compute. FNV-1a is
@@ -512,13 +619,15 @@ Compact hash (open addressing + quadratic probing), unique keys:
 - **E6.5** Instead of using a hash representation of the email address, is there
   another way that would allow using a **perfect hash** approach?
 
----
+***
 
 ## 7. Scaling out — merge-free multi-node sort (MPI + HIP)
 
 Range-partition the key space across ranks so the global result is a simple
-**concatenation** (no distributed merge): each rank owns a disjoint ZIP range,
-we shuffle each record to its owner with one all-to-all, then sort locally.
+**concatenation** (no distributed merge): each rank owns a disjoint ZIP code range,
+we move each record to its owner in the original distribution of data. We then
+balance and adjust the data on each processor with a 
+**neighbor-to-neighbor exchange**, then sort locally.
 
 ### 7.1 Distribution-aware partitioning (assume → place → adjust)
 
@@ -526,17 +635,53 @@ Rather than a separate sampling pass:
 
 1. Start with **assumed** range boundaries (uniform split of `[0,100000)` across
    ranks).
-2. Route the **first ~10%** of local records for real.
+2. Route the **first ~10%** of local records to the processor that owns that range.
 3. **Adjust** boundaries from the observed histogram of that 10%.
-4. **Move** only the small misplaced fraction; stream the remaining 90%.
+4. **Move** records with a neighbor-to-neighbor sweep (below).
+
+### 7.1a Neighbor-to-neighbor redistribution
+
+The data is assumed to be **written to the processor that owns that portion of the ZIP codes**
+(pre-partitioned under the uniform assumption). Because the boundaries assign
+**ascending** ZIP code ranges to **ascending** ranks, a record that ends up on the
+wrong rank belongs to one side, so the natural communication partner is the
+**adjacent** rank in that order. Each round every rank:
+
+1. Splits its buffer into *below-my-range* (→ left neighbor `rank-1`),
+   *in-my-range* (keep), and *at/above-my-range* (→ right neighbor `rank+1`).
+2. Exchanges those records with its two neighbors (`MPI_Sendrecv`; endpoints use
+   `MPI_PROC_NULL`). Anything still out of range is **forwarded** on the next
+   round, so records advance one hop per round toward their owner.
+3. Stops when an `MPI_Allreduce` shows no rank moved anything. The returned
+   `loops` count is the number of exchange rounds performed (`1` = a single
+   neighbor communication).
+
+When the guess is **close**, only the boundary stragglers move, so **one**
+neighbor communication usually suffices and **two** is the safe bound. If the
+guessed boundaries are **bad** — for example the 10% sample is unrepresentative
+and collapses most of the data onto one processor — the sweep needs more than two
+rounds; the code then **resets** the boundaries from a *full-data* histogram,
+restores the original local records, and **re-places from scratch** (the
+post-reset sweep is uncapped, so it always terminates in at most `nranks-1` hops
+and never falls back to an all-to-all). Running with `skew=1` writes
+badly-distributed input (80% of keys in the low band, not near their owner) to
+exercise exactly this reset path.
 
 ### 7.2 Reference solution — `multinode_zip_sort.hip`
 
-This example is a complete MPI + HIP program. It samples the first 10% to adjust boundaries, shuffles
-with `MPI_Alltoallv`, sorts locally on the GPU, and validates the merge-free result
+This example is a complete MPI + HIP program. It samples the first 10% to adjust boundaries,
+redistributes with an iterative **neighbor-to-neighbor** exchange (`MPI_Sendrecv` to
+`rank-1`/`rank+1`, with the two-loop-then-reset rule above — no `MPI_Alltoallv`),
+sorts locally on the GPU, and validates the merge-free result
 (local order + seams + load balance). hipMalloc pointers are host-accessible on the
 APU, so the MPI calls need no separate staging buffers. Pass `skew=1` as the second
-argument to force an imbalanced input and observe the failure/repair.
+argument to force badly-distributed input and observe the reset/repair. Each rank
+also reports `loops=` (neighbor-exchange rounds to converge) and `reset=` (whether
+the full-histogram boundary reset fired). A **tuned variant**,
+`tuned_multinode_zip_sort.hip`, keeps this same code and adds the recurring
+**monthly-mailer** design case (a NorthEast US-heavy dataset with only ~10% churn that reuses
+last month's boundaries and drives redistribution from the per-rank imbalance
+instead of a fresh sample) — see §7.6.
 
 ### 7.3 Interactive SLURM run — single node, 4 APUs
 
@@ -548,7 +693,7 @@ directly from the interactive shell (again `mpirun`, **not** `srun`).
 ```bash
 # 1) Grab one node with its 4 APUs for an hour (add -p <queue> as needed)
 salloc -N 1 --ntasks-per-node=4 --gpus-per-node=4 \
-       -p PPAC_MI300A_SPX --exclusive -t 01:00:00
+       -t 01:00:00 -p PPAC_MI300A_SPX -t 01:00:00
 
 # 2) When the prompt returns on the allocated compute node:
 module load rocm/7.2.4 openmpi
@@ -575,7 +720,7 @@ to release the allocation when you are done.
 
 ### 7.4 SLURM launch on MI300A — `run_multinode.sbatch`
 
-MI300A nodes expose 4 APUs. Launch one rank per APU with **`mpirun`. The batch
+MI300A nodes SPX mode expose 4 APUs. Launch one rank per APU with **`mpirun`. The batch
 script runs on the first allocated compute node, so `mpirun` places the ranks from there.
 
 We use the same logic for setting the GPU devices for each MPI rank as was used
@@ -612,26 +757,45 @@ sbatch run_multinode.sbatch 4000000 0
 
 **Validated output (4 ranks × 4M records, MI300A / ROCm 7.2.4):**
 
-```text
-# UNIFORM (skew=0)
-[rank 0] owns ZIP [0,24983)     recv=3997879  global_offset=0         local_sorted=YES seam=YES
-[rank 1] owns ZIP [24983,49996) recv=4000001  global_offset=3997879   local_sorted=YES seam=YES
-[rank 2] owns ZIP [49996,75008) recv=4002866  global_offset=7997880   local_sorted=YES seam=YES
-[rank 3] owns ZIP [75008,100000)recv=3999254  global_offset=12000746  local_sorted=YES seam=YES
-GLOBAL: total=16000000  imbalance(max/avg)=1.00  local_sorted=ALL-OK  seams=ALL-OK  (skew=0)
+The program warms up the GPU once (so `local_sort` reflects steady state, not
+cold-start JIT/allocation), then reports five phase timers: `sample` (10% sample +
+boundary adjust), `exchange` (neighbor sweeps + staging), `rebalance` (the
+full-histogram reset overhead; `0` when no reset), `local_sort` (GPU counting
+sort), and `dist_total` (barrier to seam check). `wasted_rounds` counts exchange
+rounds thrown away before a reset.
 
-# SKEWED (skew=1): 80% of keys in the low ZIP band -> boundaries shrink there
-[rank 0] owns ZIP [0,3050)      recv=4004284  global_offset=0         local_sorted=YES seam=YES
-[rank 1] owns ZIP [3050,6099)   recv=3997214  global_offset=4004284   local_sorted=YES seam=YES
-[rank 2] owns ZIP [6099,9148)   recv=4002057  global_offset=8001498   local_sorted=YES seam=YES
-[rank 3] owns ZIP [9148,100000) recv=3996445  global_offset=12003555  local_sorted=YES seam=YES
-GLOBAL: total=16000000  imbalance(max/avg)=1.00  local_sorted=ALL-OK  seams=ALL-OK  (skew=1)
+```text
+# PRE-PARTITIONED (skew=0): data already near its owner -> neighbor exchange only
+[rank 0] owns ZIP [0,25581)     recv=3995451  ... loops=2 reset=0  |  sample=2.382  exchange=36.913  rebalance=0.000  local_sort=1.902  dist_total=62.119 ms
+[rank 1] owns ZIP [25581,49997) recv=4003941  ... loops=2 reset=0  |  sample=2.380  exchange=37.558  rebalance=0.000  local_sort=1.769  dist_total=62.128 ms
+[rank 2] owns ZIP [49997,74996) recv=3999788  ... loops=2 reset=0  |  sample=2.356  exchange=35.883  rebalance=0.000  local_sort=2.043  dist_total=62.200 ms
+[rank 3] owns ZIP [74996,100000)recv=4000820  ... loops=2 reset=0  |  sample=2.345  exchange=43.587  rebalance=0.000  local_sort=1.989  dist_total=62.192 ms
+GLOBAL: total=16000000  imbalance(max/avg)=1.00  local_sorted=ALL-OK  seams=ALL-OK  neighbor_loops=2 reset=NO wasted_rounds=0  (skew=0)
+GLOBAL: max times (ms): sample=2.382  exchange=43.587  rebalance=0.000  local_sort=2.043  dist_total=62.200
+
+# BADLY DISTRIBUTED (skew=1): 80% in the low band, not near owner -> reset path
+[rank 0] owns ZIP [0,3047)      recv=4000276  ... loops=3 reset=1  |  sample=3.586  exchange=332.945  rebalance=7.550  local_sort=1.778  dist_total=358.401 ms
+[rank 1] owns ZIP [3047,6099)   recv=4001222  ... loops=3 reset=1  |  sample=3.569  exchange=331.977  rebalance=7.523  local_sort=1.606  dist_total=358.431 ms
+[rank 2] owns ZIP [6099,9147)   recv=4000716  ... loops=3 reset=1  |  sample=3.526  exchange=332.744  rebalance=7.388  local_sort=1.826  dist_total=358.423 ms
+[rank 3] owns ZIP [9147,100000) recv=3997786  ... loops=3 reset=1  |  sample=3.550  exchange=325.667  rebalance=7.378  local_sort=1.981  dist_total=358.452 ms
+GLOBAL: total=16000000  imbalance(max/avg)=1.00  local_sorted=ALL-OK  seams=ALL-OK  neighbor_loops=3 reset=YES wasted_rounds=2  (skew=1)
+GLOBAL: max times (ms): sample=3.586  exchange=332.945  rebalance=7.550  local_sort=1.981  dist_total=358.452
 ```
 
-Note how under heavy skew the assume-place-adjust step shrinks the low-range
-partitions (rank 0 owns only `[0,3050)`) so per-rank counts stay balanced
-(imbalance ≈ 1.00), and the disjoint ordered ranges make the global merge a
-no-op (verified seams + global offsets).
+With pre-partitioned input (skew=0) the guess is close, so only the boundary
+stragglers move and the neighbor exchange converges in `loops=2` with **no reset**
+(`exchange≈44 ms`, dominated by the two host-side partition passes over the local
+buffer and the host→device staging, not the network). Under `skew=1` the data is
+not near its owner: the guessed-boundary sweep exceeds two rounds
+(`wasted_rounds=2`), the full-histogram **reset** fires (`rebalance≈7.5 ms`), and
+the uncapped post-reset sweep re-places everything in `loops=3` (3 hops for 4
+ranks) at `exchange≈333 ms`. The assume-place-adjust step still shrinks the
+low-range partitions (rank 0 owns only `[0,3047)`) so per-rank counts stay
+balanced (imbalance ≈ 1.00) and the disjoint ordered ranges make the global merge
+a no-op. Note the steady-state `local_sort` is only ≈2 ms — the redistribution,
+not the GPU sort, is what the neighbor-vs-reset choice governs. The gap between
+`dist_total` and the phase timers (~15 ms) is the host-side local-order
+verification and the seam exchange, which are intentionally left untimed.
 
 ### 7.5 Exercises (extend the reference)
 
@@ -639,19 +803,97 @@ no-op (verified seams + global offsets).
   `imbalance(max/avg)`. Then **disable** the boundary adjustment (force uniform
   `bnd[]`) and rerun `skew=1` to reproduce the **degenerate all-on-one-rank** case.
 - **E7.2** Log the number of records that changed owner after the 10% calibration
-  vs. the uniform assumption (add a counter around the `owner_of` reassignment).
+  vs. the uniform assumption (add a counter around the `dir_of` classification).
 - **E7.3** Swap the ZIP key for a **last-name** key and reuse the compact hash from
   Example 2 as the per-rank local sort.
 - **E7.4 (scaling study)** Run 1 → 2 → 4 → 8 nodes; report records/sec and the
-  fraction of wall time in `MPI_Alltoallv` (time it around the call).
+  fraction of wall time in each phase timer (`sample`, `exchange`, `rebalance`,
+  `local_sort`). How do `neighbor_loops`, `wasted_rounds`, and the number of hops
+  grow with `nranks`, and when does the two-round budget stop being enough? How
+  much of `exchange` is host-side partitioning/staging vs. actual MPI traffic?
 - **E7.5** Try changing the amount of data used for the sampling from 10% to another
   value. What is optimal? How would this change for the amount of skew in the data?
+- **E7.5a** With the default pre-partitioned input the sweep converges in `<=2`
+  rounds with no reset. Increase the boundary-spill fraction (or the spill
+  distance) in the generator until records must travel two ranks, and find the
+  point where the two-round budget is exceeded and the reset fires. How does that
+  threshold move as you change `nranks`?
 - **E7.6** (discussion) When would the multinode approach be better than doing
   a single GPU sort?
+- **E7.7 (monthly design case)** Build and run the tuned recurring-mailer variant
+  (`tuned_multinode_zip_sort N 0 <churn%>`, see §7.6). With `churn=10` confirm
+  `action=skip` (imbalance ≈ 1.02
+  < `τ_nbr=1.05`) at both 4 and 8 ranks. Then raise the churn until the action
+  becomes `neighbor` and then `reset`. Verify the crossover matches
+  `τ_reset = 1 + 2/P` (1.50 at P=4, 1.25 at P=8) and that neighbor rounds track
+  `loops ≈ (imbalance − 1) × P`.
+- **E7.8 (projection)** From your E7.7 numbers, project the churn (or number of
+  un-rebalanced months) at which a **16-** or **32-**rank job should reset rather
+  than diffuse. Why does the reset threshold *tighten* as you add ranks?
 
----
+***
 
-## 8. (Optional, advanced) The radix memory story: rocPRIM Onesweep vs. Orochi's circular buffer
+## 7.6 Design case — the monthly recurring mailer (`tuned_multinode_zip_sort.hip`)
+
+The previous `multinode_zip_sort` example is for an unknown dataset sorted
+from a uniform guess. Many real sorts are *recurring* — a monthly bulk mailing
+re-sorts a database that is heavily northeast-weighted and changes only ~10% between
+runs. The prior month already produced balanced boundaries and a histogram, so
+re-sampling 10% of an almost-unchanged dataset is wasted work. The **tuned variant**
+`tuned_multinode_zip_sort.hip` (built with `make tuned_multinode_zip_sort`) keeps
+the original code intact and adds a third argument that turns on this mode:
+
+```bash
+./tuned_multinode_zip_sort <records/rank> 0 <churn%>   # e.g. 4000000 0 10  = 10% churn
+```
+
+In this mode the code (i) generates NE-heavy records already sitting under **last
+month's** boundaries, (ii) applies `churn%` (half deletions, half NE-biased
+additions), (iii) skips the 10% data sample and instead measures the **per-rank
+count imbalance** `max/avg` — `P` numbers, one reduction — and (iv) applies a
+tiered policy driven by two thresholds baked in near the top of the source:
+
+```
+TAU_NBR    = 1.05    // <= this: accept the drift, move nothing (action=skip)
+NBR_BUDGET = 2       // neighbor rounds; tau_reset = 1 + NBR_BUDGET/nranks
+```
+
+- `imbalance ≤ τ_nbr (1.05)` → **skip**: no data moves; just the local sort + seam check.
+- `τ_nbr < imbalance ≤ τ_reset (1 + 2/P)` → **neighbor** rebalance (budget ≈ `(imb−1)·P` rounds).
+- `imbalance > τ_reset` → **reset**: rebuild boundaries in one shot and re-place.
+
+Measured on one MI300A node (16M records):
+
+```text
+# 10% monthly churn — a typical month moves NOTHING
+GLOBAL: total=16000001  imbalance_in=1.021 -> out=1.02  action=skip  ... neighbor_loops=0 reset=NO  (monthly churn=10%, tau_nbr=1.05, tau_reset=1.500)   # P=4
+GLOBAL: total=16000002  imbalance_in=1.021 -> out=1.02  action=skip  ... neighbor_loops=0 reset=NO  (monthly churn=10%, tau_nbr=1.05, tau_reset=1.250)   # P=8
+
+# heavy drift (proxy for many un-rebalanced months) — a bounded neighbor rebalance
+GLOBAL: total=15999998  imbalance_in=1.207 -> out=1.00  action=neighbor  ... neighbor_loops=2 reset=NO  (monthly churn=100%, tau_nbr=1.05, tau_reset=1.250)  # P=8
+```
+
+The design numbers, from a P = 4/8/16 sweep:
+
+| imbalance (in) | P=4 loops | P=8 loops | P=16 loops |
+|---|---|---|---|
+| 1.02 (10% churn) | 1 | 1 | 1 |
+| 1.12 (50% churn) | 1 | 1 | 2 |
+| 1.24 (100% churn) | 1 | 2 | 3 |
+| 1.36 (150% churn) | 1 | 2 | 4 |
+
+Neighbor rounds scale as **`loops ≈ (imbalance − 1) × P`**, so to stay within the
+2-round budget the reset threshold is **`τ_reset = 1 + 2/P`** — it *tightens* as you
+add ranks (thinner ranks ⇒ a given imbalance means mass must travel more hops, so a
+one-shot rebuild beats a long diffusion). The takeaway: the generic path reads 10%
+every run and budgets two neighbor rounds; the monthly design reads **0%** (a
+maintained histogram + a `P`-value imbalance check), typically moves **nothing**,
+and escalates to a neighbor rebalance or a machine-size-aware reset only when the
+data actually drifts.
+
+***
+
+## 8. The radix memory story: rocPRIM Onesweep vs. Orochi's circular buffer
 
 This alternative sort approach shows a memory trade-off versus the *general-purpose*
 radix sort. Can we save memory use and still use the general sort algorithm?
@@ -689,7 +931,7 @@ Measured on MI300A (ROCm 7.2.4):
 The scratch grows **linearly at ~4.125 bytes/key** — a billion keys needs ~4.1 GB
 of temporary storage on top of the data itself.
 
-### 8.1 **Part B — read the fix in Orochi (`ParallelPrimitives`), and port it to wave64.**
+### 8.1 Examine the circular-buffer in Orochi and port it to wave64.
 The GPUOpen circular-buffer extension (Kao & Yoshimura, *GPU Zen 3*, 2025) holds
 that look-back buffer at a **constant ~2 MB regardless of `n`**. Clone Orochi and
 read the mechanism — the `tail iterator`, `L_lookback`, and `N_table` in:
@@ -769,7 +1011,7 @@ n=1000  1e5  1e6  1e7   -> sorted=YES, mismatches=0 (all)
   kernel) and fix them. Confirm correctness with the bundled test. This is the
   canonical "RDNA-tuned kernel → CDNA wave64" migration in ~30 lines.
 
----
+***
 
 ### 9. Closing Exercises
 
@@ -787,7 +1029,7 @@ n=1000  1e5  1e6  1e7   -> sorted=YES, mismatches=0 (all)
 - **9.5** Swap `name_sort`'s `thrust::sort_by_key` for the direct
   `rocprim::radix_sort_pairs` baseline and confirm identical alphabetical output.
 
----
+***
 
 # Appendix A — On-Your-Own Profiling
 
@@ -865,7 +1107,7 @@ mpirun -np "$NP" --map-by ppr:4:node -x HSA_XNACK ./multinode_zip_sort 4000000 0
 
 **Tasks:**
 - Sum node-level average power × wall time for a **whole-job energy** estimate.
-- Correlate power dips with the all-to-all shuffle phase (E3.4 timing).
+- Correlate power dips with the neighbor-exchange redistribution phase (E3.4 timing).
 
 ## A.6 CPU-side profiling (uProf / Linux tools)
 
@@ -885,17 +1127,17 @@ prefetch/`hipMemAdvise` hints change the balance on the APU?
 ## A.7 Profiling deliverable
 
 Produce a one-page summary: dominant kernel, roofline position, energy for the
-sort, and (multi-node) the shuffle fraction and per-rank balance after
+sort, and (multi-node) the neighbor-exchange fraction and per-rank balance after
 assume-place-adjust.
 
----
+***
 
 ## Appendix B — File manifest
 
 | File | Purpose |
 |---|---|
 | `zip_sort.hip` | Example 1: counting sort by ZIP (non-unique keys) + library baseline |
-| `id_sort.hip` | Example 1b: true perfect-hash scatter for unique dense keys (+ dup detection) |
+| `date_sort.hip` | Example 1b: direct-address (calendar) sort — unique keys on a bounded, gappy domain; scatter + compaction (+ dup detection) |
 | `name_sort.hip` | Example 2: LDS histogram + radix sort + compact hash (complete) |
 | `email_sort.hip` | Example 2b: unique-but-sparse emails -> compact hash, load-factor/probe sweep |
 | `multinode_zip_sort.hip` | Example 3: MPI range-partition + local sort (complete) |

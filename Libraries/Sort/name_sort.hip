@@ -1,4 +1,7 @@
-// name_sort.hip  —  Example 2 reference solution (MI300A / gfx942)
+// Copyright AMD 2026, MIT License
+// Author: Bob Robey Bob.Robey@amd.com with AI tool help
+//
+// name_sort.hip  —  Example 5 reference solution (MI300A / gfx942)
 //
 // Three parts on the SAME data (unified memory, no hipMemcpy):
 //   A) LDS-privatized first-letter histogram   -> registration-desk balancing

@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright AMD 2026, MIT License
+# Author: Bob Robey Bob.Robey@amd.com with AI tool help
 #SBATCH --job-name=zipsort
 #SBATCH --partition=PPAC_MI300A_SPX
 #SBATCH --nodes=2
@@ -9,7 +11,7 @@
 #
 # Usage: sbatch run_multinode.sbatch [records_per_rank] [skew(0|1)]
 #
-# Launch with mpirun (NOT srun). The batch script runs on the first allocated
+# Launch with mpirun. The batch script runs on the first allocated
 # compute node; mpirun places SLURM_NTASKS ranks (ppr:4:node -> one APU each).
 # No GPU-binding wrapper is needed: the code derives a node-local rank from an
 # MPI_COMM_TYPE_SHARED sub-communicator and binds hipSetDevice(local_rank % ndev),

@@ -1,3 +1,6 @@
+// Copyright AMD 2026, MIT License
+// Author: Bob Robey Bob.Robey@amd.com with AI tool help
+//
 // rocprim_tempsize.hip
 // Demonstrates the memory story behind the "circular buffer" radix work:
 // rocPRIM's Onesweep device_radix_sort needs a temporary buffer whose size

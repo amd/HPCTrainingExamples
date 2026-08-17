@@ -1,8 +1,11 @@
-// email_sort.hip  —  Example 2b: unique BUT sparse keys => compact hash
+// Copyright AMD 2026, MIT License
+// Author: Bob Robey Bob.Robey@amd.com with AI tool help
 //
-// Emails are the case the ZIP counting sort and the id_sort perfect hash cannot
-// handle: each recipient is UNIQUE (guarantee #2) but the key is a variable-length
-// string over a huge, sparse space (fails guarantee #1, a dense bounded range).
+// email_sort.hip  —  Example 6: unique BUT sparse keys => compact hash
+//
+// Emails are the case the ZIP counting sort and the date_sort direct-address hash
+// cannot handle: each recipient is UNIQUE (guarantee #2) but the key is a variable-
+// length string over a huge, sparse space (fails guarantee #1, a bounded domain).
 // So there is no dense array to scatter into. Two things happen instead:
 //
 //   1) reduce each email string to a 64-bit key with a device hash (FNV-1a here),
@@ -10,7 +13,7 @@
 //      collisions from the size-n compression resolved by open addressing.
 //
 // The teaching point: even with 100% UNIQUE emails, once you compress the 64-bit
-// hash down to a table of size ~ n you still get collisions, so you still probe.
+// hash down to a table of size ~ n you still get collisions, so you still have to probe.
 // Uniqueness gives distinct == n (no lost records); it does NOT give you a
 // collision-free perfect hash. We sweep the load factor to show probes vs. load.
 //

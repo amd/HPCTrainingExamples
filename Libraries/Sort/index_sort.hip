@@ -1,3 +1,6 @@
+// Copyright AMD 2026, MIT License
+// Author: Bob Robey Bob.Robey@amd.com with AI tool help
+//
 // index_sort.hip  —  index sort (argsort) vs. sorting the data itself
 //
 // Often you do NOT want to move the records; you want a PERMUTATION that puts

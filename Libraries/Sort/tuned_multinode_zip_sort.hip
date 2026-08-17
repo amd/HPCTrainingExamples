@@ -29,12 +29,27 @@
 #include <cstdlib>
 #include <cstring>
 #include <climits>
+#include <cmath>
+#include <algorithm>
 
 #define HIP_CHECK(x) do { hipError_t e=(x); if(e){ \
   fprintf(stderr,"HIP error %s:%d: %s\n",__FILE__,__LINE__,hipGetErrorString(e)); \
   exit(1);} } while(0)
 
 static const int NB = 100000;   // ZIP range [0,100000)
+
+// ---- Monthly recurring-sort design (see the short paper / hands-on exercises) ----
+// A monthly mailer re-sorts a database that changes only ~10% between runs, with a
+// NE-heavy ZIP distribution. Reusing LAST MONTH'S boundaries (and an incrementally
+// maintained histogram) makes the guess excellent, so we skip the 10% data sample
+// entirely and drive redistribution from the cheap per-rank COUNT imbalance:
+//   * imbalance <= TAU_NBR            -> do nothing (accept the tiny drift)
+//   * TAU_NBR < imbalance <= tau_reset -> neighbor rebalance (a few rounds)
+//   * imbalance  > tau_reset           -> full reset (re-place from scratch)
+// Measured on MI300A (P=4/8/16): neighbor rounds ~= ceil((imbalance-1)*nranks), so
+// the reset threshold TIGHTENS with P: tau_reset = 1 + NBR_BUDGET/nranks.
+static const double TAU_NBR    = 1.05;  // 5% count imbalance triggers a rebalance
+static const int    NBR_BUDGET = 2;     // neighbor rounds allowed before a full reset
 
 __global__ void histogram(const int* z, int n, int* c){
     int i = blockIdx.x*blockDim.x + threadIdx.x;
@@ -118,6 +133,30 @@ static int neighbor_sweep(std::vector<int>& buf, const std::vector<int>& bnd,
     }
 }
 
+// NE-heavy prior histogram: New England / NY / NJ / PA cluster in ZIP [0,20000)
+// carries wNE times the weight of the rest. Models the mailer's known distribution.
+static void ne_prior(std::vector<long>& gh, long N, double wNE){
+    std::vector<double> w(NB); double W = 0;
+    for (int b = 0; b < NB; ++b){ w[b] = (b < 20000) ? wNE : 1.0; W += w[b]; }
+    gh.assign(NB, 0);
+    for (int b = 0; b < NB; ++b) gh[b] = (long)llround((double)N * w[b] / W);
+}
+
+// Inverse-CDF sampler over [lo,hi) for O(log n) weighted draws.
+struct Sampler {
+    int lo = 0; std::vector<double> cdf;
+    void build(int lo_, int hi_, const std::vector<double>& w){
+        lo = lo_; cdf.assign(hi_ - lo_, 0.0); double acc = 0;
+        for (int b = lo_; b < hi_; ++b){ acc += w[b]; cdf[b - lo_] = acc; }
+    }
+    int draw() const {
+        double r = (double)rand() / RAND_MAX * cdf.back();
+        int k = (int)(std::lower_bound(cdf.begin(), cdf.end(), r) - cdf.begin());
+        if (k >= (int)cdf.size()) k = (int)cdf.size() - 1;
+        return lo + k;
+    }
+};
+
 int main(int argc, char** argv){
     MPI_Init(&argc, &argv);
     int rank, nranks;
@@ -144,34 +183,63 @@ int main(int argc, char** argv){
            rank, local_rank, mydev, pcibus, ndev);
 
     long n_local = (argc > 1) ? atol(argv[1]) : (1L<<22);
-    int  skew    = (argc > 2) ? atoi(argv[2]) : 0;   // 1 = skewed input (demo imbalance)
+    int  skew    = (argc > 2) ? atoi(argv[2]) : 0;   // 1 = skewed (badly distributed) input
+    int  monthly = (argc > 3) ? atoi(argv[3]) : 0;   // >0 = recurring mailer; value = churn %
 
-    // Data is "written to the processor that owns that ZIP portion": each rank fills
-    // its own slice of the key space under the uniform assumption. Because the input
-    // is already near its owner, a close boundary guess needs only ONE neighbor hop
-    // (two at most). skew=1 instead writes badly-distributed input (not near its
-    // owner), which forces >2 hops and exercises the reset path.
-    int* zip; HIP_CHECK(hipMalloc(&zip, (size_t)n_local*sizeof(int)));
+    // This rank's records live in a host vector `orig` (the MPI redistribution runs on
+    // the host; the APU sorts the result). How they are generated selects which
+    // redistribution path the run exercises.
     srand(1000 + rank);
-    const int w    = NB / nranks;                       // uniform-assumption width
-    const int lo   = rank * w;                          // this rank's assumed range [lo,hi)
-    const int hi   = (rank == nranks - 1) ? NB : lo + w;
-    const int span = hi - lo;
-    for (long i = 0; i < n_local; ++i){
-        if (skew){
-            zip[i] = (rand() % 100 < 80) ? (rand() % 10000)   // 80% in the low ZIP band
-                                         : (rand() % NB);      // (not pre-partitioned)
-        } else if (nranks > 1 && rand() % 100 < 5){
-            // ~5% "boundary spill": written just across into an ADJACENT rank so a
-            // single neighbor exchange repositions it once boundaries are adjusted.
-            if ((rand() & 1) && lo > 0) zip[i] = lo - 1 - (rand() % w);   // -> left  neighbor
-            else if (hi < NB)           zip[i] = hi     + (rand() % w);   // -> right neighbor
-            else                        zip[i] = lo     + (rand() % span);
-            if (zip[i] < 0)   zip[i] = 0;
-            if (zip[i] >= NB) zip[i] = NB - 1;
-        } else {
-            zip[i] = lo + (rand() % span);               // squarely on its owner
+    std::vector<int> orig;
+    std::vector<int> bnd_prev;                        // last-month boundaries (monthly mode)
+    if (monthly > 0){
+        // ---- recurring monthly mailer: NE-heavy ZIPs, ~churn% changed since last run,
+        //      already sitting under LAST MONTH's boundaries (pre-partitioned) ----
+        const double wNE = 8.0, churn = monthly / 100.0;
+        const long   N   = n_local * (long)nranks;
+        std::vector<long> gh_prev; ne_prior(gh_prev, N, wNE);
+        build_boundaries(gh_prev, nranks, bnd_prev);
+        std::vector<double> wbase(NB), wadd(NB);
+        for (int b = 0; b < NB; ++b){ wbase[b] = (b < 20000) ? wNE : 1.0; wadd[b] = wbase[b]*wbase[b]; }
+        Sampler sbase; sbase.build(bnd_prev[rank], bnd_prev[rank+1], wbase);
+        orig.reserve((size_t)(n_local * 1.2));
+        for (long i = 0; i < n_local; ++i) orig.push_back(sbase.draw());       // last month
+        long ndel = (long)(n_local * churn * 0.5);                             // ~5% deletions
+        for (long k = 0; k < ndel && !orig.empty(); ++k){
+            long idx = rand() % (long)orig.size(); orig[idx] = orig.back(); orig.pop_back();
         }
+        double WA = 0, myMass = 0;                                             // ~5% NE-biased adds
+        for (int b = 0; b < NB; ++b) WA += wadd[b];
+        for (int b = bnd_prev[rank]; b < bnd_prev[rank+1]; ++b) myMass += wadd[b];
+        long myAdd = (long)llround((double)N * churn * 0.5 * myMass / WA);
+        Sampler sadd; sadd.build(bnd_prev[rank], bnd_prev[rank+1], wadd);
+        for (long k = 0; k < myAdd; ++k) orig.push_back(sadd.draw());
+    } else {
+        // Data written near its owner under the uniform assumption (skew=0), or badly
+        // distributed (skew=1). skew=0 needs one neighbor hop; skew=1 hits the reset.
+        int* zip = (int*)malloc((size_t)n_local * sizeof(int));
+        const int w    = NB / nranks;                   // uniform-assumption width
+        const int lo   = rank * w;                      // this rank's assumed range [lo,hi)
+        const int hi   = (rank == nranks - 1) ? NB : lo + w;
+        const int span = hi - lo;
+        for (long i = 0; i < n_local; ++i){
+            if (skew){
+                zip[i] = (rand() % 100 < 80) ? (rand() % 10000)   // 80% in the low ZIP band
+                                             : (rand() % NB);      // (not pre-partitioned)
+            } else if (nranks > 1 && rand() % 100 < 5){
+                // ~5% "boundary spill": written just across into an ADJACENT rank so a
+                // single neighbor exchange repositions it once boundaries are adjusted.
+                if ((rand() & 1) && lo > 0) zip[i] = lo - 1 - (rand() % w);   // -> left  neighbor
+                else if (hi < NB)           zip[i] = hi     + (rand() % w);   // -> right neighbor
+                else                        zip[i] = lo     + (rand() % span);
+                if (zip[i] < 0)   zip[i] = 0;
+                if (zip[i] >= NB) zip[i] = NB - 1;
+            } else {
+                zip[i] = lo + (rand() % span);           // squarely on its owner
+            }
+        }
+        orig.assign(zip, zip + n_local);
+        free(zip);
     }
 
     // ---- warm up the GPU (first-touch allocation + kernel/thrust setup) so the
@@ -199,46 +267,88 @@ int main(int argc, char** argv){
     MPI_Barrier(MPI_COMM_WORLD);
     double t_dist0 = MPI_Wtime();
 
-    // ---- 1) assume-place-adjust boundaries from a 10% sample ----
+    // ---- 1) obtain range boundaries ----
     double t_s0 = MPI_Wtime();
-    long sample = n_local / 10; if (sample < 1) sample = n_local;
-    std::vector<long> sh(NB, 0);
-    for (long i = 0; i < sample; ++i) sh[zip[i]]++;          // 10% local histogram
     std::vector<long> gh(NB, 0);
-    MPI_Allreduce(sh.data(), gh.data(), NB, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+    std::vector<int>  bnd;
+    if (monthly > 0){
+        // Reuse LAST MONTH's boundaries plus a maintained histogram (last month + the
+        // known churn delta). We model the maintained counts with one NB reduction --
+        // P-independent, and, crucially, NOT a fresh 10% data sample.
+        std::vector<long> lh(NB, 0); for (int z : orig) lh[z]++;
+        MPI_Allreduce(lh.data(), gh.data(), NB, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+        bnd = bnd_prev;                                    // start from last month
+    } else {
+        // assume-place-adjust boundaries from a 10% sample
+        long sample = n_local / 10; if (sample < 1) sample = n_local;
+        std::vector<long> sh(NB, 0);
+        for (long i = 0; i < sample; ++i) sh[orig[i]]++;   // 10% local histogram
+        MPI_Allreduce(sh.data(), gh.data(), NB, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+        build_boundaries(gh, nranks, bnd);
+    }
+    double t_sample = MPI_Wtime() - t_s0;       // sample/prior + adjust time (this rank)
 
-    std::vector<int> bnd;
-    build_boundaries(gh, nranks, bnd);          // balanced from the 10% sample
-    double t_sample = MPI_Wtime() - t_s0;       // sample + adjust time (this rank)
-
-    // ---- 2) redistribute with a neighbor-to-neighbor sweep (no all-to-all) ----
-    // Keep the original local records so a reset can re-place from scratch.
-    std::vector<int> orig(zip, zip + n_local);
+    // ---- 2) redistribute ----
     double t_exchange = 0.0, t_rebalance = 0.0;  // exchange vs reset-rebalance cost
-    int    wasted_rounds = 0;                    // rounds thrown away before a reset
-
+    int    wasted_rounds = 0, did_reset = 0, loops = 0, action = 0;  // action: 0 skip,1 nbr,2 reset
+    double imbalance = 1.0;                       // per-rank COUNT imbalance (monthly signal)
     std::vector<int> buf = orig;
-    double t_e0 = MPI_Wtime();
-    int loops = neighbor_sweep(buf, bnd, rank, nranks, /*max_loops=*/2);
-    t_exchange += MPI_Wtime() - t_e0;
-    int did_reset = 0;
-    if (loops < 0){
-        // Guessed boundaries needed more than two neighbor rounds: RESET boundaries
-        // from a FULL-data histogram and place the data from scratch. The post-reset
-        // sweep is uncapped so it always terminates (<= nranks-1 hops).
-        did_reset = 1;
-        wasted_rounds = 2;                       // the two budgeted rounds are discarded
-        double t_r0 = MPI_Wtime();
-        std::vector<long> fh(NB, 0);
-        for (long i = 0; i < n_local; ++i) fh[zip[i]]++;      // full local histogram
-        std::vector<long> gh_full(NB, 0);
-        MPI_Allreduce(fh.data(), gh_full.data(), NB, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
-        build_boundaries(gh_full, nranks, bnd);
-        t_rebalance = MPI_Wtime() - t_r0;        // reset overhead (this rank)
-        buf = orig;
-        double t_e1 = MPI_Wtime();
-        loops = neighbor_sweep(buf, bnd, rank, nranks, /*max_loops=*/INT_MAX);
-        t_exchange += MPI_Wtime() - t_e1;
+
+    if (monthly > 0){
+        // Cheap signal: per-rank COUNT imbalance under last month's boundaries -- P
+        // longs, not a data histogram. Tiered policy from the design study:
+        //   imbalance <= TAU_NBR : accept (no movement)
+        //   <= tau_reset         : neighbor rebalance (budget ~ (imb-1)*nranks rounds)
+        //   >  tau_reset         : full reset (re-place from scratch)
+        long myc = (long)orig.size(), maxc = 0, sumc = 0;
+        MPI_Allreduce(&myc, &maxc, 1, MPI_LONG, MPI_MAX, MPI_COMM_WORLD);
+        MPI_Allreduce(&myc, &sumc, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+        imbalance = (double)maxc / ((double)sumc / nranks);
+        const double tau_reset = 1.0 + (double)NBR_BUDGET / nranks;   // tightens with P
+        double te0 = MPI_Wtime();
+        if (imbalance <= TAU_NBR){
+            action = 0;                            // accept the tiny drift; no movement
+        } else if (imbalance <= tau_reset){
+            action = 1;                            // neighbor rebalance
+            build_boundaries(gh, nranks, bnd);     // nudge boundaries from maintained hist
+            int budget = std::max(NBR_BUDGET, (int)std::ceil((imbalance - 1.0) * nranks));
+            loops = neighbor_sweep(buf, bnd, rank, nranks, budget);
+            if (loops < 0) action = 2;             // overran the budget -> reset
+        } else {
+            action = 2;
+        }
+        t_exchange = MPI_Wtime() - te0;
+        if (action == 2){
+            did_reset = 1;
+            double tr0 = MPI_Wtime();
+            build_boundaries(gh, nranks, bnd);     // full (maintained) histogram
+            t_rebalance = MPI_Wtime() - tr0;
+            buf = orig;
+            double te1 = MPI_Wtime();
+            loops = neighbor_sweep(buf, bnd, rank, nranks, /*max_loops=*/INT_MAX);
+            t_exchange += MPI_Wtime() - te1;
+        }
+    } else {
+        double t_e0 = MPI_Wtime();
+        loops = neighbor_sweep(buf, bnd, rank, nranks, /*max_loops=*/2);
+        t_exchange += MPI_Wtime() - t_e0;
+        if (loops < 0){
+            // Guessed boundaries needed more than two neighbor rounds: RESET boundaries
+            // from a FULL-data histogram and place the data from scratch. The post-reset
+            // sweep is uncapped so it always terminates (<= nranks-1 hops).
+            did_reset = 1;
+            wasted_rounds = 2;                     // the two budgeted rounds are discarded
+            double t_r0 = MPI_Wtime();
+            std::vector<long> fh(NB, 0); for (int z : orig) fh[z]++;   // full local histogram
+            std::vector<long> gh_full(NB, 0);
+            MPI_Allreduce(fh.data(), gh_full.data(), NB, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+            build_boundaries(gh_full, nranks, bnd);
+            t_rebalance = MPI_Wtime() - t_r0;      // reset overhead (this rank)
+            buf = orig;
+            double t_e1 = MPI_Wtime();
+            loops = neighbor_sweep(buf, bnd, rank, nranks, /*max_loops=*/INT_MAX);
+            t_exchange += MPI_Wtime() - t_e1;
+        }
     }
 
     long n_recv = (long)buf.size();
@@ -310,14 +420,21 @@ int main(int argc, char** argv){
            t_sample*1e3, t_exchange*1e3, t_rebalance*1e3, t_local*1e3, t_dist*1e3);
     if (rank == 0){
         double bal = (gsum>0) ? (double)gmax / ((double)gsum/nranks) : 1.0;
-        printf("GLOBAL: total=%ld  imbalance(max/avg)=%.2f  local_sorted=%s  seams=%s  neighbor_loops=%d reset=%s wasted_rounds=%d  (skew=%d)\n",
-               gsum, bal, g_local?"ALL-OK":"FAIL", g_seam?"ALL-OK":"FAIL",
-               gloops, greset?"YES":"NO", gwasted, skew);
+        const char* act = (action==0)?"skip":(action==1)?"neighbor":"reset";
+        if (monthly > 0)
+            printf("GLOBAL: total=%ld  imbalance_in=%.3f -> out=%.2f  action=%s  local_sorted=%s  seams=%s"
+                   "  neighbor_loops=%d reset=%s  (monthly churn=%d%%, tau_nbr=%.2f, tau_reset=%.3f)\n",
+                   gsum, imbalance, bal, act, g_local?"ALL-OK":"FAIL", g_seam?"ALL-OK":"FAIL",
+                   gloops, greset?"YES":"NO", monthly, TAU_NBR, 1.0+(double)NBR_BUDGET/nranks);
+        else
+            printf("GLOBAL: total=%ld  imbalance(max/avg)=%.2f  local_sorted=%s  seams=%s  neighbor_loops=%d reset=%s wasted_rounds=%d  (skew=%d)\n",
+                   gsum, bal, g_local?"ALL-OK":"FAIL", g_seam?"ALL-OK":"FAIL",
+                   gloops, greset?"YES":"NO", gwasted, skew);
         printf("GLOBAL: max times (ms): sample=%.3f  exchange=%.3f  rebalance=%.3f  local_sort=%.3f  dist_total=%.3f\n",
                gt_sample*1e3, gt_ex*1e3, gt_rb*1e3, gt_local*1e3, gt_dist*1e3);
     }
 
-    (void)hipFree(zip); (void)hipFree(recvbuf); (void)hipFree(counts);
+    (void)hipFree(recvbuf); (void)hipFree(counts);
     (void)hipFree(offsets); (void)hipFree(out);
     MPI_Finalize();
     return 0;

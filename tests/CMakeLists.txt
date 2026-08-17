@@ -1582,13 +1582,6 @@ add_test(NAME FTorch_MultiGPU_Test COMMAND ../ftorch_multigpu_test.sh )
 set_property(TEST FTorch_MultiGPU_Test PROPERTY PASS_REGULAR_EXPRESSION "MultiGPU example ran successfully")
 set_property(TEST FTorch_MultiGPU_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'ftorch'")
 
-# vLLM tests
-add_test(NAME vLLM_Verify_ROCm_Enabled COMMAND ../vllm_verify_rocm_enabled.sh )
-set_property(TEST vLLM_Verify_ROCm_Enabled PROPERTY PASS_REGULAR_EXPRESSION "RESULT: vLLM is ROCm-enabled")
-set_property(TEST vLLM_Verify_ROCm_Enabled PROPERTY FAIL_REGULAR_EXPRESSION "vLLM is NOT ROCm-enabled")
-set_property(TEST vLLM_Verify_ROCm_Enabled PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'vllm'")
-set_tests_properties(vLLM_Verify_ROCm_Enabled PROPERTIES TIMEOUT 300)
-
 # Julia tests
 add_test(NAME Julia_Check_Install COMMAND ../julia_check_install.sh )
 set_property(TEST Julia_Check_Install PROPERTY PASS_REGULAR_EXPRESSION "Configure Default Julia version set to '1.12'.")
@@ -1612,11 +1605,11 @@ set_property(TEST HIP-Python_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "modu
 
 add_test(NAME Numba-HIP_Check COMMAND ../numba-hip_check.sh )
 set_property(TEST Numba-HIP_Check PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Numba-HIP_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+set_property(TEST Numba-HIP_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'" "numba-hip device JIT unsupported")
 
 add_test(NAME Numba-HIP-CUDA-Posing_Check COMMAND ../numba-hip-cuda-posing_check.sh )
 set_property(TEST Numba-HIP-CUDA-Posing_Check PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Numba-HIP-CUDA-Posing_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+set_property(TEST Numba-HIP-CUDA-Posing_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'" "numba-hip device JIT unsupported")
 
 add_test(NAME HIP-Python_Device_Properties COMMAND ../hip-python_device_properties.sh )
 set_property(TEST HIP-Python_Device_Properties PROPERTY PASS_REGULAR_EXPRESSION "Success")

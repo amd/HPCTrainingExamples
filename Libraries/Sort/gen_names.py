@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright AMD 2026, MIT License
+# Author: Bob Robey Bob.Robey@amd.com with AI tool help
 """Generate a sample last-name list whose first-letter distribution matches
 approximate U.S. surname-initial frequencies. One surname per line on stdout.
 
