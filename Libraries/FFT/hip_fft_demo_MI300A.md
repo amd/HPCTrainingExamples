@@ -27,7 +27,6 @@ Environment (AAC / MI300A, `gfx942`):
 ```bash
 module load rocm/7.2.4 openmpi     # rocFFT, hipFFT ship with ROCm; OpenMPI for MPI
 export HSA_XNACK=1
-export OFFLOAD_ARCH=gfx942
 ```
 
 ---
@@ -64,10 +63,23 @@ void* ibuf[1] = { data };                            // unified-memory pointer
 rocfft_execute(fwd, ibuf, nullptr, info);            // out=NULL => in-place
 ```
 
+Get an allocation on a compute node
+
+```bash
+salloc -N 1 --gpus=1 --time=00:30:00 -p PPAC_MI300A_SPX
+```
+
+Set up the environment for the example
+
+```bash
+module load rocm
+export HSA_XNACK=1
+```
+
 Build & run:
 
 ```bash
-hipcc -O3 --offload-arch=gfx942 rocfft_c2c.hip -lrocfft -o rocfft_c2c
+make rocfft_c2c
 ./rocfft_c2c 1048576 1
 ./rocfft_c2c 65536 64          # 64 batched transforms of length 65536
 ```
@@ -96,7 +108,7 @@ verified. Note the `length[3]` array is **fastest dimension first**, and the
 work-buffer grows quickly with N.
 
 ```bash
-hipcc -O3 --offload-arch=gfx942 rocfft_3d.hip -lrocfft -o rocfft_3d
+make rocfft_3d
 ./rocfft_3d 128
 ./rocfft_3d 256
 ```
@@ -201,16 +213,37 @@ This yields **heFFTe 2.4.1** with `Heffte_ENABLE_ROCM=ON` and (by default here)
 `$HOME/heffte-rocm/{include,lib}` (shared `libheffte.so`), and CMake auto-detects
 the ROCm-aware OpenMPI 5.0.10 `mpicxx`. Configure+build+install took ~1 min total.
 
-### 4.2 Build and launch the exercise
+### 4.2 Build and launch the exercise in an interactive Slurm allocation
+
+Get an interactive allocation
 
 ```bash
-hipcc -O3 --offload-arch=gfx942 heffte_3d.cpp \
-  -I$HEFFTE_ROOT/include -I$MPI_PATH/include \
-  -L$HEFFTE_ROOT/lib -L$MPI_PATH/lib -lheffte -lmpi -lrocfft -o heffte_3d
+salloc -N 1 --ntasks=4 --cpus-per-task=1 --gpus=4 -t 01:00:00 [-p <slurm queue>]
 ```
 
-Launch with **`mpirun`** (not `srun`) via a batch script (adapt
-`run_multinode.sbatch`):
+Build the `heffte_3d` example
+
+```bash
+make heffte_3d
+```
+
+Add the heFFTe library to the `LD_LIBRARY_PATH`
+
+```bash
+export LD_LIBRARY_PATH=$HOME/heffte-rocm/lib:$LD_LIBRARY_PATH
+```
+
+Run the example with the mpirun command on 4 MPI ranks
+
+```bash
+mpirun -np 4 --map-by ppr:4:node ./heffte_3d 512
+```
+
+exit the allocation
+
+### 4.3 Build and launch the exercise
+
+Launch with **`mpirun`** via a batch script (adapt `run_multinode.sbatch`):
 
 The `libheffte.so` path is not baked into the binary's RPATH, so export it at
 run time (`run_heffte.sbatch` does this):
