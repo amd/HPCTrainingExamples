@@ -1096,6 +1096,33 @@ add_test(NAME HIP_Jacobi_CMakeLists COMMAND ../hip_jacobi_cmakelists.sh )
 set_property(TEST HIP_Jacobi_CMakeLists PROPERTY PASS_REGULAR_EXPRESSION "Measured FLOPS")
 set_property(TEST HIP_Jacobi_CMakeLists PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# Profiling-by-example: shallow-water novice stages (Makefile + CMake)
+add_test(NAME Profiling_ShallowWater_Novice_0_Baseline_Makefile COMMAND ../profiling_shallowwater_novice_makefile.sh 0_baseline)
+add_test(NAME Profiling_ShallowWater_Novice_0_Baseline_CMakeLists COMMAND ../profiling_shallowwater_novice_cmakelists.sh 0_baseline)
+add_test(NAME Profiling_ShallowWater_Novice_1_Larger_Domain_Makefile COMMAND ../profiling_shallowwater_novice_makefile.sh 1_larger_domain)
+add_test(NAME Profiling_ShallowWater_Novice_1_Larger_Domain_CMakeLists COMMAND ../profiling_shallowwater_novice_cmakelists.sh 1_larger_domain)
+add_test(NAME Profiling_ShallowWater_Novice_2_No_Device_Sync_Makefile COMMAND ../profiling_shallowwater_novice_makefile.sh 2_no_device_sync)
+add_test(NAME Profiling_ShallowWater_Novice_2_No_Device_Sync_CMakeLists COMMAND ../profiling_shallowwater_novice_cmakelists.sh 2_no_device_sync)
+add_test(NAME Profiling_ShallowWater_Novice_3_Block_32x32_Makefile COMMAND ../profiling_shallowwater_novice_makefile.sh 3_block_32x32)
+add_test(NAME Profiling_ShallowWater_Novice_3_Block_32x32_CMakeLists COMMAND ../profiling_shallowwater_novice_cmakelists.sh 3_block_32x32)
+add_test(NAME Profiling_ShallowWater_Novice_4_Block_64x4_Makefile COMMAND ../profiling_shallowwater_novice_makefile.sh 4_block_64x4)
+add_test(NAME Profiling_ShallowWater_Novice_4_Block_64x4_CMakeLists COMMAND ../profiling_shallowwater_novice_cmakelists.sh 4_block_64x4)
+set_tests_properties(
+  Profiling_ShallowWater_Novice_0_Baseline_Makefile
+  Profiling_ShallowWater_Novice_0_Baseline_CMakeLists
+  Profiling_ShallowWater_Novice_1_Larger_Domain_Makefile
+  Profiling_ShallowWater_Novice_1_Larger_Domain_CMakeLists
+  Profiling_ShallowWater_Novice_2_No_Device_Sync_Makefile
+  Profiling_ShallowWater_Novice_2_No_Device_Sync_CMakeLists
+  Profiling_ShallowWater_Novice_3_Block_32x32_Makefile
+  Profiling_ShallowWater_Novice_3_Block_32x32_CMakeLists
+  Profiling_ShallowWater_Novice_4_Block_64x4_Makefile
+  Profiling_ShallowWater_Novice_4_Block_64x4_CMakeLists
+  PROPERTIES
+    PASS_REGULAR_EXPRESSION "MCUPS"
+    FAIL_REGULAR_EXPRESSION "NEGATIVE!"
+    SKIP_REGULAR_EXPRESSION "module spider")
+
 add_test(NAME HIP_Babel_Stream COMMAND ../run_BabelStream.sh )
 set_property(TEST HIP_Babel_Stream PROPERTY PASS_REGULAR_EXPRESSION "Function")
 set_property(TEST HIP_Babel_Stream PROPERTY SKIP_REGULAR_EXPRESSION "module spider")

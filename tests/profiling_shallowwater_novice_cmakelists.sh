@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Build and run one Profiling-by-example/shallow-water/novice stage with CMake.
+# Usage: profiling_shallowwater_novice_cmakelists.sh <stage_dir>
+#   e.g. profiling_shallowwater_novice_cmakelists.sh 0_baseline
+
+if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
+   if [ -z "$CXX" ]; then
+      export CXX=`which CC`
+   fi
+   if [ -z "$CC" ]; then
+      export CC=`which cc`
+   fi
+   if [ -z "$FC" ]; then
+      export FC=`which ftn`
+   fi
+   if [ -z "$HIPCC" ]; then
+      export HIPCC=`which hipcc`
+   fi
+   export HIP_PLATFORM=amd
+else
+   module -t list 2>&1 | grep -q "^rocm"
+   if [ $? -eq 1 ]; then
+     echo "rocm module is not loaded"
+     echo "loading default rocm module"
+     module load rocm
+   fi
+   module load amdflang-new >& /dev/null
+   if [ "$?" == "1" ]; then
+      module load amdclang
+   fi
+fi
+
+STAGE=$1
+REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
+cd ${REPO_DIR}/Profiling-by-example/shallow-water/novice/${STAGE}
+
+SRC_DIR=$(pwd)
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf ${BUILD_DIR}" EXIT
+
+cd ${BUILD_DIR}
+cmake ${SRC_DIR}
+make
+./shallow
