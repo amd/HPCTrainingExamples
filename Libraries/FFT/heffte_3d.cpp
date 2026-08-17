@@ -120,5 +120,6 @@ Build recipe for heFFTe with the ROCm backend (once, on the login node):
   export HEFFTE_ROOT=$HOME/heffte-rocm
 
 Alternative (native, no external build): ROCm 7.2.4 ships hipFFT-MP
-(<hipfft/hipfftMp.h>) for multi-process distributed FFT — see exercise E5-alt.
+(<hipfft/hipfftMp.h>) for multi-process distributed FFT — see hipfftmp_3d.cpp
+and section 4 of hip_fft_demo_MI300A.md.
 --------------------------------------------------------------------------- */
