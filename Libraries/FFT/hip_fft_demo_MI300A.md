@@ -194,7 +194,10 @@ std::vector<cpx> host_back = heffte::gpu::transfer::unload(gpu_in);
 
 ### 4.1 Build heFFTe with the ROCm backend (one time, login node)
 
-heFFTe is not preinstalled — build it against rocFFT:
+On the AAC6 system, you may find a module that already has a module built. Check for
+`module avail` and look for heffte/2.4.1 module.
+
+If there is not a pre-built module, to build heFFTe against rocFFT:
 
 ```bash
 module load rocm/7.2.4 openmpi
@@ -241,7 +244,7 @@ mpirun -np 4 --map-by ppr:4:node ./heffte_3d 512
 
 exit the allocation
 
-### 4.3 Build and launch the exercise
+### 4.3 Running in an Slurm sbatch script
 
 Launch with **`mpirun`** via a batch script (adapt `run_multinode.sbatch`):
 
@@ -272,7 +275,7 @@ heFFTe 3D  512x512x512  ranks=4  grid=1x2x2  fwd+bwd=0.2172 s  round-trip max_er
 Round-trip error stays at the ~1e-15 double-precision floor across all rank
 counts — the distributed transform is numerically correct.
 
-### 4.3 Weak-scaling results (measured, ~256³ points per rank)
+### 4.4 Weak-scaling results (measured, ~256³ points per rank)
 
 Fixed per-rank volume (~16.8 M complex-double points), growing the global cube
 with the rank count. Steady-state average of 5 fwd+bwd round trips after a warm-up
@@ -304,7 +307,7 @@ GPUDirect) the GPU-aware path would win and the 8-rank point would land far clos
 to the intra-node trend. **This is exactly the kind of measurement to make before
 committing an FFT-heavy code to multi-node runs.**
 
-### 4.4 Exercises
+### 4.5 Exercises
 - **E5.1** Reproduce the weak-scaling table; add a strong-scaling run (fix 512³
   global, grow ranks) and plot speedup.
 - **E5.2 (communication)** Compare `proc_setup_min_surface` against a forced slab
