@@ -1,0 +1,15 @@
+# Built executables
+shallow_mpi
+shallow_mpi.inst
+
+# rocprofv3 output, from the -d argument used in the stage READMEs
+prof/
+outdir/
+att_out/
+
+# rocprof-compute workload directories
+workloads/
+
+# rocprof-sys output
+rocprof-sys-*-output/
+rocprofsys.cfg

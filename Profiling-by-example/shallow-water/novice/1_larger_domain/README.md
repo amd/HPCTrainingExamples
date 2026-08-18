@@ -94,8 +94,8 @@ rocprof-compute analyze -p workloads/1_larger_domain/0
 Both are explained in [Roofline plots](../README.md#roofline-plots).
 
 <p>
-<img src="../0_baseline/images/roofline_512.png" alt="Roofline of compute_rhs at 512x512, before this stage" width="49%" />
-<img src="images/roofline_2048.png" alt="Roofline of compute_rhs at 2048x2048, after this stage" width="49%" />
+<img src="../../figs/roofline_512.png" alt="Roofline of compute_rhs at 512x512, before this stage" width="49%" />
+<img src="../../figs/roofline_2048.png" alt="Roofline of compute_rhs at 2048x2048, after this stage" width="49%" />
 </p>
 
 Stage 0 at 512x512 is on the left, this stage at 2048x2048 on the right. `compute_rhs` has moved up
@@ -129,7 +129,7 @@ Open the resulting `.pftrace` file at [ui.perfetto.dev](https://ui.perfetto.dev)
 time steps.
 
 <p>
-<img src="images/hip_trace_gaps.jpg" alt="HIP API trace showing gaps between kernels" />
+<img src="../../figs/hip_trace_gaps.jpg" alt="HIP API trace showing gaps between kernels" />
 </p>
 
 There are visible gaps after each kernel, and lining the kernel row up against the HIP API row shows

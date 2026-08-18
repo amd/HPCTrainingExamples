@@ -89,8 +89,8 @@ rocprof-compute analyze -p workloads/4_block_64x4/0
 Both are explained in [Roofline plots](../README.md#roofline-plots).
 
 <p>
-<img src="../3_block_32x32/images/roofline_block_32x32.png" alt="Roofline of compute_rhs with 32x32 blocks, before this stage" width="49%" />
-<img src="images/roofline_block_64x4.png" alt="Roofline of compute_rhs with 64x4 blocks, after this stage" width="49%" />
+<img src="../../figs/roofline_block_32x32.png" alt="Roofline of compute_rhs with 32x32 blocks, before this stage" width="49%" />
+<img src="../../figs/roofline_block_64x4.png" alt="Roofline of compute_rhs with 64x4 blocks, after this stage" width="49%" />
 </p>
 
 With 32x32 on the left and 64x4 on the right, the plots show no visible change, even though the code

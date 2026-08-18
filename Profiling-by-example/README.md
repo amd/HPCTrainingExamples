@@ -18,12 +18,14 @@ hottest kernel.
 
 ## [Shallow-water](shallow-water)
 
-A tour of `rocprofv3`, `rocprof-compute` and the Roofline Extractor, applied to a 2D
-shallow-water solver on a single GPU. It is presented as a sequence of self-contained
-stages where every optimization is motivated by a specific profiler observation. Each
-stage builds and runs on its own and prints its own throughput and correctness checks, so
-you can reproduce the whole progression without editing any source. It was also set up to
-showcase some of the newer capabilities of the profiling tools: iteration multiplexing for
-counter collection, and how a roofline guides the next optimization.
+A tour of `rocprofv3`, `rocprof-sys`, `rocprof-compute` and its viewer, the Roofline
+Extractor, and the ROCprof Trace Decoder, applied to a 2D shallow-water solver. It is
+presented as a sequence of self-contained stages where every optimization is motivated by a
+specific profiler observation. Each stage builds and runs on its own and prints its own
+throughput and correctness checks, so you can reproduce the whole progression without
+editing any source. It was also set up to showcase some of the newer capabilities of the
+profiling tools: iteration multiplexing for counter collection, how a roofline guides
+the next optimization, and how to obtain and visualize advanced thread traces.
 
-The walkthrough is in [`novice`](shallow-water/novice).
+- [`novice`](shallow-water/novice): a single GPU.
+- [`advanced`](shallow-water/advanced): several GPUs with MPI.

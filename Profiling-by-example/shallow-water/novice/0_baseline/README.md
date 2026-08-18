@@ -132,7 +132,7 @@ rocprof-compute analyze -p workloads/0_baseline/0
 Both are explained in [Roofline plots](../README.md#roofline-plots).
 
 <p>
-<img src="images/roofline_512.png" alt="Roofline of compute_rhs at 512x512" />
+<img src="../../figs/roofline_512.png" alt="Roofline of compute_rhs at 512x512" />
 </p>
 
 The kernel does perform real arithmetic, but it sits well below the compute ceilings and to the left
