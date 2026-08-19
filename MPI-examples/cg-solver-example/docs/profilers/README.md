@@ -22,7 +22,7 @@ the shared *Which profiler* / *Ground rules* / *Mapping* material and links here
 | **Score-P** | `CG-GPU` / `CG-CPU` | MPI (+GPU/HIP) tracing → Cube/OTF2 | [`scorep.md`](scorep.md) |
 | **rocprofv3** | `CG-GPU` | Per-kernel + RCCL/HIP + ATT | [`rocprofv3.md`](rocprofv3.md) |
 | **rocprof-compute** | `CG-GPU` | Roofline (HBM-bound SpMV) | [`rocprof-compute.md`](rocprof-compute.md) |
-| **rocprofiler-systems** | `CG-GPU` + host | Perfetto timeline / overlap | [`rocprofiler-systems.md`](rocprofiler-systems.md) |
+| **rocprofiler-systems** | `CG-GPU` + host | Perfetto timeline: CPU threads / MPI + GPU | [`rocprofiler-systems.md`](rocprofiler-systems.md) |
 | **ROCm Optiq** | `CG-GPU` | GUI: trace timeline + roofline viewer | [`roc-optiq.md`](roc-optiq.md) |
 | **TAU** | either | MPI comm view | [`tau.md`](tau.md) |
 | **HPCToolkit** | either | Call-path sampling | [`hpctoolkit.md`](hpctoolkit.md) |

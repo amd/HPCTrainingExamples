@@ -107,6 +107,10 @@ def main():
                 ui.screenshot(path=out + ".pre.png")  # inspect selection/pan state
                 ui.keyboard.press("f")                # zoom+pan to the selected slice
                 ui.wait_for_timeout(1200)
+                # W/S zoom about the cursor, so hover the timeline canvas first;
+                # without this the 's' (zoom-out) key is dropped and nothing widens.
+                ui.mouse.move(700, 200)
+                ui.wait_for_timeout(150)
                 for _ in range(zoomout):              # widen to a couple of iterations
                     ui.keyboard.press("s")
                     ui.wait_for_timeout(150)
