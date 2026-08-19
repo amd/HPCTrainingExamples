@@ -78,6 +78,19 @@ ifeq ($(SPMV_V2),1)
 CXXFLAGS += -DUSE_V2_SPMV
 endif
 
+# Opt in to roctx range markers (make ROCTX=1).  Wraps each timed phase (halo
+# exchange, dot-product allreduce, per-iteration compute) in a named roctx range
+# so `rocprofv3 --sys-trace` / `--marker-trace` shows them as a labelled track in
+# the Perfetto timeline, aligned under the GPU-kernel row.  Default build omits
+# this entirely (no roctx dependency, zero overhead).  The library differs across
+# ROCm versions, so both names are overridable: classic roctracer (-lroctx64) is
+# the common denominator; newer ROCm also ships -lrocprofiler-sdk-roctx.
+ifeq ($(ROCTX),1)
+CXXFLAGS += -DUSE_ROCTX
+ROCTX_LIB ?= -lroctx64
+LIBS      += $(ROCTX_LIB)
+endif
+
 TARGET  = cg_gpu
 SRC     = src/cg.cpp
 HEADERS = src/sparse_mat.hpp src/par_binary_IO.hpp
