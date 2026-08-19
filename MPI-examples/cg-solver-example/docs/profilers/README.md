@@ -24,7 +24,7 @@ the shared *Which profiler* / *Ground rules* / *Mapping* material and links here
 | **rocprof-compute** | `CG-GPU` | Roofline (HBM-bound SpMV) | [`rocprof-compute.md`](rocprof-compute.md) |
 | **rocprofiler-systems** | `CG-GPU` + host | Perfetto timeline: CPU threads / MPI + GPU | [`rocprofiler-systems.md`](rocprofiler-systems.md) |
 | **ROCm Optiq** | `CG-GPU` | GUI: trace timeline + roofline viewer | [`roc-optiq.md`](roc-optiq.md) |
-| **TAU** | either | MPI comm view | [`tau.md`](tau.md) |
+| **TAU** | `CG-GPU` + host | Perfetto timeline: MPI-labelled (HIP/GPU + comm matrix) | [`tau.md`](tau.md) |
 | **HPCToolkit** | either | Call-path sampling | [`hpctoolkit.md`](hpctoolkit.md) |
 | **likwid** | `CG-CPU` | CPU roofline | [`likwid.md`](likwid.md) |
 | **AMD uProf** | `CG-CPU` | CPU hotspots | [`uprof.md`](uprof.md) |
