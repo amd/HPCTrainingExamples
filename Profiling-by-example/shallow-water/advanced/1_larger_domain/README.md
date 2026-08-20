@@ -26,15 +26,15 @@ untouched.
 ```bash
 module load rocm openmpi
 make
-mpirun -n 4 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
+mpirun -n 2 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
 ```
 
 ## Expected output
 
 ```
-MPI ranks: 4  |  GPUs detected: 1
+MPI ranks: 2  |  GPUs detected: 1
 Domain: 8192x8192 (global), steps=500, dt=0.0728643
-Elapsed (max over ranks): 1.683 s  |  Throughput: 79762.89 MCUPS
+Elapsed (max over ranks): 3.094 s  |  Throughput: 43377.47 MCUPS
 Mass: initial=6.710936665e+07, final=6.710936646e+07, rel.err=2.929e-09
 Min(h) after run: 0.981776
 ```

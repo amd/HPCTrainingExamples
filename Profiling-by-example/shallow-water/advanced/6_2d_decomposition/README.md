@@ -160,7 +160,7 @@ export ROCPROFSYS_SAMPLING_FREQ=100
 
 STEPS=$(printf "step_%s," {10..29})
 mpirun -n 16 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh \
-    rocprof-sys-run --preset=trace-hpc --selected-regions "${STEPS%,}" \
+    rocprof-sys-run --preset=trace-hpc --flat-profile --selected-regions "${STEPS%,}" \
     -o nic -- ./shallow_mpi
 ```
 

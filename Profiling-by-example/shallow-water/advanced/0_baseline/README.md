@@ -149,11 +149,13 @@ for time spent *on* the GPU, and says nothing about time spent waiting for MPI. 
 configuration most of the run sits in the gap.
 
 To see it, we need a host-and-device timeline. `rocprof-sys` records the MPI calls, HIP activity and
-the ROCTx ranges already present in the source on the same timeline. Take the whole run first:
+the ROCTx ranges already present in the source on the same timeline. Take the whole run first, with
+`--flat-profile` so that the `wall_clock` report summarises each region once instead of building a
+call tree out of them:
 
 ```bash
 mpirun -n 2 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh \
-    rocprof-sys-run --preset=trace-hpc -o trace -- ./shallow_mpi
+    rocprof-sys-run --preset=trace-hpc --flat-profile -o trace -- ./shallow_mpi
 ```
 
 Load the resulting `trace/<timestamp>/perfetto-trace-*.proto` into [Perfetto](https://ui.perfetto.dev),
@@ -170,30 +172,36 @@ transfers inside it, above the row of compute-kernel dispatches they surround.
 <img src="../../figs/advanced_0_baseline_trace_one_step.png" alt="A few timesteps of the unfiltered trace, showing the RK4 stages and their halo exchanges" />
 
 Everything we need is in there, but it is an unwieldy way to get at it. That run wrote 10.0 MB of
-Perfetto trace and 152 MB of `wall_clock` JSON per rank, covering 2000 RK4 stages that all look
-alike, and the part worth looking at is a fraction of a millisecond wide.
+Perfetto trace per rank, covering 2000 RK4 stages that all look alike, and the part worth looking at
+is a fraction of a millisecond wide.
 
 The ROCTx ranges the source already pushes give a way to record only part of the run.
 `--selected-regions` names the ones to keep:
 
 ```bash
 mpirun -n 2 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh \
-    rocprof-sys-run --preset=trace-hpc \
+    rocprof-sys-run --preset=trace-hpc --flat-profile \
     --selected-regions step_3,step_4,step_5 -o trace -- ./shallow_mpi
 ```
 
-That drops the same per-rank output to 47 KB of Perfetto trace and 114 KB of `wall_clock` JSON,
-about 220x and 1400x smaller, while keeping every event inside the three steps asked for. The saving
-is what makes the timeline worth opening, and it costs nothing in resolution:
+That drops the same per-rank output to 47 KB of Perfetto trace, about 220x smaller, while keeping
+every event inside the three steps asked for. The saving is what makes the timeline worth opening,
+and it costs nothing in resolution:
 
 <!-- SNAPSHOT: trace filtered to steps 3, 4 and 5, showing halo_exchange against the kernels -->
 <img src="../../figs/advanced_0_baseline_trace_selected_steps.png" alt="rocprof-sys trace restricted to steps 3 through 5" />
 
 The selected trace contains 12 `halo_exchange` ranges per rank, exactly three steps times four RK4
-stages. Read the durations off the timeline rather than out of the `wall_clock` text report: the
-report nests each ROCTx range inside the previous one, so its totals are cumulative rather than
-per-range. In Perfetto those host ranges are far wider than the kernel dispatches around them, which
-the kernel statistics above put at 5 to 11 us on average.
+stages, and the flat `wall_clock` report says the same on both ranks: one row for `halo_exchange`,
+count 12. Two things about the filtered trace are still being investigated: a gap after the first
+selected region, and MPI calls that the unfiltered trace shows but this one does not. In Perfetto the
+host ranges are far wider than the kernel dispatches around them, which the kernel statistics above
+put at 5 to 11 us on average.
+
+Let's zoom in to one step of the run:
+
+<!-- SNAPSHOT: one step of the filtered trace, the four RK4 stages and their exchanges against the kernels -->
+<img src="../../figs/advanced_0_baseline_trace_selected_one_step.png" alt="One step of the filtered rocprof-sys trace" />
 
 The timeline shows the MPI calls taking substantially longer than the kernels they surround. The
 `hipDeviceSynchronize()` at the top of `exchange_y_halos` makes this worse than it needs to be, since

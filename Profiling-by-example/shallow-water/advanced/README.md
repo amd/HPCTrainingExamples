@@ -284,7 +284,8 @@ for (int n = 0; n < NSTEPS; ++n) {
 ```bash
 cd 5_halo_pipeline
 mpirun -n 2 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh \
-    rocprof-sys-run --selected-regions step_3,step_4,step_5 -- ./shallow_mpi
+    rocprof-sys-run --preset=trace-hpc --flat-profile \
+    --selected-regions step_3,step_4,step_5 -- ./shallow_mpi
 ```
 
 It confirms the filter on startup, which is worth checking before waiting on a long run:

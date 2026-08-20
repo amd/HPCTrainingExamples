@@ -176,7 +176,7 @@ four, both inside one node:
 salloc -N 1 -p LocalQ --exclusive --gres=gpu:4 -t 1:00:00
 for n in 2 4; do
     mpirun -n $n --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh \
-        rocprof-sys-run --preset=trace-hpc \
+        rocprof-sys-run --preset=trace-hpc --flat-profile \
         --selected-regions step_3,step_4,step_5 -o trace_n$n -- ./shallow_mpi
 done
 ```
@@ -187,8 +187,8 @@ and the exchange does not.
 
 The kernel statistics put a number on it. At four ranks the five kernels sum to 910 ms of GPU time
 per rank over the run, which is 1.82 ms of each 2.15 ms step: communication and launch overhead own
-the remaining 15 percent. That share grows with rank count, and it is easier to see on a timeline
-than to tabulate, because the `wall_clock` reports nest their ROCTx ranges cumulatively.
+the remaining 15 percent. That share grows with rank count, and a timeline shows where it goes in a
+way that a table of totals cannot.
 
 <!-- SNAPSHOT: rocprof-sys timelines side by side, 2 ranks on the left and 4 ranks on the right -->
 <p>
