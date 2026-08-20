@@ -56,15 +56,34 @@ enough to expose it.
 
 ## Counters
 
-The `rocprof-compute` comparison is unambiguous:
+Both workloads in one `analyze` call, as in
+[stage 2](../2_block_32x32/README.md#what-happened-to-occupancy-and-cache-reuse), with the
+address-stall row added:
 
-| Block | Wavefront occupancy | Vector-L1 hit rate | L2 hit rate | VALU throughput |
-|---|---:|---:|---:|---:|
-| 32x32 | 74.78 percent | 71.07 percent | 20.66 percent | 14632 GFLOP/s |
-| 64x4 | 97.27 percent | 73.61 percent | 21.07 percent | 16040 GFLOP/s |
+```bash
+rocprof-compute analyze \
+    -p ../2_block_32x32/workloads/2_block_32x32/0 \
+    -p workloads/3_block_64x4/0 \
+    -b 2.1.0 2.1.9 2.1.14 2.1.15 2.1.18 2.1.19 2.1.20 2.1.21 15.1.1
+```
 
-The wide, short block raises occupancy substantially while preserving the cache gain from stage 2.
-That is what makes it better than either 16x16 or 32x32 rather than a compromise between them.
+| Metric | 32x32 | 64x4 | Change |
+|---|---|---|---|
+| 2.1.0 VALU FLOPs | 14632 GFLOP/s | 16040 GFLOP/s | 9.6 percent |
+| 2.1.9 VALU Utilization | 115.88 percent | 127.66 percent | 10.2 percent |
+| 2.1.14 IPC | 1.06 | 1.25 | 18.0 percent |
+| 2.1.15 Wavefront Occupancy | 74.78 percent | 97.27 percent | 22.5 points |
+| 2.1.18 vL1D Cache Hit Rate | 71.07 percent | 73.61 percent | 2.5 points |
+| 2.1.19 vL1D Cache BW | 18269 GB/s | 20027 GB/s | 9.6 percent |
+| 2.1.20 L2 Cache Hit Rate | 20.66 percent | 21.07 percent | 0.4 points |
+| 2.1.21 L2 Cache BW | 5270 GB/s | 5286 GB/s | 0.3 percent |
+| 15.1.1 Address Stall | 5.20 percent | 2.79 percent | -46.3 percent |
+
+Occupancy is the row that moved, by 22 points to nearly full, and the reason is the size half of the
+change rather than the shape half: 64x4 is 256 threads where 32x32 was 1024, so more workgroups fit
+on a compute unit at once. The cache gain from stage 2 is preserved rather than extended, two points
+on the vL1D hit rate and almost nothing at L2, which is what we want to see. Address stalls fall by
+nearly half, the row that speaks to the alignment the wider block was meant to buy.
 
 ## Roofline
 
@@ -84,8 +103,8 @@ Again the novice measurements of the same kernel, reused for
 </p>
 
 The two plots look the same, even though the change is worth 1.16x. A roofline summarizes arithmetic
-intensity and achieved bandwidth, and a coalescing improvement can pay off without moving either far
-enough to see on a log-log plot.
+intensity and achieved bandwidth, and the occupancy gain the counters credit moves neither: the same
+instructions over the same data, with more of them in flight.
 
 ## What we learned, and what to do about it
 
