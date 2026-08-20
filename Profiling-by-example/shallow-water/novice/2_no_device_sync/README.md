@@ -60,7 +60,7 @@ rocpd2pftrace -i outdir/shallow_results.db -d outdir -o shallow
 ```
 
 <p>
-<img src="../../figs/hip_trace_no_gaps.jpg" alt="HIP API trace after removing hipDeviceSynchronize" />
+<img src="../../figs/hip_trace_no_gaps.png" alt="HIP API trace after removing hipDeviceSynchronize" />
 </p>
 
 The kernels now abut one another instead of being separated by host round trips.

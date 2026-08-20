@@ -1,10 +1,9 @@
 
-# Stage 4: One wide load instead of three narrow ones
+# Stage 4: Aligned wide loads and fewer divides
 
-The launch configuration is as good as it gets and `compute_rhs` is still memory bound. Counters have
-taken us as far as they can, because they aggregate: `VALUBusy` tells us the vector units stall, not
-which instruction they stall on. This stage introduces a tool that answers that question, and then
-acts on what it says.
+The launch configuration is as good as it gets, `compute_rhs` is still memory bound, and counters have
+been taken as far as they go. This stage introduces a tool that reports which instruction the vector
+units stall on, and then acts on what it says.
 
 ## A new point of view: thread trace
 
@@ -18,7 +17,7 @@ The basic invocation, before the optimization, on the stage 3 binary:
 
 ```bash
 cd ../3_block_64x4
-rocprofv3 --att -d att_out -- ./shallow_mpi
+rocprofv3 --att -- ./shallow_mpi
 ```
 
 On Instinct hardware it is worth also streaming the SQ performance counters into the trace buffer,
@@ -26,7 +25,7 @@ which is what gives you the activity breakdown per instruction:
 
 ```bash
 rocprofv3 --att --att-activity 8 --kernel-include-regex compute_rhs \
-    -d att_out -- ./shallow_mpi
+    -o att -- ./shallow_mpi
 ```
 
 `--kernel-include-regex` matters here for the same reason `-k` mattered for the roofline: without it
@@ -39,10 +38,12 @@ you trace whatever kernel happens to be dispatched first. Two further notes:
 - Build with `-g` so the trace can put your source lines next to the ISA. The Makefile in every stage
   already does.
 
+<!-- MEASUREMENT TODO: ROCprof Compute Viewer snapshot of the stage 3 thread trace, before the
+     vectorization change, showing the s_waitcnt stall and the global_load_dwordx3 x-neighbour reads -->
+
 The run produces `stats_*.csv`, a per-instruction latency summary, and one
 `ui_output_agent_*_dispatch_*` directory per traced dispatch for the viewer. The CSV is the quickest
 way in, with one row per instruction:
-
 | Column | Meaning |
 |---|---|
 | `Instruction` | The ISA instruction |
@@ -55,10 +56,10 @@ way in, with one row per instruction:
 If `stats_*.csv` comes back empty even though the kernel definitely ran, the trace found no wave on
 the one compute unit it was watching. Widen the search with `--att-shader-engine-mask 0x11111111`.
 
-<!-- MEASUREMENT TODO: thread trace hotspot view for stage 3 compute_rhs, showing the three global loads -->
-
-Sorting by latency puts three `global_load_dword` instructions at the top, and the source column
-attributes them to the three neighbour reads in x:
+The stage 3 trace captured 4608 hits per instruction. Its largest stall is an `s_waitcnt vmcnt(8)`
+with 6.57 million stalled cycles. The hottest load is
+`global_load_dwordx3 ... offset:-4`, with 606784 stalled cycles, attributed to the first x-neighbour
+read:
 
 ```c++
     const float hi  = h[id];
@@ -66,9 +67,15 @@ attributes them to the three neighbour reads in x:
     const float hvi = hv[id];
 ```
 
-together with the `h[ip]`, `h[im]` and equivalents that follow. Per cell, `compute_rhs` issues
-separate loads for `h`, `hu` and `hv` at `i-1`, `i` and `i+1`. Nine narrow loads, all along the
-direction the arrays are contiguous in.
+together with the `h[ip]`, `h[im]` and equivalents that follow. The compiler has already combined
+the three adjacent x values for each array into `global_load_dwordx3`; the remaining y-neighbour
+reads appear as scalar `global_load_dword` instructions. The trace therefore points to memory
+latency, but it also corrects a tempting source-level assumption: these are not nine independent
+machine loads.
+
+The decoder reported that part of the trace was dropped because of bandwidth limitations. The
+per-instruction CSV is populated and supports the ranking above, but exact whole-trace totals should
+not be quoted from this run.
 
 ## What changed
 
@@ -97,16 +104,16 @@ supporting changes come with it:
 - **A `j+2` prefetch** and `__launch_bounds__(256,1)`, both attempts to keep more memory requests in
   flight.
 
-The important framing is that this widens each request at the **HBM level**, not the cache level.
-Stages 2 and 3 improved cache reuse by reshaping the block; this stage reduces the number of memory
-instructions needed to fetch the same bytes.
+What this buys is an aligned four-float access rather than fewer loads, since the compiler was
+already emitting x3, plus one prefetched value and less arithmetic latency from the reciprocal and
+`fmaf` changes.
 
 ## Build and run
 
 ```bash
 module load rocm openmpi
 make
-mpirun -n 4 --bind-to none ../gpu_bind.sh ./shallow_mpi
+mpirun -n 4 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
 ```
 
 ## Expected output
@@ -114,26 +121,26 @@ mpirun -n 4 --bind-to none ../gpu_bind.sh ./shallow_mpi
 ```
 MPI ranks: 4  |  GPUs detected: 1
 Domain: 8192x8192 (global), steps=500, dt=0.0728643
-Elapsed (max over ranks): 1.075 s  |  Throughput: 124867.74 MCUPS
+Elapsed (max over ranks): 1.075 s  |  Throughput: 124889.46 MCUPS
 Mass: initial=6.710936665e+07, final=6.710936646e+07, rel.err=2.916e-09
 Min(h) after run: 0.981776
 ```
 
 | Ranks | MCUPS at stage 3 | MCUPS now | Speedup | Efficiency |
 |---|---|---|---|---|
-| 1 | 33815.80 | 36088.86 | 1.07x | -- |
-| 2 | 67152.65 | 70413.39 | 1.05x | 98 percent |
-| 4 | 125015.25 | 124867.74 | 1.00x | 87 percent |
+| 1 | 33946.38 | 36113.05 | 1.06x | -- |
+| 2 | 67339.87 | 70436.30 | 1.05x | 97.5 percent |
+| 4 | 124762.34 | 124889.46 | 1.00x | 86.5 percent |
 
-**A 1.07x gain on one GPU that arrives as nothing at all on four.** Read those two rows together,
-because this is the most instructive result in the tutorial. The kernel really did get 7 percent
+**A 1.06x gain on one GPU that arrives as nothing at all on four.** Read those two rows together,
+because this is the most instructive result in the tutorial. The kernel really did get 6 percent
 faster, the single-GPU row proves it, and the four-GPU row is flat to within run-to-run spread. The
 speedup was spent on communication rather than banked, and the efficiency column says the same thing
 from the other side: 92 percent in stage 3, 87 percent here.
 
 It is also the last of the kernel gains, and a modest return for by far the largest code change so
 far, which is part of the lesson too: the deeper you go, the more effort each remaining percent costs.
-On one GPU we have now gone from 22229 to 36089 MCUPS since stage 1, a cumulative **1.62x**, all of it
+On one GPU we have now gone from 22239 to 36113 MCUPS since stage 1, a cumulative **1.62x**, all of it
 from the four changes a profiler pointed at. On four GPUs that same work is worth only 1.57x, and the
 gap between those two figures is the communication cost that stage 5 goes after.
 
@@ -148,16 +155,47 @@ Re-run the thread trace on this stage and compare:
 
 ```bash
 rocprofv3 --att --att-activity 8 --kernel-include-regex compute_rhs \
-    -d att_out -- ./shallow_mpi
+    -o att -- ./shallow_mpi
 ```
 
 <!-- MEASUREMENT TODO: thread trace hotspot view after vectorization, and the roofline -->
 
 ```bash
-rocprof-compute profile -n 4_vectorized_loads --roof-only --device 0 -k compute_rhs \
+rocprof-compute profile -n 4_vectorized_loads --no-roof -k compute_rhs \
     --iteration-multiplexing -- ./shallow_mpi
 rocprof-compute analyze -p workloads/4_vectorized_loads/0
 ```
+
+## How much of the step is communication?
+
+The efficiency column says communication now costs something. A timeline says how much, and the
+answer depends on how far apart the ranks are. Trace the same three steps at two ranks and at eight,
+the first pair inside one node and the eight split across two:
+
+```bash
+salloc -N 2 -p LocalQ --exclusive --gres=gpu:4 -t 1:00:00
+for n in 2 8; do
+    mpirun -n $n --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh \
+        rocprof-sys-run --preset=trace-hpc \
+        --selected-regions step_3,step_4,step_5 -o trace_n$n -- ./shallow_mpi
+done
+```
+
+At two ranks the kernels dominate each RK4 stage and `halo_exchange` is a thin band between them. At
+eight ranks the exchange takes about as long as all the compute it separates. Same binary, same
+per-rank work, and communication has gone from a detail to half the step.
+
+The kernel statistics put a number on the two-rank end of that. At four ranks the five kernels sum to
+910 ms of GPU time per rank over the run, which is 1.82 ms of each 2.15 ms step: communication and
+launch overhead own the remaining 15 percent. The eight-rank timeline is where that fraction stops
+being a rounding error, and it is easier to see than to tabulate, because the `wall_clock` reports
+nest their ROCTx ranges cumulatively.
+
+<!-- SNAPSHOT: rocprof-sys timelines side by side, 2 ranks on the left and 8 ranks on the right -->
+<p>
+<img src="../../figs/advanced_4_vectorized_loads_trace_n2.png" alt="rocprof-sys timeline of stage 4 at 2 ranks, compute dominating" width="49%" />
+<img src="../../figs/advanced_4_vectorized_loads_trace_n8.png" alt="rocprof-sys timeline of stage 4 at 8 ranks, communication comparable to compute" width="49%" />
+</p>
 
 ## What we learned, and what to do about it
 
@@ -166,16 +204,31 @@ elsewhere. Look at the efficiency column across the last four stages: 90, 91, 92
 while the kernels had slack in them and broke at the stage where they ran out, which is the clearest
 signal available that the limiter has moved. Communication is now the largest single thing left.
 
-Re-profiling the kernels at four ranks confirms the reordering. Where stage 0 had `compute_rhs`
-dominating, the cheap kernels now account for a comparable share of GPU time, and the whole GPU
-timeline is a smaller part of the wall clock than the MPI calls around it:
+Re-profiling the kernels at four ranks shows how the ranking has moved. The boundary kernel has gone
+from a quarter of the GPU time to almost none, and the two kernels this track never optimized now sit
+alongside `compute_rhs`:
 
 ```bash
-mpirun -n 4 --bind-to none ../gpu_bind.sh \
-    rocprofv3 --kernel-trace --stats -S -T -d prof -o shallow_%rank% -- ./shallow_mpi
+mpirun -n 4 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh \
+    rocprofv3 --kernel-trace --stats -S -T -f csv \
+    -o results_%env{OMPI_COMM_WORLD_RANK}% -- ./shallow_mpi
 ```
 
-<!-- MEASUREMENT TODO: per-rank kernel stats at stage 4, 4 ranks, showing the reordered ranking -->
+Rank 0 reads:
+
+```csv
+"Name","Calls","TotalDurationNs","AverageNs","Percentage","MinNs","MaxNs","StdDev"
+"compute_rhs",2000,354838293,177419.146500,38.97,167920,205081,2266.908457
+"update_stage",1500,321526462,214350.974667,35.31,200160,244401,2923.840005
+"final_update",500,219204941,438409.882000,24.07,410202,441442,5545.280621
+"apply_reflect_bc_x_yphys",2001,14897350,7444.952524,1.64,6520,40840,810.733628
+"init_gaussian",1,70401,70401.000000,7.732e-03,70401,70401,0.00000000e+00
+```
+
+In stage 0 `compute_rhs` and `update_stage` were within a few points of each other at 28 and 30
+percent, with the boundary kernel taking a quarter of the time. Here `compute_rhs` holds 39 percent,
+`update_stage` 35 and `final_update` 24, while the boundary kernel has fallen to 1.6: the kernels we
+never touched now account for 59 percent of GPU time between them.
 
 The next stage stops optimizing kernels and starts optimizing the halo exchange.
 

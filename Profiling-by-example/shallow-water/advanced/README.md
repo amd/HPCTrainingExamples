@@ -57,7 +57,7 @@ did not change the answer:
 ```
 MPI ranks: 4  |  GPUs detected: 1
 Domain: 8192x8192 (global), steps=500, dt=0.0728643
-Elapsed (max over ranks): 1.075 s  |  Throughput: 124892.14 MCUPS
+Elapsed (max over ranks): 1.076 s  |  Throughput: 124762.34 MCUPS
 Mass: initial=6.710936665e+07, final=6.710936646e+07, rel.err=2.929e-09
 Min(h) after run: 0.981776
 ```
@@ -83,53 +83,53 @@ through them in order.
 |---|---|---|---|
 | [`0_baseline`](0_baseline) | `rocprofv3` per-rank kernel trace, `rocprof-sys` | Adding GPUs makes the code *slower*; the halo exchange costs more than the compute it feeds | none, this is the starting point |
 | [`1_larger_domain`](1_larger_domain) | same | Each subdomain is far too small to fill a GPU or to amortize its own halo | Domain 512x512 to 8192x8192 |
-| [`2_block_32x32`](2_block_32x32) | `rocprofv3` `VALUBusy` | Vector ALUs busy only half the time; a larger tile caches the stencil better | Block size 16x16 to 32x32 |
-| [`3_block_64x4`](3_block_64x4) | `rocprofv3` `VALUBusy`, `OccupancyPercent` | 32x32 raised `VALUBusy` but cost occupancy; a wide, short tile recovers both | Block size 32x32 to 64x4 |
-| [`4_vectorized_loads`](4_vectorized_loads) | thread trace, roofline | Three separate global loads per cell for `h`, `hu` and `hv` dominate the instruction timeline | One `float4` load per array, cache-line-aligned row pitch |
+| [`2_block_32x32`](2_block_32x32) | `rocprofv3` `VALUBusy` | The vector units are busy only two thirds of the time; a larger tile gives the stencil more cache reuse | Block size 16x16 to 32x32 |
+| [`3_block_64x4`](3_block_64x4) | `rocprofv3` `VALUBusy`, `rocprof-compute` | A 32x32 block splits each wavefront across two grid rows, so no request covers one contiguous run | Block size 32x32 to 64x4 |
+| [`4_vectorized_loads`](4_vectorized_loads) | thread trace, roofline | Memory waits dominate; the compiler emits x3 loads for adjacent x values and scalar y loads | Explicit aligned `float4` loads, a prefetched value and fewer divides |
 | [`5_halo_pipeline`](5_halo_pipeline) | `rocprofv3` at 4 ranks, `rocprof-sys` | Communication is now the limiter: six blocking `MPI_Sendrecv` calls and a device-wide sync per stage | One fused non-blocking message per neighbour, overlapped with interior compute |
-| [`6_2d_decomposition`](6_2d_decomposition) | `rocprof-sys` NIC counters, arithmetic | A slab's halo volume per rank is constant in the rank count; a tile's shrinks as its square root | 2D Cartesian process grid |
+| [`6_2d_decomposition`](6_2d_decomposition) | halo-volume arithmetic, NIC counters | A slab's halo volume per rank stays constant as ranks are added, while a tile's falls as `1/sqrt(N)` | 2D Cartesian process grid |
 
 Throughput in MCUPS, and scaling efficiency against the same stage's own single-GPU run:
 
 | Stage | 1 GPU | 2 GPUs | 4 GPUs | Efficiency at 4 |
 |---|---|---|---|---|
-| `0_baseline` | 8309 | 4950 | 3007 | 9 percent |
-| `1_larger_domain` | 22229 | 43365 | 79749 | 90 percent |
-| `2_block_32x32` | 28919 | 58032 | 105163 | 91 percent |
-| `3_block_64x4` | 33816 | 67153 | 125015 | 92 percent |
-| `4_vectorized_loads` | 36089 | 70413 | 124868 | 87 percent |
-| `5_halo_pipeline` | 36127 | 69515 | 136294 | 94 percent |
-| `6_2d_decomposition` | 36129 | 69001 | 131756 | 91 percent |
+| `0_baseline` | 8159 | 4899 | 3085 | 9.5 percent |
+| `1_larger_domain` | 22239 | 43377 | 79763 | 89.7 percent |
+| `2_block_32x32` | 28982 | 58135 | 105226 | 90.8 percent |
+| `3_block_64x4` | 33946 | 67340 | 124762 | 91.9 percent |
+| `4_vectorized_loads` | 36113 | 70436 | 124889 | 86.5 percent |
+| `5_halo_pipeline` | 36224 | 69790 | 136645 | 94.3 percent |
+| `6_2d_decomposition` | 36159 | 69260 | 133091 | 92.0 percent |
 
 Read the table in two directions, because that is the whole point of the exercise. Reading down a
-column shows what the optimizations did to raw speed: on one GPU the solver goes from 22229 to 36127
-MCUPS between stages 1 and 5, a **1.63x** gain that comes entirely from kernel work. Reading across a
-row shows what they did to scalability, which is a separate question with separate answers. Stages 2
-and 3 speed up the kernels without disturbing efficiency at all, which holds at 90 to 92 percent.
-Stage 4 is where the trade becomes visible: it makes the compute fast enough that communication is a
-significant share of the step, so its 1.07x single-GPU gain arrives as 1.00x at four GPUs and
-efficiency falls to 87 percent. Stage 5 attacks that share directly, recovering 7 points of
-efficiency and 1.09x of four-GPU throughput without making a single kernel faster.
+column shows what the optimizations did to raw speed: on one GPU the solver goes from 22239 to 36224
+MCUPS between stages 1 and 5, a **1.63x** gain. Reading across a row shows what they did to
+scalability, which is a separate question with separate answers. Stages 2
+and 3 speed up the kernels while four-GPU efficiency holds near 90 percent. Stage 4 makes the compute
+fast enough that communication is a significant share of the step: its single-GPU gain arrives as
+almost no gain at four GPUs, and efficiency falls to 86.5 percent. Stage 5 attacks that share
+directly, recovering eight points of efficiency and 1.09x of four-GPU throughput without making a
+single physics kernel faster.
 
 Stage 0 deserves its own warning. It is the only stage where adding GPUs actively hurts, and it does
-so dramatically: 8309 MCUPS on one GPU becomes 3007 on four. A 512x512 domain split four ways gives
+so dramatically: 8159 MCUPS on one GPU becomes 3085 on four. A 512x512 domain split four ways gives
 each rank a 512x128 band, which is both too little work to fill an MI300A and too little interior to
 justify exchanging its own boundary. Any scaling study that starts from a problem this small will
 measure the decomposition rather than the solver.
 
-Stage 6 is the one stage that does not pay off at this scale, and it is kept for that reason. A 2x2
-tiling of four ranks trades a contiguous row halo for a strided column halo, and with only four GPUs
-inside a single node there is not enough network cost for the smaller halo volume to repay that. The
-argument for tiling is asymptotic, and the crossover lies beyond the rank counts reachable here.
+Stage 6 does not pay off at this scale, and it is not expected to. Four GPUs inside one node talk
+over the on-package interconnect, where halo *volume* was never the cost, so halving it buys nothing
+and the tile finishes 3 percent behind the slab. Its case rests on arithmetic that only bites at
+higher rank counts, which is why stage 6 argues from halo volume and leaves the crossover for you to
+measure on a machine wide enough to show it.
 
 All numbers quoted in this tutorial were measured on **MI300A** nodes in SPX mode, four GPUs per
-node, with ROCm 7.14 and Open MPI 5.0.10, each figure the median of three runs on an exclusive node
-through `gpu_bind.sh`. Run-to-run spread was under 2 percent, so differences of a few percent between
-stages are real, but do not read anything into a difference smaller than that. Your absolute numbers
-will differ on other hardware, and
-part of the point of the exercise is that the best block size, the value of overlapping
-communication, and the rank count at which tiling starts to win are all machine-dependent. Treat
-every figure as something to re-measure rather than to expect.
+node, with a ROCm 10.1.0a20260818 nightly build and Open MPI 5.0.10, each figure the median of three
+runs in an exclusive allocation through `gpu_bind.sh`, and run-to-run spread under 2 percent. Throughput is reported at
+one, two and four GPUs, all inside a single node. Eight ranks across two nodes appear only where two
+nodes are the point: the timeline in stage 4 that shows communication overtaking compute, and the NIC
+counters in stage 6. The best block size and the value of overlapping communication are
+machine-dependent, so treat every figure as something to re-measure rather than to expect.
 
 ## Setup
 
@@ -179,12 +179,12 @@ Activate it in any shell where you intend to run `rocprof-compute analyze`.
 
 ### Getting GPUs
 
-The stage numbers above use one, two and four GPUs, so ask for a whole node. `--exclusive` is not
-optional here, for reasons the next section explains, and it does not by itself put GPUs in the
-job's cgroup, so ask for those as well:
+The throughput numbers use one, two and four GPUs, which fit in one node. Two nodes are needed only
+for the eight-rank traces in stages 4 and 6. `--exclusive` is not optional here, for reasons the next
+section explains, and it does not by itself put GPUs in the job's cgroup, so ask for those as well:
 
 ```bash
-salloc -N 1 -p LocalQ --exclusive --gres=gpu:4 -t 2:00:00
+salloc -N 2 -p LocalQ --exclusive --gres=gpu:4 -t 2:00:00
 ```
 
 Every stage is built the same way, either with the portable Makefile:
@@ -192,7 +192,7 @@ Every stage is built the same way, either with the portable Makefile:
 ```bash
 cd 0_baseline
 make
-mpirun -n 4 --bind-to none ../gpu_bind.sh ./shallow_mpi
+mpirun -n 4 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
 ```
 
 or with CMake:
@@ -202,7 +202,7 @@ cd 0_baseline
 mkdir build && cd build
 cmake ..
 make
-mpirun -n 4 --bind-to none ../gpu_bind.sh ./shallow_mpi
+mpirun -n 4 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
 ```
 
 `make test` runs the executable on two ranks, and `make test NRANKS=4` on four. Run `make clean`
@@ -210,24 +210,31 @@ before `make` to be sure nothing is left over from a previous build.
 
 ### Affinity, which decides everything else
 
-Every command in this track launches the solver through `gpu_bind.sh`, a three-line wrapper in this
-directory. Get this wrong and no other measurement in the tutorial means anything.
+Every command in this track places its ranks explicitly. Get this wrong and no other measurement in
+the tutorial means anything.
 
-On MI300A each GPU is local to one NUMA node, GPU *i* to node *i*. The wrapper gives each rank one
-visible GPU with `ROCR_VISIBLE_DEVICES` and pins the rank's CPUs and memory to that GPU's node with
-`numactl`:
+On MI300A each GPU is local to one NUMA node, GPU *i* to node *i*. Placement is split between the
+launcher and a one-line wrapper, because Open MPI can express the CPU half but not the GPU half:
 
 ```bash
-mpirun -n 4 --bind-to none ../gpu_bind.sh ./shallow_mpi
+mpirun -n 4 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
 ```
 
-`--bind-to none` tells Open MPI to keep its hands off placement so the wrapper owns it. Each rank
-still selects its GPU with `hipSetDevice(rank % device_count)`, but with one device visible that
-reduces to device 0, which is the GPU the rank was bound to.
+`--map-by ppr:1:numa` puts exactly one rank in each NUMA node, in order, and `--bind-to numa` confines
+each rank to the CPUs and memory of the node it landed on. `gpu_bind.sh` then sets
+`ROCR_VISIBLE_DEVICES` to the rank's local index, so each rank sees exactly one GPU, the one local to
+its node. The solver's `hipSetDevice(rank % device_count)` reduces to device 0, which is that GPU.
 
-Two things go wrong without this. A non-exclusive allocation hands the whole job only a handful of
-hardware threads, which every rank then shares, and those threads are remote from most of the GPUs;
-every kernel launch and MPI progress call pays for it. The
+One rank per NUMA domain also decides which node each rank lands on: the first node's four domains fill
+before the second is used, so an eight-rank run splits 4 plus 4 instead of crowding one node.
+
+Both halves are load-bearing, and the GPU half is easy to overlook because the code still runs
+correctly without it. At four ranks, leaving all four GPUs visible costs about **8 percent** (73.6k
+against 79.8k MCUPS) even though each rank still selects the correct device.
+
+The allocation matters as much as the flags. A non-exclusive one hands the whole job only a handful
+of hardware threads, which every rank then shares, and those threads are remote from most of the
+GPUs; every kernel launch and MPI progress call pays for it. The
 [CG solver example](../../../MPI-examples/cg-solver-example/CG-GPU/README.md#cpu--numa-affinity-important-for-performance)
 measures **~100x** between an unbound, non-exclusive launch and this one, on the same binary. That is
 larger than every effect this tutorial goes on to study, so it has to be settled before the first
@@ -275,14 +282,14 @@ for (int n = 0; n < NSTEPS; ++n) {
 
 ```bash
 cd 5_halo_pipeline
-mpirun -n 2 --bind-to none ../gpu_bind.sh \
-    rocprof-sys-run --selected-regions step_10,step_11,step_12 -- ./shallow_mpi
+mpirun -n 2 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh \
+    rocprof-sys-run --selected-regions step_3,step_4,step_5 -- ./shallow_mpi
 ```
 
 It confirms the filter on startup, which is worth checking before waiting on a long run:
 
 ```
-[trace_control.cpp:38 trace_control][info] Trace controller: region filter active for regions: [step_10, step_11, step_12]
+[trace_control.cpp:38 trace_control][info] Trace controller: region filter active for regions: [step_3, step_4, step_5]
 ```
 
 Skipping the first few steps matters: step 0 pays for lazy kernel-code loading and first-touch page
@@ -291,18 +298,17 @@ ranks of `5_halo_pipeline`, measured three ways:
 
 | What was recorded | Filter | Trace per rank |
 |---|---|---|
-| The whole run | none | 17.1 MB |
-| Every halo wait and interior compute, all 500 steps | `rhs_interior,halo_mpi_wait` | 6.85 MB |
-| Three time steps, complete | `step_10,step_11,step_12` | 103 KB |
+| The whole run | none | 16.6 MB |
+| Every halo wait and interior compute, all 500 steps | `rhs_interior,halo_mpi_wait` | 3.57 MB |
+| Three time steps, complete | `step_3,step_4,step_5` | 93 KB |
 
-The last trace is **166x** smaller and contains exactly what was asked for: the ranges for steps 10,
-11 and 12 and nothing from step 13, with 12 `rhs_interior` and 12 `halo_mpi_wait` regions, being
+The last trace is **183x** smaller and contains exactly what was asked for: the ranges for steps 3, 4
+and 5 and nothing from step 6, with 12 `rhs_interior` and 12 `halo_mpi_wait` regions, being
 three steps of four RK4 stages each, against 2000 of them in the unfiltered trace.
 
-Choose the filter to match the question. Naming a phase, as in the middle row, answers "how does
-this phase behave over the whole run" and still keeps every step's worth of it. Naming a few steps
-answers "what exactly happens inside one step", which is the more common need when reading a
-timeline, and it is the cheap one.
+Naming a phase, as in the middle row, answers how that phase behaves over the whole run. Naming a few
+steps answers what happens inside one step, which is the more common need when reading a timeline and
+the cheaper trace.
 
 ## How to read the diffs
 

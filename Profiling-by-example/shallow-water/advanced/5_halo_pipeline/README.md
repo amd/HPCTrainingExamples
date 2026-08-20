@@ -1,9 +1,9 @@
 
 # Stage 5: Rebuild the halo exchange
 
-Four stages of kernel work have made the compute 1.62x faster on a single GPU and, as a direct
+Four stages of kernel work have made the compute 1.63x faster on a single GPU and, as a direct
 consequence, made communication the dominant remaining cost. Scaling efficiency at four GPUs held at
-90 to 92 percent through stage 3 and then fell to 87. This stage leaves the kernels alone and rebuilds
+90 to 92 percent through stage 3 and then fell to 86.5. This stage leaves the kernels alone and rebuilds
 the exchange around them.
 
 ## What is wrong with the old exchange
@@ -110,7 +110,7 @@ with computation. A timer would have called this version the fastest one in the 
 ```bash
 module load rocm openmpi
 make
-mpirun -n 4 --bind-to none ../gpu_bind.sh ./shallow_mpi
+mpirun -n 4 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
 ```
 
 ## Expected output
@@ -118,7 +118,7 @@ mpirun -n 4 --bind-to none ../gpu_bind.sh ./shallow_mpi
 ```
 MPI ranks: 4  |  GPUs detected: 1
 Domain: 8192x8192 (global), steps=500, dt=0.0728643
-Elapsed (max over ranks): 0.985 s  |  Throughput: 136293.57 MCUPS
+Elapsed (max over ranks): 0.982 s  |  Throughput: 136644.72 MCUPS
 Mass: initial=6.710936665e+07, final=6.710936646e+07, rel.err=2.916e-09
 Min(h) after run: 0.981776
 ```
@@ -129,11 +129,11 @@ in aggregate, and it is.
 
 | Ranks | MCUPS at stage 4 | MCUPS now | Speedup | Efficiency |
 |---|---|---|---|---|
-| 1 | 36088.86 | 36127.12 | 1.00x | -- |
-| 2 | 70413.39 | 69515.03 | 0.99x | 96 percent |
-| 4 | 124867.74 | 136293.57 | 1.09x | 94 percent |
+| 1 | 36113.05 | 36223.84 | 1.00x | -- |
+| 2 | 70436.30 | 69789.74 | 0.99x | 96.3 percent |
+| 4 | 124889.46 | 136644.72 | 1.09x | 94.3 percent |
 
-**A 1.09x gain at four GPUs, and 7 points of scaling efficiency recovered**, without touching a
+**A 1.09x gain at four GPUs, and 8 points of scaling efficiency recovered**, without touching a
 kernel that does any physics. Stage 4's kernel speedup, which four GPUs could not use at all, is
 also recovered here: the two stages together are worth 1.09x on four GPUs where stage 4 alone was
 worth nothing.
@@ -145,21 +145,34 @@ not enough of it to hide behind the interior compute, so the extra pack and unpa
 stream synchronization cost marginally more than the overlap saves.
 
 That is not a defect, it is the shape of the optimization. Overlapping communication pays in
-proportion to how much communication there is to overlap, so it should be expected to do nothing, or
-slightly worse than nothing, in the regime where communication is already cheap. Had we measured only
-two ranks we would have concluded this change was not worth making.
+proportion to how much communication there is to overlap, so it should be expected to do nothing in
+the regime where communication is already cheap. Had we measured only two ranks we would have
+concluded this change was not worth making.
 
 ## Confirming it on the timeline
 
 ```bash
-rocprof-sys-instrument -o shallow_mpi.inst -- ./shallow_mpi
-mpirun -n 4 --bind-to none ../gpu_bind.sh rocprof-sys-run -- ./shallow_mpi.inst
+salloc -N 1 -p LocalQ --exclusive --gres=gpu:4 -t 1:00:00
+mpirun -n 4 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh \
+    rocprof-sys-run --preset=trace-hpc \
+    --selected-regions step_3,step_4,step_5 -o trace -- ./shallow_mpi
 ```
 
-<!-- MEASUREMENT TODO: rocprof-sys timeline at 4 ranks, stage 4 vs stage 5, showing MPI overlapped with compute_rhs_range -->
+Trace stage 4 the same way and compare the two. Stage 4 has one opaque `halo_exchange` range per RK4
+stage, with nothing running underneath it. Stage 5 replaces that with `rhs_interior` launched before
+`halo_mpi_wait`, and in Perfetto the interior `compute_rhs_range` dispatch extends underneath
+`MPI_Waitall` rather than starting after it. That overlap is what the 1.09x is made of.
 
-The signature to look for is the interior `compute_rhs_range` dispatch sitting underneath the
-`MPI_Waitall`, rather than after it.
+Read those durations off the timeline rather than out of the `wall_clock` report, for the reason given
+in [stage 0](../0_baseline/README.md#step-3-what-the-kernel-trace-cannot-tell-you).
+
+Across two nodes the NIC counters can be added to this trace, which puts the bytes leaving the node on
+the timeline next to these ranges. The configuration is in
+[stage 6](../6_2d_decomposition/README.md#looking-at-the-network-itself), where the slab traffic
+measured here is what the tile decomposition is compared against.
+
+<!-- SNAPSHOT: Perfetto network rows for the slab decomposition, bytes and packets on enp129s0 -->
+<img src="../../figs/advanced_5_halo_pipeline_nic_bytes.png" alt="Perfetto network rows showing bytes transferred on the NIC with the 1D slab decomposition" />
 
 ## What we learned, and what to do about it
 

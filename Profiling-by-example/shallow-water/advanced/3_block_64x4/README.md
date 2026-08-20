@@ -1,9 +1,8 @@
 
 # Stage 3: A wavefront-shaped thread block
 
-Stage 2 improved `VALUBusy` by making the block bigger but paid for it in occupancy. The next idea
-changes the block's shape instead of its size, so that each wavefront reads one long contiguous run of
-memory.
+Stage 2 improved cache reuse by making the block bigger. The next idea changes the block's shape
+instead of its size, so that each wavefront reads one long contiguous run of memory.
 
 ## What changed
 
@@ -26,7 +25,7 @@ arrays are contiguous in.
 ```bash
 module load rocm openmpi
 make
-mpirun -n 4 --bind-to none ../gpu_bind.sh ./shallow_mpi
+mpirun -n 4 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
 ```
 
 ## Expected output
@@ -34,21 +33,21 @@ mpirun -n 4 --bind-to none ../gpu_bind.sh ./shallow_mpi
 ```
 MPI ranks: 4  |  GPUs detected: 1
 Domain: 8192x8192 (global), steps=500, dt=0.0728643
-Elapsed (max over ranks): 1.074 s  |  Throughput: 125015.25 MCUPS
+Elapsed (max over ranks): 1.076 s  |  Throughput: 124762.34 MCUPS
 Mass: initial=6.710936665e+07, final=6.710936646e+07, rel.err=2.929e-09
 Min(h) after run: 0.981776
 ```
 
 | Ranks | MCUPS at 32x32 | MCUPS at 64x4 | Speedup | Efficiency |
 |---|---|---|---|---|
-| 1 | 28918.90 | 33815.80 | 1.17x | -- |
-| 2 | 58031.88 | 67152.65 | 1.16x | 99 percent |
-| 4 | 105162.88 | 125015.25 | 1.19x | 92 percent |
+| 1 | 28981.84 | 33946.38 | 1.17x | -- |
+| 2 | 58135.17 | 67339.87 | 1.16x | 99.2 percent |
+| 4 | 105226.03 | 124762.34 | 1.19x | 91.9 percent |
 
 **A further 1.19x at four GPUs.** Running total from stage 1, where the domain first became a
-sensible size: 1.57x on four GPUs, and 1.52x on one.
+sensible size: 1.56x on four GPUs, and 1.53x on one.
 
-Efficiency at four GPUs has held so far: 90 percent in stage 1, 91 in stage 2, 92 here, which is a
+Efficiency at four GPUs has held so far: 89.7 percent in stage 1, 90.8 in stage 2, 91.9 here, which is a
 flat line once run-to-run spread is taken into account. That is worth stating plainly, because the
 pressure that will eventually break it is already building. The halo exchange takes the same absolute
 time it always did while the compute it hides behind keeps shrinking, so its share of each step keeps
@@ -57,23 +56,20 @@ enough to expose it.
 
 ## Counters
 
-```bash
-mpirun -n 4 --bind-to none ../gpu_bind.sh \
-    rocprofv3 --pmc VALUBusy -T --output-format csv -d prof -o valu_%rank% -- ./shallow_mpi
-mpirun -n 4 --bind-to none ../gpu_bind.sh \
-    rocprofv3 --pmc OccupancyPercent -T --output-format csv -d prof -o occ_%rank% -- ./shallow_mpi
-```
+The `rocprof-compute` comparison is unambiguous:
 
-<!-- MEASUREMENT TODO: VALUBusy and OccupancyPercent per kernel, 32x32 vs 64x4, 4 ranks -->
+| Block | Wavefront occupancy | Vector-L1 hit rate | L2 hit rate | VALU throughput |
+|---|---:|---:|---:|---:|
+| 32x32 | 74.78 percent | 71.07 percent | 20.66 percent | 14632 GFLOP/s |
+| 64x4 | 97.27 percent | 73.61 percent | 21.07 percent | 16040 GFLOP/s |
 
-The point to check is that the wide, short block recovers the occupancy that stage 2 gave away while
-keeping most of its `VALUBusy` gain, which is what makes it better than either 16x16 or 32x32 rather
-than a compromise between them.
+The wide, short block raises occupancy substantially while preserving the cache gain from stage 2.
+That is what makes it better than either 16x16 or 32x32 rather than a compromise between them.
 
 ## Roofline
 
 ```bash
-rocprof-compute profile -n 3_block_64x4 --roof-only --device 0 -k compute_rhs \
+rocprof-compute profile -n 3_block_64x4 --no-roof -k compute_rhs \
     --iteration-multiplexing -- ./shallow_mpi
 rocprof-compute analyze -p workloads/3_block_64x4/0
 ```
@@ -89,8 +85,7 @@ Again the novice measurements of the same kernel, reused for
 
 The two plots look the same, even though the change is worth 1.19x. A roofline summarizes arithmetic
 intensity and achieved bandwidth, and a coalescing improvement can pay off without moving either far
-enough to see on a log-log plot. This is the counterpart to stage 2's warning about `OccupancyPercent`:
-the wall clock decides, and a plot that does not move is not the same as a change that did not work.
+enough to see on a log-log plot.
 
 ## What we learned, and what to do about it
 

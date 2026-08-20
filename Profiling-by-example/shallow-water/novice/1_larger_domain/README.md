@@ -129,7 +129,7 @@ Open the resulting `.pftrace` file at [ui.perfetto.dev](https://ui.perfetto.dev)
 time steps.
 
 <p>
-<img src="../../figs/hip_trace_gaps.jpg" alt="HIP API trace showing gaps between kernels" />
+<img src="../../figs/hip_trace_gaps.png" alt="HIP API trace showing gaps between kernels" />
 </p>
 
 There are visible gaps after each kernel, and lining the kernel row up against the HIP API row shows

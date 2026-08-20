@@ -81,7 +81,7 @@ the slab version's boundary kernel carried has been dropped.
 ```bash
 module load rocm openmpi
 make
-mpirun -n 4 --bind-to none ../gpu_bind.sh ./shallow_mpi
+mpirun -n 4 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
 ```
 
 ## Expected output
@@ -90,7 +90,7 @@ mpirun -n 4 --bind-to none ../gpu_bind.sh ./shallow_mpi
 MPI ranks: 4  |  GPUs detected: 1
 Process grid: 2 x 2 (x by y), local subdomain 4096x4096
 Domain: 8192x8192 (global), steps=500, dt=0.0728643
-Elapsed (max over ranks): 1.019 s  |  Throughput: 131756.46 MCUPS
+Elapsed (max over ranks): 1.008 s  |  Throughput: 133090.52 MCUPS
 Mass: initial=6.710936665e+07, final=6.710936646e+07, rel.err=2.916e-09
 Min(h) after run: 0.981776
 ```
@@ -100,58 +100,87 @@ factorization is the first thing to suspect if the numbers look wrong.
 
 | Ranks | Process grid | MCUPS, slab | MCUPS, tile | Ratio | Efficiency |
 |---|---|---|---|---|---|
-| 1 | 1 x 1 | 36127.12 | 36129.05 | 1.00x | -- |
-| 2 | 1 x 2 | 69515.03 | 69000.77 | 0.99x | 95 percent |
-| 4 | 2 x 2 | 136293.57 | 131756.46 | 0.97x | 91 percent |
+| 1 | 1 x 1 | 36223.84 | 36159.43 | 1.00x | -- |
+| 2 | 1 x 2 | 69789.74 | 69260.14 | 0.99x | 95.8 percent |
+| 4 | 2 x 2 | 136644.72 | 133090.52 | 0.97x | 92.0 percent |
 
-**The 2D decomposition is 3 percent slower than the slab at four GPUs.** This is a negative result and
-it is kept deliberately, because the reason for it is more instructive than a win would have been.
+**The 2D decomposition is 3 percent slower than the slab at four GPUs**, and that is the expected
+result rather than a disappointment.
 
-The halo volume table says a 2x2 tiling should move half as many cells per rank as a four-way slab. It
-does. It is still slower, which means halo volume is not what four GPUs on one MI300A node are limited
-by. Those four GPUs talk over the on-package interconnect at a bandwidth high enough that halving a
-16384-cell message saves almost nothing, while the tiling adds two costs that are real at any scale:
-the x-direction halo is a strided gather with a stride of one row pitch, which is far less efficient
-than the contiguous row copy the slab needs, and each rank now has up to four neighbours to post
-messages to instead of two.
+The halo volume table says a 2x2 tiling moves half as many cells per rank as a four-way slab, and it
+does. It is still not faster, which means halo volume is not what four GPUs on one MI300A node are
+limited by. They talk over the on-package interconnect, where halving a 16384-cell message saves
+almost nothing, while the tiling adds two costs that are real at any scale: the x-direction halo is a
+strided gather with a stride of one row pitch rather than a contiguous row copy, and each rank now has
+up to four neighbours to post messages to instead of two.
 
 So the tiling trades a cheap, contiguous, high-volume exchange for a more expensive, strided,
-low-volume one. That is a good trade exactly when volume is what costs you, which is to say when the
-ranks are far enough apart that a real network is involved. It is a bad trade inside a single node.
-
-The honest conclusion is that this stage's change is right and its measurement is inconclusive,
-because the measurement was taken in the regime where the change cannot pay. The crossover sits beyond
-the four GPUs a single node provides, and reproducing it needs a job wide enough that ranks span
-several nodes.
+low-volume one. That is a good trade exactly when volume is what costs you, which is to say when
+enough ranks are far enough apart that a real network is involved.
 
 ## Where the crossover is
 
-To find it on your own machine, run both stages across as many nodes as you can get and plot the two
-efficiency curves against rank count. The slab curve should fall away steadily, since its per-rank
-communication is constant, while the tile curve should hold up.
+This machine cannot show the crossover: four GPUs per node and two nodes is eight ranks, and eight is
+too few for `1/sqrt(N)` to have opened a gap worth measuring. Finding it needs a wider job, so if you
+have one, run both stages over as many ranks as you can get and plot the two efficiency curves against
+rank count. The slab curve should fall away steadily, since its per-rank communication is constant,
+while the tile curve should hold up.
 
 ```bash
-salloc -N 4 -p LocalQ --exclusive --gres=gpu:4 -t 1:00:00
-for n in 8 16 32; do
-    mpirun -n $n --bind-to none ../gpu_bind.sh ../5_halo_pipeline/shallow_mpi
-    mpirun -n $n --bind-to none ../gpu_bind.sh ./shallow_mpi
+for n in 4 8 16 32; do
+    mpirun -n $n --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ../5_halo_pipeline/shallow_mpi
+    mpirun -n $n --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
 done
 ```
-
-<!-- MEASUREMENT TODO: slab vs tile scaling curve beyond 4 ranks, ideally to 16 -->
 
 ## Looking at the network itself
 
 `rocprof-sys` can attribute traffic to individual network interfaces during MPI calls, which turns the
-argument above into a measurement. It needs PAPI support and the relevant counters enabled in
-`rocprofsys.cfg`; the
-[ROCm documentation](https://rocm.docs.amd.com/projects/rocprofiler-systems/en/latest/) covers the
-configuration.
+argument above into a measurement. The
+[communication-performance section](https://rocm.blogs.amd.com/software-tools-optimization/profiling-guide/advanced/README.html#bonus-step-studying-communication-performance)
+of the ROCm profiling-guide blog is the reference for the setup. The counters come through PAPI, so
+`/proc/sys/kernel/perf_event_paranoid` has to be 2 or less, and CPU sampling has to be enabled.
 
-<!-- MEASUREMENT TODO: per-NIC traffic comparison, slab vs tile, once multi-node runs are available -->
+Find the interface first, since the name differs from machine to machine:
 
-Comparing the per-NIC traces of stages 5 and 6 at the same rank count is the most direct evidence
-there is that the decomposition, and not the code, determines what the network has to carry.
+```bash
+rocprof-sys-avail -H -r net
+```
+
+Then configure through the environment and trace twenty steps on eight ranks across two nodes:
+
+```bash
+salloc -N 2 -p LocalQ --exclusive --gres=gpu:4 -t 1:00:00
+
+export ROCPROFSYS_NETWORK_INTERFACE=enp129s0
+export ROCPROFSYS_PAPI_EVENTS="net:::enp129s0:rx:byte net:::enp129s0:rx:packet net:::enp129s0:tx:byte net:::enp129s0:tx:packet"
+export ROCPROFSYS_TIMEMORY_COMPONENTS="wall_clock network_stats"
+export ROCPROFSYS_USE_SAMPLING=true
+export ROCPROFSYS_SAMPLING_FREQ=100
+
+STEPS=$(printf "step_%s," {10..29})
+mpirun -n 8 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh \
+    rocprof-sys-run --preset=trace-hpc --selected-regions "${STEPS%,}" \
+    -o nic -- ./shallow_mpi
+```
+
+Each rank writes `network_stats*.txt` and `papi_array*.txt` alongside the usual trace, and the traffic
+appears as extra rows on the Perfetto timeline. Sampling plus counters is expensive, so treat this
+run's wall clock as profiling overhead rather than a throughput measurement.
+
+Over the whole run, every process on a node reports the same node-level totals: 210 MB received and
+208 MB sent for the slab, against 209 to 212 MB received and 209 to 211 MB sent for the tile. The
+bytes are the same to within the noise, and the packet counts are not: the slab moves them in roughly
+162000 packets each way, the tile in roughly 175000. At eight ranks the tiling has
+not reduced what crosses the wire, it has divided the same traffic into more, smaller messages, which
+is the cost side of the trade with none of the benefit yet.
+
+<!-- SNAPSHOT: Perfetto network rows for the tile decomposition, bytes and packets on enp129s0 -->
+<img src="../../figs/advanced_6_2d_decomposition_nic_bytes.png" alt="Perfetto network rows showing bytes transferred on the NIC with the 2D tile decomposition" />
+
+Whatever the reports say, the totals must not be summed over ranks: every process samples the same
+node-level NIC, and the process-level scope covers the whole run rather than the selected ranges. What
+they show is which decomposition puts less on the wire, not how fast either one runs.
 
 ## What we learned
 
@@ -171,12 +200,12 @@ Pulling the whole tutorial together:
 - **Network optimization means rewriting code.** Stages 5 and 6 are restructurings, not one-line
   changes, and stage 6 changes the meaning of a rank's data. This is the main reason communication
   problems are best identified early even if they are fixed late.
-- **Quantify every change, at more than one scale.** Stage 5 looks worthless at two ranks and
-  excellent at four. Stage 6 looks worthless at four and should look excellent at sixty-four. A single
-  configuration would have given the wrong answer about both.
+- **Quantify every change, at more than one scale.** Stage 5 looks worthless at two ranks and is worth
+  1.09x at four. Stage 6 loses three percent at four and can only pay at rank counts this machine cannot
+  reach. A single configuration would have given the wrong answer about both.
 - **Keep a correctness check that a race can fail.** The mass conservation check is the only reason
   the stale-halo bug in stage 5 was ever noticed, and it cost nothing to carry.
 
-Cumulatively, from stage 1 where the problem first became a sensible size, four GPUs went from 79749
-to 136294 MCUPS, a **1.71x** speedup: 1.57x of it from kernel work and 1.09x from restructuring the
-communication.
+Cumulatively, from stage 1 where the problem first became a sensible size, four GPUs went from 79763
+to 136645 MCUPS at stage 5, a **1.71x** speedup: 1.57x of it from kernel work and 1.09x from
+restructuring the communication.

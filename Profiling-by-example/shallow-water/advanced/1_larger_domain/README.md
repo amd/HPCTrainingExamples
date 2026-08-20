@@ -26,7 +26,7 @@ untouched.
 ```bash
 module load rocm openmpi
 make
-mpirun -n 4 --bind-to none ../gpu_bind.sh ./shallow_mpi
+mpirun -n 4 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
 ```
 
 ## Expected output
@@ -34,7 +34,7 @@ mpirun -n 4 --bind-to none ../gpu_bind.sh ./shallow_mpi
 ```
 MPI ranks: 4  |  GPUs detected: 1
 Domain: 8192x8192 (global), steps=500, dt=0.0728643
-Elapsed (max over ranks): 1.683 s  |  Throughput: 79748.87 MCUPS
+Elapsed (max over ranks): 1.683 s  |  Throughput: 79762.89 MCUPS
 Mass: initial=6.710936665e+07, final=6.710936646e+07, rel.err=2.929e-09
 Min(h) after run: 0.981776
 ```
@@ -45,18 +45,21 @@ grid resolves the Gaussian bump better. Correctness is intact.
 ## The scaling study, repeated
 
 ```bash
-for n in 1 2 4; do mpirun -n $n --bind-to none ../gpu_bind.sh ./shallow_mpi; done
+salloc -N 1 -p LocalQ --exclusive --gres=gpu:4 -t 2:00:00
+for n in 1 2 4; do
+    mpirun -n $n --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
+done
 ```
 
 | Ranks | MCUPS at 512x512 | MCUPS at 8192x8192 | Efficiency now |
 |---|---|---|---|
-| 1 | 8309.26 | 22228.56 | -- |
-| 2 | 4950.31 | 43364.87 | 98 percent |
-| 4 | 3006.97 | 79748.87 | 90 percent |
+| 1 | 8159.26 | 22238.83 | -- |
+| 2 | 4899.27 | 43377.47 | 97.5 percent |
+| 4 | 3084.88 | 79762.89 | 89.7 percent |
 
 Two different things improved at once, and it is worth separating them.
 
-The single-GPU number went from 8309 to 22229 MCUPS, **2.68x**, and that has nothing to do with MPI.
+The single-GPU number went from 8159 to 22239 MCUPS, **2.73x**, and that has nothing to do with MPI.
 It is the same effect the novice example sees at this step: 512x512 in 16x16 blocks is 1024
 workgroups against 228 compute units, which is not enough work in flight to hide memory latency,
 while 8192x8192 is 262144 workgroups and plenty.
@@ -66,7 +69,7 @@ part. Each rank now owns a 8192x2048 band: 16.7 million interior cells against t
 8192 cells each, so roughly one cell in a thousand crosses the network per stage rather than one in
 64. The halo did not get smaller in absolute terms, it got smaller relative to the work it serves.
 
-At four GPUs the code is now **26.5x** faster than the same four GPUs managed in stage 0. Almost none
+At four GPUs the code is now **25.9x** faster than the same four GPUs managed in stage 0. Almost none
 of that came from making anything faster; it came from measuring a sensible problem size.
 
 Note also what the efficiency column does between two and four ranks, falling from 98 to 90 percent.
@@ -80,21 +83,31 @@ working. `VALUBusy` is the percentage of GPU time during which the vector ALUs a
 instructions:
 
 ```bash
-mpirun -n 4 --bind-to none ../gpu_bind.sh \
-    rocprofv3 --pmc VALUBusy -T --output-format csv -d prof -o valu_%rank% -- ./shallow_mpi
+mpirun -n 2 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh \
+    rocprofv3 --pmc VALUBusy -T -f csv \
+    -o results_%env{OMPI_COMM_WORLD_RANK}% -- ./shallow_mpi
 ```
 
-Counter collection serializes kernels, so this run takes considerably longer than an unprofiled one,
-and its wall-clock time is not a performance measurement.
+Over the 2000 `compute_rhs` dispatches the median is 67.3 percent on rank 0 and 67.1 percent on
+rank 1. The two agreeing is part of the check: both ranks run the same kernel over their own half of
+the domain, so a gap between them would point at load imbalance rather than at the kernel. Every other
+kernel is far behind, `update_stage` at 3.8 and the boundary kernel at 0.06, so `compute_rhs` is where
+any vector-unit work is happening.
 
-<!-- MEASUREMENT TODO: VALUBusy per kernel at 16x16, 4 ranks -->
+Two thirds busy sounds healthy, and it is the wrong conclusion to stop at. The units are issuing
+instructions most of the time, but the next two stages show the kernel is still leaving a third of the
+issue slots idle waiting on memory, and closing that gap is what the block-shape changes do.
+
+Counter collection serializes dispatches, so a counter run's wall-clock time is not a performance
+measurement. At a single counter set the cost is small here, but do not compare it against the timings
+above.
 
 A roofline places the hot kernel against the machine's compute and bandwidth ceilings, which tells us
 whether the remaining headroom is in arithmetic or in memory traffic. Profile a single rank, since all
 four are doing the same thing:
 
 ```bash
-rocprof-compute profile -n 1_larger_domain --roof-only --device 0 -k compute_rhs \
+rocprof-compute profile -n 1_larger_domain --no-roof -k compute_rhs \
     --iteration-multiplexing -- ./shallow_mpi
 rocprof-compute analyze -p workloads/1_larger_domain/0
 ```
@@ -107,12 +120,13 @@ short; `-k compute_rhs` restricts collection to the kernel we care about, so tha
 the [Python environment](../README.md#a-python-environment-for-rocprof-compute-analyze) from the setup
 section.
 
-The plot below is the one the novice track measured for this same kernel at the same 16x16 block
-shape, on a single GPU. It is reused here rather than re-collected because a roofline describes the
-kernel, not the decomposition: every rank runs the same `compute_rhs` over its own tile, so the
-arithmetic intensity and the fraction of peak bandwidth it reaches are the same quantities. What
-changes with rank count is how many such kernels run at once, which is a scaling question rather than
-a roofline one.
+The collected report puts `compute_rhs` at 11122 GFLOP/s, 70.99 percent wavefront occupancy, a
+57.44 percent vector-L1 hit rate and an 18.44 percent L2 hit rate. Those cache numbers are the
+baseline the block-shape experiments in the next two stages are measured against.
+
+The plot below is the novice track's measurement of this same kernel at the same 16x16 block shape.
+A roofline describes the kernel rather than the decomposition, since every rank runs the same
+`compute_rhs` over its own tile, so it is reused here rather than re-collected.
 
 <p>
 <img src="../../figs/roofline_2048.png" alt="Roofline of compute_rhs with 16x16 blocks" width="60%" />
