@@ -3,8 +3,12 @@
 # X display, i.e. it will render inside a TurboVNC / noVNC XFCE desktop too).
 #
 # Usage: ./shot_roc_optiq.sh [trace.db|trace.rpd|project.rpv] [out.png]
-#   With a trace/project argument it is opened with -f; without one the empty
-#   application window (menus/toolbar/panes) is captured.
+#   With a trace/project argument it is opened with -f and the tool renders the
+#   loaded timeline (topology tree + tracks + event table); without one the empty
+#   welcome window (menus/toolbar/panes) is captured.
+#
+# roc-optiq opens a fixed 1280x720 window, so the Xvfb screen is sized to match
+# and the grab is auto-cropped to the rendered content (no black border).
 #
 # Interactive click-through is still done in a real VNC/noVNC/X11 desktop
 # (man aac6_vnc / aac6_novnc / aac6_x11); this path is for scripted/CI shots.
@@ -21,9 +25,9 @@ fi
 command -v roc-optiq >/dev/null 2>&1 || { echo "roc-optiq not found"; exit 1; }
 mkdir -p "$(dirname "$OUT")"
 
-# clean any stale server
+# clean any stale server; size the virtual screen to the app's 1280x720 window
 pkill -f "Xvfb $DISP" 2>/dev/null; sleep 1
-Xvfb $DISP -screen 0 1920x1080x24 >/tmp/xvfb_optiq.log 2>&1 &
+Xvfb $DISP -screen 0 1280x720x24 >/tmp/xvfb_optiq.log 2>&1 &
 XVFB=$!; sleep 3
 export DISPLAY=$DISP
 
@@ -34,7 +38,19 @@ ARGS=(--backend opengl --file-dialog imgui)
 echo "[info] launching: roc-optiq ${ARGS[*]}"
 roc-optiq "${ARGS[@]}" >/tmp/roc_optiq_gui.log 2>&1 &
 APP=$!
-sleep 12   # let it create the window and render
+
+# Wait for the render to settle: with a trace, block until the tracks are parsed
+# ("Track meta data loaded"); otherwise just give the welcome window a moment.
+if [ -n "$TRACE" ]; then
+  for i in $(seq 1 60); do
+    grep -q "Track meta data loaded" /tmp/roc_optiq_gui.log && break
+    kill -0 $APP 2>/dev/null || break
+    sleep 1
+  done
+  sleep 5   # let the timeline paint after the tracks are loaded
+else
+  sleep 12
+fi
 
 if ! kill -0 $APP 2>/dev/null; then
   echo "[FAIL] roc-optiq exited early:"; tail -20 /tmp/roc_optiq_gui.log
@@ -44,8 +60,12 @@ fi
 echo "[info] capturing display $DISP"
 /usr/bin/python3 - "$OUT" <<'PY'
 import sys
-from PIL import ImageGrab
-img = ImageGrab.grab(xdisplay=":99")
+from PIL import ImageGrab, ImageChops, Image
+img = ImageGrab.grab(xdisplay=":99").convert("RGB")
+# auto-crop the black border (the app window may be smaller than the screen)
+bbox = ImageChops.difference(img, Image.new("RGB", img.size, (0, 0, 0))).getbbox()
+if bbox:
+    img = img.crop(bbox)
 img.save(sys.argv[1])
 print("saved", sys.argv[1], img.size)
 PY

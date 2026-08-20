@@ -58,11 +58,11 @@ transport:
 
 ```bash
 module load rocm/7.2.4 openmpi
-cd CG-GPU && make
-# rocprofv3 straight to a rocpd .db (kernels + HIP + RCCL):
+cd CG-GPU && make ROCTX=1        # ROCTX=1 -> searchable phase labels in the trace
+# rocprofv3 straight to a rocpd .db (kernels + HIP + RCCL + roctx phases):
 CG_SEED=12345 mpirun -n 4 ./gpu_bind.sh \
-  rocprofv3 --sys-trace --output-format rocpd \
-  -d optiq_rccl_rank_${OMPI_COMM_WORLD_RANK:-0} \
+  rocprofv3 --sys-trace --marker-trace --output-format rocpd \
+  -d optiq_rccl_rank_${OMPI_COMM_WORLD_RANK:-0} -o trace \
   -- ./cg_gpu src/Dubcova2.pm rccl
 # ...or the fuller rocprofiler-systems timeline, rocpd backend:
 module load rocprofiler-systems
@@ -70,8 +70,16 @@ CG_SEED=12345 mpirun -n 4 ./gpu_bind.sh \
   rocprof-sys-run --use-rocpd -- ./cg_gpu src/Dubcova2.pm rccl
 ```
 
-Each rank writes its own rocpd database (`-d …_rank_N`). Open **one rank's** `.db`
-in roc-optiq.
+Each rank writes its own rocpd database (`-d …_rank_N/trace_results.db`). Open
+**one rank's** `.db` in roc-optiq. `--marker-trace` (with the `ROCTX=1` build) adds
+the `cg_iteration` / `spmv_on_proc` / `dot_allreduce` / `halo_*` phase ranges so you
+can search and filter them in the UI, exactly as in
+[rocprofv3](rocprofv3.md#3-communication-memory-copy--rcclhip-traces).
+
+> **Only have one GPU / running under `srun`?** `mpirun -n 4` needs 4 slots; on a
+> single-task `srun` step add `--oversubscribe`. To trace only rank 0 (the figure
+> below), guard the `rocprofv3` wrapper with
+> `R=${OMPI_COMM_WORLD_RANK:-0}; [ "$R" = 0 ] && rocprofv3 … -- ./cg_gpu … || ./cg_gpu …`.
 
 **Roofline / kernel analysis (ROCm Compute Profiler)** — characterise the SpMV:
 
@@ -132,7 +140,7 @@ the session is software-rendered use `--backend opengl`.
 
 ## 4. Working in the UI
 
-Once a trace is loaded (welcome screen below), the layout is:
+Once a trace is loaded (see the figure at the end of this section), the layout is:
 
 1. **System Topology Tree** (left) — expand nodes to relate tracks; the eye icon
    shows/hides a track, *Scroll To Track* jumps to it in the timeline.
@@ -156,21 +164,105 @@ land under the HBM diagonal, matching [rocprof-compute](rocprof-compute.md).
 Persist your track layout, bookmarks, and annotations with **File → Save As** to a
 `.rpv` project; reopening it recalls the trace and your customizations.
 
+Opening the 4-rank `rccl` rocpd `.db` from §1 (rank 0) gives you exactly this — the
+**System Topology Tree** on the left (this node's 4 MI300A GPUs, their queues, and
+the CPUs), a header reading **`493 Tracks · 11 threads · 7 queues · 473 streams · 2
+counters`**, the host **MAIN THREAD** with `ncclCommInitRank` and `hipFuncGetAttributes`
+slices, and the **Event Table** docked below with its `SQL WHERE`-style filter box:
+
+![roc-optiq: loaded 4-rank CG rccl trace — topology tree, timeline tracks, event table](figs/cg_roc_optiq_timeline_n4.png)
+
+## 5. Participant exercises
+
+Work these in a real VNC / noVNC / `ssh -X` desktop (§3) after collecting the
+rank-0 `rccl` `.db` in §1. Each is a small navigation task in the GUI — the goal is
+to *read the CG timeline*, not to re-collect data. (For a scripted, no-desktop
+capture of the loaded window, see [§6](#6-capturing-the-screenshots-headlessly).)
+
+1. **Open the trace and read the topology.** `roc-optiq -f optiq_rccl_rank_0/trace_results.db`
+   (add `--file-dialog imgui` over SSH). Expand **Nodes → … → Processors** in the
+   System Topology Tree. *How many GPUs and queues does one rank's trace see?*
+   Confirm the header track count (`… threads · … queues · … streams`).
+
+2. **Find the SpMV.** In the search box type `csrmvn` (or `rocsparse`) and press
+   **Enter**; click the match, then use **W/S** to zoom and **A/D** to pan onto it.
+   *Which GPU Kernel Dispatch Queue does the `rocsparse::csrmvn` SpMV run on?* This
+   is the kernel the [rocprof-compute roofline](rocprof-compute.md) shows as
+   HBM-bound.
+
+3. **Filter the Event Table by duration.** Open the **Event Table** tab and enter a
+   filter such as `duration > 20000` (nanoseconds) in the `SQL WHERE` box and
+   **Submit**. Sort by duration. *What are the three longest events — a kernel, an
+   RCCL op, or a HIP API call?* Lower the threshold and watch the list grow.
+
+4. **Locate the halo exchange.** Search `ncclDevKernel` (or the roctx phase
+   `halo_gather_rccl_post` if you built with `ROCTX=1`). *Is the RCCL send/recv a
+   device kernel on a GPU queue, or a host-side wait?* Compare with the
+   [rocprofiler-systems host view](rocprofiler-systems.md#4-comparing-transports-on-the-host-thread-isend-vs-staged-vs-rccl),
+   which shows the same exchange from the CPU side.
+
+5. **Trim to one iteration with a Time Range Filter.** **Ctrl+drag** across one
+   `cg_iteration` in the timeline to set a *Time Range Filter*, then
+   **Edit → Save Trace Selection** to write a trimmed `.db`. Re-open it: *how much
+   smaller is the file, and does it still contain the SpMV + allreduce + halo?*
+
+6. **Bookmark and save a project.** Set bookmarks with **Ctrl+1** / **Ctrl+2** on
+   the SpMV and the allreduce; recall with **1** / **2**. Then **File → Save As** a
+   `.rpv` project and reopen it — *do your bookmarks, hidden tracks, and zoom
+   return?*
+
+7. **Compare transports.** Re-collect rank 0 for `isend` and `staged` (swap the last
+   argument, §1) and open all three. *Does `staged` show a second `GPU Memory Copy to
+   Agent` row (the host-staging engine)? Which transport keeps the GPU queues
+   busiest?* This is the GUI restatement of the
+   [rocprofv3 transport comparison](rocprofv3.md#comparing-communication-methods-isend-vs-staged-vs-rccl).
+
+8. **(Stretch) Open a roofline.** Profile the SpMV with
+   [`rocprof-compute`](rocprof-compute.md) (`rocprof-compute profile -n cg_spmv -- ./cg_gpu src/Dubcova2.pm rccl 12345`)
+   and open its `workloads/cg_spmv/…` analysis directory in roc-optiq. In the
+   **Summary → Roofline** view, *where do the CG kernels land relative to the HBM
+   diagonal?* Confirm they are memory-bound.
+
+## 6. Capturing the screenshots headlessly
+
+Both figures on this page were captured on a compute node **with no display** using
+[`CG-GPU/shot_roc_optiq.sh`](../../CG-GPU/shot_roc_optiq.sh) (Xvfb + software OpenGL +
+Pillow). With a trace argument it opens the `.db` with `-f`, waits for the tracks to
+parse (`Track meta data loaded`), grabs the 1280×720 window, and auto-crops the
+border:
+
+```bash
+module load rocm/7.2.4 roc-optiq
+# loaded-timeline figure (this page):
+./shot_roc_optiq.sh optiq_rccl_rank_0/trace_results.db \
+  ../docs/profilers/figs/cg_roc_optiq_timeline_n4.png
+# empty welcome window (no trace argument):
+./shot_roc_optiq.sh
+```
+
+The rocpd `.db` files are **not committed** (large binaries) — regenerate them with
+the §1 commands. Interactive click-through (exercises §5) is done in a real
+VNC / noVNC / X11 desktop as in §3; the headless path is for scripted/CI shots.
+
 ## Verified
 
 > **Verified on AAC6 / MI300A, ROCm 7.2.4, roc-optiq v0.5.0.1.** `--version` and
 > `--help` as above. The GUI **renders headlessly** under `Xvfb` with both
 > `--backend opengl` and `--backend vulkan` (`--file-dialog imgui`) — confirming it
-> will render inside a TurboVNC / noVNC / `ssh -X` desktop. The welcome window was
-> captured with the helper [`CG-GPU/shot_roc_optiq.sh`](../../CG-GPU/shot_roc_optiq.sh)
-> (Xvfb + Pillow, the same approach as `shot_cubegui.sh`):
+> will render inside a TurboVNC / noVNC / `ssh -X` desktop. **Both** the empty
+> welcome window *and* a real loaded trace were captured with the helper
+> [`CG-GPU/shot_roc_optiq.sh`](../../CG-GPU/shot_roc_optiq.sh) (Xvfb + Pillow):
 
 ![roc-optiq welcome / open-trace screen](figs/cg_roc_optiq.png)
 
-Interactive click-through (expanding the track tree, filtering the event table) is
-done in a real VNC/noVNC/X11 desktop as in §3; the headless helper is for
-scripted/CI screenshots. Opening a real CG rocpd `.db` requires a GPU allocation to
-first collect the trace (§1).
+The **loaded-trace** figure in [§4](#4-working-in-the-ui) was produced from a real
+4-rank `rccl` rocpd `.db` (§1) — collected in a `PPAC_MI300A_SPX` allocation with
+`rocprofv3 --sys-trace --marker-trace --output-format rocpd`
+(`CG solve 0.20 s, comm 63 %, halo 17.5 %, dot-allreduce 46 %` on rank 0), then
+opened headlessly with `--backend opengl`. The trace parsed to
+`493 tracks · 11 threads · 7 queues · 473 streams`. Interactive click-through
+(exercises §5) is done in a real VNC / noVNC / X11 desktop as in §3; the headless
+helper is for scripted/CI screenshots.
 
 ## See also
 
