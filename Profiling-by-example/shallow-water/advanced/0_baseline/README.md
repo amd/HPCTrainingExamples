@@ -86,7 +86,7 @@ done
 | 2 | 0.107 s | 4899.27 | 30.0 percent |
 | 4 | 0.170 s | 3084.88 | 9.5 percent |
 
-**Adding GPUs makes this code slower in absolute terms.** Four GPUs take nearly three times as long as one
+Adding GPUs makes this code slower in absolute terms. Four GPUs take nearly three times as long as one
 to do exactly the same work. This is not a subtle scaling inefficiency to be shaved down later, it is
 a signal that the configuration being measured is the wrong one, and it invalidates any conclusion
 we might draw about the kernels while it holds.

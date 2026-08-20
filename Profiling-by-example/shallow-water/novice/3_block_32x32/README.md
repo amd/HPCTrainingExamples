@@ -37,7 +37,7 @@ Mass: initial=4.194806655e+06, final=4.194806458e+06, rel.err=4.681e-08
 Min(h) after run: 0.981776
 ```
 
-**29400.84 MCUPS, 1.39x faster than stage 2's 21204.86.** Running total from the baseline: 4.68x.
+29400.84 MCUPS, 1.39x faster than stage 2's 21204.86. Running total from the baseline: 4.68x.
 
 ## Did VALUBusy improve?
 

@@ -45,7 +45,7 @@ Mass: initial=4.194806655e+06, final=4.194806458e+06, rel.err=4.681e-08
 Min(h) after run: 0.981776
 ```
 
-**21204.86 MCUPS, 1.08x faster than stage 1's 19638.63.** Running total from the baseline: 3.38x.
+21204.86 MCUPS, 1.08x faster than stage 1's 19638.63. Running total from the baseline: 3.38x.
 
 An eight percent gain for deleting eight lines is a good trade, and the accuracy checks are unchanged,
 which is what we expect since removing a redundant synchronization cannot alter the arithmetic.

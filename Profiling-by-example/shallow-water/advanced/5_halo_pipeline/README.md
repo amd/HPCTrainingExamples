@@ -21,14 +21,14 @@ the exchange around them.
                  recv_bot_hv, nx, MPI_FLOAT, rank_down, 202, comm, MPI_STATUS_IGNORE);
 ```
 
-1. **Six messages where two would do.** Each of `h`, `hu` and `hv` is sent separately to each of two
+1. Six messages where two would do. Each of `h`, `hu` and `hv` is sent separately to each of two
    neighbours. Every message pays the same per-message latency, and at 8192 floats each they are small
    enough that latency, not bandwidth, is what you are paying for.
-2. **Blocking calls.** `MPI_Sendrecv` returns only once the data has moved, so the GPU sits idle for
+2. Blocking calls. `MPI_Sendrecv` returns only once the data has moved, so the GPU sits idle for
    the entire exchange even though most of the subdomain does not depend on the result.
-3. **A device-wide synchronization** before every exchange, draining all queued work rather than just
+3. A device-wide synchronization before every exchange, draining all queued work rather than just
    the writes the exchange actually needs.
-4. **All of it four times per time step**, once per RK4 stage.
+4. All of it four times per time step, once per RK4 stage.
 
 ## What changed
 
@@ -38,7 +38,7 @@ diff ../4_vectorized_loads/shallow_mpi.hip shallow_mpi.hip
 
 Three related changes.
 
-**Fuse the three arrays into one message.** Two new kernels gather the outgoing boundary rows into a
+Fuse the three arrays into one message. Two new kernels gather the outgoing boundary rows into a
 contiguous buffer as interleaved triplets and scatter the incoming ones back:
 
 ```c++
@@ -52,10 +52,10 @@ contiguous buffer as interleaved triplets and scatter the incoming ones back:
 
 Six messages per exchange become two, each three times larger.
 
-**Make the transfer non-blocking**, so the exchange splits into a `begin` that posts
+Make the transfer non-blocking, so the exchange splits into a `begin` that posts
 `MPI_Irecv`/`MPI_Isend` and a `finish` that waits and unpacks.
 
-**Overlap the transfer with compute.** `compute_rhs` becomes `compute_rhs_range`, taking a row range
+Overlap the transfer with compute. `compute_rhs` becomes `compute_rhs_range`, taking a row range
 rather than always covering the whole subdomain, which lets the interior be computed while the halo is
 in flight:
 
@@ -133,7 +133,7 @@ in aggregate, and it is.
 | 2 | 70436.30 | 69789.74 | 0.99x | 96.3 percent |
 | 4 | 124889.46 | 136644.72 | 1.09x | 94.3 percent |
 
-**A 1.09x gain at four GPUs, and 8 points of scaling efficiency recovered**, without touching a
+A 1.09x gain at four GPUs, and 8 points of scaling efficiency recovered, without touching a
 kernel that does any physics. Stage 4's kernel speedup, which four GPUs could not use at all, is
 also recovered here: the two stages together are worth 1.09x on four GPUs where stage 4 alone was
 worth nothing.
@@ -166,13 +166,9 @@ stage, with nothing running underneath it. Stage 5 replaces that with `rhs_inter
 Read those durations off the timeline rather than out of the `wall_clock` report, for the reason given
 in [stage 0](../0_baseline/README.md#step-3-what-the-kernel-trace-cannot-tell-you).
 
-Across two nodes the NIC counters can be added to this trace, which puts the bytes leaving the node on
-the timeline next to these ranges. The configuration is in
-[stage 6](../6_2d_decomposition/README.md#looking-at-the-network-itself), where the slab traffic
-measured here is what the tile decomposition is compared against.
-
-<!-- SNAPSHOT: Perfetto network rows for the slab decomposition, bytes and packets on enp129s0 -->
-<img src="../../figs/advanced_5_halo_pipeline_nic_bytes.png" alt="Perfetto network rows showing bytes transferred on the NIC with the 1D slab decomposition" />
+Across several nodes the NIC counters can be added to this trace, which puts the bytes leaving the
+node on the timeline next to these ranges. The configuration is in
+[stage 6](../6_2d_decomposition/README.md#looking-at-the-network-itself).
 
 ## What we learned, and what to do about it
 

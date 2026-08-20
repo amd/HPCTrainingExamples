@@ -75,10 +75,10 @@ through them in order.
 | [`3_block_32x32`](3_block_32x32) | `rocprofv3` `VALUBusy` | Vector ALUs busy only 47 percent of the time; a larger tile caches the stencil better | Block size 16x16 to 32x32 | 29400.84 | 1.39x |
 | [`4_block_64x4`](4_block_64x4) | `rocprofv3` `VALUBusy`, `OccupancyPercent` | 32x32 raised `VALUBusy` but cost occupancy; a wide, short tile recovers both | Block size 32x32 to 64x4 | 34551.31 | 1.18x |
 
-Together the five stages give a cumulative **5.50x** speedup, from 6282 to 34551 MCUPS.
+Together the five stages give a cumulative 5.50x speedup, from 6282 to 34551 MCUPS.
 
 All numbers quoted in this tutorial, both timings and counters, were measured on a single
-**MI300A** in SPX mode, taking the median of three runs. Your
+MI300A in SPX mode, taking the median of three runs. Your
 absolute numbers will differ on other hardware, and part of the point of the exercise is that the
 best block size and the size of each speedup are architecture-dependent. The relative trends should
 mostly hold, but treat every figure as something to re-measure rather than to expect.

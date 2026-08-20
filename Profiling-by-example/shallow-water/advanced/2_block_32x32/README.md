@@ -45,7 +45,7 @@ Min(h) after run: 0.981776
 | 2 | 43377.47 | 58135.17 | 1.34x | 100.3 percent |
 | 4 | 79762.89 | 105226.03 | 1.32x | 90.8 percent |
 
-**A 1.32x gain at four GPUs, and much the same 1.30x on one.** That the two agree is the useful part: this
+A 1.32x gain at four GPUs, and much the same 1.30x on one. That the two agree is the useful part: this
 change is purely local to the kernel, so it should help every rank equally and leave the
 communication cost alone, and the numbers say it did.
 

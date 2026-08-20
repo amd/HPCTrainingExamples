@@ -59,7 +59,7 @@ done
 
 Two different things improved at once, and it is worth separating them.
 
-The single-GPU number went from 8159 to 22239 MCUPS, **2.73x**, and that has nothing to do with MPI.
+The single-GPU number went from 8159 to 22239 MCUPS, 2.73x, and that has nothing to do with MPI.
 It is the same effect the novice example sees at this step: 512x512 in 16x16 blocks is 1024
 workgroups against 228 compute units, which is not enough work in flight to hide memory latency,
 while 8192x8192 is 262144 workgroups and plenty.
@@ -69,7 +69,7 @@ part. Each rank now owns a 8192x2048 band: 16.7 million interior cells against t
 8192 cells each, so roughly one cell in a thousand crosses the network per stage rather than one in
 64. The halo did not get smaller in absolute terms, it got smaller relative to the work it serves.
 
-At four GPUs the code is now **25.9x** faster than the same four GPUs managed in stage 0. Almost none
+At four GPUs the code is now 25.9x faster than the same four GPUs managed in stage 0. Almost none
 of that came from making anything faster; it came from measuring a sensible problem size.
 
 Note also what the efficiency column does between two and four ranks, falling from 98 to 90 percent.

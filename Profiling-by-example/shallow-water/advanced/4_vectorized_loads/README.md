@@ -31,8 +31,8 @@ rocprofv3 --att --att-activity 8 --kernel-include-regex compute_rhs \
 `--kernel-include-regex` matters here for the same reason `-k` mattered for the roofline: without it
 you trace whatever kernel happens to be dispatched first. Two further notes:
 
-- Thread trace decoding needs the **ROCprof Trace Decoder** library, and the resulting timeline is
-  viewed in the **ROCprof Compute Viewer**, which is a separate desktop application. See the
+- Thread trace decoding needs the ROCprof Trace Decoder library, and the resulting timeline is
+  viewed in the ROCprof Compute Viewer, which is a separate desktop application. See the
   [thread trace documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-thread-trace.html)
   and the [viewer documentation](https://rocm.docs.amd.com/projects/rocprof-compute-viewer/en/amd-mainline/index.html).
 - Build with `-g` so the trace can put your source lines next to the ISA. The Makefile in every stage
@@ -96,12 +96,12 @@ One `global_load_dwordx4` fetches `i-1`, `i`, `i+1` and one cell beyond, and the
 out afterwards. The y-neighbours cannot join in, since they are a row apart in memory. Three
 supporting changes come with it:
 
-- **Cache-line-aligned row pitch.** `pitch` is rounded up to a multiple of 16 floats so every row
+- Cache-line-aligned row pitch. `pitch` is rounded up to a multiple of 16 floats so every row
   starts on a 64-byte boundary, which is what makes the wide loads land inside a single cache line
   rather than straddling two.
-- **Fewer divisions.** One reciprocal is computed per location and reused for both velocity
+- Fewer divisions. One reciprocal is computed per location and reused for both velocity
   components, and the flux terms use `fmaf`.
-- **A `j+2` prefetch** and `__launch_bounds__(256,1)`, both attempts to keep more memory requests in
+- A `j+2` prefetch and `__launch_bounds__(256,1)`, both attempts to keep more memory requests in
   flight.
 
 What this buys is an aligned four-float access rather than fewer loads, since the compiler was
@@ -132,7 +132,7 @@ Min(h) after run: 0.981776
 | 2 | 67339.87 | 70436.30 | 1.05x | 97.5 percent |
 | 4 | 124762.34 | 124889.46 | 1.00x | 86.5 percent |
 
-**A 1.06x gain on one GPU that arrives as nothing at all on four.** Read those two rows together,
+A 1.06x gain on one GPU that arrives as nothing at all on four. Read those two rows together,
 because this is the most instructive result in the tutorial. The kernel really did get 6 percent
 faster, the single-GPU row proves it, and the four-GPU row is flat to within run-to-run spread. The
 speedup was spent on communication rather than banked, and the efficiency column says the same thing
@@ -140,7 +140,7 @@ from the other side: 92 percent in stage 3, 87 percent here.
 
 It is also the last of the kernel gains, and a modest return for by far the largest code change so
 far, which is part of the lesson too: the deeper you go, the more effort each remaining percent costs.
-On one GPU we have now gone from 22239 to 36113 MCUPS since stage 1, a cumulative **1.62x**, all of it
+On one GPU we have now gone from 22239 to 36113 MCUPS since stage 1, a cumulative 1.62x, all of it
 from the four changes a profiler pointed at. On four GPUs that same work is worth only 1.57x, and the
 gap between those two figures is the communication cost that stage 5 goes after.
 
@@ -169,12 +169,12 @@ rocprof-compute analyze -p workloads/4_vectorized_loads/0
 ## How much of the step is communication?
 
 The efficiency column says communication now costs something. A timeline says how much, and the
-answer depends on how far apart the ranks are. Trace the same three steps at two ranks and at eight,
-the first pair inside one node and the eight split across two:
+answer depends on how much work each rank is left with. Trace the same steps at two ranks and at
+four, both inside one node:
 
 ```bash
-salloc -N 2 -p LocalQ --exclusive --gres=gpu:4 -t 1:00:00
-for n in 2 8; do
+salloc -N 1 -p LocalQ --exclusive --gres=gpu:4 -t 1:00:00
+for n in 2 4; do
     mpirun -n $n --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh \
         rocprof-sys-run --preset=trace-hpc \
         --selected-regions step_3,step_4,step_5 -o trace_n$n -- ./shallow_mpi
@@ -182,20 +182,22 @@ done
 ```
 
 At two ranks the kernels dominate each RK4 stage and `halo_exchange` is a thin band between them. At
-eight ranks the exchange takes about as long as all the compute it separates. Same binary, same
-per-rank work, and communication has gone from a detail to half the step.
+four ranks that band holds its width while the kernels around it shrink: the work per rank halves
+and the exchange does not.
 
-The kernel statistics put a number on the two-rank end of that. At four ranks the five kernels sum to
-910 ms of GPU time per rank over the run, which is 1.82 ms of each 2.15 ms step: communication and
-launch overhead own the remaining 15 percent. The eight-rank timeline is where that fraction stops
-being a rounding error, and it is easier to see than to tabulate, because the `wall_clock` reports
-nest their ROCTx ranges cumulatively.
+The kernel statistics put a number on it. At four ranks the five kernels sum to 910 ms of GPU time
+per rank over the run, which is 1.82 ms of each 2.15 ms step: communication and launch overhead own
+the remaining 15 percent. That share grows with rank count, and it is easier to see on a timeline
+than to tabulate, because the `wall_clock` reports nest their ROCTx ranges cumulatively.
 
-<!-- SNAPSHOT: rocprof-sys timelines side by side, 2 ranks on the left and 8 ranks on the right -->
+<!-- SNAPSHOT: rocprof-sys timelines side by side, 2 ranks on the left and 4 ranks on the right -->
 <p>
 <img src="../../figs/advanced_4_vectorized_loads_trace_n2.png" alt="rocprof-sys timeline of stage 4 at 2 ranks, compute dominating" width="49%" />
-<img src="../../figs/advanced_4_vectorized_loads_trace_n8.png" alt="rocprof-sys timeline of stage 4 at 8 ranks, communication comparable to compute" width="49%" />
+<img src="../../figs/advanced_4_vectorized_loads_trace_n4.png" alt="rocprof-sys timeline of stage 4 at 4 ranks, the halo exchange holding its width as the kernels shrink" width="49%" />
 </p>
+
+Whether the exchange eventually costs more than the compute it separates is a question for a wider
+job than one node. At 16 ranks or more, spread over several nodes, the same trace is worth repeating.
 
 ## What we learned, and what to do about it
 

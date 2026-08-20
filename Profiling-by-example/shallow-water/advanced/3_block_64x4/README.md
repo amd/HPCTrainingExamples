@@ -44,7 +44,7 @@ Min(h) after run: 0.981776
 | 2 | 58135.17 | 67339.87 | 1.16x | 99.2 percent |
 | 4 | 105226.03 | 124762.34 | 1.19x | 91.9 percent |
 
-**A further 1.19x at four GPUs.** Running total from stage 1, where the domain first became a
+A further 1.19x at four GPUs. Running total from stage 1, where the domain first became a
 sensible size: 1.56x on four GPUs, and 1.53x on one.
 
 Efficiency at four GPUs has held so far: 89.7 percent in stage 1, 90.8 in stage 2, 91.9 here, which is a

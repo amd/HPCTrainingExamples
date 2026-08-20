@@ -38,7 +38,7 @@ Mass: initial=4.194806655e+06, final=4.194806458e+06, rel.err=4.681e-08
 Min(h) after run: 0.981776
 ```
 
-**19638.63 MCUPS, a 3.13x improvement over the baseline's 6282.26.**
+19638.63 MCUPS, a 3.13x improvement over the baseline's 6282.26.
 
 Read that carefully, because the wall-clock time went *up*, from 0.083 s to 0.427 s. That is the
 expected outcome: we asked for 16 times the work and it took 5.1 times as long, so each cell update

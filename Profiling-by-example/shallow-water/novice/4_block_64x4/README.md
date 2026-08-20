@@ -37,7 +37,7 @@ Mass: initial=4.194806655e+06, final=4.194806458e+06, rel.err=4.681e-08
 Min(h) after run: 0.981776
 ```
 
-**34551.31 MCUPS, 1.18x faster than stage 3's 29400.84.**
+34551.31 MCUPS, 1.18x faster than stage 3's 29400.84.
 
 This is the end of the case study, so here is the full progression:
 
@@ -49,7 +49,7 @@ This is the end of the case study, so here is the full progression:
 | 3 | Block 16x16 to 32x32 | 0.285 | 29400.84 | 1.39x |
 | 4 | Block 32x32 to 64x4 | 0.243 | 34551.31 | 1.18x |
 
-**6282 to 34551 MCUPS, a cumulative 5.50x speedup**, with the mass error and minimum depth identical
+6282 to 34551 MCUPS, a cumulative 5.50x speedup, with the mass error and minimum depth identical
 to stage 1 throughout. Every change was a one or two line edit found by asking a tool a question.
 
 ## What the counters say
