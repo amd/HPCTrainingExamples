@@ -7,29 +7,29 @@ CPU clock:	3.70 GHz
 RHS seed: 12345  (argv[2])
 172 iterations to converge
 2-norm of residual: 0.000181377
-CG solve time:      0.1607 s  (0.0009 s/iter)
+CG solve time:      0.1608 s  (0.0009 s/iter)
 --------------------------------------------------------------------------------
 Group 1: L3
 +-----------------------------+---------+-------------+
 |            Event            | Counter | HWThread 24 |
 +-----------------------------+---------+-------------+
-|       ACTUAL_CPU_CLOCK      |  FIXC1  |  1321769496 |
-|        MAX_CPU_CLOCK        |  FIXC2  |  1321780637 |
-|     RETIRED_INSTRUCTIONS    |   PMC0  |  2712402284 |
-|     CPU_CLOCKS_UNHALTED     |   PMC1  |   831735210 |
-|       L2_PF_HIT_IN_L3       |   PMC2  |    71634107 |
-|       L2_PF_MISS_IN_L3      |   PMC3  |      274945 |
-| L2_CACHE_MISS_AFTER_L1_MISS |   PMC4  |     4444662 |
+|       ACTUAL_CPU_CLOCK      |  FIXC1  |  1319516898 |
+|        MAX_CPU_CLOCK        |  FIXC2  |  1319519345 |
+|     RETIRED_INSTRUCTIONS    |   PMC0  |  2712097532 |
+|     CPU_CLOCKS_UNHALTED     |   PMC1  |   832313188 |
+|       L2_PF_HIT_IN_L3       |   PMC2  |    71458289 |
+|       L2_PF_MISS_IN_L3      |   PMC3  |      307196 |
+| L2_CACHE_MISS_AFTER_L1_MISS |   PMC4  |     4564032 |
 +-----------------------------+---------+-------------+
 
 +-------------------------+-------------+
 |          Metric         | HWThread 24 |
 +-------------------------+-------------+
-|   Runtime (RDTSC) [s]   |      0.3954 |
-|   Runtime unhalted [s]  |      0.3572 |
-|       Clock [MHz]       |   3699.9254 |
-|           CPI           |      0.3066 |
-| L3 bandwidth [MBytes/s] |  12357.8215 |
-| L3 data volume [GBytes] |      4.8866 |
+|   Runtime (RDTSC) [s]   |      0.3951 |
+|   Runtime unhalted [s]  |      0.3566 |
+|       Clock [MHz]       |   3699.9581 |
+|           CPI           |      0.3069 |
+| L3 bandwidth [MBytes/s] |  12363.9278 |
+| L3 data volume [GBytes] |      4.8851 |
 +-------------------------+-------------+
 

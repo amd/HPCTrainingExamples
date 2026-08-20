@@ -7,30 +7,30 @@ CPU clock:	3.70 GHz
 RHS seed: 12345  (argv[2])
 172 iterations to converge
 2-norm of residual: 0.000181377
-CG solve time:      0.1611 s  (0.0009 s/iter)
+CG solve time:      0.1609 s  (0.0009 s/iter)
 --------------------------------------------------------------------------------
 Group 1: L2
 +-------------------------------+---------+-------------+
 |             Event             | Counter | HWThread 24 |
 +-------------------------------+---------+-------------+
-|        ACTUAL_CPU_CLOCK       |  FIXC1  |  1321981132 |
-|         MAX_CPU_CLOCK         |  FIXC2  |  1321990390 |
-|      RETIRED_INSTRUCTIONS     |   PMC0  |  2712545124 |
-|      CPU_CLOCKS_UNHALTED      |   PMC1  |   834771060 |
-| REQUESTS_TO_L2_GRP1_ALL_NO_PF |   PMC2  |    93164973 |
-|        L2_PF_HIT_IN_L2        |   PMC3  |   101469736 |
+|        ACTUAL_CPU_CLOCK       |  FIXC1  |  1302370510 |
+|         MAX_CPU_CLOCK         |  FIXC2  |  1346407430 |
+|      RETIRED_INSTRUCTIONS     |   PMC0  |  2711708545 |
+|      CPU_CLOCKS_UNHALTED      |   PMC1  |   828382923 |
+| REQUESTS_TO_L2_GRP1_ALL_NO_PF |   PMC2  |    93175570 |
+|        L2_PF_HIT_IN_L2        |   PMC3  |   101847641 |
 +-------------------------------+---------+-------------+
 
 +-------------------------------+-------------+
 |             Metric            | HWThread 24 |
 +-------------------------------+-------------+
-|      Runtime (RDTSC) [s]      |      0.3911 |
-|      Runtime unhalted [s]     |      0.3573 |
-|          Clock [MHz]          |   3699.8817 |
-|              CPI              |      0.3077 |
-|    L2 bandwidth [MBytes/s]    |  15245.1978 |
-|    L2 data volume [GBytes]    |      5.9626 |
-| Prefetch bandwidth [MBytes/s] |  16604.1608 |
-| Prefetch data volume [GBytes] |      6.4941 |
+|      Runtime (RDTSC) [s]      |      0.3960 |
+|      Runtime unhalted [s]     |      0.3520 |
+|          Clock [MHz]          |   3578.9416 |
+|              CPI              |      0.3055 |
+|    L2 bandwidth [MBytes/s]    |  15060.2159 |
+|    L2 data volume [GBytes]    |      5.9632 |
+| Prefetch bandwidth [MBytes/s] |  16461.9059 |
+| Prefetch data volume [GBytes] |      6.5182 |
 +-------------------------------+-------------+
 

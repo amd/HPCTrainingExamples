@@ -1,0 +1,9 @@
+INFO: You are running LIKWID in a cpuset with 8 CPUs. Taking given IDs as logical ID in cpuset
+--------------------------------------------------------------------------------
+CPU name:	AMD Instinct MI300A Accelerator
+CPU type:	AMD K19 (Zen4) architecture
+CPU clock:	3.70 GHz
+ERROR - [/tmp/admin/18573/likwid-build.hPansB/likwid-5.5.2/src/perfgroup.c:perfgroup_readGroup:830] No such file or directory.
+Cannot read group file MEM_DP.txt. Searched in /nfsapps/ubuntu-24.04/opt/rocmplus-7.2.4/likwid-v5.5.2/share/likwid/perfgroups/zen4/MEM_DP.txt and /shared/prerelease/home/bobrobey/.likwid/groups/zen4/MEM_DP.txt
+ERROR - [/tmp/admin/18573/likwid-build.hPansB/likwid-5.5.2/src/perfmon.c:perfmon_addEventSet:2608] Permission denied.
+Access to performance group MEM_DP not allowed
