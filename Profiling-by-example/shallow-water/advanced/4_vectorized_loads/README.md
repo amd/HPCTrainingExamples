@@ -132,17 +132,18 @@ Min(h) after run: 0.981776
 | 2 | 67339.87 | 70436.30 | 1.05x | 97.5 percent |
 | 4 | 124762.34 | 124889.46 | 1.00x | 86.5 percent |
 
-A 1.06x gain on one GPU that arrives as nothing at all on four. Read those two rows together,
+A 1.06x gain on one GPU, 1.05x on two, and nothing at all on four. Read those three rows together,
 because this is the most instructive result in the tutorial. The kernel really did get 6 percent
-faster, the single-GPU row proves it, and the four-GPU row is flat to within run-to-run spread. The
+faster, the single-GPU row proves it, two GPUs keep almost all of it, and the four-GPU row is flat to
+within run-to-run spread. The
 speedup was spent on communication rather than banked, and the efficiency column says the same thing
 from the other side: 92 percent in stage 3, 87 percent here.
 
 It is also the last of the kernel gains, and a modest return for by far the largest code change so
 far, which is part of the lesson too: the deeper you go, the more effort each remaining percent costs.
 On one GPU we have now gone from 22239 to 36113 MCUPS since stage 1, a cumulative 1.62x, all of it
-from the four changes a profiler pointed at. On four GPUs that same work is worth only 1.57x, and the
-gap between those two figures is the communication cost that stage 5 goes after.
+from the four changes a profiler pointed at. Two GPUs keep that same 1.62x. On four it is worth only
+1.57x, and the gap between those figures is the communication cost that stage 5 goes after.
 
 This is the only stage that alters the arithmetic, so its accuracy checks are the ones worth watching
 most closely. The mass error moves from 2.929e-09 to 2.916e-09, a change in the last digits from

@@ -26,15 +26,15 @@ its own 256-thread configuration and is unaffected.
 ```bash
 module load rocm openmpi
 make
-mpirun -n 4 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
+mpirun -n 2 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
 ```
 
 ## Expected output
 
 ```
-MPI ranks: 4  |  GPUs detected: 1
+MPI ranks: 2  |  GPUs detected: 1
 Domain: 8192x8192 (global), steps=500, dt=0.0728643
-Elapsed (max over ranks): 1.276 s  |  Throughput: 105226.03 MCUPS
+Elapsed (max over ranks): 2.309 s  |  Throughput: 58135.17 MCUPS
 Mass: initial=6.710936665e+07, final=6.710936646e+07, rel.err=2.929e-09
 Min(h) after run: 0.981776
 ```
@@ -45,7 +45,7 @@ Min(h) after run: 0.981776
 | 2 | 43377.47 | 58135.17 | 1.34x | 100.3 percent |
 | 4 | 79762.89 | 105226.03 | 1.32x | 90.8 percent |
 
-A 1.32x gain at four GPUs, and much the same 1.30x on one. That the two agree is the useful part: this
+A 1.34x gain at two GPUs, and much the same 1.30x on one. That the two agree is the useful part: this
 change is purely local to the kernel, so it should help every rank equally and leave the
 communication cost alone, and the numbers say it did.
 
@@ -70,17 +70,6 @@ A block that covers a 32x32 patch of the grid has a smaller perimeter relative t
 16x16 patch, so proportionally fewer of the stencil's neighbour reads fall outside the block and have
 to come from memory instead of cache.
 
-## What happened to occupancy and cache reuse?
-
-The `rocprof-compute` reports show wavefront occupancy moving only modestly, from 70.99 to 74.78
-percent. The vector-L1 hit rate makes the larger change, from 57.44 to 71.07 percent, while the L2
-hit rate moves from 18.44 to 20.66 percent. That is consistent with the larger 32x32 patch reusing
-more neighbour data before it leaves the near cache.
-
-Occupancy is not the objective; it is a proxy for one particular failure mode, namely having too
-little work in flight to hide latency. Here it does not explain a 1.30x single-GPU speedup, while
-the cache-hit change does.
-
 ## Roofline
 
 ```bash
@@ -98,9 +87,46 @@ characterizes the kernel, not the decomposition. 16x16 on the left, 32x32 on the
 <img src="../../figs/roofline_block_32x32.png" alt="Roofline of compute_rhs with 32x32 blocks, after this stage" width="49%" />
 </p>
 
-The report measures 14632 GFLOP/s, 23.88 percent of the MI300A VALU peak, up from 11122 GFLOP/s and
-18.15 percent in stage 1. Together with the cache-hit rates above, that explains why the wall clock
-improves even though no arithmetic changed.
+## What happened to occupancy and cache reuse?
+
+For the numbers behind the plots, `analyze` accepts more than one workload. Giving it both puts every
+metric side by side with the change between them, which is easier to read than two separate reports:
+
+```bash
+rocprof-compute analyze \
+    -p ../1_larger_domain/workloads/1_larger_domain/0 \
+    -p workloads/2_block_32x32/0 \
+    -b 2.1.0 2.1.9 2.1.14 2.1.15 2.1.18 2.1.19 2.1.20 2.1.21
+```
+
+`-b` takes the metric ids in the leftmost column of the report and keeps only those rows, so the
+eight below are all that comes back instead of every section the tool knows how to print.
+
+Section 2.1, System Speed-of-Light, is the summary. 16x16 first, 32x32 second:
+
+| Metric | 16x16 | 32x32 | Change |
+|---|---|---|---|
+| 2.1.0 VALU FLOPs | 11122 GFLOP/s | 14632 GFLOP/s | 31.6 percent |
+| 2.1.9 VALU Utilization | 82.64 percent | 115.88 percent | 40.2 percent |
+| 2.1.14 IPC | 0.79 | 1.06 | 32.7 percent |
+| 2.1.15 Wavefront Occupancy | 70.99 percent | 74.78 percent | 5.3 percent |
+| 2.1.18 vL1D Cache Hit Rate | 57.44 percent | 71.07 percent | 13.6 points |
+| 2.1.19 vL1D Cache BW | 13886 GB/s | 18269 GB/s | 31.6 percent |
+| 2.1.20 L2 Cache Hit Rate | 18.44 percent | 20.66 percent | 2.2 points |
+| 2.1.21 L2 Cache BW | 5930 GB/s | 5270 GB/s | -11.1 percent |
+
+The rows make one chain. The squarer block keeps more of the stencil's neighbour reads in the near
+cache, so the vL1D hit rate gains 14 points, less traffic goes out to L2 and its bandwidth falls 11
+percent, and the vector units, waiting less often, issue a third more instructions per cycle. The
+FLOP rate rises by that same third, from 18.15 to 23.88 percent of the MI300A vector peak, with no
+arithmetic changed anywhere.
+
+Occupancy is the row that did least, and that is worth noticing. It is not the objective, only a
+proxy for one particular failure mode, having too little work in flight to hide latency. Five percent
+does not explain a 1.30x speedup, while the cache-hit change does.
+
+VALU utilization above 100 percent is not an error. MI300A can co-issue VALU instructions, so more
+than one can retire per cycle, while the metric is expressed against a single-issue peak.
 
 ## What we learned, and what to do about it
 

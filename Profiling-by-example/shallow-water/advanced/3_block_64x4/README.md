@@ -25,15 +25,15 @@ arrays are contiguous in.
 ```bash
 module load rocm openmpi
 make
-mpirun -n 4 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
+mpirun -n 2 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
 ```
 
 ## Expected output
 
 ```
-MPI ranks: 4  |  GPUs detected: 1
+MPI ranks: 2  |  GPUs detected: 1
 Domain: 8192x8192 (global), steps=500, dt=0.0728643
-Elapsed (max over ranks): 1.076 s  |  Throughput: 124762.34 MCUPS
+Elapsed (max over ranks): 1.993 s  |  Throughput: 67339.87 MCUPS
 Mass: initial=6.710936665e+07, final=6.710936646e+07, rel.err=2.929e-09
 Min(h) after run: 0.981776
 ```
@@ -44,8 +44,8 @@ Min(h) after run: 0.981776
 | 2 | 58135.17 | 67339.87 | 1.16x | 99.2 percent |
 | 4 | 105226.03 | 124762.34 | 1.19x | 91.9 percent |
 
-A further 1.19x at four GPUs. Running total from stage 1, where the domain first became a
-sensible size: 1.56x on four GPUs, and 1.53x on one.
+A further 1.16x at two GPUs. Running total from stage 1, where the domain first became a
+sensible size: 1.55x on two GPUs, and 1.53x on one.
 
 Efficiency at four GPUs has held so far: 89.7 percent in stage 1, 90.8 in stage 2, 91.9 here, which is a
 flat line once run-to-run spread is taken into account. That is worth stating plainly, because the
@@ -83,7 +83,7 @@ Again the novice measurements of the same kernel, reused for
 <img src="../../figs/roofline_block_64x4.png" alt="Roofline of compute_rhs with 64x4 blocks, after this stage" width="49%" />
 </p>
 
-The two plots look the same, even though the change is worth 1.19x. A roofline summarizes arithmetic
+The two plots look the same, even though the change is worth 1.16x. A roofline summarizes arithmetic
 intensity and achieved bandwidth, and a coalescing improvement can pay off without moving either far
 enough to see on a log-log plot.
 

@@ -69,7 +69,7 @@ part. Each rank now owns a 8192x2048 band: 16.7 million interior cells against t
 8192 cells each, so roughly one cell in a thousand crosses the network per stage rather than one in
 64. The halo did not get smaller in absolute terms, it got smaller relative to the work it serves.
 
-At four GPUs the code is now 25.9x faster than the same four GPUs managed in stage 0. Almost none
+At two GPUs the code is now 8.9x faster than the same two GPUs managed in stage 0. Almost none
 of that came from making anything faster; it came from measuring a sensible problem size.
 
 Note also what the efficiency column does between two and four ranks, falling from 98 to 90 percent.
