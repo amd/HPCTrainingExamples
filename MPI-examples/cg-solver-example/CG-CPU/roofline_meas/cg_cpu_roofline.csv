@@ -1,0 +1,14 @@
+AMDuProfPcm Report
+Family,0x19
+Model,0x90
+Sockets,1
+CoreComplex,1
+Threads,192
+Cores,96
+CpuFreqMHz,3700.45
+MemoryChannels,1
+ModelName,AMD Instinct MI300A Accelerator
+Type,app
+Name,cg_cpu
+Throughput,3.5099
+Bandwidth,0.2673

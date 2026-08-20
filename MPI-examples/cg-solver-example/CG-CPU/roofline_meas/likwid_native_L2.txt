@@ -1,0 +1,36 @@
+INFO: You are running LIKWID in a cpuset with 8 CPUs. Taking given IDs as logical ID in cpuset
+--------------------------------------------------------------------------------
+CPU name:	AMD Instinct MI300A Accelerator
+CPU type:	AMD K19 (Zen4) architecture
+CPU clock:	3.70 GHz
+--------------------------------------------------------------------------------
+RHS seed: 12345  (argv[2])
+172 iterations to converge
+2-norm of residual: 0.000181377
+CG solve time:      0.1611 s  (0.0009 s/iter)
+--------------------------------------------------------------------------------
+Group 1: L2
++-------------------------------+---------+-------------+
+|             Event             | Counter | HWThread 24 |
++-------------------------------+---------+-------------+
+|        ACTUAL_CPU_CLOCK       |  FIXC1  |  1321981132 |
+|         MAX_CPU_CLOCK         |  FIXC2  |  1321990390 |
+|      RETIRED_INSTRUCTIONS     |   PMC0  |  2712545124 |
+|      CPU_CLOCKS_UNHALTED      |   PMC1  |   834771060 |
+| REQUESTS_TO_L2_GRP1_ALL_NO_PF |   PMC2  |    93164973 |
+|        L2_PF_HIT_IN_L2        |   PMC3  |   101469736 |
++-------------------------------+---------+-------------+
+
++-------------------------------+-------------+
+|             Metric            | HWThread 24 |
++-------------------------------+-------------+
+|      Runtime (RDTSC) [s]      |      0.3911 |
+|      Runtime unhalted [s]     |      0.3573 |
+|          Clock [MHz]          |   3699.8817 |
+|              CPI              |      0.3077 |
+|    L2 bandwidth [MBytes/s]    |  15245.1978 |
+|    L2 data volume [GBytes]    |      5.9626 |
+| Prefetch bandwidth [MBytes/s] |  16604.1608 |
+| Prefetch data volume [GBytes] |      6.4941 |
++-------------------------------+-------------+
+

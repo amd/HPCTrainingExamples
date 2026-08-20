@@ -1,0 +1,33 @@
+INFO: You are running LIKWID in a cpuset with 8 CPUs. Taking given IDs as logical ID in cpuset
+--------------------------------------------------------------------------------
+CPU name:	AMD Instinct MI300A Accelerator
+CPU type:	AMD K19 (Zen4) architecture
+CPU clock:	3.70 GHz
+--------------------------------------------------------------------------------
+RHS seed: 12345  (argv[2])
+172 iterations to converge
+2-norm of residual: 0.000181377
+CG solve time:      0.1636 s  (0.0010 s/iter)
+--------------------------------------------------------------------------------
+Group 1: FLOPS_DP
++---------------------------+---------+-------------+
+|           Event           | Counter | HWThread 24 |
++---------------------------+---------+-------------+
+|      ACTUAL_CPU_CLOCK     |  FIXC1  |  1343297710 |
+|       MAX_CPU_CLOCK       |  FIXC2  |  1525764523 |
+|    RETIRED_INSTRUCTIONS   |   PMC0  |  2710031052 |
+|    CPU_CLOCKS_UNHALTED    |   PMC1  |   819426683 |
+| RETIRED_SSE_AVX_FLOPS_ALL |   PMC2  |   577829503 |
+|           MERGE           |   PMC3  |           0 |
++---------------------------+---------+-------------+
+
++----------------------+-------------+
+|        Metric        | HWThread 24 |
++----------------------+-------------+
+|  Runtime (RDTSC) [s] |      0.6611 |
+| Runtime unhalted [s] |      0.3631 |
+|      Clock [MHz]     |   3257.4520 |
+|          CPI         |      0.3024 |
+|     DP [MFLOP/s]     |    874.0148 |
++----------------------+-------------+
+

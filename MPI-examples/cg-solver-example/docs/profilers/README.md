@@ -26,8 +26,8 @@ the shared *Which profiler* / *Ground rules* / *Mapping* material and links here
 | **ROCm Optiq** | `CG-GPU` | GUI: trace timeline + roofline viewer | [`roc-optiq.md`](roc-optiq.md) |
 | **TAU** | `CG-GPU` + host | Perfetto timeline: MPI-labelled (HIP/GPU + comm matrix) | [`tau.md`](tau.md) |
 | **HPCToolkit** | `CG-CPU` / `CG-GPU` | Call-path profile + per-rank trace timeline | [`hpctoolkit.md`](hpctoolkit.md) |
-| **likwid** | `CG-CPU` | CPU roofline | [`likwid.md`](likwid.md) |
-| **AMD uProf** | `CG-CPU` | CPU hotspots | [`uprof.md`](uprof.md) |
+| **likwid** | `CG-CPU` | CPU roofline (likwid-bench ceilings + native FLOPS_DP/L2/L3 point; plot) | [`likwid.md`](likwid.md) |
+| **AMD uProf** | `CG-CPU` | CPU hotspots + classic roofline (plot) | [`uprof.md`](uprof.md) |
 | **Linux perf** | `CG-CPU` | HW counters baseline | [`perf.md`](perf.md) |
 | **Valgrind cachegrind** | `CG-CPU` | Simulated cache model | [`cachegrind.md`](cachegrind.md) |
 | **IntelliKit** | `CG-GPU` | Decoded metrics / kernel isolation | [`intellikit.md`](intellikit.md) |

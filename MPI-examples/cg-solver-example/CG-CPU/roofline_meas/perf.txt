@@ -1,0 +1,14 @@
+[ppac-pl1-s24-26:3703761] No HIP capabale device found. Disabling component.
+
+ Performance counter stats for 'mpirun --oversubscribe -n 1 ./cg_cpu src/Dubcova2.pm 12345':
+
+       577,856,970      fp_ret_sse_avx_ops.all                                                
+     1,388,129,248      cycles                                                                
+     3,207,785,086      instructions                     #    2.31  insn per cycle            
+
+       0.547887736 seconds time elapsed
+
+       0.257156000 seconds user
+       0.159959000 seconds sys
+
+
