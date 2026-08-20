@@ -68,7 +68,12 @@ ifeq ($(SCOREP),1)
 endif
 
 CXXFLAGS = -O3 -std=c++17 $(HIP_LANG) --offload-arch=$(GPU_ARCH) -I$(ROCM_PATH)/include -Isrc
-LDFLAGS  = -L$(ROCM_PATH)/lib
+# `--as-needed` drops libraries the binary does not actually reference.  The
+# OpenMPI C++ wrapper still appends `-lmpi_cxx`, but OpenMPI 5.x removed the C++
+# bindings, so that resolves to an *incompatible* system libmpi_cxx (Ubuntu's
+# OMPI 4.1) and the binary aborts at MPI_Init with an undefined-symbol error.
+# The solver uses only the C MPI API, so --as-needed simply drops that stale dep.
+LDFLAGS  = -L$(ROCM_PATH)/lib -Wl,--as-needed
 LIBS     = -lrocsparse -lrocblas -lrccl -lamdhip64
 
 # Opt in to the ROCm 7.x rocsparse_v2_spmv path (persistent descriptor + one-time
