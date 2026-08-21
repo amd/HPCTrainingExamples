@@ -1,0 +1,13 @@
+# compute peaks (MFlop/s, 1 core)
+flops peakflops 9461.99
+flops peakflops_sse_fma 
+flops peakflops_avx_fma 58556.46
+flops peakflops_avx512_fma 58699.75
+# load bandwidth by working set (MByte/s, 1 core)
+bw_load load_avx512 16kB 211858.92
+bw_load load_avx512 512kB 116451.82
+bw_load load_avx512 16MB 91488.47
+bw_load load_avx512 1GB 26025.49
+# triad (stream) DRAM (MByte/s + MFlop/s, 1 core)
+triad MFlops/s: 1633.30
+triad MByte/s: 26132.74

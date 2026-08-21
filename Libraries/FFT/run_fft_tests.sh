@@ -13,9 +13,10 @@ export OFFLOAD_ARCH=gfx942
 
 echo "=== node: $(hostname) ==="
 echo "=== build ==="
-hipcc -O3 --offload-arch=gfx942 rocfft_c2c.hip -lrocfft -o rocfft_c2c
-hipcc -O3 --offload-arch=gfx942 rocfft_3d.hip  -lrocfft -o rocfft_3d
-hipcc -O3 --offload-arch=gfx942 hipfft_c2c.hip -lhipfft -o hipfft_c2c
+hipcc -O3 --offload-arch=gfx942 rocfft_c2c.hip -lrocfft  -o rocfft_c2c
+hipcc -O3 --offload-arch=gfx942 rocfft_3d.hip  -lrocfft  -o rocfft_3d
+hipcc -O3 --offload-arch=gfx942 hipfft_c2c.hip -lhipfft  -o hipfft_c2c
+hipcc -O3 --offload-arch=gfx942 -x c++ fftw_c2c.c -lhipfftw -o fftw_c2c
 
 echo "=== rocFFT 1D batched ==="
 ./rocfft_c2c 1048576 1
@@ -23,5 +24,7 @@ echo "=== rocFFT 1D batched ==="
 echo "=== rocFFT 3D ==="
 ./rocfft_3d 128
 ./rocfft_3d 256
-echo "=== hipFFT 1D batched (portable API) ==="
+echo "=== hipFFT 1D batched (portable cuFFT API) ==="
 ./hipfft_c2c 1048576 1
+echo "=== hipFFTW 1D batched (portable FFTW3 API) ==="
+./fftw_c2c 1048576 1

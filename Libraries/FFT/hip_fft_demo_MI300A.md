@@ -15,10 +15,14 @@ distributed multi-node 3D FFT:
 
 1. **rocFFT** — 1D batched and 3D complex-to-complex, round-trip verified.
 2. **hipFFT** — the same 1D transform through the portable (cuFFT-compatible) API.
-3. **heFFTe** — distributed 3D FFT across ranks (rocFFT backend), launched with
+3. **hipFFTW** — the same 1D transform through the portable (FFTW3-compatible) API;
+   a legacy CPU FFTW3 program runs on the GPU with no source changes.
+4. **hipFFT-MP** — native multi-process distributed 3D FFT over MPI, built into
+   ROCm 7.2.4 (`<hipfft/hipfftMp.h>`); the cuFFTMp-equivalent, no external solver.
+5. **heFFTe** — distributed 3D FFT across ranks (rocFFT backend), launched with
    `mpirun`.
-4. **APU unified memory** — initialize on the CPU, transform on the GPU, no copies.
-5. Profiling (Appendix A), including the multi-node all-to-all cost.
+6. **APU unified memory** — initialize on the CPU, transform on the GPU, no copies.
+7. Profiling (Appendix A), including the multi-node all-to-all cost.
 
 > Build/PDF note: render with `pandoc hip_fft_demo_MI300A.md -o fft_demo.pdf`.
 
@@ -156,7 +160,219 @@ hipcc -O3 --offload-arch=gfx942 hipfft_c2c.hip -lhipfft -o hipfft_c2c
 
 ---
 
-## 4. heFFTe — distributed 3D FFT (multi-node, `mpirun`)
+## 4. hipFFTW — the FFTW3 drop-in (single APU)
+
+Complete program: `fftw_c2c.c`. The same 1D transform as §1–§3, but written in the
+**plain FFTW3 API** — no HIP, no device pointers, no rocFFT/hipFFT calls. hipFFTW
+(shipped inside hipFFT starting in ROCm 7.1.0, production in 7.2.x) exports the
+FFTW3 symbols (`fftw_*` / `fftwf_*`), so a legacy CPU FFTW3 code runs on an AMD GPU
+with **zero source changes**. The only difference from a CPU build is one include
+and one link flag:
+
+```text
+CPU (FFTW3):     #include <fftw3.h>            ...  -lfftw3
+GPU (hipFFTW):   #include <hipfft/hipfftw.h>   ...  -lhipfftw
+```
+
+Unlike hipFFT, hipFFTW does **not** require its buffers to be GPU-visible — it
+stages `host<->device` under the hood. On an APU (unified HBM) that staging is cheap,
+so the relink alone buys GPU acceleration. This is the easiest possible on-ramp for
+a CPU-only FFTW3 code base.
+
+```c
+#include <hipfft/hipfftw.h>
+fftw_complex* data = fftw_alloc_complex(N);
+fftw_plan fwd = fftw_plan_dft_1d(N, data, data, FFTW_FORWARD,  FFTW_ESTIMATE);
+fftw_plan bwd = fftw_plan_dft_1d(N, data, data, FFTW_BACKWARD, FFTW_ESTIMATE);
+fftw_execute(fwd);            // or fftw_execute_dft(fwd, in, out) to reuse the plan
+fftw_execute(bwd);            // inverse is unnormalized: divide by N
+```
+
+Build & run. Note the `-x c++` on the compiler line: the ROCm 7.2.4 
+hipFFTW header includes C++ standard
+headers (`<cstddef>`, `<cstdlib>`), so the translation unit including it must be
+compiled as C++ (or named `.cpp`). The FFTW3 source itself is unchanged.
+
+```bash
+salloc -N 1 --gpus=1 --time=00:30:00 -p PPAC_MI300A_SPX
+```
+
+Set up the environment for the example. 
+
+```bash
+module load rocm
+export HSA_XNACK=1
+```
+
+```bash
+make fftw_c2c
+# equivalently:
+#   hipcc -O3 --offload-arch=gfx942 -x c++ -DUSE_HIPFFTW fftw_c2c.c -lhipfftw -o fftw_c2c
+./fftw_c2c 1048576 1
+./fftw_c2c 65536 64          # 64 batched transforms of length 65536
+```
+
+### 4a. CPU baseline — the *same* source on reference FFTW3
+
+The whole point of the FFTW3 API is portability, so `fftw_c2c.c` also builds as an
+ordinary CPU program against reference FFTW3 — **no HIP, no GPU**. The single source
+selects its backend with the `USE_HIPFFTW` macro (set by the Makefile): with it, the
+hipFFTW header + `-lhipfftw`; without it, `<fftw3.h>` + `-lfftw3`. Nothing else in
+the source changes. CPU FFTW3 ships as the `fftw/3.3.10` module, which becomes
+available once the `rocm` module is loaded:
+
+```bash
+module load rocm       # exposes the fftw module (and heffte)
+module load fftw       # fftw/3.3.10 — sets FFTW_ROOT / FFTW_PATH, include & lib paths
+export HSA_XNACK=1
+```
+
+```bash
+make fftw_c2c_cpu
+# equivalently:
+#   gcc -O3 -I$FFTW_ROOT/include fftw_c2c.c -L$FFTW_ROOT/lib -lfftw3 -lm -o fftw_c2c_cpu
+./fftw_c2c_cpu 1048576 1
+./fftw_c2c_cpu 65536 64          # 64 batched transforms of length 65536
+./fftw_c2c_cpu 1000003 1         # prime N
+```
+
+**Validated (MI300A host CPU, FFTW 3.3.10):** round-trip at the double-precision
+floor, matching the GPU hipFFTW run bit-for-bit in magnitude:
+
+```text
+FFTW C2C  N=1048576 batch=1   round-trip max_err=1.333e-15
+FFTW C2C  N=65536 batch=64    round-trip max_err=8.960e-16
+FFTW C2C  N=1000003 batch=1   round-trip max_err=2.740e-15
+```
+
+**Validated (MI300A / ROCm 7.2.4, hipFFT 1.0.22):** round-trip `max_err` at the
+~1e-15 double floor, *identical* to `rocfft_c2c` / `hipfft_c2c` on the same sizes —
+hipFFTW dispatches to rocFFT underneath:
+
+```text
+hipFFTW C2C  N=1048576 batch=1   round-trip max_err=1.887e-15
+hipFFTW C2C  N=65536 batch=64    round-trip max_err=1.460e-15
+hipFFTW C2C  N=1000003 batch=1   round-trip max_err=6.062e-15   # prime -> Bluestein
+```
+
+> - The header must be compiled as C++ (see the `-x c++` note above) — a genuinely
+>   C-only build (`gcc -lfftw3` -> `-lhipfftw`) does *not* compile as-is today.
+> - Only the **basic** plans ship in 7.2.4 (`fftw_plan_dft_1d/2d/3d`,
+>   `fftw_plan_dft`, and the r2c/c2r variants) plus `fftw_execute[_dft]`. The
+>   **advanced** (`fftw_plan_many_dft`) and **guru** interfaces are not present yet,
+>   so batching is done by reusing a basic plan with `fftw_execute_dft`.
+> - Plan flags (`FFTW_MEASURE`, `FFTW_PATIENT`, wisdom, `FFTW_CONSERVE_MEMORY`) are
+>   currently **ignored** — configurations are chosen by heuristic, no measurement
+>   phase — and input preservation is not guaranteed. Interleaved complex only.
+
+### Exercises
+- **E4.1** Diff `fftw_c2c.c` against `hipfft_c2c.hip`: the FFTW source has no HIP or
+  device code at all — hipFFTW hid the GPU entirely. What did you give up vs. the
+  explicit hipFFT path (control over device buffers, streams, work areas)?
+- **E4.2 (portability)** Build the CPU baseline (`make fftw_c2c_cpu`, §4a) from the
+  *identical* source against reference FFTW3 (`-lfftw3`, `#include <fftw3.h>`) and
+  compare results and wall-clock against the GPU hipFFTW run on the APU. Only the
+  Makefile/`USE_HIPFFTW` flag changes. (Uses the `fftw/3.3.10` module.)
+- **E4.3** Add an R2C/C2R variant (`fftw_plan_dft_r2c_1d` / `fftw_plan_dft_c2r_1d`)
+  and account for the Hermitian-symmetry (~2×) memory savings.
+- **E4.4** Confirm `FFTW_MEASURE` is currently a no-op in hipFFTW (time plan
+  creation with `FFTW_ESTIMATE` vs. `FFTW_MEASURE`). What does that imply for
+  porting a code that relies on FFTW wisdom/measurement?
+
+---
+
+## 5. hipFFT-MP — native distributed 3D FFT (multi-process, MPI)
+
+Complete program: `hipfftmp_3d.cpp`. hipFFT-MP is the **multi-process** distributed
+FFT that ships *inside* hipFFT starting in ROCm 7.2.4 (`<hipfft/hipfftMp.h>`) — the
+AMD analog of NVIDIA's cuFFTMp. Where heFFTe (§6) is a separate solver you build
+and link, hipFFT-MP needs only the ROCm stack: you attach an MPI communicator to an
+ordinary hipFFT plan and the library performs the pencil/slab decomposition and the
+inter-rank all-to-all for you.
+
+The programming model is the single-process multi-GPU `hipfftXt` flow with one extra
+call — `hipfftMpAttachComm` — before the plan is made:
+
+```cpp
+hipfftHandle plan;
+hipfftCreate(&plan);
+MPI_Comm comm = MPI_COMM_WORLD;
+hipfftMpAttachComm(plan, HIPFFT_COMM_MPI, &comm);        // <-- the MP step
+size_t work;
+hipfftMakePlan3d(plan, N, N, N, HIPFFT_Z2Z, &work);     // built-in decomposition
+
+hipLibXtDesc* desc;                                      // distributed device memory
+hipfftXtMalloc(plan, &desc, HIPFFT_XT_FORMAT_INPLACE);
+hipfftXtMemcpy(plan, desc, host_slab, HIPFFT_COPY_HOST_TO_DEVICE);   // scatter
+
+hipfftXtExecDescriptor(plan, desc, desc, HIPFFT_FORWARD);
+hipfftXtExecDescriptor(plan, desc, desc, HIPFFT_BACKWARD);
+
+hipfftXtMemcpy(plan, host_slab, desc, HIPFFT_COPY_DEVICE_TO_HOST);   // gather
+hipfftXtFree(desc);
+hipfftDestroy(plan);
+```
+
+> **Notes / gotchas:**
+> 1. Attach the communicator **before** `hipfftMakePlan3d` — the plan is what gets
+>    built distributed. (The MP API is marked *Experimental* in the headers.)
+> 2. With the **built-in** decomposition each rank owns a contiguous slab of the
+>    slowest dimension, so this example requires `N % nranks == 0`. `hipfftXtMemcpy`
+>    scatters/gathers between the per-rank host slab and the distributed descriptor.
+> 3. The inverse is **unnormalized**: divide the round-trip result by `N³`.
+> 4. For a hand-tuned layout use `hipfftXtSetDistribution` (custom decomposition):
+>    each rank declares its input/output *brick* by lower/upper global coordinates.
+
+### 5.1 Build and launch in an interactive Slurm allocation
+
+Get an interactive allocation
+
+```bash
+salloc -N 1 --ntasks=4 --cpus-per-task=1 --gpus=4 -t 01:00:00 [-p <slurm queue>]
+```
+
+Set up the environment and build (hipFFT-MP ships with ROCm — no external library)
+
+```bash
+module load rocm/7.2.4 openmpi
+export HSA_XNACK=1
+make hipfftmp_3d
+```
+
+Run on 4 MPI ranks (one GPU per rank)
+
+```bash
+mpirun -np 4 --map-by ppr:4:node ./hipfftmp_3d 512
+```
+
+Or submit the batch script (`run_hipfftmp.sbatch`):
+
+```bash
+sbatch run_hipfftmp.sbatch 512
+```
+
+Expected output (round-trip error at the double-precision floor):
+
+```text
+hipFFT-MP 3D  512x512x512  ranks=4  slab=128x512x512  fwd+bwd=... s  round-trip max_err=~1e-15
+```
+
+### 5.2 Exercises
+- **E5.1** Diff the plan setup against `heffte_3d.cpp`: hipFFT-MP adds one call
+  (`hipfftMpAttachComm`) to the familiar `hipfftXt` flow, whereas heFFTe asks you to
+  build the process grid and boxes explicitly. Which model do you prefer, and why?
+- **E5.2** Sweep ranks 1→2→4 at a fixed 512³ cube (strong scaling) and compare the
+  fwd+bwd time to the heFFTe numbers in §6.4 on the same node.
+- **E5.3 (portability)** hipFFT-MP mirrors cuFFTMp call-for-call
+  (`cufftMpAttachComm` → `hipfftMpAttachComm`, etc.). Take a small cuFFTMp snippet
+  and port it by mechanical `cufft`→`hipfft` renaming.
+- **E5.4 (custom layout)** Replace the built-in decomposition with
+  `hipfftXtSetDistribution`, handing each rank an explicit input/output brick, and
+  confirm the round-trip error is unchanged.
+
+---
+
+## 6. heFFTe — distributed 3D FFT (multi-node, `mpirun`)
 
 Reference program: `heffte_3d.cpp`. heFFTe splits the global cube across ranks,
 runs local rocFFT transforms, and does the inter-rank transposes as MPI all-to-all.
@@ -185,14 +401,14 @@ fft.backward(gpu_out.data(), gpu_in.data(),  work.data(), heffte::scale::full);
 std::vector<cpx> host_back = heffte::gpu::transfer::unload(gpu_in);
 ```
 
-> **Two gotchas we hit and fixed** (both in `heffte_3d.cpp`):
+> **Two cautions** (both in `heffte_3d.cpp`):
 > 1. Destroy every heFFTe object *before* `MPI_Finalize()` — `fft3d`'s destructor
 >    frees a duplicated communicator, so wrap the work in a `{ ... }` scope.
 > 2. heFFTe GPU calls are asynchronous. Call `hipDeviceSynchronize()` before you
 >    stop the timer, otherwise a single-rank run (no all-to-all to force a sync)
 >    reports ~0 s.
 
-### 4.1 Build heFFTe with the ROCm backend (one time, login node)
+### 6.1 Build heFFTe with the ROCm backend (one time, login node)
 
 On the AAC6 system, you may find a module that already has a module built. Check for
 `module avail` and look for heffte/2.4.1 module.
@@ -216,12 +432,19 @@ This yields **heFFTe 2.4.1** with `Heffte_ENABLE_ROCM=ON` and (by default here)
 `$HOME/heffte-rocm/{include,lib}` (shared `libheffte.so`), and CMake auto-detects
 the ROCm-aware OpenMPI 5.0.10 `mpicxx`. Configure+build+install took ~1 min total.
 
-### 4.2 Build and launch the exercise in an interactive Slurm allocation
+### 6.2 Build and launch the exercise in an interactive Slurm allocation
 
 Get an interactive allocation
 
 ```bash
 salloc -N 1 --ntasks=4 --cpus-per-task=1 --gpus=4 -t 01:00:00 [-p <slurm queue>]
+```
+
+Set up the environment
+
+```bash
+module load rocm heffte
+export HSA_XNACK=1
 ```
 
 Build the `heffte_3d` example
@@ -230,7 +453,7 @@ Build the `heffte_3d` example
 make heffte_3d
 ```
 
-Add the heFFTe library to the `LD_LIBRARY_PATH`
+Build heFFTe library and add the heFFTe library to the `LD_LIBRARY_PATH`. Done by the heffte module
 
 ```bash
 export LD_LIBRARY_PATH=$HOME/heffte-rocm/lib:$LD_LIBRARY_PATH
@@ -242,9 +465,15 @@ Run the example with the mpirun command on 4 MPI ranks
 mpirun -np 4 --map-by ppr:4:node ./heffte_3d 512
 ```
 
+Validated on MI300A (`gfx942`), 4 ranks / 1 node:
+
+```
+heFFTe 3D  512x512x512  ranks=4  grid=1x2x2  fwd+bwd=0.2172 s  round-trip max_err=2.113e-15
+```
+
 exit the allocation
 
-### 4.3 Running in an Slurm sbatch script
+### 6.3 Running in an Slurm sbatch script
 
 Launch with **`mpirun`** via a batch script (adapt `run_multinode.sbatch`):
 
@@ -266,16 +495,16 @@ mpirun -np "${SLURM_NTASKS}" --map-by ppr:4:node \
        -x HSA_XNACK -x LD_LIBRARY_PATH ./heffte_3d 512
 ```
 
-Validated on MI300A (`gfx942`), 4 ranks / 1 node:
+Submit batch job
 
 ```
-heFFTe 3D  512x512x512  ranks=4  grid=1x2x2  fwd+bwd=0.2172 s  round-trip max_err=2.113e-15
+sbatch run_heffte.sbatch
 ```
 
 Round-trip error stays at the ~1e-15 double-precision floor across all rank
 counts — the distributed transform is numerically correct.
 
-### 4.4 Weak-scaling results (measured, ~256³ points per rank)
+### 6.4 Weak-scaling results (measured, ~256³ points per rank)
 
 Fixed per-rank volume (~16.8 M complex-double points), growing the global cube
 with the rank count. Steady-state average of 5 fwd+bwd round trips after a warm-up
@@ -288,10 +517,10 @@ call (`run_heffte_scaling.sbatch`):
 | 4     | 1     | 400³        | 1×2×2     | 0.025 s       | 7.4e-15        |
 | 8     | 2     | 512³        | 2×2×2     | **23.2 s**    | 9.9e-15        |
 
-**The teaching point.** Intra-node scaling (1→4 APUs) is nearly flat: the
+**Note** Intra-node scaling (1→4 APUs) is nearly flat: the
 all-to-all rides the on-package fabric / xpmem shared memory, so doubling ranks
 barely moves the wall-clock. Crossing to a **second node** collapses performance
-by ~1000× — the inter-node all-to-all is the wall.
+by ~1000× due to the inter-node all-to-all on the weak NICs on this system.
 
 We confirmed this is the **fabric**, not the software path, by toggling heFFTe's
 `plan_options.use_gpu_aware` (env `HEFFTE_GPU_AWARE`, see `run_heffte_comm.sbatch`):
@@ -307,24 +536,26 @@ GPUDirect) the GPU-aware path would win and the 8-rank point would land far clos
 to the intra-node trend. **This is exactly the kind of measurement to make before
 committing an FFT-heavy code to multi-node runs.**
 
-### 4.5 Exercises
-- **E5.1** Reproduce the weak-scaling table; add a strong-scaling run (fix 512³
+### 6.5 Exercises
+- **E6.1** Reproduce the weak-scaling table; add a strong-scaling run (fix 512³
   global, grow ranks) and plot speedup.
-- **E5.2 (communication)** Compare `proc_setup_min_surface` against a forced slab
+- **E6.2 (communication)** Compare `proc_setup_min_surface` against a forced slab
   grid (`{nranks,1,1}`); measure the all-to-all difference.
-- **E5.3** Profile the 8-rank run and separate compute from communication (see
+- **E6.3** Profile the 8-rank run and separate compute from communication (see
   Appendix A.5). Confirm the inter-node all-to-all dominates.
-- **E5.4 (alt)** ROCm 7.2.4 ships **hipFFT-MP** (`<hipfft/hipfftMp.h>`). Sketch the
-  same distributed 3D FFT with hipFFT-MP and compare the programming model to
-  heFFTe (native/minimal-deps vs. turnkey solver).
+- **E6.4 (alt)** Run the **hipFFT-MP** example (§5) on the same allocation and
+  compare its programming model and fwd+bwd time to heFFTe here — native/minimal-deps
+  (`hipfftMpAttachComm` on a stock hipFFT plan) vs. the turnkey solver.
 
 ---
 
-## 5. What "good" looks like
+## 7. What "good" looks like
 - Single device: round-trip error ~1e-15 (double); plan reuse; no `hipMemcpy` on
   the APU path.
 - 3D single device: work-buffer + data fit in HBM — the ceiling that motivates
   multi-node.
+- hipFFT-MP: native distributed round-trip correct across ranks (~1e-15) with only
+  the ROCm stack — one extra call (`hipfftMpAttachComm`) over the single-node path.
 - heFFTe: correct round-trip across ranks (~1e-15); intra-node weak-scaling
   nearly flat, with the inter-node all-to-all as the dominant cost at scale.
 
@@ -378,11 +609,17 @@ rocprof-sys-run -- ./rocfft_3d 256    # with ROCPROFSYS_USE_ROCM_SMI=ON
 | `rocfft_c2c.hip` | 1D batched C2C, forward+inverse round-trip (validated ~1e-15) |
 | `rocfft_3d.hip`  | 3D C2C round-trip (validated ~1e-15) |
 | `hipfft_c2c.hip` | 1D C2C via portable hipFFT API (validated ~1e-15) |
+| `fftw_c2c.c` | 1D C2C in the plain FFTW3 API; `make fftw_c2c` runs it on the GPU via hipFFTW, `make fftw_c2c_cpu` builds the same source on CPU FFTW3 (`fftw` module) |
+| `hipfftmp_3d.cpp` | Native distributed 3D FFT via hipFFT-MP (ROCm 7.2.4+, MPI) |
+| `run_hipfftmp.sbatch` | Single hipFFT-MP run (`sbatch run_hipfftmp.sbatch [N]`) |
 | `heffte_3d.cpp`  | Distributed 3D FFT, rocFFT backend (validated on 1/2/4/8 ranks) |
 | `run_heffte.sbatch` | Single distributed run (`sbatch run_heffte.sbatch [N]`) |
 | `run_heffte_scaling.sbatch` | Weak-scaling sweep 1→2→4→8 ranks |
 | `run_heffte_comm.sbatch` | GPU-aware vs host-staged all-to-all comparison |
 
 ## References
-- rocFFT / hipFFT documentation (ROCm 7.2.4).
+- rocFFT / hipFFT / hipFFTW documentation (ROCm 7.2.4), including the hipFFT-MP
+  multi-process API (`<hipfft/hipfftMp.h>`, `hipfftMpAttachComm`) and the FFTW3
+  drop-in interface (`<hipfft/hipfftw.h>`).
+- FFTW: Frigo & Johnson, *The Design and Implementation of FFTW3* (fftw.org).
 - heFFTe: Ayala et al., *Heffte: Highly Efficient FFT for Exascale* (ICL/UTK).

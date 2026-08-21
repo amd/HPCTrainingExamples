@@ -22,16 +22,16 @@ the shared *Which profiler* / *Ground rules* / *Mapping* material and links here
 | **Score-P** | `CG-GPU` / `CG-CPU` | MPI (+GPU/HIP) tracing → Cube/OTF2 | [`scorep.md`](scorep.md) |
 | **rocprofv3** | `CG-GPU` | Per-kernel + RCCL/HIP + ATT | [`rocprofv3.md`](rocprofv3.md) |
 | **rocprof-compute** | `CG-GPU` | Roofline (HBM-bound SpMV) | [`rocprof-compute.md`](rocprof-compute.md) |
-| **rocprofiler-systems** | `CG-GPU` + host | Perfetto timeline / overlap | [`rocprofiler-systems.md`](rocprofiler-systems.md) |
+| **rocprofiler-systems** | `CG-GPU` + host | Perfetto timeline: CPU threads / MPI + GPU | [`rocprofiler-systems.md`](rocprofiler-systems.md) |
 | **ROCm Optiq** | `CG-GPU` | GUI: trace timeline + roofline viewer | [`roc-optiq.md`](roc-optiq.md) |
-| **TAU** | either | MPI comm view | [`tau.md`](tau.md) |
-| **HPCToolkit** | either | Call-path sampling | [`hpctoolkit.md`](hpctoolkit.md) |
-| **likwid** | `CG-CPU` | CPU roofline | [`likwid.md`](likwid.md) |
-| **AMD uProf** | `CG-CPU` | CPU hotspots | [`uprof.md`](uprof.md) |
+| **TAU** | `CG-GPU` + host | Perfetto timeline: MPI-labelled (HIP/GPU + comm matrix) | [`tau.md`](tau.md) |
+| **HPCToolkit** | `CG-CPU` / `CG-GPU` | Call-path profile + per-rank trace timeline | [`hpctoolkit.md`](hpctoolkit.md) |
+| **likwid** | `CG-CPU` | CPU roofline (likwid-bench ceilings + native FLOPS_DP/L2/L3 point; plot) | [`likwid.md`](likwid.md) |
+| **AMD uProf** | `CG-CPU` | CPU hotspots + classic roofline (plot) | [`uprof.md`](uprof.md) |
 | **Linux perf** | `CG-CPU` | HW counters baseline | [`perf.md`](perf.md) |
 | **Valgrind cachegrind** | `CG-CPU` | Simulated cache model | [`cachegrind.md`](cachegrind.md) |
 | **IntelliKit** | `CG-GPU` | Decoded metrics / kernel isolation | [`intellikit.md`](intellikit.md) |
-| **roofline-extractor** | `CG-GPU` | Percent-of-peak roofline | [`roofline-extractor.md`](roofline-extractor.md) |
+| **roofline-extractor** | `CG-GPU` | Per-kernel percent-of-peak roofline (plot) | [`roofline-extractor.md`](roofline-extractor.md) |
 | **rocBudAI** | `CG-GPU` + host | AI assistant driving the stack | [`rocbudai.md`](rocbudai.md) |
 | **perf_events security** | `CG-CPU` | Access-control reference | [`perf-security.md`](perf-security.md) |
 

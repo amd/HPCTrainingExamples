@@ -95,6 +95,33 @@
     } while (0)
 
 // =============================================================================
+// roctx range markers (build with `make ROCTX=1`).  These annotate the timed
+// phases so `rocprofv3 --sys-trace`/`--marker-trace` renders a labelled track in
+// the Perfetto timeline directly under the GPU-kernel row — the halo exchange and
+// dot-product allreduce ranges then line up with the GPU idle gaps.  Compiled out
+// (no-ops, no roctx dependency) unless USE_ROCTX is defined.
+// =============================================================================
+#ifdef USE_ROCTX
+#  if defined(__has_include) && __has_include(<rocprofiler-sdk-roctx/roctx.h>)
+#    include <rocprofiler-sdk-roctx/roctx.h>
+#  else
+#    include <roctracer/roctx.h>
+#  endif
+#  define CG_RANGE_PUSH(name) roctxRangePush(name)
+#  define CG_RANGE_POP()      roctxRangePop()
+// RAII range: pushes on construction, pops at end of the enclosing scope.
+struct CGRange {
+    explicit CGRange(const char* name) { roctxRangePush(name); }
+    ~CGRange()                          { roctxRangePop(); }
+};
+#  define CG_RANGE(name) CGRange _cg_range_guard(name)
+#else
+#  define CG_RANGE_PUSH(name) ((void)0)
+#  define CG_RANGE_POP()      ((void)0)
+#  define CG_RANGE(name)      ((void)0)
+#endif
+
+// =============================================================================
 // upload_mat — copy one CPU sparse block to GPU + build rocSPARSE state
 // =============================================================================
 static void upload_mat(const Mat& cpu, GPUMat& gpu,
@@ -339,6 +366,7 @@ static void spmv_staged(double alpha, GPUParMat& A, double* d_x,
     Comm& recv = *A.recv_comm;
     Comm& send = *A.send_comm;
 
+    CG_RANGE_PUSH("halo_D2H_pack_post");
     double _t = MPI_Wtime();
     // Copy full local vector from GPU to a temporary host buffer
     int n_cols = A.on_proc.n_cols;
@@ -363,10 +391,14 @@ static void spmv_staged(double alpha, GPUParMat& A, double* d_x,
                   MPI_DOUBLE, send.procs[i], tag,
                   MPI_COMM_WORLD, &send.req[i]);
     g_halo_time += MPI_Wtime() - _t;
+    CG_RANGE_POP();   // halo_D2H_pack_post
 
     // On-proc SpMV overlaps with in-flight communication
+    CG_RANGE_PUSH("spmv_on_proc");
     spmv(alpha, A.on_proc, d_x, beta, d_b, handle);
+    CG_RANGE_POP();
 
+    CG_RANGE_PUSH("halo_wait_recv_H2D");
     _t = MPI_Wtime();
     if (recv.n_msgs)
         MPI_Waitall(recv.n_msgs, recv.req.data(), MPI_STATUSES_IGNORE);
@@ -377,13 +409,18 @@ static void spmv_staged(double alpha, GPUParMat& A, double* d_x,
                             recv.size_msgs * sizeof(double),
                             hipMemcpyHostToDevice));
     g_halo_time += MPI_Wtime() - _t;
+    CG_RANGE_POP();   // halo_wait_recv_H2D
 
+    CG_RANGE_PUSH("spmv_off_proc");
     spmv(alpha, A.off_proc, A.d_recvbuf, 1.0, d_b, handle);
+    CG_RANGE_POP();
 
+    CG_RANGE_PUSH("halo_wait_send");
     _t = MPI_Wtime();
     if (send.n_msgs)
         MPI_Waitall(send.n_msgs, send.req.data(), MPI_STATUSES_IGNORE);
     g_halo_time += MPI_Wtime() - _t;
+    CG_RANGE_POP();   // halo_wait_send
 }
 
 // =============================================================================
@@ -404,6 +441,7 @@ static void spmv_isend_irecv(double alpha, GPUParMat& A, double* d_x,
     Comm& recv = *A.recv_comm;
     Comm& send = *A.send_comm;
 
+    CG_RANGE_PUSH("halo_post_gather");
     double _t = MPI_Wtime();
     // Post receives into GPU memory
     for (int i = 0; i < recv.n_msgs; i++)
@@ -427,21 +465,30 @@ static void spmv_isend_irecv(double alpha, GPUParMat& A, double* d_x,
                   MPI_DOUBLE, send.procs[i], tag,
                   MPI_COMM_WORLD, &send.req[i]);
     g_halo_time += MPI_Wtime() - _t;
+    CG_RANGE_POP();   // halo_post_gather
 
     // On-proc SpMV overlaps with in-flight communication
+    CG_RANGE_PUSH("spmv_on_proc");
     spmv(alpha, A.on_proc, d_x, beta, d_b, handle);
+    CG_RANGE_POP();
 
+    CG_RANGE_PUSH("halo_wait_recv");
     _t = MPI_Wtime();
     if (recv.n_msgs)
         MPI_Waitall(recv.n_msgs, recv.req.data(), MPI_STATUSES_IGNORE);
     g_halo_time += MPI_Wtime() - _t;
+    CG_RANGE_POP();   // halo_wait_recv
 
+    CG_RANGE_PUSH("spmv_off_proc");
     spmv(alpha, A.off_proc, A.d_recvbuf, 1.0, d_b, handle);
+    CG_RANGE_POP();
 
+    CG_RANGE_PUSH("halo_wait_send");
     _t = MPI_Wtime();
     if (send.n_msgs)
         MPI_Waitall(send.n_msgs, send.req.data(), MPI_STATUSES_IGNORE);
     g_halo_time += MPI_Wtime() - _t;
+    CG_RANGE_POP();   // halo_wait_send
 }
 
 // =============================================================================
@@ -534,6 +581,7 @@ static void spmv_rccl(double alpha, GPUParMat& A, double* d_x,
     Comm& recv = *A.recv_comm;
     Comm& send = *A.send_comm;
 
+    CG_RANGE_PUSH("halo_gather_rccl_post");
     double _t = MPI_Wtime();
     // Gather send values on the default GPU stream
     if (send.size_msgs > 0) {
@@ -560,16 +608,23 @@ static void spmv_rccl(double alpha, GPUParMat& A, double* d_x,
                             A.rccl_comm, A.rccl_stream));
     RCCL_CHECK(ncclGroupEnd());   // kicks off all sends/recvs on rccl_stream
     g_halo_time += MPI_Wtime() - _t;
+    CG_RANGE_POP();   // halo_gather_rccl_post
 
     // On-proc SpMV on the default stream — overlaps with RCCL on rccl_stream
+    CG_RANGE_PUSH("spmv_on_proc");
     spmv(alpha, A.on_proc, d_x, beta, d_b, handle);
+    CG_RANGE_POP();
 
+    CG_RANGE_PUSH("halo_wait_rccl");
     _t = MPI_Wtime();
     // Wait for RCCL to deliver ghost values before off-proc SpMV reads them
     HIP_CHECK(hipStreamSynchronize(A.rccl_stream));
     g_halo_time += MPI_Wtime() - _t;
+    CG_RANGE_POP();   // halo_wait_rccl
 
+    CG_RANGE_PUSH("spmv_off_proc");
     spmv(alpha, A.off_proc, A.d_recvbuf, 1.0, d_b, handle);
+    CG_RANGE_POP();
 }
 
 // =============================================================================
@@ -723,11 +778,15 @@ static double inner_product(double* d_a, double* d_b, int n,
                             rocblas_handle blas_handle)
 {
     double local_sum;
+    CG_RANGE_PUSH("ddot");
     ROCBLAS_CHECK(rocblas_ddot(blas_handle, n, d_a, 1, d_b, 1, &local_sum));
     HIP_CHECK(hipDeviceSynchronize());
+    CG_RANGE_POP();   // ddot
+    CG_RANGE_PUSH("dot_allreduce");
     double _t = MPI_Wtime();
     MPI_Allreduce(MPI_IN_PLACE, &local_sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     g_allreduce_time += MPI_Wtime() - _t;
+    CG_RANGE_POP();   // dot_allreduce
     return local_sum;
 }
 
@@ -901,6 +960,18 @@ int main(int argc, char* argv[])
     int max_iter    = (int)(1.3 * A.global_rows) + 2;
     int iter        = 0;
 
+    // Diagnostic/visualization aid: cap the iteration count so a profiler trace
+    // stays short enough to view a couple of iterations directly in Perfetto
+    // (e.g. CG_MAX_ITERS=5 for a roctx timeline figure).  Does not affect a normal
+    // solve unless the variable is set.
+    if (const char* mi = getenv("CG_MAX_ITERS")) {
+        int cap = atoi(mi);
+        if (cap > 0 && cap < max_iter) {
+            max_iter = cap;
+            if (rank == 0) printf("CG_MAX_ITERS: capping at %d iterations\n", cap);
+        }
+    }
+
     // -------------------------------------------------------------------------
     // CG loop
     // -------------------------------------------------------------------------
@@ -911,29 +982,45 @@ int main(int argc, char* argv[])
 
     while (norm_r > tol && iter < max_iter)
     {
-        par_spmv(1.0, gA, d_p, 0.0, d_Ap, sparse_handle);
+        CG_RANGE("cg_iteration");
 
+        CG_RANGE_PUSH("spmv_Ap");
+        par_spmv(1.0, gA, d_p, 0.0, d_Ap, sparse_handle);
+        CG_RANGE_POP();
+
+        CG_RANGE_PUSH("dot_App");
         double App_inner = inner_product(d_Ap, d_p, n, blas_handle);
+        CG_RANGE_POP();
         if (App_inner < 0.0) {
             if (rank == 0) printf("Indefinite matrix! Aborting.\n");
             MPI_Abort(MPI_COMM_WORLD, -1);
         }
         double alpha = rr_inner / App_inner;
 
+        CG_RANGE_PUSH("axpy_x");
         axpy(alpha, d_x, d_p, n, blas_handle);
+        CG_RANGE_POP();
 
         if ((iter % recompute_r) && iter > 0) {
+            CG_RANGE_PUSH("axpy_r");
             axpy(-alpha, d_r, d_Ap, n, blas_handle);
+            CG_RANGE_POP();
         } else {
+            CG_RANGE_PUSH("recompute_r");
             HIP_CHECK(hipMemcpy(d_r, d_b, n * sizeof(double), hipMemcpyDeviceToDevice));
             par_spmv(-1.0, gA, d_x, 1.0, d_r, sparse_handle);
+            CG_RANGE_POP();
         }
 
+        CG_RANGE_PUSH("dot_rr");
         double next_inner = inner_product(d_r, d_r, n, blas_handle);
+        CG_RANGE_POP();
         double beta       = next_inner / rr_inner;
 
+        CG_RANGE_PUSH("scal_axpy_p");
         scale(beta, d_p, n, blas_handle);
         axpy(1.0, d_p, d_r, n, blas_handle);
+        CG_RANGE_POP();
 
         rr_inner = next_inner;
         norm_r   = sqrt(rr_inner);

@@ -34,9 +34,10 @@ We record two numbers each time:
 - the `Time` value in the `Epoch:` lines: the average per-step time (lower is better;
   this is what improves when communication is hidden behind compute).
 
-> The RCCL signal is small on a single MI300A (on-package fabric is nearly free).
-> For a stronger signal, rerun with more GPUs: especially the `PPAC_MI300A_CPX`
-> 12- and 24-GPU cases, where the all-reduce crosses physical APUs.
+> The RCCL signal is small within one SPX node: the all-reduce stays on the fast on-node
+> Infinity Fabric, and a single APU is one SPX device, so on its own it has no all-reduce at
+> all. For a stronger signal, scale up: the 12-/24-GPU `PPAC_MI300A_CPX` cases, or multiple
+> nodes where the all-reduce crosses NICs over RDMA.
 
 ---
 
@@ -249,14 +250,17 @@ Channel count (algorithm + protocol = default):
 
 Takeaway: `NCCL_PROTO=LL` is the dominant lever here, ~9-10x less collective time than
 the LL128/auto baseline for this ~102 MB gradient all-reduce; `Tree` edges out `Ring`
-(~7 %); and on a single APU fewer channels win (1 is best, extra channels add CUDA-block
-overhead without a bandwidth payoff).
+(~7 %); and on this on-node all-reduce fewer channels win (1 is best, extra channels add
+CUDA-block overhead without a bandwidth payoff).
 
-> Single-APU caveat. On one SPX APU the all-reduce stays on the on-package Infinity
-> Fabric, so these are relative signals on a small, fast collective. The ranking
-> (especially the protocol effect) is far more pronounced once the collective crosses
-> physical APUs: rerun the sweep on the 12-/24-GPU `PPAC_MI300A_CPX` node (see the CPX
-> section of [`README.md`](README.md#sec-cpx)) to see the large-message behavior.
+> On-node caveat. In SPX mode each APU is exposed as a single device, so a single APU has
+> no all-reduce to perform. This sweep runs across the four APUs of one SPX node, where the
+> collective stays on the node's Infinity Fabric and is small and fast, so these are relative
+> signals on an on-node collective. The ranking (especially the protocol effect) grows with
+> the number of ranks and, above all, once the collective leaves the node: rerun on the
+> 12-/24-GPU `PPAC_MI300A_CPX` node (more ranks; see the CPX section of
+> [`README.md`](README.md#sec-cpx)), and across multiple nodes where the all-reduce crosses
+> NICs over RDMA, to see that behavior.
 
 ### NCCL/RCCL variable defaults
 
