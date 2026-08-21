@@ -114,15 +114,33 @@ rocprof-compute analyze -p workloads/1_larger_domain/0
 
 `--iteration-multiplexing` collects a different subset of counters on different dispatches of the same
 kernel rather than replaying the whole application once per counter set, which keeps the profiling run
-short; `-k compute_rhs` restricts collection to the kernel we care about, so that the once-dispatched
-`init_gaussian` does not get dropped with a warning. The novice example explains the trade-off in
+short; `-k compute_rhs` restricts collection to the kernel we care about. The novice example explains the trade-off in
 [more detail](../../novice/0_baseline/README.md#an-aside-why---iteration-multiplexing). `analyze` needs
 the [Python environment](../README.md#a-python-environment-for-rocprof-compute-analyze) from the setup
 section.
 
-The collected report puts `compute_rhs` at 11122 GFLOP/s, 70.99 percent wavefront occupancy, a
-57.44 percent vector-L1 hit rate and an 18.44 percent L2 hit rate. Those cache numbers are the
-baseline the block-shape experiments in the next two stages are measured against.
+The full report runs to hundreds of rows, so ask for the summary section only. `-b` takes the metric
+ids from the leftmost column of the report and keeps just those rows:
+
+```bash
+rocprof-compute analyze -p workloads/1_larger_domain/0 \
+    -b 2.1.0 2.1.9 2.1.14 2.1.15 2.1.18 2.1.19 2.1.20 2.1.21
+```
+
+| Metric | Value | Percent of peak |
+|---|---|---|
+| 2.1.0 VALU FLOPs | 10788 GFLOP/s | 17.60 |
+| 2.1.9 VALU Utilization | 75.19 percent | -- |
+| 2.1.14 IPC | 0.73 | 14.65 |
+| 2.1.15 Wavefront Occupancy | 4838 wavefronts | 66.31 |
+| 2.1.18 vL1D Cache Hit Rate | 55.29 percent | -- |
+| 2.1.19 vL1D Cache BW | 13469 GB/s | 21.98 |
+| 2.1.20 L2 Cache Hit Rate | 22.34 percent | -- |
+| 2.1.21 L2 Cache BW | 6026 GB/s | 23.35 |
+
+Occupancy is reported as an average wavefront count against the 7296 the device can hold, which is
+the 66.31 percent in the last column. These eight rows are the baseline the block-shape experiments
+in the next two stages are measured against, and the same eight come back as a comparison there.
 
 The plot below is the novice track's measurement of this same kernel at the same 16x16 block shape.
 A roofline describes the kernel rather than the decomposition, since every rank runs the same

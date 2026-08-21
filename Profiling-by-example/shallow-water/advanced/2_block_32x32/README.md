@@ -106,27 +106,24 @@ Section 2.1, System Speed-of-Light, is the summary. 16x16 first, 32x32 second:
 
 | Metric | 16x16 | 32x32 | Change |
 |---|---|---|---|
-| 2.1.0 VALU FLOPs | 11122 GFLOP/s | 14632 GFLOP/s | 31.6 percent |
-| 2.1.9 VALU Utilization | 82.64 percent | 115.88 percent | 40.2 percent |
-| 2.1.14 IPC | 0.79 | 1.06 | 32.7 percent |
-| 2.1.15 Wavefront Occupancy | 70.99 percent | 74.78 percent | 5.3 percent |
-| 2.1.18 vL1D Cache Hit Rate | 57.44 percent | 71.07 percent | 13.6 points |
-| 2.1.19 vL1D Cache BW | 13886 GB/s | 18269 GB/s | 31.6 percent |
-| 2.1.20 L2 Cache Hit Rate | 18.44 percent | 20.66 percent | 2.2 points |
-| 2.1.21 L2 Cache BW | 5930 GB/s | 5270 GB/s | -11.1 percent |
+| 2.1.0 VALU FLOPs | 10788 GFLOP/s | 13467 GFLOP/s | 24.8 percent |
+| 2.1.9 VALU Utilization | 75.19 percent | 96.67 percent | 28.6 percent |
+| 2.1.14 IPC | 0.73 | 0.93 | 25.9 percent |
+| 2.1.15 Wavefront Occupancy | 66.31 percent | 73.47 percent | 7.2 points |
+| 2.1.18 vL1D Cache Hit Rate | 55.29 percent | 69.33 percent | 14.0 points |
+| 2.1.19 vL1D Cache BW | 13469 GB/s | 16814 GB/s | 24.8 percent |
+| 2.1.20 L2 Cache Hit Rate | 22.34 percent | 25.18 percent | 2.8 points |
+| 2.1.21 L2 Cache BW | 6026 GB/s | 5144 GB/s | -14.6 percent |
 
 The rows make one chain. The squarer block keeps more of the stencil's neighbour reads in the near
-cache, so the vL1D hit rate gains 14 points, less traffic goes out to L2 and its bandwidth falls 11
-percent, and the vector units, waiting less often, issue a third more instructions per cycle. The
-FLOP rate rises by that same third, from 18.15 to 23.88 percent of the MI300A vector peak, with no
+cache, so the vL1D hit rate gains 14 points, less traffic goes out to L2 and its bandwidth falls 15
+percent, and the vector units, waiting less often, issue a quarter more instructions per cycle. The
+FLOP rate rises by that same quarter, from 17.60 to 21.97 percent of the MI300A vector peak, with no
 arithmetic changed anywhere.
 
 Occupancy is the row that did least, and that is worth noticing. It is not the objective, only a
-proxy for one particular failure mode, having too little work in flight to hide latency. Five percent
-does not explain a 1.30x speedup, while the cache-hit change does.
-
-VALU utilization above 100 percent is not an error. MI300A can co-issue VALU instructions, so more
-than one can retire per cycle, while the metric is expressed against a single-issue peak.
+proxy for one particular failure mode, having too little work in flight to hide latency. Seven points
+do not explain a 1.30x speedup, while the cache-hit change does.
 
 ## What we learned, and what to do about it
 

@@ -5,13 +5,12 @@ The launch configuration is as good as it gets, `compute_rhs` is still memory bo
 been taken as far as they go. This stage introduces a tool that reports which instruction the vector
 units stall on, and then acts on what it says.
 
-## A new point of view: thread trace
+## A new point of view: Advanced Thread Trace (ATT)
 
-Thread trace, also called SQTT or ATT, traces wavefronts on the GPU at instruction granularity. Where
-a counter gives one number per kernel, a thread trace gives near cycle-accurate timing for every
-instruction, the exact execution path taken, and how long each instruction spent stalled versus
-issuing. It is a targeted tool rather than a survey one: it traces a single compute unit per shader
-engine and is meant for one kernel at a time.
+ATT traces wavefronts on the GPU at instruction granularity. Where a counter gives one number per
+kernel, ATT gives near cycle-accurate timing for every instruction, the exact execution path taken,
+and how long each instruction spent stalled versus issuing. It is a targeted tool rather than a
+survey one: it traces a single compute unit per shader engine and is meant for one kernel at a time.
 
 The basic invocation, before the optimization, on the stage 3 binary:
 
@@ -31,35 +30,28 @@ rocprofv3 --att --att-activity 8 --kernel-include-regex compute_rhs \
 `--kernel-include-regex` matters here for the same reason `-k` mattered for the roofline: without it
 you trace whatever kernel happens to be dispatched first. Two further notes:
 
-- Thread trace decoding needs the ROCprof Trace Decoder library, and the resulting timeline is
-  viewed in the ROCprof Compute Viewer, which is a separate desktop application. See the
+- ATT decoding needs the ROCprof Trace Decoder library, which now ships with ROCm. The resulting
+  timeline is viewed in the ROCprof Compute Viewer, which is still a separate desktop application.
+  See the
   [thread trace documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-thread-trace.html)
   and the [viewer documentation](https://rocm.docs.amd.com/projects/rocprof-compute-viewer/en/amd-mainline/index.html).
 - Build with `-g` so the trace can put your source lines next to the ISA. The Makefile in every stage
   already does.
 
-<!-- MEASUREMENT TODO: ROCprof Compute Viewer snapshot of the stage 3 thread trace, before the
-     vectorization change, showing the s_waitcnt stall and the global_load_dwordx3 x-neighbour reads -->
+Opening the traced dispatch in the viewer gives a summary view first:
 
-The run produces `stats_*.csv`, a per-instruction latency summary, and one
-`ui_output_agent_*_dispatch_*` directory per traced dispatch for the viewer. The CSV is the quickest
-way in, with one row per instruction:
-| Column | Meaning |
-|---|---|
-| `Instruction` | The ISA instruction |
-| `Hitcount` | How many times it executed, summed over all traced waves |
-| `Latency` | Total cycles, stall plus issue time |
-| `Stall` | Cycles in which the pipe could not issue, typically cache or LDS backpressure |
-| `Idle` | Gap since the previous instruction finished, from register dependencies or instruction cache misses |
-| `Source` | The source line, when built with debug symbols |
+<!-- SNAPSHOT: ROCprof Compute Viewer summary view of the stage 3 dispatch -->
+<img src="../../figs/advanced_3_block_64x4_att_summary.png" alt="ROCprof Compute Viewer summary view of the traced compute_rhs dispatch" />
 
-If `stats_*.csv` comes back empty even though the kernel definitely ran, the trace found no wave on
-the one compute unit it was watching. Widen the search with `--att-shader-engine-mask 0x11111111`.
+From there the hotspot view ranks the instructions by the cycles they cost, which is where the
+memory waits in this kernel become visible:
 
-The stage 3 trace captured 4608 hits per instruction. Its largest stall is an `s_waitcnt vmcnt(8)`
-with 6.57 million stalled cycles. The hottest load is
-`global_load_dwordx3 ... offset:-4`, with 606784 stalled cycles, attributed to the first x-neighbour
-read:
+<!-- SNAPSHOT: stage 3 hotspot view, before the vectorization change, showing the s_waitcnt stall
+     and the global_load_dwordx3 x-neighbour reads -->
+<img src="../../figs/advanced_3_block_64x4_att_hotspot.png" alt="ROCprof Compute Viewer hotspot view of compute_rhs before vectorization" />
+
+The stalling loads in the stage 3 trace are `global_load_dwordx3` instructions, attributed to the
+x-neighbour reads:
 
 ```c++
     const float hi  = h[id];
@@ -67,15 +59,11 @@ read:
     const float hvi = hv[id];
 ```
 
-together with the `h[ip]`, `h[im]` and equivalents that follow. The compiler has already combined
-the three adjacent x values for each array into `global_load_dwordx3`; the remaining y-neighbour
-reads appear as scalar `global_load_dword` instructions. The trace therefore points to memory
-latency, but it also corrects a tempting source-level assumption: these are not nine independent
-machine loads.
-
-The decoder reported that part of the trace was dropped because of bandwidth limitations. The
-per-instruction CSV is populated and supports the ranking above, but exact whole-trace totals should
-not be quoted from this run.
+together with the `h[ip]`, `h[im]` and equivalents that follow. The compiler has already combined the
+three adjacent x values of each array into one wider instruction rather than issuing three separate
+`global_load_dword` instructions; only the y-neighbour reads, a whole row apart in memory, stay
+scalar. That corrects a tempting source-level assumption: these are not nine independent machine
+loads.
 
 ## What changed
 
@@ -92,8 +80,10 @@ separate reads along x with a single 16-byte load per array:
     const float h_jp = h[jp];
 ```
 
-One `global_load_dwordx4` fetches `i-1`, `i`, `i+1` and one cell beyond, and the components are pulled
-out afterwards. The y-neighbours cannot join in, since they are a row apart in memory. Three
+The source now asks for all four values at once, `i-1`, `i`, `i+1` and one cell beyond, and pulls the
+components out afterwards. The machine code does not change to match: the fourth value is never used,
+so the compiler narrows the request back to the same `global_load_dwordx3` it was already emitting in
+stage 3. The y-neighbours cannot join in either, since they are a row apart in memory. Three
 supporting changes come with it:
 
 - Cache-line-aligned row pitch. `pitch` is rounded up to a multiple of 16 floats so every row
@@ -104,9 +94,14 @@ supporting changes come with it:
 - A `j+2` prefetch and `__launch_bounds__(256,1)`, both attempts to keep more memory requests in
   flight.
 
-What this buys is an aligned four-float access rather than fewer loads, since the compiler was
-already emitting x3, plus one prefetched value and less arithmetic latency from the reciprocal and
-`fmaf` changes.
+Trace the code again to find the `global_load_dwordx3` for the vectorized load:
+
+<!-- SNAPSHOT: stage 4 hotspot view in the ROCprof Compute Viewer, the global_load_dwordx3 still
+     present after the float4 change -->
+<img src="../../figs/advanced_4_vectorized_loads_att_hotspot.png" alt="ROCprof Compute Viewer hotspot view of compute_rhs after vectorization, still loading with global_load_dwordx3" />
+
+The load mix does not move. What shrinks is the arithmetic: ten `v_div_scale` and five `v_rcp_f32`
+where stage 3 had sixteen and eight.
 
 ## Build and run
 

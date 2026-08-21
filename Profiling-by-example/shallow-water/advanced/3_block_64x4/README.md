@@ -69,21 +69,25 @@ rocprof-compute analyze \
 
 | Metric | 32x32 | 64x4 | Change |
 |---|---|---|---|
-| 2.1.0 VALU FLOPs | 14632 GFLOP/s | 16040 GFLOP/s | 9.6 percent |
-| 2.1.9 VALU Utilization | 115.88 percent | 127.66 percent | 10.2 percent |
-| 2.1.14 IPC | 1.06 | 1.25 | 18.0 percent |
-| 2.1.15 Wavefront Occupancy | 74.78 percent | 97.27 percent | 22.5 points |
-| 2.1.18 vL1D Cache Hit Rate | 71.07 percent | 73.61 percent | 2.5 points |
-| 2.1.19 vL1D Cache BW | 18269 GB/s | 20027 GB/s | 9.6 percent |
-| 2.1.20 L2 Cache Hit Rate | 20.66 percent | 21.07 percent | 0.4 points |
-| 2.1.21 L2 Cache BW | 5270 GB/s | 5286 GB/s | 0.3 percent |
-| 15.1.1 Address Stall | 5.20 percent | 2.79 percent | -46.3 percent |
+| 2.1.0 VALU FLOPs | 13467 GFLOP/s | 16077 GFLOP/s | 19.4 percent |
+| 2.1.9 VALU Utilization | 96.67 percent | 127.21 percent | 31.6 percent |
+| 2.1.14 IPC | 0.93 | 1.23 | 32.4 percent |
+| 2.1.15 Wavefront Occupancy | 73.47 percent | 99.85 percent | 26.4 points |
+| 2.1.18 vL1D Cache Hit Rate | 69.33 percent | 73.60 percent | 4.3 points |
+| 2.1.19 vL1D Cache BW | 16814 GB/s | 20073 GB/s | 19.4 percent |
+| 2.1.20 L2 Cache Hit Rate | 25.18 percent | 21.10 percent | -4.1 points |
+| 2.1.21 L2 Cache BW | 5144 GB/s | 5300 GB/s | 3.0 percent |
+| 15.1.1 Address Stall | 4.32 percent | 2.93 percent | -32.2 percent |
 
-Occupancy is the row that moved, by 22 points to nearly full, and the reason is the size half of the
-change rather than the shape half: 64x4 is 256 threads where 32x32 was 1024, so more workgroups fit
-on a compute unit at once. The cache gain from stage 2 is preserved rather than extended, two points
-on the vL1D hit rate and almost nothing at L2, which is what we want to see. Address stalls fall by
-nearly half, the row that speaks to the alignment the wider block was meant to buy.
+Occupancy is the row that moved, by 26 points to essentially full, and the reason is the size half of
+the change rather than the shape half: 64x4 is 256 threads where 32x32 was 1024, so more workgroups
+fit on a compute unit at once. The near cache keeps improving, four more points on the vL1D hit rate,
+and the four points the L2 hit rate gives back matter less because fewer requests get that far.
+Address stalls fall by a third, the row that speaks to the alignment the wider block was meant to
+buy.
+
+VALU utilization above 100 percent is not an error. MI300A can co-issue VALU instructions, so more
+than one can retire per cycle, while the metric is expressed against a single-issue peak.
 
 ## Roofline
 
