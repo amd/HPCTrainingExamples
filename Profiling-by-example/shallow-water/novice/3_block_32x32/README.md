@@ -37,7 +37,7 @@ Mass: initial=4.194806655e+06, final=4.194806458e+06, rel.err=4.681e-08
 Min(h) after run: 0.981776
 ```
 
-**29400.84 MCUPS, 1.39x faster than stage 2's 21204.86.** Running total from the baseline: 4.68x.
+29400.84 MCUPS, 1.39x faster than stage 2's 21204.86. Running total from the baseline: 4.68x.
 
 ## Did VALUBusy improve?
 
@@ -116,8 +116,8 @@ rocprof-compute analyze -p workloads/3_block_32x32/0
 Both are explained in [Roofline plots](../README.md#roofline-plots).
 
 <p>
-<img src="../2_no_device_sync/images/roofline_no_sync.png" alt="Roofline of compute_rhs with 16x16 blocks, before this stage" width="49%" />
-<img src="images/roofline_block_32x32.png" alt="Roofline of compute_rhs with 32x32 blocks, after this stage" width="49%" />
+<img src="../../figs/roofline_no_sync.png" alt="Roofline of compute_rhs with 16x16 blocks, before this stage" width="49%" />
+<img src="../../figs/roofline_block_32x32.png" alt="Roofline of compute_rhs with 32x32 blocks, after this stage" width="49%" />
 </p>
 
 With the 16x16 blocks of stage 2 on the left and 32x32 on the right, the kernel has moved closer to

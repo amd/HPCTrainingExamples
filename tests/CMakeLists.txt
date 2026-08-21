@@ -1977,3 +1977,79 @@ add_test(NAME GPU_Thermal_Throttle_Check COMMAND ../gpu_thermal_throttle_check.s
 set_property(TEST GPU_Thermal_Throttle_Check PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
 set_property(TEST GPU_Thermal_Throttle_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_tests_properties(GPU_Thermal_Throttle_Check PROPERTIES TIMEOUT 900)
+
+# Profiling-by-example shallow-water solver, one test per optimization stage.
+# Every stage prints its own throughput and correctness checks, so MCUPS in the
+# output means it ran and "(NEGATIVE!)" means the water depth went negative and
+# the stage is wrong. The advanced stages skip themselves where the
+# rocprofiler-sdk marker library their ROCTx ranges need is absent.
+add_test(NAME Profiling_ShallowWater_Novice_Baseline COMMAND ../profiling_shallow_water_novice.sh 0_baseline )
+set_property(TEST Profiling_ShallowWater_Novice_Baseline PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Novice_Baseline PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Novice_Baseline PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Profiling_ShallowWater_Novice_Larger_Domain COMMAND ../profiling_shallow_water_novice.sh 1_larger_domain )
+set_property(TEST Profiling_ShallowWater_Novice_Larger_Domain PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Novice_Larger_Domain PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Novice_Larger_Domain PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Profiling_ShallowWater_Novice_No_Device_Sync COMMAND ../profiling_shallow_water_novice.sh 2_no_device_sync )
+set_property(TEST Profiling_ShallowWater_Novice_No_Device_Sync PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Novice_No_Device_Sync PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Novice_No_Device_Sync PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Profiling_ShallowWater_Novice_Block_32x32 COMMAND ../profiling_shallow_water_novice.sh 3_block_32x32 )
+set_property(TEST Profiling_ShallowWater_Novice_Block_32x32 PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Novice_Block_32x32 PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Novice_Block_32x32 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Profiling_ShallowWater_Novice_Block_64x4 COMMAND ../profiling_shallow_water_novice.sh 4_block_64x4 )
+set_property(TEST Profiling_ShallowWater_Novice_Block_64x4 PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Novice_Block_64x4 PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Novice_Block_64x4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Profiling_ShallowWater_Advanced_Baseline COMMAND ../profiling_shallow_water_advanced.sh 0_baseline )
+set_property(TEST Profiling_ShallowWater_Advanced_Baseline PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Advanced_Baseline PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Advanced_Baseline PROPERTY SKIP_REGULAR_EXPRESSION "module spider|Skip")
+
+add_test(NAME Profiling_ShallowWater_Advanced_Larger_Domain COMMAND ../profiling_shallow_water_advanced.sh 1_larger_domain )
+set_property(TEST Profiling_ShallowWater_Advanced_Larger_Domain PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Advanced_Larger_Domain PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Advanced_Larger_Domain PROPERTY SKIP_REGULAR_EXPRESSION "module spider|Skip")
+
+add_test(NAME Profiling_ShallowWater_Advanced_Block_32x32 COMMAND ../profiling_shallow_water_advanced.sh 2_block_32x32 )
+set_property(TEST Profiling_ShallowWater_Advanced_Block_32x32 PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Advanced_Block_32x32 PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Advanced_Block_32x32 PROPERTY SKIP_REGULAR_EXPRESSION "module spider|Skip")
+
+add_test(NAME Profiling_ShallowWater_Advanced_Block_64x4 COMMAND ../profiling_shallow_water_advanced.sh 3_block_64x4 )
+set_property(TEST Profiling_ShallowWater_Advanced_Block_64x4 PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Advanced_Block_64x4 PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Advanced_Block_64x4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider|Skip")
+
+add_test(NAME Profiling_ShallowWater_Advanced_Vectorized_Loads COMMAND ../profiling_shallow_water_advanced.sh 4_vectorized_loads )
+set_property(TEST Profiling_ShallowWater_Advanced_Vectorized_Loads PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Advanced_Vectorized_Loads PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Advanced_Vectorized_Loads PROPERTY SKIP_REGULAR_EXPRESSION "module spider|Skip")
+
+add_test(NAME Profiling_ShallowWater_Advanced_Halo_Pipeline COMMAND ../profiling_shallow_water_advanced.sh 5_halo_pipeline )
+set_property(TEST Profiling_ShallowWater_Advanced_Halo_Pipeline PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Advanced_Halo_Pipeline PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Advanced_Halo_Pipeline PROPERTY SKIP_REGULAR_EXPRESSION "module spider|Skip")
+
+add_test(NAME Profiling_ShallowWater_Advanced_2D_Decomposition COMMAND ../profiling_shallow_water_advanced.sh 6_2d_decomposition )
+set_property(TEST Profiling_ShallowWater_Advanced_2D_Decomposition PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Advanced_2D_Decomposition PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Advanced_2D_Decomposition PROPERTY SKIP_REGULAR_EXPRESSION "module spider|Skip")
+
+# The advanced stages run an 8192x8192 domain for 500 steps from stage 1 onward,
+# which is quick on an MI300A but not on one small GPU shared by both ranks.
+set_tests_properties(
+    Profiling_ShallowWater_Advanced_Larger_Domain
+    Profiling_ShallowWater_Advanced_Block_32x32
+    Profiling_ShallowWater_Advanced_Block_64x4
+    Profiling_ShallowWater_Advanced_Vectorized_Loads
+    Profiling_ShallowWater_Advanced_Halo_Pipeline
+    Profiling_ShallowWater_Advanced_2D_Decomposition
+  PROPERTIES TIMEOUT 600)

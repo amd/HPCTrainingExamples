@@ -38,7 +38,7 @@ Min(h) after run: 0.981776
 Keep the last two lines in view for the rest of the tutorial. Mass conservation and a positive
 minimum depth are how we confirm that an optimization sped the code up without changing the answer.
 
-**6282.26 MCUPS is the number to beat.**
+6282.26 MCUPS is the number to beat.
 
 ## Step 1: Which kernel should we look at?
 
@@ -132,7 +132,7 @@ rocprof-compute analyze -p workloads/0_baseline/0
 Both are explained in [Roofline plots](../README.md#roofline-plots).
 
 <p>
-<img src="images/roofline_512.png" alt="Roofline of compute_rhs at 512x512" />
+<img src="../../figs/roofline_512.png" alt="Roofline of compute_rhs at 512x512" />
 </p>
 
 The kernel does perform real arithmetic, but it sits well below the compute ceilings and to the left

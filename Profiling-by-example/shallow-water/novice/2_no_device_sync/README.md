@@ -45,7 +45,7 @@ Mass: initial=4.194806655e+06, final=4.194806458e+06, rel.err=4.681e-08
 Min(h) after run: 0.981776
 ```
 
-**21204.86 MCUPS, 1.08x faster than stage 1's 19638.63.** Running total from the baseline: 3.38x.
+21204.86 MCUPS, 1.08x faster than stage 1's 19638.63. Running total from the baseline: 3.38x.
 
 An eight percent gain for deleting eight lines is a good trade, and the accuracy checks are unchanged,
 which is what we expect since removing a redundant synchronization cannot alter the arithmetic.
@@ -60,7 +60,7 @@ rocpd2pftrace -i outdir/shallow_results.db -d outdir -o shallow
 ```
 
 <p>
-<img src="images/hip_trace_no_gaps.jpg" alt="HIP API trace after removing hipDeviceSynchronize" />
+<img src="../../figs/hip_trace_no_gaps.png" alt="HIP API trace after removing hipDeviceSynchronize" />
 </p>
 
 The kernels now abut one another instead of being separated by host round trips.
@@ -82,8 +82,8 @@ rocprof-compute analyze -p workloads/2_no_device_sync/0
 Both are explained in [Roofline plots](../README.md#roofline-plots).
 
 <p>
-<img src="../1_larger_domain/images/roofline_2048.png" alt="Roofline of compute_rhs before removing synchronization" width="49%" />
-<img src="images/roofline_no_sync.png" alt="Roofline of compute_rhs after removing synchronization" width="49%" />
+<img src="../../figs/roofline_2048.png" alt="Roofline of compute_rhs before removing synchronization" width="49%" />
+<img src="../../figs/roofline_no_sync.png" alt="Roofline of compute_rhs after removing synchronization" width="49%" />
 </p>
 
 This one is worth dwelling on, because the two plots look essentially identical. That is not

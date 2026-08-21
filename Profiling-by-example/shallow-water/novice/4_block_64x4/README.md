@@ -37,7 +37,7 @@ Mass: initial=4.194806655e+06, final=4.194806458e+06, rel.err=4.681e-08
 Min(h) after run: 0.981776
 ```
 
-**34551.31 MCUPS, 1.18x faster than stage 3's 29400.84.**
+34551.31 MCUPS, 1.18x faster than stage 3's 29400.84.
 
 This is the end of the case study, so here is the full progression:
 
@@ -49,7 +49,7 @@ This is the end of the case study, so here is the full progression:
 | 3 | Block 16x16 to 32x32 | 0.285 | 29400.84 | 1.39x |
 | 4 | Block 32x32 to 64x4 | 0.243 | 34551.31 | 1.18x |
 
-**6282 to 34551 MCUPS, a cumulative 5.50x speedup**, with the mass error and minimum depth identical
+6282 to 34551 MCUPS, a cumulative 5.50x speedup, with the mass error and minimum depth identical
 to stage 1 throughout. Every change was a one or two line edit found by asking a tool a question.
 
 ## What the counters say
@@ -89,8 +89,8 @@ rocprof-compute analyze -p workloads/4_block_64x4/0
 Both are explained in [Roofline plots](../README.md#roofline-plots).
 
 <p>
-<img src="../3_block_32x32/images/roofline_block_32x32.png" alt="Roofline of compute_rhs with 32x32 blocks, before this stage" width="49%" />
-<img src="images/roofline_block_64x4.png" alt="Roofline of compute_rhs with 64x4 blocks, after this stage" width="49%" />
+<img src="../../figs/roofline_block_32x32.png" alt="Roofline of compute_rhs with 32x32 blocks, before this stage" width="49%" />
+<img src="../../figs/roofline_block_64x4.png" alt="Roofline of compute_rhs with 64x4 blocks, after this stage" width="49%" />
 </p>
 
 With 32x32 on the left and 64x4 on the right, the plots show no visible change, even though the code

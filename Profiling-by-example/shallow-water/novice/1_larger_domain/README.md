@@ -38,7 +38,7 @@ Mass: initial=4.194806655e+06, final=4.194806458e+06, rel.err=4.681e-08
 Min(h) after run: 0.981776
 ```
 
-**19638.63 MCUPS, a 3.13x improvement over the baseline's 6282.26.**
+19638.63 MCUPS, a 3.13x improvement over the baseline's 6282.26.
 
 Read that carefully, because the wall-clock time went *up*, from 0.083 s to 0.427 s. That is the
 expected outcome: we asked for 16 times the work and it took 5.1 times as long, so each cell update
@@ -94,8 +94,8 @@ rocprof-compute analyze -p workloads/1_larger_domain/0
 Both are explained in [Roofline plots](../README.md#roofline-plots).
 
 <p>
-<img src="../0_baseline/images/roofline_512.png" alt="Roofline of compute_rhs at 512x512, before this stage" width="49%" />
-<img src="images/roofline_2048.png" alt="Roofline of compute_rhs at 2048x2048, after this stage" width="49%" />
+<img src="../../figs/roofline_512.png" alt="Roofline of compute_rhs at 512x512, before this stage" width="49%" />
+<img src="../../figs/roofline_2048.png" alt="Roofline of compute_rhs at 2048x2048, after this stage" width="49%" />
 </p>
 
 Stage 0 at 512x512 is on the left, this stage at 2048x2048 on the right. `compute_rhs` has moved up
@@ -129,7 +129,7 @@ Open the resulting `.pftrace` file at [ui.perfetto.dev](https://ui.perfetto.dev)
 time steps.
 
 <p>
-<img src="images/hip_trace_gaps.jpg" alt="HIP API trace showing gaps between kernels" />
+<img src="../../figs/hip_trace_gaps.png" alt="HIP API trace showing gaps between kernels" />
 </p>
 
 There are visible gaps after each kernel, and lining the kernel row up against the HIP API row shows
