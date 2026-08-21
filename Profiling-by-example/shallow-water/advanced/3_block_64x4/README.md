@@ -72,17 +72,18 @@ rocprof-compute analyze \
 | 2.1.0 VALU FLOPs | 13467 GFLOP/s | 16077 GFLOP/s | 19.4 percent |
 | 2.1.9 VALU Utilization | 96.67 percent | 127.21 percent | 31.6 percent |
 | 2.1.14 IPC | 0.93 | 1.23 | 32.4 percent |
-| 2.1.15 Wavefront Occupancy | 73.47 percent | 99.85 percent | 26.4 points |
+| 2.1.15 Wavefront Occupancy | 5360 wavefronts | 7285 wavefronts | 35.9 percent |
 | 2.1.18 vL1D Cache Hit Rate | 69.33 percent | 73.60 percent | 4.3 points |
 | 2.1.19 vL1D Cache BW | 16814 GB/s | 20073 GB/s | 19.4 percent |
 | 2.1.20 L2 Cache Hit Rate | 25.18 percent | 21.10 percent | -4.1 points |
 | 2.1.21 L2 Cache BW | 5144 GB/s | 5300 GB/s | 3.0 percent |
 | 15.1.1 Address Stall | 4.32 percent | 2.93 percent | -32.2 percent |
 
-Occupancy is the row that moved, by 26 points to essentially full, and the reason is the size half of
-the change rather than the shape half: 64x4 is 256 threads where 32x32 was 1024, so more workgroups
-fit on a compute unit at once. The near cache keeps improving, four more points on the vL1D hit rate,
-and the four points the L2 hit rate gives back matter less because fewer requests get that far.
+Occupancy is the row that moved, from 5360 wavefronts to 7285 of the 7296 the device can hold, and
+the reason is the size half of the change rather than the shape half: 64x4 is 256 threads where 32x32
+was 1024, so more workgroups fit on a compute unit at once. The near cache keeps improving, four more
+points on the vL1D hit rate, and the four points the L2 hit rate gives back matter less because fewer
+requests get that far.
 Address stalls fall by a third, the row that speaks to the alignment the wider block was meant to
 buy.
 

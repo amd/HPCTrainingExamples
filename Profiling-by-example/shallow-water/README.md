@@ -40,7 +40,8 @@ near zero, and the minimum water depth, which must never go negative.
 ## Where the numbers come from
 
 Every figure quoted in either track, timings and counters alike, was measured on an MI300A in SPX
-mode. The novice numbers are medians of three runs; the advanced ones are single runs. Absolute
+mode. The novice numbers are medians of three runs. In the advanced track the throughput figures are
+medians of three runs, while the counter and trace figures come from a single profiled run. Absolute
 numbers will differ on other hardware, and part of the point of the exercise is that the best block
 size and the size of each speedup are architecture-dependent. Treat every figure as something to
 re-measure rather than to expect.

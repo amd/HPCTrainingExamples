@@ -185,7 +185,7 @@ both drop while time to solution improves. Neither cache row moves at all, which
 observation the trace made about the load mix.
 
 The occupancy row is the one to read carefully. It is a wavefront count, and 8178 against a peak of
-7296 is the tool reporting more waves resident than the stated maximum, an artifact of how the
+7296 is the tool reporting more waves resident than the device can hold, an artifact of how that
 average is accumulated rather than headroom that appeared out of nowhere. Read it as saturated, which
 is what stage 3 already was.
 

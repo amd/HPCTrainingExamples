@@ -109,7 +109,7 @@ Section 2.1, System Speed-of-Light, is the summary. 16x16 first, 32x32 second:
 | 2.1.0 VALU FLOPs | 10788 GFLOP/s | 13467 GFLOP/s | 24.8 percent |
 | 2.1.9 VALU Utilization | 75.19 percent | 96.67 percent | 28.6 percent |
 | 2.1.14 IPC | 0.73 | 0.93 | 25.9 percent |
-| 2.1.15 Wavefront Occupancy | 66.31 percent | 73.47 percent | 7.2 points |
+| 2.1.15 Wavefront Occupancy | 4838 wavefronts | 5360 wavefronts | 10.8 percent |
 | 2.1.18 vL1D Cache Hit Rate | 55.29 percent | 69.33 percent | 14.0 points |
 | 2.1.19 vL1D Cache BW | 13469 GB/s | 16814 GB/s | 24.8 percent |
 | 2.1.20 L2 Cache Hit Rate | 22.34 percent | 25.18 percent | 2.8 points |
@@ -122,8 +122,8 @@ FLOP rate rises by that same quarter, from 17.60 to 21.97 percent of the MI300A 
 arithmetic changed anywhere.
 
 Occupancy is the row that did least, and that is worth noticing. It is not the objective, only a
-proxy for one particular failure mode, having too little work in flight to hide latency. Seven points
-do not explain a 1.30x speedup, while the cache-hit change does.
+proxy for one particular failure mode, having too little work in flight to hide latency. Ten percent
+more resident wavefronts do not explain a 1.30x speedup, while the cache-hit change does.
 
 ## What we learned, and what to do about it
 

@@ -163,7 +163,7 @@ stage, with nothing running underneath it. Stage 5 replaces that with `rhs_inter
 `halo_mpi_wait`, and in Perfetto the interior `compute_rhs_range` dispatch extends underneath
 `MPI_Waitall` rather than starting after it. That overlap is what the 1.09x is made of.
 
-<!-- SNAPSHOT: stage 5 four-rank trace, the interior compute_rhs dispatch running underneath
+<!-- SNAPSHOT: stage 5 four-rank trace, the interior compute_rhs_range dispatch running underneath
      MPI_Waitall inside halo_mpi_wait -->
 <img src="../../figs/advanced_5_halo_pipeline_trace_overlap.png" alt="rocprof-sys timeline of stage 5, interior compute overlapping the halo exchange" />
 

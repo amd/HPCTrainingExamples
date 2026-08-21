@@ -133,6 +133,32 @@ for n in 4 8 16 32; do
 done
 ```
 
+Those curves say whether the trade paid. They do not say whether the halo region itself shrank, which
+is what the arithmetic actually predicts, and for that we need the timeline again. Both stages carry
+the same ROCTx ranges, so tracing them the same way at 16 ranks puts `halo_mpi_wait` beside
+`rhs_interior` in each:
+
+```bash
+salloc -N 4 -p LocalQ --exclusive --gres=gpu:4 -t 1:00:00
+
+mpirun -n 16 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh \
+    rocprof-sys-run --preset=trace-hpc --flat-profile \
+    --selected-regions step_3,step_4,step_5 -o trace_slab -- ../5_halo_pipeline/shallow_mpi
+
+mpirun -n 16 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh \
+    rocprof-sys-run --preset=trace-hpc --flat-profile \
+    --selected-regions step_3,step_4,step_5 -o trace_tile -- ./shallow_mpi
+```
+
+Read the pair the way
+[stage 5 reads its four-rank trace](../5_halo_pipeline/README.md#confirming-it-on-the-timeline),
+asking how much of each RK4 stage the exchange occupies. In the slab we expect it to have grown into a
+band wide enough to see, since a rank there sends two full rows of 8192 cells however many ranks
+there are while the interior it hides behind keeps shrinking. In the tile we expect it to still be
+covered by `rhs_interior`. The flat `wall_clock` report turns the same question into numbers, one row
+per range with a count and per-occurrence statistics, so the `halo_mpi_wait` totals of the two runs
+can be compared against their own `step_*` totals rather than eyeballed in Perfetto.
+
 ## Looking at the network itself
 
 `rocprof-sys` can attribute traffic to individual network interfaces during MPI calls, which is how

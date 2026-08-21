@@ -41,11 +41,11 @@ The solver is made of the same five kernels, plus the halo machinery that appear
 | Kernel | Role |
 |---|---|
 | `init_gaussian` | Sets the initial state: flat water plus a Gaussian bump in `h` |
-| `apply_reflect_bc_x_yphys` | Fills the ghost cells that lie on a physical wall, leaving the rest to the halo exchange |
-| `compute_rhs` | Evaluates the right-hand side, the flux divergence plus viscosity. This is the hot kernel |
+| `apply_reflect_bc_x_yphys` | Fills the ghost cells that lie on a physical wall, leaving the rest to the halo exchange. Stage 6 renames it `apply_reflect_bc_phys`, since a tile's left and right ghosts are walls only on the edge of the process grid |
+| `compute_rhs` | Evaluates the right-hand side, the flux divergence plus viscosity. This is the hot kernel. From stage 5 it is `compute_rhs_range`, which takes a row range so that the interior can be computed while the halo is in flight |
 | `update_stage` | Forms an intermediate RK4 state, `y + a*dt*k` |
 | `final_update` | Combines the four RK4 slopes into the new solution |
-| `pack_y_halos`, `unpack_y_halos` | From stage 5, gather the outgoing ghost data into one contiguous message per neighbour and scatter the incoming data back |
+| `pack_y_halos`, `unpack_y_halos` | From stage 5, gather the outgoing ghost data into one contiguous message per neighbour and scatter the incoming data back. Stage 6 exchanges in x as well, so they become `pack_halos` and `unpack_halos` |
 
 The halo exchange itself is GPU-aware: MPI is handed device pointers directly, so the ghost data
 never travels through host memory. Set `GPU_AWARE_MPI` to 0 at the top of the source to fall back on
@@ -81,13 +81,13 @@ through them in order.
 
 | Stage | Tool that motivated it | Finding | Change |
 |---|---|---|---|
-| [`0_baseline`](0_baseline) | `rocprofv3` per-rank kernel trace, `rocprof-sys` | Adding GPUs makes the code *slower*; the halo exchange costs more than the compute it feeds | none, this is the starting point |
+| [`0_baseline`](0_baseline) | scaling study, `rocprofv3`, `rocprof-sys` | Adding GPUs makes the code *slower*; the halo exchange costs more than the compute it feeds | none, this is the starting point |
 | [`1_larger_domain`](1_larger_domain) | same | Each subdomain is far too small to fill a GPU or to amortize its own halo | Domain 512x512 to 8192x8192 |
-| [`2_block_32x32`](2_block_32x32) | `rocprofv3` `VALUBusy` | The vector units are busy only two thirds of the time; a larger tile gives the stencil more cache reuse | Block size 16x16 to 32x32 |
-| [`3_block_64x4`](3_block_64x4) | `rocprofv3` `VALUBusy`, `rocprof-compute` | A 32x32 block splits each wavefront across two grid rows, so no request covers one contiguous run | Block size 32x32 to 64x4 |
-| [`4_vectorized_loads`](4_vectorized_loads) | thread trace, roofline | Memory waits dominate; the compiler emits x3 loads for adjacent x values and scalar y loads | Explicit aligned `float4` loads, a prefetched value and fewer divides |
-| [`5_halo_pipeline`](5_halo_pipeline) | `rocprofv3` at 4 ranks, `rocprof-sys` | Communication is now the limiter: six blocking `MPI_Sendrecv` calls and a device-wide sync per stage | One fused non-blocking message per neighbour, overlapped with interior compute |
-| [`6_2d_decomposition`](6_2d_decomposition) | halo-volume arithmetic | A slab's halo volume per rank stays constant as ranks are added, while a tile's falls as `1/sqrt(N)` | 2D Cartesian process grid |
+| [`2_block_32x32`](2_block_32x32) | `rocprofv3`, `rocprof-compute` | The vector units are busy only two thirds of the time; a larger tile gives the stencil more cache reuse | Block size 16x16 to 32x32 |
+| [`3_block_64x4`](3_block_64x4) | `rocprofv3`, `rocprof-compute`, ROCprof Compute Viewer, wavefront-width arithmetic | A 32x32 block splits each wavefront across two grid rows, so no request covers one contiguous run | Block size 32x32 to 64x4 |
+| [`4_vectorized_loads`](4_vectorized_loads) | `rocprofv3`, `rocprof-compute`, ROCprof Compute Viewer | Memory waits dominate; the compiler emits x3 loads for adjacent x values and scalar y loads | Explicit aligned `float4` loads, a prefetched value and fewer divides |
+| [`5_halo_pipeline`](5_halo_pipeline) | `rocprofv3`, `rocprof-sys` | Communication is now the limiter: six blocking `MPI_Sendrecv` calls and a device-wide sync per stage | One fused non-blocking message per neighbour, overlapped with interior compute |
+| [`6_2d_decomposition`](6_2d_decomposition) | `rocprof-sys`, halo-volume arithmetic | A slab's halo volume per rank stays constant as ranks are added, while a tile's falls as `1/sqrt(N)` | 2D Cartesian process grid |
 
 Throughput in MCUPS, and scaling efficiency against the same stage's own single-GPU run:
 
@@ -124,8 +124,9 @@ higher rank counts, which is why stage 6 argues from halo volume and leaves the 
 measure on a machine wide enough to show it.
 
 All numbers quoted in this tutorial were measured on MI300A nodes in SPX mode, four GPUs per
-node, with a ROCm 10.1.0a20260818 nightly build and Open MPI 5.0.10, each figure the median of three
-runs in an exclusive allocation through `gpu_bind.sh`, and run-to-run spread under 2 percent. Every
+node, with a ROCm 10.1.0a20260818 nightly build and Open MPI 5.0.10, in an exclusive allocation
+through `gpu_bind.sh`. Every throughput figure is the median of three runs, with run-to-run spread
+under 2 percent, while the counter and trace figures come from a single profiled run. Every
 measurement is single-node, at one, two and four GPUs. The multi-node studies that stages 4 and 6
 point to, the wider timeline and the NIC counters, are recorded as recipes and left as exercises at 16
 ranks or more. The best block size and the value of overlapping communication are machine-dependent,
