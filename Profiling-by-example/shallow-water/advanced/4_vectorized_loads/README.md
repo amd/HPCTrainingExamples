@@ -94,12 +94,6 @@ supporting changes come with it:
 - A `j+2` prefetch and `__launch_bounds__(256,1)`, both attempts to keep more memory requests in
   flight.
 
-Trace the code again to find the `global_load_dwordx3` for the vectorized load:
-
-<!-- SNAPSHOT: stage 4 hotspot view in the ROCprof Compute Viewer, the global_load_dwordx3 still
-     present after the float4 change -->
-<img src="../../figs/advanced_4_vectorized_loads_att_hotspot.png" alt="ROCprof Compute Viewer hotspot view of compute_rhs after vectorization, still loading with global_load_dwordx3" />
-
 The load mix does not move. What shrinks is the arithmetic: ten `v_div_scale` and five `v_rcp_f32`
 where stage 3 had sixteen and eight.
 
@@ -145,7 +139,7 @@ most closely. The mass error moves from 2.929e-09 to 2.916e-09, a change in the 
 reassociating the flux expressions and using reciprocals, and the minimum depth is unchanged. Both
 are comfortably within what single precision entitles us to.
 
-## Confirming it with the trace
+## Confirming it with measurements
 
 Re-run the thread trace on this stage and compare:
 
@@ -154,13 +148,46 @@ rocprofv3 --att --att-activity 8 --kernel-include-regex compute_rhs \
     -o att -- ./shallow_mpi
 ```
 
-<!-- MEASUREMENT TODO: thread trace hotspot view after vectorization, and the roofline -->
+Here, the `global_load_dwordx3` instruction is seen for the vectorized load.
+
+<!-- SNAPSHOT: stage 4 hotspot view in the ROCprof Compute Viewer, the global_load_dwordx3 still
+     present after the float4 change -->
+<img src="../../figs/advanced_4_vectorized_loads_att_hotspot.png" alt="ROCprof Compute Viewer hotspot view of compute_rhs after vectorization, still loading with global_load_dwordx3" />
+
+The counters put this stage next to stage 3, filtered to the same rows the last two stages compared:
 
 ```bash
 rocprof-compute profile -n 4_vectorized_loads --no-roof -k compute_rhs \
     --iteration-multiplexing -- ./shallow_mpi
-rocprof-compute analyze -p workloads/4_vectorized_loads/0
+rocprof-compute analyze \
+    -p ../3_block_64x4/workloads/3_block_64x4/0 \
+    -p workloads/4_vectorized_loads/0 \
+    -b 2.1.0 2.1.9 2.1.14 2.1.15 2.1.18 2.1.19 2.1.20 2.1.21 15.1.1
 ```
+
+| Metric | 64x4 | vectorized | Change |
+|---|---|---|---|
+| 2.1.0 VALU FLOPs | 16077 GFLOP/s | 13671 GFLOP/s | -15.0 percent |
+| 2.1.9 VALU Utilization | 127.21 percent | 121.74 percent | -4.3 percent |
+| 2.1.14 IPC | 1.23 | 1.06 | -13.8 percent |
+| 2.1.15 Wavefront Occupancy | 7285 wavefronts | 8178 wavefronts | 12.3 percent |
+| 2.1.18 vL1D Cache Hit Rate | 73.60 percent | 73.61 percent | unchanged |
+| 2.1.19 vL1D Cache BW | 20073 GB/s | 21244 GB/s | 5.8 percent |
+| 2.1.20 L2 Cache Hit Rate | 21.10 percent | 21.07 percent | unchanged |
+| 2.1.21 L2 Cache BW | 5300 GB/s | 5607 GB/s | 5.8 percent |
+| 15.1.1 Address Stall | 2.93 percent | 3.64 percent | 24.2 percent |
+
+Most of this table goes the wrong way, and the kernel is faster anyway: the same report puts the mean
+`compute_rhs` dispatch at 722 us before and 682 us after. The rate metrics fell because the work fell
+with them. A reciprocal reused twice does less arithmetic than two divisions, so there are fewer FLOPs
+and fewer instructions to spread over a shorter run, and FLOPs per second and instructions per cycle
+both drop while time to solution improves. Neither cache row moves at all, which is the same
+observation the trace made about the load mix.
+
+The occupancy row is the one to read carefully. It is a wavefront count, and 8178 against a peak of
+7296 is the tool reporting more waves resident than the stated maximum, an artifact of how the
+average is accumulated rather than headroom that appeared out of nowhere. Read it as saturated, which
+is what stage 3 already was.
 
 ## How much of the step is communication?
 

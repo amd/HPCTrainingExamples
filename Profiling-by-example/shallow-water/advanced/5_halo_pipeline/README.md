@@ -163,6 +163,10 @@ stage, with nothing running underneath it. Stage 5 replaces that with `rhs_inter
 `halo_mpi_wait`, and in Perfetto the interior `compute_rhs_range` dispatch extends underneath
 `MPI_Waitall` rather than starting after it. That overlap is what the 1.09x is made of.
 
+<!-- SNAPSHOT: stage 5 four-rank trace, the interior compute_rhs dispatch running underneath
+     MPI_Waitall inside halo_mpi_wait -->
+<img src="../../figs/advanced_5_halo_pipeline_trace_overlap.png" alt="rocprof-sys timeline of stage 5, interior compute overlapping the halo exchange" />
+
 The overlap is something only the timeline shows: the flat `wall_clock` report counts each range and
 gives its spread, but not what was running alongside what. The open questions about filtered traces
 noted in [stage 0](../0_baseline/README.md#step-3-what-the-kernel-trace-cannot-tell-you) apply here
