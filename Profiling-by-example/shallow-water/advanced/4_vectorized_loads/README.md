@@ -50,6 +50,30 @@ memory waits in this kernel become visible:
      and the global_load_dwordx3 x-neighbour reads -->
 <img src="../../figs/advanced_3_block_64x4_att_hotspot.png" alt="ROCprof Compute Viewer hotspot view of compute_rhs before vectorization" />
 
+The panels are linked. Clicking a hotspot, either in the hotspot panel or on the line it points at in
+the source panel, highlights that line's instructions in the assembly view and marks the ones the
+cycles were spent on, which is how a cost charged to a line of C++ becomes a cost charged to an
+instruction.
+
+The arrow in that view is the thing to follow. It runs from an `s_waitcnt` back to the `global_load`
+whose result it is waiting for, and the gap between the two is the interval the compiler managed to
+fill: the load is issued early, other instructions issue while it is in flight, and only at the wait
+does the wavefront stop.
+
+On MI300A the hotspot is not a load at all. It is line 182 of stage 3's `shallow_mpi.hip`, the first
+line that uses what the loads fetched:
+
+```c++
+    const float ui  = hui / fmaxf(hi, eps);
+```
+
+Clicking it highlights the `s_waitcnt` that blocks there and the division that follows, which is
+where the cycles go. The loads being waited on sit further up the listing:
+
+<!-- SNAPSHOT: stage 3 with source line 182 selected, the assembly view highlighting the s_waitcnt
+     and the division, with the three global_load_dwordx3 visible above them -->
+<img src="../../figs/advanced_3_block_64x4_att_hotspot_wait_divide.png" alt="ROCprof Compute Viewer with source line 182 selected, highlighting the s_waitcnt and the division in the assembly view" />
+
 The stalling loads in the stage 3 trace are `global_load_dwordx3` instructions, attributed to the
 x-neighbour reads:
 
