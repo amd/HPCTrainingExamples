@@ -84,10 +84,23 @@ export TAU_PROFILE=${TAU_PROFILE}
 export TAU_TRACE=${TAU_TRACE}
 
 WORKDIR=$(mktemp -d -p ${SRCDIR} build_XXXXXX)
+# Install the cleanup trap before the build gate below, which can exit early.
+trap 'cd "${SRCDIR}" && rm -rf "${WORKDIR}"' EXIT
 cp ${SRCDIR}/*.hip ${SRCDIR}/*.hpp ${SRCDIR}/*.h ${SRCDIR}/Makefile ${SRCDIR}/input.txt ${WORKDIR}/
 cd ${WORKDIR}
 
-make
+# A failed build has to end the test. Without this gate make's status was
+# ignored, tau_exec profiled a binary that was never produced, and the script
+# still exited 0 because cleanup was the last command -- leaving the whole
+# verdict to the pass regex.
+if ! make; then
+   echo "TAU_CHECK: build FAILED, so nothing was profiled"
+   exit 1
+fi
+if [ ! -x ./Jacobi_hip ]; then
+   echo "TAU_CHECK: build reported success but ./Jacobi_hip is missing"
+   exit 1
+fi
 
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
 
@@ -117,9 +130,54 @@ elif [ -n "${MPI_BINDIR}" ] && [ -x "${MPI_BINDIR}/mpiexec" ]; then
 else
    MPI_LAUNCH="srun -n 2"
 fi
-if command -v ompi_info >/dev/null 2>&1; then
+# Ask the wrapper we are about to invoke, not the PATH. `command -v ompi_info`
+# answers "is some OpenMPI installed", which is a different question. An
+# MPICH-built TAU module makes the two disagree: loading it pulls in
+# mpich-wrappers, so mpicc/mpic++/mpiexec become MPICH's while ompi_info still
+# reports the OpenMPI that is no longer in front. --showme:version succeeds only
+# on OpenMPI and -compile_info only on MPICH, so each wrapper answers for itself.
+MPI_FAMILY=unknown
+if [ -n "${MPI_BINDIR}" ]; then
+   if "${MPI_BINDIR}/mpicc" --showme:version >/dev/null 2>&1; then
+      MPI_FAMILY=openmpi
+   elif "${MPI_BINDIR}/mpicc" -compile_info >/dev/null 2>&1; then
+      MPI_FAMILY=mpich
+   fi
+fi
+echo "TAU_CHECK: launching with ${MPI_FAMILY} wrappers from ${MPI_BINDIR:-<none, using srun>}"
+if [ "${MPI_FAMILY}" = "openmpi" ]; then
    MPI_LAUNCH="${MPI_LAUNCH} --oversubscribe"
 fi
+
+# Keep both ranks on the node that owns the build directory. Jacobi is compiled
+# into a mktemp directory inside this checkout, so if the checkout lives on
+# node-local storage rather than a shared filesystem, a multi-node allocation
+# lets the launcher place rank 1 on a node where that path does not exist. The
+# run then dies before the test body starts:
+#
+#   error: couldn't chdir to `/tmp/.../HIP/jacobi/build_ewLCPv': No such file or
+#   directory: going to /tmp instead
+#   [proxy:1@node2] launch_procs: unable to change wdir to /tmp/.../build_ewLCPv
+#
+# The test wants two ranks, not two nodes -- Jacobi's "-g 2 1" topology on two
+# GPUs of one node -- so pinning costs no coverage. Hydra takes -hosts; OpenMPI
+# takes --host with a slot count. Measured on two nodes: bare mpirun aborts as
+# above, both pinned forms put rank 0 and rank 1 on the same node.
+#
+# The srun fallback is left alone deliberately: it is reached only for a bare
+# MPICH with no co-located launcher, and the obvious addition there
+# (--nodes=1 --nodelist=...) needs the step's GRES respecified or Slurm rejects
+# the step outright, so a blind flag would trade a rare failure for a common one.
+MPI_HOST_LOCAL="$(hostname -s)"
+case "${MPI_LAUNCH}" in
+   srun*) ;;
+   *) case "${MPI_FAMILY}" in
+         openmpi) MPI_LAUNCH="${MPI_LAUNCH} --host ${MPI_HOST_LOCAL}:2" ;;
+         mpich)   MPI_LAUNCH="${MPI_LAUNCH} -hosts ${MPI_HOST_LOCAL}" ;;
+         *) echo "TAU_CHECK: unknown MPI family, not pinning ranks to ${MPI_HOST_LOCAL}" ;;
+      esac ;;
+esac
+echo "TAU_CHECK: launcher is ${MPI_LAUNCH}"
 
 # Use a 1024x1024 local mesh so the TAU trace buffer fits in GPU memory
 # (default 4096x4096 caused "HIP failure: 'out of memory'" during trace finalization).
@@ -130,8 +188,43 @@ else
 fi
 
 ls
-pprof
+pprof 2>&1 | tee pprof.out
 
-cd ..
-rm -rf ${WORKDIR}
+# Assert the artifacts. Matching the tool's own vocabulary is what made these
+# tests unable to fail: "profile.0" is a substring of "Could not open
+# profile.0.0.0". Assert the artifact and the profiled routines instead, in
+# strings the failure paths cannot produce, and let CMake match these.
+tau_have() { ls $1 >/dev/null 2>&1; }
+tau_status=0
 
+if [ "${TAU_PROFILE}" = "1" ]; then
+   if tau_have 'profile.*'; then
+      echo "TAU_CHECK: profile artifact PRESENT"
+   else
+      echo "TAU_CHECK: profile artifact absent"
+      tau_status=1
+   fi
+   # Reported but not fatal on their own: each is a different test's subject, so
+   # the per-test expression decides rather than failing all of them together.
+   if grep -q 'MPI_Allreduce' pprof.out; then
+      echo "TAU_CHECK: MPI routines PRESENT in profile"
+   else
+      echo "TAU_CHECK: MPI routines absent from profile"
+   fi
+   if grep -q 'hipMemcpy' pprof.out; then
+      echo "TAU_CHECK: HIP routines PRESENT in profile"
+   else
+      echo "TAU_CHECK: HIP routines absent from profile"
+   fi
+fi
+
+if [ "${TAU_TRACE}" = "1" ]; then
+   if tau_have 'tautrace.*'; then
+      echo "TAU_CHECK: trace artifact PRESENT"
+   else
+      echo "TAU_CHECK: trace artifact absent"
+      tau_status=1
+   fi
+fi
+
+exit ${tau_status}

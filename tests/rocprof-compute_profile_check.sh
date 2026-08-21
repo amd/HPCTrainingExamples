@@ -23,4 +23,12 @@ cmake ..
 make
 
 export HSA_XNACK=1
+# rocprof-compute needs Python >= 3.10; native_tool_finder.py uses PEP 604
+# unions. Fail here, naming the reason, rather than later with a SyntaxError
+# from inside the tool that names no cause.
+if ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)' 2>/dev/null; then
+  echo "ERROR: rocprof-compute needs Python >= 3.10, but python3 is $(python3 -V 2>&1)."
+  echo "ERROR: load a newer Python before running this test."
+  exit 1
+fi
 rocprof-compute profile -n v1 --no-roof -- ./saxpy

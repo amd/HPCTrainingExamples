@@ -113,7 +113,21 @@ elif [ -n "${MPI_BINDIR}" ] && [ -x "${MPI_BINDIR}/mpiexec" ]; then
 else
    MPI_LAUNCH="srun -n 2"
 fi
-if command -v ompi_info >/dev/null 2>&1; then
+# Ask the wrapper we are about to invoke; see tau_exec_check.sh for the detail.
+# Testing whether ompi_info exists added OpenMPI's --oversubscribe to MPICH's
+# hydra mpiexec, which rejects it. Note this does not by itself make the test
+# pass where TAU and the prebuilt rccl-tests binary come from different MPIs:
+# an MPICH-built TAU cannot instrument an OpenMPI-linked benchmark.
+MPI_FAMILY=unknown
+if [ -n "${MPI_BINDIR}" ]; then
+   if "${MPI_BINDIR}/mpicc" --showme:version >/dev/null 2>&1; then
+      MPI_FAMILY=openmpi
+   elif "${MPI_BINDIR}/mpicc" -compile_info >/dev/null 2>&1; then
+      MPI_FAMILY=mpich
+   fi
+fi
+echo "MPI family of ${MPI_BINDIR:-<none, using srun>}: ${MPI_FAMILY}"
+if [ "${MPI_FAMILY}" = "openmpi" ]; then
    MPI_LAUNCH="${MPI_LAUNCH} --oversubscribe"
 fi
 
