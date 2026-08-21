@@ -27,7 +27,13 @@ ifneq ($(USE_CRAYPE),)
   MPICC=CC
 endif
 
-IS_OMPI=$(shell which ompi_info 2>/dev/null)
+# Ask the wrapper we are about to invoke. `which ompi_info` reports that some
+# OpenMPI is installed, which is not the question: with MPICH wrappers in front
+# (any MPICH-built module can pull them in) this branch asked MPICH's mpic++ for
+# --showme:compile, got the flag forwarded to the compiler as an unknown
+# argument, and left both flag sets empty -- so the link had no MPI library and
+# produced a page of undefined symbols.
+IS_OMPI=$(shell ${MPICC} --showme:version >/dev/null 2>&1 && echo openmpi)
 # MPICH detection. The Cray cc/CC wrapper prints "CrayPE is loaded" (matched by
 # 'Cray' below). The standalone mpich-wrappers MPICH on a Cray, however, reports
 # the underlying compiler from `--version` (e.g. "AMD clang"), so grepping the
@@ -56,6 +62,14 @@ else ifneq ($(IS_MPICH),)
     endif
 else
     $(error Unknown MPI version! Currently can detect mpich or openmpi)
+endif
+
+# MPILD is hipcc, not the MPI wrapper, so the MPI library only reaches the link
+# line through MPILDFLAGS. Empty flags therefore produce a page of undefined MPI
+# symbols that names no cause. Fail here instead, while the reason is still
+# visible.
+ifeq ($(strip $(MPILDFLAGS)),)
+    $(error MPI detected but $(strip ${MPICC}) returned no link flags. Two MPIs on PATH is the usual cause: check that mpic++ and any MPI-linked module you loaded are the same MPI)
 endif
 
 # Flags

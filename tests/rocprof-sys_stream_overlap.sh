@@ -126,9 +126,28 @@ ${TOOL_COMMAND}-avail -G $PWD/.configure.cfg
 export ${TOOL_CONFIG}_CONFIG_FILE=$PWD/.configure.cfg
 ${TOOL_COMMAND}-instrument -o compute_comm_overlap.inst -- compute_comm_overlap
 ${TOOL_COMMAND}-run -- ./compute_comm_overlap.inst 2
-cd ${TOOL_OUTPUT}-compute_comm_overlap.inst-output/
-ls *
-
+# Assert a real trace artifact. The tool writes
+# ${TOOL_NAME}-compute_comm_overlap.inst-output (rocprofiler-systems-... on
+# ROCm > 6.2.9, omnitrace-... before it), NOT ${TOOL_OUTPUT}-...  Glob for the
+# suffix so both eras work, and require a real .proto inside it.
+assert_proto_output() {
+  local outdir n
+  outdir="$(ls -d ./*-compute_comm_overlap.inst-output 2>/dev/null | head -1)"
+  if [[ -z "${outdir}" || ! -d "${outdir}" ]]; then
+    echo "ROCPROFSYS_STREAM_OVERLAP_RESULT: FAIL no *-compute_comm_overlap.inst-output directory produced"
+    return 1
+  fi
+  # The tool nests a timestamped subdirectory, so recurse.
+  n="$(find "${outdir}" -type f -name '*.proto' | wc -l)"
+  find "${outdir}" -type f | sed 's/^/    /' | head -20
+  if [[ "${n}" -gt 0 ]]; then
+    echo "ROCPROFSYS_STREAM_OVERLAP_RESULT: PASS ${n} proto file(s) under ${outdir}"
+  else
+    echo "ROCPROFSYS_STREAM_OVERLAP_RESULT: FAIL 0 proto files under ${outdir}"
+    return 1
+  fi
+}
+assert_proto_output
 cd ..
 rm -rf ${BUILD_DIR}
 
