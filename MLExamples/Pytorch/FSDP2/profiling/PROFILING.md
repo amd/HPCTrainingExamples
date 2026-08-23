@@ -7,33 +7,44 @@ communication (`all_gather` of parameters + `reduce_scatter` of gradients) is
 woven into forward/backward and cannot be toggled off with `no_sync()`, so the
 coarse signal is the scaling behavior. This guide shows how to attribute time
 to individual **kernels** (attention / GEMM / layernorm), the **FSDP2
-collectives** (`ncclDevKernel_AllGather_*`, `ncclDevKernel_ReduceScatter_*`), and
-**hardware limits** (HBM bandwidth, FLOP/s).
+collectives** (on RCCL 2.27 these fuse into one `ncclDevKernel_Generic_2` device
+kernel; the all-gather / reduce-scatter split shows on the `nccl:_all_gather_base`
+/ `nccl:_reduce_scatter_base` framework rows), and **hardware limits** (HBM
+bandwidth, FLOP/s).
 
 The two sharded collectives are what makes FSDP2 different from DDP's single
 `all_reduce` — this guide is about *seeing* them.
 
-The per-tool steps live in the **shared per-profiler guides** under
-[`../../common/profilers/`](../../common/profilers/README.md) — each page carries the
-exact `torchrun` line for this example. Read the ground rules below first.
+The per-tool steps live in **FSDP2-specific hands-on guides** in this directory
+(indexed by [`README.md`](README.md)) — each carries the exact `torchrun` line, the
+output to expect, screenshots, and RCCL-tuning exercises. The DeepSpeed
+FlopsProfiler, rocprof-compute, and Score-P steps (no RCCL signal, or compute-only)
+stay in the **shared** guides under
+[`../../common/profilers/`](../../common/profilers/README.md). Read the ground
+rules below first.
 
 ## Which profiler for which job
 
 | Profiler | Load / install | Scope | Measures here |
 |----------|----------------|-------|---------------|
-| [**torch.profiler** (Kineto)](../../common/profilers/torch-profiler.md) | in `pytorch/2.12.0` | host + GPU | Per-op/kernel table; `all_gather`/`reduce_scatter` vs. GEMM; Chrome/Perfetto trace; memory |
+| [**torch.profiler** (Kineto)](torch-profiler.md) | in `pytorch/2.12.0` | host + GPU | Per-op/kernel table; `all_gather`/`reduce_scatter` vs. GEMM; Chrome/Perfetto trace; memory |
+| [**rocprofv3**](rocprofv3.md) | `module load rocm` | GPU | Per-kernel time (GEMM/attention) + **RCCL** all-gather / reduce-scatter trace + timeline |
+| [**rocprofiler-systems**](rocprofiler-systems.md) | in `rocm` module | GPU + host | Perfetto **timeline**: see the all-gather *prefetch* overlap with compute |
+| [**TensorBoard**](tensorboard.md) | `pip install` (venv) | host + GPU | GUI for the torch.profiler trace: timeline, kernel view, comm/compute overlap |
+| [**TraceLens**](tracelens.md) | `pip install` (venv) | post-process trace | Automated report: per-collective **algo/bus bandwidth + inter-rank skew**; per-op roofline |
 | [**DeepSpeed FlopsProfiler**](../../common/profilers/deepspeed-flops.md) | in `pytorch/2.12.0` | dense model (1 GPU) | FLOPs / MACs / params of the *unsharded* model — the compute ceiling |
-| [**TensorBoard**](../../common/profilers/tensorboard.md) | `pip install` (venv) | host + GPU | GUI for the torch.profiler trace: timeline, kernel view, comm/compute overlap |
-| [**rocprofv3**](../../common/profilers/rocprofv3.md) | `module load rocm` | GPU | Per-kernel time (GEMM/attention) + **RCCL** all-gather / reduce-scatter trace |
 | [**rocprof-compute**](../../common/profilers/rocprof-compute.md) | `module load rocm` | GPU | Roofline: achieved HBM BW / FLOP/s vs. peak for the GEMM kernels |
-| [**rocprofiler-systems**](../../common/profilers/rocprofiler-systems.md) | `module load rocprofiler-systems` | GPU + host | Perfetto **timeline**: see the all-gather *prefetch* overlap with compute |
 | [**Score-P**](../../common/profilers/scorep.md) | `module load scorep` + venv | Python regions | Per-rank training-loop regions → Cube/OTF2 |
 | [**TAU / HPCToolkit**](../../../../MPI-examples/cg-solver-example/docs/profilers/README.md) | `module load tau` / `hpctoolkit` | MPI + GPU | Whole-application, **multi-node** MPI + GPU (CG guide) |
 
 `torch.profiler` is the first stop for an ML workload: it speaks the framework's
 language (ops, `nccl:all_gather`/`nccl:reduce_scatter`, module names) and needs no
 extra tooling. Drop to `rocprofv3`/`rocprof-compute` for kernel-level or roofline
-detail, and to `rocprofiler-systems` when you need to *see* the prefetch overlap.
+detail, to `rocprofiler-systems` when you need to *see* the prefetch overlap, and
+to **TraceLens** to turn any of those traces into a quantified RCCL bandwidth /
+skew table (and a per-op roofline) without hand-reading Perfetto. See the
+[per-profiler index](README.md) for the hands-on walkthroughs and the
+communication-ceiling (rccl-tests / TransferBench) note.
 
 > **Verified on PPAC / MI300A** with the site module stack
 > `module load rocm/7.2.3 openmpi pytorch/2.12.0` (torch 2.12.0a0, hip 7.2). The
@@ -65,10 +76,11 @@ so, because profiling adds overhead:
 
 | Goal | Guide | Command |
 |------|-------|---------|
-| Op/kernel + RCCL table, trace | [torch.profiler](../../common/profilers/torch-profiler.md) | `torchrun ... ../benchmarks/fsdp2_bench.py --profile --profile-dir ./torch_prof` |
+| Op/kernel + RCCL table, trace | [torch.profiler](torch-profiler.md) | `torchrun ... ../benchmarks/fsdp2_bench.py --profile --profile-dir ./torch_prof` |
+| Kernel / RCCL trace + timeline | [rocprofv3](rocprofv3.md) | `rocprofv3 --kernel-trace --stats -- torchrun ...` |
+| Overlap timeline (prefetch) | [rocprofiler-systems](rocprofiler-systems.md) | `rocprof-sys-run -- torchrun ...` |
+| TensorBoard GUI | [TensorBoard](tensorboard.md) | `tensorboard --logdir ./torch_prof` |
+| RCCL bandwidth/skew + roofline | [TraceLens](tracelens.md) | `TraceLens_generate_multi_rank_collective_report_pytorch --trace_dir ./torch_prof --world_size 4` (needs `rank{N}_trace.json`; see [tracelens.md §4](tracelens.md#4-the-rccl-report-per-collective-bandwidth--skew)) |
 | Model FLOPs / MACs / params | [DeepSpeed](../../common/profilers/deepspeed-flops.md) | `torchrun ... ../benchmarks/fsdp2_bench.py --flops` |
-| TensorBoard GUI | [TensorBoard](../../common/profilers/tensorboard.md) | `tensorboard --logdir ./torch_prof` |
-| Kernel / RCCL trace | [rocprofv3](../../common/profilers/rocprofv3.md) | `rocprofv3 --kernel-trace --stats -- torchrun ...` |
-| Roofline | [rocprof-compute](../../common/profilers/rocprof-compute.md) | `rocprof-compute profile -n r -- torchrun ...` |
-| Overlap timeline | [rocprofiler-systems](../../common/profilers/rocprofiler-systems.md) | `rocprof-sys-run -- torchrun ...` |
+| Roofline (GEMM) | [rocprof-compute](../../common/profilers/rocprof-compute.md) | `rocprof-compute profile -n r -- torchrun ...` |
 | Per-rank Python regions | [Score-P](../../common/profilers/scorep.md) | `NPROC=2 ../../common/scorep_launch.sh ../benchmarks/fsdp2_bench.py ...` |
