@@ -12,9 +12,9 @@ models the **host x86 caches** and only sees host instructions. It cannot profil
 GPU kernels, so it targets **`CG-CPU`**, not `CG-GPU`. (Running it on `cg_gpu`
 "works" but only instruments the ROCm/HSA host runtime — `amd_comgr` code-object
 loading, `malloc`, matrix I/O — and shows **no** SpMV/rocSPARSE/rocBLAS kernels,
-which run on the device. Use [rocprof-compute](rocprof-compute.md),
-[rocprofv3 ATT](rocprofv3.md), or [IntelliKit `linex`](intellikit.md) for GPU
-cache/memory instead.)
+which run on the device. Use [rocprof-compute](rocprof-compute.md) or
+[Advanced Thread Trace](Advanced_Thread_Trace.md)
+for GPU cache/memory instead.)
 
 `valgrind` (and `cg_annotate`, `callgrind_annotate`) are on the MI300A **compute**
 nodes (`/usr/bin/…`; **not** on the login node), so run under `srun`/`sbatch`.

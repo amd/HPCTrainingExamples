@@ -207,6 +207,5 @@ cluster under the HBM diagonal, well below the compute ceiling.
 - [rocprofv3](rocprofv3.md) — the raw kernel/counter traces this builds on
 - [roofline-extractor](roofline-extractor.md) — automated *percent-of-peak* roofline
   (prints the headline % directly)
-- [IntelliKit `metrix`](intellikit.md) — the same conclusion, decoded per kernel
 - [rocprof-sys](rocprofiler-systems.md) / [TAU](tau.md) — timelines, for the
   *communication* story a roofline cannot show

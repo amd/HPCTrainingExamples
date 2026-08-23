@@ -219,6 +219,5 @@ in a browser on the node:
 ## See also
 
 - [rocprof-compute](rocprof-compute.md) — the interactive roofline GUI
-- [IntelliKit `metrix`](intellikit.md) — decoded per-kernel bandwidth
 - [rocprof-sys](rocprofiler-systems.md) / [nsys](nsys.md) — timelines, for the
   *communication* story a roofline cannot show

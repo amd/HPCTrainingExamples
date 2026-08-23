@@ -251,54 +251,24 @@ let [rocprof-compute](rocprof-compute.md) do the math.
 
 ## 5. Instruction-level: Advanced Thread Trace (ATT)
 
-**Advanced Thread Trace** records wavefront execution at the **ISA-instruction**
-granularity on selected compute units: a per-instruction hotspot/hit map, stall
-reasons, VALU/VMEM issue behaviour, and occupancy for a single kernel — the tool
-for asking *why* the SpMV is bandwidth-bound rather than just *that* it is.
-
-ATT produces an enormous amount of data, so you **must** target it:
-
-- **One kernel** — `--kernel-include-regex` (here the `rocsparse` SpMV, e.g.
-  `csrmv`), optionally `--att-consecutive-kernels N`.
-- **One rank** — run `-n 1`; the compute per rank is representative.
-- **A few CUs / SIMDs** — `--att-target-cu` (default 1), `--att-simd-select`
-  (default `0xF`), `--att-shader-engine-mask` (default `0x1`).
-
-MI300A is **gfx942 (gfx9)**, so the gfx9-only options apply: `--att-perfcounters`
-and `--att-activity 8` (AMD's recommended period).
+With `--att`, `rocprofv3` records wavefront execution at the **ISA-instruction**
+granularity and decodes it to a per-instruction hit/latency/stall map for a single
+kernel — the tool for asking *why* the SpMV is bandwidth-bound, not just *that* it
+is. It needs the `rocprof-trace-decoder` library (ROCm >= 7.12). The core command:
 
 ```bash
 module load rocm/7.13.0 openmpi   # 7.13.0 (or 7.12.0) ships the ATT decoder
-cd CG-GPU && make
-# Instruction trace of the SpMV kernel on CU 1 of one rank:
 CG_SEED=12345 mpirun -n 1 --oversubscribe ./gpu_bind.sh \
-  rocprofv3 --att \
-    --att-library-path $ROCM_PATH/lib \
-    --att-target-cu 1 \
-    --att-shader-engine-mask 0x1 \
-    --att-simd-select 0xF \
-    --att-activity 8 \
-    --att-consecutive-kernels 1 \
-    --kernel-include-regex 'csrmv' \
-    -d att_spmv \
+  rocprofv3 --att --att-library-path $ROCM_PATH/lib \
+    --att-target-cu 1 --att-activity 8 --att-consecutive-kernels 1 \
+    --kernel-include-regex 'csrmv' -d att_spmv \
     -- ./cg_gpu src/Dubcova2.pm rccl
 ```
 
-The decoded output lands under the `-d` directory: `*_gfx942_code_object_id_*.out`
-files hold the **ISA disassembly annotated with per-instruction hit counts**, and
-a `ui_output_agent_*_dispatch_*/` folder holds per-wavefront JSON for the ROCm ATT
-viewer (a `*_results.db` rocpd SQLite database is written too). Read it to confirm
-the SpMV spends its cycles on `global_load`/`flat_load` (VMEM) waits rather than in
-VALU — the instruction-level restatement of "CG is memory-bound".
-
-> **Decoder library — use ROCm ≥ 7.12 (measured).** ATT *collection* is built into
-> `rocprofv3`, but *decoding* needs the separate closed-source
-> `rocprof-trace-decoder` library. On this cluster it ships with **`rocm/7.12.0`
-> and `rocm/7.13.0`** (`$ROCM_PATH/lib/librocprof-trace-decoder.so`) but **not**
-> with `rocm/7.2.4` or earlier — there the run aborts with
-> `Fatal error: rocprof-trace-decoder library path not found`. **Verified
-> decode-to-ISA on MI300A with `rocm/7.13.0`** (decoder `0.1.7`). Modes 1–3 need no
-> decoder.
+On MI300A this shows ~88 % of the SpMV's cycles in `s_waitcnt vmcnt` / `global_load`
+(memory) vs ~3 % in VALU. **See the dedicated guide
+[Advanced_Thread_Trace.md](Advanced_Thread_Trace.md)** for the full workflow, the
+decoded-ISA reading, the reproducible batch job, and participant exercises.
 
 ## Viewing the results remotely
 
@@ -310,11 +280,12 @@ VALU — the instruction-level restatement of "CG is memory-bound".
   - `man aac6_x11` — `ssh -X` and launch a single browser window
 - **CSV / counter output** (steps 2, 4) is text — inspect with `column -s, -t` or a
   spreadsheet.
-- **ATT viewer** (step 5): load the `ui_output_agent_*` folder in the ROCm ATT
-  viewer inside the VNC desktop.
+- **ATT viewer** (step 5): see [Advanced_Thread_Trace.md](Advanced_Thread_Trace.md#3-the-att-viewer-occupancy--per-wavefront-timeline)
+  — load the `ui_output_agent_*` folder in the ROCm ATT viewer inside the VNC desktop.
 
 ## See also
 
+- [Advanced Thread Trace](Advanced_Thread_Trace.md) — the full ATT (`--att`) guide + exercises
 - [rocprof-compute](rocprof-compute.md) — turn these counters into a roofline
 - [rocprofiler-systems](rocprofiler-systems.md) — full host+GPU timeline
 - [TAU](tau.md) / [HPCToolkit](hpctoolkit.md) — the MPI communication rocprofv3 can't see

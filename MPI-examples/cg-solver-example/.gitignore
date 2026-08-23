@@ -67,3 +67,8 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Advanced Thread Trace (rocprofv3 --att) output -- large raw traces / code objects
+CG-GPU/att_spmv/
+att_spmv*/
+*.att
