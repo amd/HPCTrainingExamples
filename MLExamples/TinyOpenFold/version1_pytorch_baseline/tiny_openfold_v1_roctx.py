@@ -173,8 +173,15 @@ class PerformanceMonitor:
         }
 
         if self.metrics['memory_usage']:
+            # True intra-step peak (activations included) via max_memory_allocated(),
+            # reset after warmup. Sampled memory_usage is current-resident and misses
+            # the activation peak, so it is only a CPU-only fallback.
+            if torch.cuda.is_available():
+                peak_mb = torch.cuda.max_memory_allocated() / (1024**2)
+            else:
+                peak_mb = max(self.metrics['memory_usage'])
             summary.update({
-                'peak_memory_mb': max(self.metrics['memory_usage']),
+                'peak_memory_mb': peak_mb,
                 'avg_memory_mb': np.mean(self.metrics['memory_usage'])
             })
 
@@ -955,6 +962,10 @@ def train_tiny_openfold(
 
     print(f"Warmup complete. Starting measured training loop...")
     print("=" * 70)
+
+    # Reset the CUDA peak-memory counter so peak_memory_mb reflects the measured loop only.
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
 
     for step in range(num_steps):
         # Start batch timing

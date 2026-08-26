@@ -945,7 +945,11 @@ def train_tiny_openfold_v3(
     
     print(f"Warmup complete. Triton kernels compiled. Starting measured training loop...")
     print("=" * 70)
-    
+
+    # Reset the CUDA peak-memory counter so peak_memory_mb reflects the measured loop only.
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
+
     for step in range(num_steps):
         batch_start = time.time()
         
@@ -1020,9 +1024,19 @@ def train_tiny_openfold_v3(
     print(f"   Average optimizer time: {np.mean(optimizer_times)*1000:.1f} ms")
     print(f"   Final loss: {np.mean(losses[-10:]):.4f}")
     
+    # True intra-step peak (activations included) via max_memory_allocated(), reset
+    # after warmup. memory_usage samples are current-resident and miss the activation
+    # peak, so they are only a fallback when CUDA is unavailable.
+    if torch.cuda.is_available():
+        peak_memory_mb = torch.cuda.max_memory_allocated() / (1024**2)
+    elif memory_usage:
+        peak_memory_mb = max(memory_usage)
+    else:
+        peak_memory_mb = 0.0
+
     if memory_usage:
-        print(f"   Peak memory usage: {max(memory_usage):.1f} MB")
-    
+        print(f"   Peak memory usage: {peak_memory_mb:.1f} MB")
+
     print(f"\nTriton Kernel Performance:")
     print(f"   Custom kernels active: LayerNorm, Flash Attention (MSA & Triangle)")
     print(f"   Kernel fusion benefits: Reduced memory bandwidth, lower latency")
@@ -1035,7 +1049,7 @@ def train_tiny_openfold_v3(
     
     summary = {
         'avg_training_speed': float(avg_speed),
-        'peak_memory_mb': float(max(memory_usage)) if memory_usage else 0,
+        'peak_memory_mb': float(peak_memory_mb),
         'avg_memory_mb': float(np.mean(memory_usage)) if memory_usage else 0,
         'final_loss': float(np.mean(losses[-10:])),
         'avg_batch_time': float(np.mean(batch_times)) if batch_times else 0,
