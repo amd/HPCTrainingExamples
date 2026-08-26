@@ -4,7 +4,7 @@
 
 ## Prerequisites
 
-- Python 3.8+
+- Python 3.12 (tested; ROCm 7.13 trace tools require Python <= 3.13)
 - PyTorch with CUDA/ROCm support
 - Triton installed (`pip install triton`)
 - AMD MI300X or compatible GPU

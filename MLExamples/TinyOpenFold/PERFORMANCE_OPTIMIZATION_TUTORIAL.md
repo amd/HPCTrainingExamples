@@ -105,8 +105,9 @@ Both install the Python packages into a venv; they differ only in where the ROCm
 **B1 — TheRock pip wheels:**
 
 ```bash
-# Python 3.14 from the module system
-module load python/3.14
+# Python 3.12 from the module system (use 3.12, not 3.14 — the ROCm trace tools
+# rocpd/rocprof-sys/otf2 only support Python <= 3.13)
+module load python/3.12
 
 cd HPCTrainingExamples/MLExamples/TinyOpenFold
 python3 -m venv venv713 && source venv713/bin/activate
@@ -124,7 +125,7 @@ python3 -c "import torch, triton; print('torch', torch.__version__, '| triton', 
 **B2 — ROCm 7.13 system module (if available at your site):**
 
 ```bash
-module load rocm/7.13 python/3.14        # module names may differ per cluster
+module load rocm/7.13 python/3.12        # module names may differ per cluster
 python3 -m venv venv713 && source venv713/bin/activate
 pip3 install --upgrade pip
 
@@ -210,10 +211,12 @@ Training Configuration:
    Training steps: 30
    Batch size: 4
 
+Running 5 warmup steps...
+Warmup complete. Starting measured training loop...
 ======================================================================
-Step   0/50 | Loss: 33.06 | Speed: 100.1 samples/sec | Memory:  195.7 MB | Time:  40.0ms
-Step  10/50 | Loss: 33.25 | Speed: 100.1 samples/sec | Memory:  195.7 MB | Time:  40.0ms
-Step  20/50 | Loss: 33.45 | Speed: 100.1 samples/sec | Memory:  195.7 MB | Time:  40.0ms
+Step   0/30 | Loss: 33.06 | Speed: 100.1 samples/sec | Memory:  195.7 MB | Time:  40.0ms
+Step  10/30 | Loss: 33.25 | Speed: 100.1 samples/sec | Memory:  195.7 MB | Time:  40.0ms
+Step  20/30 | Loss: 33.45 | Speed: 100.1 samples/sec | Memory:  195.7 MB | Time:  40.0ms
 ======================================================================
 
 Performance Summary:
@@ -237,7 +240,16 @@ samples/sec / 24.4 ms.)*
 | Forward | 15.4 ms | ~38% of batch time |
 | **Backward** | **21.0 ms** | **~53% of batch time** (main bottleneck) |
 | Optimizer | 4.1 ms | ~10% of batch time |
-| Memory | 195.7 MB | Peak allocation |
+| Memory | 195.7 MB | Resident allocation, post-step (see note) |
+
+> **What the "Memory" number actually is.** `--enable-memory-profiling` samples
+> `torch.cuda.memory_allocated()` once per logged step, *after* the optimizer step, and reports the
+> `max` of those samples. This is the **resident allocation between steps**, NOT the true peak: it
+> does not use `torch.cuda.max_memory_allocated()` / `reset_peak_memory_stats()`, so it misses the
+> intra-step high-water mark reached by forward/backward activations. That's why the value is nearly
+> identical (~195.6 MB) across V1/V2/V3 and across fusion settings — fusion changes the transient
+> activation peak, which this metric can't see. Treat it as a coarse footprint sanity-check, not a
+> peak-memory measurement; for true peak use `torch.cuda.max_memory_allocated()` around the step.
 
 ### Bottleneck Analysis
 
@@ -409,9 +421,9 @@ Fusion Optimizations:
    Kernel Reduction: 80.0% (48 fewer kernels)
 
 ======================================================================
-Step   0/50 | Loss: 33.06 | Speed: 240.8 samples/sec | Memory:  195.6 MB | Time:  16.6ms
-Step  10/50 | Loss: 33.25 | Speed: 240.8 samples/sec | Memory:  195.6 MB | Time:  16.6ms
-Step  20/50 | Loss: 33.45 | Speed: 240.8 samples/sec | Memory:  195.6 MB | Time:  16.6ms
+Step   0/30 | Loss: 33.06 | Speed: 240.8 samples/sec | Memory:  195.6 MB | Time:  16.6ms
+Step  10/30 | Loss: 33.25 | Speed: 240.8 samples/sec | Memory:  195.6 MB | Time:  16.6ms
+Step  20/30 | Loss: 33.45 | Speed: 240.8 samples/sec | Memory:  195.6 MB | Time:  16.6ms
 ======================================================================
 
 Performance Summary V2:
@@ -656,8 +668,8 @@ Running warmup steps to compile Triton kernels...
 Warmup complete. Starting measured training loop...
 
 ======================================================================
-Step   0/50 | Loss: 33.06 | Speed:  91.5 samples/sec | Memory:  195.6 MB | Time:  43.7ms
-Step  10/50 | Loss: 33.25 | Speed:  91.6 samples/sec | Memory:  195.6 MB | Time:  43.7ms
+Step   0/30 | Loss: 33.06 | Speed:  91.5 samples/sec | Memory:  195.6 MB | Time:  43.7ms
+Step  10/30 | Loss: 33.25 | Speed:  91.6 samples/sec | Memory:  195.6 MB | Time:  43.7ms
 ======================================================================
 
 Performance Summary V3 (eager):
