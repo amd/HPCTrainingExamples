@@ -12,17 +12,15 @@
 #       * torch / ROCm(HIP) / transformers versions and the GPU name;
 #       * where flash_attn is imported from and which compiled extension
 #           (flash_attn_2_cuda*.so -- named "cuda" even on ROCm) is mapped,
-#           plus whether the build is a ROCm/HIP build;
-#       * whether torch's own SDPA flash backend (aotriton) is available --
-#           this is a SEPARATE "flash attention" from the flash_attn package
-#           and is reported for information only (not gated).
+#           plus whether the build is a ROCm/HIP build.
 #
 #   (B) VERIFIES (these two gate the result):
 #       * the compiled flash_attn kernel actually runs on the GPU and its
 #           output matches a fp32 reference (proves the build is functional,
 #           not just importable);
 #       * transformers dispatches to attn_implementation="flash_attention_2"
-#           without silently falling back (proves transformers picks it up).
+#           WITHOUT silently falling back to sdpa/eager -- i.e. real FA2 is
+#           picked up for this env's PyTorch, not the fallback path.
 #
 #   The final line is "FLASH ATTENTION: OK ..." when both gated checks pass
 #   (CTest gates on that keyword), "FLASH ATTENTION: FAIL - <reason>" when a
@@ -211,22 +209,6 @@ else:
         transformers_ok = False
         fail_reason = fail_reason or f"transformers FA2 dispatch failed ({e})"
         print("transformers FA2 dispatch FAILED:", e)
-
-# ---------------------------------------------------------------------------
-# Informational only (NOT gated): torch's own SDPA flash backend is a separate
-# "flash attention" (aotriton on ROCm), used by attn_implementation="sdpa".
-rule("torch SDPA flash backend (informational, not gated)")
-try:
-    from torch.nn.attention import sdpa_kernel, SDPBackend
-    if torch.cuda.is_available():
-        qs = torch.randn(1, 8, 512, 64, device="cuda", dtype=torch.bfloat16)
-        with sdpa_kernel(SDPBackend.FLASH_ATTENTION):
-            torch.nn.functional.scaled_dot_product_attention(qs, qs, qs, is_causal=True)
-        print("SDPA FLASH_ATTENTION backend: available")
-    else:
-        print("SDPA FLASH_ATTENTION backend: not checked (no GPU)")
-except Exception as e:
-    print("SDPA FLASH_ATTENTION backend: unavailable ->", e)
 
 # ---------------------------------------------------------------------------
 rule("Summary")
