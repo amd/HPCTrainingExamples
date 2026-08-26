@@ -36,21 +36,36 @@
 set -u
 
 # ---------------------------------------------------------------------------
-# If rocm AND pytorch are already loaded (e.g. by the caller), use them as-is
-# and do NOT reload. Otherwise load rocm (if needed) then pytorch. (Match the
-# "rocm/" / "pytorch/" aliases so that e.g. "rocm-new/..." does not count.) If
-# no module system is present (e.g. a plain venv) these calls just no-op and
-# the venv's python3 is used.
+# Load rocm and pytorch via the module system IF one is available, but NEVER
+# fail the test over modules: a user inside a plain venv (no Lmod) must be
+# able to run this against the venv's own torch. So we (1) try to bring the
+# module command into scope, (2) if there is still no module command, skip
+# module handling entirely and use the current environment, and (3) if a
+# module load fails, carry on rather than exit. Do NOT reload a module that
+# is already loaded (match the "rocm/" / "pytorch/" aliases so e.g.
+# "rocm-new/..." does not count); pytorch only resolves once rocm is in, so
+# rocm is handled first.
 # ---------------------------------------------------------------------------
-if ! (module -t list 2>&1 | grep -q "^rocm/") || ! (module -t list 2>&1 | grep -q "^pytorch/"); then
-  if ! module -t list 2>&1 | grep -q "^rocm/"; then
+if ! type module >/dev/null 2>&1; then
+  [ -r /etc/profile.d/lmod.sh ]         && . /etc/profile.d/lmod.sh
+  [ -r /usr/share/lmod/lmod/init/bash ] && . /usr/share/lmod/lmod/init/bash
+fi
+
+if type module >/dev/null 2>&1; then
+  module -t list 2>&1 | grep -q "^rocm/"
+  if [ $? -eq 1 ]; then
     echo "rocm module is not loaded"
     echo "loading default rocm module"
-    module load rocm
+    module load rocm 2>/dev/null || echo "  (could not load a rocm module; continuing with the current environment)"
   fi
-  if ! module -t list 2>&1 | grep -q "^pytorch/"; then
-    module load pytorch
+  module -t list 2>&1 | grep -q "^pytorch/"
+  if [ $? -eq 1 ]; then
+    echo "pytorch module is not loaded"
+    echo "loading default pytorch module"
+    module load pytorch 2>/dev/null || echo "  (could not load a pytorch module; continuing with the current environment)"
   fi
+else
+  echo "no module system detected; using the current environment / venv"
 fi
 
 # ---------------------------------------------------------------------------
@@ -173,9 +188,16 @@ else:
         cfg = AutoConfig.for_model("llama", hidden_size=256, num_hidden_layers=2,
                                    num_attention_heads=8, num_key_value_heads=8,
                                    intermediate_size=512, vocab_size=1000)
+        # transformers >= 5 renamed the `torch_dtype` kwarg to `dtype`
+        # (passing the old name emits a deprecation warning).
+        try:
+            _tv_major = int(transformers.__version__.split(".")[0])
+        except ValueError:
+            _tv_major = 0
+        _dtype_kw = "dtype" if _tv_major >= 5 else "torch_dtype"
         model = AutoModelForCausalLM.from_config(
             cfg, attn_implementation="flash_attention_2",
-            torch_dtype=torch.bfloat16).to("cuda")
+            **{_dtype_kw: torch.bfloat16}).to("cuda")
         impl = model.config._attn_implementation
         print("resolved _attn_implementation:", impl)
         ids = torch.randint(0, 1000, (1, 128), device="cuda")
