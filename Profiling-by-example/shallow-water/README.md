@@ -20,6 +20,8 @@ Start with [`novice`](novice) unless you have already profiled single-process GP
 advanced track separates raw speed from scalability, and spends its second half on communication and
 decomposition rather than on kernels.
 
+On AAC6, see [AAC6.md](AAC6.md) for site-specific setup and batch submission.
+
 ## The application
 
 The code solves the 2D shallow-water equations over a flat bed, which describe the depth and momentum

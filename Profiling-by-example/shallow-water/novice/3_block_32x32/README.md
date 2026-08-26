@@ -101,12 +101,15 @@ Always validate against the wall clock.
 
 ## Roofline
 
+`profile_app.py` in Roofline Extractor needs its
+[Python environment](../README.md#a-python-environment-for-roofline-extractor) active:
+
 ```bash
-module load rocm roofline-extractor
-roofline-extractor-profile -o roofline_out --arch MI300A -- ./shallow
+python3 "$ROOFLINE_EXTRACTOR/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
 ```
 
-The equivalent in `rocprof-compute`:
+The equivalent in `rocprof-compute`, whose `analyze` step needs its
+[Python environment](../README.md#a-python-environment-for-rocprof-compute-analyze) active:
 
 ```bash
 rocprof-compute profile -n 3_block_32x32 --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow
