@@ -36,6 +36,18 @@ module load roc-optiq
 roc-optiq --version            # -> ROCm(TM) Optiq Beta version: 0.5.0.1
 ```
 
+> **Minimum ROCm version.** roc-optiq itself has **no ROCm dependency** — the GUI is
+> a standalone visualizer, so the ROCm version only matters on the machine where you
+> *collect* the data ([upstream install docs](https://rocm.docs.amd.com/projects/roc-optiq/en/latest/install/optiq-install.html)):
+> **ROCm ≥ 7.1.0** for ROCm Systems Profiler timeline traces (the `.db`/`.rpd` rocpd
+> path this guide uses), **ROCm ≥ 7.12.0** for ROCm Compute Profiler analysis data
+> (the [§5](#5-participant-exercises) stretch roofline), and **ROCm ≥ 7.14.0** for the
+> LDS roofline chart. On this site the `roc-optiq` module is gated behind
+> `rocm/7.2.4` / `rocm/7.14.0`; to use it with an older ROCm (e.g. `rocm/7.1.1`) that
+> still clears the ≥ 7.1.0 timeline floor, add its install root to `PATH` directly
+> (`/nfsapps/ubuntu-24.04/opt/rocmplus-7.2.4/roc-optiq-v0.5.0/bin`, exactly what
+> [`shot_roc_optiq.sh`](../../CG-GPU/shot_roc_optiq.sh) falls back to).
+
 > **Just installed and `module load roc-optiq` says "Unable to find"?** That is a
 > stale Lmod **spider cache**, not a missing module. The site cron rebuilds the
 > cache every ≤30 min (`/etc/cron.d/lmod-cache-refresh` on `aac6-fe1`), so it
@@ -252,6 +264,15 @@ VNC / noVNC / X11 desktop as in §3; the headless path is for scripted/CI shots.
 > will render inside a TurboVNC / noVNC / `ssh -X` desktop. **Both** the empty
 > welcome window *and* a real loaded trace were captured with the helper
 > [`CG-GPU/shot_roc_optiq.sh`](../../CG-GPU/shot_roc_optiq.sh) (Xvfb + Pillow):
+>
+> **Also verified on ROCm 7.1.1** (the earliest 7.1.x available on this site; ≥ 7.1.0
+> is the upstream timeline floor). `rocprofv3` (v1.0.0) built `cg_gpu` with `ROCTX=1`
+> and collected the rank-0 `rccl` rocpd `.db` (`172 iters, comm 26.2 %, halo 14.7 %,
+> dot-allreduce 11.5 %`); the standalone roc-optiq v0.5.0.1 binary opened it
+> headlessly (`--backend opengl`), parsed `492 tracks · 10 threads · 7 queues · 473
+> streams · 2 counters`, and rendered the same topology + timeline + event-table
+> layout as the 7.2.4 figure. The ROCm Compute Profiler roofline (§5 stretch) is
+> **not** available below ROCm 7.12.0.
 
 ![roc-optiq welcome / open-trace screen](figs/cg_roc_optiq.png)
 
