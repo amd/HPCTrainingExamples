@@ -1414,6 +1414,12 @@ add_test(NAME Pytorch_FlashAttention_Check_Import COMMAND ../flashattention_chec
 set_property(TEST Pytorch_FlashAttention_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST Pytorch_FlashAttention_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
 
+add_test(NAME Pytorch_FlashAttention_Verify_Enabled COMMAND ../flashattention_verify_enabled.sh )
+set_property(TEST Pytorch_FlashAttention_Verify_Enabled PROPERTY PASS_REGULAR_EXPRESSION "FLASH ATTENTION: OK")
+set_property(TEST Pytorch_FlashAttention_Verify_Enabled PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'" "FLASH ATTENTION CHECK: SKIPPED")
+set_property(TEST Pytorch_FlashAttention_Verify_Enabled PROPERTY SKIP_RETURN_CODE 77)
+set_tests_properties(Pytorch_FlashAttention_Verify_Enabled PROPERTIES TIMEOUT 300)
+
 add_test(NAME Pytorch_Check_Gpu_Access COMMAND ../pytorch_check_gpu_access.sh )
 set_property(TEST Pytorch_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "True")
 set_property(TEST Pytorch_Check_Gpu_Access PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
