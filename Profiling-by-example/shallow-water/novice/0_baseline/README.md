@@ -116,9 +116,11 @@ because there is not enough boundary to go around.
 A roofline plot places a kernel against the machine's compute and bandwidth ceilings, which tells us
 whether it is limited by arithmetic or by memory traffic.
 
+`profile_app.py` in Roofline Extractor needs its
+[Python environment](../README.md#a-python-environment-for-roofline-extractor) active:
+
 ```bash
-module load rocm roofline-extractor
-roofline-extractor-profile -o roofline_out --arch MI300A -- ./shallow
+python3 "$ROOFLINE_EXTRACTOR/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
 ```
 
 The equivalent in `rocprof-compute`, whose `analyze` step needs its

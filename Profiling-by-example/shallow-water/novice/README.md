@@ -144,14 +144,41 @@ line to change.
 
 ### Roofline plots
 
-Every stage shows its roofline twice, once with the Roofline Extractor:
+Every stage shows its roofline twice, once with the Roofline Extractor and once with
+`rocprof-compute`. Novice `profile.sh` runs one backend per job; set
+`ROOFLINE_TOOL` in `env.sh` to `extractor` (default) or `rocprof-compute`.
+
+### A Python environment for roofline extractor
+
+Clone the [Roofline Extractor](https://github.com/AMD-HPC/rooflineExtractor) repo and install its
+Python dependencies once on a login node:
 
 ```bash
-module load rocm roofline-extractor
-roofline-extractor-profile -o roofline_out --arch MI300A -- ./shallow
+git clone https://github.com/AMD-HPC/rooflineExtractor.git ~/rooflineExtractor
+export ROOFLINE_EXTRACTOR=$HOME/rooflineExtractor
+../setup_roofline_extractor_venv.sh
+source ~/roofline-venv/bin/activate
 ```
 
-and once with `rocprof-compute`, whose `analyze` step needs the Python environment below:
+Activate it in any shell where you intend to run `profile_app.py`. On AAC6, point
+`ROOFLINE_EXTRACTOR` at the site install and let `env.sh` activate `~/roofline-venv`; see
+[AAC6.md](../AAC6.md).
+
+Some sites ship a pre-built install or a module wrapper (`roofline-extractor-profile`); those call
+the same `profile_app.py` with Python already configured.
+
+Run `profile_app.py` (Option 1 in the upstream README):
+
+```bash
+python3 "$ROOFLINE_EXTRACTOR/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
+```
+
+Set `--arch` to match your GPU (`MI300A`, `MI300X`, `MI250X`, and others listed in the extractor
+README). The plot is written to `roofline_out/counters.html`.
+
+The rocprof-compute roofline needs the
+[Python environment for `rocprof-compute analyze`](#a-python-environment-for-rocprof-compute-analyze)
+active:
 
 ```bash
 rocprof-compute profile -n 0_baseline --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow

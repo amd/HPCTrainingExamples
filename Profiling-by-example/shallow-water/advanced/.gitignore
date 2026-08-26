@@ -2,14 +2,28 @@
 shallow_mpi
 shallow_mpi.inst
 
-# rocprofv3 output, from the -d argument used in the stage READMEs
+# Slurm logs from fom.sh / profile.sh
+fom_*.out
+profile_*.out
+
+# rocprofv3 output
 prof/
 outdir/
+results_*
+
+# ATT (-o att in profile.sh)
+att/
 att_out/
+att_results.db
+att_*.att
 
-# rocprof-compute workload directories
+# rocprof-compute
 workloads/
+rocprof_compute_compare.txt
 
-# rocprof-sys output
+# rocprof-sys (-o trace, trace_full, trace_n*, trace_slab, trace_tile, nic*)
+trace/
+trace_*/
 rocprof-sys-*-output/
 rocprofsys.cfg
+nic*
