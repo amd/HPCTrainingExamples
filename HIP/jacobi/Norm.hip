@@ -4,7 +4,7 @@
 
 #include "Jacobi.hpp"
 
-#define OPTIMIZED
+// #define OPTIMIZED
 
 #ifdef OPTIMIZED
 #define block_size 1024

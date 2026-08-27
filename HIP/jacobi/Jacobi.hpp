@@ -43,10 +43,6 @@ struct mesh_t {
   dfloat *sendBuffer, *recvBuffer;
   dfloat *d_haloBuffer;
 
-  dfloat inv_dx_factor, inv_dy_factor;
-  dfloat dx_factor, dy_factor;
-  dfloat inv_dxy_factor;
-
   int sideLength[NSIDES], sideOffset[NSIDES];
 
   MPI_Request requests[2*NSIDES];
