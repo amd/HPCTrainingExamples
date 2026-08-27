@@ -69,7 +69,8 @@ are re-enabled.
 `setup_rocprof_compute_venv.sh` creates `~/rocprof-compute-venv` and installs
 the pinned Python packages that `rocprof-compute analyze` needs. Run it on a
 login node where `pip` can reach the package index; compute nodes may not have
-outbound network access.
+outbound network access. After that, `env.sh` only activates the venv when batch
+jobs run; it does not run `pip install` again.
 
 Novice `profile.sh` scripts collect a roofline plot using whichever backend
 `ROOFLINE_TOOL` selects in `env.sh`: `extractor` (default) runs
@@ -175,9 +176,9 @@ after `rocprof-sys-avail -H -r net`.
 
 ## Things to keep in mind
 
-**Login node vs compute node.** Module loads and `setup_rocprof_compute_venv.sh`
-belong on the login node. Batch jobs load modules again via `env.sh` when they
-start on a compute node.
+**Login node vs compute node.** The one-time venv setup scripts belong on the
+login node. Batch jobs load modules and activate those venvs via `env.sh` when
+they start on a compute node; they do not reinstall packages.
 
 **`env.sh` must exist before you submit.** Both `submit.sh` and every batch
 script source `${SW_ROOT}/env.sh`. If you skip `cp env_aac6.sh env.sh` or leave

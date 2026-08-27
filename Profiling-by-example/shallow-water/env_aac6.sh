@@ -43,9 +43,8 @@ if [ -f "${ROOFLINE_VENV}/bin/activate" ]; then
     source "${ROOFLINE_VENV}/bin/activate"
 fi
 
-# rocprof-compute analyze needs a login-node venv (see setup_rocprof_compute_venv.sh).
+# rocprof-compute analyze (see setup_rocprof_compute_venv.sh for one-time pip install).
 export ROCprof_COMPUTE_VENV="${HOME}/rocprof-compute-venv"
 if [ -f "${ROCprof_COMPUTE_VENV}/bin/activate" ]; then
     source "${ROCprof_COMPUTE_VENV}/bin/activate"
-    python3 -m pip install -r "${ROCM_PATH}/libexec/rocprofiler-compute/requirements.txt"
 fi
