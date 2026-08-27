@@ -46,6 +46,26 @@ from typing import Optional, Tuple, Dict, Any
 from dataclasses import dataclass, asdict
 from datetime import datetime
 
+# Optional imports with graceful fallbacks
+try:
+    import torch.cuda.nvtx as nvtx
+    NVTX_AVAILABLE = True
+except ImportError:
+    NVTX_AVAILABLE = False
+    class nvtx:
+        @staticmethod
+        def range(name):
+            from contextlib import nullcontext
+            return nullcontext()
+
+        @staticmethod
+        def range_start(name):
+            return None
+
+        @staticmethod
+        def range_end(handle):
+            return None
+
 
 @dataclass
 class TinyOpenFoldConfig:
@@ -153,11 +173,9 @@ class PerformanceMonitor:
         }
 
         if self.metrics['memory_usage']:
-            # peak_memory_mb is the TRUE intra-step high-water mark (activations included)
-            # via max_memory_allocated(), which the training loop resets after warmup. The
-            # per-step 'memory_usage' samples are current-resident (memory_allocated) and
-            # would miss the forward/backward activation peak, so we only use them as a
-            # fallback when the CUDA peak counter is unavailable.
+            # True intra-step peak (activations included) via max_memory_allocated(),
+            # reset after warmup. Sampled memory_usage is current-resident and misses
+            # the activation peak, so it is only a CPU-only fallback.
             if torch.cuda.is_available():
                 peak_mb = torch.cuda.max_memory_allocated() / (1024**2)
             else:
@@ -273,7 +291,9 @@ class MSARowAttentionWithPairBias(nn.Module):
             batch_size, n_seqs, seq_len, _ = msa.shape
 
             # Project to Q, K, V
-            with record_function("msa_qkv_projection"):
+            # ROCTx range so rocprof-sys traces show the three separate q/k/v GEMM
+            # launches under one label (contrast with V2's single fused launch).
+            with record_function("msa_qkv_projection"), nvtx.range("msa_qkv"):
                 q = self.q_proj(msa).view(batch_size, n_seqs, seq_len, self.n_heads, self.head_dim)
                 k = self.k_proj(msa).view(batch_size, n_seqs, seq_len, self.n_heads, self.head_dim)
                 v = self.v_proj(msa).view(batch_size, n_seqs, seq_len, self.n_heads, self.head_dim)
@@ -943,8 +963,7 @@ def train_tiny_openfold(
     print(f"Warmup complete. Starting measured training loop...")
     print("=" * 70)
 
-    # Reset the CUDA peak-memory counter so peak_memory_mb reflects the measured
-    # loop only (excludes warmup allocation spikes / autotuning).
+    # Reset the CUDA peak-memory counter so peak_memory_mb reflects the measured loop only.
     if torch.cuda.is_available():
         torch.cuda.reset_peak_memory_stats()
 
@@ -954,13 +973,18 @@ def train_tiny_openfold(
         monitor.start_timing()
 
         # Get batch
-        msa_tokens, pair_features, target_distances = dataset.get_batch(batch_size)
-        msa_tokens = msa_tokens.to(device)
-        pair_features = pair_features.to(device)
-        target_distances = target_distances.to(device)
+        with nvtx.range("data_loading"):
+            msa_tokens, pair_features, target_distances = dataset.get_batch(batch_size)
+            msa_tokens = msa_tokens.to(device)
+            pair_features = pair_features.to(device)
+            target_distances = target_distances.to(device)
 
         # Forward pass timing
+        # Use ROCTx range_start/range_end (start/stop markers) rather than the
+        # range() push/pop context manager, so rocprof-sys ROCPROFSYS_SELECTED_REGIONS
+        # (which matches roctxRangeStartA) can narrow the trace to this phase.
         monitor.start_timing()
+        _fwd_roctx = nvtx.range_start("forward_pass")
         if use_amp:
             with autocast():
                 outputs = model(msa_tokens, pair_features, target_distances)
@@ -968,24 +992,28 @@ def train_tiny_openfold(
         else:
             outputs = model(msa_tokens, pair_features, target_distances)
             loss = outputs['loss'].mean()  # Average loss across GPUs for DataParallel
+        nvtx.range_end(_fwd_roctx)
         batch_timings['forward'] = monitor.end_timing()
 
         # Backward pass timing
         monitor.start_timing()
+        _bwd_roctx = nvtx.range_start("backward_pass")
         if use_amp:
             scaler.scale(loss).backward()
         else:
             loss.backward()
+        nvtx.range_end(_bwd_roctx)
         batch_timings['backward'] = monitor.end_timing()
 
         # Optimizer step timing
         monitor.start_timing()
-        if use_amp:
-            scaler.step(optimizer)
-            scaler.update()
-        else:
-            optimizer.step()
-        optimizer.zero_grad()
+        with nvtx.range("optimizer_step"):
+            if use_amp:
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                optimizer.step()
+            optimizer.zero_grad()
         batch_timings['optimizer'] = monitor.end_timing()
 
         # Total batch time

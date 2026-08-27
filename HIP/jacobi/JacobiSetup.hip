@@ -123,6 +123,13 @@ void Jacobi_t::CreateMesh() {
   mesh.dx = mesh.Lx/(mesh.Nx*grid.Ncol+1);
   mesh.dy = mesh.Ly/(mesh.Ny*grid.Nrow+1);
 
+  mesh.inv_dx_factor = 1.0 / (mesh.dx*mesh.dx);
+  mesh.inv_dy_factor = 1.0 / (mesh.dy*mesh.dy);
+
+  mesh.dx_factor = 2.0 * mesh.inv_dx_factor;
+  mesh.dy_factor = 2.0 * mesh.inv_dy_factor;
+  mesh.inv_dxy_factor = 1.0 / (mesh.dx_factor + mesh.dy_factor);
+
   dfloat DX = mesh.dx*(mesh.Nx-1);
   dfloat DY = mesh.dy*(mesh.Ny-1);
 
@@ -141,7 +148,9 @@ void Jacobi_t::CreateMesh() {
 
   //halo exchange storage
   SafeHipCall(hipHostMalloc(&(mesh.sendBuffer), mesh.Nhalo*sizeof(dfloat),0));
+  //SafeHipCall(hipMalloc(&(mesh.sendBuffer), mesh.Nhalo*sizeof(dfloat)));
   SafeHipCall(hipHostMalloc(&(mesh.recvBuffer), mesh.Nhalo*sizeof(dfloat),0));
+  //SafeHipCall(hipMalloc(&(mesh.recvBuffer), mesh.Nhalo*sizeof(dfloat)));
   SafeHipCall(hipMalloc(&(mesh.d_haloBuffer), mesh.Nhalo*sizeof(dfloat)));
   SafeHipCall(hipMemset(mesh.d_haloBuffer, 0, mesh.Nhalo*sizeof(dfloat)));
 

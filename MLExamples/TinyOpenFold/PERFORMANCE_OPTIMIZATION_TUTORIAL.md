@@ -36,7 +36,8 @@ Version 1 (Baseline)   →   Version 2 (Fused)   →   Version 3 (Triton)
 ```
 
 **Two independent optimization axes.** Kernel *fusion* (V2) is the biggest single
-lever — ~2.4x with no memory cost. `torch.compile` (inductor auto-fusion) is an
+lever — ~2.4x *and* it **lowers peak memory ~14%** (Flash Attention avoids materializing
+the full attention matrix). `torch.compile` (inductor auto-fusion) is an
 orthogonal lever available on **all three** versions and roughly doubles V1 and V3:
 
 ```
@@ -64,6 +65,7 @@ measurements and will vary by hardware and stack.
 |------|------------|----------|-------|--------|----------|
 | **Small** | 64 | 16 | 4 | ~196 MB | Quick demos; V2 fusion ~2.4x, compile stacks on V1/V3 |
 | **Medium** | 128 | 32 | 2 | ~209 MB | Realistic workload; V2 fusion ~1.9x |
+| **Large** | 128 | 32 | 4 | ~235 MB | Medium seq-len at batch 4 (isolates batch); V2 fusion ~1.7x |
 
 ---
 
@@ -104,8 +106,9 @@ Both install the Python packages into a venv; they differ only in where the ROCm
 **B1 — TheRock pip wheels:**
 
 ```bash
-# Python 3.14 from the module system
-module load python/3.14
+# Python 3.12 from the module system (use 3.12, not 3.14 — the ROCm trace tools
+# rocpd/rocprof-sys/otf2 only support Python <= 3.13)
+module load python/3.12
 
 cd HPCTrainingExamples/MLExamples/TinyOpenFold
 python3 -m venv venv713 && source venv713/bin/activate
@@ -123,7 +126,7 @@ python3 -c "import torch, triton; print('torch', torch.__version__, '| triton', 
 **B2 — ROCm 7.13 system module (if available at your site):**
 
 ```bash
-module load rocm/7.13 python/3.14        # module names may differ per cluster
+module load rocm/7.13 python/3.12        # module names may differ per cluster
 python3 -m venv venv713 && source venv713/bin/activate
 pip3 install --upgrade pip
 
@@ -209,10 +212,12 @@ Training Configuration:
    Training steps: 30
    Batch size: 4
 
+Running 5 warmup steps...
+Warmup complete. Starting measured training loop...
 ======================================================================
-Step   0/50 | Loss: 33.06 | Speed: 100.1 samples/sec | Memory:  195.7 MB | Time:  40.0ms
-Step  10/50 | Loss: 33.25 | Speed: 100.1 samples/sec | Memory:  195.7 MB | Time:  40.0ms
-Step  20/50 | Loss: 33.45 | Speed: 100.1 samples/sec | Memory:  195.7 MB | Time:  40.0ms
+Step   0/30 | Loss: 33.06 | Speed: 100.1 samples/sec | Memory:  195.7 MB | Time:  40.0ms
+Step  10/30 | Loss: 33.25 | Speed: 100.1 samples/sec | Memory:  195.7 MB | Time:  40.0ms
+Step  20/30 | Loss: 33.45 | Speed: 100.1 samples/sec | Memory:  195.7 MB | Time:  40.0ms
 ======================================================================
 
 Performance Summary:
@@ -221,11 +226,12 @@ Performance Summary:
    Average forward time: 15.4 ms
    Average backward time: 21.0 ms
    Average optimizer time: 4.1 ms
-   Peak memory usage: 195.7 MB
+   Peak memory usage: 2266.9 MB
 ```
 
 *(Measured on MI300X / ROCm 7.13. With `--enable-torch-compile` this rises to ~164
-samples/sec / 24.4 ms.)*
+samples/sec / 24.4 ms. "Peak memory usage" is the true `max_memory_allocated()`
+high-water mark; the per-step `Memory:` line shows resident allocation (~196 MB).)*
 
 ### Key Metrics (Small Problem)
 
@@ -236,7 +242,17 @@ samples/sec / 24.4 ms.)*
 | Forward | 15.4 ms | ~38% of batch time |
 | **Backward** | **21.0 ms** | **~53% of batch time** (main bottleneck) |
 | Optimizer | 4.1 ms | ~10% of batch time |
-| Memory | 195.7 MB | Peak allocation |
+| Resident memory | ~196 MB | `memory_allocated()` between steps (weights + optimizer state) |
+| **Peak memory** | **2,266.9 MB** | `max_memory_allocated()` — true intra-step high-water mark |
+
+> **Two memory numbers, and why they differ so much.** The per-step `Step N | Memory: … MB` line shows
+> **resident** allocation (`torch.cuda.memory_allocated()`) sampled after the optimizer step — this is
+> ~196 MB and barely moves across versions because it's dominated by weights + optimizer state. The
+> Performance Summary's **`Peak memory usage`** reports the **true peak** (`max_memory_allocated()`, with
+> `reset_peak_memory_stats()` called after warmup), which captures the forward/backward **activation**
+> high-water mark — ~2,267 MB for V1, ~11.5× the resident figure. **Report the peak, not the resident
+> number, when comparing versions** — the resident value is fusion-neutral by construction and hides
+> the effect fusion actually has (see the V2 memory result below).
 
 ### Bottleneck Analysis
 
@@ -267,6 +283,21 @@ For deeper insights into GPU utilization and kernel behavior, use rocprof-sys:
 
 # Results show: kernel launch frequency, memory transfers, GPU occupancy
 # Look for: many short-lived kernels, poor occupancy on small operations
+```
+
+**Narrowing a system trace to a phase (`--selected-regions`)**
+
+To restrict a `rocprof-sys` capture to specific phases (e.g. just forward/backward), the
+ROCTx regions must use **start/stop** markers (`torch.cuda.nvtx.range_start/range_end`), which
+`ROCPROFSYS_SELECTED_REGIONS` matches — the `nvtx.range()` context manager emits push/pop
+markers and is *not* matched. Use `tiny_openfold_v1_roctx.py` (a copy of the baseline whose
+forward/backward passes are annotated with start/stop markers):
+
+```bash
+ROCPROFSYS_SELECTED_REGIONS=forward_pass,backward_pass \
+  rocprof-sys-run --rocm=kernel,marker -T -o rsys_v1_sel -- \
+  python3 tiny_openfold_v1_roctx.py --batch-size 4 --seq-len 64 --num-seqs 16 --num-blocks 4 --num-steps 10 --device 0
+# → trace contains only the forward_pass and backward_pass regions.
 ```
 
 ### Run Medium Problem
@@ -393,15 +424,15 @@ Fusion Optimizations:
    Kernel Reduction: 80.0% (48 fewer kernels)
 
 ======================================================================
-Step   0/50 | Loss: 33.06 | Speed: 240.8 samples/sec | Memory:  195.6 MB | Time:  16.6ms
-Step  10/50 | Loss: 33.25 | Speed: 240.8 samples/sec | Memory:  195.6 MB | Time:  16.6ms
-Step  20/50 | Loss: 33.45 | Speed: 240.8 samples/sec | Memory:  195.6 MB | Time:  16.6ms
+Step   0/30 | Loss: 33.06 | Speed: 240.8 samples/sec | Memory:  195.6 MB | Time:  16.6ms
+Step  10/30 | Loss: 33.25 | Speed: 240.8 samples/sec | Memory:  195.6 MB | Time:  16.6ms
+Step  20/30 | Loss: 33.45 | Speed: 240.8 samples/sec | Memory:  195.6 MB | Time:  16.6ms
 ======================================================================
 
 Performance Summary V2:
    Average training speed: 240.8 samples/sec  [+141% vs V1]
    Average batch time: 16.6 ms                [-59% vs V1]
-   Peak memory usage: 195.6 MB                [Same as V1]
+   Peak memory usage: 1941.2 MB               [-14.4% vs V1]
 ```
 
 ### V1 → V2 Improvement (Small Problem, MI300X / ROCm 7.13)
@@ -410,11 +441,15 @@ Performance Summary V2:
 |--------|----|----|-------------|
 | Speed | 100.1 s/s | 240.8 s/s | **+141%** ⚡⚡⚡ |
 | Batch time | 40.0 ms | 16.6 ms | **-59%** |
-| Memory | 195.7 MB | 195.6 MB | **No change** |
+| Peak memory | 2266.9 MB | 1941.2 MB | **-14.4%** (−326 MB) |
 
 **Key Insight**: Kernel fusion (QKV + gate/proj + Flash Attention) cuts launch
-overhead across both forward and backward — a ~2.4x throughput gain with no memory
-cost. `torch.compile` adds almost nothing on top of V2 because it's already fused.
+overhead across both forward and backward — a ~2.4x throughput gain — *and* lowers
+**peak** memory ~14%, because Flash Attention never materializes the full N×N attention
+matrix. (The ~196 MB *resident* figure is unchanged — that's weights + optimizer state,
+which fusion doesn't touch; the win is in the transient activation peak.) A control run
+with `--disable-all-fusion` measures 2266.9 MB, identical to V1, confirming the saving
+is the fusion itself. `torch.compile` adds almost nothing on top of V2 — it's already fused.
 
 ### Run Medium Problem (V2)
 
@@ -510,10 +545,11 @@ cd version2_pytorch_fused
 
 **Achievements:**
 
-Kernel fusion delivers the tutorial's biggest gains without increasing memory usage.
+Kernel fusion delivers the tutorial's biggest gains *while also lowering peak memory*.
 The small problem improved from ~100 to ~241 samples/sec (**~2.4x**), and the medium
 problem from ~47 to ~89 samples/sec (**~1.9x**), with ~80% fewer kernel launches and
-no memory overhead. This is the performance peak of the three versions.
+a **~14% lower peak-memory** high-water mark (Flash Attention avoids materializing the
+full attention matrix). This is the performance peak of the three versions.
 
 **Remaining Bottlenecks:**
 
@@ -640,15 +676,15 @@ Running warmup steps to compile Triton kernels...
 Warmup complete. Starting measured training loop...
 
 ======================================================================
-Step   0/50 | Loss: 33.06 | Speed:  91.5 samples/sec | Memory:  195.6 MB | Time:  43.7ms
-Step  10/50 | Loss: 33.25 | Speed:  91.6 samples/sec | Memory:  195.6 MB | Time:  43.7ms
+Step   0/30 | Loss: 33.06 | Speed:  91.5 samples/sec | Memory:  195.6 MB | Time:  43.7ms
+Step  10/30 | Loss: 33.25 | Speed:  91.6 samples/sec | Memory:  195.6 MB | Time:  43.7ms
 ======================================================================
 
 Performance Summary V3 (eager):
    Average training speed: 91.5 samples/sec   [~0.9x vs V1 eager]
    Average batch time: 43.7 ms
    Final loss: 33.21                          [matches V1 — numerically correct]
-   Peak memory usage: 195.6 MB
+   Peak memory usage: 2194.8 MB               [-3.2% vs V1]
 ```
 
 ### V1 → V2 → V3 Progression (Small Problem, ROCm 7.13 / MI300X)
@@ -659,7 +695,8 @@ Performance Summary V3 (eager):
 |--------|----|----|----|-------|-------|
 | **Speed** | 100 s/s | **241 s/s** | 92 s/s | **+141%** ⚡ | -8% |
 | Batch time | 40.0 ms | **16.6 ms** | 43.7 ms | -59% | +9% |
-| Memory | 195.7 MB | 195.6 MB | 195.6 MB | ~0% | ~0% |
+| Resident memory | ~196 MB | ~196 MB | ~196 MB | ~0% | ~0% |
+| **Peak memory** | 2266.9 MB | **1941.2 MB** | 2194.8 MB | **-14.4%** | -3.2% |
 
 V2 (fusion) is the clear performance win. Eager V3 sits slightly *below* V1: the
 model's runtime is dominated by triangle/transition GEMMs (identical rocBLAS calls
@@ -774,7 +811,7 @@ kernels are numerically faithful, not just fast-looking.
 - With `torch.compile`, V3 reaches ~1.7–1.9x over eager V1 and edges past compiled
   V1. This is the regime where writing custom kernels pays off.
 - V2 (kernel fusion) remains the outright performance peak (~2.4x small / ~1.9x
-  medium) with no memory cost.
+  medium) and also lowers **peak** memory ~14% (small config) via Flash Attention.
 
 **Trade-offs & the real lesson:**
 
@@ -816,14 +853,33 @@ eager (s/s)          47            89            45
 Best:  V2 fused (89 s/s, ~1.9x over eager V1)
 ```
 
+#### Large Problem (128 residues, 32 MSA, batch=4)
+
+Same seq-len/MSA as Medium but **batch 4** (matching Small) instead of 2 — isolates the
+batch dimension. Resident memory ~235 MB (vs Medium's ~209 MB) from the doubled batch.
+
+```
+Mode              V1 Baseline    V2 Fused      V3 Triton
+──────────────────────────────────────────────────────────────
+eager (s/s)          62.7         105.7          63.8
++torch.compile       94.9         106.1          91.2
+resident mem (MB)    235           235           235
+──────────────────────────────────────────────────────────────
+Best:  V2 fused (105.7 s/s, ~1.7x over eager V1)
+```
+*(The row above is **resident** allocation, which is fusion-neutral. True **peak** memory
+was re-measured only at the Small config, where V2 fusion cuts peak ~14% — see the V1→V2→V3
+table. The Medium/Large peak deltas should follow the same direction but were not re-measured.)*
+
 ### Where Do the Gains Come From?
 
 Two orthogonal levers, plus one that doesn't pay off here:
 
 1. **Kernel fusion (V2) — the big win.** Fusing QKV projections, gate/proj, and
    using Flash Attention cuts kernel-launch overhead dramatically: **~2.4x** (small)
-   and **~1.9x** (medium) over eager V1, with no extra memory. This is the lesson to
-   internalize.
+   and **~1.9x** (medium) over eager V1 — *and lowers peak memory ~14%* (small),
+   because Flash Attention never materializes the full attention matrix. This is the
+   lesson to internalize.
 2. **`torch.compile` — a free, stacking win.** Inductor auto-fusion gives ~1.6x on
    V1 and ~1.9x on V3. It adds ~nothing to V2 because V2 is already hand-fused —
    a nice demonstration that manual fusion and compiler fusion target the same
@@ -835,8 +891,17 @@ Two orthogonal levers, plus one that doesn't pay off here:
 
 ### Memory
 
-Memory is essentially flat across all three versions (~196 MB small, ~209 MB
-medium) — none of these optimizations trades memory for speed at these sizes.
+Two different memory numbers tell two different stories:
+
+- **Resident** memory (`memory_allocated()`, the per-step `Memory:` line) is essentially
+  flat across all three versions (~196 MB small, ~209 MB medium) — it's dominated by
+  weights + optimizer state, which fusion doesn't touch.
+- **Peak** memory (`max_memory_allocated()`, the summary's `Peak memory usage`) is where
+  fusion shows up: at the small config V1 peaks at **2,267 MB**, V2 fusion at **1,941 MB
+  (−14.4%)**, V3 at **2,195 MB (−3.2%)**. A `--disable-all-fusion` control matches V1
+  exactly, confirming the saving is the fusion. So V2 trades memory *down* for speed, not
+  the other way around — the activation high-water mark (esp. the N×N attention matrix)
+  is what Flash Attention removes.
 
 ---
 

@@ -41,6 +41,23 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 from pathlib import Path
 
+# ROCTx markers via torch.cuda.nvtx. Use range_start/range_end (start/stop) so that
+# rocprof-sys ROCPROFSYS_SELECTED_REGIONS=forward_pass,backward_pass can narrow the trace,
+# matching the V1/V2 roctx variants.
+try:
+    import torch.cuda.nvtx as nvtx
+    NVTX_AVAILABLE = True
+except ImportError:
+    NVTX_AVAILABLE = False
+    class nvtx:
+        @staticmethod
+        def range_start(name):
+            return None
+
+        @staticmethod
+        def range_end(handle):
+            return None
+
 # ============================================================================
 # Triton Kernel Implementations
 # ============================================================================
@@ -929,8 +946,7 @@ def train_tiny_openfold_v3(
     print(f"Warmup complete. Triton kernels compiled. Starting measured training loop...")
     print("=" * 70)
 
-    # Reset the CUDA peak-memory counter so peak_memory_mb reflects the measured
-    # loop only (excludes warmup allocation spikes / Triton autotuning).
+    # Reset the CUDA peak-memory counter so peak_memory_mb reflects the measured loop only.
     if torch.cuda.is_available():
         torch.cuda.reset_peak_memory_stats()
 
@@ -943,19 +959,23 @@ def train_tiny_openfold_v3(
         pair_features = pair_features.to(device)
         target_distances = target_distances.to(device)
         
-        # Forward pass
+        # Forward pass (ROCTx start/stop range named to match V1/V2 for --selected-regions)
         forward_start = time.time()
+        _fwd_roctx = nvtx.range_start("forward_pass")
         outputs = model(msa_tokens, pair_features, target_distances)
         loss = outputs['loss']
         if torch.cuda.is_available():
             torch.cuda.synchronize()
+        nvtx.range_end(_fwd_roctx)
         forward_time = time.time() - forward_start
-        
+
         # Backward pass
         backward_start = time.time()
+        _bwd_roctx = nvtx.range_start("backward_pass")
         loss.backward()
         if torch.cuda.is_available():
             torch.cuda.synchronize()
+        nvtx.range_end(_bwd_roctx)
         backward_time = time.time() - backward_start
         
         # Optimizer step
@@ -1005,8 +1025,8 @@ def train_tiny_openfold_v3(
     print(f"   Final loss: {np.mean(losses[-10:]):.4f}")
     
     # True intra-step peak (activations included) via max_memory_allocated(), reset
-    # after warmup above. memory_usage samples are current-resident and miss the
-    # activation peak, so they are only a fallback when CUDA is unavailable.
+    # after warmup. memory_usage samples are current-resident and miss the activation
+    # peak, so they are only a fallback when CUDA is unavailable.
     if torch.cuda.is_available():
         peak_memory_mb = torch.cuda.max_memory_allocated() / (1024**2)
     elif memory_usage:

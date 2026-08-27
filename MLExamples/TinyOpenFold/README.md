@@ -4,7 +4,7 @@ A simplified, educational implementation of the AlphaFold 2 / Evoformer architec
 
 <p align="center">
   <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white" alt="PyTorch">
-  <img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=flat&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Python-3.12-3776AB?style=flat&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License">
 </p>
 
@@ -121,9 +121,11 @@ the ROCm 7.13 runtime; in both, the Python packages (`torch`, `triton`, …) liv
 **B1 — TheRock pip wheels:**
 
 ```bash
-# ROCm 7.13 requires Python 3.14 from the module system.
-# (The module ships libpython3.14.so.1.0, which pyenv/system Python 3.14 lacks.)
-module load python/3.14
+# Use Python 3.12 from the module system for ROCm 7.13.
+# (The module ships libpython3.12.so.1.0, which pyenv/system Python lacks.)
+# NOTE: use 3.12 (not 3.14) — the ROCm trace tools (rocpd, rocprof-sys, otf2)
+# only support Python <= 3.13, so 3.14 cannot run the profiling walkthrough.
+module load python/3.12
 
 # Navigate to TinyOpenFold and create a dedicated venv
 cd HPCTrainingExamples/MLExamples/TinyOpenFold
@@ -151,7 +153,7 @@ pip3 install -r setup/requirements.txt
 **B2 — ROCm 7.13 system module (if available at your site):**
 
 ```bash
-module load rocm/7.13 python/3.14        # module names may differ per cluster
+module load rocm/7.13 python/3.12        # module names may differ per cluster
 cd HPCTrainingExamples/MLExamples/TinyOpenFold
 python3 -m venv venv713 && source venv713/bin/activate
 pip3 install --upgrade pip
@@ -172,7 +174,7 @@ Notes for the ROCm 7.13 path:
   the module (B2) but are *not* in the TheRock training wheels (B1). For B1, install the full TheRock
   SDK with the `devel` extra (`rocm[libraries,devel,device-gfx942]==7.13.*`) and source its
   environment — see `~/software/therock_install/` for a working install and `sourceme` script.
-- Re-run `module load python/3.14` and `source venv713/bin/activate` each new session.
+- Re-run `module load python/3.12` and `source venv713/bin/activate` each new session.
 
 ### Basic Training
 
@@ -435,9 +437,17 @@ Training Configuration:
    Batch size: 4
    Device: CUDA
 
+Running 5 warmup steps...
+Warmup complete. Starting measured training loop...
 Step   0/50 | Loss: 45.2341 | Speed:   8.5 samples/sec | Memory:  102.3 MB | Time:  470.2ms
 Step  10/50 | Loss: 38.7123 | Speed:   9.1 samples/sec | Memory:  102.3 MB | Time:  439.5ms
 ```
+
+> **Note on step counts:** the training loop runs **5 unconditional warmup steps** (to prime caches
+> and trigger JIT/autotuning) *before* the `--num-steps` measured loop. So `--num-steps 10` executes
+> **15** iterations total; only the 10 measured steps appear in the `Step N/10` counter and the
+> Performance Summary. Keep this in mind when reconciling per-step kernel-dispatch counts from a
+> profiler (which see all 15) against the reported measured-step timings.
 
 **Key Metrics**:
 - **Loss**: MSE on predicted distances (should decrease over time)

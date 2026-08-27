@@ -7,8 +7,7 @@
 //Jacobi iterative method
 // U = U + D^{-1}*(RHS - AU)
 __global__ void JacobiIterationKernel(const int N,
-                                 const dfloat dx,
-                                 const dfloat dy,
+                                 const dfloat inv_dxy_factor,
                                  const dfloat *__restrict__ RHS,
                                  const dfloat *__restrict__ AU,
                                        dfloat *__restrict__ RES,
@@ -19,7 +18,7 @@ __global__ void JacobiIterationKernel(const int N,
   if (id<N) {
     dfloat r_res = RHS[id] - AU[id];
     RES[id] = r_res;
-    U[id] += r_res/(2.0/(dx*dx) + 2.0/(dy*dy));
+    U[id] += r_res*inv_dxy_factor;
   }
 }
 
@@ -40,6 +39,6 @@ void JacobiIteration(grid_t& grid, mesh_t& mesh,
                      threads,
                      0, stream,
                      mesh.N,
-                     mesh.dx, mesh.dy,
+                     mesh.inv_dxy_factor,
                      d_RHS, d_AU, d_RES, d_U);
 }
