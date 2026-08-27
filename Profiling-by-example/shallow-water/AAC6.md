@@ -44,9 +44,6 @@ cp env_aac6.sh env.sh
 ./setup_rocprof_compute_venv.sh
 export ROOFLINE_EXTRACTOR=/nfsapps/ubuntu-24.04/opt/rooflineExtractor
 ./setup_roofline_extractor_venv.sh
-chmod +x submit.sh setup_rocprof_compute_venv.sh setup_roofline_extractor_venv.sh
-chmod +x novice/*/fom.sh novice/*/profile.sh
-chmod +x advanced/*/fom.sh advanced/*/profile.sh
 ```
 
 `env.sh` holds your local settings: Slurm partition, module versions, and
