@@ -118,10 +118,12 @@ if torch.cuda.is_available():
 else:
     print("GPU               : NOT available (torch.cuda.is_available() == False)")
 
-# Track the two gated outcomes; None = not determined.
+# Track the two gated outcomes; None = not determined. default_impl records the
+# attention an UNFORCED model load selects (reported, not gated).
 kernel_ok = None
 transformers_ok = None
 fail_reason = None
+default_impl = "(not determined)"
 
 # ---------------------------------------------------------------------------
 rule("flash_attn package")
@@ -173,7 +175,14 @@ else:
         print("kernel execution FAILED:", e)
 
 # ---------------------------------------------------------------------------
-rule("transformers dispatch to flash_attention_2")
+# Which attention a model load actually selects. We report TWO things:
+#   * the DEFAULT an unforced load picks -- this is what a training run gets
+#     UNLESS it explicitly requests FA2. Note FA2 is opt-in: even with
+#     flash_attn installed the default is typically 'sdpa' or 'eager', so this
+#     line is what tells you what a training script is really running.
+#   * whether an explicit attn_implementation="flash_attention_2" load is
+#     honored (this gates the result).
+rule("transformers: which attention is selected")
 if not torch.cuda.is_available():
     transformers_ok = False
     fail_reason = fail_reason or "no GPU available to exercise the transformers FA2 path"
@@ -183,9 +192,6 @@ else:
         import transformers
         from transformers import AutoConfig, AutoModelForCausalLM
         print("transformers version:", transformers.__version__)
-        cfg = AutoConfig.for_model("llama", hidden_size=256, num_hidden_layers=2,
-                                   num_attention_heads=8, num_key_value_heads=8,
-                                   intermediate_size=512, vocab_size=1000)
         # transformers >= 5 renamed the `torch_dtype` kwarg to `dtype`
         # (passing the old name emits a deprecation warning).
         try:
@@ -193,18 +199,39 @@ else:
         except ValueError:
             _tv_major = 0
         _dtype_kw = "dtype" if _tv_major >= 5 else "torch_dtype"
+
+        def _cfg():
+            return AutoConfig.for_model("llama", hidden_size=256, num_hidden_layers=2,
+                                        num_attention_heads=8, num_key_value_heads=8,
+                                        intermediate_size=512, vocab_size=1000)
+
+        # (i) DEFAULT load: what a training run gets unless it asks for FA2.
+        # Does NOT require flash_attn, so it still reports on installs with no
+        # FA2 -- exactly the "what am I actually running?" answer.
+        try:
+            dm = AutoModelForCausalLM.from_config(
+                _cfg(), **{_dtype_kw: torch.bfloat16}).to("cuda")
+            default_impl = dm.config._attn_implementation
+        except Exception as e:
+            default_impl = f"(could not determine: {e})"
+        print("DEFAULT attention (no attn_implementation set):", default_impl)
+        print("  -> this is what training uses UNLESS it passes")
+        print("     attn_implementation='flash_attention_2' explicitly (FA2 is opt-in).")
+
+        # (ii) FORCED FA2 load: gates the result. Raises here if flash_attn is
+        # not installed / not usable -- caught below.
         model = AutoModelForCausalLM.from_config(
-            cfg, attn_implementation="flash_attention_2",
+            _cfg(), attn_implementation="flash_attention_2",
             **{_dtype_kw: torch.bfloat16}).to("cuda")
         impl = model.config._attn_implementation
-        print("resolved _attn_implementation:", impl)
+        print("FORCED  attention (attn_implementation='flash_attention_2'):", impl)
         ids = torch.randint(0, 1000, (1, 128), device="cuda")
         model(ids)
         print("forward pass through FA2 model: OK")
         transformers_ok = (impl == "flash_attention_2")
         if not transformers_ok:
             fail_reason = fail_reason or f"transformers fell back to '{impl}' instead of flash_attention_2"
-        print("verdict             :", "OK" if transformers_ok else "FELL BACK")
+        print("verdict:", "OK (FA2 honored)" if transformers_ok else "FELL BACK")
     except Exception as e:
         transformers_ok = False
         fail_reason = fail_reason or f"transformers FA2 dispatch failed ({e})"
@@ -212,6 +239,7 @@ else:
 
 # ---------------------------------------------------------------------------
 rule("Summary")
+print(f"  DEFAULT attention (unforced)  : {default_impl}   <- what training uses unless it requests FA2")
 print(f"  flash_attn kernel correctness : {kernel_ok}")
 print(f"  transformers FA2 dispatch     : {transformers_ok}")
 if kernel_ok and transformers_ok:
