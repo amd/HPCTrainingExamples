@@ -35,61 +35,25 @@ cp ${BASE_DIR}/* .
 uv init imagenet_test
 cd imagenet_test
 uv venv --system-site-packages
-source .venv/bin/activate
 module load rocm openmpi pytorch
+# Activate AFTER module load so .venv/bin is first on PATH (module load prepends its own python).
+source .venv/bin/activate
 
 git clone --depth=1 https://github.com/pytorch/examples.git ./pytorch_examples
 cp pytorch_examples/imagenet/* .
 
-# Upstream main.py inits the NCCL process group but never destroys it, so PyTorch
-# warns at exit ("destroy_process_group() was not called ... can leak resources").
-# Register an atexit handler right after init_process_group so every worker
-# (incl. mp.spawn children) cleans up on a normal exit.
-sed -i '/world_size=args.world_size, rank=args.rank)/a\        import atexit as _ax, torch.distributed as _d; _ax.register(lambda: _d.destroy_process_group() if _d.is_initialized() else None)' main.py
+# Modifications to the example source code -- single source of truth in
+# apply_basic_edits.sh (sourced so its COMMON_DIR/HSA_XNACK exports propagate to
+# the runs below, and its sed commands operate on main.py in the current work
+# dir). Relies on $BASE_DIR (set above) to locate helpers via $BASE_DIR/../common.
+source "$BASE_DIR/apply_basic_edits.sh"
 
-# Print per-GPU peak memory once at the end of train() (matches README peak_mem_mb)
-sed -i '/^def validate(/i\    torch.cuda.is_available() and getattr(args,"rank",0)<=0 and print(f"PEAK_MEM_MB {torch.cuda.max_memory_allocated()/1e6:.0f}")' main.py
-
-# --- Demo instrumentation: total RCCL time + .to vs .migrate staging time ---
-# The migrate path (STAGE=migrate) aliases the batch instead of copying it; it
-# needs these and HSA_XNACK=1 (exported below).
-export COMMON_DIR="$BASE_DIR/../common"
-export HSA_XNACK=1
-
-# 1) Start a profiler and set up staging counters at the top of train().
-sed -i '/^    model.train()/a\
-    import torch.profiler as _tp\
-    _prof = _tp.profile(activities=[_tp.ProfilerActivity.CPU, _tp.ProfilerActivity.CUDA]); _prof.start()\
-    _stage_ms = 0.0; _stage_n = 0; _stager = None\
-    if os.environ.get("STAGE") == "migrate":\
-        import sys; sys.path.insert(0, os.environ["COMMON_DIR"]); from zerocopy import Stager\
-        _stager = Stager(device, method="register")' main.py
-
-# 2) Keep the demo (and the profiler trace) short.
-sed -i '/^        data_time.update(time.time() - end)/a\
-        if i >= 100: break' main.py
-
-# 3) Time the host->device staging, but only when STAGE is set (copy vs migrate).
-sed -i '/^        images = images.to(device, non_blocking=True)/c\
-        if os.environ.get("STAGE"):\
-            _e0 = torch.cuda.Event(enable_timing=True); _e1 = torch.cuda.Event(enable_timing=True)\
-            _e0.record()\
-            images = _stager.to_device(images) if _stager is not None else images.to(device, non_blocking=True)\
-            _e1.record(); torch.cuda.synchronize()\
-            _stage_ms += _e0.elapsed_time(_e1); _stage_n += 1\
-        else:\
-            images = images.to(device, non_blocking=True)' main.py
-
-# 4) register-migrate needs pageable (non-pinned) host memory.
-sed -i 's/pin_memory=True/pin_memory=False/g' main.py
-
-# 5) Stop the profiler and print total RCCL kernel time (+ staging time if timed).
-sed -i '/^def validate(/i\
-    _prof.stop()\
-    _rccl_ms = sum(e.self_device_time_total for e in _prof.key_averages() if "nccl" in e.key.lower())/1e3\
-    _ws = getattr(args,"world_size","?"); _stg = os.environ.get("STAGE","")\
-    getattr(args,"rank",0)<=0 and print(f"RCCL_TOTAL_MS {_rccl_ms:.3f} gpus={_ws}")\
-    getattr(args,"rank",0)<=0 and _stage_n and print(f"STAGE_MS_PER_STEP {_stage_ms/_stage_n:.4f} gpus={_ws} stage={_stg}")' main.py
+# Verify the edits actually landed and abort loudly if they did not (guards
+# against a silently-unmodified upstream main.py running the full epoch).
+grep -q 'i >= 100' main.py && grep -q 'PEAK_MEM_MB' main.py || {
+  echo "ERROR: apply_basic_edits.sh did not instrument main.py; aborting." >&2
+  exit 1
+}
 
 export MIOPEN_FIND_MODE=${MIOPEN_FIND_MODE:-FAST}
 export MIOPEN_LOG_LEVEL=3

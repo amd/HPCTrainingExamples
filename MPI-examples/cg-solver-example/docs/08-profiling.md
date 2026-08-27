@@ -18,22 +18,23 @@ bandwidth, FLOP/s) — for **both** the CPU reference and the GPU solver.
 | Profiler | Scope | Guide |
 |----------|-------|-------|
 | **Score-P** | MPI (+GPU/HIP) tracing → Cube/OTF2 | [`profilers/scorep.md`](profilers/scorep.md) |
-| **rocprofv3** | GPU (`CG-GPU`) — kernels, transports, ATT | [`profilers/rocprofv3.md`](profilers/rocprofv3.md) |
+| **rocprofv3** | GPU (`CG-GPU`) — kernels, transports | [`profilers/rocprofv3.md`](profilers/rocprofv3.md) |
+| **Advanced Thread Trace** | GPU — instruction-level ISA trace | [`profilers/Advanced_Thread_Trace.md`](profilers/Advanced_Thread_Trace.md) |
 | **rocprof-compute** | GPU — roofline (HBM-bound SpMV) | [`profilers/rocprof-compute.md`](profilers/rocprof-compute.md) |
 | **rocprofiler-systems** | GPU + host — Perfetto timeline | [`profilers/rocprofiler-systems.md`](profilers/rocprofiler-systems.md) |
+| **ROCm Optiq** | GPU — GUI trace/roofline viewer | [`profilers/roc-optiq.md`](profilers/roc-optiq.md) |
 | **TAU** | MPI + GPU — communication matrix | [`profilers/tau.md`](profilers/tau.md) |
 | **HPCToolkit** | MPI + GPU — call-path sampling | [`profilers/hpctoolkit.md`](profilers/hpctoolkit.md) |
 | **likwid** | CPU (`CG-CPU`) — CPU roofline | [`profilers/likwid.md`](profilers/likwid.md) |
 | **AMD uProf** | CPU — hotspots + memory | [`profilers/uprof.md`](profilers/uprof.md) |
 | **Linux perf** | CPU — HW counters baseline | [`profilers/perf.md`](profilers/perf.md) |
 | **Valgrind cachegrind** | CPU — simulated cache model | [`profilers/cachegrind.md`](profilers/cachegrind.md) |
-| **IntelliKit** | GPU — decoded metrics / kernel isolation | [`profilers/intellikit.md`](profilers/intellikit.md) |
 | **roofline-extractor** | GPU — percent-of-peak roofline | [`profilers/roofline-extractor.md`](profilers/roofline-extractor.md) |
 | **rocBudAI** | GPU + host — AI assistant driving the stack | [`profilers/rocbudai.md`](profilers/rocbudai.md) |
 | **perf_events security** | CPU — access-control reference | [`profilers/perf-security.md`](profilers/perf-security.md) |
 
 The GPU-native tools (rocprofv3, rocprof-compute, rocprofiler-systems,
-roofline-extractor, IntelliKit) target `CG-GPU`; the CPU tools (Linux `perf`,
+roofline-extractor) target `CG-GPU`; the CPU tools (Linux `perf`,
 Valgrind cachegrind, uProf; likwid where supported) target `CG-CPU`. **TAU** and
 **HPCToolkit** are whole-application and work on either (they are the best way to
 see the *MPI* communication that the ROCm GPU tools do not trace). **Score-P** also
@@ -101,12 +102,11 @@ snippet in the [profilers index](profilers/README.md#the-patched-hipblaslt-perfo
 |----------|----------------|----------------|
 | Which transport is fastest for the halo exchange? | [rocprofv3](profilers/rocprofv3.md) `--sys-trace` + [rocprofiler-systems](profilers/rocprofiler-systems.md); [TAU](profilers/tau.md) MPI matrix; [Score-P](profilers/scorep.md) | [TAU](profilers/tau.md) / [HPCToolkit](profilers/hpctoolkit.md) MPI time |
 | How costly is the dot-product all-reduce? | [TAU](profilers/tau.md) / [HPCToolkit](profilers/hpctoolkit.md) / [Score-P](profilers/scorep.md) `MPI_Allreduce` time | same |
-| Is SpMV hitting the bandwidth ceiling? | [rocprof-compute](profilers/rocprof-compute.md) roofline; [roofline-extractor](profilers/roofline-extractor.md) % of peak; [IntelliKit `metrix`](profilers/intellikit.md) | [perf](profilers/perf.md) cache-miss rate + IPC; [uProf](profilers/uprof.md) memory |
-| Which functions/lines cause cache misses? | [rocprofv3 ATT](profilers/rocprofv3.md#4-instruction-level-advanced-thread-trace-att) / [linex](profilers/intellikit.md) | [cachegrind](profilers/cachegrind.md) `cg_annotate` |
+| Is SpMV hitting the bandwidth ceiling? | [rocprof-compute](profilers/rocprof-compute.md) roofline; [roofline-extractor](profilers/roofline-extractor.md) % of peak | [perf](profilers/perf.md) cache-miss rate + IPC; [uProf](profilers/uprof.md) memory |
+| Which functions/lines cause cache misses? | [Advanced Thread Trace](profilers/Advanced_Thread_Trace.md) | [cachegrind](profilers/cachegrind.md) `cg_annotate` |
 | How far from peak overall? | [roofline-extractor](profilers/roofline-extractor.md) % of peak | n/a |
 | Want the workflow driven & explained end-to-end? | [rocBudAI](profilers/rocbudai.md) | [rocBudAI](profilers/rocbudai.md) |
-| *Why* is SpMV memory-bound (which ISA lines stall)? | [rocprofv3 ATT](profilers/rocprofv3.md#4-instruction-level-advanced-thread-trace-att); [IntelliKit `linex`](profilers/intellikit.md) | n/a |
-| Did my SpMV optimization stay correct / faster? | [IntelliKit `accordo` + `kerncap`](profilers/intellikit.md) | n/a |
+| *Why* is SpMV memory-bound (which ISA lines stall)? | [Advanced Thread Trace](profilers/Advanced_Thread_Trace.md) | n/a |
 | SDMA vs blit copies? | [rocprofiler-systems](profilers/rocprofiler-systems.md) timeline + `HSA_ENABLE_SDMA` sweep | n/a |
 | Where does each rank stall (load imbalance)? | [HPCToolkit](profilers/hpctoolkit.md) call-path | [HPCToolkit](profilers/hpctoolkit.md) / [TAU](profilers/tau.md) |
 

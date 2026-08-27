@@ -16,232 +16,273 @@ communication pattern:
 So FSDP2 trades **more communication** for **less memory per GPU**. This example
 measures both sides of that trade: throughput scaling (how well the RCCL
 all-gather/reduce-scatter scales) and peak memory per GPU (how much sharding
-saves). It reuses the upstream `pytorch/examples/distributed/FSDP2` transformer.
+saves).
+
+This README is a **hands-on walk-through**: you clone the upstream
+`pytorch/examples/distributed/FSDP2` example and apply a handful of small,
+visible patches that take it from the stock training loop to an **instrumented**
+one (throughput + peak memory), then add **profiling** and **optimizations** on
+top. The patches are deliberately tiny so the progression is clear in a session.
+
+> For the polished, all-in-one benchmark (`fsdp2_bench.py`, which bakes in every
+> patch below plus a sweep driver and batch jobs), see
+> **[`benchmarks/README_benchmark.md`](benchmarks/README_benchmark.md)**. For the
+> full profiling guide, see **[`profiling/PROFILING.md`](profiling/PROFILING.md)**.
 
 > On ROCm, PyTorch's `nccl` backend is **librccl**; all `NCCL_*` variables apply.
 > FSDP2 (`fully_shard`) requires **PyTorch >= 2.5** (ideally a recent release).
 
-## Contents
+## Repository layout
 
-| File | Purpose |
+| Path | Purpose |
 |------|---------|
-| `fsdp2_bench.py` | Shards the upstream transformer with `fully_shard`; reports throughput + peak memory |
-| `rccl_scaling_sweep.sh` | Runs the benchmark at 2/4/8 GPUs; prints throughput, efficiency, peak memory |
-| `pytorch_fsdp2_venv.batch` | Slurm job: venv install + fp32 & bf16 sweeps |
-| `pytorch_fsdp2_module.batch` | Slurm job: `module load` variant |
-| `PROFILING.md` | Full profiling guide: torch.profiler, DeepSpeed FLOPs, TensorBoard, rocprofv3, rocprof-compute, rocprof-sys |
+| `README.md` (this file) | Hands-on: clone the upstream example, patch in instrumentation + optimizations |
+| `fsdp2_speedup.sh` | Summarizes the manual sweep (`run_*.log` -> throughput / peak-mem / speedup table) |
+| [`README_rccl_optimization.md`](README_rccl_optimization.md) | Hands-on exercises: optimize the all-gather / reduce-scatter (bf16, `NCCL_*`, prefetch, reshard) |
+| [`README_compute_optimization.md`](README_compute_optimization.md) | Hands-on exercises: optimize per-GPU compute (bf16, `torch.compile`, fused optimizer, SDPA) |
+| [`benchmarks/`](benchmarks/README_benchmark.md) | Polished `fsdp2_bench.py`, automated sweep, measured results, batch jobs |
+| [`profiling/`](profiling/PROFILING.md) | Compute-vs-communication attribution (torch.profiler, rocprofv3, rocprof-sys, ...) |
 
-## Why two metrics, not just throughput
+## 1. Get an allocation and load PyTorch
 
-DDP's communication is a single collective you can toggle off (`no_sync()`), so
-its comm cost is easy to isolate. FSDP2's all-gather/reduce-scatter are woven
-into forward and backward and cannot simply be switched off. Instead we read the
-scaling behavior:
-
-- **peak memory per GPU should fall** as GPU count rises — direct evidence of
-  parameter/optimizer-state sharding (the reason to use FSDP2),
-- **throughput efficiency below ideal** reflects the growing all-gather +
-  reduce-scatter (RCCL) cost.
-
-For exact kernel-level attribution, use `rocprofv3`/`rocprof-sys` (step 4).
-
-## 0. Setup
+FSDP2 needs at least 2 GPUs; grab a few:
 
 ```bash
-git clone --depth=1 https://github.com/pytorch/examples.git ~/pytorch_examples
 salloc --gpus=8 --ntasks=1 --time=01:00:00
+module load rocm openmpi pytorch      # or set up a venv/container as in ../mnist
 ```
 
-Set up PyTorch as in the [mnist README](../mnist/README.md), but ensure it is
-**>= 2.5**. Verify FSDP2 is importable:
+Verify FSDP2 is importable and the GPUs are visible:
 
 ```bash
 python3 -c 'from torch.distributed.fsdp import fully_shard; print("FSDP2 OK")'
+python3 -c 'import torch; print(torch.cuda.is_available(), torch.cuda.device_count())'
 ```
 
-Point the benchmark at the upstream model (only if not in `~/pytorch_examples`):
+> **MI300A node requirement.** The node must be booted with `iommu=pt`
+> (`grep -o 'iommu=pt' /proc/cmdline`) so RCCL uses direct xGMI P2P; otherwise the
+> FSDP2 collectives hang. The upstream `example.py` already passes `device_id=` to
+> `init_process_group` (also required). Details in
+> [`benchmarks/README_benchmark.md`](benchmarks/README_benchmark.md).
+
+## 2. Get the upstream example
 
 ```bash
-export UPSTREAM=~/pytorch_examples/distributed/FSDP2
+git clone --depth=1 https://github.com/pytorch/examples.git ~/pytorch_examples
+cd ~/pytorch_examples/distributed/FSDP2
 ```
 
-## 1. Single run
-
-FSDP2 needs at least 2 GPUs:
+Run it once, unmodified, to see the stock 10-step training loop shard the toy
+transformer (it prints the model and writes a `checkpoints/` folder):
 
 ```bash
-torchrun --standalone --nproc_per_node=8 fsdp2_bench.py
+torchrun --standalone --nproc_per_node=2 example.py
 ```
 
-Output (rank 0):
+The stock `example.py` only trains and checkpoints — it reports **no timing,
+throughput, or memory**. The patches below add exactly that.
 
+## 3. Patch the example: add measurement, then optimizations
+
+Each edit below is a single `sed` you can read before running. Apply them in
+order to `example.py` (keep a copy of the original if you want to diff:
+`cp example.py example.orig.py`).
+
+### 3a. Enlarge the toy model so sharding/scaling is measurable
+
+The upstream toy model (`dim=16`, seq 64) is too small to show a memory or
+communication trend. Bump it to a realistic transformer (16 layers, dim 1024,
+16 heads, seq 512, per-GPU batch 8):
+
+```bash
+sed -i 's/    vocab_size = 1024/    vocab_size = 32000/' example.py
+sed -i 's/    batch_size = 32/    batch_size = 8/'       example.py
+sed -i 's/    seq_len = 64/    seq_len = 512/'           example.py
+sed -i 's/        n_layers=10,/        n_layers=16,/'    example.py
+sed -i 's/        n_heads=4,/        n_heads=16,\n        dim=1024,/' example.py
 ```
-# upstream model: /.../distributed/FSDP2
-# world_size=8 layers=16 dim=1024 seq=512 per_gpu_batch=8 precision=fp32
-RESULT world_size=8 step_s=0.0483 tokens_per_s=678000 peak_mem_mb=2310 local_shard_params=25.9M
+
+### 3b. Time a fixed window and report throughput + peak memory
+
+Warm up a few steps, then time the next `_iters` steps and print a `RESULT` line
+(step time, global tokens/s, per-GPU peak memory). This is the core measurement.
+
+```bash
+# turn the 10-step loop into warmup + timed iters (and pre-declare the profiler)
+sed -i 's/^    for _ in range(10):/    _warmup, _iters = 5, 50\n    _prof = None\n    for _i in range(_warmup + _iters):/' example.py
+
+# start the CUDA-event timer (and reset peak memory) at the first timed step
+sed -i '/^    for _i in range(_warmup + _iters):/a\
+        if _i == _warmup:\
+            torch.cuda.synchronize(); torch.distributed.barrier()\
+            torch.cuda.reset_peak_memory_stats(device)\
+            _t0 = torch.cuda.Event(enable_timing=True); _t1 = torch.cuda.Event(enable_timing=True)\
+            _t0.record()\
+            if os.environ.get("PROFILE") == "1":\
+                import torch.profiler as _tp\
+                _prof = _tp.profile(activities=[_tp.ProfilerActivity.CPU, _tp.ProfilerActivity.CUDA])\
+                _prof.start()' example.py
+
+# stop the timer after the loop, print RESULT (and RCCL time if PROFILE=1)
+sed -i '/^    checkpointer.save(model, optim)/i\
+    _t1.record(); torch.cuda.synchronize()\
+    _step_s = _t0.elapsed_time(_t1) / _iters / 1e3\
+    _tokens = batch_size * seq_len\
+    _ws = torch.distributed.get_world_size()\
+    _peak_mb = torch.cuda.max_memory_allocated(device) / 1e6\
+    if torch.distributed.get_rank() == 0:\
+        _mp = "bf16" if args.mixed_precision else "fp32"\
+        print(f"RESULT world_size={_ws} step_s={_step_s:.4f} "\
+              f"tokens_per_s={_tokens * _ws / _step_s:.0f} "\
+              f"peak_mem_mb={_peak_mb:.0f} precision={_mp}")\
+    if _prof is not None:\
+        _prof.stop()\
+        _rccl_ms = sum(e.self_device_time_total for e in _prof.key_averages()\
+                       if "nccl" in e.key.lower()) / 1e3\
+        if torch.distributed.get_rank() == 0:\
+            print(f"RCCL_TOTAL_MS {_rccl_ms:.3f} world_size={_ws}")' example.py
 ```
 
-`peak_mem_mb` is per-GPU peak; `local_shard_params` is how many parameters each
-rank actually holds (the full model divided across ranks).
+The `PROFILE=1`-gated block starts a `torch.profiler` over the timed window and
+sums the on-GPU time of the `nccl*` collective kernels (the FSDP2 all-gather +
+reduce-scatter). It is off by default so the plain timing runs are not perturbed.
 
-## 2. Confirm the RCCL topology
+### 3c. Add a `torch.compile` optimization (env-gated)
+
+Wrap the sharded model in `torch.compile` (graph capture + kernel fusion) when
+`COMPILE=1`, so you can compare against the eager baseline without a second copy
+of the script:
+
+```bash
+sed -i '/^    optim = torch.optim.Adam/i\
+    if os.environ.get("COMPILE") == "1":\
+        model = torch.compile(model)' example.py
+```
+
+> Mixed precision and explicit prefetching are **already built into** the
+> upstream example as `--mixed-precision` and `--explicit-prefetching`, so those
+> optimizations need no patch — you toggle them on the command line in step 6.
+
+Sanity-check the patched file, then run one instrumented pass:
+
+```bash
+python3 -c 'import ast; ast.parse(open("example.py").read()); print("syntax OK")'
+torchrun --standalone --nproc_per_node=2 example.py
+# -> RESULT world_size=2 step_s=... tokens_per_s=... peak_mem_mb=... precision=fp32
+```
+
+## 4. Confirm the RCCL topology
 
 ```bash
 NCCL_DEBUG=INFO NCCL_DEBUG_SUBSYS=INIT,COLL \
-  torchrun --standalone --nproc_per_node=8 fsdp2_bench.py 2>&1 \
+  torchrun --standalone --nproc_per_node=2 example.py 2>&1 \
   | grep -E 'NCCL|Ring|Channel|Tree' | head -40
 ```
 
-## 3. Scaling sweep (the RCCL + memory study)
+You want `via P2P`/`[xGMI]` (on-fabric), not `via SHM`/`via PCI` (host-staged).
+
+## 5. Scaling sweep by hand (the RCCL + memory study)
+
+Run the instrumented example once per GPU count, teeing each to `run_<N>.log`.
+Remove `checkpoints/` first so a run never reloads a checkpoint from a different
+world size:
 
 ```bash
-GPUS="2 4 8" ./rccl_scaling_sweep.sh
+rm -rf checkpoints
+for n in 2 4 8; do
+  rm -rf checkpoints
+  torchrun --standalone --nproc_per_node=$n example.py 2>&1 | tee run_$n.log
+done
+```
+
+Summarize with the helper shipped in this directory:
+
+```bash
+/path/to/HPCTrainingExamples/MLExamples/Pytorch/FSDP2/fsdp2_speedup.sh
 ```
 
 Illustrative output:
 
 ```
 GPUs   step_s       tok_per_s      peak_mem_MB    speedup    eff
-2      0.0642       255000         7900           1.00       100%
-4      0.0551       594000         4300           2.33       116%
-8      0.0483       1356000        2310           5.32       133%
+2      0.1641       49931          7086           1.00       100%
+4      0.1566       104615         6285           2.10       105%
+8      0.1400       228000         3200           4.57       114%
 ```
 
-Two things to read together:
+Read two things together:
 
-- **peak_mem_MB drops** (7900 -> 2310) as GPUs increase — the sharding win. This
-  is what lets FSDP2 train models too large to fit with DDP.
-- **throughput scales** but the all-gather/reduce-scatter overhead means the per
-  step time does not shrink perfectly linearly. (Super-linear throughput vs. the
-  2-GPU base can appear because smaller shards fit better in cache/HBM; compare
-  against ideal `N/2` for efficiency.)
+- **peak_mem_MB drops** as GPUs increase — the sharding win (what lets FSDP2
+  train models too large to fit with DDP).
+- **throughput scales** but the all-gather/reduce-scatter overhead means the
+  per-step time does not shrink perfectly linearly.
 
-**Push the model larger** (where FSDP2 matters most):
+## 6. Optimizations — compare against the baseline
+
+Re-run the sweep (or a single GPU count) with each optimization and diff the
+`RESULT` lines:
 
 ```bash
-GPUS="2 4 8" N_LAYERS=24 DIM=2048 ./rccl_scaling_sweep.sh    # bigger shards + more comm
-GPUS="2 4 8" MIXED_PRECISION=1 ./rccl_scaling_sweep.sh        # bf16 params, fp32 reduce
-GPUS="2 4 8" OPTS="--compile" ./rccl_scaling_sweep.sh         # torch.compile the sharded model
-GPUS="2 4 8" MIXED_PRECISION=1 OPTS="--compile" ./rccl_scaling_sweep.sh
+# bf16 params / fp32 reduce -- halves the all-gather byte volume (built-in flag)
+for n in 2 4 8; do rm -rf checkpoints; \
+  torchrun --standalone --nproc_per_node=$n example.py --mixed-precision 2>&1 | tee run_$n.log; done
+./fsdp2_speedup.sh
+
+# explicit prefetching of the next layers' all-gather (built-in flag)
+torchrun --standalone --nproc_per_node=4 example.py --explicit-prefetching
+
+# torch.compile the sharded model (the patch from step 3c)
+COMPILE=1 torchrun --standalone --nproc_per_node=4 example.py --mixed-precision
 ```
 
-Mixed precision reduces the all-gather byte volume (bf16 params) while keeping
-the gradient reduce-scatter in fp32 — a common way to cut FSDP communication.
-`--compile` wraps the sharded model in `torch.compile` (graph capture + kernel
-fusion); the first (warm-up) step pays a one-time compilation cost.
-
-> **ROCm 7.2.x bf16 gotcha.** On ROCm 7.2.x the bf16 (`MIXED_PRECISION=1`) path can
-> **stall for minutes in hipBLASLt**. Run these on ROCm 6.4.3, or force rocBLAS with
-> `export TORCH_BLAS_PREFER_HIPBLASLT=0`. The `hipblaslt/patched` module does **not**
-> fix this and makes no measurable difference here — see
+> **ROCm 7.2.x bf16 gotcha.** The bf16 path can stall for minutes in hipBLASLt on
+> ROCm 7.2.x. Run on ROCm 6.4.3, or `export TORCH_BLAS_PREFER_HIPBLASLT=0`. See
 > [`../common/hipblaslt-notes.md`](../common/hipblaslt-notes.md).
 
-`--migrate` (with `--host-copy` as the copy baseline) stages each token batch
-from the host to the GPU via **zero-copy unified-memory aliasing** rather than a
-`.to()` copy; `--migrate-method managed|register` picks the mechanism. Requires
-`HSA_XNACK=1`. As with minGPT, the token-ID batch is ~2 MB so this does not move
-FSDP2 throughput — see [`../common/README.md`](../common/README.md) for the
-100×–1000× raw-transfer micro-benchmark and the memory saving (100% of the
-device-resident duplicate eliminated), which is where it pays off.
+## 7. Profiling — see the sharded collectives
 
-For cross-cutting, measured MI300A results — **ROCm/PyTorch version selection**
-(ROCm 6.4 ~15% faster than 7.2.3 on this sharded transformer; TunableOp on 7.2.3
-recovers it; pip **wheel vs. site module is a wash** at matched ROCm) and **NUMA
-affinity** (negligible here; enable with `AFFINITY=1 ./rccl_scaling_sweep.sh` for
-CPU-heavy/host-staged paths) — see
-[`../common/PERFORMANCE_NOTES.md`](../common/PERFORMANCE_NOTES.md).
-
-## Measured results (MI300A, AAC6 `PPAC_MI300A_SPX`, ROCm 6.4.3 / PyTorch 2.12)
-
-Transformer (16 layers, dim 1024, 16 heads, seq 512, per-GPU batch 8).
-
-> **Cluster requirement:** the PPAC MI300A nodes must be booted with `iommu=pt`
-> (verify: `grep -o 'iommu=pt' /proc/cmdline`) so RCCL uses direct xGMI P2P — no
-> `NCCL_P2P_LEVEL`/`NCCL_P2P_DISABLE` override is needed. Without it the
-> all-gather/reduce-scatter hangs; the host-staged fallback is
-> `NCCL_P2P_DISABLE=1`. The numbers below predate the passthrough reboot, so they
-> should improve — re-run the sweep to refresh them.
-
-Baseline (fp32):
-
-```
-GPUs   step_s     tok_per_s   peak_mem_MB   speedup   eff
-2      0.1641     49931       7086          1.00      100%
-4      0.1566     104615      6285          2.10      105%
-```
-
-Optimized (`MIXED_PRECISION=1`, bf16 params / fp32 reduce):
-
-```
-GPUs   step_s     tok_per_s   peak_mem_MB   speedup   eff
-2      0.0718     114054      4879          1.00      100%
-4      0.0806     203167      4081          1.78      89%
-```
-
-Takeaways: mixed precision is a **~2.3× throughput** win at 2 GPUs and cuts peak
-memory ~30% (7086→4879 MB) by halving the all-gather byte volume. Peak memory
-keeps falling as GPUs increase (parameter sharding), the core FSDP2 benefit.
-bf16 makes compute cheaper, so the fixed reduce-scatter cost lowers weak-scaling
-efficiency from 105% to 89% at 4 GPUs — the RCCL share is now more visible.
-
-> **Cluster fix (required):** `fsdp2_bench.py` passes `device_id=device` to
-> `init_process_group`. Without it the FSDP2 all-gather/reduce-scatter
-> collectives hang (both ranks spin at ~190% CPU with no progress) on this RCCL
-> build. This is separate from — and in addition to — the required `iommu=pt`
-> node setting (host-staged fallback `NCCL_P2P_DISABLE=1` if it is ever absent).
-
-## 4. Precise kernel attribution (optional)
-
-The benchmark exposes the PyTorch-native profilers directly:
+Turn on the profiler patch (step 3b) to get the total RCCL kernel time; it grows
+with GPU count because there is more all-gather/reduce-scatter to do:
 
 ```bash
-# torch.profiler: per-op/kernel + all-gather/reduce-scatter table, trace per rank
-torchrun --standalone --nproc_per_node=2 fsdp2_bench.py \
-  --profile --profile-dir ./torch_prof
-
-# DeepSpeed FlopsProfiler on the dense (unsharded) model: FLOPs / MACs / params
-torchrun --standalone --nproc_per_node=1 fsdp2_bench.py --flops
+PROFILE=1 torchrun --standalone --nproc_per_node=4 example.py 2>&1 | tee prof_4.log
+grep RCCL_TOTAL_MS prof_4.log
 ```
 
-For a framework-independent kernel trace:
+For a framework-independent kernel trace (no code change), run the whole thing
+under `rocprofv3` and look for the FSDP2 collectives:
 
 ```bash
 rocprofv3 --kernel-trace --stats --truncate-kernels -- \
-  torchrun --standalone --nproc_per_node=8 fsdp2_bench.py --warmup 3 --iters 10
+  torchrun --standalone --nproc_per_node=4 example.py 2>&1 | grep -iE 'AllGather|ReduceScatter'
 ```
 
-Look for `ncclDevKernel_AllGather*` and `ncclDevKernel_ReduceScatter*` — these
-are the FSDP2 collectives, distinct from DDP's `AllReduce`. `rocprof-sys` shows
-them on a timeline so you can see the all-gather prefetch overlapping compute.
+`ncclDevKernel_AllGather_*` and `ncclDevKernel_ReduceScatter_*` are the FSDP2
+collectives, distinct from DDP's single `AllReduce`. For the full guide
+(torch.profiler tables, TensorBoard, rocprof-compute roofline, rocprof-sys
+timeline), see [`profiling/PROFILING.md`](profiling/PROFILING.md).
 
-**See [`PROFILING.md`](PROFILING.md)** for the full guide covering torch.profiler,
-the DeepSpeed FlopsProfiler, TensorBoard, rocprofv3, rocprof-compute (roofline),
-rocprofiler-systems (timeline), and multi-node TAU/HPCToolkit.
-
-## 5. Run the upstream example (optional)
+## 8. Cleanup
 
 ```bash
-cd ~/pytorch_examples/distributed/FSDP2
-pip install -r requirements.txt
-torchrun --nproc_per_node 8 example.py --mixed-precision
-# --explicit-prefetching and --dcp-api are also supported
+rm -rf checkpoints run_*.log prof_*.log
+deactivate 2>/dev/null || true        # if you used a venv
 ```
 
-## 6. Batch jobs
+## Next steps
 
-```bash
-sbatch pytorch_fsdp2_venv.batch
-sbatch pytorch_fsdp2_module.batch
-```
-
-## How this differs from the other examples here
-
-| Example | Collective | What scales | Isolation method |
-|---------|-----------|-------------|------------------|
-| [imagenet](../imagenet) | DDP all-reduce | step time (weak/strong) | scaling of step time |
-| [minGPT-ddp](../minGPT-ddp) | DDP all-reduce | transformer gradients | `no_sync()` subtraction |
-| **FSDP2** (this) | all-gather + reduce-scatter | **memory** and throughput | throughput + peak-memory scaling |
-
-Choose FSDP2 when the model (plus optimizer state) is too large to replicate on
-every GPU. For a plain data-parallel all-reduce study, start with `imagenet`;
-for an LLM-shaped all-reduce with a direct comm measurement, use `minGPT-ddp`.
+- **[`README_rccl_optimization.md`](README_rccl_optimization.md)** — hands-on
+  exercises that optimize the FSDP2 all-gather / reduce-scatter by editing
+  `example.py` directly (bf16 params/grads, `NCCL_ALGO`/`PROTO`/channels,
+  `reshard_after_forward`, explicit prefetching).
+- **[`README_compute_optimization.md`](README_compute_optimization.md)** —
+  hands-on exercises that optimize per-GPU compute by editing `example.py`
+  directly (bf16 params, `torch.compile`, fused optimizer, SDPA backend).
+- **[`benchmarks/README_benchmark.md`](benchmarks/README_benchmark.md)** — the
+  polished `fsdp2_bench.py` bakes in every patch above (timing, `--rccl-time`,
+  `--profile`, `--flops`, `--mixed-precision`, `--compile`, zero-copy input
+  staging) and adds an automated sweep driver, larger-model sweeps, the required
+  MI300A/RCCL settings, measured results, and batch jobs.
+- **[`profiling/PROFILING.md`](profiling/PROFILING.md)** — splitting a step into
+  compute vs. communication with torch.profiler, the DeepSpeed FlopsProfiler,
+  TensorBoard, rocprofv3, rocprof-compute (roofline), and rocprof-sys (timeline).

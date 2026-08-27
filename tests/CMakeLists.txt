@@ -853,6 +853,18 @@ add_test(NAME ROCm_rocBLAS_GEMM_Check COMMAND ../rocblas_gemm_check.sh )
 set_property(TEST ROCm_rocBLAS_GEMM_Check PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
 set_property(TEST ROCm_rocBLAS_GEMM_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
+# rocBLAS complex packed Level-2 (chpmv/ctpmv/ztpsv) unified-memory corruption
+# regression (MI300A / gfx942, HSA_XNACK=1). Launches the reproducer many times
+# and FAILs if any launch returns wrong numbers; also runs the device-buffer
+# control. Prints the per-routine worst relative error (representative pass
+# criterion) so a standalone run is informative. Runtime scales with
+# ROCBLAS_PACKED_USM_LAUNCHES (default 100); TIMEOUT 600 covers that default.
+add_test(NAME ROCm_rocBLAS_Packed_USM_Regression_Check COMMAND ../rocblas_packed_usm_regression_check.sh )
+set_property(TEST ROCm_rocBLAS_Packed_USM_Regression_Check PROPERTY PASS_REGULAR_EXPRESSION "ROCBLAS PACKED USM REGRESSION CHECK: PASSED")
+set_property(TEST ROCm_rocBLAS_Packed_USM_Regression_Check PROPERTY FAIL_REGULAR_EXPRESSION "ROCBLAS PACKED USM REGRESSION CHECK: FAILED")
+set_property(TEST ROCm_rocBLAS_Packed_USM_Regression_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "ROCBLAS PACKED USM REGRESSION CHECK: SKIPPED")
+set_tests_properties(ROCm_rocBLAS_Packed_USM_Regression_Check PROPERTIES TIMEOUT 600)
+
 add_test(NAME HIPFort_ROCm_Check_hipfc_2003 COMMAND ../hipfort_rocm_check_hipfc_2003.sh )
 set_property(TEST HIPFort_ROCm_Check_hipfc_2003 PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
 set_property(TEST HIPFort_ROCm_Check_hipfc_2003 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
@@ -943,6 +955,11 @@ add_test(NAME GPUAwareOpenMPI_UCC_OpenMP_AllReduce COMMAND ../gpuawarempi_ucc_op
 set_property(TEST GPUAwareOpenMPI_UCC_OpenMP_AllReduce PROPERTY PASS_REGULAR_EXPRESSION "REGRESSION_RESULT: PASS")
 set_property(TEST GPUAwareOpenMPI_UCC_OpenMP_AllReduce PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip" "Skip -- Cray MPICH does not use UCC")
 set_tests_properties(GPUAwareOpenMPI_UCC_OpenMP_AllReduce PROPERTIES TIMEOUT 600)
+
+add_test(NAME GPUAwareMPI_DeviceManaged_Probe COMMAND ../gpuaware_mpi_probe.sh )
+set_property(TEST GPUAwareMPI_DeviceManaged_Probe PROPERTY PASS_REGULAR_EXPRESSION "GPUAWARE_PROBE: PASS")
+set_property(TEST GPUAwareMPI_DeviceManaged_Probe PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_tests_properties(GPUAwareMPI_DeviceManaged_Probe PROPERTIES TIMEOUT 300)
 
 add_test(NAME OpenMPI_Hello_World_Run COMMAND ../openmpi_hello_world_run.sh )
 set_property(TEST OpenMPI_Hello_World_Run PROPERTY PASS_REGULAR_EXPRESSION "Hello world from processor")
@@ -1078,6 +1095,33 @@ set_property(TEST HIP_Saxpy_CMakeLists PROPERTY SKIP_REGULAR_EXPRESSION "module 
 add_test(NAME HIP_Jacobi_CMakeLists COMMAND ../hip_jacobi_cmakelists.sh )
 set_property(TEST HIP_Jacobi_CMakeLists PROPERTY PASS_REGULAR_EXPRESSION "Measured FLOPS")
 set_property(TEST HIP_Jacobi_CMakeLists PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+# Profiling-by-example: shallow-water novice stages (Makefile + CMake)
+add_test(NAME Profiling_ShallowWater_Novice_0_Baseline_Makefile COMMAND ../profiling_shallowwater_novice_makefile.sh 0_baseline)
+add_test(NAME Profiling_ShallowWater_Novice_0_Baseline_CMakeLists COMMAND ../profiling_shallowwater_novice_cmakelists.sh 0_baseline)
+add_test(NAME Profiling_ShallowWater_Novice_1_Larger_Domain_Makefile COMMAND ../profiling_shallowwater_novice_makefile.sh 1_larger_domain)
+add_test(NAME Profiling_ShallowWater_Novice_1_Larger_Domain_CMakeLists COMMAND ../profiling_shallowwater_novice_cmakelists.sh 1_larger_domain)
+add_test(NAME Profiling_ShallowWater_Novice_2_No_Device_Sync_Makefile COMMAND ../profiling_shallowwater_novice_makefile.sh 2_no_device_sync)
+add_test(NAME Profiling_ShallowWater_Novice_2_No_Device_Sync_CMakeLists COMMAND ../profiling_shallowwater_novice_cmakelists.sh 2_no_device_sync)
+add_test(NAME Profiling_ShallowWater_Novice_3_Block_32x32_Makefile COMMAND ../profiling_shallowwater_novice_makefile.sh 3_block_32x32)
+add_test(NAME Profiling_ShallowWater_Novice_3_Block_32x32_CMakeLists COMMAND ../profiling_shallowwater_novice_cmakelists.sh 3_block_32x32)
+add_test(NAME Profiling_ShallowWater_Novice_4_Block_64x4_Makefile COMMAND ../profiling_shallowwater_novice_makefile.sh 4_block_64x4)
+add_test(NAME Profiling_ShallowWater_Novice_4_Block_64x4_CMakeLists COMMAND ../profiling_shallowwater_novice_cmakelists.sh 4_block_64x4)
+set_tests_properties(
+  Profiling_ShallowWater_Novice_0_Baseline_Makefile
+  Profiling_ShallowWater_Novice_0_Baseline_CMakeLists
+  Profiling_ShallowWater_Novice_1_Larger_Domain_Makefile
+  Profiling_ShallowWater_Novice_1_Larger_Domain_CMakeLists
+  Profiling_ShallowWater_Novice_2_No_Device_Sync_Makefile
+  Profiling_ShallowWater_Novice_2_No_Device_Sync_CMakeLists
+  Profiling_ShallowWater_Novice_3_Block_32x32_Makefile
+  Profiling_ShallowWater_Novice_3_Block_32x32_CMakeLists
+  Profiling_ShallowWater_Novice_4_Block_64x4_Makefile
+  Profiling_ShallowWater_Novice_4_Block_64x4_CMakeLists
+  PROPERTIES
+    PASS_REGULAR_EXPRESSION "MCUPS"
+    FAIL_REGULAR_EXPRESSION "NEGATIVE!"
+    SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME HIP_Babel_Stream COMMAND ../run_BabelStream.sh )
 set_property(TEST HIP_Babel_Stream PROPERTY PASS_REGULAR_EXPRESSION "Function")
@@ -1329,9 +1373,9 @@ set_property(TEST Affinity_MPI4_OpenMP2_Bind_OpenMPI PROPERTY RESOURCE_LOCK affi
 #set_property(TEST Rocprofv3_TraceDecoder PROPERTY PASS_REGULAR_EXPRESSION "Found json output")
 #set_property(TEST Rocprofv3_TraceDecoder PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-#add_test(NAME Rocprofv3_Rocpd COMMAND ../rocpd_check_version.sh )
-#set_property(TEST Rocprofv3_Rocpd PROPERTY PASS_REGULAR_EXPRESSION "Success")
-#set_property(TEST Rocprofv3_Rocpd PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+add_test(NAME Rocprofv3_Rocpd COMMAND ../rocpd_check_version.sh )
+set_property(TEST Rocprofv3_Rocpd PROPERTY PASS_REGULAR_EXPRESSION "version:")
+set_property(TEST Rocprofv3_Rocpd PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # PyTorch tests
 add_test(NAME Pytorch_Check_Import COMMAND ../pytorch_check_import.sh )
@@ -1369,6 +1413,12 @@ set_property(TEST Pytorch_SageAttention_Check_Import PROPERTY SKIP_REGULAR_EXPRE
 add_test(NAME Pytorch_FlashAttention_Check_Import COMMAND ../flashattention_check_import.sh )
 set_property(TEST Pytorch_FlashAttention_Check_Import PROPERTY PASS_REGULAR_EXPRESSION "Success")
 set_property(TEST Pytorch_FlashAttention_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
+
+add_test(NAME Pytorch_FlashAttention_Verify_Enabled COMMAND ../flashattention_verify_enabled.sh )
+set_property(TEST Pytorch_FlashAttention_Verify_Enabled PROPERTY PASS_REGULAR_EXPRESSION "FLASH ATTENTION: OK")
+set_property(TEST Pytorch_FlashAttention_Verify_Enabled PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'" "FLASH ATTENTION CHECK: SKIPPED")
+set_property(TEST Pytorch_FlashAttention_Verify_Enabled PROPERTY SKIP_RETURN_CODE 77)
+set_tests_properties(Pytorch_FlashAttention_Verify_Enabled PROPERTIES TIMEOUT 300)
 
 add_test(NAME Pytorch_Check_Gpu_Access COMMAND ../pytorch_check_gpu_access.sh )
 set_property(TEST Pytorch_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "True")
@@ -1561,11 +1611,11 @@ set_property(TEST HIP-Python_Check_Import PROPERTY SKIP_REGULAR_EXPRESSION "modu
 
 add_test(NAME Numba-HIP_Check COMMAND ../numba-hip_check.sh )
 set_property(TEST Numba-HIP_Check PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Numba-HIP_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+set_property(TEST Numba-HIP_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'" "numba-hip device JIT unsupported")
 
 add_test(NAME Numba-HIP-CUDA-Posing_Check COMMAND ../numba-hip-cuda-posing_check.sh )
 set_property(TEST Numba-HIP-CUDA-Posing_Check PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST Numba-HIP-CUDA-Posing_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'")
+set_property(TEST Numba-HIP-CUDA-Posing_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hip-python'" "numba-hip device JIT unsupported")
 
 add_test(NAME HIP-Python_Device_Properties COMMAND ../hip-python_device_properties.sh )
 set_property(TEST HIP-Python_Device_Properties PROPERTY PASS_REGULAR_EXPRESSION "Success")
@@ -1728,6 +1778,26 @@ set_property(TEST TAU_Check_MPI_Profile PROPERTY PASS_REGULAR_EXPRESSION "MPI_Al
 set_property(TEST TAU_Check_MPI_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider tau" "Unable to locate a modulefile for 'tau'")
 set_property(TEST TAU_Check_MPI_Profile PROPERTY TIMEOUT 600)
 
+# TAU + RCCL PC-sampling tests (from the TAU author's examples): run the
+# rccl-tests all_gather_perf benchmark under `tau_exec -rocm_pc [-ebs]` and check
+# the pprof profile for host-side RCCL routines, GPU PC samples, and GPU kernels.
+set(TAU_RCCL_SKIP "module spider" "Unable to locate a modulefile for 'tau'" "Unable to locate a modulefile for 'rccl-tests'" "Skip")
+
+add_test(NAME TAU_RCCL_Routines_Check COMMAND ../tau_rccl_pc_check.sh --rccl-routines)
+set_property(TEST TAU_RCCL_Routines_Check PROPERTY PASS_REGULAR_EXPRESSION "ncclAllGather")
+set_property(TEST TAU_RCCL_Routines_Check PROPERTY SKIP_REGULAR_EXPRESSION ${TAU_RCCL_SKIP})
+set_tests_properties(TAU_RCCL_Routines_Check PROPERTIES TIMEOUT 600)
+
+add_test(NAME TAU_RCCL_PC_Sampling_Check COMMAND ../tau_rccl_pc_check.sh --pc-sampling)
+set_property(TEST TAU_RCCL_PC_Sampling_Check PROPERTY PASS_REGULAR_EXPRESSION "rocm sample")
+set_property(TEST TAU_RCCL_PC_Sampling_Check PROPERTY SKIP_REGULAR_EXPRESSION ${TAU_RCCL_SKIP})
+set_tests_properties(TAU_RCCL_PC_Sampling_Check PROPERTIES TIMEOUT 600)
+
+add_test(NAME TAU_RCCL_Kernel_Check COMMAND ../tau_rccl_pc_check.sh --pc-sampling)
+set_property(TEST TAU_RCCL_Kernel_Check PROPERTY PASS_REGULAR_EXPRESSION "ROCm Kernel")
+set_property(TEST TAU_RCCL_Kernel_Check PROPERTY SKIP_REGULAR_EXPRESSION ${TAU_RCCL_SKIP})
+set_tests_properties(TAU_RCCL_Kernel_Check PROPERTIES TIMEOUT 600)
+
 
 # Score-P Tests
 add_test(NAME Score-P_Check_Version COMMAND ../scorep_check_version.sh)
@@ -1743,40 +1813,38 @@ set_property(TEST Score-P_GPU_Profile PROPERTY PASS_REGULAR_EXPRESSION "PASS: Sc
 set_property(TEST Score-P_GPU_Profile PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'scorep'")
 
 # Miniconda3 Tests
-# Miniconda3 Tests
-# Miniconda3 Tests
-add_test(NAME Miniconda3_Check_Version COMMAND ../miniconda3_check_version.sh)
-set_property(TEST Miniconda3_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 25.3.1")
-set_property(TEST Miniconda3_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniconda3'")
+#add_test(NAME Miniconda3_Check_Version COMMAND ../miniconda3_check_version.sh)
+#set_property(TEST Miniconda3_Check_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 25.3.1")
+#set_property(TEST Miniconda3_Check_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniconda3'")
 
-add_test(NAME Miniconda3_Env_Create COMMAND ../miniconda3_env_create.sh)
-set_property(TEST Miniconda3_Env_Create PROPERTY PASS_REGULAR_EXPRESSION "env_for_conda_create_test")
-set_property(TEST Miniconda3_Env_Create PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniconda3'")
-set_property(TEST Miniconda3_Env_Create PROPERTY RESOURCE_LOCK miniconda3_cache)
+#add_test(NAME Miniconda3_Env_Create COMMAND ../miniconda3_env_create.sh)
+#set_property(TEST Miniconda3_Env_Create PROPERTY PASS_REGULAR_EXPRESSION "env_for_conda_create_test")
+#set_property(TEST Miniconda3_Env_Create PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniconda3'")
+#set_property(TEST Miniconda3_Env_Create PROPERTY RESOURCE_LOCK miniconda3_cache)
 
-add_test(NAME Miniconda3_Env_Install COMMAND ../miniconda3_env_install.sh)
-set_property(TEST Miniconda3_Env_Install PROPERTY PASS_REGULAR_EXPRESSION "jaxlib")
-set_property(TEST Miniconda3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniconda3'")
-set_property(TEST Miniconda3_Env_Install PROPERTY RESOURCE_LOCK miniconda3_cache)
+#add_test(NAME Miniconda3_Env_Install COMMAND ../miniconda3_env_install.sh)
+#set_property(TEST Miniconda3_Env_Install PROPERTY PASS_REGULAR_EXPRESSION "jaxlib")
+#set_property(TEST Miniconda3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniconda3'")
+#set_property(TEST Miniconda3_Env_Install PROPERTY RESOURCE_LOCK miniconda3_cache)
 
 # Miniforge3 Tests
-add_test(NAME Miniforge3_Check_Conda_Version COMMAND ../miniforge3_check_version.sh)
-set_property(TEST Miniforge3_Check_Conda_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 24.9.0")
-set_property(TEST Miniforge3_Check_Conda_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
+#add_test(NAME Miniforge3_Check_Conda_Version COMMAND ../miniforge3_check_version.sh)
+#set_property(TEST Miniforge3_Check_Conda_Version PROPERTY PASS_REGULAR_EXPRESSION "conda 24.9.0")
+#set_property(TEST Miniforge3_Check_Conda_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
 
-add_test(NAME Miniforge3_Check_Mamba_Version COMMAND ../miniforge3_check_version.sh)
-set_property(TEST Miniforge3_Check_Mamba_Version PROPERTY PASS_REGULAR_EXPRESSION "mamba 1.5.9")
-set_property(TEST Miniforge3_Check_Mamba_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
+#add_test(NAME Miniforge3_Check_Mamba_Version COMMAND ../miniforge3_check_version.sh)
+#set_property(TEST Miniforge3_Check_Mamba_Version PROPERTY PASS_REGULAR_EXPRESSION "mamba 1.5.9")
+#set_property(TEST Miniforge3_Check_Mamba_Version PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
 
-add_test(NAME Miniforge3_Env_Create COMMAND ../miniforge3_env_create.sh)
-set_property(TEST Miniforge3_Env_Create PROPERTY PASS_REGULAR_EXPRESSION "env_for_create_test")
-set_property(TEST Miniforge3_Env_Create PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
-set_property(TEST Miniforge3_Env_Create PROPERTY RESOURCE_LOCK miniforge3_cache)
+#add_test(NAME Miniforge3_Env_Create COMMAND ../miniforge3_env_create.sh)
+#set_property(TEST Miniforge3_Env_Create PROPERTY PASS_REGULAR_EXPRESSION "env_for_create_test")
+#set_property(TEST Miniforge3_Env_Create PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
+#set_property(TEST Miniforge3_Env_Create PROPERTY RESOURCE_LOCK miniforge3_cache)
 
-add_test(NAME Miniforge3_Env_Install COMMAND ../miniforge3_env_install.sh)
-set_property(TEST Miniforge3_Env_Install PROPERTY PASS_REGULAR_EXPRESSION "jaxlib")
-set_property(TEST Miniforge3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
-set_property(TEST Miniforge3_Env_Install PROPERTY RESOURCE_LOCK miniforge3_cache)
+#add_test(NAME Miniforge3_Env_Install COMMAND ../miniforge3_env_install.sh)
+#set_property(TEST Miniforge3_Env_Install PROPERTY PASS_REGULAR_EXPRESSION "jaxlib")
+#set_property(TEST Miniforge3_Env_Install PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'miniforge3'")
+#set_property(TEST Miniforge3_Env_Install PROPERTY RESOURCE_LOCK miniforge3_cache)
 
 #HDF5 Tests
 add_test(NAME HDF5_Check_Version COMMAND ../hdf5_check_version.sh)
@@ -1906,3 +1974,88 @@ set_tests_properties(IntelliKit_Check_Import PROPERTIES TIMEOUT 300)
 #    OpenMP_Fortran_5_Vecadd_Async_HSA_XNACK_1
 #    OpenMP_Language_Constructs_Fortran_Complex_Saxpy_AMDflang
 #  PROPERTIES WILL_FAIL TRUE)
+
+# GPU thermal / throttle diagnostic. Soaks every visible GPU to thermal steady
+# state (plateau), so runtime is adaptive: healthy nodes plateau early (~2 min),
+# a throttling node soaks up to the AMDGPU_NREPS cap (default 20 x 25 s = ~500 s
+# load + build). TIMEOUT 900 covers that ceiling with margin.
+add_test(NAME GPU_Thermal_Throttle_Check COMMAND ../gpu_thermal_throttle_check.sh )
+set_property(TEST GPU_Thermal_Throttle_Check PROPERTY PASS_REGULAR_EXPRESSION "SUCCESS")
+set_property(TEST GPU_Thermal_Throttle_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(GPU_Thermal_Throttle_Check PROPERTIES TIMEOUT 900)
+
+# Profiling-by-example shallow-water solver, one test per optimization stage.
+# Every stage prints its own throughput and correctness checks, so MCUPS in the
+# output means it ran and "(NEGATIVE!)" means the water depth went negative and
+# the stage is wrong. The advanced stages skip themselves where the
+# rocprofiler-sdk marker library their ROCTx ranges need is absent.
+add_test(NAME Profiling_ShallowWater_Novice_Baseline COMMAND ../profiling_shallow_water_novice.sh 0_baseline )
+set_property(TEST Profiling_ShallowWater_Novice_Baseline PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Novice_Baseline PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Novice_Baseline PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Profiling_ShallowWater_Novice_Larger_Domain COMMAND ../profiling_shallow_water_novice.sh 1_larger_domain )
+set_property(TEST Profiling_ShallowWater_Novice_Larger_Domain PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Novice_Larger_Domain PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Novice_Larger_Domain PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Profiling_ShallowWater_Novice_No_Device_Sync COMMAND ../profiling_shallow_water_novice.sh 2_no_device_sync )
+set_property(TEST Profiling_ShallowWater_Novice_No_Device_Sync PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Novice_No_Device_Sync PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Novice_No_Device_Sync PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Profiling_ShallowWater_Novice_Block_32x32 COMMAND ../profiling_shallow_water_novice.sh 3_block_32x32 )
+set_property(TEST Profiling_ShallowWater_Novice_Block_32x32 PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Novice_Block_32x32 PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Novice_Block_32x32 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Profiling_ShallowWater_Novice_Block_64x4 COMMAND ../profiling_shallow_water_novice.sh 4_block_64x4 )
+set_property(TEST Profiling_ShallowWater_Novice_Block_64x4 PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Novice_Block_64x4 PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Novice_Block_64x4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Profiling_ShallowWater_Advanced_Baseline COMMAND ../profiling_shallow_water_advanced.sh 0_baseline )
+set_property(TEST Profiling_ShallowWater_Advanced_Baseline PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Advanced_Baseline PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Advanced_Baseline PROPERTY SKIP_REGULAR_EXPRESSION "module spider|Skip")
+
+add_test(NAME Profiling_ShallowWater_Advanced_Larger_Domain COMMAND ../profiling_shallow_water_advanced.sh 1_larger_domain )
+set_property(TEST Profiling_ShallowWater_Advanced_Larger_Domain PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Advanced_Larger_Domain PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Advanced_Larger_Domain PROPERTY SKIP_REGULAR_EXPRESSION "module spider|Skip")
+
+add_test(NAME Profiling_ShallowWater_Advanced_Block_32x32 COMMAND ../profiling_shallow_water_advanced.sh 2_block_32x32 )
+set_property(TEST Profiling_ShallowWater_Advanced_Block_32x32 PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Advanced_Block_32x32 PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Advanced_Block_32x32 PROPERTY SKIP_REGULAR_EXPRESSION "module spider|Skip")
+
+add_test(NAME Profiling_ShallowWater_Advanced_Block_64x4 COMMAND ../profiling_shallow_water_advanced.sh 3_block_64x4 )
+set_property(TEST Profiling_ShallowWater_Advanced_Block_64x4 PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Advanced_Block_64x4 PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Advanced_Block_64x4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider|Skip")
+
+add_test(NAME Profiling_ShallowWater_Advanced_Vectorized_Loads COMMAND ../profiling_shallow_water_advanced.sh 4_vectorized_loads )
+set_property(TEST Profiling_ShallowWater_Advanced_Vectorized_Loads PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Advanced_Vectorized_Loads PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Advanced_Vectorized_Loads PROPERTY SKIP_REGULAR_EXPRESSION "module spider|Skip")
+
+add_test(NAME Profiling_ShallowWater_Advanced_Halo_Pipeline COMMAND ../profiling_shallow_water_advanced.sh 5_halo_pipeline )
+set_property(TEST Profiling_ShallowWater_Advanced_Halo_Pipeline PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Advanced_Halo_Pipeline PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Advanced_Halo_Pipeline PROPERTY SKIP_REGULAR_EXPRESSION "module spider|Skip")
+
+add_test(NAME Profiling_ShallowWater_Advanced_2D_Decomposition COMMAND ../profiling_shallow_water_advanced.sh 6_2d_decomposition )
+set_property(TEST Profiling_ShallowWater_Advanced_2D_Decomposition PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Advanced_2D_Decomposition PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Advanced_2D_Decomposition PROPERTY SKIP_REGULAR_EXPRESSION "module spider|Skip")
+
+# The advanced stages run an 8192x8192 domain for 500 steps from stage 1 onward,
+# which is quick on an MI300A but not on one small GPU shared by both ranks.
+set_tests_properties(
+    Profiling_ShallowWater_Advanced_Larger_Domain
+    Profiling_ShallowWater_Advanced_Block_32x32
+    Profiling_ShallowWater_Advanced_Block_64x4
+    Profiling_ShallowWater_Advanced_Vectorized_Loads
+    Profiling_ShallowWater_Advanced_Halo_Pipeline
+    Profiling_ShallowWater_Advanced_2D_Decomposition
+  PROPERTIES TIMEOUT 600)

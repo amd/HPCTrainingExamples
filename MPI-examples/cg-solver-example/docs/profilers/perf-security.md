@@ -81,7 +81,7 @@ to build `cg_cpu`) and does **not** sweep ROCm versions: the paranoid ladder,
 a given kernel. Because the setup **leaves `perf_event_paranoid` open**, you can
 apply the `perf_users`/`CAP_PERFMON` overlay to **one release's** profilers and every
 *other* release keeps working untouched. (Contrast the *GPU* ATT decoder in
-[rocprofv3 §4](rocprofv3.md#4-instruction-level-advanced-thread-trace-att), which
+[Advanced Thread Trace](Advanced_Thread_Trace.md), which
 genuinely needs `rocm >= 7.12`.)
 
 ## See also

@@ -30,6 +30,7 @@ SRC_DIR=$(pwd)
 BUILD_DIR=$(mktemp -d)
 trap "rm -rf ${BUILD_DIR}" EXIT
 
+cp ${SRC_DIR}/* ${BUILD_DIR}
 cd ${BUILD_DIR}
 
 git clone https://github.com/ROCm/hipfort hipfort_for_test_rocm_2008
@@ -39,5 +40,5 @@ pushd hipfort_for_test_rocm_2008/test/f2008/vecadd
 HIPFORT_COMP=`which amdflang`
 
 # Example with Fortran 2008 interface
-hipfc -v --offload-arch=${AMDGPU_GFXMODEL} -hipfort-compiler ${HIPFORT_COMP} hip_implementation.cpp main.f03
+hipfc -v --offload-arch=${AMDGPU_GFXMODEL} -hipfort-compiler ${HIPFORT_COMP} hip_implementation.cpp main.f08
 ./a.out

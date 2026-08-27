@@ -1,0 +1,4 @@
+RHS seed: 12345  (CG_SEED)
+172 iterations to converge
+2-norm of residual: 0.000181377
+CG solve time:      0.1624 s  (0.0009 s/iter)

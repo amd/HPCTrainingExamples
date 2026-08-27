@@ -44,6 +44,7 @@ PROG_MODEL=0
 ROCPROF=0
 SCOREP=0
 USM=0
+PROFILING_BY_EXAMPLE=0
 
 
 usage()
@@ -90,6 +91,7 @@ usage()
     echo "--prog-model : runs the programming  model tests"
     echo "--rocprofv3 : runs the rocprofv3 tests"
     echo "--usm : runs the usm tests"
+    echo "--profiling-by-example : runs the profiling-by-example walkthrough tests"
     echo ""
     exit 1
 }
@@ -317,6 +319,11 @@ do
           USM=1
           reset-last
           ;;
+      "--profiling-by-example")
+          shift
+          PROFILING_BY_EXAMPLE=1
+          reset-last
+          ;;
       "--help")
           usage
           ;;
@@ -426,6 +433,8 @@ elif [ ${ROCPROFV3} -eq 1 ]; then
    ctest -R Rocprofv3
 elif [ ${USM} -eq 1 ]; then
    ctest -R USM
+elif [ ${PROFILING_BY_EXAMPLE} -eq 1 ]; then
+   ctest -R Profiling_
 else
    ctest
 fi

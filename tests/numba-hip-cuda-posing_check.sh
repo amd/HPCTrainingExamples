@@ -28,6 +28,18 @@ fi
 
 module load hip-python
 
+# numba-hip JIT-compiles kernels by linking a COMGR-generated device
+# library (built with the ROCm SDK's LLVM) using the LLVM bundled in the
+# rocm-llvm-python wheel. When the SDK's LLVM is newer than the wheel's,
+# that link fails and there is no installable matching wheel. The
+# hip-python modulefile sets NUMBA_HIP_DEVICE_JIT_UNSUPPORTED=1 in that
+# case; skip rather than hard-fail (CTest matches the message below via
+# SKIP_REGULAR_EXPRESSION).
+if [ "${NUMBA_HIP_DEVICE_JIT_UNSUPPORTED:-0}" = "1" ]; then
+   echo "SKIP: numba-hip device JIT unsupported (SDK LLVM newer than rocm-llvm-python LLVM)"
+   exit 0
+fi
+
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 EXAMPLE_DIR="$REPO_DIR/Python/hip-python"
 WORK_DIR=$(mktemp -d)

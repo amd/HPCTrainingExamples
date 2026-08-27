@@ -68,7 +68,12 @@ ifeq ($(SCOREP),1)
 endif
 
 CXXFLAGS = -O3 -std=c++17 $(HIP_LANG) --offload-arch=$(GPU_ARCH) -I$(ROCM_PATH)/include -Isrc
-LDFLAGS  = -L$(ROCM_PATH)/lib
+# `--as-needed` drops libraries the binary does not actually reference.  The
+# OpenMPI C++ wrapper still appends `-lmpi_cxx`, but OpenMPI 5.x removed the C++
+# bindings, so that resolves to an *incompatible* system libmpi_cxx (Ubuntu's
+# OMPI 4.1) and the binary aborts at MPI_Init with an undefined-symbol error.
+# The solver uses only the C MPI API, so --as-needed simply drops that stale dep.
+LDFLAGS  = -L$(ROCM_PATH)/lib -Wl,--as-needed
 LIBS     = -lrocsparse -lrocblas -lrccl -lamdhip64
 
 # Opt in to the ROCm 7.x rocsparse_v2_spmv path (persistent descriptor + one-time
@@ -76,6 +81,19 @@ LIBS     = -lrocsparse -lrocblas -lrccl -lamdhip64
 # header is unavailable (e.g. ROCm 6.x).
 ifeq ($(SPMV_V2),1)
 CXXFLAGS += -DUSE_V2_SPMV
+endif
+
+# Opt in to roctx range markers (make ROCTX=1).  Wraps each timed phase (halo
+# exchange, dot-product allreduce, per-iteration compute) in a named roctx range
+# so `rocprofv3 --sys-trace` / `--marker-trace` shows them as a labelled track in
+# the Perfetto timeline, aligned under the GPU-kernel row.  Default build omits
+# this entirely (no roctx dependency, zero overhead).  The library differs across
+# ROCm versions, so both names are overridable: classic roctracer (-lroctx64) is
+# the common denominator; newer ROCm also ships -lrocprofiler-sdk-roctx.
+ifeq ($(ROCTX),1)
+CXXFLAGS += -DUSE_ROCTX
+ROCTX_LIB ?= -lroctx64
+LIBS      += $(ROCTX_LIB)
 endif
 
 TARGET  = cg_gpu

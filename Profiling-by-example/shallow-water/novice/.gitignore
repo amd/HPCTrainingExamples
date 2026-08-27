@@ -1,0 +1,14 @@
+# Built executable
+shallow
+
+# Slurm logs from fom.sh / profile.sh
+fom_*.out
+profile_*.out
+
+# rocprofv3 output, from the -d argument used in the stage READMEs
+outdir/
+prof/
+roofline_out/
+
+# rocprof-compute workload directories (ROOFLINE_TOOL=rocprof-compute)
+workloads/
