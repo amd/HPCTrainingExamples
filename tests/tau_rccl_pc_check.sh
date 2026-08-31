@@ -113,7 +113,20 @@ elif [ -n "${MPI_BINDIR}" ] && [ -x "${MPI_BINDIR}/mpiexec" ]; then
 else
    MPI_LAUNCH="srun -n 2"
 fi
-if command -v ompi_info >/dev/null 2>&1; then
+# Detect the MPI flavour from the launch wrapper; see tau_exec_check.sh. Checking
+# PATH instead could add OpenMPI's --oversubscribe to MPICH's mpiexec, which
+# rejects it. This does not fix the case where TAU and the prebuilt rccl-tests
+# binary come from different MPIs.
+MPI_FAMILY=unknown
+if [ -n "${MPI_BINDIR}" ]; then
+   if "${MPI_BINDIR}/mpicc" --showme:version >/dev/null 2>&1; then
+      MPI_FAMILY=openmpi
+   elif "${MPI_BINDIR}/mpicc" -compile_info >/dev/null 2>&1; then
+      MPI_FAMILY=mpich
+   fi
+fi
+echo "MPI family of ${MPI_BINDIR:-<none, using srun>}: ${MPI_FAMILY}"
+if [ "${MPI_FAMILY}" = "openmpi" ]; then
    MPI_LAUNCH="${MPI_LAUNCH} --oversubscribe"
 fi
 

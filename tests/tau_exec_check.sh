@@ -84,10 +84,21 @@ export TAU_PROFILE=${TAU_PROFILE}
 export TAU_TRACE=${TAU_TRACE}
 
 WORKDIR=$(mktemp -d -p ${SRCDIR} build_XXXXXX)
+# Install the cleanup trap before the build gate below, which can exit early.
+trap 'cd "${SRCDIR}" && rm -rf "${WORKDIR}"' EXIT
 cp ${SRCDIR}/*.hip ${SRCDIR}/*.hpp ${SRCDIR}/*.h ${SRCDIR}/Makefile ${SRCDIR}/input.txt ${WORKDIR}/
 cd ${WORKDIR}
 
-make
+# Stop the test if the build fails, otherwise tau_exec would go on to profile a
+# binary that was never produced.
+if ! make; then
+   echo "TAU_CHECK: build FAILED, so nothing was profiled"
+   exit 1
+fi
+if [ ! -x ./Jacobi_hip ]; then
+   echo "TAU_CHECK: build reported success but ./Jacobi_hip is missing"
+   exit 1
+fi
 
 ROCM_VERSION=`cat ${ROCM_PATH}/.info/version | head -1 | cut -f1 -d'-' `
 
@@ -108,7 +119,7 @@ result=""; ver_gt "${ROCM_VERSION}" 6.1.9 && result="${ROCM_VERSION}"; echo $res
 # ("MPI processes (2) doesn't match the topology size (1)"). Only a bare Cray
 # MPICH (mpicc with no co-located launcher) falls back to srun. The MPICH hydra
 # mpiexec also rejects OpenMPI's --oversubscribe, so add that flag for OpenMPI
-# only (detected via ompi_info).
+# only (detected from the MPI wrapper below).
 MPI_BINDIR=$(dirname "$(command -v mpicc 2>/dev/null)" 2>/dev/null)
 if [ -n "${MPI_BINDIR}" ] && [ -x "${MPI_BINDIR}/mpirun" ]; then
    MPI_LAUNCH="${MPI_BINDIR}/mpirun -n 2"
@@ -117,9 +128,38 @@ elif [ -n "${MPI_BINDIR}" ] && [ -x "${MPI_BINDIR}/mpiexec" ]; then
 else
    MPI_LAUNCH="srun -n 2"
 fi
-if command -v ompi_info >/dev/null 2>&1; then
+# Ask the launch wrapper which MPI it is: only OpenMPI answers --showme:version
+# and only MPICH answers -compile_info. This is more reliable than checking PATH,
+# since a module can put one MPI's wrappers in front of another's.
+MPI_FAMILY=unknown
+if [ -n "${MPI_BINDIR}" ]; then
+   if "${MPI_BINDIR}/mpicc" --showme:version >/dev/null 2>&1; then
+      MPI_FAMILY=openmpi
+   elif "${MPI_BINDIR}/mpicc" -compile_info >/dev/null 2>&1; then
+      MPI_FAMILY=mpich
+   fi
+fi
+echo "TAU_CHECK: launching with ${MPI_FAMILY} wrappers from ${MPI_BINDIR:-<none, using srun>}"
+if [ "${MPI_FAMILY}" = "openmpi" ]; then
    MPI_LAUNCH="${MPI_LAUNCH} --oversubscribe"
 fi
+
+# Run both ranks on this node. The test needs two ranks on two GPUs, not two
+# nodes, and Jacobi is built in a directory inside the checkout. If that checkout
+# is on node-local storage, a multi-node launch could place a rank on a node that
+# cannot see the build directory. Hydra takes -hosts, OpenMPI takes --host with a
+# slot count. The srun fallback is left as is, because pinning it would also need
+# the step's GRES respecified.
+MPI_HOST_LOCAL="$(hostname -s)"
+case "${MPI_LAUNCH}" in
+   srun*) ;;
+   *) case "${MPI_FAMILY}" in
+         openmpi) MPI_LAUNCH="${MPI_LAUNCH} --host ${MPI_HOST_LOCAL}:2" ;;
+         mpich)   MPI_LAUNCH="${MPI_LAUNCH} -hosts ${MPI_HOST_LOCAL}" ;;
+         *) echo "TAU_CHECK: unknown MPI family, not pinning ranks to ${MPI_HOST_LOCAL}" ;;
+      esac ;;
+esac
+echo "TAU_CHECK: launcher is ${MPI_LAUNCH}"
 
 # Use a 1024x1024 local mesh so the TAU trace buffer fits in GPU memory
 # (default 4096x4096 caused "HIP failure: 'out of memory'" during trace finalization).
@@ -130,8 +170,42 @@ else
 fi
 
 ls
-pprof
+pprof 2>&1 | tee pprof.out
 
-cd ..
-rm -rf ${WORKDIR}
+# Check for the produced files and print our own result strings, which CMake
+# matches on. Matching the tool's own words was unreliable: "profile.0" also
+# appears in messages like "Could not open profile.0.0.0".
+tau_have() { ls $1 >/dev/null 2>&1; }
+tau_status=0
 
+if [ "${TAU_PROFILE}" = "1" ]; then
+   if tau_have 'profile.*'; then
+      echo "TAU_CHECK: profile artifact PRESENT"
+   else
+      echo "TAU_CHECK: profile artifact absent"
+      tau_status=1
+   fi
+   # Reported but not fatal on their own: each is a different test's subject, so
+   # the per-test expression decides rather than failing all of them together.
+   if grep -q 'MPI_Allreduce' pprof.out; then
+      echo "TAU_CHECK: MPI routines PRESENT in profile"
+   else
+      echo "TAU_CHECK: MPI routines absent from profile"
+   fi
+   if grep -q 'hipMemcpy' pprof.out; then
+      echo "TAU_CHECK: HIP routines PRESENT in profile"
+   else
+      echo "TAU_CHECK: HIP routines absent from profile"
+   fi
+fi
+
+if [ "${TAU_TRACE}" = "1" ]; then
+   if tau_have 'tautrace.*'; then
+      echo "TAU_CHECK: trace artifact PRESENT"
+   else
+      echo "TAU_CHECK: trace artifact absent"
+      tau_status=1
+   fi
+fi
+
+exit ${tau_status}
