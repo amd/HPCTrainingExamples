@@ -26,7 +26,9 @@ ImGui file dialog for use over SSH.
 
 ## 0. Setup (ROCm 7.2.4)
 
-roc-optiq **v0.5.0** ships as a `rocmplus-7.2.4` module (install root
+One can install ROCm Optiq on a local Linux, Windows, or macOS machine following these [installation instructions](https://rocm.docs.amd.com/projects/roc-optiq/en/latest/install/optiq-install.html).
+
+On AAC6, roc-optiq **v0.5.0** ships as a `rocmplus-7.2.4` module (install root
 `/nfsapps/ubuntu-24.04/opt/rocmplus-7.2.4/roc-optiq-v0.5.0`); load it **after**
 `rocm/7.2.4`:
 
