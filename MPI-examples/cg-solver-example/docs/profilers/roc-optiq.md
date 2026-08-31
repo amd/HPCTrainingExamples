@@ -5,8 +5,7 @@
 > Unlike the terminal tools on the other pages, **roc-optiq is a native desktop
 > GUI** — plan to run it inside an AAC6 graphical session (VNC / noVNC / X11).
 
-[ROCm Optiq](https://github.com/ROCm/roc-optiq) (Beta;
-[docs](https://rocm.docs.amd.com/projects/roc-optiq/en/latest/)) is a **visualizer
+[ROCm Optiq](https://github.com/ROCm/roc-optiq) ([docs](https://rocm.docs.amd.com/projects/roc-optiq/en/latest/)) is a **visualizer
 for the ROCm profiler tools**. It opens two kinds of data produced by the other
 guides and gives you an interactive, AMD-native desktop UI for them:
 
