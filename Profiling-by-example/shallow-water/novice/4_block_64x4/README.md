@@ -1,8 +1,8 @@
 
 # Stage 4: A rectangular thread block
 
-Square blocks are a habit, not a rule. On AMD GPUs a wavefront is 64 lanes wide, so a block that is
-64 threads wide lets each wavefront read one unbroken run of 64 consecutive cells.
+Square blocks are a habit, not a rule. On AMD Instinct GPUs a wavefront is 64 lanes wide, so a block
+that is 64 threads wide lets each wavefront read one unbroken run of 64 consecutive cells.
 
 ## What changed
 

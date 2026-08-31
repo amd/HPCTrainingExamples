@@ -116,20 +116,24 @@ rocprofv3 --kernel-trace --hip-trace -d outdir -o shallow -- ./shallow
 ```
 
 This writes `outdir/shallow_results.db`. Since ROCm 7.0, `rocprofv3` collects into a SQLite
-database by default and leaves the choice of output format to a second step. Convert that database
-to Perfetto format with `rocpd`:
+rocpd database by default and leaves the choice of viewer to a second step. One path is to export
+for [Perfetto](https://ui.perfetto.dev), a web-based timeline viewer:
 
 ```bash
 rocpd2pftrace -i outdir/shallow_results.db -d outdir -o shallow
 ```
 
-which produces `outdir/shallow_results.pftrace`. Separating collection from export means the run is
-profiled once and can be re-exported as often as you like: `rocpd2csv` and `rocpd2summary` read the
-same database, so changing your mind about the output no longer costs another run of the
-application.
+which produces `outdir/shallow_results.pftrace`. Open that file in the Perfetto UI and zoom into a
+few time steps.
 
-Open the resulting `.pftrace` file at [ui.perfetto.dev](https://ui.perfetto.dev) and zoom into a few
-time steps.
+Separating collection from export means the run is profiled once and can be re-exported as often as
+you like: `rocpd2csv` and `rocpd2summary` read the same database, so changing your mind about the
+output no longer costs another run of the application.
+
+[ROCm Optiq](https://rocm.docs.amd.com/projects/roc-optiq/en/latest/index.html) is an alternative:
+open the native `.db` file directly, with no `rocpd2pftrace` step. Optiq reads rocpd output from
+`rocprofv3` here and, on the advanced track, rocpd databases from `rocprof-sys` when collection is
+configured for that format.
 
 <p>
 <img src="../../figs/hip_trace_gaps.png" alt="HIP API trace showing gaps between kernels" />

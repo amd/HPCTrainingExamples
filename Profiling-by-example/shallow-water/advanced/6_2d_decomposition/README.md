@@ -221,7 +221,7 @@ Pulling the whole tutorial together:
 - Quantify every change, at more than one scale. Stage 5 looks worthless at two ranks and is worth
   1.09x at four. Stage 6 loses three percent at four and can only pay at rank counts this machine cannot
   reach. A single configuration would have given the wrong answer about both.
-- Keep a correctness check that a race can fail. The mass conservation check is the only reason
+- Keep a correctness check that a race would break. The mass conservation check is the only reason
   the stale-halo bug in stage 5 was ever noticed, and it cost nothing to carry.
 
 Cumulatively, from stage 1 where the problem first became a sensible size, four GPUs went from 79763

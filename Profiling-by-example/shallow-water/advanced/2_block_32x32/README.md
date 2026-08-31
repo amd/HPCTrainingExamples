@@ -131,11 +131,11 @@ There is still stall time to recover and we are still memory bound. So far we ha
 *many* threads are in a block, not how they are arranged.
 
 Arrangement matters because consecutive threads in a workgroup map to consecutive lanes of a
-wavefront, and a wavefront is 64 lanes wide on AMD GPUs. With a 32x32 block, each row of the block is
-only 32 threads, so a single wavefront straddles two rows of the grid and each memory request covers
-two disjoint stretches of memory. Making the block 64 wide and only 4 tall lines each wavefront up
-with one contiguous run of 64 cells, which is both a better fit for cache lines and a longer
-consecutive read.
+wavefront, and a wavefront is 64 lanes wide on AMD Instinct GPUs. With a 32x32 block, each row of
+the block is only 32 threads, so a single wavefront straddles two rows of the grid and each memory
+request covers two disjoint stretches of memory. Making the block 64 wide and only 4 tall lines each
+wavefront up with one contiguous run of 64 cells, which is both a better fit for cache lines and a
+longer consecutive read.
 
 Continue to [`3_block_64x4`](../3_block_64x4). Note that this also takes the block back down from
 1024 threads to 256, so it is a change of shape and size at once.

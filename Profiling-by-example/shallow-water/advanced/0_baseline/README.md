@@ -159,7 +159,10 @@ mpirun -n 2 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh \
 ```
 
 Load the resulting `trace/<timestamp>/perfetto-trace-*.proto` into [Perfetto](https://ui.perfetto.dev),
-one file per rank:
+one file per rank. [ROCm Optiq](https://rocm.docs.amd.com/projects/roc-optiq/en/latest/index.html) is
+an alternative viewer that reads a native rocpd database instead: setting `ROCPROFSYS_USE_ROCPD=true`
+makes `rocprof-sys` write a `.db` that Optiq opens directly, the same format `rocprofv3` writes on the
+novice track. Either viewer shows the same timeline:
 
 <!-- SNAPSHOT: unfiltered trace of the whole 500-step run, zoomed out -->
 <img src="../../figs/advanced_0_baseline_trace_full_run.png" alt="Unfiltered rocprof-sys trace of the whole 500-step run" />

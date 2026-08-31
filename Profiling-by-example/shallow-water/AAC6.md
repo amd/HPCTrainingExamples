@@ -135,8 +135,10 @@ less profile_12345.out
 
 ## Novice track (one GPU)
 
-Five stages, single-process HIP. Each `fom.sh` requests one GPU and 30 minutes;
-each `profile.sh` requests one GPU and two hours (rocprof and roofline collection).
+Five stages, single-process HIP. The batch scripts request one GPU through
+`#SBATCH --gpus=1`; any custom `sbatch` or `salloc` for novice work needs the
+same flag or Slurm will not assign a GPU. Each `fom.sh` allows 30 minutes;
+each `profile.sh` allows two hours (rocprof and roofline collection).
 
 ```bash
 cd novice/0_baseline

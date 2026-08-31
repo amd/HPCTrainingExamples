@@ -16,8 +16,8 @@ One line:
     dim3 block(64,4);
 ```
 
-Still 256 threads, arranged 64 wide and 4 tall. Since a wavefront is 64 lanes on AMD GPUs, each
-wavefront now maps onto exactly one row of 64 consecutive cells in x, which is the direction the
+Still 256 threads, arranged 64 wide and 4 tall. Since a wavefront is 64 lanes on AMD Instinct GPUs,
+each wavefront now maps onto exactly one row of 64 consecutive cells in x, which is the direction the
 arrays are contiguous in.
 
 ## Build and run

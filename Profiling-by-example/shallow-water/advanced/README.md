@@ -124,7 +124,7 @@ higher rank counts, which is why stage 6 argues from halo volume and leaves the 
 measure on a machine wide enough to show it.
 
 All numbers quoted in this tutorial were measured on MI300A nodes in SPX mode, four GPUs per
-node, with a ROCm 10.1.0a20260818 nightly build and Open MPI 5.0.10, in an exclusive allocation
+node, with a ROCm 10.1.0a20260818 nightly build and OpenMPI 5.0.10, in an exclusive allocation
 through `gpu_bind.sh`. Every throughput figure is the median of three runs, with run-to-run spread
 under 2 percent, while the counter and trace figures come from a single profiled run. Every
 measurement is single-node, at one, two and four GPUs. The multi-node studies that stages 4 and 6
@@ -151,7 +151,7 @@ module load rocm openmpi
 ```
 
 The MPI you use must be built with ROCm support if you want to leave `GPU_AWARE_MPI` at 1, which is
-the default and what every number here was measured with. For Open MPI that means UCX with ROCm
+the default and what every number here was measured with. For OpenMPI that means UCX with ROCm
 enabled.
 
 ### A Python environment for `rocprof-compute analyze`
@@ -215,7 +215,7 @@ Every command in this track places its ranks explicitly. Get this wrong and no o
 the tutorial means anything.
 
 On MI300A each GPU is local to one NUMA node, GPU *i* to node *i*. Placement is split between the
-launcher and a one-line wrapper, because Open MPI can express the CPU half but not the GPU half:
+launcher and a one-line wrapper, because OpenMPI can express the CPU half but not the GPU half:
 
 ```bash
 mpirun -n 4 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
