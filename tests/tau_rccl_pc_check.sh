@@ -113,11 +113,10 @@ elif [ -n "${MPI_BINDIR}" ] && [ -x "${MPI_BINDIR}/mpiexec" ]; then
 else
    MPI_LAUNCH="srun -n 2"
 fi
-# Ask the wrapper we are about to invoke; see tau_exec_check.sh for the detail.
-# Testing whether ompi_info exists added OpenMPI's --oversubscribe to MPICH's
-# hydra mpiexec, which rejects it. Note this does not by itself make the test
-# pass where TAU and the prebuilt rccl-tests binary come from different MPIs:
-# an MPICH-built TAU cannot instrument an OpenMPI-linked benchmark.
+# Detect the MPI flavour from the launch wrapper; see tau_exec_check.sh. Checking
+# PATH instead could add OpenMPI's --oversubscribe to MPICH's mpiexec, which
+# rejects it. This does not fix the case where TAU and the prebuilt rccl-tests
+# binary come from different MPIs.
 MPI_FAMILY=unknown
 if [ -n "${MPI_BINDIR}" ]; then
    if "${MPI_BINDIR}/mpicc" --showme:version >/dev/null 2>&1; then

@@ -89,10 +89,8 @@ trap 'cd "${SRCDIR}" && rm -rf "${WORKDIR}"' EXIT
 cp ${SRCDIR}/*.hip ${SRCDIR}/*.hpp ${SRCDIR}/*.h ${SRCDIR}/Makefile ${SRCDIR}/input.txt ${WORKDIR}/
 cd ${WORKDIR}
 
-# A failed build has to end the test. Without this gate make's status was
-# ignored, tau_exec profiled a binary that was never produced, and the script
-# still exited 0 because cleanup was the last command -- leaving the whole
-# verdict to the pass regex.
+# Stop the test if the build fails, otherwise tau_exec would go on to profile a
+# binary that was never produced.
 if ! make; then
    echo "TAU_CHECK: build FAILED, so nothing was profiled"
    exit 1
@@ -121,7 +119,7 @@ result=""; ver_gt "${ROCM_VERSION}" 6.1.9 && result="${ROCM_VERSION}"; echo $res
 # ("MPI processes (2) doesn't match the topology size (1)"). Only a bare Cray
 # MPICH (mpicc with no co-located launcher) falls back to srun. The MPICH hydra
 # mpiexec also rejects OpenMPI's --oversubscribe, so add that flag for OpenMPI
-# only (detected via ompi_info).
+# only (detected from the MPI wrapper below).
 MPI_BINDIR=$(dirname "$(command -v mpicc 2>/dev/null)" 2>/dev/null)
 if [ -n "${MPI_BINDIR}" ] && [ -x "${MPI_BINDIR}/mpirun" ]; then
    MPI_LAUNCH="${MPI_BINDIR}/mpirun -n 2"
@@ -130,12 +128,9 @@ elif [ -n "${MPI_BINDIR}" ] && [ -x "${MPI_BINDIR}/mpiexec" ]; then
 else
    MPI_LAUNCH="srun -n 2"
 fi
-# Ask the wrapper we are about to invoke, not the PATH. `command -v ompi_info`
-# answers "is some OpenMPI installed", which is a different question. An
-# MPICH-built TAU module makes the two disagree: loading it pulls in
-# mpich-wrappers, so mpicc/mpic++/mpiexec become MPICH's while ompi_info still
-# reports the OpenMPI that is no longer in front. --showme:version succeeds only
-# on OpenMPI and -compile_info only on MPICH, so each wrapper answers for itself.
+# Ask the launch wrapper which MPI it is: only OpenMPI answers --showme:version
+# and only MPICH answers -compile_info. This is more reliable than checking PATH,
+# since a module can put one MPI's wrappers in front of another's.
 MPI_FAMILY=unknown
 if [ -n "${MPI_BINDIR}" ]; then
    if "${MPI_BINDIR}/mpicc" --showme:version >/dev/null 2>&1; then
@@ -149,25 +144,12 @@ if [ "${MPI_FAMILY}" = "openmpi" ]; then
    MPI_LAUNCH="${MPI_LAUNCH} --oversubscribe"
 fi
 
-# Keep both ranks on the node that owns the build directory. Jacobi is compiled
-# into a mktemp directory inside this checkout, so if the checkout lives on
-# node-local storage rather than a shared filesystem, a multi-node allocation
-# lets the launcher place rank 1 on a node where that path does not exist. The
-# run then dies before the test body starts:
-#
-#   error: couldn't chdir to `/tmp/.../HIP/jacobi/build_ewLCPv': No such file or
-#   directory: going to /tmp instead
-#   [proxy:1@node2] launch_procs: unable to change wdir to /tmp/.../build_ewLCPv
-#
-# The test wants two ranks, not two nodes -- Jacobi's "-g 2 1" topology on two
-# GPUs of one node -- so pinning costs no coverage. Hydra takes -hosts; OpenMPI
-# takes --host with a slot count. Measured on two nodes: bare mpirun aborts as
-# above, both pinned forms put rank 0 and rank 1 on the same node.
-#
-# The srun fallback is left alone deliberately: it is reached only for a bare
-# MPICH with no co-located launcher, and the obvious addition there
-# (--nodes=1 --nodelist=...) needs the step's GRES respecified or Slurm rejects
-# the step outright, so a blind flag would trade a rare failure for a common one.
+# Run both ranks on this node. The test needs two ranks on two GPUs, not two
+# nodes, and Jacobi is built in a directory inside the checkout. If that checkout
+# is on node-local storage, a multi-node launch could place a rank on a node that
+# cannot see the build directory. Hydra takes -hosts, OpenMPI takes --host with a
+# slot count. The srun fallback is left as is, because pinning it would also need
+# the step's GRES respecified.
 MPI_HOST_LOCAL="$(hostname -s)"
 case "${MPI_LAUNCH}" in
    srun*) ;;
@@ -190,10 +172,9 @@ fi
 ls
 pprof 2>&1 | tee pprof.out
 
-# Assert the artifacts. Matching the tool's own vocabulary is what made these
-# tests unable to fail: "profile.0" is a substring of "Could not open
-# profile.0.0.0". Assert the artifact and the profiled routines instead, in
-# strings the failure paths cannot produce, and let CMake match these.
+# Check for the produced files and print our own result strings, which CMake
+# matches on. Matching the tool's own words was unreliable: "profile.0" also
+# appears in messages like "Could not open profile.0.0.0".
 tau_have() { ls $1 >/dev/null 2>&1; }
 tau_status=0
 
