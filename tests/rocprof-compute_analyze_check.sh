@@ -32,4 +32,5 @@ if ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)' 2
   exit 1
 fi
 rocprof-compute profile -n v1 --no-roof -- ./saxpy
-rocprof-compute analyze -p workloads/v1/* --block 7.1.0 7.1.1 7.1.2 7.1.0: Grid size 7.1.1: Workgroup size 7.1.2: Total Wavefronts
+rocprof-compute analyze -p workloads/v1/* --block 7.1.0 7.1.1 7.1.2
+
