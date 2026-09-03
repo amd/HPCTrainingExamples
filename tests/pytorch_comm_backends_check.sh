@@ -83,6 +83,15 @@ if [ -n "${OPENMPI_MODULE_NAME}" ]; then
   if [ -z "${OPENMPI_MODULE_PREFIX}" ]; then
     OPENMPI_MODULE_PREFIX=$(printf '%s\n' "${_show}" | sed -n 's|.*prepend_path("LD_LIBRARY_PATH","\([^"]*\)/lib").*|\1|p' | head -1)
   fi
+  # Tcl Environment Modules: `module show` prints `setenv MPI_PATH <path>` and
+  # `prepend-path LD_LIBRARY_PATH <path>/lib`, not the Lmod Lua forms above.
+  # Only runs if the Lua parse left the prefix empty, so Lmod sites are unchanged.
+  if [ -z "${OPENMPI_MODULE_PREFIX}" ]; then
+    OPENMPI_MODULE_PREFIX=$(printf '%s\n' "${_show}" | sed -n 's/^[[:space:]]*setenv[[:space:]]\{1,\}MPI_PATH[[:space:]]\{1,\}\([^[:space:]]*\).*/\1/p' | head -1)
+    if [ -z "${OPENMPI_MODULE_PREFIX}" ]; then
+      OPENMPI_MODULE_PREFIX=$(printf '%s\n' "${_show}" | sed -n 's|^[[:space:]]*prepend-path[[:space:]]\{1,\}LD_LIBRARY_PATH[[:space:]]\{1,\}\(.*\)/lib[[:space:]]*$|\1|p' | head -1)
+    fi
+  fi
 fi
 export OPENMPI_MODULE_NAME OPENMPI_MODULE_PREFIX
 
