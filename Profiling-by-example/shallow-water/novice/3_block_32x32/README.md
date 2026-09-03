@@ -42,7 +42,7 @@ Min(h) after run: 0.981776
 ## Did VALUBusy improve?
 
 ```bash
-rocprofv3 --pmc VALUBusy -T --output-format csv -d outdir -o shallow -- ./shallow
+rocprofv3 --pmc VALUBusy -T --output-format csv -d outdir -o valu -- ./shallow
 ```
 
 | Kernel | VALUBusy at 16x16 | VALUBusy at 32x32 |
@@ -61,10 +61,10 @@ neighbour reads fall outside the block and have to come from memory instead of c
 
 ## The surprise: occupancy went down
 
-Re-run the occupancy counter and compare against stage 1:
+Re-run the occupancy counter and compare against stage 2:
 
 ```bash
-rocprofv3 --pmc OccupancyPercent -T --output-format csv -d outdir -o shallow -- ./shallow
+rocprofv3 --pmc OccupancyPercent -T --output-format csv -d outdir -o occupancy -- ./shallow
 ```
 
 ```
@@ -102,14 +102,14 @@ Always validate against the wall clock.
 ## Roofline
 
 `profile_app.py` in Roofline Extractor needs its
-[Python environment](../README.md#a-python-environment-for-roofline-extractor) active:
+[Python environment](../README.md#roofline-extractor) active:
 
 ```bash
 python3 "$ROOFLINE_EXTRACTOR/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
 ```
 
 The equivalent in `rocprof-compute`, whose `analyze` step needs its
-[Python environment](../README.md#a-python-environment-for-rocprof-compute-analyze) active:
+[Python environment](../README.md#rocprof-compute-analyze) active:
 
 ```bash
 rocprof-compute profile -n 3_block_32x32 --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow

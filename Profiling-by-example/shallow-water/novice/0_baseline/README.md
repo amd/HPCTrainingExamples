@@ -79,7 +79,7 @@ busy. `OccupancyPercent` measures the fraction of the maximum possible wavefront
 occupied.
 
 ```bash
-rocprofv3 --pmc OccupancyPercent -T --output-format csv -d outdir -o shallow -- ./shallow
+rocprofv3 --pmc OccupancyPercent -T --output-format csv -d outdir -o occupancy -- ./shallow
 ```
 
 The first rows of the resulting CSV:
@@ -117,14 +117,14 @@ A roofline plot places a kernel against the machine's compute and bandwidth ceil
 whether it is limited by arithmetic or by memory traffic.
 
 `profile_app.py` in Roofline Extractor needs its
-[Python environment](../README.md#a-python-environment-for-roofline-extractor) active:
+[Python environment](../README.md#roofline-extractor) active:
 
 ```bash
 python3 "$ROOFLINE_EXTRACTOR/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
 ```
 
 The equivalent in `rocprof-compute`, whose `analyze` step needs its
-[Python environment](../README.md#a-python-environment-for-rocprof-compute-analyze) active:
+[Python environment](../README.md#rocprof-compute-analyze) active:
 
 ```bash
 rocprof-compute profile -n 0_baseline --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow

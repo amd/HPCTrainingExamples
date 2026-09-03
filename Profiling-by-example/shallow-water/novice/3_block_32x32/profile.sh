@@ -12,9 +12,9 @@ source "${SW_ROOT}/env.sh"
 
 make clean && make
 
-rocprofv3 --pmc VALUBusy -T --output-format csv -d outdir -o shallow -- ./shallow
+rocprofv3 --pmc VALUBusy -T --output-format csv -d outdir -o valu -- ./shallow
 
-rocprofv3 --pmc OccupancyPercent -T --output-format csv -d outdir -o shallow -- ./shallow
+rocprofv3 --pmc OccupancyPercent -T --output-format csv -d outdir -o occupancy -- ./shallow
 
 if [ "${ROOFLINE_TOOL:-extractor}" = rocprof-compute ]; then
     rocprof-compute profile -n 3_block_32x32 --overwrite --roof-only --device 0 -k compute_rhs \

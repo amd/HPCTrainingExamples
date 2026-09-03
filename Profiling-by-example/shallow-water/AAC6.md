@@ -6,7 +6,7 @@ The novice and advanced READMEs explain the profiling workflow and what each sta
 teaches; here we cover only what is specific to AAC6 and the batch scripts provided
 with the tutorial tree.
 
-Hardware: MI300A on AAC6, ROCm `10.1.0a20260818` from the Ubuntu 24.04 nightlies
+Hardware: MI300A on AAC6, ROCm `10.1.0a20260901` from the Ubuntu 24.04 nightlies
 module tree.
 
 ## Repository layout
@@ -70,7 +70,9 @@ are re-enabled.
 the pinned Python packages that `rocprof-compute analyze` needs. Run it on a
 login node where `pip` can reach the package index; compute nodes may not have
 outbound network access. After that, `env.sh` only activates the venv when batch
-jobs run; it does not run `pip install` again.
+jobs run; it does not run `pip install` again. Profile scripts call `analyze`
+after `profile`, so if one stops with a list of missing Python packages, re-run
+the setup script on a login node.
 
 Novice `profile.sh` scripts collect a roofline plot using whichever backend
 `ROOFLINE_TOOL` selects in `env.sh`: `extractor` (default) runs
@@ -185,16 +187,6 @@ they start on a compute node; they do not reinstall packages.
 **`env.sh` must exist before you submit.** Both `submit.sh` and every batch
 script source `${SW_ROOT}/env.sh`. If you skip `cp env_aac6.sh env.sh` or leave
 `SLURM_PARTITION` unset, submission fails immediately.
-
-**`rocprof-compute analyze` and the venv.** Profile scripts call `analyze` after
-`profile`. That requires the virtual environment from the one-time setup. If
-`analyze` reports missing Python packages, re-run `setup_rocprof_compute_venv.sh`
-on a login node.
-
-**Roofline Extractor and Python.** Novice `profile.sh` scripts call
-`profile_app.py` from `ROOFLINE_EXTRACTOR`. On AAC6 the install and Python deps
-come from `~/roofline-venv` (see one-time setup); elsewhere use
-`setup_roofline_extractor_venv.sh`.
 
 **Counter and profile runtimes.** Profiling replays or multiplexes kernel
 dispatches and can take much longer than a plain FOM run. Use `fom.sh` when you

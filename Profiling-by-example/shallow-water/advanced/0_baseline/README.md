@@ -155,10 +155,10 @@ call tree out of them:
 
 ```bash
 mpirun -n 2 --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh \
-    rocprof-sys-run --preset=trace-hpc --flat-profile -o trace -- ./shallow_mpi
+    rocprof-sys-run --preset=trace-hpc --flat-profile -o trace_full -- ./shallow_mpi
 ```
 
-Load the resulting `trace/<timestamp>/perfetto-trace-*.proto` into [Perfetto](https://ui.perfetto.dev),
+Load the resulting `trace_full/<timestamp>/perfetto-trace-*.proto` into [Perfetto](https://ui.perfetto.dev),
 one file per rank. [ROCm Optiq](https://rocm.docs.amd.com/projects/roc-optiq/en/latest/index.html) is
 an alternative viewer that reads a native rocpd database instead: setting `ROCPROFSYS_USE_ROCPD=true`
 makes `rocprof-sys` write a `.db` that Optiq opens directly, the same format `rocprofv3` writes on the

@@ -12,7 +12,9 @@ source "${SW_ROOT}/env.sh"
 
 make clean && make
 
-rocprofv3 --pmc OccupancyPercent -T --output-format csv -d outdir -o shallow -- ./shallow
+rocprofv3 --pmc OccupancyPercent -T --output-format csv -d outdir -o occupancy -- ./shallow
+
+rocprofv3 --pmc VALUBusy -T --output-format csv -d outdir -o valu -- ./shallow
 
 rocprofv3 --kernel-trace --hip-trace -d outdir -o shallow -- ./shallow
 rocpd2pftrace -i outdir/shallow_results.db -d outdir -o shallow

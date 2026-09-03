@@ -142,9 +142,8 @@ cd HPCTrainingExamples/Profiling-by-example/shallow-water/advanced
 ```
 
 The stages are built with `hipcc` against an MPI installation and profiled with `rocprofv3`,
-`rocprof-compute` and `rocprof-sys`, all of which ship with ROCm. The modules referenced below rely
-on the model installation described in the HPCTrainingDock
-[repo](https://github.com/amd/HPCTrainingDock).
+`rocprof-compute` and `rocprof-sys`. The modules referenced below rely on the model installation
+described in the HPCTrainingDock [repo](https://github.com/amd/HPCTrainingDock).
 
 ```bash
 module load rocm openmpi
@@ -154,13 +153,21 @@ The MPI you use must be built with ROCm support if you want to leave `GPU_AWARE_
 the default and what every number here was measured with. For OpenMPI that means UCX with ROCm
 enabled.
 
+Everything used to collect data works as soon as that module loads: `hipcc`, `rocprofv3`,
+`rocpd2pftrace`, `rocprof-compute profile`, `rocprof-sys-run`, and the ROCprof Trace Decoder behind
+the thread traces in [stage 4](4_vectorized_loads/README.md). Only `rocprof-compute analyze` needs
+more, in the shape of the Python environment described next; `rocpd2csv` and `rocpd2summary` are a
+milder case, needing any recent pandas rather than a pinned set. The viewers are separate but need
+nothing installed on the cluster: Perfetto runs in a browser, and the ROCprof Compute Viewer is a
+desktop application.
+
 ### A Python environment for `rocprof-compute analyze`
 
-`rocprof-compute` has two modes with different requirements. Its `profile` mode collects counters
-and needs nothing beyond ROCm and a base Python installation, but its `analyze` mode, which turns
-those counters into tables and roofline plots, is a Python application with pinned dependencies that
-ROCm does not install for you. Skip this step and every `analyze` invocation stops with a list like
-this instead of a report:
+`rocprof-compute` is a Python application, and its two modes have different requirements. Its
+`profile` mode collects counters and needs nothing beyond ROCm and a base Python installation, but
+its `analyze` mode, which turns those counters into tables and roofline plots, brings in a set of
+pinned dependencies that ROCm does not install for you. If you skip this step, every `analyze`
+invocation stops with a list like this instead of a report:
 
 ```
 ERROR The 'pandas==2.2.3' package was not found in the current execution environment.

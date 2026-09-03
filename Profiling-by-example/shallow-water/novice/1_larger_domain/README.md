@@ -53,7 +53,7 @@ Gaussian bump better. Correctness is intact.
 Re-run the occupancy measurement to check that the extra work landed where we predicted:
 
 ```bash
-rocprofv3 --pmc OccupancyPercent -T --output-format csv -d outdir -o shallow -- ./shallow
+rocprofv3 --pmc OccupancyPercent -T --output-format csv -d outdir -o occupancy -- ./shallow
 ```
 
 ```
@@ -80,14 +80,14 @@ The main kernels went from roughly a quarter of the machine to roughly four fift
 roofline tells the same story from a different angle:
 
 `profile_app.py` in Roofline Extractor needs its
-[Python environment](../README.md#a-python-environment-for-roofline-extractor) active:
+[Python environment](../README.md#roofline-extractor) active:
 
 ```bash
 python3 "$ROOFLINE_EXTRACTOR/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
 ```
 
 The equivalent in `rocprof-compute`, whose `analyze` step needs its
-[Python environment](../README.md#a-python-environment-for-rocprof-compute-analyze) active:
+[Python environment](../README.md#rocprof-compute-analyze) active:
 
 ```bash
 rocprof-compute profile -n 1_larger_domain --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow
@@ -128,7 +128,9 @@ few time steps.
 
 Separating collection from export means the run is profiled once and can be re-exported as often as
 you like: `rocpd2csv` and `rocpd2summary` read the same database, so changing your mind about the
-output no longer costs another run of the application.
+output no longer costs another run of the application. Those two go through pandas, unlike
+`rocpd2pftrace`; if pandas is missing they print `Error: No module named 'pandas'` rather than
+failing outright.
 
 [ROCm Optiq](https://rocm.docs.amd.com/projects/roc-optiq/en/latest/index.html) is an alternative:
 open the native `.db` file directly, with no `rocpd2pftrace` step. Optiq reads rocpd output from

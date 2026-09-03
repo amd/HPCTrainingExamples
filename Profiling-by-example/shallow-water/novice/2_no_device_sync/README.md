@@ -68,14 +68,14 @@ The kernels now abut one another instead of being separated by host round trips.
 ## Step 2: Check the roofline again
 
 `profile_app.py` in Roofline Extractor needs its
-[Python environment](../README.md#a-python-environment-for-roofline-extractor) active:
+[Python environment](../README.md#roofline-extractor) active:
 
 ```bash
 python3 "$ROOFLINE_EXTRACTOR/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
 ```
 
 The equivalent in `rocprof-compute`, whose `analyze` step needs its
-[Python environment](../README.md#a-python-environment-for-rocprof-compute-analyze) active:
+[Python environment](../README.md#rocprof-compute-analyze) active:
 
 ```bash
 rocprof-compute profile -n 2_no_device_sync --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow
@@ -104,7 +104,7 @@ the percentage of GPU time during which vector ALU instructions are being issued
 to 100 percent.
 
 ```bash
-rocprofv3 --pmc VALUBusy -T --output-format csv -d outdir -o shallow -- ./shallow
+rocprofv3 --pmc VALUBusy -T --output-format csv -d outdir -o valu -- ./shallow
 ```
 
 ```
@@ -130,6 +130,22 @@ rocprofv3 --pmc VALUBusy -T --output-format csv -d outdir -o shallow -- ./shallo
 `compute_rhs` keeps the vector units busy less than half the time. The low figures for
 `update_stage` and `final_update` are unsurprising, since they are pure streaming operations with
 almost no arithmetic per byte, and they are bandwidth-limited by nature.
+
+We record occupancy here as well. Removing the synchronizations did not change how many wavefronts
+fit on the machine, so these figures are within a percentage point of stage 1, but they are the
+baseline the next stage compares its larger blocks against:
+
+```bash
+rocprofv3 --pmc OccupancyPercent -T --output-format csv -d outdir -o occupancy -- ./shallow
+```
+
+| Kernel | Occupancy |
+|---|---|
+| `init_gaussian` | 60.7 percent |
+| `compute_rhs` | 78.3 percent |
+| `update_stage` | 81.5 percent |
+| `final_update` | 85.9 percent |
+| `apply_reflect_bc` | 0.18 percent |
 
 ## What we learned, and what to do about it
 

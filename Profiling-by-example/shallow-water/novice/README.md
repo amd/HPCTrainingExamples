@@ -92,15 +92,104 @@ git clone https://github.com/amd/HPCTrainingExamples.git
 cd HPCTrainingExamples/Profiling-by-example/shallow-water/novice
 ```
 
-The stages are built with `hipcc` and profiled with `rocprofv3` and `rocprof-compute`, all of which
-ship with ROCm. The modules referenced below rely on the model installation described in the
-HPCTrainingDock [repo](https://github.com/amd/HPCTrainingDock).
+The modules referenced below rely on the model installation described in the HPCTrainingDock
+[repo](https://github.com/amd/HPCTrainingDock).
 
 ```bash
 module load rocm
 ```
 
-### Getting a GPU
+That one module covers almost everything the tutorial uses:
+
+| Tool | Used for | Extra setup |
+|---|---|---|
+| `hipcc` | Building every stage | none |
+| `rocprofv3` | Kernel and HIP API traces, and the `OccupancyPercent` and `VALUBusy` counters | none |
+| `rocpd2pftrace` | Turning a run's rocpd database into a Perfetto trace | none |
+| `rocpd2csv`, `rocpd2summary` | Turning the same database into a CSV or a summary table | pandas |
+| `rocprof-compute profile` | Collecting the counters behind the roofline | none |
+| `rocprof-compute analyze` | Reporting those counters as tables and plots | its own pinned Python packages |
+| Roofline Extractor `profile_app.py` | The roofline plot shown at every stage | the code, plus its own Python packages |
+
+Every row marked "none" is ready the moment `module load rocm` succeeds. That includes
+`rocprof-compute profile`, so it is only the reporting half of `rocprof-compute` that needs
+anything more. `rocpd2csv` and `rocpd2summary` want any reasonably recent pandas, which many
+systems already provide; without it they print `Error: No module named 'pandas'` and write nothing.
+The last two rows are the ones that need environments of their own, which the next section sets up.
+The viewers used later need nothing installed on the cluster either, since Perfetto runs in a
+browser and ROCm Optiq is a desktop application.
+
+## Tools with Python dependencies
+
+Exactly two things in this tutorial need a virtual environment of their own: the Roofline Extractor
+and `rocprof-compute analyze`. Neither is needed to build the code, run `rocprofv3`, run
+`rocprof-compute profile`, or export a trace with `rocpd2pftrace`.
+
+### Roofline Extractor
+
+The Roofline Extractor is not part of ROCm, so both the code and its Python dependencies have to be
+installed once, on a login node:
+
+```bash
+git clone https://github.com/AMD-HPC/rooflineExtractor.git ~/rooflineExtractor
+export ROOFLINE_EXTRACTOR=$HOME/rooflineExtractor
+../setup_roofline_extractor_venv.sh
+source ~/roofline-venv/bin/activate
+```
+
+Activate it in any shell where you intend to run `profile_app.py`. On AAC6, point
+`ROOFLINE_EXTRACTOR` at the site install and let `env.sh` activate `~/roofline-venv`; see
+[AAC6.md](../AAC6.md). Some sites ship a pre-built install or a module wrapper
+(`roofline-extractor-profile`); those call the same `profile_app.py` with Python already configured.
+
+### `rocprof-compute analyze`
+
+`rocprof-compute` is a Python application throughout, but only its `analyze` mode has pinned
+dependencies that ROCm does not install for you, so without them `analyze` stops with a list of
+missing packages instead of a report while `profile` carries on working. The pinned list itself
+ships with ROCm, headed `# Analyze mode only.`, so build a virtual environment from it once, on the
+login node where `pip` can reach the package index:
+
+```bash
+python3 -m venv ~/rocprof-compute-venv
+source ~/rocprof-compute-venv/bin/activate
+pip install -r $ROCM_PATH/libexec/rocprofiler-compute/requirements.txt
+```
+
+Activate it in any shell where you intend to run `analyze`. Leaving it active for the whole session
+is simplest, since it does not interfere with `profile` mode, `rocprofv3`, or building the code.
+
+## Roofline plots
+
+Every stage shows its roofline twice, once with the Roofline Extractor and once with
+`rocprof-compute`. Novice `profile.sh` runs one backend per job; set
+`ROOFLINE_TOOL` in `env.sh` to `extractor` (default) or `rocprof-compute`.
+
+The extractor is invoked as `profile_app.py` (Option 1 in the upstream README), with its
+[environment](#roofline-extractor) active:
+
+```bash
+python3 "$ROOFLINE_EXTRACTOR/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
+```
+
+Set `--arch` to match your GPU (`MI300A`, `MI300X`, `MI250X`, and others listed in the extractor
+README). The extractor writes the plot itself, as `roofline_out/counters.html`; its options and
+outputs are documented in the
+[Roofline Extractor repo](https://github.com/AMD-HPC/rooflineExtractor).
+
+The `rocprof-compute` roofline is collected and then reported, and only the second command needs
+the [`rocprof-compute analyze` environment](#rocprof-compute-analyze):
+
+```bash
+rocprof-compute profile -n 0_baseline --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow
+rocprof-compute analyze -p workloads/0_baseline/0
+```
+
+The extractor is an AMD research project whose capabilities are being integrated into
+`rocprof-compute` for a future release, so it produces the plots in this tutorial for now and the
+`rocprof-compute` commands are given alongside for when that lands.
+
+## Getting a GPU and building
 
 Get an interactive session with one GPU before building and running:
 
@@ -139,73 +228,6 @@ diff 2_no_device_sync/shallow.hip 3_block_32x32/shallow.hip
 
 For stages 1, 3 and 4 that diff is a single line. That is the point: profiling tells you which one
 line to change.
-
-## Profiling tool setup
-
-### Roofline plots
-
-Every stage shows its roofline twice, once with the Roofline Extractor and once with
-`rocprof-compute`. Novice `profile.sh` runs one backend per job; set
-`ROOFLINE_TOOL` in `env.sh` to `extractor` (default) or `rocprof-compute`.
-
-### A Python environment for roofline extractor
-
-Clone the [Roofline Extractor](https://github.com/AMD-HPC/rooflineExtractor) repo and install its
-Python dependencies once on a login node:
-
-```bash
-git clone https://github.com/AMD-HPC/rooflineExtractor.git ~/rooflineExtractor
-export ROOFLINE_EXTRACTOR=$HOME/rooflineExtractor
-../setup_roofline_extractor_venv.sh
-source ~/roofline-venv/bin/activate
-```
-
-Activate it in any shell where you intend to run `profile_app.py`. On AAC6, point
-`ROOFLINE_EXTRACTOR` at the site install and let `env.sh` activate `~/roofline-venv`; see
-[AAC6.md](../AAC6.md).
-
-Some sites ship a pre-built install or a module wrapper (`roofline-extractor-profile`); those call
-the same `profile_app.py` with Python already configured.
-
-Run `profile_app.py` (Option 1 in the upstream README):
-
-```bash
-python3 "$ROOFLINE_EXTRACTOR/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
-```
-
-Set `--arch` to match your GPU (`MI300A`, `MI300X`, `MI250X`, and others listed in the extractor
-README). The plot is written to `roofline_out/counters.html`.
-
-The rocprof-compute roofline needs the
-[Python environment for `rocprof-compute analyze`](#a-python-environment-for-rocprof-compute-analyze)
-active:
-
-```bash
-rocprof-compute profile -n 0_baseline --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow
-rocprof-compute analyze -p workloads/0_baseline/0
-```
-
-The extractor writes the plot itself, as `roofline_out/counters.html`; its options and outputs are
-documented in the [Roofline Extractor repo](https://github.com/AMD-HPC/rooflineExtractor). It is an
-AMD research project whose capabilities are being integrated into `rocprof-compute` for a future
-release, so it produces the plots in this tutorial for now and the `rocprof-compute` commands are
-given alongside for when that lands.
-
-### A Python environment for `rocprof-compute analyze`
-
-`rocprof-compute analyze` is a Python application with pinned dependencies that ROCm does not
-install for you, so without them it stops with a list of missing packages instead of a report. The
-pinned list ships with ROCm, so build a virtual environment from it once, on the login node where
-`pip` can reach the package index:
-
-```bash
-python3 -m venv ~/rocprof-compute-venv
-source ~/rocprof-compute-venv/bin/activate
-pip install -r $ROCM_PATH/libexec/rocprofiler-compute/requirements.txt
-```
-
-Activate it in any shell where you intend to run `analyze`. Leaving it active for the whole session
-is simplest, since it does not interfere with `profile` mode, `rocprofv3`, or building the code.
 
 ## Start here
 

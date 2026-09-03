@@ -75,14 +75,14 @@ in the two streaming kernels, which are the ones that care most about contiguous
 ## Roofline
 
 `profile_app.py` in Roofline Extractor needs its
-[Python environment](../README.md#a-python-environment-for-roofline-extractor) active:
+[Python environment](../README.md#roofline-extractor) active:
 
 ```bash
 python3 "$ROOFLINE_EXTRACTOR/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
 ```
 
 The equivalent in `rocprof-compute`, whose `analyze` step needs its
-[Python environment](../README.md#a-python-environment-for-rocprof-compute-analyze) active:
+[Python environment](../README.md#rocprof-compute-analyze) active:
 
 ```bash
 rocprof-compute profile -n 4_block_64x4 --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow

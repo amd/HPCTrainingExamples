@@ -15,7 +15,9 @@ make clean && make
 rocprofv3 --kernel-trace --hip-trace -d outdir -o shallow -- ./shallow
 rocpd2pftrace -i outdir/shallow_results.db -d outdir -o shallow
 
-rocprofv3 --pmc VALUBusy -T --output-format csv -d outdir -o shallow -- ./shallow
+rocprofv3 --pmc VALUBusy -T --output-format csv -d outdir -o valu -- ./shallow
+
+rocprofv3 --pmc OccupancyPercent -T --output-format csv -d outdir -o occupancy -- ./shallow
 
 if [ "${ROOFLINE_TOOL:-extractor}" = rocprof-compute ]; then
     rocprof-compute profile -n 2_no_device_sync --overwrite --roof-only --device 0 -k compute_rhs \

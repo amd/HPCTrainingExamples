@@ -12,7 +12,7 @@ source /etc/profile.d/lmod.sh
 source /shared/apps/ubuntu/lmod/overridetcl2lmod.sh
 
 module use /nfsapps/ubuntu-24.04-nightlies/modules/base
-module load rocm/10.1.0a20260818
+module load rocm/10.1.0a20260901
 module load openmpi
 
 # Two NUMA domains (typical SPX layout):
