@@ -159,45 +159,53 @@ module avail
 The output list of `module avail` should show:
 
 ```
---------------------------------- /etc/lmod/modules/Linux ----------------------------------
-   clang/base    gcc/base
-
-------------------------------- /etc/lmod/modules/LinuxPlus --------------------------------
-   miniconda3/25.3.1    miniforge3/24.9.0
-
----------------------------------- /etc/lmod/modules/ROCm ----------------------------------
-   amdclang/19.0.0-6.4.1           rocprof-tracedecoder/6.4.1
-   amdflang-new/rocm-afar-7.0.5    rocprofiler-compute/6.4.1  (D)
-   hipfort/6.4.1                   rocprofiler-sdk/6.4.1
-   opencl/6.4.1                    rocprofiler-systems/6.4.1  (D)
-   rocm/6.4.1
-
--------------------------------- /etc/lmod/modules/ROCmPlus --------------------------------
-   adios2/2.10.1    hpctoolkit/2024.01.99-next    netcdf-c/4.9.3          scorep/9.0
-   fftw/3.3.10      hypre/2.33.0                  netcdf-fortran/4.6.2    tau/dev
-   hdf5/1.14.6      kokkos/4.6.01                 petsc/3.23.1
-
------------------------------- /etc/lmod/modules/ROCmPlus-MPI ------------------------------
-   mpi4py/4.0.3    openmpi/5.0.7-ucc1.4.4-ucx1.18.1
-
------------------------ /etc/lmod/modules/ROCmPlus-AMDResearchTools ------------------------
-   rocprofiler-compute/develop    rocprofiler-systems/amd-staging
-
------------------------- /etc/lmod/modules/ROCmPlus-LatestCompilers ------------------------
-   hipfort_from_source/6.4.1
-
------------------------------- /etc/lmod/modules/ROCmPlus-AI -------------------------------
-   cupy/14.0.0a1    jax/0.6.0                          pytorch/2.7.1           (D)
-   ftorch/dev       pytorch/2.7.1_tunableop_enabled    tensorflow/merge-250318
-
----------------------------------- /etc/lmod/modules/misc ----------------------------------
-   hipifly/dev
-
-  Where:
-   D:  Default Module
+------------------------- /nfsapps/ubuntu-24.04/modules/base --------------------------
+   emacs/30.1                 rocm/6.3.3    rocm/7.1.0         rocm/7.14.0
+   google-chrome/stable       rocm/6.3.4    rocm/7.1.1         rocm/10.0.0
+   qcachegrind/23.08.5        rocm/6.4.0    rocm/7.2.0         roofline-extractor/dev
+   rocbudai/dev               rocm/6.4.1    rocm/7.2.1         tracelens/dev
+   rocm/afar-23.1.0-7.12.0    rocm/6.4.2    rocm/7.2.2         turbovnc/3.0.3
+   rocm/afar-23.2.1-7.13.0    rocm/6.4.3    rocm/7.2.3         uprof/5.3-518
+   rocm/6.3.0                 rocm/7.0.0    rocm/7.2.4  (D)
+   rocm/6.3.1                 rocm/7.0.1    rocm/7.12.0
+   rocm/6.3.2                 rocm/7.0.2    rocm/7.13.0
 ```
 
-There are several modules associated with each ROCm version. One is the rocm module which is needed by many of the other modules. The second is the amdclang module when using the amdclang compiler that comes bundled with ROCm. The third is the hipfort module for the Fortran interfaces to HIP. Also, there is an OpenCL module and one for each of the AMD profilers.
+Once you load a ROCm module `module load rocm`, you will see additional modules built with that ROCm version
+
+```
+---------------------------- /nfsapps/ubuntu-24.04/modules/rocmplus-7.2.4 ----------------------------
+   cupy/13.5.1                                          pytorch/2.7.1_tunableop_enabled
+   elpa/master-548c64b                                  pytorch/2.7.1
+   fftw/3.3.10                                          pytorch/2.8.0_tunableop_enabled
+   ftorch/2.12.0                                        pytorch/2.8.0
+   ftorch_amdflang/2.12.0                               pytorch/2.9.1_tunableop_enabled
+   hdf5/2.1.1                                           pytorch/2.9.1
+   heffte/2.4.1                                         pytorch/2.10.0_tunableop_enabled
+   hip-python/7.2.4                                     pytorch/2.10.0
+   hipblaslt/patched                             (L)    pytorch/2.11.0_tunableop_enabled
+   hipifly/dev                                          pytorch/2.11.0
+   hpctoolkit/2025.1.2                                  pytorch/2.12.0_tunableop_enabled
+   hypre/3.1.0                                          pytorch/2.12.0                   (D)
+   intellikit/main                                      rccl-tests/7.2.4
+   jax/0.8.0                                            roc-optiq/0.5.0
+   kokkos/4.7.04                                        roc-optiq/1.0.0                  (D)
+   likwid/5.5.1                                         rocshmem/3.2.0-ro_ipc
+   likwid/5.5.2                                  (D)    scorep/9.4
+   magma/2.10.0                                         scorep/11.0-dev                  (D)
+   mdb/1.0.6                                            tau/dev
+   mpi4py/4.1.0                                         tensorflow/2.20.0
+   mpitrace/7.2.4                                       umpire/2025.12.0
+   netcdf-c/4.10.0                                      vllm/0.10.1-pt2.7.1
+   netcdf-fortran/4.6.2                                 vllm/0.10.1-pt2.8.0
+   openblas/0.3.33                                      vllm/0.11.0-pt2.9.1
+   openmpi/5.0.10-ucc1.6.0-ucx1.19.1-xpmem-2.7.4        vllm/0.19.1-pt2.10.0
+   petsc/3.24.1                                         vllm/0.27.1-pt2.11.0
+   pnetcdf/1.14.1                                       vllm/0.27.1-pt2.12.0             (D)
+
+------------------------------ /nfsapps/ubuntu-24.04/modules/rocm-7.2.4 ------------------------------
+   amdclang/22.0.0-7.2.4    hipfort/7.2.4    opencl/7.2.4
+```
 
 Compiler modules set the C, CXX, FC flags. Only one compiler module can be loaded at a time. hipcc is in the path when the rocm module is loaded. Note that there are several modules that set the compiler flags and that they set the full path to the compilers to avoid path problems.
 
@@ -210,9 +218,12 @@ sinfo
 ```
 
 ```
-PARTITION                    AVAIL  TIMELIMIT  NODES  STATE NODELIST
-1CN192C4G1H_MI300A_Ubuntu22*    up 8-00:00:00      3   idle ppac-pl1-s24-[16,26,30,35],ppac-pl1-s25-40
-1CN48C1G1H_MI300A_Ubuntu22      up 8-00:00:00      4   idle sh5-pl1-s12-[09,12,15,33,36]
+PARTITION          AVAIL  TIMELIMIT  NODES  STATE NODELIST
+PPAC_MI300A_CPX*      up    8:00:00      1   idle ppac-pl1-s25-40
+PPAC_MI300A_SPX       up    8:00:00      4  alloc ppac-pl1-s24-[16,26,30,35]
+SH5_MI300A_CPX        up    8:00:00      4   idle sh5-pl1-s12-[09,12,15,36]
+SH5_MI300A_SPX        up    8:00:00      1   idle sh5-pl1-s12-33
+sh5_cpx_admin_long    up 2-00:00:00      4   idle sh5-pl1-s12-[09,12,15,36]
 ```
 
 The Slurm `salloc` command may be used to acquire a long term session that exclusively grants access to one or more GPUs. Alternatively, the `srun` or `sbatch` commands may be used to acquire a session with one or more GPUs and only exclusively use the session for the life of the run of an application. `squeue` will show information on who is currently running jobs.
