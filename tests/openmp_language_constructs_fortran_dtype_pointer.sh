@@ -25,7 +25,6 @@ fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/Pragma_Examples/OpenMP/Fortran/7_derived_types
-cd derived_types
 
 SRC_DIR=$(pwd)
 BUILD_DIR=$(mktemp -d)
@@ -34,5 +33,12 @@ cp * ${BUILD_DIR}
 
 cd ${BUILD_DIR}
 
+# Fail visibly if the build or run fails, then emit an explicit success
+# marker from the real executable output so CTest matches the marker, not a
+# bare "10" that any path/build-name containing 10 could satisfy.
+set -euo pipefail
+
 make dtype_pointer
-./dtype_pointer
+out="$(./dtype_pointer)"
+echo "$out"
+echo "FORTRAN-DTYPE-RESULT: $(awk 'NF {last=$0} END {print last}' <<< "$out")"

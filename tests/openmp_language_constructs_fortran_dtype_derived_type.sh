@@ -35,5 +35,12 @@ cp * ${BUILD_DIR}
 
 cd ${BUILD_DIR}
 
+# Fail visibly if the build or run fails, then emit an explicit success
+# marker from the real executable output so CTest matches the marker, not a
+# bare "10" that any path/build-name containing 10 could satisfy.
+set -euo pipefail
+
 make dtype_derived_type
-./dtype_derived_type
+out="$(./dtype_derived_type)"
+echo "$out"
+echo "FORTRAN-DTYPE-RESULT: $(awk 'NF {last=$0} END {print last}' <<< "$out")"

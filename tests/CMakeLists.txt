@@ -666,24 +666,24 @@ set_property(TEST OpenMP_Language_Constructs_Fortran_Teams_EndLoop PROPERTY PASS
 set_property(TEST OpenMP_Language_Constructs_Fortran_Teams_EndLoop PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Language_Constructs_Fortran_DType_Derived_Type COMMAND ../openmp_language_constructs_fortran_dtype_derived_type.sh )
-set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Derived_Type PROPERTY PASS_REGULAR_EXPRESSION "10")
+set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Derived_Type PROPERTY PASS_REGULAR_EXPRESSION "FORTRAN-DTYPE-RESULT: +10")
 set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Derived_Type PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Language_Constructs_Fortran_DType_Derived_Type_Automap COMMAND ../openmp_language_constructs_fortran_dtype_derived_type_automap.sh )
-set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Derived_Type_Automap PROPERTY PASS_REGULAR_EXPRESSION "10")
+set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Derived_Type_Automap PROPERTY PASS_REGULAR_EXPRESSION "FORTRAN-DTYPE-RESULT: +10")
 set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Derived_Type_Automap PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Language_Constructs_Fortran_DType_Derived_Type_USM COMMAND ../openmp_language_constructs_fortran_dtype_derived_type_usm.sh )
-set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Derived_Type_USM PROPERTY PASS_REGULAR_EXPRESSION "10")
+set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Derived_Type_USM PROPERTY PASS_REGULAR_EXPRESSION "FORTRAN-DTYPE-RESULT: +10")
 set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Derived_Type_USM PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Language_Constructs_Fortran_DType_Pointer COMMAND ../openmp_language_constructs_fortran_dtype_pointer.sh )
-set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Pointer PROPERTY PASS_REGULAR_EXPRESSION "10")
+set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Pointer PROPERTY PASS_REGULAR_EXPRESSION "FORTRAN-DTYPE-RESULT: +10")
 set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Pointer PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 # Known failure
 add_test(NAME OpenMP_Language_Constructs_Fortran_DType_Scalar_Members COMMAND ../openmp_language_constructs_fortran_dtype_scalar_members.sh )
-set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Scalar_Members PROPERTY PASS_REGULAR_EXPRESSION "10")
+set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Scalar_Members PROPERTY PASS_REGULAR_EXPRESSION "FORTRAN-DTYPE-RESULT: +10")
 set_property(TEST OpenMP_Language_Constructs_Fortran_DType_Scalar_Members PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME OpenMP_Language_Constructs_C_Reduction_Scalar COMMAND ../openmp_language_constructs_c_reduction_scalar.sh )
