@@ -1480,7 +1480,7 @@ set_tests_properties(Pytorch_ROCmSDK_Dlopen_Duplicate_Regression PROPERTIES TIME
 # native RCCL / MPI / UCC / UCX libraries (soname + realpath + version) the
 # build is actually wired to. Needs no GPU or launcher (pure build introspection).
 add_test(NAME Pytorch_Comm_Backends_Check COMMAND ../pytorch_comm_backends_check.sh )
-set_property(TEST Pytorch_Comm_Backends_Check PROPERTY PASS_REGULAR_EXPRESSION "GPU-AWARE MPI: OK")
+set_property(TEST Pytorch_Comm_Backends_Check PROPERTY PASS_REGULAR_EXPRESSION "MPI PROVENANCE: OK")
 set_property(TEST Pytorch_Comm_Backends_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'" "COMM BACKENDS CHECK: SKIPPED")
 set_property(TEST Pytorch_Comm_Backends_Check PROPERTY SKIP_RETURN_CODE 77)
 set_tests_properties(Pytorch_Comm_Backends_Check PROPERTIES TIMEOUT 300)

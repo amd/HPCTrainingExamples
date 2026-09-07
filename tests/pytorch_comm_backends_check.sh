@@ -356,6 +356,28 @@ print(f"  backends: nccl(RCCL)={avail['nccl']} gloo={avail['gloo']} "
       f"mpi={avail['mpi']} ucc(native)={avail['ucc']}")
 print(f"  default comm path: GPU={defaults.get('cuda')}(RCCL) CPU={defaults.get('cpu')}")
 print(f"GPU-AWARE MPI: {gpu_aware_mpi}")
+# MPI provenance verdict: accept GPU-aware OpenMPI OR Cray/MPICH-family MPI;
+# reject OS/system MPI. Evidence only: resolved libmpi realpath, soname, and
+# MPI_Get_library_version banner. CTest gates on "MPI PROVENANCE: OK".
+mpi_banner_text = mpi_banner(mpi_real) if mpi_real else ""
+mpi_banner_lower = mpi_banner_text.lower()
+mpi_is_os = bool(mpi_real and (mpi_real.startswith(("/usr/", "/lib/", "/lib64/"))
+                              or "site-packages" in mpi_real or "/.libs/" in mpi_real))
+mpi_is_staged_tree = bool(mpi_real and mpi_real.startswith(("/shareddata/", "/opt/cray/", "/opt/rocm")))
+mpi_is_mpich_family = bool(("mpich" in mpi_banner_lower) or re.search(r"libmpi\w*\.so\.12(\.|$)", mpi_name or ""))
+if not avail["mpi"]:
+    mpi_provenance = "NO - MPI backend not compiled in (normal for pip/venv wheels)"
+elif not mpi_real:
+    mpi_provenance = "NO - libtorch does not link libmpi"
+elif under_module and ompi_rocm:
+    mpi_provenance = f"OK - GPU-aware OpenMPI (module '{ompi_mod}', {mpi_name} under {ompi_prefix_real})"
+elif mpi_is_os:
+    mpi_provenance = f"NO - OS/system MPI ({mpi_real}); expected GPU-aware OpenMPI or Cray MPICH"
+elif mpi_is_mpich_family and mpi_is_staged_tree:
+    mpi_provenance = f"OK - Cray MPICH ({mpi_name}, '{mpi_banner_text}', {mpi_real})"
+else:
+    mpi_provenance = f"NO - unrecognised MPI ({mpi_name}, '{mpi_banner_text}', {mpi_real}); not the GPU-aware OpenMPI module and not Cray MPICH"
+print(f"MPI PROVENANCE: {mpi_provenance}")
 sys.exit(0)
 EOF
 
