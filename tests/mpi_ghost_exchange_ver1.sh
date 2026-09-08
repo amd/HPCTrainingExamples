@@ -36,6 +36,11 @@ BUILD_DIR=$(mktemp -d)
 trap "rm -rf ${BUILD_DIR}" EXIT
 cd ${BUILD_DIR}
 
+if [ -n "${ROCM_PATH:-}" ] && [ -x "${ROCM_PATH}/bin/amdclang++" ] && [ -x "${ROCM_PATH}/bin/amdclang" ]; then
+   export CXX="${ROCM_PATH}/bin/amdclang++"
+   export CC="${ROCM_PATH}/bin/amdclang"
+fi
+
 cmake ${SRC_DIR}
 make
 
