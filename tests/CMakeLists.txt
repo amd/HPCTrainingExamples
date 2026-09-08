@@ -648,7 +648,6 @@ add_test(NAME OpenMP_Language_Constructs_Fortran_Reduction_Array COMMAND ../open
 set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array PROPERTY PASS_REGULAR_EXPRESSION "Form 1 \\(whole array\\)   : ce\\(1\\) = 1000.000000000000  ce\\(2\\) = 1000.000000000000")
 set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
-# Expected failure -- not implemented in amdflang-new yet
 add_test(NAME OpenMP_Language_Constructs_Fortran_Reduction_Array_Min_Max_Sum COMMAND ../openmp_language_constructs_fortran_2_reduction_array_min_max_sum.sh )
 set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array_Min_Max_Sum PROPERTY PASS_REGULAR_EXPRESSION "ALL TESTS PASSED")
 set_property(TEST OpenMP_Language_Constructs_Fortran_Reduction_Array_Min_Max_Sum PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
