@@ -19,13 +19,10 @@ program rt003_reduction
   iarr = (/ 258, 290, 320, 258 /)
 
   imax_result = -huge(imax_result)
-  !$omp target
-  !$omp teams loop collapse(1) default(shared) private(i) reduction(MAX: imax_result)
+  !$omp target teams loop reduction(MAX: imax_result)
   do i = 1, n, 1
     imax_result = max(imax_result, iarr(i))
   end do
-  !$omp end teams loop
-  !$omp end target
 
   write(*,'(a,i0,a,i0)') "Test 1  int MAX (n=4):       result=", imax_result, "  expected=", 320
   if (imax_result /= 320) then
@@ -47,13 +44,10 @@ program rt003_reduction
   iarr(512) = 99999
 
   imax_result = -huge(imax_result)
-  !$omp target
-  !$omp teams loop collapse(1) default(shared) private(i) reduction(MAX: imax_result)
+  !$omp target teams loop reduction(MAX: imax_result)
   do i = 1, n, 1
     imax_result = max(imax_result, iarr(i))
   end do
-  !$omp end teams loop
-  !$omp end target
 
   write(*,'(a,i0,a,i0)') "Test 2  int MAX (n=1024):    result=", imax_result, "  expected=", 99999
   if (imax_result /= 99999) then
@@ -75,13 +69,10 @@ program rt003_reduction
   iarr(100) = -42
 
   imin_result = huge(imin_result)
-  !$omp target
-  !$omp teams loop collapse(1) default(shared) private(i) reduction(MIN: imin_result)
+  !$omp target teams loop reduction(MIN: imin_result)
   do i = 1, n, 1
     imin_result = min(imin_result, iarr(i))
   end do
-  !$omp end teams loop
-  !$omp end target
 
   write(*,'(a,i0,a,i0)') "Test 3  int MIN (n=256):     result=", imin_result, "  expected=", -42
   if (imin_result /= -42) then
@@ -102,13 +93,10 @@ program rt003_reduction
   end do
 
   isum_result = 0
-  !$omp target
-  !$omp teams loop collapse(1) default(shared) private(i) reduction(+: isum_result)
+  !$omp target teams loop reduction(+: isum_result)
   do i = 1, n, 1
     isum_result = isum_result + iarr(i)
   end do
-  !$omp end teams loop
-  !$omp end target
 
   write(*,'(a,i0,a,i0)') "Test 4  int SUM (n=100):     result=", isum_result, "  expected=", 5050
   if (isum_result /= 5050) then
@@ -130,13 +118,10 @@ program rt003_reduction
   darr(256) = 9999.0d0
 
   dmax_result = -huge(dmax_result)
-  !$omp target
-  !$omp teams loop collapse(1) default(shared) private(i) reduction(MAX: dmax_result)
+  !$omp target teams loop reduction(MAX: dmax_result)
   do i = 1, n, 1
     dmax_result = max(dmax_result, darr(i))
   end do
-  !$omp end teams loop
-  !$omp end target
 
   write(*,'(a,f12.2,a,f12.2)') "Test 5  dp  MAX (n=512):     result=", dmax_result, "  expected=", 9999.0d0
   if (abs(dmax_result - 9999.0d0) > 1.0d-6) then
@@ -158,13 +143,10 @@ program rt003_reduction
   darr(300) = -7777.0d0
 
   dmin_result = huge(dmin_result)
-  !$omp target
-  !$omp teams loop collapse(1) default(shared) private(i) reduction(MIN: dmin_result)
+  !$omp target teams loop reduction(MIN: dmin_result)
   do i = 1, n, 1
     dmin_result = min(dmin_result, darr(i))
   end do
-  !$omp end teams loop
-  !$omp end target
 
   write(*,'(a,f12.2,a,f12.2)') "Test 6  dp  MIN (n=512):     result=", dmin_result, "  expected=", -7777.0d0
   if (abs(dmin_result - (-7777.0d0)) > 1.0d-6) then
@@ -185,13 +167,10 @@ program rt003_reduction
   end do
 
   dsum_result = 0.0d0
-  !$omp target
-  !$omp teams loop collapse(1) default(shared) private(i) reduction(+: dsum_result)
+  !$omp target teams loop reduction(+: dsum_result)
   do i = 1, n, 1
     dsum_result = dsum_result + darr(i)
   end do
-  !$omp end teams loop
-  !$omp end target
 
   write(*,'(a,f12.2,a,f12.2)') "Test 7  dp  SUM (n=1000):    result=", dsum_result, "  expected=", 1000.0d0
   if (abs(dsum_result - 1000.0d0) > 1.0d-6) then
@@ -210,15 +189,12 @@ program rt003_reduction
   iarr = (/ 258, 290, 320, 258 /)
 
   imax_result = -huge(imax_result)
-  !$omp target
-  !$omp teams loop collapse(1) default(shared) private(i) reduction(MAX: imax_result)
+  !$omp target teams loop reduction(MAX: imax_result)
   do i = 1, n, 1
     if (iarr(i) > 0) then
       imax_result = max(imax_result, iarr(i))
     end if
   end do
-  !$omp end teams loop
-  !$omp end target
 
   write(*,'(a,i0,a,i0)') "Test 8  int MAX cond (n=4):  result=", imax_result, "  expected=", 320
   if (imax_result /= 320) then
