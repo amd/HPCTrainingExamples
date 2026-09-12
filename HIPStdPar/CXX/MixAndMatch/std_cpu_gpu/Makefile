@@ -35,7 +35,7 @@ stdpar_gpu_executor.o: stdpar_gpu_executor.cpp
 
 # Link all object files and main.cpp into final
 $(TARGET): $(OBJS) main.cpp
-	$(HIPCC) $(CXXFLAGS) $(OPENMP_FLAGS) $(OBJS) main.cpp -o $@ -L$(TBB_LIBDIR) ${LIBS} -ltbb
+	$(HIPCC) $(CXXFLAGS) $(OPENMP_FLAGS) $(OBJS) main.cpp -o $@ -L$(TBB_LIBDIR) -Wl,-rpath,$(TBB_LIBDIR) ${LIBS} -ltbb
 
 clean:
 	rm -f $(OBJS) $(TARGET)
