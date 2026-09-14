@@ -927,7 +927,7 @@ set_property(TEST HIPFort_ROCm_GEMM_Local_SD PROPERTY SKIP_REGULAR_EXPRESSION "m
 
 add_test(NAME HIPFort_ROCm_Check_Matmult COMMAND ../hipfort_rocm_check_matmult.sh )
 set_property(TEST HIPFort_ROCm_Check_Matmult PROPERTY PASS_REGULAR_EXPRESSION "Success")
-set_property(TEST HIPFort_ROCm_Check_Matmult PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_property(TEST HIPFort_ROCm_Check_Matmult PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hipfort'")
 
 # Advanced OpenMP Examples
 add_test(NAME AdvancedOpenMP_CXX_Memory1 COMMAND ../advancedopenmp_cxx_memory1.sh )
