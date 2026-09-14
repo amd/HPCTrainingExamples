@@ -346,7 +346,7 @@ HIP_VISIBLE_DEVICES=0,1,2,3 python main.py -a resnet50 --dummy --dist-url 'tcp:/
 <a id="sec-apu"></a>
 ## 6. APU programming model (MI300A)
 
-The MI300A APU has a unified memory and does not need to copy the data, just the pointer. Other GPUS can emulate APU behavior leveraging the APU programming model. The APU programming model requires `HSA_XNACK 1` to be set (you also need it on MI300A).
+The MI300A APU has a unified memory and does not need to copy the data, just the pointer. Other GPUs can emulate APU behavior leveraging the APU programming model. The APU programming model requires `HSA_XNACK=1` to be set (you also need it on MI300A).
 We will compare `.to` (copy) vs `.migrate` staging looking at `STAGE_MS_PER_STEP` in the final report.
 
 - Host-to-device staging time — the per-step `images.to(device)` copy is
