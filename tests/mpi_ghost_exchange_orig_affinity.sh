@@ -30,7 +30,7 @@ if [ -n "${CRAY_MPICH_VERSION:-}" ]; then
    MPI_MAP_BY=""
 else
    MPIRUN=mpirun
-   MPI_RUN_OPTIONS="--mca coll ^hcoll --bind-to core --report-bindings"
+   MPI_RUN_OPTIONS="--bind-to core --report-bindings"
    MPI_MAP_BY="--map-by ppr:2:numa"
 fi
 

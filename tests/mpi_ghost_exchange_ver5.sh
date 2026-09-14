@@ -31,7 +31,7 @@ else
 
    export HSA_XNACK=1
 
-   MPI_RUN_OPTIONS="--mca coll ^hcoll"
+   MPI_RUN_OPTIONS=""
 
    REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
    cd ${REPO_DIR}/MPI-examples/GhostExchange/GhostExchange_ArrayAssign
@@ -53,7 +53,7 @@ else
       export MPICH_GPU_SUPPORT_ENABLED=1
    else
       MPIRUN=mpirun
-      MPI_RUN_OPTIONS="--mca coll ^hcoll --bind-to core --report-bindings"
+      MPI_RUN_OPTIONS="--bind-to core --report-bindings"
       MPI_MAP_BY="--map-by ppr:2:numa"
    fi
 

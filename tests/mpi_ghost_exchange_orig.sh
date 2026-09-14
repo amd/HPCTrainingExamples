@@ -29,7 +29,7 @@ if [ -n "${CRAY_MPICH_VERSION:-}" ]; then
    MPI_RUN_OPTIONS=""
 else
    MPIRUN=mpirun
-   MPI_RUN_OPTIONS="--mca coll ^hcoll"
+   MPI_RUN_OPTIONS=""
 fi
 
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"

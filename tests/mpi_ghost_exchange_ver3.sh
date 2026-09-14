@@ -38,7 +38,7 @@ else
       export MPICH_GPU_SUPPORT_ENABLED=1
    else
       MPIRUN=mpirun
-      MPI_RUN_OPTIONS="--mca coll ^hcoll --bind-to core --report-binding"
+      MPI_RUN_OPTIONS="--bind-to core --report-binding"
       MPI_MAP_BY="--map-by ppr:2:numa"
    fi
 

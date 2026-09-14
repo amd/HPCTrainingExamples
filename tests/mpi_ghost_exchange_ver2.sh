@@ -50,6 +50,8 @@ NUM_PER_RESOURCE_MPI4=`expr 4 / ${NUM_GPUS}`
 NUM_PER_RESOURCE_MPI16=`expr 16 / ${NUM_GPUS}`
 
 export ROCPROFSYS_USE_PROCESS_SAMPLING=false
+export ROCPROFSYS_USE_MPIP=ON
+export ROCPROFSYS_USE_PID=ON
 rocprof-sys-instrument -o GhostExchange.inst -- ./GhostExchange
 
 if [ -n "${CRAY_MPICH_VERSION:-}" ]; then
@@ -60,7 +62,7 @@ if [ -n "${CRAY_MPICH_VERSION:-}" ]; then
    MPI_RESOURCE_MPI16="--ntasks-per-socket=${NUM_PER_RESOURCE_MPI16}"
 else
    MPIRUN=mpirun
-   MPI_RUN_OPTIONS="--mca coll ^hcoll --bind-to core --report-bindings"
+   MPI_RUN_OPTIONS="--bind-to core --report-bindings"
    MPI_MAP_BY="--map-by ppr:2:numa"
    # per-resource placement: ranks per NUMA domain
    MPI_RESOURCE_MPI4="--map-by ppr:${NUM_PER_RESOURCE_MPI4}:numa"
@@ -79,4 +81,4 @@ if [[ ${NUM_PER_RESOURCE_MPI16} -le 4 ]]; then
           -x 4  -y 4  -i 400 -j 400 -h 2 -t -c -I 100
 fi
 
-ls -Rl rocprofsys-* |grep perfetto
+ls -Rl rocprofsys-* rocprofiler-systems-*-output 2>/dev/null |grep perfetto
