@@ -79,4 +79,4 @@ if [[ ${NUM_PER_RESOURCE_MPI16} -le 4 ]]; then
           -x 4  -y 4  -i 400 -j 400 -h 2 -t -c -I 100
 fi
 
-ls -Rl rocprofsys-* |grep perfetto
+ls -Rl rocprofiler-systems-* |grep perfetto
