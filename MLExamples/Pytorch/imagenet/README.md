@@ -31,8 +31,8 @@ This exercise was developed using AAC6 cluster that has 4xMI300A per node with r
 6. [APU programming model (MI300A)](#sec-apu)
 7. [Read the two numbers (RCCL time, staging)](#sec-read-numbers)
 8. [Calculating the performance](#sec-performance)
-9. [Featured RCCL optimization: tune the all-reduce with environment variables](#sec-rccl-opt)
-10. [Featured compute optimization: hands-on `main.py` edits](#sec-compute-opt)
+9. [Featured compute optimization: hands-on `main.py` edits](#sec-compute-opt)
+10. [Featured RCCL optimization: tune the all-reduce with environment variables](#sec-rccl-opt)
 11. [Featured profiling exercise: a measured timeline of compute vs communication (4×MI300A)](#sec-profiling-exercise)
 12. [Featured profiling tool: roofline extractor (per-kernel compute vs. memory)](#sec-roofline)
 13. [Cleanup](#sec-cleanup)
@@ -455,19 +455,19 @@ run_4.log  img/s=3720  step=0.1376s  batch=512  peak_mem_mb=...  speedup=3.84x
 > `ddp_resnet_bench.py`'s `--rccl-time`, `--host-copy`, and `--migrate` flags,
 > documented in [`benchmarks/README_benchmark.md`](benchmarks/README_benchmark.md).
 
-<a id="sec-rccl-opt"></a>
-## 9. Featured RCCL optimization: tune the all-reduce with environment variables
-
-Hands-on `main.py` edits for improving the RCCL all-reduce, together with a reproducible
-batch sweep and measured `RCCL_TOTAL_MS` numbers, are collected in
-[`README_rccl_optimization.md`](README_rccl_optimization.md).
-
 <a id="sec-compute-opt"></a>
-## 10. Featured compute optimization: hands-on `main.py` edits
+## 9. Featured compute optimization: hands-on `main.py` edits
 
 Hands-on `main.py` edits for speeding up per-GPU compute (ResNet-50 forward/backward),
 together with a reproducible batch study and measured `torch.compile` throughput numbers,
 are collected in [`README_compute_optimization.md`](README_compute_optimization.md).
+
+<a id="sec-rccl-opt"></a>
+## 10. Featured RCCL optimization: tune the all-reduce with environment variables
+
+Hands-on `main.py` edits for improving the RCCL all-reduce, together with a reproducible
+batch sweep and measured `RCCL_TOTAL_MS` numbers, are collected in
+[`README_rccl_optimization.md`](README_rccl_optimization.md).
 
 <a id="sec-profiling-exercise"></a>
 ## 11. Featured profiling exercise: a measured timeline of compute vs communication
