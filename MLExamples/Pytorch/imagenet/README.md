@@ -367,8 +367,7 @@ STAGE=migrate HIP_VISIBLE_DEVICES=0 python main.py -a resnet50 --dummy \
 
 The `.to()` path pays a `hipMemcpy` every step; `migrate` aliases the batch, so
 its `STAGE_MS_PER_STEP` should be much smaller. `migrate` requires `HSA_XNACK=1`
-and `COMMON_DIR` pointing at [`../common`](../common) (both exported by
-`main.py`); if the migrate extension can't build, `Stager` falls back to a copy
+and `COMMON_DIR` pointing at [`../common`](../common) (if this haven't been done already, please export them as described in [compare-to-copy-vs-migrate-zero-copy-staging](https://github.com/amd/HPCTrainingExamples/tree/main/MLExamples/Pytorch/imagenet#3e-compare-to-copy-vs-migrate-zero-copy-staging)); if the migrate extension can't build, `Stager` falls back to a copy
 and the two numbers will match.
 
 
