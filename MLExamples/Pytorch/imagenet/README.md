@@ -19,6 +19,8 @@ Synthetic data is enabled with the `--dummy` flag.
 By comparing step time across GPU counts we isolate and quantify the RCCL
 communication cost.
 
+This exercise was developed using AAC6 cluster that has 4xMI300A per node with rocm/7.2.4 and pytorch/2.12, but it should run similarly with various setups. For example, if you are using nodes with only 2xMI300A, just minor changes to the launched scripts are needed (adapting `HIP_VISIBLE_DEVICES` and `-b`) while the same principles should still apply.
+
 ## Contents
 
 1. [Get an allocation and load PyTorch](#sec-alloc)
