@@ -31,7 +31,7 @@ them, so each contribution stays isolated.
 We record two numbers each time:
 
 - `RCCL_TOTAL_MS`: total RCCL communication time (lower is better).
-- the `Time` value in the `Epoch:` lines: the average per-step time (lower is better;
+- `Time` value in the `Epoch:` lines: the average per-step time (lower is better;
   this is what improves when communication is hidden behind compute).
 
 > The RCCL signal is small within one SPX node: the all-reduce stays on the fast on-node
