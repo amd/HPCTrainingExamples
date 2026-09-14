@@ -78,8 +78,8 @@ OOM on CPX, drop the per-GPU batch size (e.g. `-b 128`).
 > `mpirun` ([Path B (TAU)](#sec-prof-tau)), which do their own binding, so there the Slurm flags are only
 > advisory.
 
-Set up virtual environment to avod scattering python packages across system
-and for more repeatability
+Set up virtual environment to avoid scattering python packages across system
+and for more repeatability.
 
 Check `uv` is installed by doing `which uv`. If not, install it and then do:
 ```bash
