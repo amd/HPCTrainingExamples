@@ -24,6 +24,6 @@ else
    module load mpi4py
 fi
 
-python3 -c 'from mpi4py import MPI' 2> /dev/null && echo 'Success' || echo 'Failure'
+/usr/bin/python3 -c 'from mpi4py import MPI' 2> /dev/null && echo 'Success' || echo 'Failure'
 
 
