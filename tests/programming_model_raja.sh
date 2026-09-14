@@ -26,6 +26,8 @@ else
    fi
 fi
 
+export CMAKE_PREFIX_PATH="${ROCM_PATH}${CMAKE_PREFIX_PATH:+:${CMAKE_PREFIX_PATH}}"
+
 XNACK_COUNT=`rocminfo | grep xnack | wc -l`
 if [ ${XNACK_COUNT} -lt 1 ]; then
    echo "Skip"
