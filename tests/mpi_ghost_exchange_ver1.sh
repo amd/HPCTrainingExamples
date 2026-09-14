@@ -26,6 +26,18 @@ else
    module load openmpi
 fi
 
+# /etc/cray-release exists on a Cray system even when no PrgEnv module has put
+# the compiler wrappers on PATH.  The branch above then exports an empty CXX and
+# CMake falls back to /usr/bin/c++, which does not implement
+# "#pragma omp requires unified_shared_memory".  Use the ROCm compilers only in
+# that case, so a working wrapper or an explicit user choice is left alone.
+if [ -z "${CXX:-}" ] || ! command -v "${CXX}" >/dev/null 2>&1; then
+   if [ -x "${ROCM_PATH:-}/bin/amdclang++" ] && [ -x "${ROCM_PATH:-}/bin/amdclang" ]; then
+      export CXX="${ROCM_PATH}/bin/amdclang++"
+      export CC="${ROCM_PATH}/bin/amdclang"
+   fi
+fi
+
 REPO_DIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 cd ${REPO_DIR}/MPI-examples/GhostExchange/GhostExchange_ArrayAssign
 
@@ -35,11 +47,6 @@ SRC_DIR=$(pwd)
 BUILD_DIR=$(mktemp -d)
 trap "rm -rf ${BUILD_DIR}" EXIT
 cd ${BUILD_DIR}
-
-if [ -n "${ROCM_PATH:-}" ] && [ -x "${ROCM_PATH}/bin/amdclang++" ] && [ -x "${ROCM_PATH}/bin/amdclang" ]; then
-   export CXX="${ROCM_PATH}/bin/amdclang++"
-   export CC="${ROCM_PATH}/bin/amdclang"
-fi
 
 cmake ${SRC_DIR}
 make
