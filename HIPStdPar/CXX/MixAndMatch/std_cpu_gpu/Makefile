@@ -15,6 +15,7 @@ ifeq ($(TBB_LIBDIR),)
 $(error TBB not found. Install libtbb-dev or set TBB_LIBDIR=<path>)
 endif
 
+$(info TBB_LIBDIR=$(TBB_LIBDIR))
 
 # If STDPAR_PATH is not specified on the command line, use this default.
 STDPAR_PATH ?= ${ROCM_PATH}/include/thrust/system/hip/hipstdpar

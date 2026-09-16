@@ -74,7 +74,7 @@ else
    cd ${BUILD_DIR}
    rm -rf raja_example_build || true
    mkdir -p raja_example_build && cd raja_example_build
-   CXX=hipcc Raja_DIR=${Raja_DIR}/Raja_HIP cmake ${REPO_DIR}/ManagedMemory/Raja_Code
+   CXX=hipcc Raja_DIR=${Raja_DIR}/Raja_HIP cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ${REPO_DIR}/ManagedMemory/Raja_Code
    make
    ./raja_code
 fi
