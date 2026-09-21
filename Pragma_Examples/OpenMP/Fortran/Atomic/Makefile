@@ -1,6 +1,7 @@
 EXEC = atomic
-default: ${EXEC}
-all: ${EXEC}
+EXECS = ${EXEC} atomic_multiterm
+default: ${EXECS}
+all: ${EXECS}
 
 ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
 
@@ -31,9 +32,9 @@ endif
 FFLAGS := -g -O3 ${FFLAGS} ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
 LDFLAGS = ${OPENMP_FLAGS}
 
-${EXEC}: ${EXEC}.o
+%: %.o
 	$(FC) $(FFLAGS) $(LDFLAGS) $^ -o $@
 
 # Cleanup
 clean:
-	rm -f *.o ${EXEC} *.mod *.bin
+	rm -f *.o ${EXECS} *.mod *.bin
