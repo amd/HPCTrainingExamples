@@ -124,6 +124,10 @@ fi
 
 ${TOOL_COMMAND}-avail -G $PWD/.configure.cfg
 export ${TOOL_CONFIG}_CONFIG_FILE=$PWD/.configure.cfg
+# rocprof-sys >= v1.10 (ROCm 10.2) defaults to RocPD (USE_ROCPD=true,
+# USE_PERFETTO=false); this test asserts on .proto artifacts, so enable the
+# perfetto backend explicitly (env overrides the generated config).
+export ${TOOL_CONFIG}_USE_PERFETTO=1
 ${TOOL_COMMAND}-instrument -o compute_comm_overlap.inst -- compute_comm_overlap
 ${TOOL_COMMAND}-run -- ./compute_comm_overlap.inst 2
 # Check for a real .proto artifact instead of matching tool output. The output

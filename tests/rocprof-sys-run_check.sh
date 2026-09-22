@@ -25,6 +25,11 @@ cd ${BUILD_DIR}
 cmake ../
 make -j
 
+# rocprof-sys >= v1.10 (ROCm 10.2) defaults to RocPD output (USE_ROCPD=true,
+# USE_PERFETTO=false); this check looks for the perfetto tracing-session output,
+# so enable the perfetto backend explicitly.
+export ROCPROFSYS_USE_PERFETTO=1
+
 rocprof-sys-run -- ./compute_comm_overlap 2
 
 cd ..

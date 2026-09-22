@@ -39,6 +39,11 @@ rm -rf ./rocprofsys-python3-output
 export RSP_CFG=${PROFILER_TOP_DIR}/rocm-system-profiler/rocprofiler-systems_$$.cfg
 rocprof-sys-avail -G $RSP_CFG
 
+# rocprof-sys >= v1.10 (ROCm 10.2) defaults to RocPD (USE_ROCPD=true,
+# USE_PERFETTO=false); this test surfaces the perfetto trace, so enable the
+# perfetto backend explicitly (env overrides the generated config).
+export ROCPROFSYS_USE_PERFETTO=1
+
 # Execute the python script.
 
 # NOTE on --num-workers: on the reference rocm/therock-23.1.0 stack (rocprof-sys
