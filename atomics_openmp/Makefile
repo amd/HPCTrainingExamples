@@ -12,11 +12,11 @@ CC1 = $(notdir $(CC))
 ifneq ($(findstring amdclang,$(CC1)),)
 # OPENMP_FLAGS = -fopenmp -target $(ROCM_CPUTARGET) -fopenmp-targets=$(ROCM_GPUTARGET) -Xopenmp-target=$(ROCM_GPUTARGET) -march=$(ROCM_GPU) 
 # Should work for > ROCm 4.5
-  OPENMP_FLAGS = -fopenmp -target $(ROCM_CPUTARGET) --offload-arch=$(ROCM_GPU)
+  OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
 else ifneq ($(findstring amdclang,$(CC1)),)
 # OPENMP_FLAGS = -fopenmp -target $(ROCM_CPUTARGET) -fopenmp-targets=$(ROCM_GPUTARGET) -Xopenmp-target=$(ROCM_GPUTARGET) -march=$(ROCM_GPU) 
 # Should work for > ROCm 4.5
-  OPENMP_FLAGS = -fopenmp -target $(ROCM_CPUTARGET) --offload-arch=$(ROCM_GPU)
+  OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
 else ifneq ($(findstring gcc,$(CC1)),)
   #OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp -fopt-info-missed
   OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU} -fopt-info-optimized-omp

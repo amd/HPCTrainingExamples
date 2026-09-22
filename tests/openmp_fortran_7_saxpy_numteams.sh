@@ -30,6 +30,7 @@ SRC_DIR=$(pwd)
 BUILD_DIR=$(mktemp -d)
 trap "rm -rf ${BUILD_DIR}" EXIT
 cp * ${BUILD_DIR}
+cd ${BUILD_DIR}
 
 make
 ./saxpy
