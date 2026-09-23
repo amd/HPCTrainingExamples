@@ -17,6 +17,8 @@ After completing this version, you will be able to:
 - Use ROCm profiling tools (rocprofv3, rocprof-sys, rocprof-compute) for hardware-level analysis
 - Analyze kernel fusion impact on performance and memory usage
 - Interpret ROCm profiling data for optimization insights
+- Train on real text data and evaluate a language model by validation perplexity, not just loss
+- Tune GPU training throughput and run production-scale training as an unattended SLURM batch job
 
 ## Key Optimizations Implemented
 
@@ -637,6 +639,92 @@ analyzing dispatch 1538 here.
 - Memory hierarchy utilization analysis
 - Optimization recommendations for Version 3
 -->
+
+### Exercise 4: Training on Real Text
+
+**Objective**: After focusing on profiling and optimizing the key kernels of the LLM architecture, the next step is to apply these to actual training on a real dataset.
+For this, we'll use the [wikimedia/wikipedia](https://huggingface.co/datasets/wikimedia/wikipedia) dataset to train the model to auto-complete sentences.
+
+#### Step 1: Environment setup
+
+Besides the `pytorch` package already used in the previous exercises, this exercise requires the `tokenizers` and `datasets` packages. On AAC6, the former is already provided by the `pytorch` module, so it's sufficient to run:
+```bash
+pip install --user datasets
+```
+On other systems, you might need to install both.
+
+The text is tokenized with the pretrained GPT-2 tokenizer (`--wiki-tokenizer`, default `gpt2`, vocab size 50,257) fetched from HuggingFace. The tokenized corpus is cached in `wiki_cache/` the first time the training script is executed with the new dataset enabled:
+```bash
+python3 tiny_llama_v2.py --dataset wikipedia --wiki-num-docs 3000
+```
+The flag `--dataset wikipedia` enables streaming the first `--wiki-num-docs` articles from [wikimedia/wikipedia](https://huggingface.co/datasets/wikimedia/wikipedia) (the dataset is not downloaded in full).
+After the first execution, the cached corpus is used directly.
+
+#### Step 2: Track learning quality
+
+Add `--eval-interval` to switch `tiny_llama_v2.py` from throughput profiling to quality tracking. Instead of samples/sec, it now reports **training/validation loss and validation perplexity** (lower is better) and periodic sample completions.
+It also enabled checkpointing:
+
+```bash
+python3 tiny_llama_v2.py --dataset wikipedia --wiki-num-docs 3000 \
+    --hidden-dim 256 --num-layers 4 --seq-len 128 --batch-size 16 \
+    --num-steps 1000 --eval-interval 50 --save-checkpoints --output-dir ./quality_runs
+```
+
+The metrics of the run are written to `quality_runs/<timestamp>/metrics.json`.
+Run the training and follow the resulting metrics. How do they behave and which common issue in AI training can you observe?
+
+#### Step 3: Try completions yourself
+
+Once you trained a first model, you can use the `evaluate_model.py` script to test its usefulness. Simply run:
+```bash
+python3 evaluate_model.py --checkpoint <path/to/best_model.pt> \
+    --wiki-num-docs 3000 --interactive --temperature 0.8
+```
+which will provide you with a prompt. Enter a sentence stub and press `Enter` and let the model auto-complete the sentence for you.
+
+Important: `--wiki-num-docs`/`--wiki-tokenizer` must match what the checkpoint was trained with, so the same cached corpus/tokenizer loads. The `--temperature` flag controls how greedily the next token will be sampled. Temperature can help avoid repetition loops on lightly-trained models by allowing less likely tokens to be chosen and thus slightly increasing the stochasticity.
+
+
+### Exercise 5: Throughput Tuning and Production-Scale Training
+
+Next, we'll investigate how our previous optimizations impact the actual training throughput on the new dataset.
+
+#### Step 1: Measure the effect of `torch.compile` and batch size
+
+First, try the previous optimizations and investigate if the previous improvements still show for the more realistic dataset. You can compare your results to the reference numbers provided below.
+```bash
+python3 tiny_llama_v2.py --dataset wikipedia --hidden-dim 768 --num-layers 12 --num-heads 12 --seq-len 128 --batch-size 32 --num-steps 100
+python3 tiny_llama_v2.py --dataset wikipedia --hidden-dim 768 --num-layers 12 --num-heads 12 --seq-len 128 --batch-size 32 --num-steps 100 --enable-torch-compile
+python3 tiny_llama_v2.py --dataset wikipedia --hidden-dim 768 --num-layers 12 --num-heads 12 --seq-len 128 --batch-size 128 --num-steps 100 --enable-torch-compile
+```
+
+Reference results (142M params, vocab 50,257 from the pretrained `gpt2` tokenizer, seq 128, full `SPX` MI300A):
+
+| Config | s/step | tokens/sec |
+|---|---|---|
+| Fusion only, batch 32 | 0.114 | 36,100 |
+| + `torch.compile` (mode=default), batch 32 | 0.098 | 41,700 |
+| + `torch.compile`, batch 128 | 0.343 | 47,800 |
+
+
+#### Step 2: Run the production job
+
+Next, we will run a more production-sized training job using a batch job.
+You can refer to the `train_job.sbatch` for AAC6, but be aware that you will need to adapt the SLURM settings for other systems, e.g. partition names, time limits, hardware available, software modules.
+The script launches a training run on the full 100,000-article dataset (~124M tokens, up to 100,000 steps, `--dropout 0.1`) with our prior optimizations enabled (kernel fusion, `torch.compile`).
+You can submit it (directly on AAC6 or with modification on other systems) with
+```bash
+sbatch train_job.sbatch
+
+# Override any setting without editing the file:
+sbatch --export=ALL,NUM_STEPS=20000,WIKI_NUM_DOCS=20000 train_job.sbatch
+```
+
+You can monitor the run by monitoring the run's `metrics.json` (or the SLURM log in `slurm_logs/`).
+The validation loss should fall steadily and then plateau. At this data scale, a 142M-parameter model has far more unique text to learn from than it can memorize before the loss stabilizes.
+
+A run with this configuration should reach a stable validation perplexity around **37** after roughly 30,000 steps and produces fluent, if simple and repetitive, Wikipedia-style completions.
 
 ## Key Performance Improvements
 

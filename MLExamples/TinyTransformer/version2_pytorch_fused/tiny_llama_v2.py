@@ -39,12 +39,25 @@ import numpy as np
 import math
 import time
 import os
+import sys
 import json
 import argparse
 from pathlib import Path
 from typing import Optional, Tuple, Dict, Any
 from dataclasses import dataclass, asdict
 from datetime import datetime
+
+try:
+    from wiki_dataset import WikipediaTextDataset, add_dataset_args, safe_exit
+except ImportError:
+    WikipediaTextDataset = None  # --dataset wikipedia will fail gracefully in build_dataset_from_args()
+
+    def safe_exit(code: int = 0) -> None:
+        sys.exit(code)
+
+    def add_dataset_args(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument('--dataset', type=str, choices=['random', 'wikipedia'], default='random',
+                             help='Training data source (wiki_dataset.py not found: only "random" works)')
 
 # Optional imports with graceful fallbacks
 try:
@@ -610,14 +623,11 @@ class TinyLlamaV2(nn.Module):
             loss = None
             if labels is not None:
                 with record_function("loss_calculation"):
-                    # Shift for next-token prediction
-                    shift_logits = logits[..., :-1, :].contiguous()
-                    shift_labels = labels[..., 1:].contiguous()
-
                     # Calculate cross-entropy loss
+                    # labels at input_ids position are already next-token target for each item -> don't shift
                     loss = F.cross_entropy(
-                        shift_logits.view(-1, self.config.vocab_size),
-                        shift_labels.view(-1)
+                        logits.contiguous().view(-1, self.config.vocab_size),
+                        labels.contiguous().view(-1)
                     )
 
             return {'logits': logits, 'loss': loss}
@@ -656,7 +666,7 @@ class TinyLlamaV2(nn.Module):
 
 
 class SimpleTextDataset:
-    """Simple text dataset - same as V1 for consistency."""
+    """Synthetic dataset of deterministic random tokens."""
 
     def __init__(self, seq_length: int = 128, vocab_size: int = 1000, num_samples: int = 1000):
         self.seq_length = seq_length
@@ -677,6 +687,47 @@ class SimpleTextDataset:
         labels = torch.from_numpy(batch[:, 1:])
 
         return input_ids, labels
+
+
+def build_dataset_from_args(args: argparse.Namespace, config: TinyLlamaConfig, vocab_size_explicit: bool = False) -> Any:
+    """Construct the dataset selected via ``--dataset``. For Wikipedia, updates
+    ``config.vocab_size`` in place to match the pretrained tokenizer, unless the user
+    explicitly requested a specific ``--vocab-size`` (then just warns)."""
+    if args.dataset == "random":
+        return SimpleTextDataset(seq_length=config.max_seq_len, vocab_size=config.vocab_size)
+
+    if WikipediaTextDataset is None:
+        sys.exit("ERROR: --dataset wikipedia requires wiki_dataset.py next to this script.")
+
+    try:
+        dataset = WikipediaTextDataset(
+            seq_length=config.max_seq_len,
+            wiki_config=args.wiki_config,
+            num_docs=args.wiki_num_docs,
+            val_fraction=args.wiki_val_fraction,
+            cache_dir=args.wiki_cache_dir,
+            tokenizer_name=args.wiki_tokenizer,
+        )
+    except ImportError as e:
+        sys.exit(f"ERROR: --dataset wikipedia requires the 'datasets' package "
+                  f"(pip install --user datasets). Missing: {e}")
+
+    if dataset.vocab_size != config.vocab_size:
+        if vocab_size_explicit:
+            print(
+                f"WARNING: --vocab-size {config.vocab_size} was requested explicitly but the "
+                f"pretrained tokenizer has vocab_size={dataset.vocab_size}; the model's output "
+                "layer will not match the tokenizer. Pass a matching --vocab-size or omit it "
+                "to let it auto-adjust."
+            )
+        else:
+            print(
+                f"Adjusting model vocab_size {config.vocab_size} -> {dataset.vocab_size} to "
+                "match the pretrained tokenizer"
+            )
+            config.vocab_size = dataset.vocab_size
+
+    return dataset
 
 
 def setup_pytorch_profiler(profiler_config: ProfilerConfig) -> Optional[profile]:
@@ -723,6 +774,51 @@ def setup_deepspeed_profiler(model: nn.Module) -> Optional[FlopsProfiler]:
     return FlopsProfiler(model)
 
 
+def evaluate(model: nn.Module, dataset: Any, device: torch.device, batch_size: int, num_batches: int) -> Tuple[float, float]:
+    """Average validation loss/perplexity over a few held-out batches."""
+    model.eval()
+    losses = []
+    with torch.no_grad():
+        for _ in range(num_batches):
+            input_ids, labels = dataset.get_val_batch(batch_size)
+            input_ids, labels = input_ids.to(device), labels.to(device)
+            outputs = model(input_ids, labels)
+            losses.append(outputs['loss'].item())
+    model.train()
+
+    avg_loss = float(np.mean(losses))
+    try:
+        perplexity = math.exp(avg_loss)
+    except OverflowError:
+        perplexity = float('inf')
+    return avg_loss, perplexity
+
+
+@torch.no_grad()
+def generate(model: nn.Module, dataset: Any, max_seq_len: int, device: torch.device,
+             prompt: str, max_new_tokens: int = 60, temperature: Optional[float] = None) -> Optional[str]:
+    """Generate a text continuation of `prompt` (greedy, or sampled if temperature is set)."""
+    if not hasattr(dataset, 'encode') or not hasattr(dataset, 'decode'):
+        return None
+
+    model.eval()
+    ids = dataset.encode(prompt) or [0]
+    input_ids = torch.tensor([ids], dtype=torch.long, device=device)
+
+    for _ in range(max_new_tokens):
+        context = input_ids[:, -max_seq_len:]
+        logits = model(context)['logits'][:, -1, :]
+        if temperature:
+            probs = F.softmax(logits / temperature, dim=-1)
+            next_id = torch.multinomial(probs, num_samples=1)
+        else:
+            next_id = torch.argmax(logits, dim=-1, keepdim=True)
+        input_ids = torch.cat([input_ids, next_id], dim=1)
+
+    model.train()
+    return dataset.decode(input_ids[0])
+
+
 def train_tiny_llama_v2(
     config: TinyLlamaConfig,
     fusion_config: FusionConfig,
@@ -730,9 +826,19 @@ def train_tiny_llama_v2(
     num_steps: int = 50,
     batch_size: int = 8,
     learning_rate: float = 3e-4,
-    use_amp: bool = False
+    use_amp: bool = False,
+    dataset: Optional[Any] = None,
+    eval_interval: int = 0,
+    eval_batches: int = 10,
+    generate_every: int = 0,
+    generate_tokens: int = 60,
+    prompt: str = 'The history of',
+    save_checkpoints: bool = False,
+    output_dir: Optional[str] = None,
 ):
-    """Train Tiny LLaMA V2 with comprehensive fusion and profiling."""
+    """Train Tiny LLaMA V2 with fusion, profiling, and (if eval_interval>0) quality tracking
+    (validation loss/perplexity, sample generation, checkpointing)."""
+    quality_tracking = eval_interval > 0
 
     # Setup environment
     setup_deterministic_environment()
@@ -772,11 +878,14 @@ def train_tiny_llama_v2(
     if fusion_stats:
         print(f"   Kernel Reduction: {fusion_stats.get('kernel_reduction_percent', 0):.1f}% ({fusion_stats.get('total_kernel_reduction', 0)} fewer kernels)")
 
-    # Create dataset
-    dataset = SimpleTextDataset(
-        seq_length=config.max_seq_len,
-        vocab_size=config.vocab_size
-    )
+    # Create dataset (defaults to the synthetic random dataset if none was supplied)
+    if dataset is None:
+        dataset = SimpleTextDataset(
+            seq_length=config.max_seq_len,
+            vocab_size=config.vocab_size
+        )
+    can_eval = quality_tracking and hasattr(dataset, 'get_val_batch')
+    can_generate = generate_every and hasattr(dataset, 'encode') and hasattr(dataset, 'decode')
 
     # Setup optimizer
     optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
@@ -791,10 +900,22 @@ def train_tiny_llama_v2(
     # Performance monitor
     monitor = PerformanceMonitor()
 
+    run_dir = None
+    checkpoint_path = None
+    if output_dir:
+        run_dir = Path(output_dir) / datetime.now().strftime('%Y%m%d_%H%M%S')
+        run_dir.mkdir(parents=True, exist_ok=True)
+        checkpoint_path = run_dir / 'best_model.pt'
+
     print(f"\nTraining Configuration V2:")
     print(f"   Training steps: {num_steps}")
     print(f"   Batch size: {batch_size}")
     print(f"   Learning rate: {learning_rate}")
+    if quality_tracking:
+        print(f"   Dropout: {config.dropout}")
+        print(f"   Validation: {'every ' + str(eval_interval) + ' steps (' + str(eval_batches) + ' batches)' if can_eval else 'unavailable for this dataset'}")
+        print(f"   Text samples: {'every ' + str(generate_every) + ' steps' if can_generate else 'unavailable/disabled'}")
+        print(f"   Output dir: {run_dir if run_dir else 'not saving (pass output_dir/--output-dir to save)'}")
     print(f"   Mixed precision: {use_amp}")
     print(f"   Device: {device}")
     print(f"   PyTorch Profiler: {profiler_config.enable_pytorch_profiler}")
@@ -838,7 +959,12 @@ def train_tiny_llama_v2(
 
     print("=" * 70)
 
-    for step in range(num_steps):
+    quality_history = []
+    best_val_loss = float('inf')
+    total_steps = num_steps
+    start_time = time.time()
+
+    for step in range(1, total_steps + 1):
         if torch.cuda.is_available():
             torch.cuda.reset_peak_memory_stats()
 
@@ -883,6 +1009,7 @@ def train_tiny_llama_v2(
                 optimizer.step()
             optimizer.zero_grad()
         batch_timings['optimizer'] = monitor.end_timing()
+        accum_loss = loss.item()
 
         # Total batch time
         batch_timings['total'] = sum(batch_timings.values())
@@ -895,7 +1022,7 @@ def train_tiny_llama_v2(
         # Record metrics with fusion statistics
         monitor.record_batch_metrics(
             batch_size,
-            loss.item(),
+            accum_loss,
             batch_timings,
             fusion_stats,
             gpu_peak_memory_mb=peak_mb,
@@ -905,19 +1032,86 @@ def train_tiny_llama_v2(
         if pytorch_profiler:
             pytorch_profiler.step()
 
-        # Progress logging
-        if step % 10 == 0:
-            speed = batch_size / batch_timings['total'] if batch_timings['total'] > 0 else 0
-            live_mb = torch.cuda.memory_allocated() / (1024**2) if torch.cuda.is_available() else 0
-            peak_log = f"{peak_mb:6.1f}" if peak_mb is not None else "  n/a"
+        is_last_step = step == total_steps
 
-            print(f"Step {step:3d}/{num_steps} | "
-                  f"Loss: {loss.item():.4f} | "
-                  f"Speed: {speed:5.1f} samples/sec | "
-                  f"Peak: {peak_log} MB | Live: {live_mb:6.1f} MB | "
-                  f"Time: {batch_timings['total']*1000:5.1f}ms")
+        if quality_tracking:
+            record: Dict[str, Any] = {'step': step, 'train_loss': accum_loss,
+                                       'elapsed_sec': time.time() - start_time}
+            do_eval = can_eval and (step % eval_interval == 0 or is_last_step)
+            do_generate = can_generate and (step % generate_every == 0 or is_last_step)
+
+            if do_eval:
+                val_loss, val_ppl = evaluate(model, dataset, device, batch_size, eval_batches)
+                record['val_loss'] = val_loss
+                record['val_ppl'] = val_ppl
+                print(f"Step {step:5d}/{total_steps} | Train Loss: {accum_loss:.4f} | "
+                      f"Val Loss: {val_loss:.4f} | Val PPL: {val_ppl:9.2f}")
+
+                if val_loss < best_val_loss - 1e-4:
+                    best_val_loss = val_loss
+                    if save_checkpoints and checkpoint_path:
+                        torch.save({
+                            'model_state_dict': model.state_dict(),
+                            'config': config.to_dict(),
+                            'fusion_config': fusion_config.to_dict(),
+                            'step': step,
+                            'val_loss': val_loss,
+                        }, checkpoint_path)
+                        print(f"   -> new best checkpoint saved (val_loss={val_loss:.4f})")
+            elif step == 1 or step % max(1, eval_interval // 5) == 0:
+                print(f"Step {step:5d}/{total_steps} | Train Loss: {accum_loss:.4f}")
+
+            if do_generate:
+                sample = generate(model, dataset, config.max_seq_len, device, prompt, generate_tokens)
+                if sample is not None:
+                    print(f"   Sample @ step {step}: {sample!r}")
+                    record['sample'] = sample
+
+            quality_history.append(record)
+        else:
+            # progress logging for performance testing
+            if step % 10 == 1 or step == total_steps:
+                speed = batch_size / batch_timings['total'] if batch_timings['total'] > 0 else 0
+                live_mb = torch.cuda.memory_allocated() / (1024**2) if torch.cuda.is_available() else 0
+                peak_log = f"{peak_mb:6.1f}" if peak_mb is not None else "  n/a"
+
+                print(f"Step {step:3d}/{total_steps} | "
+                      f"Loss: {accum_loss:.4f} | "
+                      f"Speed: {speed:5.1f} samples/sec | "
+                      f"Peak: {peak_log} MB | Live: {live_mb:6.1f} MB | "
+                      f"Time: {batch_timings['total']*1000:5.1f}ms")
 
     print("=" * 70)
+
+    if quality_tracking:
+        total_time = time.time() - start_time
+        print(f"\nTraining completed in {total_time / 60:.1f} min ({num_steps} steps)")
+
+        final_with_val = next((r for r in reversed(quality_history) if 'val_loss' in r), None)
+        if final_with_val:
+            print(f"Final validation loss: {final_with_val['val_loss']:.4f} | "
+                  f"perplexity: {final_with_val['val_ppl']:.2f}")
+
+        if run_dir:
+            metrics_path = run_dir / 'metrics.json'
+            with open(metrics_path, 'w') as f:
+                json.dump({
+                    'script': 'tiny_llama_v2',
+                    'timestamp': datetime.now().isoformat(),
+                    'config': config.to_dict(),
+                    'fusion_config': fusion_config.to_dict(),
+                    'training_params': {
+                        'num_steps': num_steps,
+                        'batch_size': batch_size,
+                        'learning_rate': learning_rate,
+                        'dropout': config.dropout,
+                        'use_amp': use_amp,
+                    },
+                    'history': quality_history,
+                }, f, indent=2)
+            print(f"Metrics saved to: {metrics_path}")
+            if save_checkpoints and checkpoint_path and checkpoint_path.exists():
+                print(f"Best checkpoint saved to: {checkpoint_path}")
 
     # Stop FLOPS profiler and get results
     if deepspeed_profiler:
@@ -969,7 +1163,7 @@ def train_tiny_llama_v2(
     # Actual speedup: 1.2x vs baseline through kernel fusion optimizations
 
     # Save performance data
-    if profiler_config.profile_dir:
+    if profiler_config.profile_dir and not quality_tracking:
         timestamp_str = datetime.now().strftime('%Y%m%d_%H%M%S')
 
         profile_data = {
@@ -1012,17 +1206,14 @@ def main():
     parser = argparse.ArgumentParser(description='Tiny LLaMA V2: Fused Implementation with Optimizations')
 
     # Model configuration
-    parser.add_argument('--vocab-size', type=int, default=1000, help='Vocabulary size')
+    parser.add_argument('--vocab-size', type=int, default=None,
+                         help='Vocabulary size (default: 1000; omit with --dataset wikipedia to '
+                              'auto-match the pretrained tokenizer)')
     parser.add_argument('--hidden-dim', type=int, default=512, help='Hidden dimension')
     parser.add_argument('--num-layers', type=int, default=8, help='Number of transformer layers')
     parser.add_argument('--num-heads', type=int, default=8, help='Number of attention heads')
     parser.add_argument('--seq-len', type=int, default=256, help='Sequence length')
-
-    # Training configuration
-    parser.add_argument('--num-steps', type=int, default=50, help='Number of training steps')
-    parser.add_argument('--batch-size', type=int, default=8, help='Batch size')
-    parser.add_argument('--learning-rate', type=float, default=3e-4, help='Learning rate')
-    parser.add_argument('--use-amp', action='store_true', help='Use automatic mixed precision')
+    parser.add_argument('--dropout', type=float, default=0.0, help='Dropout probability (0 disables)')
 
     # Fusion configuration
     parser.add_argument('--enable-qkv-fusion', action='store_true', default=True, help='Enable QKV fusion')
@@ -1035,6 +1226,25 @@ def main():
     parser.add_argument('--torch-compile-mode', type=str, default='default', help='Torch compile mode')
     parser.add_argument('--enable-all-fusion', action='store_true', help='Enable all fusion optimizations')
     parser.add_argument('--disable-all-fusion', action='store_true', help='Disable all fusion optimizations')
+
+    add_dataset_args(parser)
+
+    # Training configuration
+    parser.add_argument('--num-steps', type=int, default=50, help='Number of training steps')
+    parser.add_argument('--batch-size', type=int, default=8, help='Batch size')
+    parser.add_argument('--learning-rate', type=float, default=3e-4, help='Learning rate')
+    parser.add_argument('--use-amp', action='store_true', help='Use automatic mixed precision')
+
+    # Quality-tracking configuration (opt-in via --eval-interval > 0)
+    parser.add_argument('--eval-interval', type=int, default=0,
+                         help='Steps between validation evals. >0 enables quality tracking')
+    parser.add_argument('--eval-batches', type=int, default=10, help='Validation batches per eval')
+    parser.add_argument('--generate-every', type=int, default=0,
+                         help='Steps between text-generation samples (0 disables)')
+    parser.add_argument('--generate-tokens', type=int, default=60, help='Tokens to generate per sample')
+    parser.add_argument('--prompt', type=str, default='The history of', help='Text-generation prompt')
+    parser.add_argument('--save-checkpoints', action='store_true', help='Save the best-val-loss checkpoint')
+    parser.add_argument('--output-dir', type=str, default=None, help='Directory for metrics.json/checkpoints')
 
     # Profiling configuration
     parser.add_argument('--enable-pytorch-profiler', action='store_true', help='Enable PyTorch profiler')
@@ -1058,12 +1268,13 @@ def main():
 
     # Configure model
     config = TinyLlamaConfig(
-        vocab_size=args.vocab_size,
+        vocab_size=args.vocab_size if args.vocab_size is not None else 1000,
         hidden_dim=args.hidden_dim,
         n_layers=args.num_layers,
         n_heads=args.num_heads,
         intermediate_dim=args.hidden_dim * 4,  # Standard 4x multiplier for fair comparison
-        max_seq_len=args.seq_len
+        max_seq_len=args.seq_len,
+        dropout=args.dropout
     )
 
     # Configure fusion
@@ -1072,7 +1283,8 @@ def main():
         enable_flash_attention=args.enable_flash_attention if not args.disable_flash_attention else False,
         enable_swiglu_fusion=args.enable_swiglu_fusion if not args.disable_swiglu_fusion else False,
         enable_torch_compile=args.enable_torch_compile,
-        torch_compile_mode=args.torch_compile_mode
+        torch_compile_mode=args.torch_compile_mode,
+        flash_attention_dropout=args.dropout
     )
 
     # Handle fusion presets
@@ -1097,6 +1309,9 @@ def main():
         profile_dir=args.profile_dir
     )
 
+    print(f"\nDataset: {args.dataset}")
+    dataset = build_dataset_from_args(args, config, vocab_size_explicit=args.vocab_size is not None)
+
     # Validation mode
     if args.validate_setup:
         print("Running V2 validation checks...")
@@ -1107,7 +1322,8 @@ def main():
                 fusion_config=fusion_config,
                 profiler_config=profiler_config,
                 num_steps=3,
-                batch_size=4
+                batch_size=4,
+                dataset=dataset
             )
             print("PASS V2 validation successful! Fusion optimizations working correctly.")
             return
@@ -1124,7 +1340,15 @@ def main():
             num_steps=args.num_steps,
             batch_size=args.batch_size,
             learning_rate=args.learning_rate,
-            use_amp=args.use_amp
+            use_amp=args.use_amp,
+            dataset=dataset,
+            eval_interval=args.eval_interval,
+            eval_batches=args.eval_batches,
+            generate_every=args.generate_every,
+            generate_tokens=args.generate_tokens,
+            prompt=args.prompt,
+            save_checkpoints=args.save_checkpoints,
+            output_dir=args.output_dir,
         )
 
         print(f"\nV2 training completed successfully!")
@@ -1172,3 +1396,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+    if 'datasets' in sys.modules:
+        # Avoid a PyGILState_Release crash on exit from streaming-dataset threads.
+        safe_exit(0)
