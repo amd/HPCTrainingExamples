@@ -46,6 +46,259 @@ After completing this version, you will be able to:
 - **Solution**: Automatic fusion through torch.compile()
 - **Expected Benefit**: Additional 10-20% speedup through automatic optimizations
 
+## Workshop Exercises
+
+**Host–GPU affinity:** On multi-NUMA systems, it is crucial to pin the CPU cores, local memory, and GPU correctly. Poor affinity increases cross-socket traffic significantly causing misleading timings.
+A quick way to pin the Python process to the first CPU and GPU is:
+```bash
+ROCR_VISIBLE_DEVICES=0 numactl -C 0 -m 0
+```
+See the [Affinity exercises](https://github.com/amd/HPCTrainingExamples/tree/main/Affinity) for how to discover your topology and set the affinity accordingly.
+
+
+### Exercise 1: Kernel Fusion Analysis
+
+**Objective**: Compare the unfused, fused, and compiled configurations on the same `tiny_llama_v2.py` code path to quantify the benefits of fusion.
+
+
+#### Step 1: Three-way throughput comparison
+
+From `version2_pytorch_fused/`, run the same batch size, sequence length, and step count three times. Save each run to its own `--profile-dir` so JSON summaries do not overwrite each other.
+
+```bash
+cd version2_pytorch_fused
+
+# 1. Unfused baseline (equivalent to Version 1)
+python tiny_llama_v2.py \
+  --batch-size 8 --seq-len 128 --num-steps 30 --disable-all-fusion \
+  --profile-dir ./bench_no_fusion
+
+# 2. Fused QKV + Flash Attention + SwiGLU
+python tiny_llama_v2.py \
+  --batch-size 8 --seq-len 128 --num-steps 30 \
+  --profile-dir ./bench_fused
+
+# 3. Fused + torch.compile
+python tiny_llama_v2.py \
+  --batch-size 8 --seq-len 128 --num-steps 30 --enable-torch-compile \
+  --profile-dir ./bench_torch_compile
+```
+
+Compare the performance you see for the different models. What are the differences?
+
+#### Step 2: Optional operator-level profiling
+
+Compare the kernel launch patterns between the three cases with the built-in PyTorch profiler:
+
+```bash
+python tiny_llama_v2.py \
+  --batch-size 8 --seq-len 128 --num-steps 10 --enable-pytorch-profiler \
+  --profile-dir ./fusion_analysis
+```
+Open the Chrome trace or TensorBoard timeline and compare the unfused and fused versions. Do you see the ~43% fewer attention-related kernels per layer reported by the Python script?
+
+#### Reference results
+
+The following reference results have been obtained on an MI300A with PyTorch 2.9.1 and ROCm 7.2.0 with the same model setup as described above.
+
+| Configuration | Throughput (samples/s) | Avg batch time (ms) | Peak device memory (MB) |
+|-----------------|------------------------|---------------------|-------------------------|
+| `--disable-all-fusion` (V1-equivalent) | 293 | 27.3 | 998 |
+| Default fused | 437 | 18.3 | 967 |
+| `--enable-torch-compile` | 794 | 10.1 | 875 |
+
+On this setup, fusion yields ~**1.5×** throughput over the unfused path; adding `torch.compile` reaches ~**2.7×** vs. unfused and ~**1.8×** vs. fused alone.
+With the short sequence length of `seq=128`, the majority of the memory is consumed by the weights and gradients leading to only minor differences in peak memory between the versions.
+Continue to exercise 2 to learn more about the impact of kernel fusion and Flash Attention on the memory consumption.
+
+### Exercise 2: Flash Attention Memory Analysis
+
+**Objective**: Show how peak device memory scales with sequence length for naive attention vs. Flash Attention.
+
+#### Memory scaling of unfused and fused attention
+
+Next, investigate how the memory consumption scales if we increase the sequence length with both naive unfused attention and the fused Flash Attention kernel.
+For this, enable `--enable-memory-profiling` so the summary reports **peak device memory** per run. Keep `batch-size 4` and `num-steps 20` fixed while sweeping sequence length.
+Run this for both variants and compare the scaling. Below, you can find some reference results to compare to.
+
+```bash
+for seq_len in 128 256 512 1024; do
+    python tiny_llama_v2.py \
+        --seq-len $seq_len \
+        --batch-size 4 \
+        --num-steps 20 \
+        --enable-memory-profiling \
+        --profile-dir ./flash_attention_seq${seq_len}
+done
+```
+
+#### Reference results
+
+The following reference results have been obtained on an MI300A with PyTorch 2.9.1 and ROCm 7.2.0 with the same model setup as described above.
+
+| Configuration | seq=128 | seq=256 | seq=512 | seq=1024 |
+|---------------|---------|---------|---------|----------|
+| `--disable-all-fusion` | 764 | 1031 | 1669 | 3471 |
+| Default fused (Flash Attention) | 764 | 967 | 1414 | 2302 |
+| Ratio | 1.00x | 1.06x | 1.18x | 1.51x |
+
+Clearly, the fused attention kernel reduces the required memory significantly. Why is that?
+Unfused attention materializes an $S \times S$ attention matrix, so the peak memory rises close to **quadratically** in sequence length once that tensor dominates. Flash Attention avoids storing the full matrix as it computes the local attention scores on-the-fly resulting in a roughly **linear** scaling in $S$. At `seq=128`, exhibit the same memory footprint since the the majority of the occupied memory is consumed by the weights and activations. The attention matrix only becomes the dominant factor for larger sequence lengths.
+
+Does the further fusion with `torch.compile` lower the peak even more? Try it out!
+
+### Exercise 3: Using ROCm Tools
+
+**Objective**: Explore ROCm profiling tools for hardware-level optimization.
+
+AMD offers three performance profiling tools for ROCm based applications:
+ - `rocprofv3` (hotspot analysis and timeline traces)
+ - `rocprof-sys` (hotspot and timeline profiling including CPU and MPI)
+ - `rocprof-compute` (in-depth profiling of kernel)
+
+For more details about these tools, see 
+[Appendix C of the TECHNICAL_APPENDICES.md](https://github.com/amd/HPCTrainingExamples/blob/main/MLExamples/TinyTransformer/TECHNICAL_APPENDICES.md#appendix-c-rocm-profiling-tools-reference).
+about each tool. 
+
+#### Step 1: rocprofv3 Basic Profiling
+
+Running rocprofv3 to collect GPU hotspots on this example would look like this:
+
+```bash
+rocprofv3 --kernel-trace -S --stats --truncate-kernels --output-format csv -- \
+     python tiny_llama_v1.py --batch-size 8 --seq-len 128 --num-steps 30
+```
+
+View the `<pid>_kernel_stats.csv` file to see the GPU kernel hotspots.
+
+Note: Since the statistics are computed per kernel name, the `--truncate-kernels` argument might collapse kernels with similar signatures into the same truncated name.
+
+#### Step 2: rocprof-sys System Analysis
+
+To collect a comprehensive timeline trace with host and device activity, run rocprof-sys as shown below:
+
+```bash
+rocprof-sys-run --profile --trace -- python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
+```
+
+Copy the `.proto` file to your laptop to visualize with the Perfetto browser based tool at [https://ui.perfetto.dev](https://ui.perfetto.dev).
+
+#### Step 3: rocprof-compute Advanced Analysis
+
+To collect roofline plots, run the following command:
+
+```bash
+rocprof-compute profile -n roof --kernel-names --roof-only --device 0 -- python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
+```
+
+This generates three PDF files: two roofline plots and a legend.
+
+To collect a profile, then analyze a particular kernel dispatch, run the following commands:
+
+```bash
+rocprof-compute profile -n ver2 --no-roof -- python3 tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
+rocprof-compute analyze -p workloads/ver2/MI300A_A1 --list-stats >& stats.txt
+rocprof-compute analyze -p workloads/ver2/MI300A_A1 --dispatch 1538 >& dispatch_1538.txt
+```
+
+The `--list-stats` option provides a hotspot list of GPU kernels and a list of dispatches. Pick a dispatch of the
+kernel that you want to analyze further and use that in the subsequent analyze command. For example, we are
+analyzing dispatch 1538 here.
+
+<!--
+**Expected Results:**
+- Detailed kernel performance metrics
+- Memory hierarchy utilization analysis
+- Optimization recommendations for Version 3
+-->
+
+### Exercise 4: Training on Real Text
+
+**Objective**: After focusing on profiling and optimizing the key kernels of the LLM architecture, the next step is to apply these to actual training on a real dataset.
+For this, we'll use the [wikimedia/wikipedia](https://huggingface.co/datasets/wikimedia/wikipedia) dataset to train the model to auto-complete sentences.
+
+#### Step 1: Environment setup
+
+Besides the `pytorch` package already used in the previous exercises, this exercise requires the `tokenizers` and `datasets` packages. On AAC6, the former is already provided by the `pytorch` module, so it's sufficient to run:
+```bash
+pip install --user datasets
+```
+On other systems, you might need to install both.
+
+The text is tokenized with the pretrained GPT-2 tokenizer (`--wiki-tokenizer`, default `gpt2`, vocab size 50,257) fetched from HuggingFace. The tokenized corpus is cached in `wiki_cache/` the first time the training script is executed with the new dataset enabled:
+```bash
+python3 tiny_llama_v2.py --dataset wikipedia --wiki-num-docs 3000
+```
+The flag `--dataset wikipedia` enables streaming the first `--wiki-num-docs` articles from [wikimedia/wikipedia](https://huggingface.co/datasets/wikimedia/wikipedia) (the dataset is not downloaded in full).
+After the first execution, the cached corpus is used directly.
+
+#### Step 2: Track learning quality
+
+Add `--eval-interval` to switch `tiny_llama_v2.py` from throughput profiling to quality tracking. Instead of samples/sec, it now reports **training/validation loss and validation perplexity** (lower is better) and periodic sample completions.
+It also enabled checkpointing:
+
+```bash
+python3 tiny_llama_v2.py --dataset wikipedia --wiki-num-docs 3000 \
+    --hidden-dim 256 --num-layers 4 --seq-len 128 --batch-size 16 \
+    --num-steps 1000 --eval-interval 50 --save-checkpoints --output-dir ./quality_runs
+```
+
+The metrics of the run are written to `quality_runs/<timestamp>/metrics.json`.
+Run the training and follow the resulting metrics. How do they behave and which common issue in AI training can you observe?
+
+#### Step 3: Try completions yourself
+
+Once you trained a first model, you can use the `evaluate_model.py` script to test its usefulness. Simply run:
+```bash
+python3 evaluate_model.py --checkpoint <path/to/best_model.pt> \
+    --wiki-num-docs 3000 --interactive --temperature 0.8
+```
+which will provide you with a prompt. Enter a sentence stub and press `Enter` and let the model auto-complete the sentence for you.
+
+Important: `--wiki-num-docs`/`--wiki-tokenizer` must match what the checkpoint was trained with, so the same cached corpus/tokenizer loads. The `--temperature` flag controls how greedily the next token will be sampled. Temperature can help avoid repetition loops on lightly-trained models by allowing less likely tokens to be chosen and thus slightly increasing the stochasticity.
+
+
+### Exercise 5: Throughput Tuning and Production-Scale Training
+
+Next, we'll investigate how our previous optimizations impact the actual training throughput on the new dataset.
+
+#### Step 1: Measure the effect of `torch.compile` and batch size
+
+First, try the previous optimizations and investigate if the previous improvements still show for the more realistic dataset. You can compare your results to the reference numbers provided below.
+```bash
+python3 tiny_llama_v2.py --dataset wikipedia --hidden-dim 768 --num-layers 12 --num-heads 12 --seq-len 128 --batch-size 32 --num-steps 100
+python3 tiny_llama_v2.py --dataset wikipedia --hidden-dim 768 --num-layers 12 --num-heads 12 --seq-len 128 --batch-size 32 --num-steps 100 --enable-torch-compile
+python3 tiny_llama_v2.py --dataset wikipedia --hidden-dim 768 --num-layers 12 --num-heads 12 --seq-len 128 --batch-size 128 --num-steps 100 --enable-torch-compile
+```
+
+Reference results (142M params, vocab 50,257 from the pretrained `gpt2` tokenizer, seq 128, full `SPX` MI300A):
+
+| Config | s/step | tokens/sec |
+|---|---|---|
+| Fusion only, batch 32 | 0.114 | 36,100 |
+| + `torch.compile` (mode=default), batch 32 | 0.098 | 41,700 |
+| + `torch.compile`, batch 128 | 0.343 | 47,800 |
+
+
+#### Step 2: Run the production job
+
+Next, we will run a more production-sized training job using a batch job.
+You can refer to the `train_job.sbatch` for AAC6, but be aware that you will need to adapt the SLURM settings for other systems, e.g. partition names, time limits, hardware available, software modules.
+The script launches a training run on the full 100,000-article dataset (~124M tokens, up to 100,000 steps, `--dropout 0.1`) with our prior optimizations enabled (kernel fusion, `torch.compile`).
+You can submit it (directly on AAC6 or with modification on other systems) with
+```bash
+sbatch train_job.sbatch
+
+# Override any setting without editing the file:
+sbatch --export=ALL,NUM_STEPS=20000,WIKI_NUM_DOCS=20000 train_job.sbatch
+```
+
+You can monitor the run by monitoring the run's `metrics.json` (or the SLURM log in `slurm_logs/`).
+The validation loss should fall steadily and then plateau. At this data scale, a 142M-parameter model has far more unique text to learn from than it can memorize before the loss stabilizes.
+
+A run with this configuration should reach a stable validation perplexity around **37** after roughly 30,000 steps and produces fluent, if simple and repetitive, Wikipedia-style completions.
+
+
 ## Architecture Enhancements and Fusion Techniques
 
 ### Mathematical Foundation of Kernel Fusion
@@ -473,258 +726,6 @@ def calculate_arithmetic_intensity(operation_type, batch_size, seq_len, hidden_d
 
     return intensity_metrics
 ```
-
-## Workshop Exercises
-
-**Host–GPU affinity:** On multi-NUMA systems, it is crucial to pin the CPU cores, local memory, and GPU correctly. Poor affinity increases cross-socket traffic significantly causing misleading timings.
-A quick way to pin the Python process to the first CPU and GPU is:
-```bash
-ROCR_VISIBLE_DEVICES=0 numactl -C 0 -m 0
-```
-See the [Affinity exercises](https://github.com/amd/HPCTrainingExamples/tree/main/Affinity) for how to discover your topology and set the affinity accordingly.
-
-
-### Exercise 1: Kernel Fusion Analysis
-
-**Objective**: Compare the unfused, fused, and compiled configurations on the same `tiny_llama_v2.py` code path to quantify the benefits of fusion.
-
-
-#### Step 1: Three-way throughput comparison
-
-From `version2_pytorch_fused/`, run the same batch size, sequence length, and step count three times. Save each run to its own `--profile-dir` so JSON summaries do not overwrite each other.
-
-```bash
-cd version2_pytorch_fused
-
-# 1. Unfused baseline (equivalent to Version 1)
-python tiny_llama_v2.py \
-  --batch-size 8 --seq-len 128 --num-steps 30 --disable-all-fusion \
-  --profile-dir ./bench_no_fusion
-
-# 2. Fused QKV + Flash Attention + SwiGLU
-python tiny_llama_v2.py \
-  --batch-size 8 --seq-len 128 --num-steps 30 \
-  --profile-dir ./bench_fused
-
-# 3. Fused + torch.compile
-python tiny_llama_v2.py \
-  --batch-size 8 --seq-len 128 --num-steps 30 --enable-torch-compile \
-  --profile-dir ./bench_torch_compile
-```
-
-Compare the performance you see for the different models. What are the differences?
-
-#### Step 2: Optional operator-level profiling
-
-Compare the kernel launch patterns between the three cases with the built-in PyTorch profiler:
-
-```bash
-python tiny_llama_v2.py \
-  --batch-size 8 --seq-len 128 --num-steps 10 --enable-pytorch-profiler \
-  --profile-dir ./fusion_analysis
-```
-Open the Chrome trace or TensorBoard timeline and compare the unfused and fused versions. Do you see the ~43% fewer attention-related kernels per layer reported by the Python script?
-
-#### Reference results
-
-The following reference results have been obtained on an MI300A with PyTorch 2.9.1 and ROCm 7.2.0 with the same model setup as described above.
-
-| Configuration | Throughput (samples/s) | Avg batch time (ms) | Peak device memory (MB) |
-|-----------------|------------------------|---------------------|-------------------------|
-| `--disable-all-fusion` (V1-equivalent) | 293 | 27.3 | 998 |
-| Default fused | 437 | 18.3 | 967 |
-| `--enable-torch-compile` | 794 | 10.1 | 875 |
-
-On this setup, fusion yields ~**1.5×** throughput over the unfused path; adding `torch.compile` reaches ~**2.7×** vs. unfused and ~**1.8×** vs. fused alone.
-With the short sequence length of `seq=128`, the majority of the memory is consumed by the weights and gradients leading to only minor differences in peak memory between the versions.
-Continue to exercise 2 to learn more about the impact of kernel fusion and Flash Attention on the memory consumption.
-
-### Exercise 2: Flash Attention Memory Analysis
-
-**Objective**: Show how peak device memory scales with sequence length for naive attention vs. Flash Attention.
-
-#### Memory scaling of unfused and fused attention
-
-Next, investigate how the memory consumption scales if we increase the sequence length with both naive unfused attention and the fused Flash Attention kernel.
-For this, enable `--enable-memory-profiling` so the summary reports **peak device memory** per run. Keep `batch-size 4` and `num-steps 20` fixed while sweeping sequence length.
-Run this for both variants and compare the scaling. Below, you can find some reference results to compare to.
-
-```bash
-for seq_len in 128 256 512 1024; do
-    python tiny_llama_v2.py \
-        --seq-len $seq_len \
-        --batch-size 4 \
-        --num-steps 20 \
-        --enable-memory-profiling \
-        --profile-dir ./flash_attention_seq${seq_len}
-done
-```
-
-#### Reference results
-
-The following reference results have been obtained on an MI300A with PyTorch 2.9.1 and ROCm 7.2.0 with the same model setup as described above.
-
-| Configuration | seq=128 | seq=256 | seq=512 | seq=1024 |
-|---------------|---------|---------|---------|----------|
-| `--disable-all-fusion` | 764 | 1031 | 1669 | 3471 |
-| Default fused (Flash Attention) | 764 | 967 | 1414 | 2302 |
-| Ratio | 1.00x | 1.06x | 1.18x | 1.51x |
-
-Clearly, the fused attention kernel reduces the required memory significantly. Why is that?
-Unfused attention materializes an $S \times S$ attention matrix, so the peak memory rises close to **quadratically** in sequence length once that tensor dominates. Flash Attention avoids storing the full matrix as it computes the local attention scores on-the-fly resulting in a roughly **linear** scaling in $S$. At `seq=128`, exhibit the same memory footprint since the the majority of the occupied memory is consumed by the weights and activations. The attention matrix only becomes the dominant factor for larger sequence lengths.
-
-Does the further fusion with `torch.compile` lower the peak even more? Try it out!
-
-### Exercise 3: Using ROCm Tools
-
-**Objective**: Explore ROCm profiling tools for hardware-level optimization.
-
-AMD offers three performance profiling tools for ROCm based applications:
- - `rocprofv3` (hotspot analysis and timeline traces)
- - `rocprof-sys` (hotspot and timeline profiling including CPU and MPI)
- - `rocprof-compute` (in-depth profiling of kernel)
-
-For more details about these tools, see 
-[Appendix C of the TECHNICAL_APPENDICES.md](https://github.com/amd/HPCTrainingExamples/blob/main/MLExamples/TinyTransformer/TECHNICAL_APPENDICES.md#appendix-c-rocm-profiling-tools-reference).
-about each tool. 
-
-#### Step 1: rocprofv3 Basic Profiling
-
-Running rocprofv3 to collect GPU hotspots on this example would look like this:
-
-```bash
-rocprofv3 --kernel-trace -S --stats --truncate-kernels --output-format csv -- \
-     python tiny_llama_v1.py --batch-size 8 --seq-len 128 --num-steps 30
-```
-
-View the `<pid>_kernel_stats.csv` file to see the GPU kernel hotspots.
-
-Note: Since the statistics are computed per kernel name, the `--truncate-kernels` argument might collapse kernels with similar signatures into the same truncated name.
-
-#### Step 2: rocprof-sys System Analysis
-
-To collect a comprehensive timeline trace with host and device activity, run rocprof-sys as shown below:
-
-```bash
-rocprof-sys-run --profile --trace -- python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
-```
-
-Copy the `.proto` file to your laptop to visualize with the Perfetto browser based tool at [https://ui.perfetto.dev](https://ui.perfetto.dev).
-
-#### Step 3: rocprof-compute Advanced Analysis
-
-To collect roofline plots, run the following command:
-
-```bash
-rocprof-compute profile -n roof --kernel-names --roof-only --device 0 -- python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
-```
-
-This generates three PDF files: two roofline plots and a legend.
-
-To collect a profile, then analyze a particular kernel dispatch, run the following commands:
-
-```bash
-rocprof-compute profile -n ver2 --no-roof -- python3 tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
-rocprof-compute analyze -p workloads/ver2/MI300A_A1 --list-stats >& stats.txt
-rocprof-compute analyze -p workloads/ver2/MI300A_A1 --dispatch 1538 >& dispatch_1538.txt
-```
-
-The `--list-stats` option provides a hotspot list of GPU kernels and a list of dispatches. Pick a dispatch of the
-kernel that you want to analyze further and use that in the subsequent analyze command. For example, we are
-analyzing dispatch 1538 here.
-
-<!--
-**Expected Results:**
-- Detailed kernel performance metrics
-- Memory hierarchy utilization analysis
-- Optimization recommendations for Version 3
--->
-
-### Exercise 4: Training on Real Text
-
-**Objective**: After focusing on profiling and optimizing the key kernels of the LLM architecture, the next step is to apply these to actual training on a real dataset.
-For this, we'll use the [wikimedia/wikipedia](https://huggingface.co/datasets/wikimedia/wikipedia) dataset to train the model to auto-complete sentences.
-
-#### Step 1: Environment setup
-
-Besides the `pytorch` package already used in the previous exercises, this exercise requires the `tokenizers` and `datasets` packages. On AAC6, the former is already provided by the `pytorch` module, so it's sufficient to run:
-```bash
-pip install --user datasets
-```
-On other systems, you might need to install both.
-
-The text is tokenized with the pretrained GPT-2 tokenizer (`--wiki-tokenizer`, default `gpt2`, vocab size 50,257) fetched from HuggingFace. The tokenized corpus is cached in `wiki_cache/` the first time the training script is executed with the new dataset enabled:
-```bash
-python3 tiny_llama_v2.py --dataset wikipedia --wiki-num-docs 3000
-```
-The flag `--dataset wikipedia` enables streaming the first `--wiki-num-docs` articles from [wikimedia/wikipedia](https://huggingface.co/datasets/wikimedia/wikipedia) (the dataset is not downloaded in full).
-After the first execution, the cached corpus is used directly.
-
-#### Step 2: Track learning quality
-
-Add `--eval-interval` to switch `tiny_llama_v2.py` from throughput profiling to quality tracking. Instead of samples/sec, it now reports **training/validation loss and validation perplexity** (lower is better) and periodic sample completions.
-It also enabled checkpointing:
-
-```bash
-python3 tiny_llama_v2.py --dataset wikipedia --wiki-num-docs 3000 \
-    --hidden-dim 256 --num-layers 4 --seq-len 128 --batch-size 16 \
-    --num-steps 1000 --eval-interval 50 --save-checkpoints --output-dir ./quality_runs
-```
-
-The metrics of the run are written to `quality_runs/<timestamp>/metrics.json`.
-Run the training and follow the resulting metrics. How do they behave and which common issue in AI training can you observe?
-
-#### Step 3: Try completions yourself
-
-Once you trained a first model, you can use the `evaluate_model.py` script to test its usefulness. Simply run:
-```bash
-python3 evaluate_model.py --checkpoint <path/to/best_model.pt> \
-    --wiki-num-docs 3000 --interactive --temperature 0.8
-```
-which will provide you with a prompt. Enter a sentence stub and press `Enter` and let the model auto-complete the sentence for you.
-
-Important: `--wiki-num-docs`/`--wiki-tokenizer` must match what the checkpoint was trained with, so the same cached corpus/tokenizer loads. The `--temperature` flag controls how greedily the next token will be sampled. Temperature can help avoid repetition loops on lightly-trained models by allowing less likely tokens to be chosen and thus slightly increasing the stochasticity.
-
-
-### Exercise 5: Throughput Tuning and Production-Scale Training
-
-Next, we'll investigate how our previous optimizations impact the actual training throughput on the new dataset.
-
-#### Step 1: Measure the effect of `torch.compile` and batch size
-
-First, try the previous optimizations and investigate if the previous improvements still show for the more realistic dataset. You can compare your results to the reference numbers provided below.
-```bash
-python3 tiny_llama_v2.py --dataset wikipedia --hidden-dim 768 --num-layers 12 --num-heads 12 --seq-len 128 --batch-size 32 --num-steps 100
-python3 tiny_llama_v2.py --dataset wikipedia --hidden-dim 768 --num-layers 12 --num-heads 12 --seq-len 128 --batch-size 32 --num-steps 100 --enable-torch-compile
-python3 tiny_llama_v2.py --dataset wikipedia --hidden-dim 768 --num-layers 12 --num-heads 12 --seq-len 128 --batch-size 128 --num-steps 100 --enable-torch-compile
-```
-
-Reference results (142M params, vocab 50,257 from the pretrained `gpt2` tokenizer, seq 128, full `SPX` MI300A):
-
-| Config | s/step | tokens/sec |
-|---|---|---|
-| Fusion only, batch 32 | 0.114 | 36,100 |
-| + `torch.compile` (mode=default), batch 32 | 0.098 | 41,700 |
-| + `torch.compile`, batch 128 | 0.343 | 47,800 |
-
-
-#### Step 2: Run the production job
-
-Next, we will run a more production-sized training job using a batch job.
-You can refer to the `train_job.sbatch` for AAC6, but be aware that you will need to adapt the SLURM settings for other systems, e.g. partition names, time limits, hardware available, software modules.
-The script launches a training run on the full 100,000-article dataset (~124M tokens, up to 100,000 steps, `--dropout 0.1`) with our prior optimizations enabled (kernel fusion, `torch.compile`).
-You can submit it (directly on AAC6 or with modification on other systems) with
-```bash
-sbatch train_job.sbatch
-
-# Override any setting without editing the file:
-sbatch --export=ALL,NUM_STEPS=20000,WIKI_NUM_DOCS=20000 train_job.sbatch
-```
-
-You can monitor the run by monitoring the run's `metrics.json` (or the SLURM log in `slurm_logs/`).
-The validation loss should fall steadily and then plateau. At this data scale, a 142M-parameter model has far more unique text to learn from than it can memorize before the loss stabilizes.
-
-A run with this configuration should reach a stable validation perplexity around **37** after roughly 30,000 steps and produces fluent, if simple and repetitive, Wikipedia-style completions.
 
 ## Key Performance Improvements
 
