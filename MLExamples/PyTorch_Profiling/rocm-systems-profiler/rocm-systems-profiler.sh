@@ -30,19 +30,29 @@ if [ ! -d data/cifar-100-python ]; then
 fi
 popd
 
-# Remove any stale rocprofsys-python3-output directories from previous runs so
-# that the glob in the final cd below (and any CTest pass regex that looks for
-# "perfetto-trace-") cannot match leftovers from earlier invocations.
-rm -rf ./rocprofsys-python3-output
+# Remove any stale output directories from previous runs so that the glob in
+# the final cd below (and any CTest pass regex that looks for "perfetto-trace-")
+# cannot match leftovers from earlier invocations. rocprof-sys renamed its output
+# directory from rocprofsys-python3-output (<= ROCm 7.2) to
+# rocprofiler-systems-python3-output (>= ROCm 7.14), so clean both.
+rm -rf ./rocprofsys-python3-output ./rocprofiler-systems-python3-output
 
 # Create the configuration for the system profiler:
 export RSP_CFG=${PROFILER_TOP_DIR}/rocm-system-profiler/rocprofiler-systems_$$.cfg
 rocprof-sys-avail -G $RSP_CFG
 
-# rocprof-sys >= v1.10 (ROCm 10.2) defaults to RocPD (USE_ROCPD=true,
-# USE_PERFETTO=false); this test surfaces the perfetto trace, so enable the
-# perfetto backend explicitly (env overrides the generated config).
-export ROCPROFSYS_USE_PERFETTO=1
+# This test surfaces the perfetto trace. rocprof-sys v1.10+ (ROCm 10.x) makes
+# RocPD the default output and deprecated ROCPROFSYS_USE_PERFETTO (renamed to
+# ROCPROFSYS_TRACE) in favour of a unified --output-format selector; selecting a
+# format there also enables the corresponding backend. Older versions lack
+# --output-format and still emit a perfetto trace via the env var. Detect which
+# mechanism this rocprof-sys supports and request a perfetto (proto) trace.
+output_format_args=()
+if rocprof-sys-sample --help=all 2>/dev/null | grep -q -- "--output-format"; then
+    output_format_args=(--output-format proto rocpd)
+else
+    export ROCPROFSYS_USE_PERFETTO=1
+fi
 
 # Execute the python script.
 
@@ -57,7 +67,7 @@ export ROCPROFSYS_USE_PERFETTO=1
 # Keep this <= 2 to stay well below any historical v1.3.0 deadlock threshold.
 # Other pytorch_profiling_*.sh tests are unaffected; the default in
 # train_cifar_100.py is still 4.
-rocprof-sys-sample -c $RSP_CFG -- \
+rocprof-sys-sample -c $RSP_CFG "${output_format_args[@]}" -- \
 python3 ${PROFILER_TOP_DIR}/train_cifar_100.py --batch-size 256 --max-steps 10 \
 --num-workers 2 \
 --data-path ${PROFILER_TOP_DIR}/data
@@ -67,12 +77,14 @@ rm -f $RSP_CFG
 
 # Surface the perfetto trace from the newest output dir so that the
 # CTest PASS_REGULAR_EXPRESSION "perfetto-trace-" can match.
-latest="$(ls -1dt rocprofsys-python3-output/*/ 2>/dev/null | head -1)"
+# rocprof-sys renamed its output directory from rocprofsys-python3-output
+# (<= ROCm 7.2) to rocprofiler-systems-python3-output (>= ROCm 7.14); accept either.
+latest="$(ls -1dt rocprofsys-python3-output/*/ rocprofiler-systems-python3-output/*/ 2>/dev/null | head -1)"
 if [[ -n "$latest" ]]; then
     cd "$latest"
     ls
 else
-    echo "ERROR: rocprof-sys produced no rocprofsys-python3-output/<ts>/ directory" >&2
+    echo "ERROR: rocprof-sys produced no rocprofsys-python3-output/<ts>/ or rocprofiler-systems-python3-output/<ts>/ directory" >&2
 fi
 
 exit $rc
