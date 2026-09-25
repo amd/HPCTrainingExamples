@@ -211,14 +211,16 @@ int main(int argc, char *argv[])
       dim3 grid((isize+2*nhalo+63)/64, (jsize+2*nhalo+3)/4, 1);
       dim3 block(64, 4, 1);
       init_core <<< grid, block >>> (x, nhalo, jsize, isize, 0.0);
-      hipDeviceSynchronize();
+      HIP_CHECK(hipGetLastError());
+      HIP_CHECK(hipDeviceSynchronize());
 
    }
 
    dim3 grid((isize+63)/64, (jsize+3)/4, 1);
    dim3 block(64, 4, 1);
    init_core2 <<< grid, block >>> (x, jsize, isize, jbegin, ibegin, sigma, x_center, y_center);
-   hipDeviceSynchronize();
+   HIP_CHECK(hipGetLastError());
+   HIP_CHECK(hipDeviceSynchronize());
 
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
    ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
@@ -243,7 +245,8 @@ int main(int argc, char *argv[])
       cpu_timer_start(&tstart_stencil);
 
       blur <<< grid, block >>> (x, xnew, jsize, isize);
-      hipDeviceSynchronize();
+      HIP_CHECK(hipGetLastError());
+      HIP_CHECK(hipDeviceSynchronize());
       roctxRangePop(); //Stencil
 
       SWAP_PTR(xnew, x, xtmp);
@@ -300,28 +303,32 @@ void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int n
    if (nleft == MPI_PROC_NULL){
 
       enforce_bcs_left <<< gridVrt, blockVrt >>> (x, nhalo, jsize);
-      hipDeviceSynchronize();
+      HIP_CHECK(hipGetLastError());
+      HIP_CHECK(hipDeviceSynchronize());
 
    }
 
    if (nrght == MPI_PROC_NULL){
 
       enforce_bcs_rght <<< gridVrt, blockVrt >>> (x, nhalo, jsize, isize);
-      hipDeviceSynchronize();
+      HIP_CHECK(hipGetLastError());
+      HIP_CHECK(hipDeviceSynchronize());
 
    }
 
    if (nbot == MPI_PROC_NULL){
 
       enforce_bcs_bot <<< gridHor, blockHor >>> (x, nhalo, isize);
-      hipDeviceSynchronize();
+      HIP_CHECK(hipGetLastError());
+      HIP_CHECK(hipDeviceSynchronize());
 
    }
       
    if (ntop == MPI_PROC_NULL){
 
       enforce_bcs_top <<< gridHor, blockHor >>> (x, nhalo, jsize, isize);
-      hipDeviceSynchronize();
+      HIP_CHECK(hipGetLastError());
+      HIP_CHECK(hipDeviceSynchronize());
 
    }
 
@@ -366,14 +373,16 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
    if (nleft != MPI_PROC_NULL){
 
       ghost_left_send <<< gridGhst, blockGhst >>> (xbuf_left_send, x, jlow, jhgh, nhalo, bufcount);
-      hipDeviceSynchronize();
+      HIP_CHECK(hipGetLastError());
+      HIP_CHECK(hipDeviceSynchronize());
 
    }
 
    if (nrght != MPI_PROC_NULL){
 
       ghost_rght_send <<< gridGhst, blockGhst >>> (xbuf_rght_send, x, jlow, jhgh, isize, nhalo, bufcount);
-      hipDeviceSynchronize();
+      HIP_CHECK(hipGetLastError());
+      HIP_CHECK(hipDeviceSynchronize());
 
    }
    roctxRangePop(); //LoadLeftRight
@@ -395,14 +404,16 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
    if (nrght != MPI_PROC_NULL){
 
       ghost_rght_recv <<< gridGhst, blockGhst >>> (xbuf_rght_recv, x, jlow, jhgh, isize, nhalo, bufcount);
-      hipDeviceSynchronize();
+      HIP_CHECK(hipGetLastError());
+      HIP_CHECK(hipDeviceSynchronize());
 
    }
 
    if (nleft != MPI_PROC_NULL){
 
       ghost_left_recv <<< gridGhst, blockGhst >>>  (xbuf_left_recv, x, jlow, jhgh, nhalo, bufcount);
-      hipDeviceSynchronize();
+      HIP_CHECK(hipGetLastError());
+      HIP_CHECK(hipDeviceSynchronize());
 
    }
    roctxRangePop(); //UnpackLeftRight
