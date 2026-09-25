@@ -1,4 +1,29 @@
 cmake_minimum_required(VERSION 3.0)
+
+# Pin clang to the newest GCC dir that actually ships libstdc++ (must run
+# before project(); FLAGS_INIT is what its compiler checks consult).
+if(NOT DEFINED GCC_LIBSTDCXX_PINNED)
+  set(_cxx "$ENV{CXX}")
+  if(_cxx STREQUAL "")
+    set(_cxx "${CMAKE_CXX_COMPILER}")
+  endif()
+  if(_cxx MATCHES "clang")
+    file(GLOB _gcc_dirs LIST_DIRECTORIES true /usr/lib/gcc/x86_64-linux-gnu/*)
+    list(SORT _gcc_dirs COMPARE NATURAL ORDER DESCENDING)
+    foreach(_d ${_gcc_dirs})
+      if(EXISTS "${_d}/libstdc++.so" OR EXISTS "${_d}/libstdc++.a")
+        set(_pin "--gcc-install-dir=${_d}")
+        string(APPEND CMAKE_C_FLAGS_INIT   " ${_pin}")
+        string(APPEND CMAKE_CXX_FLAGS_INIT " ${_pin}")
+        string(APPEND CMAKE_HIP_FLAGS_INIT " ${_pin}")
+        message(STATUS "Pinning clang libstdc++ to ${_d}")
+        break()
+      endif()
+    endforeach()
+  endif()
+  set(GCC_LIBSTDCXX_PINNED TRUE)
+endif()
+
 project(GhostExchange)
 
 set (CMAKE_C_STANDARD 99)
