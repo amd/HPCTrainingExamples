@@ -39,7 +39,7 @@ BUILDDIR=$(mktemp -d)
 trap 'rm -rf ${BUILDDIR}' EXIT
 cd ${BUILDDIR}
 
-git clone --branch v$HYPRE_VERSION https://github.com/hypre-space/hypre.git "hypre"
+git clone --depth 1 --single-branch --branch v$HYPRE_VERSION https://github.com/hypre-space/hypre.git "hypre"
 
 pushd "hypre/src/test"
 

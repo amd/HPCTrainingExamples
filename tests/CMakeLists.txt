@@ -1559,6 +1559,7 @@ set_property(TEST PETSc_AMDFlang_Snes_Ex21 PROPERTY SKIP_REGULAR_EXPRESSION "mod
 add_test(NAME HYPRE_IJ COMMAND ../hypre_ij.sh )
 set_property(TEST HYPRE_IJ PROPERTY PASS_REGULAR_EXPRESSION "Iterations = 18")
 set_property(TEST HYPRE_IJ PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'hypre'")
+set_property(TEST HYPRE_IJ PROPERTY TIMEOUT 1800)
 
 # ELPA tests
 add_test(NAME ELPA_Install COMMAND ../elpa_install_test.sh )
