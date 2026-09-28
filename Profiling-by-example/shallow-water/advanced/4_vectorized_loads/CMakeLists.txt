@@ -49,6 +49,9 @@ endif (DEFINED ENV{HIP_PATH})
 
 add_executable(shallow_mpi ${SHALLOW_CXX_SRCS} ${SHALLOW_HIP_SRCS} )
 target_link_libraries(shallow_mpi PRIVATE MPI::MPI_CXX rocprofiler-sdk-roctx::rocprofiler-sdk-roctx)
+if (NOT MPI_CXX_LIBRARIES)
+  set_target_properties(shallow_mpi PROPERTIES LINKER_LANGUAGE CXX)
+endif()
 
 # Make example runnable using ctest
 add_test(NAME ShallowWaterMPI COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 $<TARGET_FILE:shallow_mpi>)

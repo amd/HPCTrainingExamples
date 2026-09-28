@@ -57,5 +57,8 @@ set_source_files_properties(${JACOBI_HIP_SRCS} PROPERTIES LANGUAGE ${GPU_RUNTIME
 set_source_files_properties(${JACOBI_HIP_SRCS} PROPERTIES COMPILE_FLAGS "${HIPCC_FLAGS}")
 target_include_directories(Jacobi_hip PRIVATE $ENV{ROCM_PATH}/include/roctracer ${MPI_INCLUDE_PATH})
 target_link_libraries(Jacobi_hip PRIVATE ${MPI_LIBRARIES} ${HIPCC_LIBS})
+if (NOT MPI_CXX_LIBRARIES)
+  set_target_properties(Jacobi_hip PROPERTIES LINKER_LANGUAGE CXX)
+endif()
 
 install(TARGETS Jacobi_hip)
