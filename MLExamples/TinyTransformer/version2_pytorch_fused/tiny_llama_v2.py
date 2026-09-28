@@ -960,6 +960,26 @@ def train_tiny_llama_v2(
     print("=" * 70)
 
     quality_history = []
+
+    def save_metrics():
+        # Called after every eval so kill doesn't lose hole history.
+        if not run_dir:
+            return
+        with open(run_dir / 'metrics.json', 'w') as f:
+            json.dump({
+                'script': 'tiny_llama_v2',
+                'timestamp': datetime.now().isoformat(),
+                'config': config.to_dict(),
+                'fusion_config': fusion_config.to_dict(),
+                'training_params': {
+                    'num_steps': num_steps,
+                    'batch_size': batch_size,
+                    'learning_rate': learning_rate,
+                    'dropout': config.dropout,
+                    'use_amp': use_amp,
+                },
+                'history': quality_history,
+            }, f, indent=2)
     best_val_loss = float('inf')
     total_steps = num_steps
     start_time = time.time()
@@ -1068,6 +1088,8 @@ def train_tiny_llama_v2(
                     record['sample'] = sample
 
             quality_history.append(record)
+            if do_eval:
+                save_metrics()
         else:
             # progress logging for performance testing
             if step % 10 == 1 or step == total_steps:
@@ -1093,23 +1115,8 @@ def train_tiny_llama_v2(
                   f"perplexity: {final_with_val['val_ppl']:.2f}")
 
         if run_dir:
-            metrics_path = run_dir / 'metrics.json'
-            with open(metrics_path, 'w') as f:
-                json.dump({
-                    'script': 'tiny_llama_v2',
-                    'timestamp': datetime.now().isoformat(),
-                    'config': config.to_dict(),
-                    'fusion_config': fusion_config.to_dict(),
-                    'training_params': {
-                        'num_steps': num_steps,
-                        'batch_size': batch_size,
-                        'learning_rate': learning_rate,
-                        'dropout': config.dropout,
-                        'use_amp': use_amp,
-                    },
-                    'history': quality_history,
-                }, f, indent=2)
-            print(f"Metrics saved to: {metrics_path}")
+            save_metrics()
+            print(f"Metrics saved to: {run_dir / 'metrics.json'}")
             if save_checkpoints and checkpoint_path and checkpoint_path.exists():
                 print(f"Best checkpoint saved to: {checkpoint_path}")
 
