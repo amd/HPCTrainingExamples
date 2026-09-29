@@ -213,14 +213,13 @@ needs `COMMON_DIR` in the `sys.path` to find `zerocopy.Stager`, `HSA_XNACK=1`, a
 (non-pinned) host memory. When `STAGE` is unset these edits are inert, so the
 plain scaling runs are unaffected.
 
-Point `COMMON_DIR` at the shared helpers and enable XNACK. Anchoring to the repo
+Point `COMMON_DIR` at the shared helpers: anchoring to the repo
 root makes the export work from any directory (the manual flow above leaves you
 in `imagenet_test`, two levels below `common/`, so a bare `../common` would not
 resolve):
 
 ```bash
 export COMMON_DIR="$(git rev-parse --show-toplevel)/MLExamples/Pytorch/common"
-export HSA_XNACK=1
 ```
 
 Set up the staging counters and (for `STAGE=migrate`) the zero-copy `Stager` at the top of `train()`:
@@ -362,7 +361,7 @@ We will compare `.to` (copy) vs `.migrate` staging looking at `STAGE_MS_PER_STEP
 STAGE=copy    HIP_VISIBLE_DEVICES=0 python main.py -a resnet50 --dummy \
   --dist-url 'tcp://127.0.0.1:23456' --dist-backend nccl \
   --multiprocessing-distributed --world-size 1 --rank 0 -b 128 -p 20 --epochs 1 |& tee stage_copy.log
-STAGE=migrate HIP_VISIBLE_DEVICES=0 python main.py -a resnet50 --dummy \
+STAGE=migrate HSA_XNACK=1 HIP_VISIBLE_DEVICES=0 python main.py -a resnet50 --dummy \
   --dist-url 'tcp://127.0.0.1:23456' --dist-backend nccl \
   --multiprocessing-distributed --world-size 1 --rank 0 -b 128 -p 20 --epochs 1 |& tee stage_migrate.log
 ```
