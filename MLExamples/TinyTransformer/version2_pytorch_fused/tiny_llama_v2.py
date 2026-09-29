@@ -846,6 +846,7 @@ def train_tiny_llama_v2(
 
     # Create model with fusion
     model = TinyLlamaV2(config, fusion_config).to(device)
+    gen_model = model  # uncompiled reference, used for generate() to avoid recompile storms
 
     # Apply torch.compile if enabled
     if fusion_config.enable_torch_compile and TORCH_COMPILE_AVAILABLE:
@@ -1082,7 +1083,7 @@ def train_tiny_llama_v2(
                 print(f"Step {step:5d}/{total_steps} | Train Loss: {accum_loss:.4f}")
 
             if do_generate:
-                sample = generate(model, dataset, config.max_seq_len, device, prompt, generate_tokens)
+                sample = generate(gen_model, dataset, config.max_seq_len, device, prompt, generate_tokens)
                 if sample is not None:
                     print(f"   Sample @ step {step}: {sample!r}")
                     record['sample'] = sample
