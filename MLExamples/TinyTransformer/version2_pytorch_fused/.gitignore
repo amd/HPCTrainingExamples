@@ -1,0 +1,8 @@
+# Cached tokenizer + tokenized Wikipedia corpus (see wiki_dataset.py)
+wiki_cache/
+
+# Output of tiny_llama_v2.py quality-tracking runs (metrics.json + checkpoints)
+quality_runs/
+
+# SLURM batch job stdout/stderr logs (see train_job.sbatch)
+slurm_logs/
