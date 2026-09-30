@@ -8,8 +8,12 @@ ds.close()
 u_flat = u.flatten()
 
 u_valid = u_flat[np.abs(u_flat) < 1e36]
+nonfinite = np.count_nonzero(~np.isfinite(np.ma.compressed(u_flat)))
 
-if len(u_valid) > 0:
+if nonfinite > 0:
+    print(f"WARNING: {nonfinite} non-finite (NaN/Inf) values in diff.nc")
+    max_abs = np.nan
+elif len(u_valid) > 0:
     max_abs = np.max(np.abs(u_valid))
     print(f"Maximum absolute value: {max_abs}")
 else:
