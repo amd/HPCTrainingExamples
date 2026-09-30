@@ -190,10 +190,10 @@ Running rocprofv3 to collect GPU hotspots on this example would look like this:
 
 ```bash
 rocprofv3 --kernel-trace -S --stats --truncate-kernels --output-format csv -- \
-     python tiny_llama_v1.py --batch-size 8 --seq-len 128 --num-steps 30
+     python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
 ```
 
-View the `<pid>_kernel_stats.csv` file to see the GPU kernel hotspots.
+View the `<hostname>/<pid>_kernel_stats.csv` file to see the GPU kernel hotspots.
 
 Note: Since the statistics are computed per kernel name, the `--truncate-kernels` argument might collapse kernels with similar signatures into the same truncated name.
 
@@ -212,7 +212,7 @@ Copy the `.proto` file to your laptop to visualize with the Perfetto browser bas
 To collect roofline plots, run the following command:
 
 ```bash
-rocprof-compute profile -n roof --kernel-names --roof-only --device 0 -- python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
+rocprof-compute profile -n roof --kernel-names --roof-only --device 0 -- python tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 5
 ```
 
 This generates three PDF files: two roofline plots and a legend.
@@ -220,14 +220,14 @@ This generates three PDF files: two roofline plots and a legend.
 To collect a profile, then analyze a particular kernel dispatch, run the following commands:
 
 ```bash
-rocprof-compute profile -n ver2 --no-roof -- python3 tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 30
+rocprof-compute profile -n ver2 --no-roof -k Cijk -- python3 tiny_llama_v2.py --batch-size 8 --seq-len 128 --num-steps 5
 rocprof-compute analyze -p workloads/ver2/MI300A_A1 --list-stats >& stats.txt
-rocprof-compute analyze -p workloads/ver2/MI300A_A1 --dispatch 1538 >& dispatch_1538.txt
+rocprof-compute analyze -p workloads/ver2/MI300A_A1 --dispatch 928 >& dispatch_928.txt
 ```
 
+The `-k Cijk` filter limits the profile to the GEMM kernels (their names start with `Cijk`), since these take the largest share of the GPU time in the rocprofv3 hotspot list from Step 1.
 The `--list-stats` option provides a hotspot list of GPU kernels and a list of dispatches. Pick a dispatch of the
-kernel that you want to analyze further and use that in the subsequent analyze command. For example, we are
-analyzing dispatch 1538 here.
+kernel that you want to analyze further and use that in the subsequent analyze command as `928`.
 
 <!--
 **Expected Results:**
@@ -302,6 +302,8 @@ Reference results (142M params, vocab 50,257 from the pretrained `gpt2` tokenize
 | Fusion only, batch 32 | 0.114 | 36,100 |
 | + `torch.compile` (mode=default), batch 32 | 0.098 | 41,700 |
 | + `torch.compile`, batch 128 | 0.343 | 47,800 |
+
+The absolute numbers can vary across software versions and systems, but the relative improvements should be comparable.
 
 
 #### Step 2: Run the production job
