@@ -48,6 +48,30 @@ After completing this version, you will be able to:
 
 ## Workshop Exercises
 
+> [!TIP]
+> You can also run this exercise in a container via Apptainer:
+> ```bash
+> apptainer pull rocm10.0_ubuntu24.04_py3.12_pytorch_release_2.11.0.sif docker://<registry>/rocm10.0_ubuntu24.04_py3.12_pytorch_release_2.11.0
+> apptainer shell --cleanenv --rocm rocm10.0_ubuntu24.04_py3.12_pytorch_release_2.11.0.sif
+> cd HPCTrainingExamples/MLExamples/TinyTransformer/version2_pytorch_fused
+> python3 -m venv --system-site-packages ./venv-pt
+> echo "/opt/venv/lib/python3.12/site-packages" > ./venv-pt/lib/python3.12/site-packages/_container_torch.pth
+> source ./venv-pt/bin/activate
+> pip3 install -r requirements.txt
+> ```
+> The extra `.pth` line is needed because a plain `python3 -m venv` inside the container loses access to the pre-installed ROCm PyTorch; it re-adds it to the new venv's search path.
+>
+> If you want to use `rocprof-sys` (Step 2) and `rocprof-compute` (Step 3) you can install them inside the container with:
+> ```bash
+> source ./setup_profilers_apptainer.sh
+> ```
+> The installation only happens the first time; source the script again in every new shell to set `ROCM_PATH` and `LD_LIBRARY_PATH`.
+> `rocprof-compute analyze` additionally needs particular Python packages, which the script installs into a separate venv `./venv-analyze`. Put it first on `PATH` only when analyzing:
+> ```bash
+> PATH=$PWD/venv-analyze/bin:$PATH rocprof-compute analyze -p workloads/ver2/MI300A_A1 --list-stats
+> ```
+> The container ships `rocprof-compute` 3.8.0, which no longer has `--kernel-names` and produces the roofline as an HTML file during `analyze` instead of PDFs; drop that flag from the Step 3 command.
+
 **Host–GPU affinity:** On multi-NUMA systems, it is crucial to pin the CPU cores, local memory, and GPU correctly. Poor affinity increases cross-socket traffic significantly causing misleading timings.
 A quick way to pin the Python process to the first CPU and GPU is:
 ```bash
@@ -223,7 +247,7 @@ Besides the `pytorch` package already used in the previous exercises, this exerc
 ```bash
 pip install --user datasets
 ```
-On other systems, you might need to install both.
+On other systems, you might need to install both. If you're running inside the Apptainer container described above, both are already installed via `requirements.txt` in your `venv-pt`.
 
 The text is tokenized with the pretrained GPT-2 tokenizer (`--wiki-tokenizer`, default `gpt2`, vocab size 50,257) fetched from HuggingFace. The tokenized corpus is cached in `wiki_cache/` the first time the training script is executed with the new dataset enabled:
 ```bash
@@ -235,7 +259,7 @@ After the first execution, the cached corpus is used directly.
 #### Step 2: Track learning quality
 
 Add `--eval-interval` to switch `tiny_llama_v2.py` from throughput profiling to quality tracking. Instead of samples/sec, it now reports **training/validation loss and validation perplexity** (lower is better) and periodic sample completions.
-It also enabled checkpointing:
+With `--save-checkpoints`, it also saves the best model so far:
 
 ```bash
 python3 tiny_llama_v2.py --dataset wikipedia --wiki-num-docs 3000 \
@@ -244,7 +268,7 @@ python3 tiny_llama_v2.py --dataset wikipedia --wiki-num-docs 3000 \
 ```
 
 The metrics of the run are written to `quality_runs/<timestamp>/metrics.json`.
-Run the training and follow the resulting metrics. How do they behave and which common issue in AI training can you observe?
+Run the training and follow the resulting metrics. How do training and validation loss evolve, and how large is the gap between them? What does the final perplexity suggest about how much more the model could learn?
 
 #### Step 3: Try completions yourself
 
@@ -294,7 +318,7 @@ sbatch --export=ALL,NUM_STEPS=20000,WIKI_NUM_DOCS=20000 train_job.sbatch
 ```
 
 You can monitor the run by monitoring the run's `metrics.json` (or the SLURM log in `slurm_logs/`).
-The validation loss should fall steadily and then plateau. At this data scale, a 142M-parameter model has far more unique text to learn from than it can memorize before the loss stabilizes.
+Compared to the short run in Exercise 4, this run trains a larger model on far more data for many more steps. The validation loss should fall steadily and then plateau.
 
 A run with this configuration should reach a stable validation perplexity around **37** after roughly 30,000 steps and produces fluent, if simple and repetitive, Wikipedia-style completions.
 
