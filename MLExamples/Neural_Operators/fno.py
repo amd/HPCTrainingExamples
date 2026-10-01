@@ -14,7 +14,7 @@ import the_well.utils
 import the_well.utils.download
 
 
-if torch.cuda.is_available:
+if torch.cuda.is_available():
     device = "cuda" 
     print("Running on a GPU!")
 else:

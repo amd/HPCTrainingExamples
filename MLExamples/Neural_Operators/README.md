@@ -23,6 +23,19 @@ cd HPCTrainingExamples/MLExamples/Neural_Operators
 pip3 install -r requirements.txt
 ```
 
+> [!TIP]
+> You can also setup your environment and run this exercise in a container via Apptainer:
+> ```bash
+> apptainer pull rocm10.0_ubuntu24.04_py3.12_pytorch_release_2.11.0.sif docker://<registry>/rocm10.0_ubuntu24.04_py3.12_pytorch_release_2.11.0
+> apptainer shell --cleanenv --rocm rocm10.0_ubuntu24.04_py3.12_pytorch_release_2.11.0.sif
+> cd HPCTrainingExamples/MLExamples/Neural_Operators
+> python3 -m venv --system-site-packages ./venv-pt
+> echo "/opt/venv/lib/python3.12/site-packages" > ./venv-pt/lib/python3.12/site-packages/_container_torch.pth
+> source ./venv-pt/bin/activate
+> pip3 install -r requirements.txt
+> ```
+> The extra `.pth` line is needed because a plain `python3 -m venv` inside the container loses access to the pre-installed ROCm PyTorch; it re-adds it to the new venv's search path.
+
 ## A Brief Introduction to Neural Operators
 Many tasks in computational science can be reduced to predicting how a system evolves in time.
 Given the state of the system at some point in time $U(x,t=t_0)$, the task is to predict the system's state after a time increment $\Delta t$.
@@ -115,10 +128,10 @@ data_loader = torch.utils.data.DataLoader(
     dataset = dataset_train,
     shuffle = True,
     batch_size = args.batchsize,
-    pin_memory = True
+    pin_memory = True,
     num_workers = 2,
     prefetch_factor=4
-}
+)
 ```
 - Data transfer between host and device is significantly impacted by the affinity between CPUs, GPUs, and memory on multi-GPU systems.
   Have a look at [this exercise](https://github.com/amd/HPCTrainingExamples/tree/main/Affinity) to learn how to set the correct affinity for a specific system.

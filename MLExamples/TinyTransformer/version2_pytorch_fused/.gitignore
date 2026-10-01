@@ -6,3 +6,7 @@ quality_runs/
 
 # SLURM batch job stdout/stderr logs (see train_job.sbatch)
 slurm_logs/
+
+# venvs created when running this exercise inside the Apptainer container (see README)
+venv-pt/
+venv-analyze/
