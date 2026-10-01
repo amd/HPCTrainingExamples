@@ -60,21 +60,14 @@ rocpd2pftrace -i outdir/shallow_results.db -d outdir -o shallow
 ```
 
 <p>
-<img src="../../figs/hip_trace_no_gaps.png" alt="HIP API trace after removing hipDeviceSynchronize" />
+<img src="../../figs/hip_trace_no_gaps.png" alt="HIP API trace without synchronization gaps" />
 </p>
 
 The kernels now abut one another instead of being separated by host round trips.
 
 ## Step 2: Check the roofline again
 
-`profile_app.py` in Roofline Extractor needs its
-[Python environment](../README.md#roofline-extractor) active:
-
-```bash
-python3 "$ROOFLINE_EXTRACTOR/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
-```
-
-The equivalent in `rocprof-compute`, whose `analyze` step needs its
+We collect it with `rocprof-compute`, whose `analyze` step needs its
 [Python environment](../README.md#rocprof-compute-analyze) active:
 
 ```bash
@@ -82,11 +75,11 @@ rocprof-compute profile -n 2_no_device_sync --roof-only --device 0 -k compute_rh
 rocprof-compute analyze -p workloads/2_no_device_sync/0
 ```
 
-Both are explained in [Roofline plots](../README.md#roofline-plots).
+The command is explained in [Roofline plots](../README.md#roofline-plots).
 
 <p>
-<img src="../../figs/roofline_2048.png" alt="Roofline of compute_rhs before removing synchronization" width="49%" />
-<img src="../../figs/roofline_no_sync.png" alt="Roofline of compute_rhs after removing synchronization" width="49%" />
+<img src="../../figs/roofline_2048.png" alt="Roofline of compute_rhs with synchronization" width="49%" />
+<img src="../../figs/roofline_no_sync.png" alt="Roofline of compute_rhs without synchronization" width="49%" />
 </p>
 
 This one is worth dwelling on, because the two plots look essentially identical. That is not

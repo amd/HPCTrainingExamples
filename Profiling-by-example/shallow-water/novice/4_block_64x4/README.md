@@ -39,7 +39,7 @@ Min(h) after run: 0.981776
 
 34551.31 MCUPS, 1.18x faster than stage 3's 29400.84.
 
-This is the end of the case study, so here is the full progression:
+Through this stage, the progression is:
 
 | Stage | Change | Elapsed (s) | MCUPS | Step speedup |
 |---|---|---|---|---|
@@ -67,21 +67,22 @@ is why it is worth having even though it is the smaller of the two block-size ch
 64-wide block improves the memory access pattern, and dropping back to 256 threads per block
 restores the scheduler's freedom to pack workgroups onto compute units.
 
-It is also worth noticing where the time actually went. In the kernel trace, `compute_rhs` improved
+It is also worth noticing where the time actually went. We run the kernel trace from
+[stage 0](../0_baseline/README.md#step-1-which-kernel-should-we-look-at) here and in
+`3_block_32x32`:
+
+```bash
+rocprofv3 --kernel-trace --stats -S -T -d outdir -o shallow -- ./shallow
+```
+
+In the kernel trace, `compute_rhs` improved
 by only 7 percent between stages 3 and 4, from 100.5 ms to 93.1 ms, while `update_stage` improved by
 21 percent and `final_update` by 23 percent. The change was aimed at the stencil but paid off most
 in the two streaming kernels, which are the ones that care most about contiguous access.
 
 ## Roofline
 
-`profile_app.py` in Roofline Extractor needs its
-[Python environment](../README.md#roofline-extractor) active:
-
-```bash
-python3 "$ROOFLINE_EXTRACTOR/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
-```
-
-The equivalent in `rocprof-compute`, whose `analyze` step needs its
+We collect it with `rocprof-compute`, whose `analyze` step needs its
 [Python environment](../README.md#rocprof-compute-analyze) active:
 
 ```bash
@@ -89,11 +90,11 @@ rocprof-compute profile -n 4_block_64x4 --roof-only --device 0 -k compute_rhs --
 rocprof-compute analyze -p workloads/4_block_64x4/0
 ```
 
-Both are explained in [Roofline plots](../README.md#roofline-plots).
+The command is explained in [Roofline plots](../README.md#roofline-plots).
 
 <p>
-<img src="../../figs/roofline_block_32x32.png" alt="Roofline of compute_rhs with 32x32 blocks, before this stage" width="49%" />
-<img src="../../figs/roofline_block_64x4.png" alt="Roofline of compute_rhs with 64x4 blocks, after this stage" width="49%" />
+<img src="../../figs/roofline_block_32x32.png" alt="Roofline of compute_rhs with 32x32 blocks" width="49%" />
+<img src="../../figs/roofline_block_64x4.png" alt="Roofline of compute_rhs with 64x4 blocks" width="49%" />
 </p>
 
 With 32x32 on the left and 64x4 on the right, the plots show no visible change, even though the code
@@ -118,12 +119,60 @@ Some experiments worth running yourself, since the answers are hardware-dependen
 - Enlarge the domain again beyond 2048x2048 and watch whether the gains keep coming or reverse.
 - Re-run the whole sequence on a different GPU generation and compare which steps mattered most.
 
-## Where to go next
+## Where the time goes inside the kernel
 
-The four iterations above only ever changed constants. The kernels themselves were never touched,
-which means there is a whole category of optimization still unexplored: rewriting `compute_rhs` to
-issue wider memory requests, staging a row of the grid in LDS, or fusing the streaming kernels. Those
-are larger edits than a one-line block size, and the profiler is less able to hand you the answer.
+The counters and the roofline locate the limit. Which instruction inside `compute_rhs` accounts
+for that time is the next question. Advanced Thread Trace (ATT) answers it. ATT records
+wavefronts on one compute unit, one instruction at a time. For each instruction we see how long
+it spent issuing and how long it spent waiting. The trace covers a single compute unit per
+shader engine, so we point it at one kernel.
 
-Whichever you try, compare it against 34551 MCUPS and keep the mass and minimum-depth lines in view.
-A well-reasoned optimization can still lose, and only the clock decides.
+The Makefile already passes `-g`. That is what lets the viewer place source lines next to the
+ISA. On Instinct, `--att-activity 8` streams the SQ activity counters into the trace.
+`--kernel-include-regex` keeps the capture on `compute_rhs`.
+
+```bash
+rocprofv3 --att --att-activity 8 --kernel-include-regex compute_rhs \
+    -d att -o att -- ./shallow
+```
+
+`rocprofv3` decodes the capture into a directory named `ui_output_agent_*_dispatch_*` under
+`att/`. We open that directory in the ROCprof Compute Viewer:
+
+```bash
+rocprof-compute-viewer att/ui_output_agent_*_dispatch_*
+```
+
+The viewer is a desktop application, installed separately from ROCm. We copy the directory to a
+workstation and open it there. The decoder ships with ROCm 7.13 and later. Collection options
+are in the
+[thread trace documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-thread-trace.html).
+The viewer is documented with
+[ROCprof Compute Viewer](https://rocm.docs.amd.com/projects/rocprof-compute-viewer/en/latest/).
+
+We start from the summary view. Hotspot then ranks instructions by the cycles they cost.
+Selecting a source line highlights its instructions in the assembly view. Wave States separates
+an explicit wait, such as `s_waitcnt`, from a stall.
+
+<!-- SNAPSHOT: summary view of compute_rhs -->
+<img src="../../figs/novice_4_block_64x4_att_summary.png" alt="Summary view of compute_rhs" />
+
+We then move to Hotspot to identify the instructions where `compute_rhs` spends its cycles:
+
+<!-- SNAPSHOT: hotspot view of compute_rhs -->
+<img src="../../figs/novice_4_block_64x4_att_hotspot.png" alt="Hotspot view of compute_rhs" />
+
+Selecting line 174, the first use of the loaded values, highlights the `s_waitcnt` that blocks
+there and the division that follows:
+
+```c++
+    const float ui  = hui / fmaxf(hi, eps);
+```
+
+<!-- SNAPSHOT: hotspot view with the wait and the division selected -->
+<img src="../../figs/novice_4_block_64x4_att_hotspot_wait_divide.png" alt="Hotspot view with the wait and the division selected" />
+
+The x-neighbour reads in this trace are `global_load_dwordx3` instructions: the compiler has
+already combined the three adjacent values of each array. The y-neighbour reads stay scalar
+`global_load_dword` instructions. The next stage rewrites those loads in the source. We trace
+the kernel again there. Continue to [`5_vectorized_loads`](../5_vectorized_loads).

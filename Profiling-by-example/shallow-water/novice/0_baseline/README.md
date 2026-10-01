@@ -116,14 +116,7 @@ because there is not enough boundary to go around.
 A roofline plot places a kernel against the machine's compute and bandwidth ceilings, which tells us
 whether it is limited by arithmetic or by memory traffic.
 
-`profile_app.py` in Roofline Extractor needs its
-[Python environment](../README.md#roofline-extractor) active:
-
-```bash
-python3 "$ROOFLINE_EXTRACTOR/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
-```
-
-The equivalent in `rocprof-compute`, whose `analyze` step needs its
+We collect it with `rocprof-compute`, whose `analyze` step needs its
 [Python environment](../README.md#rocprof-compute-analyze) active:
 
 ```bash
@@ -131,7 +124,7 @@ rocprof-compute profile -n 0_baseline --roof-only --device 0 -k compute_rhs --it
 rocprof-compute analyze -p workloads/0_baseline/0
 ```
 
-Both are explained in [Roofline plots](../README.md#roofline-plots).
+The command is explained in [Roofline plots](../README.md#roofline-plots).
 
 <p>
 <img src="../../figs/roofline_512.png" alt="Roofline of compute_rhs at 512x512" />
@@ -143,9 +136,9 @@ the memory bandwidth ceiling itself. A kernel that were simply bandwidth-limited
 that line. Being far beneath it means either the memory accesses are inefficient, or there is not
 enough parallelism in flight to hide memory latency.
 
-The extractor's per-kernel summary says the same thing in numbers: it puts `compute_rhs` at an
-arithmetic intensity of 4.82 flops per byte of HBM traffic, moving 1.9 TB/s against the 3.7 TB/s
-this MI300A can sustain, so it is leaving about half the available bandwidth unused.
+The per-kernel roofline data says the same thing in numbers: it puts `compute_rhs` at an
+arithmetic intensity of 2.88 FLOPs per byte of HBM traffic, moving 2.04 TB/s against the 4.03 TB/s
+measured ceiling, so it is leaving about half the available bandwidth unused.
 
 ### An aside: why `--iteration-multiplexing`
 
@@ -158,8 +151,6 @@ itself. `--roof-only` narrows that to 3 sets, but the multiplier is still there.
 `--iteration-multiplexing` removes the replay. Rather than collecting the same counters on every
 dispatch and re-running the program, it collects a different subset of counters on *different
 dispatches of the same kernel*, then combines them at the end. The application runs exactly once.
-On the 2048x2048 domain used from stage 1 onward, a full counter collection for `compute_rhs`
-dropped from 209 seconds to 24 seconds this way.
 
 The requirement is that each kernel be dispatched enough times to cover every subset, around 15 on
 current hardware with 50 recommended. Our solver launches `compute_rhs` 2000 times, so it has
@@ -179,7 +170,7 @@ covers the remaining caveats.
 
 The occupancy of about 24 percent points squarely at the second explanation. At 512x512 there
 simply are not enough cells to keep every compute unit supplied with work: 512x512 interior cells
-divided into 16x16 blocks is 1024 workgroups, spread across a GPU with 304 compute units.
+divided into 16x16 blocks is 1024 workgroups, spread across a GPU with 228 compute units.
 
 The cheapest possible experiment is to give the GPU more of the same work: grow the domain from
 512x512 to 2048x2048, a 16x increase in cells. If the diagnosis is right, throughput per cell should

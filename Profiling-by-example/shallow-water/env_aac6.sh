@@ -4,7 +4,7 @@
 #
 # Set SLURM_PARTITION to the partition your account uses on AAC6.
 # For the advanced track, pick the GPU_BIND / MPI_BIND pair that matches
-# your node layout (see AAC6.md).
+# your node layout (see AAC6_advanced.md).
 
 export SLURM_PARTITION=
 
@@ -12,7 +12,7 @@ source /etc/profile.d/lmod.sh
 source /shared/apps/ubuntu/lmod/overridetcl2lmod.sh
 
 module use /nfsapps/ubuntu-24.04-nightlies/modules/base
-module load rocm/10.1.0a20260901
+module load rocm/10.2.0a20260921
 module load openmpi
 
 # Two NUMA domains (typical SPX layout):
@@ -30,17 +30,6 @@ if [ -n "${ROCPROFSYS_NETWORK_INTERFACE}" ]; then
     export ROCPROFSYS_TIMEMORY_COMPONENTS="wall_clock network_stats"
     export ROCPROFSYS_USE_SAMPLING=true
     export ROCPROFSYS_SAMPLING_FREQ=100
-fi
-
-export ROOFLINE_EXTRACTOR=/nfsapps/ubuntu-24.04/opt/rooflineExtractor
-
-# Novice profile.sh roofline backend: extractor (default) or rocprof-compute
-export ROOFLINE_TOOL=extractor
-# export ROOFLINE_TOOL=rocprof-compute
-
-export ROOFLINE_VENV="${HOME}/roofline-venv"
-if [ -f "${ROOFLINE_VENV}/bin/activate" ]; then
-    source "${ROOFLINE_VENV}/bin/activate"
 fi
 
 # rocprof-compute analyze (see setup_rocprof_compute_venv.sh for one-time pip install).

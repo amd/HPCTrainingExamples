@@ -12,7 +12,7 @@ progression without editing any source.
 
 | Track | Scope | Tools it exercises |
 |---|---|---|
-| [`novice`](novice) | One GPU, five stages | `rocprofv3` kernel and HIP API traces, `OccupancyPercent` and `VALUBusy` counters, `rocprof-compute` and the Roofline Extractor |
+| [`novice`](novice) | One GPU, six stages | `rocprofv3` kernel and HIP API traces, `OccupancyPercent` and `VALUBusy` counters, `rocprof-compute` rooflines, thread traces in the ROCprof Compute Viewer |
 | [`advanced`](advanced) | Several GPUs with MPI, seven stages | per-rank `rocprofv3`, `rocprof-sys` timelines, thread traces through the ROCprof Trace Decoder and Compute Viewer, rooflines |
 
 Start with [`novice`](novice) unless you have already profiled single-process GPU code, which is what
@@ -20,7 +20,7 @@ Start with [`novice`](novice) unless you have already profiled single-process GP
 advanced track separates raw speed from scalability, and spends its second half on communication and
 decomposition rather than on kernels.
 
-On AAC6, see [AAC6.md](AAC6.md) for site-specific setup and batch submission.
+On AAC6, the novice setup is in [AAC6_novice.md](AAC6_novice.md) and the advanced setup is in [AAC6_advanced.md](AAC6_advanced.md).
 
 ## The application
 

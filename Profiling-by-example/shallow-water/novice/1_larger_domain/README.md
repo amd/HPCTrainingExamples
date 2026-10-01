@@ -79,14 +79,7 @@ rocprofv3 --pmc OccupancyPercent -T --output-format csv -d outdir -o occupancy -
 The main kernels went from roughly a quarter of the machine to roughly four fifths of it. The
 roofline tells the same story from a different angle:
 
-`profile_app.py` in Roofline Extractor needs its
-[Python environment](../README.md#roofline-extractor) active:
-
-```bash
-python3 "$ROOFLINE_EXTRACTOR/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
-```
-
-The equivalent in `rocprof-compute`, whose `analyze` step needs its
+We collect it with `rocprof-compute`, whose `analyze` step needs its
 [Python environment](../README.md#rocprof-compute-analyze) active:
 
 ```bash
@@ -94,16 +87,17 @@ rocprof-compute profile -n 1_larger_domain --roof-only --device 0 -k compute_rhs
 rocprof-compute analyze -p workloads/1_larger_domain/0
 ```
 
-Both are explained in [Roofline plots](../README.md#roofline-plots).
+The command is explained in [Roofline plots](../README.md#roofline-plots).
 
 <p>
-<img src="../../figs/roofline_512.png" alt="Roofline of compute_rhs at 512x512, before this stage" width="49%" />
-<img src="../../figs/roofline_2048.png" alt="Roofline of compute_rhs at 2048x2048, after this stage" width="49%" />
+<img src="../../figs/roofline_512.png" alt="Roofline of compute_rhs at 512x512" width="49%" />
+<img src="../../figs/roofline_2048.png" alt="Roofline of compute_rhs at 2048x2048" width="49%" />
 </p>
 
 Stage 0 at 512x512 is on the left, this stage at 2048x2048 on the right. `compute_rhs` has moved up
-toward the memory ceiling. Arithmetic intensity is unchanged, since we did not touch the arithmetic,
-but we are now much closer to extracting the bandwidth the hardware can deliver.
+toward the memory ceiling. Its HBM arithmetic intensity remains about the same, moving from 2.88 to
+2.85 FLOPs per byte, since we did not touch the arithmetic. We are now much closer to extracting
+the bandwidth the hardware can deliver.
 
 ## Step 2: Where is the remaining time going?
 
@@ -138,7 +132,7 @@ open the native `.db` file directly, with no `rocpd2pftrace` step. Optiq reads r
 configured for that format.
 
 <p>
-<img src="../../figs/hip_trace_gaps.png" alt="HIP API trace showing gaps between kernels" />
+<img src="../../figs/hip_trace_gaps.png" alt="HIP API trace with gaps between kernels" />
 </p>
 
 There are visible gaps after each kernel, and lining the kernel row up against the HIP API row shows

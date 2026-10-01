@@ -19,15 +19,6 @@ rocprofv3 --pmc VALUBusy -T --output-format csv -d outdir -o valu -- ./shallow
 rocprofv3 --kernel-trace --hip-trace -d outdir -o shallow -- ./shallow
 rocpd2pftrace -i outdir/shallow_results.db -d outdir -o shallow
 
-if [ "${ROOFLINE_TOOL:-extractor}" = rocprof-compute ]; then
-    rocprof-compute profile -n 1_larger_domain --overwrite --roof-only --device 0 -k compute_rhs \
-        --iteration-multiplexing -- ./shallow
-    rocprof-compute analyze -p "${STAGE_DIR}/workloads/1_larger_domain/0"
-else
-    : "${ROOFLINE_EXTRACTOR:?Set ROOFLINE_EXTRACTOR in env.sh to your rooflineExtractor checkout}"
-
-    module use /nfsapps/ubuntu-24.04/modules/base 2>/dev/null || true
-    module load roofline-extractor/dev 2>/dev/null || true
-
-    python3 "${ROOFLINE_EXTRACTOR}/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
-fi
+rocprof-compute profile -n 1_larger_domain --overwrite --roof-only --device 0 -k compute_rhs \
+    --iteration-multiplexing -- ./shallow
+rocprof-compute analyze -p "${STAGE_DIR}/workloads/1_larger_domain/0"
