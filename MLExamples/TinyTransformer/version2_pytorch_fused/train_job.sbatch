@@ -18,10 +18,9 @@ cd "$SLURM_SUBMIT_DIR"  # sbatch copies the script elsewhere; run from the submi
 mkdir -p slurm_logs
 
 echo "Job $SLURM_JOB_ID on $(hostname), started $(date)"
-amd-smi list 2>&1 || true
 
-# sbatch runs as a non-login shell, so the module must be loaded explicitly.
-module load pytorch/2.12.0
+module load rocm pytorch/2.12.0
+amd-smi list 2>&1 || true
 
 # --- Model / data config (production-size text pool; vocab size is fixed by the pretrained tokenizer) ---
 HIDDEN_DIM=${HIDDEN_DIM:-768}

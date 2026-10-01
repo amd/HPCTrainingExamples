@@ -77,6 +77,9 @@ try:
 except ImportError:
     DEEPSPEED_AVAILABLE = False
 
+    class FlopsProfiler:  # placeholder so the type hint below resolves without deepspeed installed
+        pass
+
 try:
     import psutil
     PSUTIL_AVAILABLE = True
