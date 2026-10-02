@@ -17,24 +17,36 @@ We set `SLURM_PARTITION` in `env.sh` to our partition. Then:
 
 ```bash
 ./setup_rocprof_compute_venv.sh
-source env.sh
-salloc -N 1 -p "$SLURM_PARTITION" --gpus=1 -t 02:00:00
 ```
 
-`env.sh` loads `rocm/10.2.0a20260921` and activates `~/rocprof-compute-venv`. The
-allocation keeps that environment. `rocprof-compute analyze` uses it.
+`env.sh` loads `rocm/10.2.0a20260921` and activates `~/rocprof-compute-venv`.
+`rocprof-compute analyze` uses it. Each batch script sources `env.sh` when the job
+starts.
 
-## Commands
+## Running a stage
+
+Each stage directory has `fom.sh` and `profile.sh`. They hold the Slurm request and
+the commands for that stage. We submit them from the stage directory. `submit.sh`
+reads the partition from `env.sh`:
 
 ```bash
 cd novice/0_baseline
+../../submit.sh fom.sh
+../../submit.sh profile.sh
+```
+
+`fom.sh` asks for one GPU and 30 minutes. It builds and runs:
+
+```bash
 make
 ./shallow
 ```
 
-`./shallow` prints the throughput. The stage README gives the `rocprofv3` command for
-that step. Every stage also collects a roofline. The workload name is the stage
-directory:
+`./shallow` prints the throughput. The log is `fom_<jobid>.out`.
+
+`profile.sh` asks for one GPU and two hours. It runs the `rocprofv3` commands from
+that stage's README. It then collects and reports the roofline, using the stage
+directory as the workload name:
 
 ```bash
 rocprof-compute profile -n 0_baseline --roof-only --device 0 -k compute_rhs \
@@ -42,5 +54,4 @@ rocprof-compute profile -n 0_baseline --roof-only --device 0 -k compute_rhs \
 rocprof-compute analyze -p workloads/0_baseline/0
 ```
 
-Each later stage starts the same way: `make`, then `./shallow`. The `rocprofv3`
-command for that stage is in its README.
+The log is `profile_<jobid>.out`. We repeat both submissions in each later stage.

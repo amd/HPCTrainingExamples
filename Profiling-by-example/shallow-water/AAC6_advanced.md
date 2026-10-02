@@ -19,30 +19,53 @@ NUMA domain, which is the SPX layout. On a single-NUMA node we switch `GPU_BIND`
 
 ```bash
 ./setup_rocprof_compute_venv.sh
-source env.sh
-salloc -N 1 -p "$SLURM_PARTITION" --exclusive --gres=gpu:4 -t 02:00:00
 ```
 
 `env.sh` loads `rocm/10.2.0a20260921` and Open MPI, and activates
-`~/rocprof-compute-venv`. The allocation keeps that environment. The job is exclusive
-so each rank gets CPU cores next to its GPU.
+`~/rocprof-compute-venv`. Each batch script sources `env.sh` when the job starts.
 
-## Commands
+For NIC counter profiling in stages 5 and 6, we set `ROCPROFSYS_NETWORK_INTERFACE`
+in `env.sh` to the node's HPC interface name. We find that name on a compute node:
+
+```bash
+rocprof-sys-avail -H -r net
+```
+
+The stage 6 README has the collection recipe. The NIC runs in `profile.sh` stay
+commented out until a two-node job is available.
+
+## Running a stage
+
+Each stage directory has `fom.sh` and `profile.sh`. They hold the Slurm request and
+the commands for that stage. We submit them from the stage directory. `submit.sh`
+reads the partition from `env.sh`:
 
 ```bash
 cd advanced/0_baseline
+../../submit.sh fom.sh
+../../submit.sh profile.sh
+```
+
+`fom.sh` asks for one exclusive node with four GPUs and allows two hours. The
+exclusive node gives each rank CPU cores next to its GPU. The script builds, then
+runs at 1, 2, and 4 ranks:
+
+```bash
 make
 for n in 1 2 4; do
     mpirun -n $n --map-by ppr:1:numa --bind-to numa ../gpu_bind.sh ./shallow_mpi
 done
 ```
 
-On an MI300A node configured in CPX mode, we use the CPX binding script:
+On an MI300A node configured in CPX mode, that launch uses the CPX binding script:
 
 ```bash
 mpirun -n $n --map-by slot ../gpu_bind_cpx.sh ./shallow_mpi
 ```
 
-The stage README gives the `rocprofv3`, `rocprof-compute`, and `rocprof-sys` commands
-for that step. We run them with the same `mpirun` line. Each later stage starts with
-`make`, then that launch.
+The log is `fom_<jobid>.out`.
+
+`profile.sh` allows two hours on the same exclusive node. It runs the `rocprofv3`,
+`rocprof-compute`, and `rocprof-sys` commands from that stage's README, with the same
+`mpirun` binding. The log is `profile_<jobid>.out`. We repeat both submissions in
+each later stage.
