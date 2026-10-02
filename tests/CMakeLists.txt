@@ -1107,6 +1107,8 @@ add_test(NAME Profiling_ShallowWater_Novice_3_Block_32x32_Makefile COMMAND ../pr
 add_test(NAME Profiling_ShallowWater_Novice_3_Block_32x32_CMakeLists COMMAND ../profiling_shallowwater_novice_cmakelists.sh 3_block_32x32)
 add_test(NAME Profiling_ShallowWater_Novice_4_Block_64x4_Makefile COMMAND ../profiling_shallowwater_novice_makefile.sh 4_block_64x4)
 add_test(NAME Profiling_ShallowWater_Novice_4_Block_64x4_CMakeLists COMMAND ../profiling_shallowwater_novice_cmakelists.sh 4_block_64x4)
+add_test(NAME Profiling_ShallowWater_Novice_5_Vectorized_Loads_Makefile COMMAND ../profiling_shallowwater_novice_makefile.sh 5_vectorized_loads)
+add_test(NAME Profiling_ShallowWater_Novice_5_Vectorized_Loads_CMakeLists COMMAND ../profiling_shallowwater_novice_cmakelists.sh 5_vectorized_loads)
 set_tests_properties(
   Profiling_ShallowWater_Novice_0_Baseline_Makefile
   Profiling_ShallowWater_Novice_0_Baseline_CMakeLists
@@ -1118,6 +1120,8 @@ set_tests_properties(
   Profiling_ShallowWater_Novice_3_Block_32x32_CMakeLists
   Profiling_ShallowWater_Novice_4_Block_64x4_Makefile
   Profiling_ShallowWater_Novice_4_Block_64x4_CMakeLists
+  Profiling_ShallowWater_Novice_5_Vectorized_Loads_Makefile
+  Profiling_ShallowWater_Novice_5_Vectorized_Loads_CMakeLists
   PROPERTIES
     PASS_REGULAR_EXPRESSION "MCUPS"
     FAIL_REGULAR_EXPRESSION "NEGATIVE!"
@@ -2013,6 +2017,11 @@ add_test(NAME Profiling_ShallowWater_Novice_Block_64x4 COMMAND ../profiling_shal
 set_property(TEST Profiling_ShallowWater_Novice_Block_64x4 PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
 set_property(TEST Profiling_ShallowWater_Novice_Block_64x4 PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
 set_property(TEST Profiling_ShallowWater_Novice_Block_64x4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Profiling_ShallowWater_Novice_Vectorized_Loads COMMAND ../profiling_shallow_water_novice.sh 5_vectorized_loads )
+set_property(TEST Profiling_ShallowWater_Novice_Vectorized_Loads PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Novice_Vectorized_Loads PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Novice_Vectorized_Loads PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Profiling_ShallowWater_Advanced_Baseline COMMAND ../profiling_shallow_water_advanced.sh 0_baseline )
 set_property(TEST Profiling_ShallowWater_Advanced_Baseline PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")

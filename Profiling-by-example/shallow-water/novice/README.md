@@ -6,8 +6,7 @@ README.md from `HPCTrainingExamples/Profiling-by-example/shallow-water/novice` f
 This example is a guided, hands-on walkthrough of profiling and optimizing a HIP application on
 AMD GPUs. Rather than presenting a fast code and explaining why it is fast, it starts from a
 straightforward implementation and improves it one step at a time, where every step is motivated by
-something a profiling tool told us. The companion material is the ROCm blog article on
-[novice-level profiling](https://rocm.blogs.amd.com/software-tools-optimization/profiling-guide/novice/README.html).
+something a profiling tool told us.
 
 "Novice" here describes the starting assumptions, not the difficulty:
 
@@ -74,8 +73,11 @@ through them in order.
 | [`2_no_device_sync`](2_no_device_sync) | `rocprofv3` HIP API trace | Gaps between kernels caused by `hipDeviceSynchronize()` that a single stream already guarantees | Remove the redundant synchronizations | 21204.86 | 1.08x |
 | [`3_block_32x32`](3_block_32x32) | `rocprofv3` `VALUBusy` | Vector ALUs busy only 47 percent of the time; a larger tile caches the stencil better | Block size 16x16 to 32x32 | 29400.84 | 1.39x |
 | [`4_block_64x4`](4_block_64x4) | `rocprofv3` `VALUBusy`, `OccupancyPercent` | 32x32 raised `VALUBusy` but cost occupancy; a wide, short tile recovers both | Block size 32x32 to 64x4 | 34551.31 | 1.18x |
+| [`5_vectorized_loads`](5_vectorized_loads) | Advanced Thread Trace, `rocprof-compute` roofline | `compute_rhs` gets faster, but the application does not | `float4` x-loads, one reciprocal per depth | 33494.23 | 0.97x |
 
-Together the five stages give a cumulative 5.50x speedup, from 6282 to 34551 MCUPS.
+The first five stages give a cumulative 5.50x speedup, from 6282 to 34551 MCUPS. Stage 5 is the
+first change to the kernel body. It makes `compute_rhs` 2.8 percent faster, but the complete
+application is 3.1 percent slower. This leaves the cumulative speedup at 5.33x rather than 5.50x.
 
 All numbers quoted in this tutorial, both timings and counters, were measured on a single
 MI300A in SPX mode, taking the median of three runs. Your
@@ -109,41 +111,19 @@ That one module covers almost everything the tutorial uses:
 | `rocpd2csv`, `rocpd2summary` | Turning the same database into a CSV or a summary table | pandas |
 | `rocprof-compute profile` | Collecting the counters behind the roofline | none |
 | `rocprof-compute analyze` | Reporting those counters as tables and plots | its own pinned Python packages |
-| Roofline Extractor `profile_app.py` | The roofline plot shown at every stage | the code, plus its own Python packages |
 
 Every row marked "none" is ready the moment `module load rocm` succeeds. That includes
 `rocprof-compute profile`, so it is only the reporting half of `rocprof-compute` that needs
 anything more. `rocpd2csv` and `rocpd2summary` want any reasonably recent pandas, which many
 systems already provide; without it they print `Error: No module named 'pandas'` and write nothing.
-The last two rows are the ones that need environments of their own, which the next section sets up.
+The last row is the one that needs an environment of its own, which the next section sets up.
 The viewers used later need nothing installed on the cluster either, since Perfetto runs in a
 browser and ROCm Optiq is a desktop application.
 
-## Tools with Python dependencies
+## `rocprof-compute analyze`
 
-Exactly two things in this tutorial need a virtual environment of their own: the Roofline Extractor
-and `rocprof-compute analyze`. Neither is needed to build the code, run `rocprofv3`, run
-`rocprof-compute profile`, or export a trace with `rocpd2pftrace`.
-
-### Roofline Extractor
-
-The Roofline Extractor is not part of ROCm, so both the code and its Python dependencies have to be
-installed once, on a login node:
-
-```bash
-git clone https://github.com/AMD-HPC/rooflineExtractor.git ~/rooflineExtractor
-export ROOFLINE_EXTRACTOR=$HOME/rooflineExtractor
-../setup_roofline_extractor_venv.sh
-source ~/roofline-venv/bin/activate
-```
-
-Activate it in any shell where you intend to run `profile_app.py`. On AAC6, point
-`ROOFLINE_EXTRACTOR` at the site install and let `env.sh` activate `~/roofline-venv`; see
-[AAC6.md](../AAC6.md). Some sites ship a pre-built install or a module wrapper
-(`roofline-extractor-profile`); those call the same `profile_app.py` with Python already configured.
-
-### `rocprof-compute analyze`
-
+Only `rocprof-compute analyze` needs a virtual environment. We do not need it to build the code,
+run `rocprofv3`, collect a profile, or export a trace with `rocpd2pftrace`.
 `rocprof-compute` is a Python application throughout, but only its `analyze` mode has pinned
 dependencies that ROCm does not install for you, so without them `analyze` stops with a list of
 missing packages instead of a report while `profile` carries on working. The pinned list itself
@@ -161,33 +141,13 @@ is simplest, since it does not interfere with `profile` mode, `rocprofv3`, or bu
 
 ## Roofline plots
 
-Every stage shows its roofline twice, once with the Roofline Extractor and once with
-`rocprof-compute`. Novice `profile.sh` runs one backend per job; set
-`ROOFLINE_TOOL` in `env.sh` to `extractor` (default) or `rocprof-compute`.
-
-The extractor is invoked as `profile_app.py` (Option 1 in the upstream README), with its
-[environment](#roofline-extractor) active:
-
-```bash
-python3 "$ROOFLINE_EXTRACTOR/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
-```
-
-Set `--arch` to match your GPU (`MI300A`, `MI300X`, `MI250X`, and others listed in the extractor
-README). The extractor writes the plot itself, as `roofline_out/counters.html`; its options and
-outputs are documented in the
-[Roofline Extractor repo](https://github.com/AMD-HPC/rooflineExtractor).
-
-The `rocprof-compute` roofline is collected and then reported, and only the second command needs
+We collect each roofline with `rocprof-compute`. Only the second command needs
 the [`rocprof-compute analyze` environment](#rocprof-compute-analyze):
 
 ```bash
 rocprof-compute profile -n 0_baseline --roof-only --device 0 -k compute_rhs --iteration-multiplexing -- ./shallow
 rocprof-compute analyze -p workloads/0_baseline/0
 ```
-
-The extractor is an AMD research project whose capabilities are being integrated into
-`rocprof-compute` for a future release, so it produces the plots in this tutorial for now and the
-`rocprof-compute` commands are given alongside for when that lands.
 
 ## Getting a GPU and building
 
