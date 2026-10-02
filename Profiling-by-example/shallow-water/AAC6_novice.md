@@ -54,4 +54,6 @@ rocprof-compute profile -n 0_baseline --roof-only --device 0 -k compute_rhs \
 rocprof-compute analyze -p workloads/0_baseline/0
 ```
 
-The log is `profile_<jobid>.out`. We repeat both submissions in each later stage.
+The log is `profile_<jobid>.out`. The roofline plot is
+`workloads/0_baseline/0/empirRoof_gpu-0.html`. We repeat both submissions in each
+later stage, with that stage's directory name in place of `0_baseline`.
