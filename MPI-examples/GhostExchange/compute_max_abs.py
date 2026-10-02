@@ -2,7 +2,7 @@ import netCDF4 as nc
 import numpy as np
 
 ds = nc.Dataset('diff.nc', 'r')
-u = ds.variables['u'][:]
+u = ds.variables['u'][[0, -1]]
 ds.close()
 
 u_flat = u.flatten()
