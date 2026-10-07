@@ -6,8 +6,17 @@
 #ifdef USE_PNETCDF
 #include <pnetcdf.h>
 #endif
+#include <vector>
 #include <cmath>
 #include <hip/hip_runtime.h>
+#include <roctx.h>
+
+#include "timer.h"
+
+#define SWAP_PTR(xnew,xold,xtmp) (xtmp=xnew, xnew=xold, xold=xtmp)
+
+#define xv(j,i) x[(j+nhalo)*jstride+(i+nhalo)]
+#define xvnew(j,i) xnew[(j+nhalo)*jstride+(i+nhalo)]
 
 #define HIP_CHECK(cmd) \
 {\
@@ -17,189 +26,177 @@
         exit(EXIT_FAILURE);\
       }\
 }
-#include <vector>
-#include "malloc2D.h"
-#include "timer.h"
 
-__global__ void init_core (double **x, int nhalo, int jsize, int isize, double val)
+__global__ void init_core (double *x, int nhalo, int jsize, int isize, double val, int jstride)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x -nhalo;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y -nhalo;
     if (tidy < jsize+nhalo && tidx < isize+nhalo) {
-        x[tidy][tidx] = val;
+        xv(tidy,tidx) = val;
     }
 }
 
-__global__ void init_core2 (double **x, int jsize, int isize, int jbegin, int ibegin, double sigma, double x_center, double y_center)
+__global__ void init_core2 (double *x, int nhalo, int jsize, int isize, int jbegin, int ibegin, double sigma, double x_center, double y_center, int jstride)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y;
     if (tidy < jsize && tidx < isize) {
            double x_phys = tidx + ibegin;
            double y_phys = tidy + jbegin;
-           x[tidy][tidx] = exp(-0.5 * ( ((x_phys - x_center)*(x_phys - x_center)/(sigma*sigma)
+           xv(tidy,tidx) = exp(-0.5 * ( ((x_phys - x_center)*(x_phys - x_center)/(sigma*sigma)
                            + (y_phys - y_center)*(y_phys - y_center)/(sigma*sigma)) ));
     }
 }
 
-__global__ void blur (double **x, double **xnew, int jsize, int isize)
+__global__ void blur (double *x, double *xnew, int jsize, int isize, int jstride, int nhalo)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y;
     if (tidy < jsize && tidx < isize) {
-        xnew[tidy][tidx] = ( x[tidy][tidx] + x[tidy][tidx-1] + x[tidy][tidx+1] + x[tidy-1][tidx] + x[tidy+1][tidx] )/5.0;
+        xvnew(tidy,tidx) = ( xv(tidy,tidx) + xv(tidy,tidx-1) + xv(tidy,tidx+1) + xv(tidy-1,tidx) + xv(tidy+1,tidx) )/5.0;
     }
 }
 
-__global__ void enforce_bcs_left (double **x, int nhalo, int jsize)
+__global__ void blur_inner (double *x, double *xnew, int jsize, int isize, int jstride, int nhalo)
+{
+    int tidx = threadIdx.x + blockIdx.x * blockDim.x + nhalo;
+    int tidy = threadIdx.y + blockIdx.y * blockDim.y + nhalo;
+    if (tidy < jsize - nhalo && tidx < isize - nhalo) {
+        xvnew(tidy,tidx) = ( xv(tidy,tidx) + xv(tidy,tidx-1) + xv(tidy,tidx+1) + xv(tidy-1,tidx) + xv(tidy+1,tidx) )/5.0;
+    }
+}
+
+__global__ void blur_outer_left (double *x, double *xnew, int jsize, int isize, int jstride, int nhalo)
+{
+    int tidx = threadIdx.x + blockIdx.x * blockDim.x;
+    int tidy = threadIdx.y + blockIdx.y * blockDim.y;
+    if (tidy < jsize && tidx < nhalo) {
+        xvnew(tidy,tidx) = ( xv(tidy,tidx) + xv(tidy,tidx-1) + xv(tidy,tidx+1) + xv(tidy-1,tidx) + xv(tidy+1,tidx) )/5.0;
+    }
+}
+
+__global__ void blur_outer_right (double *x, double *xnew, int jsize, int isize, int jstride, int nhalo)
+{
+    int tidx = threadIdx.x + blockIdx.x * blockDim.x + isize - nhalo;
+    int tidy = threadIdx.y + blockIdx.y * blockDim.y;
+    if (tidy < jsize && tidx < isize) {
+        xvnew(tidy,tidx) = ( xv(tidy,tidx) + xv(tidy,tidx-1) + xv(tidy,tidx+1) + xv(tidy-1,tidx) + xv(tidy+1,tidx) )/5.0;
+    }
+}
+
+__global__ void blur_outer_top (double *x, double *xnew, int jsize, int isize, int jstride, int nhalo)
+{
+    int tidx = threadIdx.x + blockIdx.x * blockDim.x + nhalo;
+    int tidy = threadIdx.y + blockIdx.y * blockDim.y + jsize - nhalo;
+    if (tidy < jsize && tidx < isize - nhalo) {
+        xvnew(tidy,tidx) = ( xv(tidy,tidx) + xv(tidy,tidx-1) + xv(tidy,tidx+1) + xv(tidy-1,tidx) + xv(tidy+1,tidx) )/5.0;
+    }
+}
+
+__global__ void blur_outer_bottom (double *x, double *xnew, int jsize, int isize, int jstride, int nhalo)
+{
+    int tidx = threadIdx.x + blockIdx.x * blockDim.x + nhalo;
+    int tidy = threadIdx.y + blockIdx.y * blockDim.y;
+    if (tidy < nhalo && tidx < isize- nhalo) {
+        xvnew(tidy,tidx) = ( xv(tidy,tidx) + xv(tidy,tidx-1) + xv(tidy,tidx+1) + xv(tidy-1,tidx) + xv(tidy+1,tidx) )/5.0;
+    }
+}
+
+__global__ void enforce_bcs_left (double *x, int nhalo, int jsize, int jstride)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x - nhalo;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y;
     if (tidy < jsize && tidx < 0) {
-        x[tidy][tidx] = x[tidy][0];
+        xv(tidy,tidx) = xv(tidy,0);
     }
 }
 
-__global__ void enforce_bcs_rght (double **x, int nhalo, int jsize, int isize)
+__global__ void enforce_bcs_rght (double *x, int nhalo, int jsize, int isize, int jstride)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y;
     if (tidy < jsize  && tidx < nhalo) {
-        x[tidy][isize+tidx] = x[tidy][isize-1];
+        xv(tidy,isize+tidx) = xv(tidy,isize-1);
     }
 }
 
-__global__ void enforce_bcs_bot (double **x, int nhalo, int isize)
+__global__ void enforce_bcs_bot (double *x, int nhalo, int isize, int jstride)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x - nhalo;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y - nhalo;
     if (tidy < 0 && tidx < isize + nhalo) {
-        x[tidy][tidx] = x[0][tidx];
+        xv(tidy,tidx) = xv(0,tidx);
     }
 }
 
-__global__ void enforce_bcs_top (double **x, int nhalo, int jsize, int isize)
+__global__ void enforce_bcs_top (double *x, int nhalo, int jsize, int isize, int jstride)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x - nhalo;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y;
     if (tidy < nhalo && tidx < isize + nhalo) {
-        x[jsize+tidy][tidx] = x[jsize-1][tidx];
+        xv(jsize+tidy,tidx) = xv(jsize-1,tidx);
     }
 }
 
-__global__ void ghost_left_send (double *xbuf_left_send, double **x, int jlow, int jhgh, int nhalo, int bufcount)
+__global__ void ghost_left_send (double *xbuf_left_send, double *x, int jlow, int jhgh, int nhalo, int bufcount, int jstride)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y + jlow;
     int offset = (tidy - jlow) * nhalo + tidx;
     if (tidy < jhgh && tidx < nhalo && offset < bufcount) {
-        xbuf_left_send[offset] = x[tidy][tidx];
+        xbuf_left_send[offset] = xv(tidy,tidx);
     }
 }
 
-__global__ void ghost_rght_send (double *xbuf_rght_send, double **x, int jlow, int jhgh, int isize, int nhalo, int bufcount)
+__global__ void ghost_rght_send (double *xbuf_rght_send, double *x, int jlow, int jhgh, int isize, int nhalo, int bufcount, int jstride)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y + jlow;
     int offset = (tidy - jlow) * nhalo + tidx;
     if (tidy < jhgh && tidx < nhalo && offset < bufcount) {
-        xbuf_rght_send[offset] = x[tidy][isize - nhalo + tidx];
+        xbuf_rght_send[offset] = xv(tidy,isize - nhalo + tidx);
     }
 }
 
-__global__ void ghost_rght_recv (double *xbuf_rght_recv, double **x, int jlow, int jhgh, int isize, int nhalo, int bufcount)
+__global__ void ghost_rght_recv (double *xbuf_rght_recv, double *x, int jlow, int jhgh, int isize, int nhalo, int bufcount, int jstride)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y + jlow;
     int offset = (tidy - jlow) * nhalo + tidx;
     if (tidy < jhgh && tidx < nhalo && offset < bufcount) {
-        x[tidy][isize + tidx] = xbuf_rght_recv[offset];
+        xv(tidy,isize + tidx) = xbuf_rght_recv[offset];
     }
 }
 
-__global__ void ghost_left_recv (double *xbuf_left_recv, double **x, int jlow, int jhgh, int nhalo, int bufcount)
+__global__ void ghost_left_recv (double *xbuf_left_recv, double *x, int jlow, int jhgh, int nhalo, int bufcount, int jstride)
 {
     int tidx = threadIdx.x + blockIdx.x * blockDim.x;
     int tidy = threadIdx.y + blockIdx.y * blockDim.y + jlow;
     int offset = (tidy - jlow) * nhalo + tidx;
     if (tidy < jhgh && tidx < nhalo && offset < bufcount) {
-        x[tidy][tidx - nhalo] = xbuf_left_recv[offset];
+        xv(tidy,tidx - nhalo) = xbuf_left_recv[offset];
     }
 }
 
-// ---------------------------------------------------------------------------------
-// hipErrorCheck() and print_affinity_info() code adapted from ORNL's hello_jobstep 
-// application: https://code.ornl.gov/olcf/hello_jobstep
-// ---------------------------------------------------------------------------------
-// Macro for checking errors in HIP API calls
-#define hipErrorCheck(call)                                                                 \
-do{                                                                                         \
-    hipError_t hipErr = call;                                                               \
-    if(hipSuccess != hipErr){                                                               \
-        printf("HIP Error - %s:%d: '%s'\n", __FILE__, __LINE__, hipGetErrorString(hipErr)); \
-        exit(0);                                                                            \
-    }                                                                                       \
-}while(0)
-
-void print_affinity_info (int rank)
-{
-    // If ROCR_VISIBLE_DEVICES is set, capture visible GPUs
-    const char* gpu_id_list;
-    const char* rocr_visible_devices = getenv("ROCR_VISIBLE_DEVICES");
-    if(rocr_visible_devices == NULL){
-        gpu_id_list = "N/A";
-    }
-    else{
-        gpu_id_list = rocr_visible_devices;
-    }
-
-    // Find how many GPUs HIP runtime says are available
-    int num_devices = 0;
-    hipErrorCheck( hipGetDeviceCount(&num_devices) );
-
-    int hwthread;
-    int thread_id = 0;
-    if(num_devices == 0){
-        hwthread = sched_getcpu();
-        printf("MPI %03d - HWT %03d\n",
-                    rank, hwthread);
-    }
-    else{
-
-        std::string rt_gpu_id_list = "";
-
-        // Loop over the GPUs available to each MPI rank
-        for(int i=0; i<num_devices; i++){
-
-            hipErrorCheck( hipSetDevice(i) );
-
-            // Concatenate per-MPIrank GPU info into strings for print
-            if(i > 0) rt_gpu_id_list.append(",");
-            rt_gpu_id_list.append(std::to_string(i));
-        }
-        hwthread = sched_getcpu();
-
-        printf("MPI %03d - HWT %03d - RT_GPU_ID %s - GPU_ID %s\n",
-                    rank, hwthread, rt_gpu_id_list.c_str(), gpu_id_list);
-    }
-}
-
-#define SWAP_PTR(xnew,xold,xtmp) (xtmp=xnew, xnew=xold, xold=xtmp)
 void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing, int &do_print);
-void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx);
+void Cartesian_print(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int jstride);
 #ifdef USE_PNETCDF
 void create_netcdf_file(const char *fname, int jmax, int imax, MPI_Comm comm, int *ncid, int *varid, int *varid_xcoord, int *varid_ycoord);
-void write_netcdf_soln(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int tstep, int ncid, int varid);
+void write_netcdf_soln(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int tstep, int ncid, int varid, int jstride);
 void write_netcdf_coords(int imax, int jmax, int nprocx, int nprocy, double Lx, double Ly, int ncid, int varid_xcoord, int varid_ycoord);
 void close_netcdf(int ncid);
 #endif
-void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop);
-void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize,
+void boundarycondition_update(double *x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop);
+void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize,
       int nleft, int nrght, int nbot, int ntop, int do_timing);
 void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, int nrght, int nbot, int ntop,
       int jmax, int imax, int nprocy, int nprocx, int do_timing, int do_print);
 
 double boundarycondition_time=0.0, ghostcell_time=0.0;
+
+double *xbuf_left_send, *xbuf_rght_send, *xbuf_rght_recv, *xbuf_left_recv;
+
+hipStream_t comp_stream, comm_stream;
 
 int main(int argc, char *argv[])
 {
@@ -208,9 +205,10 @@ int main(int argc, char *argv[])
    int rank, nprocs;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+   if (rank == 0) printf("------> Initializing the Problem\n");
    hipSetDevice(0);
-
-   print_affinity_info (rank);
+   HIP_CHECK(hipStreamCreateWithFlags(&comp_stream, hipStreamNonBlocking));
+   HIP_CHECK(hipStreamCreateWithFlags(&comm_stream, hipStreamNonBlocking));
 
    int imax = 2000, jmax = 2000;
    int nprocx = 0, nprocy = 0;
@@ -220,8 +218,6 @@ int main(int argc, char *argv[])
    int maxIter = 1000;
 
    parse_input_args(argc, argv, jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, do_timing, do_print);
-
-   if (rank == 0) printf("------> Initializing the Problem\n");
  
    struct timespec tstart_stencil, tstart_total;
    double stencil_time=0.0, total_time;
@@ -255,75 +251,138 @@ int main(int argc, char *argv[])
    double x0 = Lx / 2.0;
    double y0 = Ly / 2.0;
 
+   int jstride = isize+2*nhalo;
+
+   int jlow=0, jhgh=jsize;
+   if (corners) {
+      if (nbot == MPI_PROC_NULL) jlow = -nhalo;
+      if (ntop == MPI_PROC_NULL) jhgh = jsize+nhalo;
+   }
+   int jnum = jhgh-jlow;
+   int bufcount = jnum*nhalo;
+
+   roctxRangePush("BufAlloc");
+   HIP_CHECK(hipMalloc(&xbuf_left_send, bufcount*sizeof(double)));
+   HIP_CHECK(hipMalloc(&xbuf_rght_send, bufcount*sizeof(double)));
+   HIP_CHECK(hipMalloc(&xbuf_rght_recv, bufcount*sizeof(double)));
+   HIP_CHECK(hipMalloc(&xbuf_left_recv, bufcount*sizeof(double)));
+   roctxRangePop(); //BufAlloc
+
    /* The halo update both updates the ghost cells and the boundary halo cells. To be precise with terminology,
     * the ghost cells only exist for multi-processor runs with MPI. The boundary halo cells are to set boundary
     * conditions. Halos refer to both the ghost cells and the boundary halo cells.
     */
    haloupdate_test(nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, jmax, imax, nprocy, nprocx, do_timing, do_print);
 
-   double** xtmp;
-   // This offsets the array addressing so that the real part of the array is from 0,0 to jsize,isize
-   double** x    = malloc2D(jsize+2*nhalo, isize+2*nhalo, nhalo, nhalo);
-   double** xnew = malloc2D(jsize+2*nhalo, isize+2*nhalo, nhalo, nhalo);
+   double* xtmp;
+   // Using 1D representation of a 2D array with nhalo offsets
+   int totcells=(jsize+2*nhalo)*(isize+2*nhalo);
+   double *x=NULL, *xnew=NULL;
+   HIP_CHECK(hipMalloc(&x, totcells * sizeof(double)));
+   HIP_CHECK(hipMalloc(&xnew, totcells * sizeof(double)));
+
+   double *x_h=NULL;
+   if (do_print) {
+      // Allocate a host array once for use in printing/debugging
+      x_h = (double *) malloc (totcells * sizeof(double));
+   }
 
    if (! corners) { // need to initialize when not doing corners so there is no uninitialized memory
-
       dim3 grid((isize+2*nhalo+63)/64, (jsize+2*nhalo+3)/4, 1);
       dim3 block(64, 4, 1);
-      init_core <<< grid, block >>> (x, nhalo, jsize, isize, 0.0);
+      init_core <<< grid, block >>> (x, nhalo, jsize, isize, 0.0, jstride);
       HIP_CHECK(hipGetLastError());
       HIP_CHECK(hipDeviceSynchronize());
-
    }
 
    dim3 grid((isize+63)/64, (jsize+3)/4, 1);
    dim3 block(64, 4, 1);
-   init_core2 <<< grid, block >>> (x, jsize, isize, jbegin, ibegin, sigma, x_center, y_center);
+   init_core2 <<< grid, block >>> (x, nhalo, jsize, isize, jbegin, ibegin, sigma, x_center, y_center, jstride);
    HIP_CHECK(hipGetLastError());
    HIP_CHECK(hipDeviceSynchronize());
 
    boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
-   ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
    if (do_print == 1) {
-      if (rank == 0) printf("------> Initial State\n");
-      Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+      if (rank == 0) printf("------> Initial State \n");
+      // note: this ghostcell_update is only for printing purposes to show that the
+      // solution matches the one produced by Orig also on the halo for debugging
+      // the value of the solution on the halo does not matter as long as
+      // it is up to date when it is used to compute the solution on cells that need it
+      ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
+      HIP_CHECK(hipMemcpy(x_h, x, totcells * sizeof(double), hipMemcpyDefault));
+      Cartesian_print(x_h, jmax, imax, nhalo, nprocy, nprocx, jstride);
    }
+
+   roctxMark("Starting main iteration loop");
 
 #ifdef USE_PNETCDF
    int ncid, varid, varid_xcoord, varid_ycoord;
      create_netcdf_file("solution.nc", jmax, imax, MPI_COMM_WORLD, &ncid, &varid, &varid_xcoord, &varid_ycoord);
-     write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, 0, ncid, varid);
+     write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, 0, ncid, varid, jstride);
      write_netcdf_coords(imax, jmax, nprocx, nprocy, Lx, Ly, ncid, varid_xcoord, varid_ycoord);
 #endif
 
    if (rank == 0) printf("------> Advancing the Solution\n");
    for (int iter = 0; iter < maxIter; iter++){
       cpu_timer_start(&tstart_stencil);
+      roctxRangePush("InnerCellsUpdate");
 
-      blur <<< grid, block >>> (x, xnew, jsize, isize);
+      // note: we assume that the halo size is greater than or equal
+      // to the the operator's stencil reach (which for the blur is 1)
+      blur_inner <<< grid, block, 0, comp_stream >>> (x, xnew, jsize, isize, jstride, nhalo);
       HIP_CHECK(hipGetLastError());
+      roctxRangePop(); //InnerCellsUpdate
+      stencil_time += cpu_timer_stop(tstart_stencil);
+      roctxRangePush("GhostCellUpdate");
+      ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
+      roctxRangePop(); //GhostCellUpdate
+      MPI_Barrier(MPI_COMM_WORLD);
       HIP_CHECK(hipDeviceSynchronize());
+
+      cpu_timer_start(&tstart_stencil);
+      roctxRangePush("OuterCellsUpdate");
+      blur_outer_left <<< grid, block >>> (x, xnew, jsize, isize, jstride, nhalo);
+      HIP_CHECK(hipGetLastError());
+      blur_outer_right <<< grid, block >>> (x, xnew, jsize, isize, jstride, nhalo);
+      HIP_CHECK(hipGetLastError());
+      blur_outer_top <<< grid, block >>> (x, xnew, jsize, isize, jstride, nhalo);
+      HIP_CHECK(hipGetLastError());
+      blur_outer_bottom <<< grid, block >>> (x, xnew, jsize, isize, jstride, nhalo);
+      HIP_CHECK(hipGetLastError());
+      roctxRangePop(); //OuterCellsUpdate
+      stencil_time += cpu_timer_stop(tstart_stencil);
+
+      roctxRangePush("BoundaryUpdate");
+      boundarycondition_update(xnew, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
+      hipDeviceSynchronize();
+      roctxRangePop(); //BoundaryUpdate
+
+      if (do_print == 1) {
+         // halo update on soln
+         // NOTE: this is just for visualziation
+         // we do not care in general what the solution is in the halo
+         // as long as it is correct when we need it to compute the next
+         // value of the solution
+         ghostcell_update(xnew, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
+      }
 
       SWAP_PTR(xnew, x, xtmp);
 
-      stencil_time += cpu_timer_stop(tstart_stencil);
-
-      boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
-      ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
-
       if (iter%10 == 0 && rank == 0) printf("        Iter %d\n",iter);
       if (do_print == 1) {
-         Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+         HIP_CHECK(hipMemcpy(x_h, x, totcells * sizeof(double), hipMemcpyDefault));
+         Cartesian_print(x_h, jmax, imax, nhalo, nprocy, nprocx, jstride);
       }
-
 #ifdef USE_PNETCDF
       if(iter == maxIter - 1){
-         write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, iter+1, ncid, varid);
+         write_netcdf_soln(x, jmax, imax, nhalo, nprocy, nprocx, iter+1, ncid, varid, jstride);
       }
-#endif      
-
+#endif   
    }
+
+   roctxMark("Stopping main iteration loop");
+
    total_time = cpu_timer_stop(tstart_total);
 
    if (rank == 0){
@@ -334,8 +393,20 @@ int main(int argc, char *argv[])
       printf("        Total: %f\n",total_time);
    }
 
-   malloc2D_free(x, nhalo);
-   malloc2D_free(xnew, nhalo);
+   if (do_print) {
+      free(x_h);
+   }
+
+   HIP_CHECK(hipFree(x));
+   HIP_CHECK(hipFree(xnew));
+
+   HIP_CHECK(hipFree(xbuf_left_send));
+   HIP_CHECK(hipFree(xbuf_rght_send));
+   HIP_CHECK(hipFree(xbuf_rght_recv));
+   HIP_CHECK(hipFree(xbuf_left_recv));
+
+   HIP_CHECK(hipStreamDestroy(comp_stream));
+   HIP_CHECK(hipStreamDestroy(comm_stream));
 
 #ifdef USE_PNETCDF
    close_netcdf(ncid);
@@ -344,8 +415,10 @@ int main(int argc, char *argv[])
    exit(0);
 }
 
-void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop)
+void boundarycondition_update(double *x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop)
 {
+   int jstride = isize+2*nhalo;
+
    struct timespec tstart_boundarycondition;
    cpu_timer_start(&tstart_boundarycondition);
 
@@ -357,7 +430,7 @@ void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int n
 // Boundary conditions -- constant
    if (nleft == MPI_PROC_NULL){
 
-      enforce_bcs_left <<< gridVrt, blockVrt >>> (x, nhalo, jsize);
+      enforce_bcs_left <<< gridVrt, blockVrt >>> (x, nhalo, jsize, jstride);
       HIP_CHECK(hipGetLastError());
       HIP_CHECK(hipDeviceSynchronize());
 
@@ -365,7 +438,7 @@ void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int n
 
    if (nrght == MPI_PROC_NULL){
 
-      enforce_bcs_rght <<< gridVrt, blockVrt >>> (x, nhalo, jsize, isize);
+      enforce_bcs_rght <<< gridVrt, blockVrt >>> (x, nhalo, jsize, isize, jstride);
       HIP_CHECK(hipGetLastError());
       HIP_CHECK(hipDeviceSynchronize());
 
@@ -373,7 +446,7 @@ void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int n
 
    if (nbot == MPI_PROC_NULL){
 
-      enforce_bcs_bot <<< gridHor, blockHor >>> (x, nhalo, isize);
+      enforce_bcs_bot <<< gridHor, blockHor >>> (x, nhalo, isize, jstride);
       HIP_CHECK(hipGetLastError());
       HIP_CHECK(hipDeviceSynchronize());
 
@@ -381,7 +454,7 @@ void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int n
       
    if (ntop == MPI_PROC_NULL){
 
-      enforce_bcs_top <<< gridHor, blockHor >>> (x, nhalo, jsize, isize);
+      enforce_bcs_top <<< gridHor, blockHor >>> (x, nhalo, jsize, isize, jstride);
       HIP_CHECK(hipGetLastError());
       HIP_CHECK(hipDeviceSynchronize());
 
@@ -390,15 +463,19 @@ void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int n
    boundarycondition_time += cpu_timer_stop(tstart_boundarycondition);
 }
 
-void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, int nleft, int nrght, int nbot, int ntop, int do_timing)
+void ghostcell_update(double *x, int nhalo, int corners, int jsize, int isize, int nleft, int nrght, int nbot, int ntop, int do_timing)
 {
+   int jstride = isize+2*nhalo;
+
    //if (do_timing) MPI_Barrier(MPI_COMM_WORLD);
 
    struct timespec tstart_ghostcell;
    cpu_timer_start(&tstart_ghostcell);
 
+   roctxRangePush("MPIRequest");
    std::vector<MPI_Request> request(4*nhalo);
    std::vector<MPI_Status> status(4*nhalo);
+   roctxRangePop(); //MPIRequest
 
    int jlow=0, jhgh=jsize;
    if (corners) {
@@ -408,75 +485,66 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
    int jnum = jhgh-jlow;
    int bufcount = jnum*nhalo;
 
-   double xbuf_left_send[bufcount];
-   double xbuf_rght_send[bufcount];
-   double xbuf_rght_recv[bufcount];
-   double xbuf_left_recv[bufcount];
-
    dim3 gridGhst((nhalo+3)/4, (jnum+63)/64, 1);
    dim3 blockGhst(4, 64, 1);
 
+   roctxRangePush("LoadLeftRight");
    if (nleft != MPI_PROC_NULL){
-
-      ghost_left_send <<< gridGhst, blockGhst >>> (xbuf_left_send, x, jlow, jhgh, nhalo, bufcount);
+      ghost_left_send <<< gridGhst, blockGhst, 0, comm_stream >>> (xbuf_left_send, x, jlow, jhgh, nhalo, bufcount, jstride);
       HIP_CHECK(hipGetLastError());
-      HIP_CHECK(hipDeviceSynchronize());
-
    }
-
    if (nrght != MPI_PROC_NULL){
-
-      ghost_rght_send <<< gridGhst, blockGhst >>> (xbuf_rght_send, x, jlow, jhgh, isize, nhalo, bufcount);
+      ghost_rght_send <<< gridGhst, blockGhst, 0, comm_stream >>> (xbuf_rght_send, x, jlow, jhgh, isize, nhalo, bufcount, jstride);
       HIP_CHECK(hipGetLastError());
-      HIP_CHECK(hipDeviceSynchronize());
-
    }
-
-   MPI_Irecv(&xbuf_rght_recv, bufcount, MPI_DOUBLE, nrght, 1001,
+   HIP_CHECK(hipStreamSynchronize(comm_stream));
+   roctxRangePop(); //LoadLeftRight
+                                                                                    
+   roctxRangePush("MPILeftRightExchange");
+   MPI_Irecv(xbuf_rght_recv, bufcount, MPI_DOUBLE, nrght, 1001,
              MPI_COMM_WORLD, &request[0]);
-   MPI_Isend(&xbuf_left_send, bufcount, MPI_DOUBLE, nleft, 1001,
+   MPI_Isend(xbuf_left_send, bufcount, MPI_DOUBLE, nleft, 1001,
              MPI_COMM_WORLD, &request[1]);
 
-   MPI_Irecv(&xbuf_left_recv, bufcount, MPI_DOUBLE, nleft, 1002,
+   MPI_Irecv(xbuf_left_recv, bufcount, MPI_DOUBLE, nleft, 1002,
              MPI_COMM_WORLD, &request[2]);
-   MPI_Isend(&xbuf_rght_send, bufcount, MPI_DOUBLE, nrght, 1002,
+   MPI_Isend(xbuf_rght_send, bufcount, MPI_DOUBLE, nrght, 1002,
              MPI_COMM_WORLD, &request[3]);
    MPI_Waitall(4, request.data(), status.data());
-
+   roctxRangePop(); //MPILeftRightExchange
+                                                                                    
+   roctxRangePush("UnpackLeftRight");
    if (nrght != MPI_PROC_NULL){
-
-      ghost_rght_recv <<< gridGhst, blockGhst >>> (xbuf_rght_recv, x, jlow, jhgh, isize, nhalo, bufcount);
+      ghost_rght_recv <<< gridGhst, blockGhst, 0, comm_stream >>> (xbuf_rght_recv, x, jlow, jhgh, isize, nhalo, bufcount, jstride);
       HIP_CHECK(hipGetLastError());
-      HIP_CHECK(hipDeviceSynchronize());
-
    }
-
    if (nleft != MPI_PROC_NULL){
-
-      ghost_left_recv <<< gridGhst, blockGhst >>>  (xbuf_left_recv, x, jlow, jhgh, nhalo, bufcount);
+      ghost_left_recv <<< gridGhst, blockGhst, 0, comm_stream >>> (xbuf_left_recv, x, jlow, jhgh, nhalo, bufcount, jstride);
       HIP_CHECK(hipGetLastError());
-      HIP_CHECK(hipDeviceSynchronize());
-
    }
-
+   HIP_CHECK(hipStreamSynchronize(comm_stream));
+   roctxRangePop(); //UnpackLeftRight
+ 
+   roctxRangePush("MPIUpDownExchange");
    if (corners) {
       bufcount = nhalo*(isize+2*nhalo);
-      MPI_Irecv(&x[jsize][-nhalo],   bufcount, MPI_DOUBLE, ntop, 1001, MPI_COMM_WORLD, &request[0]);
-      MPI_Isend(&x[0    ][-nhalo],   bufcount, MPI_DOUBLE, nbot, 1001, MPI_COMM_WORLD, &request[1]);
+      MPI_Irecv(&xv(jsize,-nhalo),   bufcount, MPI_DOUBLE, ntop, 1001, MPI_COMM_WORLD, &request[0]);
+      MPI_Isend(&xv(0    ,-nhalo),   bufcount, MPI_DOUBLE, nbot, 1001, MPI_COMM_WORLD, &request[1]);
 
-      MPI_Irecv(&x[     -nhalo][-nhalo], bufcount, MPI_DOUBLE, nbot, 1002, MPI_COMM_WORLD, &request[2]);
-      MPI_Isend(&x[jsize-nhalo][-nhalo], bufcount, MPI_DOUBLE, ntop, 1002, MPI_COMM_WORLD, &request[3]);
+      MPI_Irecv(&xv(     -nhalo,-nhalo), bufcount, MPI_DOUBLE, nbot, 1002, MPI_COMM_WORLD, &request[2]);
+      MPI_Isend(&xv(jsize-nhalo,-nhalo), bufcount, MPI_DOUBLE, ntop, 1002, MPI_COMM_WORLD, &request[3]);
       MPI_Waitall(4, request.data(), status.data());
    } else {
       for (int j = 0; j<nhalo; j++){
-         MPI_Irecv(&x[jsize+j][0],   isize, MPI_DOUBLE, ntop, 1001+j*2, MPI_COMM_WORLD, &request[0+j*4]);
-         MPI_Isend(&x[0+j    ][0],   isize, MPI_DOUBLE, nbot, 1001+j*2, MPI_COMM_WORLD, &request[1+j*4]);
+         MPI_Irecv(&xv(jsize+j,0),   isize, MPI_DOUBLE, ntop, 1001+j*2, MPI_COMM_WORLD, &request[0+j*4]);
+         MPI_Isend(&xv(0+j    ,0),   isize, MPI_DOUBLE, nbot, 1001+j*2, MPI_COMM_WORLD, &request[1+j*4]);
 
-         MPI_Irecv(&x[     -nhalo+j][0], isize, MPI_DOUBLE, nbot, 1002+j*2, MPI_COMM_WORLD, &request[2+j*4]);
-         MPI_Isend(&x[jsize-nhalo+j][0], isize, MPI_DOUBLE, ntop, 1002+j*2, MPI_COMM_WORLD, &request[3+j*4]);
+         MPI_Irecv(&xv(     -nhalo+j,0), isize, MPI_DOUBLE, nbot, 1002+j*2, MPI_COMM_WORLD, &request[2+j*4]);
+         MPI_Isend(&xv(jsize-nhalo+j,0), isize, MPI_DOUBLE, ntop, 1002+j*2, MPI_COMM_WORLD, &request[3+j*4]);
          }
       MPI_Waitall(4*nhalo, request.data(), status.data());
    }
+   roctxRangePop(); //MPIUpDownExchange
 
    //if (do_timing) MPI_Barrier(MPI_COMM_WORLD);
 
@@ -486,23 +554,25 @@ void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize, 
 void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, int nrght, int nbot, int ntop,
       int jmax, int imax, int nprocy, int nprocx, int do_timing, int do_print)
 {
+   int jstride = isize+2*nhalo;
 
-   // NOTE: this function has not been ported to HIP
    int rank;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-   double** x = malloc2D(jsize+2*nhalo, isize+2*nhalo, nhalo, nhalo);
+   int totcells=(jsize+2*nhalo)*(isize+2*nhalo);
+   double *x=NULL;
+   HIP_CHECK(hipMalloc(&x, totcells*sizeof(double)));
 
    if (jsize > 12 || isize > 12) return;
 
    for (int j = -nhalo; j < jsize+nhalo; j++){
       for (int i = -nhalo; i < isize+nhalo; i++){
-         x[j][i] = 0.0;
+         xv(j,i) = 0.0;
       }
    }
 
    for (int j = 0; j < jsize; j++){
       for (int i = 0; i < isize; i++){
-         x[j][i] = rank * 1000 + j*10 + i;
+         xv(j,i) = rank * 1000 + j*10 + i;
       }
    }
 
@@ -510,10 +580,13 @@ void haloupdate_test(int nhalo, int corners, int jsize, int isize, int nleft, in
    ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing);
 
    if (do_print == 1) {
-      Cartesian_print(x, jmax, imax, nhalo, nprocy, nprocx);
+      double *x_h = (double *) malloc (totcells*sizeof(double));
+      HIP_CHECK(hipMemcpy(x_h, x, totcells*sizeof(double), hipMemcpyDefault));
+      Cartesian_print(x_h, jmax, imax, nhalo, nprocy, nprocx, jstride);
+      free(x_h);
    }
 
-   malloc2D_free(x, nhalo);
+   HIP_CHECK(hipFree(x));
 }
 
 void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, int &nprocx, int &nhalo, int &corners, int &maxIter, int &do_timing, int &do_print)
@@ -587,7 +660,7 @@ void parse_input_args(int argc, char **argv, int &jmax, int &imax, int &nprocy, 
    }
 }
 
-void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx)
+void Cartesian_print(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int jstride)
 {
    int rank, nprocs;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -645,7 +718,7 @@ void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int 
          ilen_displ[i] = ilen_displ[i-1] + ilen_global[i-1];
       }
       for (int j=jlen_max+nhalo-1; j>=-nhalo; j--){
-         MPI_Gatherv(&x[j][-nhalo],ilen,MPI_DOUBLE,xrow,ilen_global,ilen_displ,MPI_DOUBLE,0,MPI_COMM_WORLD);
+         MPI_Gatherv(&xv(j,-nhalo),ilen,MPI_DOUBLE,xrow,ilen_global,ilen_displ,MPI_DOUBLE,0,MPI_COMM_WORLD);
          if (rank == 0) {
             printf("%3d:",j);
             for (int ii = 0; ii < nprocx; ii++){
@@ -693,7 +766,7 @@ void create_netcdf_file(const char *fname, int jmax, int imax, MPI_Comm comm, in
 }
 
 
-void write_netcdf_soln(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int tstep, int ncid, int varid)
+void write_netcdf_soln(double *x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int tstep, int ncid, int varid, int jstride)
 {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -723,7 +796,7 @@ void write_netcdf_soln(double **x, int jmax, int imax, int nhalo, int nprocy, in
 
     for (int j = 0; j < jsize; j++) {
         for (int i = 0; i < isize; i++) {
-            buf[(jsize-1-j)*isize + i] = x[j][i];  // no halo cells included
+            buf[(jsize-1-j)*isize + i] = xv(j,i);  // no halo cells included
         }
     }
 
