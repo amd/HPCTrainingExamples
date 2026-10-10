@@ -1,19 +1,19 @@
-- [Exercise 7 (advanced): conditions, ignore, watch, display](#orgff13a99)
-  - [7a - a conditional breakpoint](#orgac3e103)
-  - [7b - ignore a breakpoint N times](#orgec9420a)
-  - [7c - watch a value change](#orgcb89375)
-  - [7d - awatch an array element (not the 0th)](#org4f8e68a)
-  - [7e - display a value while stepping](#org5151c8a)
+- [Exercise 7 (advanced): conditions, ignore, watch, display](#org69d94a4)
+  - [7a - a conditional breakpoint](#org81b1b18)
+  - [7b - ignore a breakpoint N times](#orgd929ca8)
+  - [7c - watch a value change](#org032708d)
+  - [7d - awatch an array element (not the 0th)](#org55eb92c)
+  - [7e - display a value while stepping](#org85b8b4a)
 
 
-<a id="orgff13a99"></a>
+<a id="org69d94a4"></a>
 
 # Exercise 7 (advanced): conditions, ignore, watch, display
 
 Programs are in `../common/`; run rocgdb from this directory. All parts share one session; `delete` clears breakpoints between them.
 
 
-<a id="orgac3e103"></a>
+<a id="org81b1b18"></a>
 
 ## 7a - a conditional breakpoint
 
@@ -26,7 +26,7 @@ $ rocgdb ../common/demo
 ```
 
 
-<a id="orgec9420a"></a>
+<a id="orgd929ca8"></a>
 
 ## 7b - ignore a breakpoint N times
 
@@ -39,7 +39,7 @@ $ rocgdb ../common/demo
 ```
 
 
-<a id="orgcb89375"></a>
+<a id="org032708d"></a>
 
 ## 7c - watch a value change
 
@@ -53,20 +53,22 @@ $ rocgdb ../common/demo
 ```
 
 
-<a id="org4f8e68a"></a>
+<a id="org55eb92c"></a>
 
 ## 7d - awatch an array element (not the 0th)
+
+In this exercise, the use of `-location` is necessary to avoid rocgdb stopping each time the base address of `data` is accessed.
 
 ```
 (gdb) delete
 (gdb) break demo.c:20              # sum_array entry (data is in scope)
 (gdb) run
-(gdb) awatch data[3]              # stop on any READ or WRITE of element 3
+(gdb) awatch -location data[3]     # stop on any READ or WRITE of element 3
 (gdb) continue                     # fires when the loop reaches i = 3 (data[3] = 1)
 ```
 
 
-<a id="org5151c8a"></a>
+<a id="org85b8b4a"></a>
 
 ## 7e - display a value while stepping
 
@@ -79,4 +81,4 @@ $ rocgdb ../common/demo
 (gdb) next                         # total is shown automatically each time
 ```
 
--   `display` is ideal for a value that changes every iteration: set it once and just step.
+-   `display` is ideal for a value that changes every iteration - set it once and just step.
