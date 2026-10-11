@@ -125,14 +125,20 @@ fi
 # --- how many logical GPUs, and is the device partitioned? --------------------
 # A KFD topology node with simd_count > 0 is a logical GPU. Its compute units are
 # simd_count/simd_per_cu: a full MI300A reports 228, a CPX slice 38.
+# Read through cat rather than letting awk open the files: under a Slurm
+# allocation of some of the node's GPUs, the cgroup denies the properties of the
+# ones not allocated, and an unreadable file is fatal to awk -- it would exit
+# before the END block and leave the family undetected, silently falling back to
+# a generic budget. cat skips them and carries on.
 KFD=/sys/class/kfd/kfd/topology/nodes
 NGPU= CU_PER_GPU= GFXVER=
 if [ -d $KFD ]; then
    read -r NGPU CU_PER_GPU GFXVER <<EOF
-$(awk '/^simd_count/{s=$2} /^simd_per_cu/{p=$2;
+$(cat $KFD/*/properties 2>/dev/null |
+  awk '/^simd_count/{s=$2} /^simd_per_cu/{p=$2;
         if (s>0 && p>0) {n++; cu=s/p}; s=0}
       /^gfx_target_version/{if ($2>0) v=$2}
-      END{print n+0, cu+0, v+0}' $KFD/*/properties)
+      END{print n+0, cu+0, v+0}')
 EOF
 fi
 

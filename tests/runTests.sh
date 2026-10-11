@@ -27,6 +27,7 @@ HPCTOOLKIT=0
 OPENMPI=0
 MPI=0
 MPI4PY=0
+MPICHECK=0
 FFTW=0
 OPENMP=0
 OPENACC=0
@@ -69,8 +70,9 @@ usage()
     echo "--hpctoolkit: runs the hpctoolkit tests"
     echo "--tau: runs the tau tests"
     echo "--scorep: runs the score-p tests"
-    echo "--mpi : runs all the mpi tests (same as including --opempi --mpi4py --mvapich2 --gpu-aware-mpi)"
+    echo "--mpi : runs all the mpi tests (same as including --opempi --mpi4py --mvapich2 --gpu-aware-mpi --mpicheck)"
     echo "--openmpi : runs the openmpi tests"
+    echo "--mpicheck : runs the mpicheck oversubscription tests"
     echo "--fftw: runts the fftw tests"
     echo "--hip-python: runs the hip-python tests"
     echo "--numba-hip: runs the numba-hip tests"
@@ -269,6 +271,11 @@ do
           MPI4PY=1
           reset-last
           ;;
+      "--mpicheck")
+          shift
+          MPICHECK=1
+          reset-last
+          ;;
       "--hipfort")
           shift
           HIPFORT=1
@@ -411,8 +418,11 @@ elif [ ${MPI} -eq 1 ]; then
    ctest -R Mvapich2
    ctest -R GPUAware
    ctest -R MPI4PY
+   ctest -R MPI_Oversubscription
 elif [ ${OPENMPI} -eq 1 ]; then
    ctest -R OpenMPI
+elif [ ${MPICHECK} -eq 1 ]; then
+   ctest -R MPI_Oversubscription
 elif [ ${MPI4PY} -eq 1 ]; then
    ctest -R MPI4PY
 elif [ ${OPENMP} -eq 1 ]; then
