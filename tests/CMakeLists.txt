@@ -1762,6 +1762,11 @@ add_test(NAME JAX_Mnist COMMAND ../jax_mnist.sh )
 set_property(TEST JAX_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Epoch 9 in")
 set_property(TEST JAX_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'jax'")
 
+add_test(NAME JAX_Pytest_Lax_Vmap COMMAND ../jax_pytest_lax_vmap.sh )
+set_property(TEST JAX_Pytest_Lax_Vmap PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST JAX_Pytest_Lax_Vmap PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'jax'")
+set_tests_properties(JAX_Pytest_Lax_Vmap PROPERTIES TIMEOUT 600)
+
 # commenting this out since passing outcome is hardware dependent
 #add_test(NAME JAX_Check_Performance COMMAND ../jax_check_performance.sh )
 #set_property(TEST JAX_Check_Performance PROPERTY PASS_REGULAR_EXPRESSION "Acheived bfloat16 TFLOPS: 129")
