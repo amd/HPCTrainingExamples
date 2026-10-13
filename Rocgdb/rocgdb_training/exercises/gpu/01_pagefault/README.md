@@ -1,19 +1,19 @@
-- [GPU Exercise 1 (page fault): find the bad device pointer](#org12b71a5)
-  - [Build](#org74adb78)
-  - [Reproduce and locate the fault](#orgc03a359)
-  - [Diagnose](#orgf815d8a)
-  - [Fix and confirm](#org68ebab4)
-  - [Keep the evidence (optional)](#org522c766)
+- [GPU Exercise 1 (page fault): find the bad device pointer](#orgc46a806)
+  - [Build](#orgeb9405e)
+  - [Reproduce and locate the fault](#orge1aec3b)
+  - [Diagnose](#org559df3e)
+  - [Fix and confirm](#orgb7c8bd3)
+  - [Keep the evidence (optional)](#orga1c0e26)
 
 
-<a id="org12b71a5"></a>
+<a id="orgc46a806"></a>
 
 # GPU Exercise 1 (page fault): find the bad device pointer
 
-`saxmy.cpp` launches a HIP kernel that computes `y[i] = a*x[i]*y[i]` on the device. It crashes. Our task: use `rocgdb` to find out *where* and *why*.
+`saxmy.cpp` launches a HIP kernel that computes `y[i] = a*x[i]*y[i]` on the device. It crashes. Your job: use `rocgdb` to find out **where** and **why**.
 
 
-<a id="org74adb78"></a>
+<a id="orgeb9405e"></a>
 
 ## Build
 
@@ -21,11 +21,11 @@
 amdclang++ -x hip -ggdb -O0 --offload-arch=gfx942 -o saxmy saxmy.cpp
 ```
 
--   Use the arch of your GPU (`gfx942` = MI300A, `gfx950` = MI355X, ...).
+-   Use the arch of your GPU (`gfx942` = MI300A, `gfx950` = MI355X, &#x2026;).
 -   `-ggdb -O0` keeps full debug info; `-x hip` selects the HIP language.
 
 
-<a id="orgc03a359"></a>
+<a id="orge1aec3b"></a>
 
 ## Reproduce and locate the fault
 
@@ -42,7 +42,7 @@ rocgdb ./saxmy
 -   The stop is in a *GPU wave* (rocgdb calls a wave a "thread"), at the `y[i] = a*x[i]*y[i]` line. Look at the frame's arguments.
 
 
-<a id="orgf815d8a"></a>
+<a id="org559df3e"></a>
 
 ## Diagnose
 
@@ -54,10 +54,10 @@ rocgdb ./saxmy
 (gdb) where            # the CPU is parked in hipDeviceSynchronize, waiting
 ```
 
--   Now look at `main`: the device pointers `d_x`/`d_y` are *never allocated* (no `hipMalloc`), so the kernel dereferences garbage/null memory.
+-   Now look at the `main` function: the device pointers `d_x=/=d_y` are **never allocated** (no `hipMalloc`), so the kernel dereferences garbage/null memory.
 
 
-<a id="org68ebab4"></a>
+<a id="orgb7c8bd3"></a>
 
 ## Fix and confirm
 
@@ -70,8 +70,8 @@ amdclang++ -x hip -ggdb -O0 --offload-arch=gfx942 -o saxmy_fixed saxmy_fixed.cpp
 ```
 
 
-<a id="org522c766"></a>
+<a id="orga1c0e26"></a>
 
 ## Keep the evidence (optional)
 
--   At the fault, `generate-core-file` (`gcore`) writes a core you can reload later with `rocgdb ./saxmy <core>` on any machine: no GPU needed for the post-mortem.
+-   At the rocgdb prompt, after the segmentation fault, you can use `generate-core-file` (`gcore`) to write a core you can reload later with `rocgdb ./saxmy <core>` on any machine - no GPU needed for the post-mortem.

@@ -9,8 +9,8 @@
 // reads x[i] - the device dereferences a null pointer and faults. A malloc'd x
 // would be silently demand-paged onto the MI300A even while unmapped, hiding the
 // fault; a NULL x faults reliably, under any HSA_XNACK. The reference solution is
-// saxmy_fixed.c (allocate, initialise and map x). See README.org. Build:
-//   amdclang -g -O0 -fopenmp --offload-arch=gfx942 -o saxmyc saxmy.c
+// saxmy_fixed.c (allocate, initialise and map x). Please see README.md for
+// building and running instructions.
 #include <stdio.h>
 #include <stdlib.h>
 int main(void)

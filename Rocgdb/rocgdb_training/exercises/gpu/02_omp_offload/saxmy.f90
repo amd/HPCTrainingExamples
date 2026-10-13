@@ -9,8 +9,8 @@
 ! !$omp target region reads x(i) - the device dereferences address 0 and faults.
 ! An *allocated* x would be silently demand-paged onto the MI300A even while
 ! unmapped, hiding the fault; a null x faults reliably, under any HSA_XNACK. The
-! reference solution is saxmy_fixed.f90 (allocate, initialise and map x). See
-! README.org. Build: amdflang -g -O0 -fopenmp --offload-arch=gfx942 -o saxmyf saxmy.f90
+! reference solution is saxmy_fixed.f90 (allocate, initialise and map x). Please
+! see README.md for building and running instructions.
 program saxmy_omp
   implicit none
   integer, parameter :: n = 256
