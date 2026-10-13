@@ -351,6 +351,24 @@ mkdir build
 cd build
 cmake ..
 
+# CTest's own summary counts skipped tests as passed
+if command ctest --help 2>/dev/null | grep -q -- "--output-junit"; then
+   JUNIT_RUNS=0
+   ctest() {
+      JUNIT_RUNS=$((JUNIT_RUNS + 1))
+      command ctest --output-junit junit-${JUNIT_RUNS}.xml "$@"
+   }
+fi
+
+junit_count() {
+   local f n total=0
+   for f in junit-*.xml; do
+      n=$(tr '\n' ' ' < ${f} | grep -o '<testsuite [^>]*>' | grep -o "[[:space:]]${1}=\"[0-9]*\"" | grep -o '[0-9][0-9]*')
+      total=$((total + ${n:-0}))
+   done
+   echo ${total}
+}
+
 if [ ${AI} -eq 1 ]; then
    ctest -R Cupy
    ctest -R Pytorch
@@ -447,6 +465,15 @@ elif [ ${PROFILING_BY_EXAMPLE} -eq 1 ]; then
    ctest -R Profiling_
 else
    ctest
+fi
+
+if ls junit-*.xml >/dev/null 2>&1; then
+   TOTAL=$(junit_count tests)
+   FAILED=$(junit_count failures)
+   SKIPPED=$(junit_count skipped)
+   DISABLED=$(junit_count disabled)
+   RAN=$((TOTAL - SKIPPED - DISABLED))
+   echo "Ran ${RAN} of ${TOTAL} tests: $((RAN - FAILED)) passed, ${FAILED} failed, ${SKIPPED} skipped, ${DISABLED} disabled"
 fi
 
 rm -rf build
