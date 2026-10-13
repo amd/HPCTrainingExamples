@@ -6,9 +6,7 @@
 // THE FIX: every rank now allocates y (the `if (rank != size - 1)` guard is gone),
 // so no rank passes a null device pointer and every rank finishes cleanly.
 //
-// Build (hipcc is deprecated; use amdclang++ -x hip):
-//   amdclang++ -x hip -ggdb -O0 --offload-arch=gfx942 \
-//     $(mpicxx --showme:compile) $(mpicxx --showme:link) -o mpi_saxmy mpi_saxmy_fixed.cpp
+// Please see README.md for building and running instructions.
 #include <mpi.h>
 #include <hip/hip_runtime.h>
 #include <cstdio>
@@ -33,6 +31,11 @@ int main(int argc, char** argv) {
 
     saxmy<<<(n + 63) / 64, 64>>>(n, 2.0f, x, y);
     hipDeviceSynchronize();
+    hipError_t err = hipGetLastError();        // HIP has no OMP_TARGET_OFFLOAD=MANDATORY;
+    if (err != hipSuccess) {                   // with no GPU the launch fails silently, so
+        fprintf(stderr, "rank %d: HIP error: %s\n", rank, hipGetErrorString(err));
+        MPI_Abort(MPI_COMM_WORLD, 1);          // abort the whole job rather than "pass"
+    }
 
     printf("rank %d done\n", rank);
     MPI_Finalize();

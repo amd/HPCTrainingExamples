@@ -1,21 +1,21 @@
-- [Exercise 4 (inspecting): stack, variables, memory - and a wrong line](#orga09dd1b)
-  - [4a - a backtrace without a crash (demo)](#org2d106e8)
-  - [4b - move around the stack: frame / up / down](#orgb455f7f)
-  - [4c - print and examine memory](#org628e204)
-  - [4d - print with a SIDE EFFECT (careful!)](#orgb8e4370)
-  - [4e - x remembers the format: a size gotcha (floats)](#org149dfe9)
-  - [4f - a breakpoint on the wrong line (fusion, built at -O2)](#orgd090ce0)
-  - [4g - fix it: rebuild without optimization](#org95839cf)
+- [Exercise 4 (inspecting): stack, variables, memory - and a wrong line](#orgd11f4eb)
+  - [4a - a backtrace without a crash (demo)](#orgcdaa1c0)
+  - [4b - move around the stack: frame / up / down](#orgf3f64c3)
+  - [4c - print and examine memory](#org50f5380)
+  - [4d - print with a SIDE EFFECT (careful!)](#org8d753c9)
+  - [4e - x remembers the format: a size gotcha (floats)](#org3e72265)
+  - [4f - a breakpoint on the wrong line (fusion, built at -O2)](#org4efae07)
+  - [4g - fix it: rebuild without optimization](#orga93c3bd)
 
 
-<a id="orga09dd1b"></a>
+<a id="orgd11f4eb"></a>
 
 # Exercise 4 (inspecting): stack, variables, memory - and a wrong line
 
 Programs are in `../common/`; run rocgdb from this directory. This exercise uses three programs (`demo`, `floats`, `fusion`); quit and restart rocgdb when you switch, as marked.
 
 
-<a id="org2d106e8"></a>
+<a id="orgcdaa1c0"></a>
 
 ## 4a - a backtrace without a crash (demo)
 
@@ -27,7 +27,7 @@ $ rocgdb ../common/demo
 ```
 
 
-<a id="orgb455f7f"></a>
+<a id="orgf3f64c3"></a>
 
 ## 4b - move around the stack: frame / up / down
 
@@ -43,7 +43,7 @@ $ rocgdb ../common/demo
 ```
 
 
-<a id="org628e204"></a>
+<a id="org50f5380"></a>
 
 ## 4c - print and examine memory
 
@@ -56,7 +56,7 @@ $ rocgdb ../common/demo
 ```
 
 
-<a id="orgb8e4370"></a>
+<a id="org8d753c9"></a>
 
 ## 4d - print with a SIDE EFFECT (careful!)
 
@@ -74,7 +74,7 @@ $ rocgdb ../common/demo
 -   The program now prints `sum = 14`, not `31`: your assignment changed the result.
 
 
-<a id="org149dfe9"></a>
+<a id="org3e72265"></a>
 
 ## 4e - x remembers the format: a size gotcha (floats)
 
@@ -92,7 +92,7 @@ $ rocgdb ../common/floats
 -   Lesson: `x` keeps the last size/format. Always name the size that matches the type.
 
 
-<a id="orgd090ce0"></a>
+<a id="org4efae07"></a>
 
 ## 4f - a breakpoint on the wrong line (fusion, built at -O2)
 
@@ -106,10 +106,10 @@ $ rocgdb ../common/fusion
 (gdb) info breakpoints     # all three show the SAME address
 ```
 
--   Ask for line 13 and rocgdb binds you to a shared instruction, not the line you meant.
+-   Ask for line 13 and rocgdb binds you to a shared instruction - not the line you meant.
 
 
-<a id="org95839cf"></a>
+<a id="orga93c3bd"></a>
 
 ## 4g - fix it: rebuild without optimization
 
@@ -123,5 +123,5 @@ $ rocgdb ../common/fusion
 ```
 
 -   Moral: when a breakpoint lands somewhere surprising, suspect optimization first.
--   Note: any optimization (`-O1` and up) fuses these particular lines here: only `-O0` makes every line separately addressable.
+-   Note: any optimization (`-O1` and up) fuses these particular lines here - only `-O0` makes every line separately addressable.
 -   Restore the shared `-O2` build afterwards with `make -C ../common fusion`.

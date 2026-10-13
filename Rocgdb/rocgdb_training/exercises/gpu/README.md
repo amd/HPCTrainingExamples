@@ -1,11 +1,11 @@
-- [Layout](#org6902795)
+- [Layout](#org683151a)
 
-Hands-on labs for **Part II** (Basics of rocgdb). Each `NN_name/` directory is self-contained: it ships the buggy program to debug, a `*_fixed` reference, and a `README.org` with the build line and a walkthrough. There is no shared `common/`.
+Hands-on labs for **Part II** (Basics of rocgdb). Each `NN_name/` directory is self-contained: it ships the buggy program to debug, a `*_fixed` reference, and a `README` with the build line and a walkthrough. There is no shared `common/`.
 
-See `../README.org` for how to get onto a GPU node and load the toolchain.
+See `../README` for how to get onto a GPU node and load the toolchain.
 
 
-<a id="org6902795"></a>
+<a id="org683151a"></a>
 
 # Layout
 
