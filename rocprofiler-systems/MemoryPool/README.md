@@ -74,11 +74,14 @@ Run it directly with the OpenMP preset:
 ```bash
 rocprof-sys-run --preset=trace-openmp --output problem-out -- ./test_mempool
 ```
-
-This produces the first view of the problem without adding instrumentation to the
-application. Look for the long first kernel in each iteration and the gaps between
+Look at the *.proto file from the output folder with Perfetto (https://ui.perfetto.dev/).
+This produces the first view of the problem. Look for the long first kernel in each iteration and the gaps between
 GPU work. With unified shared memory, those long first-touch regions are a symptom
 that allocation and page placement costs are being paid repeatedly.
+
+<img width="1918" height="1017" alt="v1_rocprof-sys" src="https://github.com/user-attachments/assets/5024d089-b635-4212-a34b-feb4dc674838" />
+Zoom in:
+<img width="1635" height="762" alt="v1_rocprof-sys_Zoom" src="https://github.com/user-attachments/assets/deb2ce6f-de24-4594-bbf8-bd43c451fa42" />
 
 ## Add memory profiling option
 
@@ -98,6 +101,9 @@ in each iteration is expensive: page faults and migration/placement events show
 that unified-memory pages are being made resident for GPU access. This is the
 evidence that motivates avoiding repeated dynamic allocation or adding a memory
 pool.
+
+<img width="1622" height="587" alt="image" src="https://github.com/user-attachments/assets/93be269a-cd4c-42dc-8940-599772c7b011" />
+
 
 ## Solution 1, move allocations out of the loop
 
@@ -173,4 +179,4 @@ rocprof-sys-run \
   --output solution2-out \
   -- ./test_mempool
 ```
-Look at the *.proto file from the output folder with Perfetto (https://ui.perfetto.dev/). You will see the allocations on the device but much shorter kernel times as no first touch penalty happens as the allocation is on the device already. If you would touch the data from the CPU allocated on GPU, you will see a first touch penalty again. With unified memory profiling and this flag it is easy to find out where one unintentionally mixes CPU and GPU allocations and computations: something important to understand for performance on discrete GPUs (when using the USM programming model).
+Look at the *.proto file from the output folder with Perfetto (https://ui.perfetto.dev/). You will see the allocations on the device between each of the repeated kernel calls but much shorter kernel times as no first touch penalty happens as the allocation is on the device already. If you would touch the data from the CPU allocated on GPU, you will see a first touch penalty again. With unified memory profiling and this flag it is easy to find out where one unintentionally mixes CPU and GPU allocations and computations: something important to understand for performance on discrete GPUs when using the USM programming model and avoiding first touch penalties with frequent reallocations on MI300A.
