@@ -3,7 +3,7 @@
 This exercise uses the Fortran OpenMP code from
 `Rocprofv3/OpenMP/Allocations_and_MemoryPool_MI300A/Fortran` and profiles it with
 `rocprof-sys-run`. It uses the same problem as the
-`rocprofv3` exercise, but uses the rocprofiler-systems HPC/OpenMP presets and unified memory profiling.
+[`rocprofv3` exercise](../../Rocprofv3/OpenMP/Allocations_and_MemoryPool_MI300A/Fortran), but uses the rocprofiler-systems HPC/OpenMP presets and unified memory profiling.
 
 The goal is to show how repeated unified-memory allocations create expensive first
 touch/page-fault behavior on MI300A. This exercise shows how to identify the issue and several ways how to solve this.

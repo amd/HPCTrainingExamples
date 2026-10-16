@@ -72,3 +72,5 @@ The first two iterations when the memory pool still 'warms up' will have a longe
 The total execution time is roughly: 257 ms, so the speed up is a little less than moving the allocation outside, but also for the memory pool we only pay the price in the first 2 iterations until the library figured out the size of the pool. This is usually negligible if hundreds to thousands of iterations / time steps are run in production applications which do more iterations than this training example.
 
 Conclusion: The usage of memory pools is recommended if you have frequent allocations and deallocations in your application and cannot move the allocations outside the loop!
+
+For profiler-focused walkthroughs of this issue, see the [`rocprofv3` memory pool exercise](../../../../../Rocprofv3/OpenMP/Allocations_and_MemoryPool_MI300A/Fortran) and the [rocprofiler-systems memory pool exercise](../../../../../rocprofiler-systems/MemoryPool).

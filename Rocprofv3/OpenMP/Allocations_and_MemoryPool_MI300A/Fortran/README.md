@@ -5,7 +5,7 @@ This exercise highlights the importance of the reduction of dynamic memory alloc
 
 On AAC7, allocate a shared node with 1 APU:
 ```
-salloc -N 1 --mem=100GB --gpus=1 -p 192C4G1H_MI300A_RHEL9_A1_CPX
+salloc -N 1 --mem=20GB --gpus=1 -p 192C4G1H_MI300A_RHEL9_A1_CPX
 ```
 
 Set up ROCm 10.1.0 and the LLVM-based `amdflang` compiler:
@@ -45,7 +45,6 @@ and run the example with rocprofv3
 ```
 rocprofv3 --sys-trace --output-format pftrace --output-file timeline_v1 -- ./test_mempool
 ```
-The total execution time is roughly (measured with ROCm 10.1.0 on AAC7 in Oct 2026): 0.870102 s
 
 Download the trace timeline_v1_results.pftrace file.
 Copy the generated timeline_v1_results.pftrace file to your local machine
@@ -89,7 +88,7 @@ Run rocprof tracing again. Don't forget to include the `marker-trace` option now
 ```
 rocprofv3 --sys-trace --marker-trace --output-format pftrace --output-file timeline_v2 -- ./test_mempool
 ```
-The total execution time is roughly: 0.8654s (ROCm 10.1.0, Oct 2026), so the overhead of the roctx markers is lower than the runtime differences observed for different runs in this case.
+The total execution time is roughly equal to the previous example, so the overhead of the roctx markers is lower than the runtime differences observed for different runs in this case.
 
 Explore the trace again in perfetto after the download of the trace. 
 Now you can see the annotated regions in the trace.
@@ -110,7 +109,7 @@ Profile:
 ```
 rocprofv3 --sys-trace --marker-trace --output-format pftrace --output-file timeline_v3 -- ./test_mempool
 ```
-First thing you will notice is that the runtime is down to 0.157s (ROCm 10.1.0, Oct 2026), i.e. a magnificent 5.5x speedup!
+First thing you will notice is that the runtime is siginificantly lower!
 
 Explore the trace again in perfetto after download.
 
@@ -135,54 +134,6 @@ module load umpire/2025.12.0
 ```
 This module sets the ```UMPIRE_PATH``` for you.
 
-If you need Umpire on another system, we provide the installation instructions here (unfold).
-<details>
-  <summary> *Install Umpire with amdflang*</summary>
-If you are not on a system with Umpire installed as a module, details of installation with the LLVM-based `amdflang` compiler are provided here:
-
-Adapt the UMPIRE_PATH to your favorite installation location:
-```
-#!/bin/bash
-set -e
-
-export CXX=amdclang++
-export FC=amdflang
-export UMPIRE_PATH="$(pwd)"
-mkdir -p "$UMPIRE_PATH"
-cd "$UMPIRE_PATH"
-mkdir -p install
-
-if [ ! -d "$UMPIRE_PATH/Umpire" ]; then
-    git clone -b v2025.12.0 --recursive https://github.com/llnl/Umpire.git
-fi
-
-#patch the free form flag
-cd "$UMPIRE_PATH/Umpire"
-for f in \
-    tests/integration/interface/fortran/CMakeLists.txt \
-    src/umpire/interface/c_fortran/CMakeLists.txt \
-    examples/tutorial/fortran/CMakeLists.txt \
-    examples/cookbook/CMakeLists.txt; do
-    if grep -q -- '-Mfree)' "$f"; then
-        sed -i 's/-Mfree)/-ffree-form)/g' "$f"
-        echo "Patched -Mfree -> -ffree-form in $f"
-    fi
-done
-
-cd "$UMPIRE_PATH/Umpire"
-mkdir -p build
-cd build
-cmake -DCMAKE_INSTALL_PREFIX=${UMPIRE_PATH}/install -DROCM_ROOT_DIR=${ROCM_PATH} -DHIP_ROOT_DIR=${ROCM_PATH}/hip -DHIP_PATH=${ROCM_PATH}/llvm/bin -DENABLE_HIP=On -DENABLE_OPENMP=Off -DENABLE_CUDA=Off -DENABLE_MPI=Off -DCMAKE_CXX_COMPILER=${ROCM_PATH}/llvm/bin/amdclang++ -DCMAKE_C_COMPILER=${ROCM_PATH}/llvm/bin/amdclang -DCMAKE_Fortran_COMPILER=${ROCM_PATH}/llvm/bin/amdflang -DCMAKE_HIP_ARCHITECTURES=gfx942 -DAMDGPU_TARGETS=gfx942 -DGPU_TARGETS=gfx942 -DBLT_CXX_STD=c++17 -DUMPIRE_ENABLE_IPC_SHARED_MEMORY=On -DENABLE_FORTRAN=On -DCMAKE_Fortran_COMPILER_ID=LLVMFlang ../
-make -j 32
-make install
-```
-With umpire installed, you can now use it to explore the effect of a memory pool.
-</details>
-
-
-Note: Some installations need also the ```FMT_PATH``` and/or ```CAMP_PATH``` e.g. if installation was performed through Spack.
-
-  
 Have a look how the memory pool is set up in the code by looking at version 4.
 Compile and run with roctx markers and Umpire:
 ```
@@ -214,3 +165,5 @@ Further best practices / recommendations: if you use unified memory on MI300A (w
 In this example you will e.g. already see better performance in the above exercise with `export ROCR_VISIBLE_DEVICES=0` as all arrays are only touched by the GPU.
 If you use GPU aware MPI with Cray MPICH you need GPU allocated buffers i.e. `omp_target_alloc` or `hipmalloc` allocated memory. You can also achieve GPU allocations through using the Device instead of Host allocator pool in Umpire.
 </hr>
+
+For a complementary profiling workflow, see the [rocprofiler-systems memory pool exercise](../../../../rocprofiler-systems/MemoryPool). It uses the same Fortran example and can show the allocation/page-fault issue faster and more easily when profiling a large application.
