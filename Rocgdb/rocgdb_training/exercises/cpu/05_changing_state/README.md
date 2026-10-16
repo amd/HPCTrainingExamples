@@ -1,16 +1,16 @@
-- [Exercise 5 (changing state): write memory and skip a line](#org007bb35)
-  - [5a - write a variable and an array element](#org0a89246)
-  - [5b - jump over a line](#org4533207)
+- [Exercise 5 (changing state): write memory and skip a line](#org7a5cf3e)
+  - [5a - write a variable and an array element](#org14885a4)
+  - [5b - jump over a line](#org15b3f8e)
 
 
-<a id="org007bb35"></a>
+<a id="org7a5cf3e"></a>
 
 # Exercise 5 (changing state): write memory and skip a line
 
 Programs are in `../common/`; run rocgdb from this directory. In `floats.c`: `da` is a `double[3]`, `scale` is set on line 11 and multiplied on line 14.
 
 
-<a id="org0a89246"></a>
+<a id="org14885a4"></a>
 
 ## 5a - write a variable and an array element
 
@@ -26,10 +26,10 @@ $ rocgdb ../common/floats
 (gdb) print da                     # {1.5, 9, 3.5}
 ```
 
--   `set {double}<addr> = ...` writes `sizeof(double)` bytes at the address: powerful and unchecked, so aim carefully.
+-   `set {double}<addr> = ...` writes `sizeof(double)` bytes at the address - powerful and unchecked, so aim carefully.
 
 
-<a id="org4533207"></a>
+<a id="org15b3f8e"></a>
 
 ## 5b - jump over a line
 
@@ -43,4 +43,4 @@ $ rocgdb ../common/floats
 ```
 
 -   Output shows `after: scale = 2` (the multiply never ran). No `continue` is needed: `jump` resumes execution, and with no breakpoint ahead the program finishes on its own.
--   `jump` does *not* adjust the stack: it is for deliberate experiments, easy to misuse.
+-   `jump` does *not* adjust the stack - it is for deliberate experiments, easy to misuse.

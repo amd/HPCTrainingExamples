@@ -9,7 +9,7 @@
 // The fault is INJECTED here: the device pointers are never allocated (no hipMalloc),
 // so the kernel dereferences null; hipDeviceSynchronize() lets the GPU report the
 // fault before the host exits. The fix lives in saxmy_fixed.cpp.
-// Build: amdclang++ -x hip -ggdb -O0 --offload-arch=gfx942 -o saxmy saxmy.cpp
+// Please see README.md for building and running instructions.
 
 #include <hip/hip_runtime.h>
 
@@ -35,4 +35,9 @@ int main()
     int group_size = 128;
     saxmy<<<num_groups, group_size>>>(n, d_x, 1, d_y, 1);
     hipDeviceSynchronize();
+    hipError_t err = hipGetLastError();        // HIP has no OMP_TARGET_OFFLOAD=MANDATORY;
+    if (err != hipSuccess) {                   // on a node with no GPU the launch just
+        fprintf(stderr, "HIP error: %s\n", hipGetErrorString(err));  // fails silently -
+        return 1;                              // check it, or the demo "passes" with no fault
+    }
 }
