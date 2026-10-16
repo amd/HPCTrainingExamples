@@ -18,7 +18,7 @@ administrator access. Each subdirectory installs the stock agent into our home
 directory and changes only where the model is served.
 
 The agent and its workflow are the same in every subdirectory. What differs is the
-trust boundary and the model. Neither subdirectory reproduces the cluster
+trust boundary and the model. None of these subdirectories reproduce the cluster
 deployment's guarantees. We treat them as a preview of the agent, and follow the
 rocBudAI repository's `INSTALL.md` for a deployment that must keep code private.
 
@@ -29,3 +29,8 @@ rocBudAI repository's `INSTALL.md` for a deployment that must keep code private.
   model served by [`LLM_Serving/aim-engine`](../LLM_Serving/aim-engine/README.md),
   on a cluster we assert is trusted and in-boundary. The agent then also runs from
   a login node or a laptop without a local GPU.
+- [`atom`](atom/README.md): runs the agent against a frontier model (Kimi-K3)
+  served on the same cluster by AMD's [ATOM](https://github.com/ROCm/ATOM) engine
+  on an MI355X node. The model runs on a compute node and the agent on the login
+  node, so like `aim-engine` it needs no local GPU, but model, weights and agent
+  all stay on one HPC system.
