@@ -19,8 +19,8 @@
 #   RBK_TP         (default 8)
 #   RBK_MAXLEN     (default 131072; Kimi-K3 supports up to 1048576)
 #   RBK_GPU_UTIL   (default 0.93)
-#   RBK_HF_HOME    (default /shared/gcapodag/hf-cache)
-#   RBK_ATOM_PYLIB (default /shared/gcapodag/opt/atom-pylib)
+#   RBK_HF_HOME    (default /shared/$USER/hf-cache)
+#   RBK_ATOM_PYLIB (default /shared/$USER/opt/atom-pylib)
 #   RBK_EXTRA      (extra args appended to the server command)
 set -euo pipefail
 
@@ -33,13 +33,13 @@ RBK_HOST="${RBK_HOST:-0.0.0.0}"
 RBK_TP="${RBK_TP:-8}"
 RBK_MAXLEN="${RBK_MAXLEN:-131072}"   # agent prompts (persona + code) exceed 16k
 RBK_GPU_UTIL="${RBK_GPU_UTIL:-0.93}"
-RBK_HF_HOME="${RBK_HF_HOME:-/shared/gcapodag/hf-cache}"
-RBK_ATOM_PYLIB="${RBK_ATOM_PYLIB:-/shared/gcapodag/opt/atom-pylib}"
+RBK_HF_HOME="${RBK_HF_HOME:-/shared/${USER}/hf-cache}"
+RBK_ATOM_PYLIB="${RBK_ATOM_PYLIB:-/shared/${USER}/opt/atom-pylib}"
 # Newer AITER than the one bundled in the vllm module — ATOM needs its newer
 # symbols (topk_select, etc.). Pinned release v0.1.25 built for ROCm 7.2 (matches
 # the rocm/7.2.2 module), prebuilt gfx950 kernels. Prepended so it shadows the
 # module's older aiter.
-RBK_AITER="${RBK_AITER:-/shared/gcapodag/opt/aiter-wheel}"
+RBK_AITER="${RBK_AITER:-/shared/${USER}/opt/aiter-wheel}"
 # Default reasoning effort (low|high|max). Kimi-K3 defaults to "max" (very long
 # hidden reasoning, ~5x slower turns); "high" keeps quality with fast turnaround.
 # A client's own reasoning_effort still wins per request. See README "Turnaround".

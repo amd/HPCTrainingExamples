@@ -120,14 +120,14 @@ engine rejects.
 
 ## Installing the agent
 
-On this cluster the agent is already staged at a shared prefix, so skip to
-[Quick start](#quick-start) and `module use /shared/modulefiles`. To install it
-yourself (a fresh cluster, or a private copy), run the installer; it clones and
-patches rocBudAI and writes the modulefile:
+Run the installer; it clones and patches rocBudAI and writes the modulefile:
 
 ```bash
 ./install-rocbudai-atom.sh                      # into $HOME/rocbudai-atom
 ```
+
+If your site has already staged the agent at a shared prefix, skip the install and
+`module use <that-prefix>/modulefiles` directly.
 
 Point the serve defaults and shared cache at your own engine build (see
 [Building the engine](#building-the-engine)) and, optionally, publish to a shared
@@ -148,13 +148,15 @@ flags are in [Options](#options); `--help` lists them.
 ## Quick start
 
 We start a server on a compute node, then load the module on the login node.
+Below, `$PREFIX` is the install root (the installer's default is
+`$HOME/rocbudai-atom`; a site may stage it on a shared path instead).
 
 Step 1: in an MI355X allocation, start the server. `--mem=0` is required, and we
 use the full path because the module is not loaded on the compute node:
 
 ```bash
 salloc -p mi355x --exclusive --gres=gpu:amd_instinct_mi355_oam:8 --mem=0 -t 2:00:00
-/shared/gcapodag/opt/rocbudai/bin/rocbudai-serve-kimi   # wait for "Application startup complete"
+"$PREFIX"/bin/rocbudai-serve-kimi   # wait for "Application startup complete"
 ```
 
 The first start loads 1.5 TB of weights and builds JIT kernels, which takes
@@ -165,7 +167,7 @@ Step 2: back on the login node, load the module from the project we want to
 profile. It finds the allocation's node on its own:
 
 ```bash
-module use /shared/modulefiles
+module use "$PREFIX"/modulefiles
 cd <your-project-dir>
 module load rocbudai/atom
 ```

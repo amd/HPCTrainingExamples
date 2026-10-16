@@ -25,7 +25,7 @@ export AITER_MANIFEST="${AITER_MANIFEST:-https://rocm.frameworks-nightlies.amd.c
 
 # Shared, world-readable install reused by everyone. One root; the rest derive
 # from it. Point SHARE_ROOT at your own published install to use a different one.
-export SHARE_ROOT="${SHARE_ROOT:-/shared/gcapodag}"
+export SHARE_ROOT="${SHARE_ROOT:-/shared/${USER}}"
 
 # Serve command. Prefer a copy bundled next to this config (portable kit for
 # another system); otherwise use the one blessed command from the shared install.
