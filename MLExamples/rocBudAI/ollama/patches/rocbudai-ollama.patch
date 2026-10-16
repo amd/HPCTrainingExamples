@@ -1,0 +1,219 @@
+diff --git a/bin/rocbudai b/bin/rocbudai
+index c44e07b..fb7ec73 100755
+--- a/bin/rocbudai
++++ b/bin/rocbudai
+@@ -32,7 +32,7 @@ case "${1:-}" in
+     -h|--help) usage; exit 0 ;;
+ esac
+ 
+-if [[ -z "${SLURM_JOB_ID:-}" ]]; then
++if [[ -z "${SLURM_JOB_ID:-}" && -z "${ROCBUDAI_USER_MODE:-}" ]]; then
+     cat >&2 <<'EOF'
+ [rocbudai] error: rocbudai must run on a Slurm-allocated compute node
+ [rocbudai]        (no SLURM_JOB_ID in this shell — you are on a login node).
+diff --git a/bin/rocbudai-airgap-check b/bin/rocbudai-airgap-check
+index 78b4232..0766ab2 100755
+--- a/bin/rocbudai-airgap-check
++++ b/bin/rocbudai-airgap-check
+@@ -98,6 +98,14 @@ echo "rocbudai-airgap-check — verify the cluster airgap baseline is in force"
+ printf "host: %s   user: %s   date: %s\n" "$(hostname)" "${USER:-?}" "$(date -Is)"
+ echo "──────────────────────────────────────────────────────────"
+ 
++if [[ -n "${ROCBUDAI_USER_MODE:-}" ]]; then
++    fail "user mode (ROCBUDAI_USER_MODE=1): NO airgap is enforced in this session"
++    hint "network egress from this node is not blocked and no managed opencode config is installed."
++    hint "user mode is only for trying rocBudAI. Production use must deploy it cluster-wide per"
++    hint "INSTALL.md (step 8 hardening) to get the airgap: https://github.com/AMD-HPC/rocBudAI/blob/main/INSTALL.md"
++    exit 1
++fi
++
+ # ---------------------------------------------------------------------------
+ # 1. Compute node + ollama allocation
+ # ---------------------------------------------------------------------------
+diff --git a/bin/rocbudai-doctor b/bin/rocbudai-doctor
+index b2bfdeb..2bb0e2f 100755
+--- a/bin/rocbudai-doctor
++++ b/bin/rocbudai-doctor
+@@ -84,6 +84,10 @@ fi
+ echo "1. Slurm allocation"
+ if [[ -n "${ROCBUDAI_CONTAINER:-}" ]]; then
+     ok "container quick-test mode — Slurm/comment/partition gates not applicable (testing only)"
++elif [[ -n "${ROCBUDAI_USER_MODE:-}" ]]; then
++    ok "user mode — Slurm/comment/partition gates not applicable"
++    warn "user mode — NO airgap is enforced: nothing blocks network egress from this session"
++    hint "user mode is only for trying rocBudAI; production use must deploy it per INSTALL.md to get the airgap"
+ elif [[ -n "${SLURM_JOB_ID:-}" ]]; then
+     ok "in Slurm allocation: job ${SLURM_JOB_ID}"
+ 
+diff --git a/bin/rocbudai-tui b/bin/rocbudai-tui
+index 9c5ef22..b877348 100755
+--- a/bin/rocbudai-tui
++++ b/bin/rocbudai-tui
+@@ -127,7 +127,7 @@ info() { echo "[rocbudai-tui] $*"; }
+ # propagated into the shell. Recover the jobid via squeue: their unique
+ # RUNNING job on this node.
+ if [[ -z "${ROCBUDAI_CONTAINER:-}" && -z "${SLURM_JOB_ID:-}" ]] && command -v squeue >/dev/null 2>&1; then
+-    _adopted=$(squeue -h -w "$(hostname -s)" -u "$USER" -t R -o '%i' 2>/dev/null)
++    _adopted=$(squeue -h -w "$(hostname -s)" -u "$USER" -t R -o '%i' 2>/dev/null || true)
+     if [[ -n "$_adopted" && $(printf '%s\n' "$_adopted" | wc -l) -eq 1 ]]; then
+         export SLURM_JOB_ID="$_adopted"
+     fi
+@@ -141,7 +141,15 @@ if [[ -n "${ROCBUDAI_CONTAINER:-}" ]]; then
+     info "container quick-test mode — skipping Slurm/partition gates (testing only)."
+ fi
+ 
+-if [[ -z "${ROCBUDAI_CONTAINER:-}" && -z "${SLURM_JOB_ID:-}" ]]; then
++# User mode runs the user's own ollama daemon outside any cluster airgap.
++if [[ -n "${ROCBUDAI_USER_MODE:-}" ]]; then
++    info "user mode — skipping Slurm/partition/allow-list gates."
++    warn "user mode — NO airgap is enforced: nothing blocks network egress from this session."
++    warn "user mode is only for trying rocBudAI; production use must deploy it per INSTALL.md"
++    warn "  (https://github.com/AMD-HPC/rocBudAI/blob/main/INSTALL.md) to get the airgap and Slurm gating."
++fi
++
++if [[ -z "${ROCBUDAI_CONTAINER:-}" && -z "${ROCBUDAI_USER_MODE:-}" && -z "${SLURM_JOB_ID:-}" ]]; then
+     err "no SLURM_JOB_ID — rocbudai-tui must run inside a Slurm allocation."
+     err "from a login node, allocate one first (-p selects the GPU"
+     err "partition; --comment=ollama starts the ollama daemon for you):"
+@@ -158,7 +166,7 @@ fi
+ # but `scontrol show job` is the authoritative source for both, so use
+ # it as primary and fall back to env vars only if scontrol is missing.
+ _scontrol_out=""
+-if [[ -z "${ROCBUDAI_CONTAINER:-}" ]] && command -v scontrol >/dev/null 2>&1; then
++if [[ -z "${ROCBUDAI_CONTAINER:-}" && -n "${SLURM_JOB_ID:-}" ]] && command -v scontrol >/dev/null 2>&1; then
+     _scontrol_out="$(scontrol show job "${SLURM_JOB_ID:-}" -o 2>/dev/null || true)"
+ fi
+ _job_comment=""
+@@ -168,8 +176,8 @@ if [[ -n "$_scontrol_out" ]]; then
+     # values may contain commas but not spaces (Slurm rejects raw spaces
+     # in --comment unless the user quotes; even then the parser stores
+     # them with embedded \  on disk), so [^[:space:]]+ is safe.
+-    _job_comment="$(  echo "$_scontrol_out" | grep -oE 'Comment=[^[:space:]]+'   | head -1 | sed 's/^Comment=//')"
+-    _job_partition="$(echo "$_scontrol_out" | grep -oE 'Partition=[^[:space:]]+' | head -1 | sed 's/^Partition=//')"
++    _job_comment="$(  echo "$_scontrol_out" | grep -oE 'Comment=[^[:space:]]+'   | head -1 | sed 's/^Comment=//' || true)"
++    _job_partition="$(echo "$_scontrol_out" | grep -oE 'Partition=[^[:space:]]+' | head -1 | sed 's/^Partition=//' || true)"
+     # Slurm prints "Comment=(null)" when no comment was set; normalise.
+     [[ "$_job_comment" == "(null)" ]] && _job_comment=""
+ fi
+@@ -184,7 +192,7 @@ _job_partition="${_job_partition:-${SLURM_JOB_PARTITION:-}}"
+ # lets the launcher start, only for the runner to crash mid-load with
+ # "model failed to load, resource limitations or internal error". Catch
+ # it here with an actionable message instead.
+-if [[ -z "${ROCBUDAI_CONTAINER:-}" && "${_job_comment}" != *ollama* ]]; then
++if [[ -z "${ROCBUDAI_CONTAINER:-}" && -z "${ROCBUDAI_USER_MODE:-}" && "${_job_comment}" != *ollama* ]]; then
+     err "this allocation's --comment is '${_job_comment:-(none)}', which does not contain 'ollama'."
+     err "rocBudAI requires --comment=ollama at salloc time so the Slurm prolog"
+     err "starts (and the epilog stops) the ollama daemon for THIS job."
+@@ -215,7 +223,7 @@ for _p in ${_spx_partitions//,/ }; do
+         break
+     fi
+ done
+-if [[ -z "${ROCBUDAI_CONTAINER:-}" && -n "$_spx_partitions" && "$_spx_ok" -eq 0 ]]; then
++if [[ -z "${ROCBUDAI_CONTAINER:-}" && -z "${ROCBUDAI_USER_MODE:-}" && -n "$_spx_partitions" && "$_spx_ok" -eq 0 ]]; then
+     err "this allocation's partition is '${_job_partition:-(none)}', which is not in the rocBudAI allow-list."
+     err "the default model needs enough GPUs in full (SPX) mode; partitions that"
+     err "expose sliced GPUs (e.g. MI300A CPX/TPX) cause the runner to abort with"
+@@ -241,7 +249,7 @@ fi
+ # that isn't in the list, fail fast with an actionable error rather than
+ # letting opencode surface a confusing "model not found" deep in the TUI.
+ _normalised_allowed=",${ROCBUDAI_ALLOWED_MODELS// /},"
+-if [[ "${_normalised_allowed}" != *",${ROCBUDAI_MODEL},"* ]]; then
++if [[ -z "${ROCBUDAI_USER_MODE:-}" && "${_normalised_allowed}" != *",${ROCBUDAI_MODEL},"* ]]; then
+     err "ROCBUDAI_MODEL='${ROCBUDAI_MODEL}' is not in the admin allow-list."
+     err "allowed: ${ROCBUDAI_ALLOWED_MODELS}"
+     err "to fix:  unset ROCBUDAI_MODEL ; module load rocbudai"
+@@ -271,8 +279,13 @@ fi
+ # Ollama reachability (3s timeout, no hang).
+ if ! curl -fsS --max-time 3 "${ROCBUDAI_OLLAMA_HOST}/api/tags" >/dev/null 2>&1; then
+     err "ollama daemon not reachable at ${ROCBUDAI_OLLAMA_HOST}."
+-    err "did you allocate with --comment=ollama?  is the daemon up on this node?"
+-    err "try:  systemctl is-active ollama ollama-proxy"
++    if [[ -n "${ROCBUDAI_USER_MODE:-}" ]]; then
++        err "user mode: start your own daemon first:"
++        err "  OLLAMA_HOST=${ROCBUDAI_OLLAMA_HOST#http://} ollama serve > ollama.log 2>&1 &"
++    else
++        err "did you allocate with --comment=ollama?  is the daemon up on this node?"
++        err "try:  systemctl is-active ollama ollama-proxy"
++    fi
+     err "for full diagnostics:  rocbudai-doctor"
+     exit 1
+ fi
+@@ -281,8 +294,13 @@ fi
+ if ! curl -fsS --max-time 3 "${ROCBUDAI_OLLAMA_HOST}/api/tags" \
+         | grep -q "\"${ROCBUDAI_MODEL}\""; then
+     warn "model '${ROCBUDAI_MODEL}' is not in the ollama registry on this node."
+-    warn "the TUI will start, but the first prompt may fail until an admin"
+-    warn "runs:  sudo -u ollama ollama pull ${ROCBUDAI_MODEL}"
++    if [[ -n "${ROCBUDAI_USER_MODE:-}" ]]; then
++        warn "the TUI will start, but the first prompt may fail until you"
++        warn "run:  OLLAMA_HOST=${ROCBUDAI_OLLAMA_HOST#http://} ollama pull ${ROCBUDAI_MODEL}"
++    else
++        warn "the TUI will start, but the first prompt may fail until an admin"
++        warn "runs:  sudo -u ollama ollama pull ${ROCBUDAI_MODEL}"
++    fi
+     warn "for full diagnostics:  rocbudai-doctor"
+ fi
+ 
+@@ -1005,6 +1023,15 @@ each I'll suggest the quick-test answer — just press Enter or reply "ok"
+ to accept it. Here's the first:
+ EOF
+ else
++    if [[ -n "${ROCBUDAI_USER_MODE:-}" ]]; then
++        _ROCBUDAI_BANNER_PRIVACY="No airgap: this user-mode session is only for trying rocBudAI. Nothing
++blocks network traffic from this node, so do not use it on code or data that
++must stay private. Production use needs a cluster deployment that follows
++rocBudAI's INSTALL.md, which provides the airgap and the Slurm gating."
++    else
++        _ROCBUDAI_BANNER_PRIVACY="Privacy: your code, chats, and model responses stay on this node while
++this job runs. Verify: rocbudai-airgap-check"
++    fi
+     cat > .rocbudai-banner.md <<EOF
+ Welcome to rocBudAI — your AMD GPU profiling assistant.
+ 
+@@ -1019,8 +1046,7 @@ Session info:
+   Model:       ${ROCBUDAI_MODEL}
+   Working dir: ${_ROCBUDAI_CWD_DISPLAY}${_ROCBUDAI_BANNER_AUTOLINE}
+ 
+-Privacy: your code, chats, and model responses stay on this node while
+-this job runs. Verify: rocbudai-airgap-check
++${_ROCBUDAI_BANNER_PRIVACY}
+ 
+ ${_ROCBUDAI_BANNER_PERM_FULL}
+ 
+@@ -1035,6 +1061,8 @@ Let's scope the run. I will ask seven short questions, one at a time.
+ Here's the first:
+ EOF
+ fi
++# The user-mode module only sets the environment; `rocbudai` starts a session.
++[[ -n "${ROCBUDAI_USER_MODE:-}" ]] && sed -i 's/module load rocbudai/rocbudai/g' .rocbudai-banner.md
+ chmod 0644 .rocbudai-banner.md
+ 
+ # 4. Exec opencode via `ollama launch` ----------------------------------------
+diff --git a/share/rocbudai/opencode-allow-all.json b/share/rocbudai/opencode-allow-all.json
+index d2e6450..a93c6c0 100644
+--- a/share/rocbudai/opencode-allow-all.json
++++ b/share/rocbudai/opencode-allow-all.json
+@@ -9,7 +9,8 @@
+         "qwen3.5:122b": { "limit": { "context": 262144, "output": 32768 }, "options": { "temperature": 0.6, "top_p": 0.95 } },
+         "gpt-oss:120b": { "limit": { "context": 131072, "output": 32768 } },
+         "nemotron-3-super:120b": { "limit": { "context": 262144, "output": 32768 }, "options": { "top_p": 0.95 } },
+-        "laguna-s-2.1:q4_K_M": { "limit": { "context": 262144, "output": 32768 } }
++        "laguna-s-2.1:q4_K_M": { "limit": { "context": 262144, "output": 32768 } },
++        "laguna-xs-2.1:q4_K_M": { "limit": { "context": 262144, "output": 32768 } }
+       }
+     }
+   },
+diff --git a/share/rocbudai/opencode-default.json b/share/rocbudai/opencode-default.json
+index 323fdaa..fd82ff5 100644
+--- a/share/rocbudai/opencode-default.json
++++ b/share/rocbudai/opencode-default.json
+@@ -9,7 +9,8 @@
+         "qwen3.5:122b": { "limit": { "context": 262144, "output": 32768 }, "options": { "temperature": 0.6, "top_p": 0.95 } },
+         "gpt-oss:120b": { "limit": { "context": 131072, "output": 32768 } },
+         "nemotron-3-super:120b": { "limit": { "context": 262144, "output": 32768 }, "options": { "top_p": 0.95 } },
+-        "laguna-s-2.1:q4_K_M": { "limit": { "context": 262144, "output": 32768 } }
++        "laguna-s-2.1:q4_K_M": { "limit": { "context": 262144, "output": 32768 } },
++        "laguna-xs-2.1:q4_K_M": { "limit": { "context": 262144, "output": 32768 } }
+       }
+     }
+   },

@@ -1,17 +1,17 @@
-- [Exercise 3 (breakpoints): set, list, and toggle](#org8054c0c)
-  - [3a - set breakpoints several ways, then list them](#orga4d6e99)
-  - [3b - a one-shot (temporary) breakpoint](#org996cd6d)
-  - [3c - disable a loop breakpoint once you have seen enough](#org8033745)
+- [Exercise 3 (breakpoints): set, list, and toggle](#org0491417)
+  - [3a - set breakpoints several ways, then list them](#org568500f)
+  - [3b - a one-shot (temporary) breakpoint](#org9b84883)
+  - [3c - disable a loop breakpoint once you have seen enough](#org91394dc)
 
 
-<a id="org8054c0c"></a>
+<a id="org0491417"></a>
 
 # Exercise 3 (breakpoints): set, list, and toggle
 
 Programs are in `../common/`; run rocgdb from this directory.
 
 
-<a id="orga4d6e99"></a>
+<a id="org568500f"></a>
 
 ## 3a - set breakpoints several ways, then list them
 
@@ -27,7 +27,7 @@ $ rocgdb ../common/demo
 ```
 
 
-<a id="org996cd6d"></a>
+<a id="org9b84883"></a>
 
 ## 3b - a one-shot (temporary) breakpoint
 
@@ -38,11 +38,11 @@ $ rocgdb ../common/demo
 ```
 
 
-<a id="org8033745"></a>
+<a id="org91394dc"></a>
 
 ## 3c - disable a loop breakpoint once you have seen enough
 
--   A breakpoint in the loop fires on every iteration. Watch a couple, then switch it off and let the program finish: a realistic move once the loop is clear.
+-   A breakpoint in the loop fires on every iteration. Watch a couple, then switch it off and let the program finish - a realistic move once the loop is clear:
 
 ```
 (gdb) break demo.c:22        # note the number rocgdb prints (call it N)

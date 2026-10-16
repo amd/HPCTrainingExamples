@@ -4,8 +4,8 @@
 
 // Reference solution for the C sibling of 02_omp_offload (compare with saxmy.c):
 // allocate, initialise and map x so the device has a valid array to read. With
-// a=2, x=1, y=2 the result is y=4.0, under any HSA_XNACK. See README.org. Build:
-//   amdclang -g -O0 -fopenmp --offload-arch=gfx942 -o saxmyc_fixed saxmy_fixed.c
+// a=2, x=1, y=2 the result is y=4.0, under any HSA_XNACK. Please see README.md
+// for building and running instructions.
 #include <stdio.h>
 #include <stdlib.h>
 int main(void)

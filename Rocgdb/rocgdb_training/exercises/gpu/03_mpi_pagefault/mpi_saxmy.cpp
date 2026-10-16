@@ -9,11 +9,7 @@
 // per-rank rocgdb wrapper that means exactly one rank's gdb_out_<rank>.txt shows
 // the GPU memory fault; the rest show "done".
 //
-// Build (hipcc is deprecated; use amdclang++ -x hip):
-//   amdclang++ -x hip -ggdb -O0 --offload-arch=gfx942 \
-//     $(mpicxx --showme:compile) $(mpicxx --showme:link) -o mpi_saxmy mpi_saxmy.cpp
-// Run under the per-rank wrapper (rank from SLURM_PROCID):
-//   srun -n 2 --mpi=pmix ./gdb_mpi_wrapper_all_ranks.sh ./mpi_saxmy
+// Please see README.md for building and running instructions.
 #include <mpi.h>
 #include <hip/hip_runtime.h>
 #include <cstdio>
@@ -39,6 +35,11 @@ int main(int argc, char** argv) {
 
     saxmy<<<(n + 63) / 64, 64>>>(n, 2.0f, x, y);
     hipDeviceSynchronize();      // the faulting rank reports the fault here
+    hipError_t err = hipGetLastError();        // HIP has no OMP_TARGET_OFFLOAD=MANDATORY;
+    if (err != hipSuccess) {                   // with no GPU the launch fails silently, so
+        fprintf(stderr, "rank %d: HIP error: %s\n", rank, hipGetErrorString(err));
+        MPI_Abort(MPI_COMM_WORLD, 1);          // abort the whole job rather than "pass"
+    }
 
     printf("rank %d done\n", rank);
     MPI_Finalize();

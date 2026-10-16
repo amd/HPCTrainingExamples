@@ -1,19 +1,19 @@
-- [Exercise 6 (mdb): one prompt for all ranks](#orgf406c18)
-  - [6d - install mdb into a venv](#org6fabc54)
-  - [6e - launch mdb across all ranks, then attach](#org81e02cd)
-  - [6f - drive every rank from one prompt](#org331f797)
+- [Exercise 6 (mdb): one prompt for all ranks](#orga058cc1)
+  - [6d - install mdb into a venv](#orge99365e)
+  - [6e - launch mdb across all ranks, then attach](#org999dcfd)
+  - [6f - drive every rank from one prompt](#orge91ed63)
 
 
-<a id="orgf406c18"></a>
+<a id="orga058cc1"></a>
 
 # Exercise 6 (mdb): one prompt for all ranks
 
-`mdb` (<https://github.com/TomMelt/mdb>, MIT) is an MPI-aware front-end that runs a gdb on every rank and drives them from a SINGLE prompt: the interactive counterpart to the per-rank batch wrapper (which writes N separate logs). This exercise is self-contained: install mdb, then debug the same `mpi_demo` across all ranks.
+`mdb` (<https://github.com/TomMelt/mdb>, MIT) is an MPI-aware front-end that runs a gdb on every rank and drives them from a SINGLE prompt - the interactive counterpart to the per-rank batch wrapper (which writes N separate logs). This exercise is self-contained: install mdb, then debug the same `mpi_demo` across all ranks.
 
 -   Prerequisites: Python >= 3.10, `gdb` on PATH (mdb's `-b gdb` backend launches the `gdb` binary by name; `rocgdb` is a drop-in only if it is what `gdb` resolves to), and an MPI stack (OpenMPI, Cray MPI, or mpich >= 4.3.2).
 
 
-<a id="org6fabc54"></a>
+<a id="orge99365e"></a>
 
 ## 6d - install mdb into a venv
 
@@ -30,12 +30,12 @@ $ cd ..
 -   `deactivate` leaves the venv; `source .mdb/bin/activate` re-enters it in a new shell.
 
 
-<a id="org81e02cd"></a>
+<a id="org999dcfd"></a>
 
 ## 6e - launch mdb across all ranks, then attach
 
 -   Build the program if you have not already: `make -C ../common mpi`.
--   Launch 4 ranks under gdb: mdb drives the MPI job itself and prints a host and port.
+-   Launch 4 ranks under gdb - mdb drives the MPI job itself and prints a host and port:
 
 ```
 $ mdb launch -b gdb -n 4 -t ../common/mpi_demo
@@ -51,7 +51,7 @@ $ mdb attach -h <host> -p <port>
 ```
 
 
-<a id="org331f797"></a>
+<a id="orge91ed63"></a>
 
 ## 6f - drive every rank from one prompt
 
@@ -66,5 +66,5 @@ $ mdb attach -h <host> -p <port>
 (mdb) command continue              # let them all finish
 ```
 
--   One prompt, one command, all ranks: contrast with the wrapper's N `gdb_out_<rank>.txt`.
+-   One prompt, one command, all ranks - contrast with the wrapper's N `gdb_out_<rank>.txt`.
 -   For the curious: `plot value` draws the per-rank values as an ASCII chart, and a whole session can be scripted non-interactively with `mdb attach ... -x session.mdb`.

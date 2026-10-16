@@ -9,7 +9,7 @@
 // THE FIX: the two hipMalloc calls are added (the buggy saxmy.cpp leaves the device
 // pointers null) and the device buffers are zero-initialised, so the kernel no longer
 // dereferences null and the program runs clean.
-// Build: amdclang++ -x hip -ggdb -O0 --offload-arch=gfx942 -o saxmy_fixed saxmy_fixed.cpp
+// Please see README.md for building and running instructions.
 
 #include <hip/hip_runtime.h>
 
@@ -39,6 +39,11 @@ int main()
     int group_size = 128;
     saxmy<<<num_groups, group_size>>>(n, d_x, 1, d_y, 1);
     hipDeviceSynchronize();
+    hipError_t err = hipGetLastError();        // catch the "no GPU on this node" case:
+    if (err != hipSuccess) {                   // HIP has no OMP_TARGET_OFFLOAD=MANDATORY,
+        fprintf(stderr, "HIP error: %s\n", hipGetErrorString(err));  // it fails silently
+        return 1;
+    }
 
     hipFree(d_x);
     hipFree(d_y);

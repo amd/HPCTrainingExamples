@@ -101,6 +101,6 @@ For new users of OpenMP offloading, we recommend following this order first: [sa
 - [optimization/Allocations](optimization/Allocations/)
 - [teams_endloop](teams_endloop/)
 
-#### Notes on this exercise with the cray compiler
+## Notes on OpenMP target offload exercises with the cray compiler
 
 On systems with the Cray Programming Environment, the `ftn` wrapper can also be used. Load the matching ROCm and accelerator modules, for example `craype-accel-amd-gfx942`, and set `export FC=ftn`. The main exercise instructions use `amdflang` directly, so remember that direct compiler commands need `--offload-arch=gfx942` while Cray wrappers get the offload architecture from the loaded modules.

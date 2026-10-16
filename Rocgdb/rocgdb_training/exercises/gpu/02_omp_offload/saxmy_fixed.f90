@@ -4,8 +4,8 @@
 
 ! Reference solution for 02_omp_offload (compare with saxmy.f90): allocate,
 ! initialise and map x so the device has a valid array to read. With a=2, x=1, y=2
-! the result is y=4.0, under any HSA_XNACK. See README.org.
-! Build: amdflang -g -O0 -fopenmp --offload-arch=gfx942 -o saxmyf_fixed saxmy_fixed.f90
+! the result is y=4.0, under any HSA_XNACK. Please see README.md for building
+! and running instructions.
 program saxmy_omp
   implicit none
   integer, parameter :: n = 256
