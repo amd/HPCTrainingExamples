@@ -7,7 +7,9 @@ This exercise uses the Fortran OpenMP code from
 
 The goal is to show how repeated unified-memory allocations create expensive first
 touch/page-fault behavior on MI300A. This exercise shows how to identify the issue and several ways how to solve this.
-This is a common optimization for codes using the allocator ALLOCATE for memory touched in GPU kernels when relying on unified shared memory (needs `HSA_XNACK=1`).
+This is a common optimization for codes using the allocator ALLOCATE for memory touched in GPU kernels when relying on unified shared memory (needs `HSA_XNACK=1`). 
+
+**Note**: the same is true for `malloc` or `new` in C/C++ codes. C/C++ codes can be optimized analogous to this Fortran example.
 
 ## Environment
 
