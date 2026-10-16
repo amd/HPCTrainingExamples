@@ -44,6 +44,10 @@ RBK_AITER="${RBK_AITER:-/shared/gcapodag/opt/aiter-wheel}"
 # hidden reasoning, ~5x slower turns); "high" keeps quality with fast turnaround.
 # A client's own reasoning_effort still wins per request. See README "Turnaround".
 RBK_REASONING_EFFORT="${RBK_REASONING_EFFORT:-high}"
+# Prefix caching (1=on, 0=off). The agent resends a large stable prefix (persona +
+# addendum + history) every turn; caching its KV cuts per-turn prefill from
+# seconds to ~0. ATOM supports it for Kimi-K3/KDA and defaults it on. Set 0 to disable.
+RBK_PREFIX_CACHING="${RBK_PREFIX_CACHING:-1}"
 RBK_EXTRA="${RBK_EXTRA:-}"
 
 ROCM_MODULE="${ROCM_MODULE:-rocm/7.2.2}"
@@ -145,6 +149,13 @@ if [[ -n "${RBK_REASONING_EFFORT}" ]]; then
     RBK_EFFORT_ARG=(--default-chat-template-kwargs "{\"thinking_effort\": \"${RBK_REASONING_EFFORT}\"}")
 fi
 
+# Prefix caching toggle (ATOM's BooleanOptionalAction flag).
+if [[ "${RBK_PREFIX_CACHING}" == "0" || "${RBK_PREFIX_CACHING,,}" == "false" ]]; then
+    RBK_PREFIX_ARG=(--no-enable_prefix_caching)
+else
+    RBK_PREFIX_ARG=(--enable_prefix_caching)
+fi
+
 say "node=$(hostname)  model=${RBK_MODEL}  tp=${RBK_TP}  port=${RBK_PORT}  max_len=${RBK_MAXLEN}  reasoning=${RBK_REASONING_EFFORT:-max(default)}"
 say "HF_HOME=${HF_HOME}  AITER_JIT_DIR=${AITER_JIT_DIR}"
 say "engine=ATOM ($(python3 -c 'import atom,os;print(os.path.dirname(atom.__file__))' 2>/dev/null || echo "${RBK_ATOM_PYLIB}/atom"))"
@@ -167,7 +178,7 @@ exec python3 -m atom.entrypoints.openai_server \
     --max-num-batched-tokens 16384 \
     --gpu-memory-utilization "${RBK_GPU_UTIL}" \
     --block-size 128 \
-    --no-enable_prefix_caching \
+    "${RBK_PREFIX_ARG[@]}" \
     --host "${RBK_HOST}" \
     --port "${RBK_PORT}" \
     --online_quant_config "${ONLINE_QUANT}" \

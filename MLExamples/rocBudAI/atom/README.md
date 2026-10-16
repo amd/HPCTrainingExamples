@@ -244,6 +244,7 @@ serve knobs are read by `rocbudai-serve-kimi`:
 | `RBK_TP` | tensor-parallel degree (default `8`, the whole node) |
 | `RBK_MAXLEN` | context window, `--max-model-len` (default `131072`; Kimi-K3 supports up to 1048576) |
 | `RBK_REASONING_EFFORT` | server-wide default thinking effort `low`\|`high`\|`max` (default `high`; see [Turnaround](#turnaround)) |
+| `RBK_PREFIX_CACHING` | reuse the KV of a shared prompt prefix across turns (default `1`; see [Turnaround](#turnaround)) |
 | `RBK_GPU_UTIL` | `--gpu-memory-utilization` (default `0.93`) |
 | `RBK_HF_HOME` | weights cache (default the shared `hf-cache`) |
 | `RBK_ATOM_PYLIB` | ATOM layer dir, for a private build |
@@ -279,6 +280,14 @@ RBK_REASONING_EFFORT=low rocbudai-serve-kimi
 
 A client can also override per request by sending a top-level `reasoning_effort`
 field; `"none"` disables thinking entirely for that request.
+
+The other half of turnaround is prefill. Each agent turn resends a large stable
+prefix (the persona, the no-GPU addendum, and the growing conversation history),
+so the serve command enables prefix caching (`RBK_PREFIX_CACHING=1`, ATOM's
+default): the KV of that shared prefix is reused across turns and only the new
+tokens are prefilled, cutting per-turn prefill from several seconds (measured
+~4.5 s at ~50k tokens without it) to near zero. Decode itself is ~65 tok/s with
+all 8 GPUs saturated. Set `RBK_PREFIX_CACHING=0` to disable.
 
 ## Troubleshooting
 
