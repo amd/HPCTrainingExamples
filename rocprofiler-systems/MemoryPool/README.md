@@ -29,7 +29,7 @@ the memory-pool versions:
 
 ```bash
 module load rocm/10.1.0 # or module load rocm-new/10.1.0
-# Needed for version4_solution2:
+# Needed for Solution 2:
 module load umpire
 ```
 
