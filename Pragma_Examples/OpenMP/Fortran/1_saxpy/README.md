@@ -17,24 +17,16 @@ export HSA_XNACK=1
 ```
 to make use of the APU programming model (unified memory).
 
-Load a Fortran compiler module <hr>
-**either**
-We recommend to use the new LLVM-based `amdflang` Fortran compiler for these exercises. The new LLVM-based `amdflang` compiler is the default Fortran compiler in ROCm since `rocm/7.X` and also in all of the `rocm-afar` or `therock` modules. Depending on the system you are on, you can simply load either
+Load a Fortran compiler module.
+We recommend to use the new LLVM-based `amdflang` Fortran compiler for these exercises. The new LLVM-based `amdflang` compiler is the default Fortran compiler in ROCm 10.1. Depending on the system you are on, you can simply load either
 ```
 module unload rocm
-module load rocm        # on AAC6
-module load rocm-new  # on AAC7
+module load rocm/10.1.0       # on AAC6
+# or
+module load rocm-new/10.1.0   # on AAC7
+export FC=amdflang
 ```
-Note: These modules set ```FC``` for you.<hr>
-
-**or** you can use the Cray Fortran compiler with (only available on systems with CPE installed)
-```
-module load PrgEnv-cray
-module load rocm
-module load cce
-export FC=ftn
-```
- <hr>
+Note: These modules may set ```FC``` for you, but setting it explicitly makes the following Makefile examples unambiguous.
  
 Check with 
 ```
@@ -49,18 +41,10 @@ cd 0_saxpy_portyourself
 ```
 Try to port this example yourself. If you are stuck, use the step by step solution in folders 1-7 and read the instructions for those exercises below. Recommendation for your first port: use ```!$omp requires unified_shared memory``` (in the code after ```implicit none``` in each module) and ```export HSA_XNACK=1``` (before running) so that you do not have to worry about map clauses. Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behaviour of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps.
 
-Compile the serial version. Note that ```-fopenmp``` is required as ```omp_get_wtime``` is used to time the loop execution.<hr>
-**either**
+Compile the serial version. Note that ```-fopenmp``` is required as ```omp_get_wtime``` is used to time the loop execution.
 ```
 amdflang -fopenmp saxpy.F90 -o saxpy
 ```
- <hr>
- 
-**or**
-```
-ftn -fopenmp saxpy.F90 -o saxpy
-```
-<hr>
 
 Run the serial version.
 ```
@@ -79,23 +63,12 @@ vi saxpy.f90
 ```
 adds ```!$omp target``` to move the loop in the saxpy subroutine to the device.
 
-Compile this first GPU version.<hr>
-**either**
+Compile this first GPU version.
 Make sure you add ```--offload-arch=gfx942``` (on MI300A, find out what your system's gfx... is with ```rocminfo```)
 with the `amdflang` compiler.
 ```
 amdflang -fopenmp --offload-arch=gfx942 saxpy.F90 -o saxpy
 ```
- <hr>
- 
-**or** on systems with CPE with ftn:
-
-First, make sure you loaded the right module that offload is enabled ```module load craype-accel-amd-gfx942``` (for MI300A) before you compile with
-```
-ftn -fopenmp saxpy.F90 -o saxpy
-```
-Note that CPE compiler wrapper ```ftn``` determines the offload architecture through modules while using compilers directly requires you to add the ```--offload-arch``` to the compilation line (see above).
-<hr>
 
 Run
 ```
@@ -132,16 +105,10 @@ Note: you could also switch around 1.2 and 1.3.
 
 ### 1.4) Experiment with different versions
 Check the output of different combinations of directives. What can you learn from setting those environment variables?
- <hr>
- 
+
 For the Next Generation Fortran compiler check:
 - Set ```export LIBOMPTARGET_KERNEL_TRACE=1``` (or 2 or 3 or -1 for all info). Can you interpret the output? Set it back to zero afterwards.
 - Set ```export LIBOMPTARGET_INFO=1``` (or 2 or 3 or -1 for all info). Can you interpret the output? Set it back to zero afterwards.
- <hr>
- 
-For the Cray Fortran compiler:
-Set ```export CRAY_ACC_DEBUG=1``` (or 2 or 3). Can you interpret the output? Set it back to zero afterwards.
- <hr>
  
 ## Part 2: explore the impact of unified shared memory
 ```
@@ -158,7 +125,7 @@ export HSA_XNACK=0
 to get similar behaviour like on discrete GPUs (with memory copies). You can repeat exercise 1.4 with both versions and compare: You will see additional data movement.
 Compiling and running this version without any map clauses but with memory copies will result in much worse performance than with unified shared memory and ```HSA_XNACK=1``` (no memory copies on MI300A).
 
-Note: If you don't want to add ```!$omp requires unified_shared_memory``` in every module by hand, you can use the compiler flag ```-fopenmp-force-usm```. This flag is also understood by the Cray Fortran compiler.
+Note: If you don't want to add ```!$omp requires unified_shared_memory``` in every module by hand, you can use the compiler flag ```-fopenmp-force-usm```.
 
 ## Part 3: with map clauses
 Set
@@ -197,8 +164,7 @@ The results will be wrong! This shows, that proper validation of results is cruc
 
 ### 3.3) Investigate
 What can you learn from setting those environment variables?
- <hr>
- 
+
 For the Next Generation Fortran compiler:
 Set 
 ```
@@ -210,14 +176,6 @@ Try the same for
 export LIBOMPTARGET_INFO=1
 ``` 
 (or 2 or 3 or -1 for all info). Can you interpret the output? Set it back to zero afterwards.
- <hr>
- 
-For the Cray Fortran compiler:
-Set 
-```
-export CRAY_ACC_DEBUG=1
-``` 
-(or 2 or 3). Can you interpret the output? Set it back to zero afterwards.<hr>
 
 What are the differences compared to the USM version?
 
@@ -237,3 +195,4 @@ After finishing this introductory exercise, go to the next exercise in the Fortr
 ```
 cd ../..
 ```
+

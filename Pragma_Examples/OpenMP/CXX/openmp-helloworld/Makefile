@@ -1,11 +1,6 @@
-HIP_PATH?= $(wildcard /opt/rocm/hip)
-ifeq (,$(HIP_PATH))
-	HIP_PATH=/opt/rocm
-endif
-
-HIPCC=$(HIP_PATH)/bin/hipcc
-CXX=$(HIPCC)
-CXXFLAGS =-fopenmp
+HIPCC ?= hipcc
+ROCM_GPU ?= gfx942
+CXXFLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
 
 SOURCES = openmp_helloworld.cpp
 
@@ -18,7 +13,7 @@ all: $(EXECUTABLE) test
 
 
 $(EXECUTABLE):
-	$(CXX) $(CXXFLAGS) $(SOURCES) -o $@
+	$(HIPCC) $(CXXFLAGS) $(SOURCES) -o $@
 
 
 test: $(EXECUTABLE)

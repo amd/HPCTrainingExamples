@@ -17,37 +17,14 @@ export HSA_XNACK=1
 ```
 to make use of the APU programming model (unified memory).
 
-Load a C compiler module <hr>
-**either**
-The AMD Compiler from the latest rocm 
+Load a C compiler module.
+The AMD compiler is provided by ROCm:
 ```
-module load rocm       #on AAC6
-
-```
-or
-```
-module load rocm-new   #on AAC7
-```
-then set
-```
+module load rocm/10.1.0       # on AAC6
+# or
+module load rocm-new/10.1.0   # on AAC7
+export CC=amdclang
 export C_COMPILER=amdclang
-
-```
-**or**
-The AMD Compiler with the Cray programming environment (only available on systems with CPE installed, e.g. AAC7)
-```
-module load PrgEnv-amd
-module load rocm
-module load amd
-export C_COMPILER = amdclang
-```
-
-**or** (only available on systems with CPE installed, e.g. AAC7)
-```
-module load PrgEnv-cray
-module load rocm
-module load cce
-export C_COMPILER = cc
 ```
 
 Check with 
@@ -57,7 +34,7 @@ $C_COMPILER --version
 if you loaded the compiler you expect.
 > [!NOTE]
 > Setting ```C_COMPILER``` to the desired compiler is only necessary when using the provided Makefiles in this or later examples. It is not required in this example if you compile by hand as shown in the following for educational purposes.
-> The `C_COMPILER` environment variable is chosen instead of the standard `CC` variable for C compilers since `CC` clashes with the Cray C++ compiler wrapper `CC`.
+> Some Makefiles use `C_COMPILER` instead of `CC` because `CC` is also the Cray C++ compiler wrapper.
 
 #### 1.0) the serial CPU code.
 ```
@@ -65,18 +42,10 @@ cd 0_saxpy_portyourself
 ```
 Try to port this example yourself. If you are stuck, use the step by step solution in folders 1-7 and read the instructions for those exersices below. Recommendation for your first port: use ```#pragma omp requires unified_shared_memory``` and ```export HSA_XNACK=1``` (before running) so that you do not have to worry about map clauses. Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behaviour of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps.
 
-Compile the serial version. Note that ```-fopenmp``` is required as ```omp_get_wtime``` is used to time the loop execution.<hr>
-**either**
+Compile the serial version. Note that ```-fopenmp``` is required as ```omp_get_wtime``` is used to time the loop execution.
 ```
 amdclang -fopenmp saxpy.c -o saxpy
 ```
- <hr>
- 
-**or** (CPE with cray wrappers only)
-```
-cc -fopenmp saxpy.c -o saxpy
-```
-<hr>
 
 Run the serial version.
 ```
@@ -94,22 +63,11 @@ vi saxpy.c
 ```
 add ```#pragma omp target``` to move the loop in the saxpy subroutine to the device.
 
-Compile this first GPU version.<hr>
-**either**
+Compile this first GPU version.
 Make sure you add ```--offload-arch=gfx942``` (on MI300A, find out what your system's gfx... is with ```rocminfo```)
 ```
 amdclang -fopenmp --offload-arch=gfx942 saxpy.c -o saxpy
 ```
- <hr>
-
-**or** on systems with CPE with cc:
-
-First, make sure you loaded the right module that offload is enabled ```module load craype-accel-amd-gfx942``` (for MI300A) before you compile with
-```
-cc -fopenmp saxpy.c -o saxpy
-```
-Note that CPE compiler wrapper ```cc``` determines the offload architecture through modules while using compilers directly requires you to add the ```--offload-arch``` to the compilation line (see above).
-<hr>
 
 Run
 ```
@@ -146,16 +104,10 @@ Note: you could also switch around 1.2 and 1.3.
 
 ### 1.4) Experiment with different versions
 Check the output of different combinations of directives. What can you learn from setting those environment variables?
- <hr>
- 
-For the Next Generation Fortran compiler check:
+
+For the amdclang compiler check:
 - Set ```export LIBOMPTARGET_KERNEL_TRACE=1``` (or 2 or 3 or -1 for all info). Can you interpret the output? Set it back to zero afterwards.
 - Set ```export LIBOMPTARGET_INFO=1``` (or 2 or 3 or -1 for all info). Can you interpret the output? Set it back to zero afterwards.
- <hr>
- 
-For the Cray Fortran compiler:
-Set ```export CRAY_ACC_DEBUG=1``` (or 2 or 3). Can you interpret the output? Set it back to zero afterwards.
- <hr>
 
 ## Part 2: explore the impact of unified memory
 ```
@@ -204,7 +156,6 @@ Additional exercise: What happens to the result, if you comment out the ```#prag
 vi saxpy.c
 ```
 Don't forget to recompile after commenting it.
-- Don't forget to recompile after commenting it.
 The results will be wrong! This shows, that proper validation of results is crucial when porting! Before you port a large app, think about your validation strategy before you start. Incremental testing is essential to capture such errors like missing data movement.
 
 > [!TIP]
@@ -218,8 +169,7 @@ The results will be wrong! This shows, that proper validation of results is cruc
 
 ### 3.3) Investigate
 What can you learn from setting those environment variables?
- <hr>
- 
+
 For the amdclang compiler:
 Set 
 ```
@@ -231,14 +181,6 @@ Try the same for
 export LIBOMPTARGET_INFO=1
 ``` 
 (or 2 or 3 or -1 for all info). Can you interpret the output? Set it back to zero afterwards.
- <hr>
- 
-For the Cray C compiler:
-Set 
-```
-export CRAY_ACC_DEBUG=1
-``` 
-(or 2 or 3). Can you interpret the output? Set it back to zero afterwards.<hr>
 
 What are the differences compared to the USM version?
 
@@ -258,3 +200,4 @@ After finishing this introductory exercise, go to the next exercise in the C fol
 ```
 cd ../..
 ```
+

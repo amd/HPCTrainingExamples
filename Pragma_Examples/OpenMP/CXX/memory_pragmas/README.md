@@ -7,10 +7,8 @@ README.md in `HPCTrainingExamples/Pragma_Examples/OpenMP/CXX/memory_pragmas` fro
 Setup your environment
 
 ```
-module load amdclang
-   or
-export CXX=<C++ Compiler>
-      Example: export CXX=amdclang++
+module load rocm/10.1.0
+export CXX=amdclang++
 
 export LIBOMPTARGET_INFO=-1
 export LIBOMPTARGET_KERNEL_TRACE=[1,2]
@@ -171,7 +169,8 @@ also run nearly the same code in mem7.cc with managed memory on the MI200 series
 
 ```
 cd ~/HPCTrainingExamples/Pragma_Examples/OpenMP/CXX/memory_pragmas
-module load amdclang
+module load rocm/10.1.0
+export CXX=amdclang++
 mkdir build && cd build
 cmake ..
 make mem11

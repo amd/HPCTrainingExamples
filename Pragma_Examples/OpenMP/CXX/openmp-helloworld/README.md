@@ -16,6 +16,7 @@ Originally from HIP-Examples/openmp-helloworld in
 ## How to run this code:
 
 ### Using Make on Linux:
+* Load ROCm first, for example `module load rocm/10.1.0` on AAC6.
 * To build and run: `make`.
 * To clean the environment: `make clean`.
 

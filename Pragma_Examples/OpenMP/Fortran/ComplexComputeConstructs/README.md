@@ -6,7 +6,8 @@ README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/ComplexComput
 To compile:
 
 ```
-module load amdclang
+module load rocm/10.1.0
+export FC=amdflang
 make 
 ```
 

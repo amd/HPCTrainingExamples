@@ -24,7 +24,9 @@ We'll start with a baseline from the full combined compute directive
 Setting up the environment
 
 ```
-module load amdclang
+module load rocm/10.1.0
+export CC=amdclang
+export C_COMPILER=amdclang
 export HSA_XNACK=1
 export LIBOMPTARGET_KERNEL_TRACE=1
 ```
@@ -60,7 +62,9 @@ cd HPCTrainingExamples/Pragma_Examples/OpenMP/C/ComplexComputeConstructs
 Setting up the environment
 
 ```
-module load amdclang
+module load rocm/10.1.0
+export CC=amdclang
+export C_COMPILER=amdclang
 export HSA_XNACK=1
 export LIBOMPTARGET_KERNEL_INFO=1
 ```

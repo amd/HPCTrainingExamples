@@ -9,8 +9,10 @@ The first version is an OpenMP offload example with three kernels in an iterativ
 Set up the environment (use the module line for your system; on AAC6 load ```rocm```, on AAC7 load ```rocm-new```):
 
 ```
-module load rocm        # on AAC6
-module load rocm-new  # on AAC7
+module load rocm/10.1.0   # on AAC6
+export FC=amdflang
+module load rocm-new/10.1.0  # on AAC7
+export FC=amdflang
 export HSA_XNACK=1
 ```
 
@@ -49,16 +51,12 @@ A possible solution is to use a memory pool. An example pool you can use in C/C+
 cd  3_memorypool
 ```
 
-First install umpire
+Load the Umpire module:
 ```
-export hip_DIR=${ROCM_PATH}
-./umpire_setup.sh
+module load umpire/2025.12.0
 ```
 
-Set the `UMPIRE_PATH` to the installation location:
-```
-export UMPIRE_PATH=$HOME/Umpire
-```
+The module sets `UMPIRE_PATH` for the Makefile. If your system does not provide an Umpire module, see the Umpire build helper at https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/umpire_setup.sh.
 
 Have a look how the memory pool is set up by looking at the memorypool.f90 file.
 

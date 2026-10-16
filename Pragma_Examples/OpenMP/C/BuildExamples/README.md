@@ -41,8 +41,6 @@ else ifneq ($(findstring clang,$(CC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
 else ifneq ($(findstring gcc,$(CC1)),)
   OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU}
-else ifneq ($(findstring CC,$(CC1)),)
-  OPENMP_FLAGS = -fopenmp
 endif
 
 CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
@@ -58,7 +56,9 @@ clean:
 ```
 
 ```
-module load amdclang
+module load rocm/10.1.0
+export CC=amdclang
+export C_COMPILER=amdclang
 make
 ```
 
@@ -95,17 +95,15 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp --offload-arch=${ROCM_GPU}")
 elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp -foffload=-march=${ROCM_GPU}")
-elseif (CMAKE_C_COMPILER_ID MATCHES "Cray")
-   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
-   #the cray compiler decides the offload-arch by loading appropriate modules
-   #module load craype-accel-amd-gfx942 for example
 endif()
 
 add_executable(openmp_code openmp_code.c)
 ```
 
 ```
-module load amdclang
+module load rocm/10.1.0
+export CC=amdclang
+export C_COMPILER=amdclang
 mkdir build && cd build && cmake ..
 make
 ```

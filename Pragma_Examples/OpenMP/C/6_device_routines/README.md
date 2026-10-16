@@ -19,11 +19,13 @@ Explore the serial CPU code first.
 
 ```
 cd 0_device_routine_portyourself
-module load amdclang
+module load rocm/10.1.0
+export CC=amdclang
+export C_COMPILER=amdclang
 make
 ./device_routine
 ```
-The rocm module will be loaded with the amdclang module. And the current rocm module will set `HSA_XNACK=1`. If there are no modules set up on your system, set the `CC` environment variable to the full path to the C compiler you want to use. Add the ROCm directory to the PATH and also the LLVM directory under ROCm. Also add the lib directory to the `LD_LIBRARY_PATH`. And finally set `HSA_XNACK` with `export HSA_XNACK=1`.
+The ROCm 10.1 module provides `amdclang`. Set `HSA_XNACK=1` for unified shared memory examples.
 
 ```
 make

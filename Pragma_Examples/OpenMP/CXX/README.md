@@ -9,13 +9,13 @@ cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/CXX
 Follow the message of the day how to allocate one GPU interactively.
 Load the amdclang compiler and set up the environment 
 ```
-module load rocm
+module load rocm/10.1.0
 export CXX=amdclang++
 ```
 #### on aac7:
 Get an interactive session on a node:
 ```
-salloc -N 1 --mem=100GB --gpus=1
+salloc -N 1 --mem=100GB --gpus=1 -p 192C4G1H_MI300A_RHEL9_A1_CPX
 ```
 Note: you will get 1 GPU and 100 GB of memory. This will allow others to use the remaining resources of a node.
 Useful commands:
@@ -32,47 +32,10 @@ scancel <JobID>
 ```
 to terminate a job.
 
-You can choose the Cray C++ compiler (CC) or the amdclang++ compiler.
-##### amdclang++ compiler on aac7:
-On AAC7, if you use **amdclang++** without the Cray programming environment (no ```PrgEnv-*```), load **rocm-new**:
+Use the `amdclang++` compiler from `rocm-new`:
 ```
-module load rocm-new
-```
-```
+module load rocm-new/10.1.0
 export CXX=amdclang++
-```
-Note that in CPE/25.03 the CC compiler wrapper in PrgEnv-amd leads to a segfault at program finalization. Therefore we decided to not recommend to use the compiler wrappers for now on aac7 with amdclang++. If you have rocm 6.3.3 or greater in that version of CPE you should not encounter any issues. If you need the Cray ```CC``` wrapper with ```PrgEnv-amd``` instead, prepare the environment with:
-```
-module load PrgEnv-amd
-module load craype-x86-genoa
-module load craype-accel-amd-gfx942
-module load amd
-module load rocm
-```
-```
-export CXX=CC
-```
-##### Cray C++ compiler on aac7:
-Prepare the environment:
-```
-module swap rocm rocm-new/7.1.1
-module load craype-accel-amd-gfx942
-```
-make sure to load the right rocm version (non-default!).
-```
-module list
-```
-should show you this list of modules:
-```
-Currently Loaded Modulefiles:
-  1) craype-x86-genoa          7) cray-mpich/9.1.0
-  2) libfabric/2.2.0rc1        8) cray-libsci/26.03.0
-  3) craype-network-ofi        9) PrgEnv-cray/8.7.0
-  4) perftools-base/26.03.0   10) rocm-new/7.1.1
-  5) cce/21.0.0               11) craype-accel-amd-gfx942
-  6) craype/2.7.36```
-```
-export CXX=CC
 ```
 #### On all systems independent of the compiler:
 This flag
@@ -94,3 +57,21 @@ The exercises in the folders are small examples of what one may encounter when p
 Each exercise has its own README with instructions.
 Exercise 8 is a small app with a Jacobi solver. (Note: This code is explained in detail a blogpost https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-jacobi-readme/.) 
 Choose one of the exercises in the sub-directories and use the README there for instructions.
+
+## Exercise index
+
+For new users of OpenMP offloading, we recommend first following the introductory path in the C or Fortran sections: saxpy, reduction, device routines, vecadd, and then Jacobi. In this C++ section, [device routines](6_device_routines/) and [Jacobi](8_jacobi/) continue that path; the other examples cover special topics.
+
+- [6_device_routines](6_device_routines/)
+- [8_jacobi](8_jacobi/)
+- [BuildExamples](BuildExamples/)
+- [cpp_classes](cpp_classes/)
+- [kernel_pragmas](kernel_pragmas/)
+- [memory_pragmas](memory_pragmas/)
+- [openmp-helloworld](openmp-helloworld/)
+- [optimization/Allocations](optimization/Allocations/)
+- [optimization/alignment](optimization/alignment/)
+
+#### Notes on this exercise with the cray compiler
+
+On systems with the Cray Programming Environment, the `CC` wrapper can also be used. Load the matching ROCm and accelerator modules, for example `craype-accel-amd-gfx942`, and set `export CXX=CC`. The main exercise instructions use `amdclang++` directly, so direct compiler commands need `--offload-arch=gfx942` while Cray wrappers get the offload architecture from the loaded modules.

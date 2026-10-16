@@ -21,8 +21,9 @@ and surrounding the region of interest using the roctx API:
 ```
 
 Do not forget to include the hipfort module directory in the compilation command
-in the Makefile. For this exercise, the ROCm afar drop version 22.2.0 was
-used to provide both the `amdflang` compiler and the `hipfort` library.
+in the Makefile. This exercise requires a ROCm environment that provides both
+`amdflang` and the `hipfort` modules. Set `HIPFORT_INC` to the directory
+containing `hipfort.mod` and `hipfort_roctx.mod` before building.
 
 ```
 %.o : %.f90 Makefile

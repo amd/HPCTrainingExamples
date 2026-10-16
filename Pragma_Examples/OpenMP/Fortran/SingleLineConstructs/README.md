@@ -22,8 +22,10 @@ We go to the directory with the example and load the Fortran compiler module (on
 
 ```
 cd HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/SingleLineConstructs
-module load rocm        # on AAC6
-module load rocm-new  # on AAC7
+module load rocm/10.1.0   # on AAC6
+export FC=amdflang
+module load rocm-new/10.1.0  # on AAC7
+export FC=amdflang
 make saxpy_cpu
 ./saxpy_cpu
 ```
@@ -42,7 +44,7 @@ through the process in these exercises to show you how it is done.
 
 First we will work with a very simple case. It has all the code in a single subroutine with
 statically allocated arrays on the stack. This permits the compiler to have as much information as possible. Note that we could
-also load the regular amdclang module instead of the new amdflang.
+also use `amdclang` from the ROCm module instead of `amdflang`.
 Also, we have made the array size smaller so that it won't run out of stack space.
 
 ```

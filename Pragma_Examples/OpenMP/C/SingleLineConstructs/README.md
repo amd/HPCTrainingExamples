@@ -18,11 +18,13 @@ This example uses OpenMP on the CPU with threading for parallelism. The pragma u
 #pragma omp parallel for
 ```
 
-We go to the directory with the example and load the amdclang module. We can then build and run the code.
+We go to the directory with the example and load the ROCm 10.1 module. We can then build and run the code.
 
 ```
 cd HPCTrainingExamples/Pragma_Examples/OpenMP/C/SingleLineConstructs
-module load amdclang
+module load rocm/10.1.0
+export CC=amdclang
+export C_COMPILER=amdclang
 make saxpy_cpu
 ./saxpy_cpu
 ```

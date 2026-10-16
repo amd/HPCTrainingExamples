@@ -64,11 +64,6 @@ For `amdflang` set
 ```
 export LIBOMPTARGET_INFO=-1 
 ```
-or, if you work with the `ftn` compiler
-```
-export CRAY_ACC_DEBUG=1
-
-```
 
 Run example 3 with and without unified shared memory (`export HSA_XNACK=1` and `export HSA_XNACK=0`)
 You are able to see host to device copies in the shown log in the case of HSA_XNACK=0.
@@ -77,10 +72,4 @@ In the case of HSA_XNACK=1 those copies are gone and this message is shown:
 AMDGPU device 0 info: Application configured to run in zero-copy using auto zero-copy.
 
 Hence, if a discrete GPU program is compiled with HSA_XNACK=1 on MI300A, memory copies are automatically ignored. This makes code portable between discrete GPUs and APUs. Include `!$omp requires unified_shared_memory` at the top of the program (after `implicit none`) such that the compiler can make full use of the APU programming model. This is shown in example code 5.
-When you compare the code examples, the unified_shared_memory version dtype_derived_type_usm (version 5) is very simple to implement. If you only work on an APU, this is the easiest way to port, as mapping clauses are not required to obtain good performance.
 
-You may want to set
-```
-export LIBOMPTARGET_INFO=0
-```
-before you run the next exercise.

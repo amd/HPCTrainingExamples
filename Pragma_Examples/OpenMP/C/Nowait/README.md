@@ -13,7 +13,7 @@
 ## Build & run
 
 ```bash
-export CC=amdclang   # or clang / gcc / cc
+export CC=amdclang
 make
 ./nowait
 make clean

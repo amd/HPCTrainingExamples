@@ -6,6 +6,10 @@ ROCM_GPU ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name
 
 FC1=$(notdir $(FC))
 
+ifeq ($(strip $(HIPFORT_INC)),)
+  $(error HIPFORT_INC is not set. Load a hipfort-capable ROCm module or set HIPFORT_INC to the directory containing hipfort.mod and hipfort_roctx.mod)
+endif
+
 ifneq ($(findstring amdflang,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=$(ROCM_GPU)
   FREE_FORM_FLAG = -ffree-form
