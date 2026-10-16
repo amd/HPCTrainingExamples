@@ -6,9 +6,8 @@ This exercise uses the Fortran OpenMP code from
 `rocprofv3` exercise, but uses the rocprofiler-systems HPC/OpenMP presets and unified memory profiling.
 
 The goal is to show how repeated unified-memory allocations create expensive first
-touch/page-fault behavior on MI300A, and how the traces change when the code either
-removes repeated allocations or uses a memory pool. This is a common optimization for
-codes using the allocator ALLOCATE and running on MI300A with HSA_XNACK=1.
+touch/page-fault behavior on MI300A. This exercise shows how to identify the issue and several ways how to solve this.
+This is a common optimization for codes using the allocator ALLOCATE for memory touched in GPU kernels when relying on unified shared memory (needs `HSA_XNACK=1`).
 
 ## Environment
 
