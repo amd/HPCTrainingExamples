@@ -143,14 +143,17 @@ do{                                                                             
 
 void print_affinity_info (int rank)
 {
-    // If ROCR_VISIBLE_DEVICES is set, capture visible GPUs
+    // If HIP_VISIBLE_DEVICES (or ROCR_VISIBLE_DEVICES) is set, capture visible GPUs
     const char* gpu_id_list;
-    const char* rocr_visible_devices = getenv("ROCR_VISIBLE_DEVICES");
-    if(rocr_visible_devices == NULL){
+    const char* visible_devices = getenv("HIP_VISIBLE_DEVICES");
+    if(visible_devices == NULL){
+        visible_devices = getenv("ROCR_VISIBLE_DEVICES");
+    }
+    if(visible_devices == NULL){
         gpu_id_list = "N/A";
     }
     else{
-        gpu_id_list = rocr_visible_devices;
+        gpu_id_list = visible_devices;
     }
 
     // Find how many GPUs HIP runtime says are available
