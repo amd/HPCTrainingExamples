@@ -28,7 +28,8 @@ Load ROCm 10.1.0 and use an Umpire build that matches that ROCm/compiler stack f
 the memory-pool versions:
 
 ```bash
-module load rocm/10.1.0 # or module load rocm-new/10.1.0
+module load rocm/10.1.0 # On aac6
+module load rocm-new/10.1.0 # On aac7
 # Needed for Solution 2:
 module load umpire
 ```
