@@ -159,6 +159,13 @@ salloc -p mi355x --exclusive --gres=gpu:amd_instinct_mi355_oam:8 --mem=0 -t 2:00
 "$PREFIX"/bin/rocbudai-serve-kimi   # wait for "Application startup complete"
 ```
 
+The partition name (`mi355x`) and the GRES string (`gpu:amd_instinct_mi355_oam:8`)
+are site-specific: find yours with `sinfo` and the `Gres=` line of
+`scontrol show node <node>`, or set `SLURM_PARTITION` / `GPU_GRES` in `config.sh`.
+`--mem=0` (whole-node memory) is the one flag that must stay, since Kimi-K3 needs
+nearly all of the node's RAM to load. For a different ROCm version or GPU, see
+[Porting to a different ROCm version or GPU](#porting-to-a-different-rocm-version-or-gpu).
+
 The first start loads 1.5 TB of weights and builds JIT kernels, which takes
 several minutes. It is ready when it prints `Application startup complete` and
 `Uvicorn running on http://0.0.0.0:8000`.
@@ -213,6 +220,33 @@ before `atom-pylib` and the `vllm` module so the newer `aiter` wins. The serve
 command does this for us. We watch a run with `squeue -u $USER` and
 `tail -f "$LOGDIR"/*.log`; a good serve prints the `/v1/models` listing and a
 `/v1/chat/completions` reply.
+
+### Porting to a different ROCm version or GPU
+
+The recipe is pinned and validated as one set: `rocm/7.2.2`,
+`vllm/0.19.1-pt2.10.0`, AITER `v0.1.25` (built for `rocm7.2`), and ATOM
+`67c54da4e`, on `gfx950`. The hard rule is that **ATOM and the AITER wheel must
+match the ROCm, PyTorch, and Triton that the serving modules provide**. A mismatch
+does not fail cleanly; it surfaces as the Triton errors in
+[Troubleshooting](#troubleshooting) (the `packed_h2d` "14 arguments" crash and the
+Gluon `SwizzledSharedLayout` crash are both AITER/ATOM-vs-module-Triton skew). So
+move the whole set together rather than one piece at a time.
+
+To target a different ROCm version, override these in `config.sh` before building:
+
+- `ROCM_MODULE` and `VLLM_MODULE`: your site's modules that provide ROCm and a
+  matching PyTorch + Triton (the engine reuses the `vllm` module's torch).
+- `AITER_ROCM`, `AITER_RELEASE_TAG` (and `AITER_MANIFEST` for a nightly): an AITER
+  wheel built for that ROCm. Its ABI must match the module's PyTorch/Triton.
+- `ATOM_COMMIT`: a commit compatible with that PyTorch/Triton. The bundled
+  `patches/atom-packed-h2d.patch` targets the pinned commit, so a different commit
+  may need the patch refreshed (or may already include the fix).
+
+For a different GPU, also set `--gfx-arch` on the installer (persona and arch pin)
+and `SLURM_PARTITION` / `GPU_GRES` for the node shape. Then run the kit
+(`1-download-kimi.sh`, `2-build-engine.sh`, `3-run-serve-test.sh`) and install as
+usual. Only the pinned set above is tested, so expect to iterate on the AITER/ATOM
+versions and patches on a materially different stack.
 
 ## Options
 
