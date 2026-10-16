@@ -38,7 +38,7 @@ With the SDMA engines the exchange, about 0.8 ms per iteration, runs while `blur
 
 ```
 unset HSA_ENABLE_SDMA
-mpirun -n 4 --bind-to core --map-by ppr:1:numa bash -c 'ROCR_VISIBLE_DEVICES=$OMPI_COMM_WORLD_LOCAL_RANK rocprofv3 --kernel-trace --stats \
+mpirun -n 4 --bind-to core --map-by ppr:1:numa bash -c 'HIP_VISIBLE_DEVICES=$OMPI_COMM_WORLD_LOCAL_RANK rocprofv3 --kernel-trace --stats \
     -f csv -o trace -d prof/rank$OMPI_COMM_WORLD_LOCAL_RANK -- ./GhostExchange -x 1 -y 4 -i 20000 -j 20000 -h 128 -t -c -I 100'
 grep -h -e Name -e blur_inner prof/rank*/trace_kernel_stats.csv
 ```
