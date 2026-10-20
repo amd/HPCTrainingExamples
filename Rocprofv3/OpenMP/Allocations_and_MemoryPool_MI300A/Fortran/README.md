@@ -1,9 +1,10 @@
 # Exercise rocprofv3 with roctx-markers: Dynamic memory allocations and memory pool on MI300A
 This exercise highlights the importance of the reduction of dynamic memory allocations on MI300A with unified memory and shows a way to discover such an issue with rocprofv3 and how to use roctx markers in Fortran. So this exercise teaches you about a common performance problem on MI300A as well as how to use rocprofv3 with roctx markers.
 
-#### Environment
+## Environment
 
-On AAC7, allocate a shared node with 1 APU:
+### On AAC7
+allocate a shared node with 1 APU:
 ```
 salloc -N 1 --mem=20GB --gpus=1 -p 192C4G1H_MI300A_RHEL9_A1_CPX
 ```
@@ -14,7 +15,8 @@ module load rocm-new/10.1.0  # on AAC7
 export FC=amdflang
 ```
 
-On AAC6, allocate a shared node with 1 APU:
+### On AAC6
+allocate a shared node with 1 APU:
 ```
 salloc -N 1 --gpus=1 -p PPAC_MI300A_CPX
 ```
@@ -24,7 +26,7 @@ Use the ROCm module instead:
 module load rocm/10.1.0      # on AAC6
 export FC=amdflang
 ```
-
+##  Check Environment
 Check with ```echo $FC``` and ```$FC --version``` that you are using ```amdflang```.
 
 Enable unified memory on MI300A:
@@ -92,10 +94,10 @@ Explore the trace again in perfetto after the download of the trace.
 Now you can see the annotated regions in the trace.
 <p><img src="images/2_FullTracewithmarkers.png"/></p>
 
-With zooming in and out (asdw keys or press ctrl+scroll with mouse) one can see that the first kernel marked with the roctx markers as ```first touch``` in each iteration is extremely long compared to all other kernels and deallocations marked also with a roctx marker take a significant amount of time. The following kernels are almost insignificant compared to the first one, but is this really unavoidable that this first kernel takes so much time? Comparing the amount of arrays which need to be loaded, the first and second kernel should not be too different, at least in the same order of magnitude, but why isn't this the case?
+With zooming in and out (asdw keys or press ctrl+scroll with mouse) one can see that the first kernel marked with the roctx markers as ```first touch``` in each iteration is extremely long compared to all other kernels and deallocations marked also with a roctx marker take a significant amount of time. The following kernels are almost insignificant compared to the first one, but is this really unavoidable that this first kernel takes so much time? Comparing the amount of arrays which need to be loaded, the first and second kernel should not be too different, at least in the same order of magnitude, but why isn't this the case? The allocation does not happen at ```allocate``` but when the data is touched the first time. This initial process -the recovery from a GPU page fault- takes a lot of time on MI300A when using unified shared memory.
 
 ## version 3: Solution no dynamic allocation and deallocation
-In this version the allocations are moved outside the iteration loop. If you compile and run again with rocprofv3 you get a trace which shows only a long time for the "first_touch" region in the first iteration. 
+In this version the allocations are moved outside the iteration loop. If you compile and run again with rocprofv3 you get a trace which shows only a long time for the "first_touch" region in the first iteration. The same region in following iterations shrinks as it is no true first touch of the data anymore. 
 ```
 cd ../version3_solution1
 ```
@@ -164,4 +166,4 @@ In this example you will e.g. already see better performance in the above exerci
 If you use GPU aware MPI with Cray MPICH you need GPU allocated buffers i.e. ```omp_target_alloc``` or ```hipmalloc``` allocated memory. You can also achieve GPU allocations through using the Device instead of Host allocator pool in Umpire.
 </hr>
 
-For a complementary profiling workflow, see the [rocprofiler-systems memory pool exercise](../../../../rocprofiler-systems/MemoryPool). It uses the same Fortran example and can show the allocation/page-fault issue faster and more easily when profiling a large application.
+For a complementary profiling workflow with rocprofiler systems, see the [rocprofiler-systems memory pool exercise](../../../../rocprofiler-systems/MemoryPool). It uses the same Fortran example and can show the allocation/page-fault issue faster and more easily when profiling a large application. It also shows futher mitigation strategies for the underlying first touch issue.
