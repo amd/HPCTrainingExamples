@@ -16,10 +16,18 @@ export C_COMPILER=amdclang
 #### on aac7:
 Get an interactive session on a node:
 ```
-salloc -N 1 --mem=100GB --gpus=1 -p 192C4G1H_MI300A_RHEL9_A1_CPX
+salloc -N 1 --mem=20GB --gpus=1 -p 192C4G1H_MI300A_RHEL9_A1_CPX
 ```
-Note: you will get 1 GPU and 100 GB of memory. This will allow others to use the remaining resources of a node.
-Useful commands:
+Note: you will get 1 GPU and a fraction of the node's memory. This will allow others to use the remaining resources of a node.
+Use the `amdclang` compiler from `rocm-new`:
+```
+module load rocm-new/10.1.0
+export CC=amdclang
+export C_COMPILER=amdclang
+```
+> [!NOTE]
+> Some C examples use `C_COMPILER` instead of only `CC` because `CC` is also the Cray C++ compiler wrapper; CMake and a few Makefiles use the standard `CC` variable.
+#### Useful commands:
 ```
 sinfo
 ```
@@ -33,14 +41,6 @@ scancel <JobID>
 ```
 to terminate a job.
 
-Use the `amdclang` compiler from `rocm-new`:
-```
-module load rocm-new/10.1.0
-export CC=amdclang
-export C_COMPILER=amdclang
-```
-> [!NOTE]
-> Some C examples use `C_COMPILER` instead of only `CC` because `CC` is also the Cray C++ compiler wrapper; CMake and a few Makefiles use the standard `CC` variable.
 #### On all systems independent of the compiler:
 This flag
 ```
@@ -67,8 +67,8 @@ Exercise 8 is a small app with a Jacobi solver that you can find in the CXX sect
 
 ## Exercise index
 
-For new users of OpenMP offloading, we recommend following this order first: [saxpy](1_saxpy/), [reduction](2_reduction/), [device routines](6_device_routines/), [vecadd](3_vecadd/), and then the [Jacobi solver in the C++ section](../CXX/8_jacobi/). After that, use the other examples for special topics.
-
+For new users of OpenMP offloading, we recommend following this order first: [saxpy](1_saxpy/), [reduction](2_reduction/), [device routines](6_device_routines/), [vecadd](3_vecadd/), and then the [Jacobi solver in the C++ section](../CXX/8_jacobi/). Not all exercises exist in C and C++, so please check both folders. 
+The following exercises exist in the C folder
 - [1_saxpy](1_saxpy/)
 - [2_reduction](2_reduction/)
 - [3_vecadd](3_vecadd/)
