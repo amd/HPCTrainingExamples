@@ -194,7 +194,14 @@ if [ "${CONTAINER_ONLY}" = "1" ]; then
 [test] 'exit' stops and removes the container.
 
 EOF
-      "${RUNTIME}" exec -it "${cname}" bash 2>/dev/null || "${RUNTIME}" exec -it "${cname}" sh
+      # Pick the shell by whether bash exists, not by the interactive session's
+      # exit status: keying the fallback off `bash || sh` would spawn a second
+      # shell whenever we exit bash on a non-zero last command.
+      if "${RUNTIME}" exec "${cname}" sh -c 'command -v bash >/dev/null 2>&1'; then
+         "${RUNTIME}" exec -it "${cname}" bash
+      else
+         "${RUNTIME}" exec -it "${cname}" sh
+      fi
       exit 0
    fi
    echo "[test] FAIL: no valid completion. Response: ${resp}"; exit 1
