@@ -54,7 +54,7 @@ Run the serial version.
 You can now try to port the serial CPU version to the GPU or follow the
 step by step solution and ideas:
 
-### 1.1) Move the computation to the device
+### 1.1) Partial insufficient solution: First step: Move the computation to the device
 ```
 cd ../1_saxpy_omptarget
 ```
