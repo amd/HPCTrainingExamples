@@ -4,6 +4,7 @@ The CXX porting exercises can be found here (this is the directory of this READM
 ```
 cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/CXX
 ```
+Note: it is reccomended to start with the C exercises first.
 #### on aac6: 
 
 Follow the message of the day how to allocate one GPU interactively.
