@@ -24,22 +24,19 @@ module unload rocm
 module load rocm/10.1.0       # on AAC6
 # or
 module load rocm-new/10.1.0   # on AAC7
-export FC=amdflang
-```
-Note: These modules may set ```FC``` for you, but setting it explicitly makes the following Makefile examples unambiguous.
- 
+export FC=amdflang # needed later for examples with Makefile
+``` 
 Check with 
 ```
+amdflang --version
 $FC --version
 ```
-if you loaded the compiler you expect.
-Note: we are setting ```FC``` here already as later examples will use a Makefile which uses ```FC``` to be flexible for different compilers. Here it is not needed if you compile by hand.
+if you loaded the compiler you expect and the environment variable (needed for later examples for Makefiles) is set correctly.
 
 ### 1.0) the serial CPU code.
 ```
 cd 0_saxpy_portyourself
 ```
-Try to port this example yourself. If you are stuck, use the step by step solution in folders 1-7 and read the instructions for those exercises below. Recommendation for your first port: use ```!$omp requires unified_shared memory``` (in the code after ```implicit none``` in each module) and ```export HSA_XNACK=1``` (before running) so that you do not have to worry about map clauses. Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behaviour of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps.
 
 Compile the serial version. Note that ```-fopenmp``` is required as ```omp_get_wtime``` is used to time the loop execution.
 ```
@@ -54,7 +51,9 @@ You can now try to port the serial CPU version to the GPU or follow the
 step by step sample solution and ideas in the following. 
 Suggestion: Use ```vimdiff``` to compare the different versions.
 
-### 1.1) Partial insufficient solution: Move the computation to the device
+Hints: use ```!$omp requires unified_shared memory``` (in the code after ```implicit none``` in each module or compiler flag ```-fopenmp-force-usm```) and ```export HSA_XNACK=1``` (before running). Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behavior of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps. Make sure to set ```--offload-arch``` for compilation!
+
+### 1.1) Partial insufficient solution: First step: move the computation to the device
 ```
 cd ../1_saxpy_omptarget
 ```
@@ -87,7 +86,7 @@ add ```parallel do```
 - run again
 The observed time is a bit better than in case 1.1 but still not the full parallelism is used.
 
-### 1.3) Solution: Add multi-level parallelism
+### 1.3) Solution: Add multi-level parallelism to use the full device
 ```
 cd ../3_saxpy_fullpragma
 ```
@@ -104,12 +103,14 @@ Note that the initialization kernel is a warm-up kernel here. If we do not have 
 Note: you could also switch around 1.2 and 1.3.
 
 ### 1.4) Experiment with different versions
-Check the output of different combinations of directives. What can you learn from setting those environment variables?
+Check the output of different combinations of directives. What can you learn from setting the following environment variables before running?
 
 For the Next Generation Fortran compiler check:
 - Set ```export LIBOMPTARGET_KERNEL_TRACE=1``` (or 2 or 3 or -1 for all info). Can you interpret the output? Set it back to zero afterwards.
+to get rid of the verbose output for subsequent runs later ```unset LIBOMPTARGET_KERNEL_TRACE```
 - Set ```export LIBOMPTARGET_INFO=1``` (or 2 or 3 or -1 for all info). Can you interpret the output? Set it back to zero afterwards.
- 
+to get rid of the verbose output for subsequent runs later ```unset LIBOMPTARGET_INFO```
+
 ## Part 2: explore the impact of unified shared memory
 ```
 cd ../4_saxpy_nousm
@@ -132,7 +133,7 @@ Set
 ```
 export HSA_XNACK=0
 ```
-for the map clauses to have an effect on MI300A.
+for the map clauses to have an effect on MI300A. You can try on your own to port the unified memory version from Part 1 of follow the sample solution.
 
 ### 3.1) introduce map clauses for each kernel
 ```
