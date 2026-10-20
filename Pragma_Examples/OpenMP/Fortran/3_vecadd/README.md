@@ -8,7 +8,7 @@ The CPU code to port yourself can be found in
 ```
 cd 0_vecadd_portyourself
 ```
-Don't forget to port the Makefile, too, and validate your application runs on the GPU (see 1_saxpy example)!
+Don't forget to port the Makefile, too, and validate your application runs on the GPU (see environment variables in 1_saxpy example)! Also setting export ```OMP_TARGET_OFFLOAD=MANDATORY``` may prevent you from accidentally running on CPUs if the target is not available (e.g. on login or allocation without CPUs).
 Build with
 ```  
 make
