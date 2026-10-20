@@ -51,15 +51,21 @@ kubectl get aimservice,inferenceservice,pods -n default
 
 ## Hosts without Docker or cgroup v2
 
-`kind` needs a container runtime that can host a node, and its rootless Podman
-path needs `cgroup` v2, so a `cgroup` v1 host without root cannot create a
-cluster (a `kind` limitation). For that case, and for anyone without sudo,
-`--container-only` skips `kind`, `kubectl`, and `helm` and runs the AIM container
-directly with GPU passthrough: it validates the microservice layer only, not the
-operator or the Kubernetes scripts, but needs no cluster, `cgroup` v2, or sudo.
-Its default leaves the model serving and drops us into a shell inside the
-container (a throwaway sandbox reachable at `http://localhost:8000`);
-`--auto-run 1` runs the checks and cleans up.
+`kind` needs a container runtime to host its node. The harness prefers Docker and
+falls back to Podman when Docker is absent, which on a shared HPC node is the
+usual case. That fallback runs into a `cgroup` limit: `kind`'s rootless mode, the
+only way to run it without a privileged daemon, requires `cgroup` v2, whereas a
+root-level Docker daemon can host a node on `cgroup` v1. So where we have only
+rootless Podman on a `cgroup` v1 host, `kind` cannot create a cluster at all.
+
+For that case, `--container-only` skips `kind`, `kubectl`, and `helm` and runs
+the AIM container directly with GPU passthrough. A single container is far less
+demanding than a Kubernetes node: it needs neither a cluster nor `cgroup` v2, so
+rootless Podman on a `cgroup` v1 host runs it without sudo. This validates the
+AIM microservice layer alone, a GPU serving a model, not the operator or the
+Kubernetes scripts. By default it leaves the model serving and drops us into a
+shell inside the container, a throwaway sandbox reachable at
+`http://localhost:8000`; `--auto-run 1` runs the checks and cleans up instead.
 
 Once a run here is green, deploy for real per
 [`deploy/README.md`](../deploy/README.md); for an overview see the
