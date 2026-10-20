@@ -1,12 +1,16 @@
 # Testing AIM on a throwaway cluster
 
-`aim_engine_test.sh` stands up a disposable `kind` cluster with real AMD GPU
+`aim_engine_test.sh` stands up a disposable `kind` (Kubernetes on Docker) cluster with real AMD GPU
 passthrough so we can exercise the whole flow, including inference, before
 deploying for real. It runs the sibling [`deploy/`](../deploy/README.md) scripts:
 it mounts them into the node at `/aim-engine` and, in auto-run mode, calls
 `aim_engine_setup.sh` directly. Everything lives in a working directory removed
 on exit. It needs a GPU host with `docker` and the `/dev/kfd` and `/dev/dri`
-devices; `kind`, `kubectl`, and `helm` are fetched if absent.
+devices; `kind`, `kubectl`, and `helm` are fetched if absent. On a shared HPC
+cluster we rarely have such a host directly: we obtain one through the scheduler,
+for example a Slurm allocation on a GPU node (`salloc -N1 --gpus=1`, or `srun`)
+where `docker` and the devices are available, and we run the script from inside
+that allocation.
 
 The harness provides only the foundation a real cluster already has, leaving the
 prerequisite and operator installs to the `deploy/` scripts: it creates the
@@ -25,6 +29,15 @@ advertisement and labels, and shared storage are substituted.
 ./aim_engine_test.sh --base-image-only 1  # skip the operator; only the base-image serve check
 ./aim_engine_test.sh --container-only 1   # no Kubernetes; run the AIM container directly
 ```
+
+The `--auto-run 1` path runs three checks in sequence: it installs the
+prerequisites and the operator, then re-runs the same install to confirm it is
+idempotent, and finally serves a model and issues a real inference request. The
+idempotency check matters because deploy scripts get re-run in practice (a
+retried job, a repeated command): an idempotent install detects that everything
+is already present and exits success without reinstalling or erroring, so a
+second run is a no-op rather than a failure. The `--replace 1` flag is the
+deliberate escape hatch for when we do want to reinstall.
 
 The default (`--auto-run 0`) drops us into a shell in the `kind` node, with the
 `deploy/` scripts at `/aim-engine`, `kubectl` and `helm` on `PATH`, and
