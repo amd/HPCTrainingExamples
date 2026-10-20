@@ -100,6 +100,7 @@ For new users of OpenMP offloading, we recommend following this order first: [sa
 - [do_concurrent/2_reduction](do_concurrent/2_reduction/)
 - [optimization/Allocations](optimization/Allocations/)
 - [teams_endloop](teams_endloop/)
+- [workdistribute](workdistribute/)
 
 ## Notes on OpenMP target offload exercises with the cray compiler
 
