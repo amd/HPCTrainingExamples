@@ -2,10 +2,10 @@
 
 | At a glance | |
 | --- | --- |
-| Model served | a large, tools-strong model (~120B class), e.g. gpt-oss-120b; the agent is a thin client |
-| Serving engine | AIM (AMD Inference Microservices) Engine, a vLLM OpenAI-compatible endpoint on Kubernetes |
-| Minimal prerequisites | a Kubernetes cluster already running AIM Engine with a model serving (or rights to create an `AIMService`); `kubectl` + kubeconfig or a routable `--endpoint`; `opencode` and `git`; a Slurm login node sharing the compute filesystem for GPU jobs |
-| Estimated setup time | short when a model is already serving (authenticate `kubectl`, run the installer); add many minutes for the weight download when deploying (gpt-oss-120b is tens of GB; some catalog models exceed 600 GB) |
+| Model | large ~120B, e.g. gpt-oss-120b (served remotely) |
+| Engine | AIM Engine (vLLM on Kubernetes) |
+| Needs | a cluster already running AIM Engine; `kubectl` or an endpoint; no local GPU |
+| Setup | minutes if a model is already serving; add the weight download if you deploy one |
 
 This directory installs [rocBudAI](../README.md) as a thin client of a model
 already served by AIM (AMD Inference Microservices) Engine: the vLLM,
