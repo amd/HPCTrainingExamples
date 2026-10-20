@@ -14,9 +14,13 @@ that allocation.
 
 The harness provides only the foundation a real cluster already has, leaving the
 prerequisite and operator installs to the `deploy/` scripts: it creates the
-cluster, deploys the ROCm device plugin (advertising `amd.com/gpu`), injects the
-accelerator labels a GPU Operator would set, and installs an in-cluster NFS
-provisioner for the ReadWriteMany StorageClass the operator's cache needs. That
+cluster; deploys the ROCm device plugin, the component that makes the node's GPUs
+schedulable by advertising them to Kubernetes as the `amd.com/gpu` resource
+(Slurm's GRES, what `--gpus` requests); injects the accelerator labels a GPU
+Operator would set; and installs an in-cluster NFS provisioner for a
+ReadWriteMany StorageClass, on-demand storage many pods can mount read-write at
+once (like a shared Lustre or GPFS filesystem), which the operator's cache needs.
+That
 is why a run here is the closest rehearsal of a real deploy: the scripts and the
 operator and inference paths are identical, and only the cluster, the GPU
 advertisement and labels, and shared storage are substituted.
@@ -24,11 +28,35 @@ advertisement and labels, and shared storage are substituted.
 ## Modes
 
 ```bash
-./aim_engine_test.sh                      # bring up kind + GPU, then drop into a sandbox shell
-./aim_engine_test.sh --auto-run 1         # install, idempotency, and inference checks, then clean up
-./aim_engine_test.sh --base-image-only 1  # skip the operator; only the base-image serve check
-./aim_engine_test.sh --container-only 1   # no Kubernetes; run the AIM container directly
+./aim_engine_test.sh                      # bring up the throwaway cluster, then open a sandbox shell to drive it by hand
+./aim_engine_test.sh --auto-run 1         # run the whole install-and-inference sequence automatically, then clean up
+./aim_engine_test.sh --base-image-only 1  # quick check: serve a model straight from the AIM container, no operator
+./aim_engine_test.sh --container-only 1   # no Kubernetes at all: run the AIM container on its own
 ```
+
+Two terms recur below. An operator is a program we install into the cluster that
+runs continuously and automates what a person would otherwise do by hand. The
+contrast with Slurm is the useful part: with Slurm we write an `sbatch` script and
+submit a job that runs to completion, whereas here we hand the operator a short
+declarative request (an `AIMService`, meaning "serve this model") and it does the
+rest, pulling the model, starting the serving pods (the containers running on the
+nodes), wiring up networking, and setting resource limits, then keeps the service
+up and restarts anything that fails, all without us watching. Installing the AIM
+Engine operator also pulls in a stack of supporting add-ons. The base image, by
+contrast, is that same AIM model container run on its own, as a plain pod, with
+nothing orchestrating it.
+
+The modes differ in how much they set up and therefore what we can exercise. The
+no-flag default is the full rehearsal and a superset of the rest: it also lays
+down what the operator needs (the GPU labels and shared storage), then drops us
+into a sandbox shell where we run any level by hand, either the operator-less
+base-image serve (`aim_deploy.sh --level 1`) or the full operator path
+(`--level 2` through `--level 4`), with inference and inspection in between.
+`--base-image-only` is the narrow, fast case: it brings up only what a bare serve
+needs (a GPU-advertising cluster, without the operator's labels or shared storage)
+and limits us to the base-image serve check, so we confirm a GPU serves a model
+from the AIM image but cannot drive the operator or `AIMService` path here.
+`--container-only` goes further and drops Kubernetes entirely.
 
 The `--auto-run 1` path runs three checks in sequence: it installs the
 prerequisites and the operator, then re-runs the same install to confirm it is
@@ -39,10 +67,10 @@ is already present and exits success without reinstalling or erroring, so a
 second run is a no-op rather than a failure. The `--replace 1` flag is the
 deliberate escape hatch for when we do want to reinstall.
 
-The default (`--auto-run 0`) drops us into a shell in the `kind` node, with the
-`deploy/` scripts at `/aim-engine`, `kubectl` and `helm` on `PATH`, and
-`KUBECONFIG` set. We run any level exactly as in production, then exit to tear it
-all down:
+Inside that default sandbox shell, the `deploy/` scripts are at `/aim-engine`,
+`kubectl` (the cluster's command-line client) and `helm` are on `PATH`, and
+`KUBECONFIG` points it at this cluster, so we run the levels exactly as in
+production; `exit` tears it all down:
 
 ```bash
 ./aim_deploy.sh --level 4

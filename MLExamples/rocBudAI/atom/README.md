@@ -1,5 +1,12 @@
 # rocBudAI over ATOM, on Kimi-K3
 
+| At a glance | |
+| --- | --- |
+| Model served | Kimi-K3, a frontier reasoning model (~1.5 TB weights); the agent is a thin client |
+| Serving engine | ATOM, AMD's vLLM-like OpenAI-compatible engine, on an MI355X compute node |
+| Minimal prerequisites | an MI355X node (`gfx950`, 8 GPUs) via Slurm requested with `--mem=0`; a login node sharing the compute filesystem; the Kimi-K3 weights in a shared offline HuggingFace cache (~1.5 TB); ATOM + a matching AITER wheel staged (usually already installed); `opencode` on `PATH` |
+| Estimated setup time | on this cluster, minimal: `module load`, then start the server, whose first start loads 1.5 TB of weights and builds JIT kernels (several minutes). A fresh cluster adds a few minutes of staging plus the one-time 1.5 TB download |
+
 This directory runs [rocBudAI](../README.md) as a thin client of
 [Kimi-K3](https://huggingface.co/moonshotai/Kimi-K3) served on the same cluster by
 [ATOM](https://github.com/ROCm/ATOM), AMD's vLLM-like, OpenAI-compatible engine.

@@ -1,5 +1,12 @@
 # rocBudAI as a user, with ollama
 
+| At a glance | |
+| --- | --- |
+| Model served | Laguna XS (`laguna-xs-2.1:q4_K_M`), a small profiling model |
+| Serving engine | ollama, a daemon we start ourselves on the GPU node |
+| Minimal prerequisites | one AMD Instinct GPU (CDNA2 or newer: MI210/MI250/MI300X) with ROCm, an interactive shell on that node, ~25 GB free disk, and `git`/`curl`/`sha256sum`; no admin or Slurm config |
+| Estimated setup time | about 10 minutes (fast MI300X node: ~40 s install, ~1 min model pull, first agent turn within ~2.5 min) |
+
 This directory installs [rocBudAI](https://github.com/AMD-HPC/rocBudAI) into our
 home directory and runs it against an ollama daemon that we start ourselves on a
 GPU node. Nothing needs an administrator: there is no Slurm comment or partition
