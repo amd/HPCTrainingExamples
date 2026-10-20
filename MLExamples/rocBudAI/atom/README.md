@@ -10,13 +10,12 @@
 This directory runs [rocBudAI](../README.md) as a thin client of
 [Kimi-K3](https://huggingface.co/moonshotai/Kimi-K3) served on the same cluster by
 [ATOM](https://github.com/ROCm/ATOM), AMD's vLLM-like, OpenAI-compatible engine.
-The user experience is the stock rocBudAI experience, unchanged: the session
-picker, `rocbudai --continue`, session naming, the welcome banner and the
-discovery interview all behave as they do upstream. Only the model moves. The
-stock deployment serves a curated model with ollama and gates the launcher behind
-Slurm; here Kimi-K3 runs on an MI355X compute node and the agent runs from the
-cluster's login node, so it never competes with the model for CPU and needs no
-GPU of its own.
+The experience is stock rocBudAI, unchanged (see
+[What every recipe shares](../README.md#what-every-recipe-shares)); only the model
+moves. Where the stock deployment serves a curated model with ollama behind a
+Slurm gate, here Kimi-K3 runs on an MI355X compute node and the agent runs from the
+cluster's login node, so it never competes with the model for CPU and needs no GPU
+of its own.
 
 Where [`aim-engine`](../aim-engine/README.md) serves its model on a Kubernetes
 cluster through AIM Engine, this recipe serves it directly on a Slurm compute node
@@ -28,11 +27,9 @@ model on a compute node, and the weights in a shared offline cache.
 > This setup does not reproduce the stock rocBudAI airgap and Slurm gating. The
 > model, the weights cache and the agent all stay on the cluster, and the module
 > disables opencode's phone-home, but nothing here blocks the login node's own
-> egress. Privacy rests on the cluster being trusted and in-boundary. This setup
-> is only for experiencing rocBudAI on a frontier model: a production deployment
-> must follow the stock rocBudAI install in
-> [`INSTALL.md`](https://github.com/AMD-HPC/rocBudAI/blob/main/INSTALL.md) to get
-> the enforced airgap and gating.
+> egress. Privacy rests on the cluster being trusted and in-boundary. It is a
+> preview, not the production airgap (see
+> [What every recipe shares](../README.md#what-every-recipe-shares)).
 
 We need the following before starting:
 
@@ -79,13 +76,12 @@ auto-compacts instead of overflowing, and launches the TUI. On this cluster the
 agent is already installed at a world-readable shared prefix, so most users skip
 the install and just `module load`.
 
-Because the agent runs on a login node with no local GPU, the patch appends
-`no-gpu-addendum.md` to opencode's instructions, which overrides the persona: the
-agent does not run `rocbudai-bench` or profilers locally but dispatches each
-profiler job through `rocbudai-submit` instead. On a real GPU host the addendum is
-omitted and the stock local flow applies. Note the model's own allocation is
-saturated by Kimi-K3, so dispatched GPU jobs land in a separate allocation on the
-`mi355x` partition (`ROCBUDAI_SUBMIT_PARTITION`).
+Because the agent runs on a login node with no local GPU, the no-GPU addendum
+engages and dispatches each profiler job through `rocbudai-submit` (see
+[What every recipe shares](../README.md#what-every-recipe-shares)). One point is
+specific here: the model's own allocation is saturated by Kimi-K3, so dispatched
+GPU jobs land in a separate allocation on the `mi355x` partition
+(`ROCBUDAI_SUBMIT_PARTITION`).
 
 The server is `rocbudai-serve-kimi`, run inside an MI355X allocation. The cluster's
 `vllm/0.19.1` module cannot serve Kimi-K3's architecture, and the vLLM that can
@@ -120,10 +116,9 @@ allocation, resolves the compute node, and sets
 `ROCBUDAI_OPENAI_BASE=http://<that-node>:8000/v1` automatically. With no live
 allocation it errors out and tells the user to start a server first. Detection
 re-runs on every load, so after changing allocations a user reloads the module to
-pick up the new node. The launcher reads Kimi-K3's served context window and
-writes it as the model's `limit` in `opencode.json`, which is what lets opencode
-auto-compact the history and cap output tokens instead of sending a request the
-engine rejects.
+pick up the new node. As in the other recipes, the launcher also writes Kimi-K3's
+served context window as the model's `limit` in `opencode.json` (see
+[What every recipe shares](../README.md#what-every-recipe-shares)).
 
 ## Installing the agent
 
@@ -186,11 +181,9 @@ cd <your-project-dir>
 module load rocbudai/atom
 ```
 
-Loading the module launches the TUI exactly as stock rocBudAI does: a session
-picker if this directory has prior sessions, otherwise the welcome banner and the
-discovery interview. Session files (`AGENTS.md`, `opencode.json`, `.rocbudai-*`)
-are written into the project directory, so add them to its `.gitignore`. To pin a
-fixed endpoint instead of auto-detection, export
+Loading the module launches the TUI exactly as every recipe does (see
+[What every recipe shares](../README.md#what-every-recipe-shares)). To pin a fixed
+endpoint instead of auto-detection, export
 `ROCBUDAI_OPENAI_BASE=http://host:port/v1` before loading; a real remote value is
 respected, a loopback one is ignored so detection can run.
 

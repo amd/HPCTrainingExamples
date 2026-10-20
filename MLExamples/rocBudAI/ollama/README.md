@@ -10,17 +10,16 @@
 This directory installs [rocBudAI](https://github.com/AMD-HPC/rocBudAI) into our
 home directory and runs it against an ollama daemon that we start ourselves on a
 GPU node. Nothing needs an administrator: there is no Slurm comment or partition
-to request, no allow-list to configure, and no system service. The agent itself
-is the stock one, with its personas, discovery interview and benchmarking tools.
+to request, no allow-list to configure, and no system service. The agent is stock
+rocBudAI; its UI and sessions behave the same across every recipe (see
+[What every recipe shares](../README.md#what-every-recipe-shares)).
 
 ## Requirements and setup time
 
-> No airgap is enforced in this setup. Nothing blocks network traffic from the
-> node, so the agent and the tools it runs can reach the internet. Do not use it on
-> code or data that must stay private. This setup is only for experiencing
-> rocBudAI: a production deployment must follow the stock rocBudAI install in
-> [`INSTALL.md`](https://github.com/AMD-HPC/rocBudAI/blob/main/INSTALL.md) to
-> get the airgap, the Slurm gating and the curated models.
+> No airgap is enforced in this setup: nothing blocks the node's network traffic,
+> so the agent and the tools it runs can reach the internet. Do not use it on code
+> or data that must stay private. This is a preview, not the production airgap (see
+> [What every recipe shares](../README.md#what-every-recipe-shares)).
 
 We repeat this message wherever a session shows its state. The launcher prints it
 at startup and the welcome banner states it. `rocbudai-doctor` warns about it,
@@ -115,12 +114,12 @@ cd <your-project-dir>
 rocbudai
 ```
 
-Unlike the cluster module, loading `rocbudai/ollama` only sets the environment, and
-`rocbudai` starts the agent. `rocbudai --continue` resumes the last session in the
-directory, and `rocbudai --new` forces a fresh one. Session files (`AGENTS.md`,
-`opencode.json`, `.rocbudai-*`) are written into the project directory, so add
-them to its `.gitignore`. When we are done, we stop the daemon with
-`pkill -u $USER -x ollama`, which also releases its GPU.
+Unlike the cluster module, loading `rocbudai/ollama` only sets the environment;
+`rocbudai` then starts the agent. Session resume and session files work the same
+as in every recipe (see
+[What every recipe shares](../README.md#what-every-recipe-shares)). When we are
+done, we stop the daemon with `pkill -u $USER -x ollama`, which also releases its
+GPU.
 
 ## Options
 
