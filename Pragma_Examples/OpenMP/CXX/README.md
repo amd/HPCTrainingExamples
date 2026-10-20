@@ -7,18 +7,26 @@ cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/CXX
 #### on aac6: 
 
 Follow the message of the day how to allocate one GPU interactively.
-Load the amdclang compiler and set up the environment 
+```
+salloc -N 1 --gpus=1 -p <partition>
+```
 ```
 module load rocm/10.1.0
 export CXX=amdclang++
 ```
 #### on aac7:
-Get an interactive session on a node:
+Get an interactive session on a node in the CPX queue:
 ```
-salloc -N 1 --mem=100GB --gpus=1 -p 192C4G1H_MI300A_RHEL9_A1_CPX
+salloc -N 1 --mem=20GB --gpus=1 -p 192C4G1H_MI300A_RHEL9_A1_CPX
 ```
-Note: you will get 1 GPU and 100 GB of memory. This will allow others to use the remaining resources of a node.
-Useful commands:
+Note: you will get 1 GPU and a fraction of the node memory. This will allow others to use the remaining resources of a node.
+
+Use the `amdclang++` compiler from `rocm-new` module:
+```
+module load rocm-new/10.1.0
+export CXX=amdclang++
+```
+#### Useful commands:
 ```
 sinfo
 ```
@@ -31,12 +39,6 @@ check for your job(s). In case it was not terminated correctly, you may have to 
 scancel <JobID>
 ```
 to terminate a job.
-
-Use the `amdclang++` compiler from `rocm-new`:
-```
-module load rocm-new/10.1.0
-export CXX=amdclang++
-```
 #### On all systems independent of the compiler:
 This flag
 ```
@@ -72,6 +74,6 @@ For new users of OpenMP offloading, we recommend first following the introductor
 - [optimization/Allocations](optimization/Allocations/)
 - [optimization/alignment](optimization/alignment/)
 
-#### Notes on this exercise with the cray compiler
+#### Notes on these exercises with the cray compiler
 
 On systems with the Cray Programming Environment, the `CC` wrapper can also be used. Load the matching ROCm and accelerator modules, for example `craype-accel-amd-gfx942`, and set `export CXX=CC`. The main exercise instructions use `amdclang++` directly, so direct compiler commands need `--offload-arch=gfx942` while Cray wrappers get the offload architecture from the loaded modules.
