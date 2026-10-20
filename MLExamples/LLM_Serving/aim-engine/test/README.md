@@ -49,7 +49,7 @@ all down:
 kubectl get aimservice,inferenceservice,pods -n default
 ```
 
-## Hosts without Docker or cgroup v2
+## Hosts where rootless `kind` cannot start a cluster
 
 `kind` needs a container runtime to host its node. The harness prefers Docker and
 falls back to Podman when Docker is absent, which on a shared HPC node is the
@@ -58,7 +58,16 @@ only way to run it without a privileged daemon, requires `cgroup` v2, whereas a
 root-level Docker daemon can host a node on `cgroup` v1. So where we have only
 rootless Podman on a `cgroup` v1 host, `kind` cannot create a cluster at all.
 
-For that case, `--container-only` skips `kind`, `kubectl`, and `helm` and runs
+A second block appears even on `cgroup` v2 when we run under a scheduler. A Slurm
+allocation places our shell in the job step's own `cgroup` (`slurmstepd.scope`),
+which lacks the systemd `Delegate=yes` property and the delegated `cpu` and `io`
+controllers that `kind`'s rootless provider requires, so cluster creation fails
+with a `Delegate=yes` error even though `cgroup` v2 is present. That delegation
+can only be set on `user@.service`, not on the Slurm step that actually hosts our
+processes, so enabling it does not reach the Podman we launch inside the
+allocation.
+
+For either case, `--container-only` skips `kind`, `kubectl`, and `helm` and runs
 the AIM container directly with GPU passthrough. A single container is far less
 demanding than a Kubernetes node: it needs neither a cluster nor `cgroup` v2, so
 rootless Podman on a `cgroup` v1 host runs it without sudo. This validates the
