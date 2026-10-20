@@ -11,13 +11,12 @@ decide if you want to port with or without unified shared memory. <hr>
 ```
 export HSA_XNACK=1
 ```
-<hr>
 
 **or** without for a behaviour with copies
 ```
 export HSA_XNACK=0
 ```
-<hr>
+Then compile
 ```
 make
 ```
