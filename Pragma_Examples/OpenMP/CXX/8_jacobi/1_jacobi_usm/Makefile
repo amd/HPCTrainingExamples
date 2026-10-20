@@ -5,7 +5,7 @@
 # Compilers and related
 ROCM_PATH     ?= /opt/rocm
 ROCM_GPU      ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
-CXXFLAG       = -O2 -g
+CXXFLAG       = -O2 -g -std=c++17
 LDFLAG        =
 
 # OpenMP

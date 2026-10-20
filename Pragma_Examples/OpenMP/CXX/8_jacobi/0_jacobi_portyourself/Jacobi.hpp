@@ -3,7 +3,9 @@
 //**************************************************************************
 
 #pragma once
+#include <cstddef>
 #include <iostream>
+#include <new>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -59,7 +61,20 @@
 #define uint64					unsigned long long
 #define MPI_UINT64			MPI_UNSIGNED_LONG_LONG
 
-#define SafeHostFree(block)			{ if (block) free(block); }
+constexpr std::size_t HOST_ALIGNMENT = 128;
+
+inline dfloat* AlignedHostAlloc(std::size_t count)
+{
+  return new (std::align_val_t{HOST_ALIGNMENT}) dfloat[count];
+}
+
+inline void AlignedHostDelete(dfloat* block)
+{
+  if (block) {
+    ::operator delete[](block, std::align_val_t{HOST_ALIGNMENT});
+  }
+}
+
 #define OnePrintf(allow, ...)		{ if (allow) printf(__VA_ARGS__); }
 #define OneErrPrintf(allow, ...)	{ if (allow) fprintf(stderr, __VA_ARGS__); }
 
