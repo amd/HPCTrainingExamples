@@ -25,7 +25,7 @@ module load rocm/10.1.0      # on AAC6
 export FC=amdflang
 ```
 
-Check with ```echo $FC``` and ```$FC --version``` that you are using `amdflang`.
+Check with ```echo $FC``` and ```$FC --version``` that you are using ```amdflang```.
 
 Enable unified memory on MI300A:
 ```
@@ -55,8 +55,6 @@ and use the browser (Chrome recommended) to open the web page [https://ui.perfet
 
 Click `Open trace file` and select the timeline_v1_results.pftrace file. Below, you can see an example of how the trace file would be visualized with `Perfetto`: [https://ui.perfetto.dev/](https://ui.perfetto.dev/).
 
-If there is an error opening one trace file such as the trace is not shown at all, try using an older Perfetto version, e.g., by opening the web page [https://ui.perfetto.dev/v46.0-35b3d9845/#!/](https://ui.perfetto.dev/v46.0-35b3d9845/#!/).
-
 <p><img src="images/1_FullTraceWithoutMarkers-WhyGaps.png"/></p>
 Note that different versions of rocprofv3 may have more or less information showing depending on the version. ROCm 10.1.0, for example, also shows allocated memory on the device.
 With zooming in and out (asdw keys or press Ctrl+scroll with mouse) one can see that the first kernel in each iteration is extremely long compared to all other kernels. Note that on the coarsest zoom level you may not even be able to see the other kernels, zoom in on the end of a kernel to make the short ones visible.
@@ -71,7 +69,7 @@ One possibility to explore this is manual instrumentation with roctx markers. Us
 This version is instrumented with roctx markers to better understand what is going on in the observed "gaps".
 Either use version 1 and try to instrument the code yourself with roctx markers or have a look at version2 to see how you can implement roctx markers in Fortran.
 ```
-cd version2_roctxMarkers
+cd ../version2_roctxMarkers
 ```
 Have a look at the code with
 ```
@@ -99,7 +97,7 @@ With zooming in and out (asdw keys or press ctrl+scroll with mouse) one can see 
 ## version 3: Solution no dynamic allocation and deallocation
 In this version the allocations are moved outside the iteration loop. If you compile and run again with rocprofv3 you get a trace which shows only a long time for the "first_touch" region in the first iteration. 
 ```
-cd version3_solution1
+cd ../version3_solution1
 ```
 Compiler:
 ```
@@ -126,11 +124,11 @@ But what if that is very hard to do in a true app which uses different temporary
 ## version 4: Solution memory pool
 A possible solution is to use a memory pool. An example pool you can use in C/C++ and Fortran is the library Umpire (developed by LLNL).
 ```
-cd  version4_solution2
+cd  ../version4_solution2
 ```
 For the trainings we usually provide a module for Umpire:
 ```
-module load umpire/2025.12.0
+module load umpire/<version-matching-loaded-rocm> #check with module avail umpire what you need to load in case there are multiple versions (e.g. on aac7) 
 ```
 This module sets the ```UMPIRE_PATH``` for you.
 
@@ -153,7 +151,7 @@ Conclusion: The usage of memory pools is recommended if you have frequent alloca
 
 ## version 5: Further remarks
 ```
-cd  version5_wrapMarkerInifdefs
+cd  ../version5_wrapMarkerInifdefs
 ```
 Recommendation: wrap roctx markers in ifdefs, to compile:
 ```
@@ -161,9 +159,9 @@ ${FC} -cpp -fopenmp --offload-arch=gfx942 -DUSE_ROCTX -I${UMPIRE_PATH}/include/u
 ```
 compiling with -cpp you can use preprocessor ifdefs. This way you can run without roctx markers in production, but can easily reactivate as needed for tracing.
 <hr>
-Further best practices / recommendations: if you use unified memory on MI300A (with `export HSA_XNACK=1`), which is highly recommended to avoid unnecessary memory copies, make sure you know how to set the affinity of CPU cores and GPU correctly such that the memory is allocated and initialized where it is used and not on another APU on the same node! On MI300A an MPI process pinned to CPU cores 0 to 23 should offload to GPU 0, an MPI process on cores 24 to 47 to GPU 1 etc. In SPX mode (see rocm-smi output, this mode is default on most systems) it is usually best to use 1 MPI process per APU to offload and use e.g. OpenMP on the CPU cores to parallelize across CPU cores. In TPX or CPX mode one APU shows 3 or 6 (smaller) GPUs and one MPI process to drive the offload to each of those may be optimal. This is especially a good option for codes where part of the code (still) runs on the CPU. How to set this up properly may strongly depend on your HPC center's configuration, so please consult the respective documentation how to run in your environment.
-In this example you will e.g. already see better performance in the above exercise with `export ROCR_VISIBLE_DEVICES=0` as all arrays are only touched by the GPU.
-If you use GPU aware MPI with Cray MPICH you need GPU allocated buffers i.e. `omp_target_alloc` or `hipmalloc` allocated memory. You can also achieve GPU allocations through using the Device instead of Host allocator pool in Umpire.
+Further best practices / recommendations: if you use unified memory on MI300A (with ```export HSA_XNACK=1```), which is highly recommended to avoid unnecessary memory copies, make sure you know how to set the affinity of CPU cores and GPU correctly such that the memory is allocated and initialized where it is used and not on another APU on the same node! On MI300A an MPI process pinned to CPU cores 0 to 23 should offload to GPU 0, an MPI process on cores 24 to 47 to GPU 1 etc. In SPX mode (see rocm-smi output, this mode is default on most systems) it is usually best to use 1 MPI process per APU to offload and use e.g. OpenMP on the CPU cores to parallelize across CPU cores. In TPX or CPX mode one APU shows 3 or 6 (smaller) GPUs and one MPI process to drive the offload to each of those may be optimal. This is especially a good option for codes where part of the code (still) runs on the CPU. How to set this up properly may strongly depend on your HPC center's configuration, so please consult the respective documentation how to run in your environment.
+In this example you will e.g. already see better performance in the above exercise with ```export ROCR_VISIBLE_DEVICES=0``` as all arrays are only touched by the GPU.
+If you use GPU aware MPI with Cray MPICH you need GPU allocated buffers i.e. ```omp_target_alloc``` or ```hipmalloc``` allocated memory. You can also achieve GPU allocations through using the Device instead of Host allocator pool in Umpire.
 </hr>
 
 For a complementary profiling workflow, see the [rocprofiler-systems memory pool exercise](../../../../rocprofiler-systems/MemoryPool). It uses the same Fortran example and can show the allocation/page-fault issue faster and more easily when profiling a large application.
