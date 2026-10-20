@@ -190,7 +190,7 @@ Experiment with the ```num_teams``` clause.
 cd ../7_saxpy_numteams
 vi saxpy.c
 ```
-Specify ```num_teams(...)```` and choose a number of teams you want to test.
+Specify ```num_teams(...)``` and choose a number of teams you want to test.
 - compile again
 - run again
 When investigating different numbers of teams you will find that the compiler default (without setting this) was already leading to good performance (with recent rocm versions, older rocm versions may profit from more help). saxpy is a very simple kernel, this finding may differ for complex kernels with many instructions.
