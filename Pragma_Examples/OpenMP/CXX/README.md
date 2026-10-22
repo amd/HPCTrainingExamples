@@ -4,7 +4,7 @@ The CXX porting exercises can be found here (this is the directory of this READM
 ```
 cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/CXX
 ```
-Note: it is reccomended to start with the C exercises first.
+Note: it is recommended to start with the C exercises first.
 #### on aac6: 
 
 Follow the message of the day how to allocate one GPU interactively.
@@ -58,7 +58,7 @@ if ```xnack+``` (unified memory enabled) or ```xnack-``` (with memory copies) is
 
 The exercises in the folders are small examples of what one may encounter when porting a real world code. 
 Each exercise has its own README with instructions.
-Exercise 8 is a small app with a Jacobi solver. (Note: This code is explained in detail a blogpost https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-jacobi-readme/.) 
+Exercise 8 is a small app with a Jacobi solver. (Note: This code is explained in detail in a [blogpost](https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html).)
 Choose one of the exercises in the sub-directories and use the README there for instructions.
 
 ## Exercise index

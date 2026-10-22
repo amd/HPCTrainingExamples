@@ -16,7 +16,7 @@ export HSA_XNACK=1
 ```
 export HSA_XNACK=0
 ```
-Then compile
+Then set the compiler (e.g. `export CXX=amdclang++`, see the README in the parent folder) and compile
 ```
 make
 ```

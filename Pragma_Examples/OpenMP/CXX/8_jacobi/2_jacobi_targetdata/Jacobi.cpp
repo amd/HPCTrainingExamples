@@ -222,5 +222,5 @@ void Jacobi_t::Run()
   std::cout << "Stopped after " << iterations << " with residue:" << residual << std::endl;
   
   PrintResults();
-  #pragma omp target exit data map(release: h_U[0:N],h_AU[0:N],h_RES[0:N],h_RHS[0:N])
+  #pragma omp target exit data map(release: mesh,h_U[0:N],h_AU[0:N],h_RES[0:N],h_RHS[0:N])
 }
