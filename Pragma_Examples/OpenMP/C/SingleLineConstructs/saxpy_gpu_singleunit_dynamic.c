@@ -5,6 +5,7 @@ This software is distributed under the MIT License
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <omp.h>
 
 int main(int argc, char *argv[]){
