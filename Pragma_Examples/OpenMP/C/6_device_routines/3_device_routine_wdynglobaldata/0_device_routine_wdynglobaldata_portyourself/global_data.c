@@ -13,3 +13,8 @@ void initialize_constants(int isize){
       constants[i] = (double)i;
    }
 }
+
+void finalize_constants(int isize){
+   free(constants);
+   constants = NULL;
+}

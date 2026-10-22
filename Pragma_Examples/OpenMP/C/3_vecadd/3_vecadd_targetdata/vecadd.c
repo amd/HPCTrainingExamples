@@ -21,7 +21,7 @@ int main()
 
   double sum;
   double tstart,tend;
-  #pragma omp target data map(alloc:a[0:N],b[0:N],c[0:N]) map(from:sum,tstart,tend)
+  #pragma omp target data map(alloc:a[0:N],b[0:N],c[0:N]) map(from:sum)
   {
   #pragma omp target teams distribute parallel for
   for (int i=0; i<N; i++){
