@@ -44,17 +44,14 @@ contains
     invdy2 = mesh%dy**-2
     factor = (2._RK*invdx2+2._RK*invdy2)**-1
 
-    ! Fused compute: laplacian + update for interior in one kernel
+    ! Fused compute: laplacian + residual for interior in one kernel.
     !$omp target teams distribute parallel do collapse(2)
     do j = 2, n_y-1
       do i = 2, n_x-1
         lap_val = (-u(i-1,j)+2._RK*u(i,j)-u(i+1,j))*invdx2 + &
-                (-u(i,j-1)+2._RK*u(i,j)-u(i,j+1))*invdy2
-
+                  (-u(i,j-1)+2._RK*u(i,j)-u(i,j+1))*invdy2
         au(i,j) = lap_val
-        temp = rhs(i,j) - lap_val
-        res(i,j) = temp
-        u(i,j) = u(i,j) + temp*factor
+        res(i,j) = rhs(i,j) - lap_val
       end do
     end do
 
@@ -69,54 +66,54 @@ contains
                 + (2._RK*u(1,1)-u(1,2))*invdy2
         temp = rhs(1,1) - au(1,1)
         res(1,1) = temp
-        u(1,1) = u(1,1) + temp*factor
       else if (id <= n_x-1) then
         i = id
         au(i,1) = (-u(i-1,1)+2._RK*u(i,1)-u(i+1,1))*invdx2 &
                 + (2._RK*u(i,1)-u(i,2))*invdy2
         temp = rhs(i,1) - au(i,1)
         res(i,1) = temp
-        u(i,1) = u(i,1) + temp*factor
       else if (id == n_x) then
         au(n_x,1) = (2._RK*u(n_x,1)-u(n_x-1,1))*invdx2 &
                   + (2._RK*u(n_x,1)-u(n_x,2))*invdy2
         temp = rhs(n_x,1) - au(n_x,1)
         res(n_x,1) = temp
-        u(n_x,1) = u(n_x,1) + temp*factor
       else if (id == n_x+1) then
-        au(1,n_y) = (2._RK*u(1,n_y)-u(2,1))*invdx2 &
+        au(1,n_y) = (2._RK*u(1,n_y)-u(2,n_y))*invdx2 &
                   + (2._RK*u(1,n_y)-u(1,n_y-1))*invdy2
         temp = rhs(1,n_y) - au(1,n_y)
         res(1,n_y) = temp
-        u(1,n_y) = u(1,n_y) + temp*factor
       else if (id <= 2*n_x-1) then
         i = id - n_x
         au(i,n_y) = (-u(i-1,n_y)+2._RK*u(i,n_y)-u(i+1,n_y))*invdx2 &
                   + (2._RK*u(i,n_y)-u(i,n_y-1))*invdy2
         temp = rhs(i,n_y) - au(i,n_y)
         res(i,n_y) = temp
-        u(i,n_y) = u(i,n_y) + temp*factor
       else if (id == 2*n_x) then
-        au(n_x,n_y) = (2._RK*u(n_x,n_y)-u(n_x-1,1))*invdx2 &
+        au(n_x,n_y) = (2._RK*u(n_x,n_y)-u(n_x-1,n_y))*invdx2 &
                     + (2._RK*u(n_x,n_y)-u(n_x,n_y-1))*invdy2
         temp = rhs(n_x,n_y) - au(n_x,n_y)
         res(n_x,n_y) = temp
-        u(n_x,n_y) = u(n_x,n_y) + temp*factor
       else if (id <= 2*n_x+n_y-2) then
         j = id - 2*n_x + 1
         au(1,j) = (2._RK*u(1,j)-u(2,j))*invdx2 &
                 + (-u(1,j-1)+2._RK*u(1,j)-u(1,j+1))*invdy2
         temp = rhs(1,j) - au(1,j)
         res(1,j) = temp
-        u(1,j) = u(1,j) + temp*factor
       else
         j = id - 2*n_x - n_y + 3
         au(n_x,j) = (2._RK*u(n_x,j)-u(n_x-1,j))*invdx2 &
                   + (-u(n_x,j-1)+2._RK*u(n_x,j)-u(n_x,j+1))*invdy2
         temp = rhs(n_x,j) - au(n_x,j)
         res(n_x,j) = temp
-        u(n_x,j) = u(n_x,j) + temp*factor
       end if
+    end do
+
+    ! Update u for all points after au and res are complete everywhere
+    !$omp target teams distribute parallel do collapse(2)
+    do j = 1, n_y
+      do i = 1, n_x
+        u(i,j) = u(i,j) + res(i,j)*factor
+      end do
     end do
 
   end subroutine fused_laplacian_update

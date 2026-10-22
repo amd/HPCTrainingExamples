@@ -37,14 +37,14 @@ contains
         au(n_x,1) = (2._RK*u(n_x,1)-u(n_x-1,1))*invdx2 &
                   + (2._RK*u(n_x,1)-u(n_x,2))*invdy2
       else if (id == n_x+1) then
-        au(1,n_y) = (2._RK*u(1,n_y)-u(2,1))*invdx2 &
+        au(1,n_y) = (2._RK*u(1,n_y)-u(2,n_y))*invdx2 &
                   + (2._RK*u(1,n_y)-u(1,n_y-1))*invdy2
       else if (id <= 2*n_x-1) then
         i = id - n_x
         au(i,n_y) = (-u(i-1,n_y)+2._RK*u(i,n_y)-u(i+1,n_y))*invdx2 &
                   + (2._RK*u(i,n_y)-u(i,n_y-1))*invdy2
       else if (id == 2*n_x) then
-        au(n_x,n_y) = (2._RK*u(n_x,n_y)-u(n_x-1,1))*invdx2 &
+        au(n_x,n_y) = (2._RK*u(n_x,n_y)-u(n_x-1,n_y))*invdx2 &
                     + (2._RK*u(n_x,n_y)-u(n_x,n_y-1))*invdy2
       else if (id <= 2*n_x+n_y-2) then
         j = id - 2*n_x + 1
