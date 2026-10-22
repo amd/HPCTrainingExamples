@@ -11,33 +11,34 @@ Each version has a sub-folder with a
 
 Build and run analogous to the previous exercises.
 
-There are three different versions:
+There are three different versions. Let's start with the first:
 ```
 cd 1_device_routine 
 ```
-Explore the serial CPU code first. 
 
+Set up your environment by loading the ROCm 10.1 module, which provides `amdclang`.
+The exact module name might differ depending on the system you are on.
+Also, you need to set the `CC` variable for Makefiles to pick the correct compiler and `HSA_XNACK=1` for unified shared memory examples.
 ```
-cd 0_device_routine_portyourself
-module load rocm/10.1.0
+module load rocm/10.1.0      # on AAC6
+module load rocm-new/10.1.0  # on AAC7
 export CC=amdclang
 export C_COMPILER=amdclang
-make
-./device_routine
 ```
-The ROCm 10.1 module provides `amdclang`. Set `HSA_XNACK=1` for unified shared memory examples.
 
+Explore the serial CPU code first by compiling and running it:
 ```
+cd 0_device_routine_portyourself
 make
 ./device_routine
 ```
+
 You should see the result:
-
 ```
 Result: sum of x is 1000.000000
 ```
 
-Now try and convert the example to run on the GPU. Start with adding `#pragma omp target teams distribute parallel for` before the for loops in the main program in `device_routine.c`. Note that one of the loops also needs a `reduction(+:sum)` clause added to the target directive. How do you show the compiler to compile the function in the other file, compute.c, for the GPU? Try adding the `#pragma omp declare target` directive to the subroutine declaration in compute.c.
+Now try and convert the example to run on the GPU. Start with adding `#pragma omp target teams distribute parallel for` before the for loops in the main program in `device_routine.c`. Note that one of the loops also needs a `reduction(+:sum)` clause added to the target directive. How do you tell the compiler to compile the function in the other file, compute.c, for the GPU? Try adding the `#pragma omp declare target` directive to the subroutine declaration in compute.c.
 
 There are two solutions for this exercise. One with the APU programming model using unified shared memory. The other has explicit map clauses for when unified shared memory is not available or not being used. We'll look at the unified shared memory version first.
 
@@ -58,7 +59,7 @@ Similarly with the solution using map clauses:
 cd ../2_device_routine_map
 ```
 
-Look for the map clauses in the `device_routine.c` source file. In this case, The memory is only accessed on the GPU. So, we use map(alloc:x[0:N]) and map(release:x[0:N]) in the clauses. Build and run the examples.
+Look for the map clauses in the `device_routine.c` source file. In this case, the memory is only accessed on the GPU. So, we use map(alloc:x[0:N]) and map(release:x[0:N]) in the clauses. Build and run the examples.
 
 ```
 make
@@ -84,7 +85,7 @@ make
 
 Now try modifying the example to run on the GPU. How do you use the global data from the `global_data.c` file in your device subroutine?
 
-For the solution, lets look at the example in `1_device_routine_wglobaldata`.
+For the solution, let's look at the example in `1_device_routine_wglobaldata`.
 
 ```
 cd 1_device_routine_wglobaldata
@@ -92,7 +93,7 @@ cd 1_device_routine_wglobaldata
 
 Look at the directive `#pragma omp declare target` in the `global_data.c` file. Is this necessary for your version of the compiler?
 
-It is a bit more complicated if the data being used is dynamically allocated. We have to be sure and map it over to the GPU after the memory allocation. We can experiment with this case in the next example.
+It is a bit more complicated if the data being used is dynamically allocated. We have to make sure to map it over to the GPU after the memory allocation. We can experiment with this case in the next example.
 
 ```
 cd ../3_device_routine_wdynglobaldata
@@ -129,4 +130,3 @@ In this example, we initialize the data on the GPU with:
 ```
 
 How would this be different if we initialized the data on the CPU?
-

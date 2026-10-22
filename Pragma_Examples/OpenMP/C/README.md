@@ -59,11 +59,11 @@ if ```xnack+``` (unified memory enabled) or ```xnack-``` (with memory copies) is
 
 The exercises in the folders numbered 1 to 6 are small examples of what one may encounter when porting a real world code. 
 Each exercise has its own README with instructions.
-The exercises 1-5 have a CPU only code to try porting yourself and (intermediate steps) of a solution. Exercise 6 does not have a version to port yourself, but explains a common challenge for porting to discrete GPUs.
+The exercises 1-6 have a CPU only code to try porting yourself and (intermediate steps of) a solution. Exercise 6 additionally explains common challenges when calling routines and using global data on the device.
 The instructions assume you work on MI300A and some of the exercises explore the differences of using the discrete GPU or APU programming model (```HSA_XNACK=0``` or ```=1```).
 The recommended order to do the exercises is the order in which they are numbered and first all with unified memory and then again with map clauses or data region.
 
-Exercise 8 is a small app with a Jacobi solver that you can find in the CXX section. (Note: This code is explained in detail a blogpost https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-jacobi-readme/.)
+Exercise 8 is a small app with a Jacobi solver that you can find in the CXX section. (Note: This code is explained in detail in a [blogpost](https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html).)
 
 ## Exercise index
 

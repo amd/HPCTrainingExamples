@@ -60,5 +60,5 @@ and without USM
 cd 5_vecadd_async
 ```
 
-In the solution, the first kernel was split to show the functionality better. Investigate what happens, if you would remove the ```!$omp taskwait``` directive.
-If you remove the ```!$omp taskwait``` the result will be wrong as the CPU does not wait for the GPU to synchronize before the data is accessed on the CPU.
+In the solution, the first kernel was split to show the functionality better. Investigate what happens, if you would remove the ```#pragma omp taskwait``` directive.
+If you remove the ```#pragma omp taskwait``` the result may be wrong, as the CPU does not wait for the GPU to synchronize before the data is accessed on the CPU.

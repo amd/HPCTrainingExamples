@@ -57,7 +57,9 @@ There are 416 teams (workgroups) of size 256. There is a low vector register usa
 
 We'll start with what happens with just the target directive
 
+```
 cd HPCTrainingExamples/Pragma_Examples/OpenMP/C/ComplexComputeConstructs
+```
 
 Setting up the environment
 
@@ -66,7 +68,7 @@ module load rocm/10.1.0
 export CC=amdclang
 export C_COMPILER=amdclang
 export HSA_XNACK=1
-export LIBOMPTARGET_KERNEL_INFO=1
+export LIBOMPTARGET_KERNEL_TRACE=1
 ```
 
 ```
@@ -131,8 +133,8 @@ As a further experiment, let's try just adding parallel for to engage all the th
 Building and running it
 
 ```
-make saxpy_gpu_parallel_for
-./saxpy_gpu_parallel_for
+make saxpy_gpu_target_parallel_for
+./saxpy_gpu_target_parallel_for
 ```
 
 Output should be something like

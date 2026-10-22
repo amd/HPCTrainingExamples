@@ -1,7 +1,7 @@
 
 ## Porting exercise reduction into an array
 
-README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/6_reduction_array` from the Training Examples repository.
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/5_reduction_array` from the Training Examples repository.
 
 This folder has two code versions:
 

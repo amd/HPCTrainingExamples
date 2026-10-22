@@ -3,10 +3,10 @@
 
 This document is the README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/1_saxpy` in the HPC Training Examples repository.
 
-This exercise will show in a step by step solution how to port your first kernels. 
-This simple example will practice how to compile for the GPU or APU on the commandline and not use Makefiles. However, there is a Makefile in each folder you can use. All following exercises will use a Makefile.
+This exercise will guide you through porting your first kernels step by step by going through the 7 enumerated folders.
 
-There are 7 different enumerated folders. The following exercises will guide you step by step:
+For this exercise, compile the code directly on the commandline for practicing how to compile code for the GPU or APU.
+However, there is a Makefile provided in each folder and all following exercises will use Makefiles.
 
 ## Part 1: Porting with unified shared memory enabled
 First, prepare the environment (load modules, set environment variables), if you didn't do so before.
@@ -17,30 +17,35 @@ export HSA_XNACK=1
 ```
 to make use of the APU programming model (unified memory).
 
-Load a C compiler module.
-The AMD compiler is provided by ROCm:
+Load a C compiler.
+The AMD compiler `amdclang` is provided by ROCm:
 ```
+module unload rocm
 module load rocm/10.1.0       # on AAC6
 # or
 module load rocm-new/10.1.0   # on AAC7
+
+# Ensure Makefiles use correct compiler (in later exercises)
 export CC=amdclang
 export C_COMPILER=amdclang
 ```
 
-Check with 
+Check that the correct compilers are loaded and the `CC` and `C_COMPILER` variables point to the correct compiler.
 ```
+amclang --version
+$CC --version
 $C_COMPILER --version
 ```
-if you loaded the compiler you expect.
+
 > [!NOTE]
-> Setting ```C_COMPILER``` to the desired compiler is only necessary when using the provided Makefiles in this or later examples. It is not required in this example if you compile by hand as shown in the following for educational purposes.
-> Some Makefiles use `C_COMPILER` instead of `CC` because `CC` is also the Cray C++ compiler wrapper.
+> Make sure to set the `CC` and `C_COMPILER` environment variables to the compiler you want to use, since this is how the Makefiles in this and later exercises will choose the compiler to use.
+> Setting ```C_COMPILER``` is only necessary since some Makefiles use `C_COMPILER` explicitly instead of `CC` to avoid conflicts with the Cray C++ compiler wrapper, which is also `CC`.
 
 #### 1.0) the serial CPU code.
 ```
 cd 0_saxpy_portyourself
 ```
-Try to port this example yourself. If you are stuck, use the step by step solution in folders 1-7 and read the instructions for those exersices below. Recommendation for your first port: use ```#pragma omp requires unified_shared_memory``` and ```export HSA_XNACK=1``` (before running) so that you do not have to worry about map clauses. Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behaviour of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps.
+Try to port this example yourself. If you are stuck, use the step by step solution in folders 1-7 and read the instructions for those exercises below. Recommendation for your first port: use ```#pragma omp requires unified_shared_memory``` and ```export HSA_XNACK=1``` (before running) so that you do not have to worry about map clauses. Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behaviour of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps.
 
 Compile the serial version. Note that ```-fopenmp``` is required as ```omp_get_wtime``` is used to time the loop execution.
 ```
@@ -94,11 +99,11 @@ and inspect
 ```
 vi saxpy.c
 ``` 
-Adds "teams distribute" for more parellelism.
+Adds `teams distribute` for more parallelism.
 - Compile again
 - run again
 The observed time is much better than all previous versions.
-Note that the initialization kernel is a warm-up kernel here. If we do not have a warm-up kernel, the observed performance would be significantly worse. Hence the benefit of the accelerator is usually seen only after the first kernel touching the data on the device when system allocators were used. You can try this by commenting the ```#pragma omp target...``` in the initialize subroutine, then the measured kernel is the first which touches the arrays used in the kernel. A way to circumvent the penalty is using ```omp_target_alloc``` if the data is only needed on the device.
+Note that the initialization kernel is a warm-up kernel here. If we do not have a warm-up kernel, the observed performance would be significantly worse. Hence the benefit of the accelerator is usually seen only after the first kernel touching the data on the device when system allocators were used. You can try this by commenting out the ```#pragma omp target...``` in the initialize subroutine, then the measured kernel is the first which touches the arrays used in the kernel. A way to circumvent the penalty is using ```omp_target_alloc``` if the data is only needed on the device.
 
 Note: you could also switch around 1.2 and 1.3.
 
@@ -136,7 +141,7 @@ for the map clauses to have an effect on MI300A.
 cd ../5_saxpy_map 
 vi saxpy.c
 ```
-See where the map clasues where added. The ```x``` vector only has to be maped "to".
+See where the map clauses were added. The ```x``` vector only has to be mapped "to".
 - compile again
 - run again
 The performance is not much better than version 4.
@@ -161,10 +166,13 @@ The results will be wrong! This shows, that proper validation of results is cruc
 > [!TIP]
 > In C++, you can use the ```new``` allocator with an alignment of 128 instead of ```malloc``` to control the memory alignment. This is beneficial for improved performance:
 > ```cpp
-> #include <memory>
+> #include <new>
 > // ...
 > x = new (std::align_val_t(128)) float[N];
 > y = new (std::align_val_t(128)) float[N];
+> // ...
+> ::operator delete[](x, std::align_val_t(128));
+> ::operator delete[](y, std::align_val_t(128));
 > ```
 
 ### 3.3) Investigate
