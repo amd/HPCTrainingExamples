@@ -3,10 +3,10 @@
 
 This document is the README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/1_saxpy` in the HPC Training Examples repository.
 
-This exercise will show in a step by step solution how to port your first kernels. 
-This simple example will practice how to compile for the GPU or APU on the commandline and not use Makefiles. However, there is a Makefile in each folder you can use. All following exercises will use a Makefile.
+This exercise will guide you through porting your first kernels step by step by going through the 7 enumerated folders.
 
-There are 7 different enumerated folders. The following exercises will guide you step by step:
+For this exercise, compile the code directly on the commandline for practicing how to compile code for the GPU or APU.
+However, there is a Makefile provided in each folder and all following exercises will use Makefiles.
 
 ## Part 1: Porting with unified shared memory enabled
 First, prepare the environment (load modules, set environment variables), if you didn't do so before.
@@ -17,21 +17,26 @@ export HSA_XNACK=1
 ```
 to make use of the APU programming model (unified memory).
 
-Load a Fortran compiler module.
-We recommend to use the new LLVM-based `amdflang` Fortran compiler for these exercises. The new LLVM-based `amdflang` compiler is the default Fortran compiler in ROCm 10.1. Depending on the system you are on, you can simply load either
+Load a Fortran compiler.
+We recommend to use the new LLVM-based `amdflang` Fortran compiler for these exercises, which ships as the default Fortran compiler since ROCm 7. Depending on the system you are on, you can simply load either
 ```
 module unload rocm
 module load rocm/10.1.0       # on AAC6
 # or
 module load rocm-new/10.1.0   # on AAC7
-export FC=amdflang # needed later for examples with Makefile
+
+# Ensure Makefiles use correct compiler (in later exercises)
+export FC=amdflang
 ``` 
-Check with 
+
+Check that the correct compilers are loaded and the `FC` variable points to the correct compiler.
 ```
 amdflang --version
 $FC --version
 ```
-if you loaded the compiler you expect and the environment variable (needed for later examples for Makefiles) is set correctly.
+
+> [!NOTE]
+> Make sure to set the `FC` environment variable to the compiler you want to use, since this is how the Makefiles in this and later exercises will choose the compiler to use.
 
 ### 1.0) the serial CPU code.
 ```
@@ -51,14 +56,14 @@ You can now try to port the serial CPU version to the GPU or follow the
 step by step sample solution and ideas in the following. 
 Suggestion: Use ```vimdiff``` to compare the different versions.
 
-Hints: use ```!$omp requires unified_shared memory``` (in the code after ```implicit none``` in each module or compiler flag ```-fopenmp-force-usm```) and ```export HSA_XNACK=1``` (before running). Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behavior of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps. Make sure to set ```--offload-arch``` for compilation!
+Hints: use ```!$omp requires unified_shared_memory``` (in the code after ```implicit none``` in each module or compiler flag ```-fopenmp-force-usm```) and ```export HSA_XNACK=1``` (before running). Steps 1-3 of the solution assume unified shared memory. Map clauses and investigating the behavior of ```export HSA_XNACK=0``` or ```=1``` is added in the later steps. Make sure to set ```--offload-arch``` for compilation!
 
 ### 1.1) Partial insufficient solution: First step: move the computation to the device
 ```
 cd ../1_saxpy_omptarget
 ```
 ```
-vi saxpy.f90
+vi saxpy.F90
 ```
 adds ```!$omp target``` to move the loop in the saxpy subroutine to the device.
 
@@ -79,7 +84,7 @@ The observed time is much larger than for the CPU version which shows: More para
 ### 1.2) Partial insufficient solution: Add parallelism
 ```
 cd ../2_saxpy_omptargetparalleldo
-vi saxpy.f90
+vi saxpy.F90
 ```
 add ```parallel do```
 - Compile again
@@ -92,9 +97,9 @@ cd ../3_saxpy_fullpragma
 ```
 and inspect
 ```
-vi saxpy.f90
+vi saxpy.F90
 ``` 
-Adds "parallel do" for more parellelism.
+Adds `teams distribute` to the directive (`target teams distribute parallel do`) for more parallelism.
 - Compile again
 - run again
 The observed time is much better than all previous versions.
@@ -114,7 +119,7 @@ to get rid of the verbose output for subsequent runs later ```unset LIBOMPTARGET
 ## Part 2: explore the impact of unified shared memory
 ```
 cd ../4_saxpy_nousm
-vi saxpy.f90
+vi saxpy.F90
 ```
 The ```!$omp requires...``` line is removed.
 - Compile again
@@ -133,14 +138,14 @@ Set
 ```
 export HSA_XNACK=0
 ```
-for the map clauses to have an effect on MI300A. You can try on your own to port the unified memory version from Part 1 of follow the sample solution.
+for the map clauses to have an effect on MI300A. You can try on your own to port the unified memory version from Part 1 or follow the sample solution.
 
 ### 3.1) introduce map clauses for each kernel
 ```
 cd ../5_saxpy_map 
-vi saxpy.f90
+vi saxpy.F90
 ```
-See where the map clasues where added. The ```x``` vector only has to be maped "to".
+See where the map clauses were added. The ```x``` vector only has to be mapped "to".
 - compile again
 - run again
 The performance is not much better than version 4.
@@ -151,13 +156,13 @@ The memory is only moved once at the beginning. The time to solution should be r
 cd ../6_saxpy_targetdata
 ```
 ```
-vi saxpy.f90
+vi saxpy.F90
 ```
 - compile again
 - run again
-Additional exercise: What happens to the result, if you comment out the ```!$omp target update``` (in line 29)? 
+Additional exercise: What happens to the result, if you comment out the ```!$omp target update``` (in line 31)? 
 ```
-vi saxpy.f90
+vi saxpy.F90
 ```
 - Don't forget to recompile after commenting it.
 
@@ -184,7 +189,7 @@ What are the differences compared to the USM version?
 Experiment with the ```num_teams``` clause.
 ```
 cd ../7_saxpy_numteams
-vi saxpy.f90
+vi saxpy.F90
 ```
 Specify ```num_teams(...)``` and choose a number of teams you want to test.
 - compile again

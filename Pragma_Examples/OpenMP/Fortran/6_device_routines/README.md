@@ -20,7 +20,7 @@ there are six code versions in enumerated folders:
 5_device_routine_enter_data
 ```
 
-Starting with the CPU version to try and porting yourself
+Starting with the CPU version to try porting it yourself
 
 ```
 cd 0_device_routine_portyourself
@@ -39,7 +39,7 @@ The result should be
 Result: sum of x is 1000.000000000000
 ```
 
-Now add the directive to the three loops in `device_compute.f90`
+Now add the directive to the three loops in `device_routine.f90`
 
 ```
 !$omp target teams distribute parallel do
@@ -75,24 +75,25 @@ has been added.
 cd ../2_device_routine_usm
 ```
 
-Note the additions. In compute.f90:
+Note the additions. In `compute.f90`:
 
 ```
-      subroutine compute(x)
-          implicit none
-          !$omp requires unified_shared_memory
-          !$omp declare target
+subroutine compute(x)
+    implicit none
+    !$omp requires unified_shared_memory
+    !$omp declare target
 ```
 
-and in device_compute.f90
+and in `device_routine.f90`
 
 ```
- program device routine
+program device_routine
 ...
-         implicit none
-         !$omp requires unified_shared_memory
-
-...                                                                                                                                                         !$omp target teams distribute parallel do                                                                                                                                                       do .... 
+   implicit none
+   !$omp requires unified_shared_memory
+...
+   !$omp target teams distribute parallel do
+   do ...
 ```
 
 Now build and run the example
@@ -102,7 +103,7 @@ make
 ./device_routine
 ```
 
-For the case where we want to do explicit memory movement, we use maps as show in `3_device_routine_map`.
+For the case where we want to do explicit memory movement, we use maps as shown in `3_device_routine_map`.
 
 ```
 cd ../3_device_routine_map

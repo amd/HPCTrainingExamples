@@ -50,7 +50,7 @@ cd 3_vecadd_targetdata
 ```
 
 ## Part 3: asynchronous offload
-This secton presents a solution for asynchronous offload both with USM
+This section presents a solution for asynchronous offload both with USM
 ```
 cd 4_vecadd_usm_async
 ```
@@ -60,4 +60,4 @@ cd 5_vecadd_async
 ```
 
 In the solution, the first kernel was split to show the functionality better. Investigate what happens, if you would remove the ```!$omp taskwait``` directive.
-If you remove the ```!$omp taskwait``` the result will be wrong as the CPU does not wait for the GPU to synchronize before the data is accessed on the CPU.
+If you remove the ```!$omp taskwait``` the result may be wrong, as the CPU does not wait for the GPU to synchronize before the data is accessed on the CPU.

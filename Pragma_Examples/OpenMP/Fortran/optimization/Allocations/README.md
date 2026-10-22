@@ -1,7 +1,7 @@
 # Investigate memory allocation problem: Dynamic memory allocations and memory pool on MI300A
-This excercise highlights the importance of the reduction of dynamic memory allocations on MI300A 
-with unified memory. So this excercise teaches you about a common performance problem on MI300A as 
-well as some possible problems.
+This exercise highlights the importance of the reduction of dynamic memory allocations on MI300A
+with unified memory. So this exercise teaches you about a common performance problem on MI300A as
+well as some possible solutions.
 
 ## version 1: Allocation Problem
 The first version is an OpenMP offload example with three kernels in an iterative loop as an example of a "dwarf" of an application with an iterative solution or multiple time steps.

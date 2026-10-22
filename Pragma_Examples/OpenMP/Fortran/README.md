@@ -61,7 +61,7 @@ Note: If you don't want to add ```!$omp requires unified_shared_memory``` in eve
 
 The exercises in the folders numbered 1 to 6 are small examples of what one may encounter when porting a real world code. 
 Each exercise has its own README with instructions.
-The exercises 1-5 have a CPU only code to try porting yourself and (intermediate steps) of a solution. Exercise 6 does not have a version to port yourself, but explains a common challenge for porting to discrete GPUs.
+The exercises 1-6 have a CPU only code to try porting yourself and (intermediate steps) of a solution.
 The instructions assume you work on MI300A and some of the exercises explore the differences of using the discrete GPU or APU programming model (```HSA_XNACK=0``` or ```=1```).
 The recommended order to do the exercises is the order in which they are numbered and first all with unified memory and then again with map clauses or data region.
 
@@ -72,7 +72,7 @@ The Fortran version is additionally described here:
 https://rocm.blogs.amd.com/ecosystems-and-partners/fortran-journey/README.html
 <hr>
 
-Choose one of the exercises in the sub-directories and use the README there for instructions, we reccomend to start with 1_saxpy. There are also additional examples and tests in this folder to explore.
+Choose one of the exercises in the sub-directories and use the README there for instructions, we recommend to start with 1_saxpy. There are also additional examples and tests in this folder to explore.
 
 ## Exercise index
 

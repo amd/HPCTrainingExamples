@@ -17,7 +17,7 @@ vi freduce.F
 ```
 Only port the Makefile and the reduction itself! This exercise focuses on how to implement a reduction, not on porting the full example.
 
-How to build all versions:
+How to build (in each folder):
 ```
 make
 ```
@@ -25,14 +25,14 @@ and run:
 ```
 ./freduce
 ```
-The other folders 1 and 2 have different flavors of the solution:
+The other folders 1 to 3 have different flavors of the solution:
 
 ### Part 1: Port with unified shared memory
 ```
 cd 1_reduction_solution_usm
 vi freduce.F
 ```
-contains a sample solution for unified shared memory / the APU programming model and requries ```export HSA_XNACK=1``` to be set in advance.
+contains a sample solution for unified shared memory / the APU programming model and requires ```export HSA_XNACK=1``` to be set in advance.
 The correct output is `1010` for each element.
 
 ### Part 2: Port with map clause
@@ -41,11 +41,11 @@ The correct output is `1010` for each element.
 cd 2_reduction_solution
 vi freduce.F
 ```
-contains a sample solution for discrete GPUs and requries ```export HSA_XNACK=0``` to be set in advance.
+contains a sample solution for discrete GPUs and requires ```export HSA_XNACK=0``` to be set in advance.
 The correct output is `1010` for each element.
 
 #### 2.2 Behaviour with and without USM
-The third folder contains an exercise to explore the behavior with and without USM:
+The last folder contains an exercise to explore the behavior with and without USM:
 ```
 cd 3_reduction_wrongmapping
 vi freduce.F
