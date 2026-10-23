@@ -1,42 +1,43 @@
 
 ## Porting exercise: vecadd
 
-This exercise combines what you learned in the exercises 1_saxpy and 2_reduction (recommended to do those first): porting simple kernels without and with reduction.
+This exercise combines what you learned in the exercises [1_saxpy](../1_saxpy/) and [2_reduction](../2_reduction/) (recommended to do those first): porting simple kernels without and with reduction.
 
 ## Serial CPU code to port
 The CPU code to port yourself can be found in
 ```
 cd 0_vecadd_portyourself
 ```
-Don't forget to port the Makefile, too, and validate your application runs on the GPU (see environment variables in 1_saxpy example)! Also setting export ```OMP_TARGET_OFFLOAD=MANDATORY``` may prevent you from accidentally running on CPUs if the target is not available (e.g. on login or allocation without CPUs).
+Don't forget to port the Makefile, too, and validate your application runs on the GPU (see environment variables in 1_saxpy example)! Also setting ```export OMP_TARGET_OFFLOAD=MANDATORY``` may prevent you from accidentally running on CPUs if the target is not available (e.g. on login or allocation without CPUs).
+
 Build with
-```  
+```
 make
 ```
 and run
 ```
 ./vecadd
 ```
-Remember the output result for the serial version to validate the offload version.
+Remember the output result for the serial version to validate the offload version. The expected output is `Final result:   1.000000`.
 
 Port the example (including the Makefile) in the following and build and run the example after every kernel you ported to ensure correctness.
 
 ## Part 1: unified shared memory
 The following example port assumes unified shared memory.
-Set 
+Set
 ```
 export HSA_XNACK=1
 ```
 ```
-cd 1_vecadd_usm  
+cd 1_vecadd_usm
 ```
-contains the unified shared memory solution. 
+contains the unified shared memory solution.
 
-Note: if you set ```HSA_XNACK=0``` you will get an error message. This is the intended behaviour for USM, if XNACK is disabled. If you don't want to add ```!$omp requires unified_shared_memory``` in every module by hand, you can use the compiler flag ```-fopenmp-force-usm```.
+Note: if you set ```HSA_XNACK=0``` you will get an error message. This is the intended behavior for USM, if XNACK is disabled. If you don't want to add ```!$omp requires unified_shared_memory``` in every module by hand, you can use the compiler flag ```-fopenmp-force-usm```.
 
 ## Part 2: with map clauses
 Port first with map clauses and later optimize the data movement:
-Set 
+Set
 ```
 export HSA_XNACK=0
 ```

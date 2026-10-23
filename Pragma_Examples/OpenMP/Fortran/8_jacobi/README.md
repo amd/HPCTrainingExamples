@@ -1,15 +1,15 @@
 
 ## Porting a small app: jacobi
 
-Note: This exercise code and solutions were tested with the LLVM-based `amdflang` from `rocm-new/10.1.0` on AAC7 (or `rocm/10.1.0` on AAC6). Setup the environment accordingly.
+Note: This exercise code and solutions were tested with the LLVM-based `amdflang` from `rocm-new/10.1.0` on AAC7 (or `rocm/10.1.0` on AAC6). Set up the environment accordingly.
 
-The C++ version of this code is described in detail https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html
+The C++ version of this code is described in detail in this [ROCm blog](https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html).
 
-The Fortran code is described here: https://rocm.blogs.amd.com/ecosystems-and-partners/fortran-journey/README.html
+The Fortran code is described in this [ROCm blog](https://rocm.blogs.amd.com/ecosystems-and-partners/fortran-journey/README.html).
 ```
 cd 0_jacobi_portyourself
 ```
-decide if you want to port with or without unified shared memory. <hr>
+Decide if you want to port with or without unified shared memory. <hr>
 
 **Either** for USM
 ```
@@ -17,20 +17,21 @@ export HSA_XNACK=1
 ```
 <hr>
 
-**or** without for a behaviour with copies
+**or** without, for a behavior with copies
 ```
 export HSA_XNACK=0
 ```
 <hr>
 
+Then set the compiler (e.g. `export FC=amdflang`, see the [README](../README.md) in the parent folder) and compile:
 ```
 make
 ```
-run the code for a reference CPU solution.
+Run the code for a reference CPU solution.
 ```
 ./jacobi
 ```
-you can specify a problem size with
+You can specify a problem size with
 ```
 ./jacobi -m <Problemsize>
 ```
@@ -53,7 +54,7 @@ cd 1_jacobi_usm
 make
 ./jacobi
 ```
-compare with your solution (e.g. use ```vimdiff``` to compare).
+Compare with your solution (e.g. use ```vimdiff``` to compare).
 
 For the discrete GPU / manual memory management version:
 ```
@@ -64,7 +65,8 @@ make
 ```
 compare with your solution (e.g. use ```vimdiff``` to compare).
 
-For the target data version with ROCtx markers:
+## Notes on enhancing this code with markers for profiling:
+For the target data version with ROCtx markers for profiling with markers:
 ```
 export HSA_XNACK=0
 cd 3_jacobi_targetdata_markers
@@ -90,3 +92,5 @@ The marker version links the ROCtx library:
 $(FC) $(LDFLAGS) $^ -o $@ -lrocprofiler-sdk-roctx
 ```
 Rocprofv3 and Rocprofiler-systems exercises show how roctx markers show up in timeline tracing.
+=======
+Compare with your solution (e.g. use ```vimdiff``` to compare).

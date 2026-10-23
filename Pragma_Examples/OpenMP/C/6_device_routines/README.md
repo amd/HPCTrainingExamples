@@ -1,10 +1,10 @@
 
 ## C Code -- Porting device routine exercises
 
-README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/6_device_routines` in Training Examples repository
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/6_device_routines` in Training Examples repository.
 
 This exercise will show how to port kernels which call a subroutine or function.
-Each version has a sub-folder with a 
+Each version has a sub-folder with a
 - serial CPU version to port yourself and a
 - solution for unified memory and
 - a solution with map clauses.
@@ -13,13 +13,14 @@ Build and run analogous to the previous exercises.
 
 There are three different versions. Let's start with the first:
 ```
-cd 1_device_routine 
+cd 1_device_routine
 ```
 
 Set up your environment by loading the ROCm 10.1 module, which provides `amdclang`.
 The exact module name might differ depending on the system you are on.
 Also, you need to set the `CC` variable for Makefiles to pick the correct compiler and `HSA_XNACK=1` for unified shared memory examples.
 ```
+module unload rocm
 module load rocm/10.1.0      # on AAC6
 module load rocm-new/10.1.0  # on AAC7
 export CC=amdclang
@@ -70,13 +71,13 @@ make
 cd 2_device_routine_wglobaldata
 ```
 
-First look at the original code in `0_device_routine_wglobaldata_portyourself`. 
+First look at the original code in `0_device_routine_wglobaldata_portyourself`.
 
 ```
 cd 0_device_routine_wglobaldata_portyourself
 ```
 
-Note the addition of the `global_data.c` file with the definition of the constants array. Build and run the example. 
+Note the addition of the `global_data.c` file with the definition of the constants array. Build and run the example.
 
 ```
 make
@@ -99,7 +100,7 @@ It is a bit more complicated if the data being used is dynamically allocated. We
 cd ../3_device_routine_wdynglobaldata
 ```
 
-Again there is a version that you can try and port before looking at the solution. 
+Again there is a version that you can try and port before looking at the solution.
 
 ```
 cd 0_device_routine_wdynglobaldata_portyourself

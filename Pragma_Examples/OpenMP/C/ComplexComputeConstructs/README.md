@@ -10,7 +10,6 @@ First retrieve the examples for this part.
 
 ```
 git clone https://github.com/amd/HPCTrainingExamples
-
 ```
 
 ### Full combined compute directive
@@ -24,7 +23,10 @@ We'll start with a baseline from the full combined compute directive
 Setting up the environment
 
 ```
-module load rocm/10.1.0
+module unload rocm
+module load rocm/10.1.0       # on AAC6
+# or
+module load rocm-new/10.1.0   # on AAC7
 export CC=amdclang
 export C_COMPILER=amdclang
 export HSA_XNACK=1
@@ -50,7 +52,7 @@ DEVID:  0 SGN:5 ConstWGSize:256  args: 5 teamsXthrds:( 416X 256) reqd:(   0X   0
 Time of kernel: 0.082906
 ```
 
-There are 416 teams (workgroups) of size 256. There is a low vector register usage a 8. We'll also look at the run-time of 0.082906 for comparison.
+There are 416 teams (workgroups) of size 256. There is a low vector register usage of 8. We'll also look at the run-time of 0.082906 for comparison.
 
 
 ### Target directive
@@ -64,7 +66,10 @@ cd HPCTrainingExamples/Pragma_Examples/OpenMP/C/ComplexComputeConstructs
 Setting up the environment
 
 ```
-module load rocm/10.1.0
+module unload rocm
+module load rocm/10.1.0       # on AAC6
+# or
+module load rocm-new/10.1.0   # on AAC7
 export CC=amdclang
 export C_COMPILER=amdclang
 export HSA_XNACK=1

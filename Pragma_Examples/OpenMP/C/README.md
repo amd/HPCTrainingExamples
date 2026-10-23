@@ -1,13 +1,13 @@
 
 # Porting exercises
-The C porting exercises can be found here (this is the directory of this README): 
+The C porting exercises can be found here (this is the directory of this README):
 ```
 cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/C
 ```
-#### on aac6: 
+#### on aac6:
 
 Follow the message of the day how to allocate one GPU interactively.
-Load the amdclang compiler and set up the environment 
+Load the amdclang compiler and set up the environment
 ```
 module load rocm/10.1.0
 export CC=amdclang
@@ -21,6 +21,7 @@ salloc -N 1 --mem=20GB --gpus=1 -p 192C4G1H_MI300A_RHEL9_A1_CPX
 Note: you will get 1 GPU and a fraction of the node's memory. This will allow others to use the remaining resources of a node.
 Use the `amdclang` compiler from `rocm-new`:
 ```
+module unload rocm
 module load rocm-new/10.1.0
 export CC=amdclang
 export C_COMPILER=amdclang
@@ -46,29 +47,29 @@ This flag
 ```
 export HSA_XNACK=1
 ```
-will enable no memory copies (use of `unified_shared_memory`) on MI300A
+will enable no memory copies (use of `unified_shared_memory`) on MI300A.
 ```
 export HSA_XNACK=0
 ```
 will disable this and behave similarly to a discrete GPU with memory copies.
 Check with
 ```
-rocminfo
+rocminfo | grep xnack
 ```
 if ```xnack+``` (unified memory enabled) or ```xnack-``` (with memory copies) is set.
 
-The exercises in the folders numbered 1 to 6 are small examples of what one may encounter when porting a real world code. 
+The exercises in the folders numbered 1 to 6 are small examples of what one may encounter when porting a real world code.
 Each exercise has its own README with instructions.
 The exercises 1-6 have a CPU only code to try porting yourself and (intermediate steps of) a solution. Exercise 6 additionally explains common challenges when calling routines and using global data on the device.
 The instructions assume you work on MI300A and some of the exercises explore the differences of using the discrete GPU or APU programming model (```HSA_XNACK=0``` or ```=1```).
 The recommended order to do the exercises is the order in which they are numbered and first all with unified memory and then again with map clauses or data region.
 
-Exercise 8 is a small app with a Jacobi solver that you can find in the CXX section. (Note: This code is explained in detail in a [blogpost](https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html).)
+Exercise 8 is a small app with a Jacobi solver that you can find in the CXX section. (Note: This code is explained in detail in a [blogpost](https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html)).
 
 ## Exercise index
 
-For new users of OpenMP offloading, we recommend following this order first: [saxpy](1_saxpy/), [reduction](2_reduction/), [device routines](6_device_routines/), [vecadd](3_vecadd/), and then the [Jacobi solver in the C++ section](../CXX/8_jacobi/). Not all exercises exist in C and C++, so please check both folders. 
-The following exercises exist in the C folder
+For new users of OpenMP offloading, we recommend following this order first: [saxpy](1_saxpy/), [reduction](2_reduction/), [device routines](6_device_routines/), [vecadd](3_vecadd/), and then the [Jacobi solver in the C++ section](../CXX/8_jacobi/). Not all exercises exist in C and C++, so please check both folders.
+The following exercises exist in the C folder:
 - [1_saxpy](1_saxpy/)
 - [2_reduction](2_reduction/)
 - [3_vecadd](3_vecadd/)
