@@ -33,11 +33,11 @@ export HSA_XNACK=0
 
 ## Build and run
 
-No profiling yet, just check that the code compiles and runs correctly.
+No profiling yet, just check that the code compiles and runs correctly. We intentionally build without requiring USM to see the automatic memory copies in the trace later on:
 
 ```
 make clean
-make FC=amdflang
+make FC=amdflang USM_FLAG=""
 ./jacobi -m 1024
 ```
 
