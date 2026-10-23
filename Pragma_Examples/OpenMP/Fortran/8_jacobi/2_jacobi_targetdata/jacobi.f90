@@ -7,7 +7,7 @@ module jacobi_mod
   use input_mod, only: debug
   use mesh_mod, only: mesh_t
   use norm_mod, only: norm
-  use laplacian_mod, only: laplacian, fused_laplacian_update
+  use laplacian_mod, only: laplacian
   use boundary_mod, only: boundary_conditions
   use update_mod, only: update
   use omp_lib, only: omp_get_wtime
@@ -87,9 +87,24 @@ contains
     this%t_start = omp_get_wtime()
 
     do while (this%iters < max_iters .and. resid > tolerance)
-      ! Fused: laplacian + boundary + residual, followed by the solution update
-      call fused_laplacian_update(mesh,this%u,this%au,this%rhs,this%res)
-      
+      ! Compute Laplacian
+      call laplacian(mesh,this%u,this%au)
+      if (debug) then
+        !$omp target update from(this%au)
+        call print_2D(this%au)
+        write(stdout,*)
+      end if
+
+      ! Apply boundary conditions
+      call boundary_conditions(mesh,this%u,this%au)
+      if (debug) then
+        !$omp target update from(this%au)
+        call print_2D(this%au)
+        write(stdout,*)
+      end if
+
+      ! Update the solution
+      call update(mesh,this%rhs,this%au,this%u,this%res)
       if (debug) then
         !$omp target update from(this%u)
         call print_2D(this%u)

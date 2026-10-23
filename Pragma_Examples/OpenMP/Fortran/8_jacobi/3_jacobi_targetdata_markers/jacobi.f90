@@ -11,9 +11,8 @@ module jacobi_mod
   use boundary_mod, only: boundary_conditions
   use update_mod, only: update
   use omp_lib, only: omp_get_wtime
-  use iso_c_binding
-  use hipfort
-  use hipfort_roctx
+  use, intrinsic :: iso_c_binding, only: c_int, c_null_char
+  use roctx_mod, only: roctxRangePush, roctxRangePop
   implicit none
 
   private
@@ -36,7 +35,7 @@ contains
     type(mesh_t), intent(inout) :: mesh
     integer(IK) :: i,j
     real(RK) :: rhs_bc
-    integer :: ret
+    integer(c_int) :: ret
 
     ret = roctxRangePush("init"//c_null_char)
     allocate(this%u(mesh%n_x,mesh%n_y))
@@ -83,7 +82,7 @@ contains
     type(mesh_t), intent(inout) :: mesh
 
     real(RK) :: resid
-    integer :: ret
+    integer(c_int) :: ret
 
     write(stdout,'(A)') 'Starting Jacobi run'
     ret = roctxRangePush("run"//c_null_char)
