@@ -3,12 +3,10 @@
 
 README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/BuildExamples` in the Training Examples repository
 
-We start the introduction with how to compile programs using OpenMP offloading to GPUs. This leads us to how to write makefiles and 
+We start the introduction with how to compile programs using OpenMP offloading to GPUs. This leads us to how to write makefiles and
 CMakeLists.
 
 ## OpenMP C Build systems: make and cmake
-
-README.md in `HPCTrainingExamples/Pragma_Examples/OpenMP/C/BuildExamples` of the Training Examples repository
 
 Build systems for make and cmake are an important starting step to working with OpenMP.
 We'll start with samples for C builds. We'll test them with
@@ -56,7 +54,10 @@ clean:
 ```
 
 ```
-module load rocm/10.1.0
+module unload rocm
+module load rocm/10.1.0       # on AAC6
+# or
+module load rocm-new/10.1.0   # on AAC7
 export CC=amdclang
 export C_COMPILER=amdclang
 make
@@ -101,7 +102,10 @@ add_executable(openmp_code openmp_code.c)
 ```
 
 ```
-module load rocm/10.1.0
+module unload rocm
+module load rocm/10.1.0       # on AAC6
+# or
+module load rocm-new/10.1.0   # on AAC7
 export CC=amdclang
 export C_COMPILER=amdclang
 mkdir build && cd build && cmake ..

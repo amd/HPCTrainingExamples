@@ -14,7 +14,7 @@ first, set
 ```
 export HSA_XNACK=0
 ```
-to explore the behaviour similar to a discrete GPU (Remark: ```vimdiff file1 file2``` may help to find the differences).
+to explore the behavior similar to a discrete GPU (Remark: ```vimdiff file1 file2``` may help to find the differences).
 
 Explore and run the five examples:
 
@@ -54,7 +54,7 @@ Run:
 ```
 AMDGPU message: Running a program that requires XNACK on a system where XNACK is disabled. This may cause problems when using an OS-allocated pointer inside a target region. Re-run with HSA_XNACK=1 to remove this warning.
 
-Now switch on unified shared memory by 
+Now switch on unified shared memory by
 ```
 export HSA_XNACK=1
 ```
@@ -62,7 +62,7 @@ Run all the five examples again. All of them should run successfully.
 
 For `amdflang` set
 ```
-export LIBOMPTARGET_INFO=-1 
+export LIBOMPTARGET_INFO=-1
 ```
 
 Run example 3 with and without unified shared memory (`export HSA_XNACK=1` and `export HSA_XNACK=0`)

@@ -1,4 +1,4 @@
-# OpenMP nowait clause example 
+# OpenMP nowait clause example
 
 > This example is here to show that
 > `target ... nowait` lets the **host** continue past a kernel launch
@@ -19,7 +19,7 @@ make
 make clean
 ```
 
-Data is moved explicitly in this example so `HSA_XNACK=1` should not be exported. 
+Data is moved explicitly in this example so `HSA_XNACK=1` should not be exported.
 
 ## Note on kernel sizing
 
@@ -28,7 +28,7 @@ loop that runs alongside the kernels is a deliberately long serial
 `sin()` accumulation. Both numbers are picked so that the GPU work
 and the host work each take long enough to be measurable, which is
 what makes the asynchronous behavior of `nowait` visible in
-wall-clock time. 
+wall-clock time.
 
 ## Reference
 

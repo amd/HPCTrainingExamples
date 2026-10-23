@@ -22,7 +22,10 @@ We go to the directory with the example and load the ROCm 10.1 module. We can th
 
 ```
 cd HPCTrainingExamples/Pragma_Examples/OpenMP/C/SingleLineConstructs
-module load rocm/10.1.0
+module unload rocm
+module load rocm/10.1.0       # on AAC6
+# or
+module load rocm-new/10.1.0   # on AAC7
 export CC=amdclang
 export C_COMPILER=amdclang
 make saxpy_cpu
@@ -42,9 +45,7 @@ You can use the CPU example and port it to the GPU on your own to get more exper
 through the process in these exercises to show you how it is done.
 
 First we will work with a very simple case. It has all the code in a single subroutine with
-arrays allocated on the stack. This permits the compiler to have as much information as possible. Note that we could
-also load the new amdflang beta which has a perfectly good amdclang
-compiler. Also, we have made the array size smaller so that it won't run out of stack space.
+arrays allocated on the stack. This permits the compiler to have as much information as possible. Also, we have made the array size smaller so that it won't run out of stack space.
 
 ```
 make saxpy_gpu_singleunit_autoalloc
@@ -171,11 +172,10 @@ We can use the collapse clause to spread out the work from both loops rather tha
 be helpful if the outer loop is small. But since we are always trying to generate more work and parallelism, it
 can also have some benefit for larger outer loops.
 
-We'll consider the case of Fortran since 2-dimensional arrays are much easier to work with.
 The directive will now become
 
 ```
-!$omp target teams distribute parallel do collapse(2)
+#pragma omp target teams distribute parallel for collapse(2)
 ```
 
 Building and running the example

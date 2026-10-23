@@ -1,7 +1,7 @@
 
 ## Part 1: Fortran with interface blocks
 
-README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/6_device_routines` in Training Examples repository
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/6_device_routines` in Training Examples repository.
 
 Let's start with the device routine in a separate file with an interface.
 
@@ -59,17 +59,17 @@ Build the code
 make
 ```
 
-You should see an error.  
+You should see an error.
 
 ```
 ld.lld: error: undefined symbol: compute_
 ```
 
-The compute routine is created only for the host and not for the device. So we need to add the device target 
+The compute routine is created only for the host and not for the device. So we need to add the device target
 directive to the compute subroutine definition in `compute.f90`.
 
 Moving to the next version at 2_device_routine_usm directory where the device target directive
-has been added. 
+has been added.
 
 ```
 cd ../2_device_routine_usm
@@ -117,7 +117,7 @@ make
 ./device_routine
 ```
 
-Another clause that can be useful is the `device_type(nohost)` that only generates device code 
+Another clause that can be useful is the `device_type(nohost)` that only generates device code
 for the target, otherwise it will also generate a host version of that subroutine or function. Check out the example at
 
 ```
@@ -177,7 +177,7 @@ make
 ./device_routine
 ```
 
-Examining the two source files, we see that we first need to add the compute 
+Examining the two source files, we see that we first need to add the compute
 directives:
 
 ```
@@ -185,7 +185,7 @@ directives:
 !$omp target teams distribute parallel do reduction(+:sum)
 ```
 
-In addition, we need the explicit memory movement directives 
+In addition, we need the explicit memory movement directives
 
 ```
 !$omp target enter data map(alloc:x(1:N))
@@ -202,7 +202,7 @@ cd ../2_device_routine_with_module_usm
 ```
 
 We need to add `!$omp requires unified_shared_memory` to both source code files since they both will have
-OpenMP target directives. Now we just need to add the compute directives as above and also add the 
+OpenMP target directives. Now we just need to add the compute directives as above and also add the
 `!$omp declare target` directive inside the subroutine definition in computemod.f90.
 
 Now build and run
