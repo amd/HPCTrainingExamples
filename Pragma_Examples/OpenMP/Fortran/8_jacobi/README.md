@@ -65,32 +65,28 @@ make
 ```
 compare with your solution (e.g. use ```vimdiff``` to compare).
 
-## Notes on enhancing this code with markers for profiling:
-For the target data version with ROCtx markers for profiling with markers:
+### Notes on enhancing this code with markers for profiling:
+This is not part of the porting exercise but as you may like to experiment with profiling this example we included an example with ROCtx markers the profilers will show in the timelines and can use for some filtering options (see rocprofv3 and rocprofiler-systems exercises):
 ```
 export HSA_XNACK=0
 cd 3_jacobi_targetdata_markers
 make
 ./jacobi
 ```
-
 This version adds ROCtx ranges around selected code regions so that profiling
-traces can show named regions. The example uses the local `roctx_mod` module to
+traces can show named regions. 
+
+The example uses the local `roctx_mod` module to
 declare the two C bindings needed in this exercise:
 
 ```
 use roctx_mod, only: roctxRangePush, roctxRangePop
 ```
-
 Using this small local module avoids a dependency on the Fortran hipfort
 modules for the exercise. ROCm installations that provide hipfort also provide
 these interfaces through the `hipfort` and `hipfort_roctx`
-
 The marker version links the ROCtx library:
-
 ```
 $(FC) $(LDFLAGS) $^ -o $@ -lrocprofiler-sdk-roctx
 ```
 Rocprofv3 and Rocprofiler-systems exercises show how roctx markers show up in timeline tracing.
-=======
-Compare with your solution (e.g. use ```vimdiff``` to compare).
