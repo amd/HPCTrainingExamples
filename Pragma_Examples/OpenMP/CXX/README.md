@@ -1,11 +1,11 @@
 
 # Porting exercises
-The CXX porting exercises can be found here (this is the directory of this README): 
+The CXX porting exercises can be found here (this is the directory of this README):
 ```
 cd $HOME/HPCTrainingExamples/Pragma_Examples/OpenMP/CXX
 ```
 Note: it is recommended to start with the C exercises first.
-#### on aac6: 
+#### on aac6:
 
 Follow the message of the day how to allocate one GPU interactively.
 ```
@@ -24,6 +24,7 @@ Note: you will get 1 GPU and a fraction of the node memory. This will allow othe
 
 Use the `amdclang++` compiler from `rocm-new` module:
 ```
+module unload rocm
 module load rocm-new/10.1.0
 export CXX=amdclang++
 ```
@@ -45,20 +46,20 @@ This flag
 ```
 export HSA_XNACK=1
 ```
-will enable no memory copies (use of `unified_shared_memory`) on MI300A
+will enable no memory copies (use of `unified_shared_memory`) on MI300A.
 ```
 export HSA_XNACK=0
 ```
 will disable this and behave similarly to a discrete GPU with memory copies.
 Check with
 ```
-rocminfo
+rocminfo | grep xnack
 ```
 if ```xnack+``` (unified memory enabled) or ```xnack-``` (with memory copies) is set.
 
-The exercises in the folders are small examples of what one may encounter when porting a real world code. 
+The exercises in the folders are small examples of what one may encounter when porting a real world code.
 Each exercise has its own README with instructions.
-Exercise 8 is a small app with a Jacobi solver. (Note: This code is explained in detail in a [blogpost](https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html).)
+Exercise 8 is a small app with a Jacobi solver. (Note: This code is explained in detail in a [blogpost](https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html)).
 Choose one of the exercises in the sub-directories and use the README there for instructions.
 
 ## Exercise index

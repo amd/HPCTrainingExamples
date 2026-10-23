@@ -1,30 +1,30 @@
 
 ## Porting a small app: jacobi
 
-This code is described in detail in this blog: https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html
+This code is described in detail in this [ROCm blog](https://rocm.blogs.amd.com/high-performance-computing/jacobi/README.html).
 ```
 cd 0_jacobi_portyourself
 ```
-decide if you want to port with or without unified shared memory. <hr>
+Decide if you want to port with or without unified shared memory. <hr>
 
 **Either** for USM
 ```
 export HSA_XNACK=1
 ```
 
-**or** without for a behaviour with copies
+**or** without, for a behavior with copies
 ```
 export HSA_XNACK=0
 ```
-Then set the compiler (e.g. `export CXX=amdclang++`, see the README in the parent folder) and compile
+Then set the compiler (e.g. `export CXX=amdclang++`, see the [README](../README.md) in the parent folder) and compile:
 ```
 make
 ```
-run the code for a reference CPU solution.
+Run the code for a reference CPU solution.
 ```
 ./Jacobi_omp
 ```
-you can specify a problem size with
+You can specify a problem size with
 ```
 ./Jacobi_omp -m <Problemsize>
 ```
@@ -47,7 +47,7 @@ cd 1_jacobi_usm
 make
 ./Jacobi_omp
 ```
-compare with your solution (e.g. use ```vimdiff``` to compare).
+Compare with your solution (e.g. use ```vimdiff``` to compare).
 
 For the discrete GPU / manual memory management version:
 ```
@@ -56,4 +56,4 @@ cd 2_jacobi_targetdata
 make
 ./Jacobi_omp
 ```
-compare with your solution (e.g. use ```vimdiff``` to compare).
+Compare with your solution (e.g. use ```vimdiff``` to compare).

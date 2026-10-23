@@ -1,7 +1,7 @@
 
 ## C++ member function
 
-README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/CXX/6_device_routines` in Training Examples repository
+README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/CXX/6_device_routines` in Training Examples repository.
 
 The first example is where there is a compute method in the Science class that is called from a parallel target region.
 
@@ -56,7 +56,7 @@ For the solution, go to the `1_member_function_external` directory
 cd ../1_member_function_external
 ```
 
-Note that now we have to add `#pragma omp declare target` around the compute method definition. We also need a 
+Note that now we have to add `#pragma omp declare target` around the compute method definition. We also need a
 `#pragma omp end declare target` directive to close out the declare target region.
 
 Let's try compiling and running the example
@@ -80,14 +80,14 @@ make
 ## C++ virtual methods
 
 Additional complexity in C++ classes can cause difficulties with porting to GPUs. Fundamentally, the GPU language is C with only
-a little support for C++. So let's take a look at a simple virtual method where class inheritance is used. 
+a little support for C++. So let's take a look at a simple virtual method where class inheritance is used.
 
 ```
 cd ../../3_virtual_methods
 ```
 
-The original CPU C++ code is given in `0_virtual_methods_portyourself`. We create a new HotScience class that is based on the Science class. 
-The new class is defined in `HotScience.hh`. It overrides the compute method. The method definition for the new compute function is 
+The original CPU C++ code is given in `0_virtual_methods_portyourself`. We create a new HotScience class that is based on the Science class.
+The new class is defined in `HotScience.hh`. It overrides the compute method. The method definition for the new compute function is
 in `HotScience_member_functions.cc`.
 
 First, let's verify that the original code works.
@@ -98,7 +98,7 @@ make
 ./bigscience
 ```
 
-Try porting this version and see what might be required. 
+Try porting this version and see what might be required.
 
 The solution is given in `1_virtual_methods` directory.
 
@@ -106,7 +106,7 @@ The solution is given in `1_virtual_methods` directory.
 cd ../1_virtual_methods
 ```
 
-Examine the source code files to see what is needed. Note that now the `#pragma omp declare target` block is needed around the 
+Examine the source code files to see what is needed. Note that now the `#pragma omp declare target` block is needed around the
 method definition in `HotScience_member_functions.cc`. Let's verify that this works with your current compiler.
 
 ```
