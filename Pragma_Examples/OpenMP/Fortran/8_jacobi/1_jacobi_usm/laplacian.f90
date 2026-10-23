@@ -5,7 +5,7 @@ module laplacian_mod
   use kind_mod
   use mesh_mod, only: mesh_t
   implicit none
-  !$omp requires unified_shared_memory
+  
 
   private
   public :: laplacian

@@ -6,7 +6,7 @@ program main
   use mesh_mod, only: mesh_t
   use jacobi_mod, only: jacobi_t, init_jacobi, run_jacobi
   implicit none
-  !$omp requires unified_shared_memory
+  
   type(mesh_t) :: mesh
   type(jacobi_t) :: jacobi
 

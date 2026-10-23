@@ -12,7 +12,7 @@ module jacobi_mod
   use norm_mod, only: norm
   use omp_lib, only: omp_get_wtime
   implicit none
-  !$omp requires unified_shared_memory
+  
 
   private
   public :: jacobi_t, init_jacobi, run_jacobi
