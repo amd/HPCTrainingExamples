@@ -3,7 +3,7 @@
 
 In this series of examples, we will demonstrate profiling with rocprofv3 on a platform using an AMD Instinct&trade; MI300 GPU. ROCm releases (6.2+) now include rocprofv3.
 
-Note that the focus of this exercise is on the rocprofv3 profiler, not on how to achieve optimal performance on MI300A. This exercise was last tested with ROCm 6.4.2 on MI300A [MPCDF Viper-GPU](https://docs.mpcdf.mpg.de/doc/computing/viper-gpu-user-guide.html) and then with ROCm 7.0.2 on the MI300A AAC6 cluster. It is important to note that starting from ROCm 7.0, the default output format has change from csv to db. Thus, it is necessary in this case to specify `--output-format csv` for getting the described csv outputs.
+Note that the focus of this exercise is on the rocprofv3 profiler, not on how to achieve optimal performance on MI300A. This exercise was tested with ROCm 6.4.2 on MI300A [MPCDF Viper-GPU](https://docs.mpcdf.mpg.de/doc/computing/viper-gpu-user-guide.html), then with ROCm 7.0.2 on the MI300A AAC6 cluster and the most recently with ROCm 10.1.0 on MI300A AAC7 cluster. It is important to note that starting from ROCm 7.0, the default output format has change from csv to db. Thus, it is necessary in this case to specify `--output-format csv` for getting the described csv outputs.
 
 The examples are based on [Fortran+OpenMP Jacobi porting example from HPCTrainingExamples](https://github.com/amd/HPCTrainingExamples/tree/main/Pragma_Examples/OpenMP/Fortran/8_jacobi). 
 
@@ -21,6 +21,7 @@ Load the necessary modules. In case you are using a ROCm release before 7.0, you
 
 ```
 module load rocm
+# With ROCm < 7.0
 module load amdflang-new
 ```
 
@@ -33,7 +34,7 @@ export HSA_XNACK=0
 
 ## Build and run
 
-No profiling yet, just check that the code compiles and runs correctly. We intentionally build without requiring USM to see the automatic memory copies in the trace later on:
+No profiling yet, just check that the code compiles and runs correctly. We intentionally build without requiring unified shared memory (USM) to see the automatic memory copies in the trace later on:
 
 ```
 make clean
@@ -184,6 +185,14 @@ Below, you can see an example of how the trace file would be visualized in `Perf
 If you zoom in, you should be able to see OpenMP kernels in more details (flows between kernels and memory copies are errors in ROCm 6.4.2 that were later fixed in ROCm 7.0.2):
 ![image](images/rocprofv3_runtime_zoomed.png)
 
+### Visualizing traces using `ROCm Optiq`
+
+Similar workflow as the above:
+
+  1. Generate the trace file with `--output-format rocpd` (or do not specify anything, since `rocpd` database is the default output format).
+  2. Copy file to you laptop.
+  3. [Install ROCm Optiq](https://rocm.docs.amd.com/projects/roc-optiq/en/latest/install/optiq-install.html) stand-alone application.
+  4. Open the trace in ROCm Optiq and analyze the results.
 
 ## Additional features
 
@@ -192,6 +201,8 @@ If you zoom in, you should be able to see OpenMP kernels in more details (flows 
 Read about hardware counters available for the GPU on this system (look for gfx942 section):
 
 ```
+rocprofv3 -L
+# Alternatively, on some ROCm versions
 less $ROCM_PATH/lib/rocprofiler/gfx_metrics.xml
 ```
 
@@ -216,6 +227,53 @@ You'll notice that rocprofv3 runs 2 passes, one for each set of counters we have
 head omp_counters/pmc_1/omp_counter_collection.csv
 echo
 head omp_counters/pmc_2/omp_counter_collection.csv
+```
+
+### OpenMP specific options (starting from ROCm 10.0)
+
+If you have access to the ROCm version 10.0 or newer, consider profiling OpenMP applications using the new `--ompt-trace` option. Note that in this case, only `rocpd` output format is supported. 
+
+```
+rocprofv3 --ompt-trace --kernel-trace --memory-copy-trace --output-directory omp_output --output-file omp --output-format rocpd -- ./jacobi -m 1024
+```
+
+This option traces host-side OpenMP execution (parallel regions, work-sharing, tasks, sync regions, mutexes, thread lifecycle) and, for applications that offload to a device, the host-side target events (target, target_data_op, target_submit). For more information, see [ompt documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-rocprofv3.html#ompt-trace).
+
+To analyze the collect trace, open it in ROCm Optiq visualization tool or for a short summary use `rocpd` (for more info about `rocpd`, see the [rocpd documentation](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-rocpd-output-format.html)):
+
+```
+rocpd2summary -i omp_output/omp_results.db
+```
+
+The output should look similar to this (note the OMPT summary at the bottom):
+
+```
+Found 1 database files.
+
+KERNELS_SUMMARY:
+                                                             Name  Calls  DURATION (nsec)  AVERAGE (nsec)  PERCENT (INC)  MIN (nsec)  MAX (nsec)     STD_DEV
+                   __omp_offloading_38_facd3__QMnorm_modPnorm_l26   1001         45225281    45180.100899      39.337516       29800       60960 6523.779576
+               __omp_offloading_38_facd5__QMupdate_modPupdate_l25   1000         34088869    34088.869000      29.650925       26320       36880 1307.271237
+         __omp_offloading_38_faccc__QMlaplacian_modPlaplacian_l25   1000         22258524    22258.524000      19.360743       17440       30000 2170.002686
+__omp_offloading_38_fabef__QMboundary_modPboundary_conditions_l27   1000         13391108    13391.108000      11.647754        6840       16840 1134.882655
+                                             __omp_dm_init_kernel      1             3520     3520.000000       0.003062        3520        3520         NaN
+
+MEMORY_COPIES_SUMMARY:
+                      Name  Calls  DURATION (nsec)  AVERAGE (nsec)  PERCENT (INC)  MIN (nsec)  MAX (nsec)      STD_DEV
+MEMORY_COPY_HOST_TO_DEVICE  18006       1341540597    74505.198101      50.327459        2040      148761 71822.656149
+MEMORY_COPY_DEVICE_TO_HOST  13003       1324082923   101829.033531      49.672541        1960      148321 66188.328823
+
+OMPT_SUMMARY:
+                  Name  Calls  DURATION (nsec)  AVERAGE (nsec)  PERCENT (INC)  MIN (nsec)  MAX (nsec)       STD_DEV
+     omp_implicit_task      1       5404862649    5.404863e+09      34.250887  5404862649  5404862649           NaN
+        omp_target_emi   4001       5204573421    1.300818e+06      32.981644      884806     3052708 476498.865850
+omp_target_data_op_emi  64016       5146736664    8.039766e+04      32.615130         150    32301551 175861.766890
+ omp_target_submit_emi   4001         24039302    6.008323e+03       0.152338        3490      109581   3000.249339
+omp_callback_functions      1                0    0.000000e+00       0.000000           0           0           NaN
+   omp_device_finalize      1                0    0.000000e+00       0.000000           0           0           NaN
+ omp_device_initialize      1                0    0.000000e+00       0.000000           0           0           NaN
+       omp_device_load      1                0    0.000000e+00       0.000000           0           0           NaN
+      omp_thread_begin      1                0    0.000000e+00       0.000000           0           0           NaN
 ```
 
 ## Next steps
