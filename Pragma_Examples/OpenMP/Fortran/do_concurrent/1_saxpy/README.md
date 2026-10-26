@@ -6,7 +6,7 @@ README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/Fortran/do_concurrent
 **Note:** Fortran do concurrent enabled by flag `-fdo-concurrent-to-openmp` requires at least ROCm 7.2.
 
 ```
-module load rocm # or rocm-new/7.2.0 depending on your system
+module load rocm/10.1.0  # on AAC6, or rocm-new/10.1.0 on AAC7
 export FC=amdflang
 ```
 ### Why is this under OpenMP/Fortran?

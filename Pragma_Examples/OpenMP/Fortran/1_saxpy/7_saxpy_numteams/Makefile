@@ -19,7 +19,7 @@ else ifneq ($(findstring gfortran,$(FC1)),)
 else ifneq ($(findstring ftn,$(FC1)),)
   FTN_VERSION := $(shell $(FC) --version 2>&1)
   OPENMP_FLAGS = -fopenmp
-  ifneq ($(finds -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}tring Cray,$(FTN_VERSION)),)
+  ifneq ($(findstring Cray,$(FTN_VERSION)),)
     FREE_FORM_FLAG = -f free
     FFLAGS = -eZ
   else

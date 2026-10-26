@@ -3,12 +3,10 @@
 
 README.md from `HPCTrainingExamples/Pragma_Examples/OpenMP/C/BuildExamples` in the Training Examples repository
 
-We start the introduction with how to compile programs using OpenMP offloading to GPUs. This leads us to how to write makefiles and 
+We start the introduction with how to compile programs using OpenMP offloading to GPUs. This leads us to how to write makefiles and
 CMakeLists.
 
 ## OpenMP C Build systems: make and cmake
-
-README.md in `HPCTrainingExamples/Pragma_Examples/OpenMP/C/BuildExamples` of the Training Examples repository
 
 Build systems for make and cmake are an important starting step to working with OpenMP.
 We'll start with samples for C builds. We'll test them with
@@ -41,8 +39,6 @@ else ifneq ($(findstring clang,$(CC1)),)
   OPENMP_FLAGS = -fopenmp --offload-arch=${ROCM_GPU}
 else ifneq ($(findstring gcc,$(CC1)),)
   OPENMP_FLAGS = -fopenmp -foffload=-march=${ROCM_GPU}
-else ifneq ($(findstring CC,$(CC1)),)
-  OPENMP_FLAGS = -fopenmp
 endif
 
 CFLAGS = -g -O3 -fstrict-aliasing ${OPENMP_FLAGS}
@@ -58,7 +54,12 @@ clean:
 ```
 
 ```
-module load amdclang
+module unload rocm
+module load rocm/10.1.0       # on AAC6
+# or
+module load rocm-new/10.1.0   # on AAC7
+export CC=amdclang
+export C_COMPILER=amdclang
 make
 ```
 
@@ -95,17 +96,18 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp --offload-arch=${ROCM_GPU}")
 elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp -foffload=-march=${ROCM_GPU}")
-elseif (CMAKE_C_COMPILER_ID MATCHES "Cray")
-   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
-   #the cray compiler decides the offload-arch by loading appropriate modules
-   #module load craype-accel-amd-gfx942 for example
 endif()
 
 add_executable(openmp_code openmp_code.c)
 ```
 
 ```
-module load amdclang
+module unload rocm
+module load rocm/10.1.0       # on AAC6
+# or
+module load rocm-new/10.1.0   # on AAC7
+export CC=amdclang
+export C_COMPILER=amdclang
 mkdir build && cd build && cmake ..
 make
 ```

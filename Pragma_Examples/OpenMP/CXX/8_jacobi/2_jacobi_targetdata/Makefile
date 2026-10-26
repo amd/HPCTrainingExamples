@@ -5,7 +5,7 @@
 # Compilers and related
 ROCM_PATH     ?= /opt/rocm
 ROCM_GPU      ?= $(strip $(shell rocminfo |grep -m 1 -E gfx[^0]{1} | sed -e 's/ *Name: *//'))
-CXXFLAG       = -O2 -g
+CXXFLAG       = -O2 -g -std=c++17
 LDFLAG        =
 
 # OpenMP
@@ -41,7 +41,7 @@ omp:
 	@echo "======================="
 	@echo "Building OpenMP version"
 	@echo "======================="
-	mkdir -p build & mkdir -p build/omp
+	mkdir -p build/omp
 	rsync -ru *.cpp *.hpp Makefile build/omp
 	$(MAKE) -C build/$@ jacobi CXX=$(COMPILER_OMP) CXXFLAGS=$(CXXFLAGS_OMP) LDFLAGS=$(LDFLAGS_OMP)
 	cp build/omp/Jacobi ./Jacobi_omp

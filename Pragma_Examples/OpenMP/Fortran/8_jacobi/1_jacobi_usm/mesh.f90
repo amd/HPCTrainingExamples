@@ -5,7 +5,7 @@ module mesh_mod
   use, intrinsic :: ISO_Fortran_env, only: stdout=>output_unit
   use kind_mod
   implicit none
-  !$omp requires unified_shared_memory
+  
 
   private
   public :: mesh_t, init_mesh

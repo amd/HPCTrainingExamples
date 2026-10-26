@@ -12,20 +12,14 @@ In the present directory, you will find two subdirectories, one called `usm` and
 In this context, `usm` stands for unified shared memory, which is what we are requiring for the code samples in this directory. 
 To compile the code in the `usm` directory, do:
 
-On **AAC7** without the Cray programming environment, use ```module load rocm-new``` instead of ```module load rocm``` (see ```../README.md```).
+On **AAC7**, use ```module load rocm-new/10.1.0``` instead of ```module load rocm/10.1.0``` (see ```../README.md```).
 
 ```
-module load rocm
-module load amdclang
+module load rocm/10.1.0
+export CXX=amdclang++
 export HSA_XNACK=1
 make
 ```
-
-If the `amdclang` module is not available on your system, make sure to do:
-```
-export CXX=$ROCM_PATH/llvm/bin/amdclang++
-```
-before running the `make` command.
 
 Note that if one was to not set `HSA_XNACK=1` the code would not compile, because we are requiring unified shared memory with the following pragma line in `main.cpp`:
 
@@ -55,18 +49,14 @@ The code in the `operations` directory adds one layer of complexity and performs
 
 ### The `explicit` Sub-directory
 
-This sub-directory contains example code that is meant to work even without enabling unified shared memory, meaning that it will compile and run regardless of whether `HSA_XNACK=1`. This is achieved by creating an appropriate data environment with the use of maps, as it will explained next. To compile (on **AAC7** without Cray, prefer ```rocm-new``` as above):
+This sub-directory contains example code that is meant to work even without enabling unified shared memory, meaning that it will compile and run regardless of whether `HSA_XNACK=1`. This is achieved by creating an appropriate data environment with the use of maps, as it will explained next. To compile (on **AAC7**, prefer ```rocm-new/10.1.0``` as above):
 
 ```
-module load rocm
-module load amdclang
+module load rocm/10.1.0
+export CXX=amdclang++
 make
 ```
 
-Again, make sure that the CXX environment variable is set as below, before running the `make` command:
-```
-export CXX=$ROCM_PATH/llvm/bin/amdclang++
-```
 
 The directory is named `explicit` because we are explicitly taking care of all the data movement between host and device, helping the compiler with figuring out how to perform the offload to GPU. The only sub-directory here is `daxpy`.
 

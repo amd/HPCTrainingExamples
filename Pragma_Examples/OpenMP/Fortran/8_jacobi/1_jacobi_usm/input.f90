@@ -6,7 +6,7 @@ module input_mod
   use kind_mod
   use mesh_mod, only: mesh_t, init_mesh
   implicit none
-  !$omp requires unified_shared_memory
+  
 
   private
   public :: debug, parse_arguments

@@ -13,7 +13,7 @@
 ## Build & run
 
 ```bash
-export FC=amdflang   # or flang / gfortran / ftn
+export FC=amdflang
 make
 ./nowait
 make clean

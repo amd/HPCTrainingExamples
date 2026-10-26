@@ -11,9 +11,8 @@ module jacobi_mod
   use boundary_mod, only: boundary_conditions
   use update_mod, only: update
   use omp_lib, only: omp_get_wtime
-  use iso_c_binding
-  use hipfort
-  use hipfort_roctx
+  use, intrinsic :: iso_c_binding, only: c_int, c_null_char
+  use roctx_mod, only: roctxRangePush, roctxRangePop
   implicit none
 
   private
@@ -36,7 +35,7 @@ contains
     type(mesh_t), intent(inout) :: mesh
     integer(IK) :: i,j
     real(RK) :: rhs_bc
-    integer :: ret
+    integer(c_int) :: ret
 
     ret = roctxRangePush("init"//c_null_char)
     allocate(this%u(mesh%n_x,mesh%n_y))
@@ -49,14 +48,15 @@ contains
     this%rhs = 0._RK
     this%au = 0._RK
 
-     ! Add forcing function to rhs
+    ! Add forcing function to rhs
+    ! NOTE: The boundary data sin(pi*i/(n+2)) is deliberately written to match the C++ and HIP versions
     do i=1,mesh%n_x
-      rhs_bc = cos(pi*mesh%x(i))/mesh%dx**2
+      rhs_bc = sin(pi*i/(mesh%n_x+2._RK))/mesh%dx**2
       this%rhs(i,1) = this%rhs(i,1) + rhs_bc
       this%rhs(i,mesh%n_y) = this%rhs(i,mesh%n_y) + rhs_bc
     end do
     do j=1,mesh%n_y
-      rhs_bc = cos(pi*mesh%y(j))/mesh%dy**2
+      rhs_bc = sin(pi*j/(mesh%n_y+2._RK))/mesh%dy**2
       this%rhs(1,j) = this%rhs(1,j) + rhs_bc
       this%rhs(mesh%n_x,j) = this%rhs(mesh%n_x,j) + rhs_bc
     end do
@@ -82,7 +82,7 @@ contains
     type(mesh_t), intent(inout) :: mesh
 
     real(RK) :: resid
-    integer :: ret
+    integer(c_int) :: ret
 
     write(stdout,'(A)') 'Starting Jacobi run'
     ret = roctxRangePush("run"//c_null_char)

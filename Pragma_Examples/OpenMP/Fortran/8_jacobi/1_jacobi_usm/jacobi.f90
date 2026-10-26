@@ -6,14 +6,13 @@ module jacobi_mod
   use kind_mod
   use input_mod, only: debug
   use mesh_mod, only: mesh_t
-  use norm_mod, only: norm
-  use laplacian_mod, only: fused_laplacian_update
+  use laplacian_mod, only: laplacian
   use update_mod, only: update
   use boundary_mod, only: boundary_conditions
   use norm_mod, only: norm
   use omp_lib, only: omp_get_wtime
   implicit none
-  !$omp requires unified_shared_memory
+  
 
   private
   public :: jacobi_t, init_jacobi, run_jacobi
@@ -46,14 +45,15 @@ contains
     this%rhs = 0._RK
     this%au = 0._RK
 
-     ! Add forcing function to rhs
+    ! Add forcing function to rhs
+    ! NOTE: The boundary data sin(pi*i/(n+2)) is deliberately written to match the C++ and HIP versions
     do i=1,mesh%n_x
-      rhs_bc = cos(pi*mesh%x(i))/mesh%dx**2
+      rhs_bc = sin(pi*i/(mesh%n_x+2._RK))/mesh%dx**2
       this%rhs(i,1) = this%rhs(i,1) + rhs_bc
       this%rhs(i,mesh%n_y) = this%rhs(i,mesh%n_y) + rhs_bc
     end do
     do j=1,mesh%n_y
-      rhs_bc = cos(pi*mesh%y(j))/mesh%dy**2
+      rhs_bc = sin(pi*j/(mesh%n_y+2._RK))/mesh%dy**2
       this%rhs(1,j) = this%rhs(1,j) + rhs_bc
       this%rhs(mesh%n_x,j) = this%rhs(mesh%n_x,j) + rhs_bc
     end do
@@ -86,13 +86,10 @@ contains
     this%t_start = omp_get_wtime()
 
     do while (this%iters < max_iters .and. resid > tolerance)
-      ! Compute Laplacian + Update (fused kernel)
-      call fused_laplacian_update(mesh,this%rhs,this%u,this%au,this%res)
+      ! Compute Laplacian
+      call laplacian(mesh,this%u,this%au)
       if (debug) then
-        call print_2D(this%u)
-        write(stdout,*)
-        call print_2D(this%res)
-        write(stdout,*)
+        call print_2D(this%au)
         write(stdout,*)
       end if
 
@@ -100,6 +97,16 @@ contains
       call boundary_conditions(mesh,this%u,this%au)
       if (debug) then
         call print_2D(this%au)
+        write(stdout,*)
+      end if
+
+      ! Update the solution
+      call update(mesh,this%rhs,this%au,this%u,this%res)
+      if (debug) then
+        call print_2D(this%u)
+        write(stdout,*)
+        call print_2D(this%res)
+        write(stdout,*)
         write(stdout,*)
       end if
 
