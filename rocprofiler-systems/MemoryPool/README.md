@@ -154,15 +154,22 @@ first-touch/page-fault pattern.
 Use the memory-pool solution when the application cannot easily hoist temporary
 allocations out of loops or subroutines. The Umpire module must match the ROCm
 10.1.0 compiler/runtime environment.
+```bash
+module load umpire #on aac6 or
+module load umpire/v2025.12.0-rocm-new-10.1.0 #on aac7
+```
 
 ```bash
 cd ../solution2
-amdflang -fopenmp --offload-arch=gfx942 \
+ amdflang -fopenmp --offload-arch=gfx942 \
   -I${UMPIRE_PATH}/include/umpire \
-  -L${UMPIRE_PATH}/lib64 -L${UMPIRE_PATH}/lib \
-  -lumpire -lcamp -lfmt \
   -o test_mempool \
-  test_mempool.f90
+  test_mempool.f90 \
+  -L${UMPIRE_PATH}/lib64 \
+  -L${UMPIRE_PATH}/lib \
+  -lumpire -lcamp -lfmt \
+  -L${ROCM_PATH}/lib \
+  -lamdhip64 -lrt -lstdc++
 
 rocprof-sys-run \
   --preset=trace-openmp \
