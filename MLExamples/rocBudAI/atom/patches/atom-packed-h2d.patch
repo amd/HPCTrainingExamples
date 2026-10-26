@@ -1,0 +1,20 @@
+--- a/atom/utils/packed_h2d.py
++++ b/atom/utils/packed_h2d.py
+@@ -83,10 +83,11 @@
+         # Header and payload share this single asynchronous H2D.
+         prefix[1].copy_(prefix[0], non_blocking=True)
+         grid = (len(self.members), (largest + 1023) // 1024, 1)
+-        if self.kernel is None:
+-            self.kernel = self.launch[grid](self.device, self.destinations, BLOCK=1024)
+-        else:
+-            # Both argument storages and their layouts are fixed for this
+-            # binding. Reuse its compiled kernel; counts and grid stay dynamic.
+-            self.kernel[grid](self.device, self.destinations)
++        # Always dispatch through Triton's JIT launcher. The cached-CompiledKernel
++        # fast path (calling self.kernel[grid](...) directly) is ABI-specific and
++        # breaks across Triton versions: the installed AMD driver expects a
++        # profile_scratch arg, raising "function takes exactly 14 arguments
++        # (13 given)". Triton caches the compiled artifact by signature internally,
++        # so re-entering the launcher is cheap (dict lookup) and version-safe.
++        self.launch[grid](self.device, self.destinations, BLOCK=1024)
+         return True

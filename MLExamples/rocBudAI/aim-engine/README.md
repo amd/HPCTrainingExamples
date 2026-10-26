@@ -1,28 +1,31 @@
 # rocBudAI over AIM Engine
 
+| At a glance | |
+| --- | --- |
+| Model | large ~120B, e.g. gpt-oss-120b (served remotely) |
+| Engine | AIM Engine (vLLM on Kubernetes) |
+| Needs | a cluster already running AIM Engine; `kubectl` or an endpoint; no local GPU |
+| Setup | minutes if a model is already serving; add the weight download if you deploy one |
+
 This directory installs [rocBudAI](../README.md) as a thin client of a model
 already served by AIM (AMD Inference Microservices) Engine: the vLLM,
 OpenAI-compatible endpoint stood up by
 [`LLM_Serving/aim-engine/deploy`](../../LLM_Serving/aim-engine/deploy/README.md).
-The user experience is the stock rocBudAI experience, unchanged. The session
-picker, `rocbudai --continue`, session naming and the welcome banner behave
-exactly as they do upstream, and so do the idle auto-nudge, the resume hints and
-`rocbudai-submit`. Only the model moves. The stock deployment serves the model
-locally with ollama and gates the launcher behind Slurm, so a user must be inside
-a `--comment=ollama` GPU allocation to start it. Here the model runs remotely on
-the cluster instead, and the agent can run from a login node or a laptop that has
+The experience is stock rocBudAI, unchanged (see
+[What every recipe shares](../README.md#what-every-recipe-shares)); only the model
+moves. Where the stock deployment serves the model locally with ollama and gates
+the launcher behind a `--comment=ollama` Slurm allocation, here the model runs
+remotely on the cluster, and the agent can run from a login node or a laptop with
 no GPU of its own.
 
 ## Requirements and setup time
 
-> This setup does not provide the stock rocBudAI airgap. It installs nothing that
-> blocks the agent's network traffic, and `rocbudai-airgap-check` only probes
-> whether the host is restricted. Privacy rests on our assertion that the serving
-> cluster is trusted, plus the checks described in
-> [The trust boundary](#the-trust-boundary). This setup is only for experiencing
-> rocBudAI: a production deployment must follow the stock rocBudAI install in
-> [`INSTALL.md`](https://github.com/AMD-HPC/rocBudAI/blob/main/INSTALL.md) to
-> get the airgap.
+> This setup does not provide the stock rocBudAI airgap: it installs nothing that
+> blocks the agent's traffic, and `rocbudai-airgap-check` only probes whether the
+> host is restricted. Privacy rests on our assertion that the serving cluster is
+> trusted, plus the checks in [The trust boundary](#the-trust-boundary). It is a
+> preview, not the production airgap (see
+> [What every recipe shares](../README.md#what-every-recipe-shares)).
 
 Beyond that, we need the following before starting:
 
@@ -88,13 +91,12 @@ The `opencode.json` it writes uses the OpenAI-compatible provider with tool
 calling on and `share` disabled, and inherits rocBudAI's ASK-mode permission
 policy from the stock template.
 
-The stock path gets one thing for free that the AIM path must set explicitly.
-opencode already knows the stock ollama model from its bundled models.dev
-registry, but the AIM model is served by a custom provider it has no metadata
-for. So the launcher declares the served `max_model_len` as that model's `limit`
-in `opencode.json`. That is what lets opencode auto-compact the history and cap
-output tokens. Without it, opencode can compute and send a negative `max_tokens`
-once the window fills, which vLLM rejects (`max_tokens must be at least 1`).
+The AIM model is served by a custom provider opencode has no metadata for, so the
+launcher declares its served `max_model_len` as the model's `limit` in
+`opencode.json` (see
+[What every recipe shares](../README.md#what-every-recipe-shares)). Without it,
+opencode can send a negative `max_tokens` once the window fills, which vLLM rejects
+(`max_tokens must be at least 1`).
 
 Everything else, the persona seeding and the whole session machinery, is stock
 rocBudAI running unmodified. Because we drive raw opencode, which honors
@@ -186,34 +188,26 @@ cd <your-project-dir>          # the code you want rocBudAI to profile
 module load rocbudai
 ```
 
-Loading the module launches the TUI (terminal user interface) exactly as stock
-rocBudAI does: a session picker if this directory has prior sessions, otherwise
-the welcome banner and the seven-question discovery interview. On a fresh session
-the launcher first asks which GPU we are profiling, since the agent host has no
-local GPU to detect it from, and loads the matching persona. A resumed session
-keeps its persona and is not asked again. `rocbudai --continue` resumes the last
-session in the directory, and `rocbudai --new` forces a fresh one. Session files
-(`AGENTS.md`, `opencode.json`, `.rocbudai-*`) are written into the project
-directory, so add them to its `.gitignore`.
+Loading the module launches the TUI (terminal user interface) exactly as every
+recipe does (see
+[What every recipe shares](../README.md#what-every-recipe-shares)). One detail is
+specific here: on a fresh session the launcher first asks which GPU we are
+profiling, since the agent host has no local GPU to detect it from, and loads the
+matching persona; a resumed session keeps its persona and is not asked again.
 
 ## GPU execution: where the workload runs
 
 Serving the model on AIM is separate from running our GPU code. The agent runs
-wherever we load the module, often a login node or laptop with no local GPU. That
-breaks a core rocBudAI assumption: the persona tells the agent to profile with
-`rocbudai-bench`, which runs the workload on a local GPU. The recipe handles this
-automatically. When the launcher detects no local GPU, it appends
-`no-gpu-addendum.md` to opencode's instructions, which overrides the persona: the
-agent is told not to run GPU work locally and to dispatch every build, run and
-profiler job through `rocbudai-submit` instead. On a real GPU node the addendum is
-omitted and the stock local flow applies.
+wherever we load the module, often a login node or laptop with no local GPU, so
+the no-GPU addendum engages and dispatches profiling jobs through `rocbudai-submit`
+(see [What every recipe shares](../README.md#what-every-recipe-shares)).
 
 The intended topology is a model served on the Kubernetes cluster and GPU
 workloads submitted to a Slurm HPC system with `rocbudai-submit`. Today the recipe
-targets running the agent on the HPC login node itself. There is no local GPU, so
-the addendum engages, but Slurm is on `PATH` and the compute nodes share the login
-node's filesystem, so the agent submits jobs directly. `rocbudai-submit` comes
-with the rocBudAI tree the installer stages, so it is always on `PATH`.
+targets running the agent on the HPC login node itself: Slurm is on `PATH` and the
+compute nodes share the login node's filesystem, so the agent submits jobs
+directly. `rocbudai-submit` comes with the rocBudAI tree the installer stages, so
+it is always on `PATH`.
 
 `rocbudai-submit` carries no hardcoded cluster information. It reads the target
 partition from `ROCBUDAI_SUBMIT_PARTITION`, falling back to the Slurm cluster

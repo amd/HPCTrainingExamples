@@ -194,7 +194,14 @@ if [ "${CONTAINER_ONLY}" = "1" ]; then
 [test] 'exit' stops and removes the container.
 
 EOF
-      "${RUNTIME}" exec -it "${cname}" bash 2>/dev/null || "${RUNTIME}" exec -it "${cname}" sh
+      # Pick the shell by whether bash exists, not by the interactive session's
+      # exit status: keying the fallback off `bash || sh` would spawn a second
+      # shell whenever we exit bash on a non-zero last command.
+      if "${RUNTIME}" exec "${cname}" sh -c 'command -v bash >/dev/null 2>&1'; then
+         "${RUNTIME}" exec -it "${cname}" bash
+      else
+         "${RUNTIME}" exec -it "${cname}" sh
+      fi
       exit 0
    fi
    echo "[test] FAIL: no valid completion. Response: ${resp}"; exit 1
@@ -439,39 +446,54 @@ if "${DEPLOY_DIR}/aim_engine_setup.sh"; then echo "[test] PASS: idempotent."
 else echo "[test] FAIL: second run did not succeed."; FAILED=1; fi
 
 echo ""; echo "[test] STEP 4: inference smoke test (${AIM_TEST_MODEL_IMAGE})"
-kubectl apply -f - <<EOF
-apiVersion: aim.eai.amd.com/v1alpha2
-kind: AIMService
-metadata:
-  name: aim-smoke
-  namespace: default
-  annotations:
-    aim.eai.amd.com/reconciler-pipeline: profile
-spec:
-  model:
-    image: ${AIM_TEST_MODEL_IMAGE}
-  profile:
-    selector:
-      minimumType: any
-EOF
-echo "[test] waiting for the InferenceService to become Ready (model download can take a while)"
-isvc=""
-for i in $(seq 1 120); do
-   isvc=$(kubectl get inferenceservice -n default -l aim.eai.amd.com/service.name=aim-smoke -o name 2>/dev/null | head -n1)
-   [ -n "${isvc}" ] && kubectl wait --for=condition=Ready "${isvc}" -n default --timeout=10s >/dev/null 2>&1 && break
+# Serve via aim_deploy.sh --level 2 (the operator is already installed by STEP 2),
+# i.e. the SAME path a user runs by hand -- instead of hand-rolling a bare AIMService.
+# That matters: aim_deploy.sh's serve path adds three things a minimal AIMService
+# lacks, each of which otherwise makes auto-run hang where interactive runs succeed:
+#   1. an auto-nudge watcher that clears AIM Engine's known reconcile stall (the
+#      AIMService parks in Starting after its AIMProfileCache goes Ready and the
+#      operator fails to re-queue it, so no InferenceService is ever created);
+#   2. memory + amd.com/gpu resource floors (a bare AIMService omits memory, so
+#      KServe's 2Gi default OOM-kills weight loading, and omits the GPU limit);
+#   3. an acceleratorCount selector so profile resolution matches.
+if AIM_MODEL_IMAGE="${AIM_TEST_MODEL_IMAGE}" NAMESPACE=default "${DEPLOY_DIR}/aim_deploy.sh" --level 2; then
+   echo "[test] AIMService applied via aim_deploy.sh --level 2; waiting for Ready."
+else
+   echo "[test] FAIL: aim_deploy.sh --level 2 did not apply the AIMService."; FAILED=1
+fi
+
+# Wait for the AIMService to become Ready. Large models (the default is Qwen3-32B)
+# can take a long time: the first run pulls a multi-GB image in a discovery Job,
+# then pulls + loads weights into the cache PVC on a cold cluster. Each loop is
+# ~20s (10s wait + 10s sleep), so the default 180 iterations allows ~60 min.
+# Override with AIM_TEST_READY_ITERS for bigger models or slower networks.
+: ${AIM_TEST_READY_ITERS:=180}
+echo "[test] waiting up to ~$(( AIM_TEST_READY_ITERS * 20 / 60 )) min for aim-smoke to become Ready (model download can take a while)"
+ready=0
+for i in $(seq 1 "${AIM_TEST_READY_ITERS}"); do
+   kubectl wait --for=condition=Ready aimservice/aim-smoke -n default --timeout=10s >/dev/null 2>&1 && { ready=1; break; }
    sleep 10
 done
-if [ -n "${isvc}" ] && kubectl get "${isvc}" -n default >/dev/null 2>&1; then
-   kubectl port-forward -n default "svc/$(basename ${isvc})-predictor" 8080:80 >/dev/null 2>&1 &
+if [ "${ready}" = "1" ]; then
+   # Prefer the predictor Service by label; fall back to the InferenceService name.
+   svc=$(kubectl get svc -n default -l aim.eai.amd.com/service.name=aim-smoke,component=predictor -o name 2>/dev/null | head -n1)
+   if [ -z "${svc}" ]; then
+      isvc=$(kubectl get inferenceservice -n default -l aim.eai.amd.com/service.name=aim-smoke -o name 2>/dev/null | head -n1)
+      [ -n "${isvc}" ] && svc="svc/$(basename ${isvc})-predictor"
+   fi
+   kubectl port-forward -n default "${svc}" 8080:80 >/dev/null 2>&1 &
    pf=$!; sleep 5
+   # The model is served under its real id (not "aim-smoke"), so read it back.
+   model=$(curl -sS http://localhost:8080/v1/models 2>/dev/null | grep -o '"id":"[^"]*"' | head -n1 | cut -d'"' -f4)
+   [ -z "${model}" ] && model="aim-smoke"
    resp=$(curl -sS http://localhost:8080/v1/chat/completions \
       -H "Content-Type: application/json" \
-      -d '{"model":"aim-smoke","messages":[{"role":"user","content":"Hello!"}]}')
+      -d '{"model":"'"${model}"'","messages":[{"role":"user","content":"Hello!"}]}')
    kill ${pf} >/dev/null 2>&1 || true
    if echo "${resp}" | grep -q '"choices"'; then echo "[test] PASS: inference returned a completion."
    else echo "[test] FAIL: no valid completion. Response: ${resp}"; FAILED=1; fi
 else
-   echo "[test] FAIL: InferenceService for aim-smoke never became Ready."; FAILED=1
+   echo "[test] FAIL: AIMService aim-smoke never became Ready."; FAILED=1
 fi
 
 echo ""
