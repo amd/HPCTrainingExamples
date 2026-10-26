@@ -21,12 +21,12 @@ Jacobi_t::Jacobi_t(mesh_t& mesh_):
 
 
 Jacobi_t::~Jacobi_t() {
-  SafeHostFree(mesh.x);
-  SafeHostFree(mesh.y);
-  SafeHostFree(h_U);
-  SafeHostFree(h_AU);
-  SafeHostFree(h_RHS);
-  SafeHostFree(h_RES);
+  AlignedHostDelete(mesh.x);
+  AlignedHostDelete(mesh.y);
+  AlignedHostDelete(h_U);
+  AlignedHostDelete(h_AU);
+  AlignedHostDelete(h_RHS);
+  AlignedHostDelete(h_RES);
 }
 
 // Generates the 2D mesh
@@ -47,8 +47,8 @@ void Jacobi_t::CreateMesh()
   mesh.invNtotal = 1.0/Ntotal;
 
   //coordinates (including boundary points)
-  mesh.x = (dfloat *) malloc((mesh.Nx+2)*sizeof(dfloat));
-  mesh.y = (dfloat *) malloc((mesh.Ny+2)*sizeof(dfloat));
+  mesh.x = AlignedHostAlloc(mesh.Nx+2);
+  mesh.y = AlignedHostAlloc(mesh.Ny+2);
 
   for (int i=0;i<mesh.Nx;i++)
     mesh.x[i] = mesh.dx + i*mesh.dx;
@@ -62,10 +62,10 @@ void Jacobi_t::InitializeData()
 {
 
   //host buffers
-  h_U   = (dfloat*) malloc(mesh.N*sizeof(dfloat));
-  h_AU  = (dfloat*) malloc(mesh.N*sizeof(dfloat));
-  h_RHS = (dfloat*) malloc(mesh.N*sizeof(dfloat));
-  h_RES = (dfloat*) malloc(mesh.N*sizeof(dfloat));
+  h_U   = AlignedHostAlloc(mesh.N);
+  h_AU  = AlignedHostAlloc(mesh.N);
+  h_RHS = AlignedHostAlloc(mesh.N);
+  h_RES = AlignedHostAlloc(mesh.N);
 
   #pragma omp parallel for collapse(2)
   for (int j=0;j<mesh.Ny;j++) 
@@ -222,5 +222,5 @@ void Jacobi_t::Run()
   std::cout << "Stopped after " << iterations << " with residue:" << residual << std::endl;
   
   PrintResults();
-  #pragma omp target exit data map(release: h_U[0:N],h_AU[0:N],h_RES[0:N],h_RHS[0:N])
+  #pragma omp target exit data map(release: mesh,h_U[0:N],h_AU[0:N],h_RES[0:N],h_RHS[0:N])
 }

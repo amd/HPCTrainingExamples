@@ -44,14 +44,15 @@ contains
     this%rhs = 0._RK
     this%au = 0._RK
 
-     ! Add forcing function to rhs
+    ! Add forcing function to rhs
+    ! NOTE: The boundary data sin(pi*i/(n+2)) is deliberately written to match the C++ and HIP versions
     do i=1,mesh%n_x
-      rhs_bc = cos(pi*mesh%x(i))/mesh%dx**2
+      rhs_bc = sin(pi*i/(mesh%n_x+2._RK))/mesh%dx**2
       this%rhs(i,1) = this%rhs(i,1) + rhs_bc
       this%rhs(i,mesh%n_y) = this%rhs(i,mesh%n_y) + rhs_bc
     end do
     do j=1,mesh%n_y
-      rhs_bc = cos(pi*mesh%y(j))/mesh%dy**2
+      rhs_bc = sin(pi*j/(mesh%n_y+2._RK))/mesh%dy**2
       this%rhs(1,j) = this%rhs(1,j) + rhs_bc
       this%rhs(mesh%n_x,j) = this%rhs(mesh%n_x,j) + rhs_bc
     end do

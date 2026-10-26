@@ -5,6 +5,7 @@ This software is distributed under the MIT License
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <omp.h>
 
 void saxpy() {
@@ -42,7 +43,10 @@ void saxpy() {
    printf("y[0] %lf\n",y[0]);
    printf("y[N-1] %lf\n",y[N-1]);
    
-   #pragma omp target exit data map(release:x,y)
+   #pragma omp target exit data map(release:x[0:N],y[0:N])
+
+   free(x);
+   free(y);
 
 }
 int main(int argc, char *argv[]){

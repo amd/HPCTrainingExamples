@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 void initialize_constants(int isize);
+void finalize_constants(int isize);
 void compute(int cindex, double *x);
 
 int main(int argc, char *argv[]){
@@ -37,5 +38,6 @@ int main(int argc, char *argv[]){
 
 #pragma omp target exit data map (release:x[0:N])
    free(x);
+   finalize_constants(isize);
 }
       

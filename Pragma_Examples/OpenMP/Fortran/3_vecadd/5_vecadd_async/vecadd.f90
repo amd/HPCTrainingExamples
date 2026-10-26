@@ -5,6 +5,7 @@ program main
 
     use omp_lib 
     use, intrinsic :: iso_fortran_env, only: real64
+    implicit none
     ! Size of vectors
     integer :: n = 10000000
  

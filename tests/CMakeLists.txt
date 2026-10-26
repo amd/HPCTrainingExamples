@@ -1043,6 +1043,11 @@ set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY PASS_REGULAR_EXPRESSION "Prin
 set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_tests_properties(MPI_Ghost_Exchange_Ver6 PROPERTIES TIMEOUT 600)
 
+add_test(NAME MPI_Oversubscription_Check COMMAND ../mpicheck_oversubscribe.sh )
+set_property(TEST MPI_Oversubscription_Check PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
+set_property(TEST MPI_Oversubscription_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_tests_properties(MPI_Oversubscription_Check PROPERTIES TIMEOUT 600)
+
 # Ver7 is disabled: no Ver7/ source directory exists yet. The script is kept
 # in sync with ver2 (ver1 + rocprof-sys) so it is ready to enable once a
 # Ver7/ variant is added.
@@ -1756,6 +1761,11 @@ set_property(TEST JAX_Check_Gpu_Access PROPERTY SKIP_REGULAR_EXPRESSION "module 
 add_test(NAME JAX_Mnist COMMAND ../jax_mnist.sh )
 set_property(TEST JAX_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Epoch 9 in")
 set_property(TEST JAX_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'jax'")
+
+add_test(NAME JAX_Pytest_Lax_Vmap COMMAND ../jax_pytest_lax_vmap.sh )
+set_property(TEST JAX_Pytest_Lax_Vmap PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST JAX_Pytest_Lax_Vmap PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'jax'")
+set_tests_properties(JAX_Pytest_Lax_Vmap PROPERTIES TIMEOUT 600)
 
 # commenting this out since passing outcome is hardware dependent
 #add_test(NAME JAX_Check_Performance COMMAND ../jax_check_performance.sh )

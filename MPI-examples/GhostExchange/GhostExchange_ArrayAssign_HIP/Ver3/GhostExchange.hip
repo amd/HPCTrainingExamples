@@ -135,6 +135,7 @@ void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int 
 void create_netcdf_file(const char *fname, int jmax, int imax, MPI_Comm comm, int *ncid, int *varid, int *varid_xcoord, int *varid_ycoord);
 void write_netcdf_soln(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int tstep, int ncid, int varid);
 void write_netcdf_coords(int imax, int jmax, int nprocx, int nprocy, double Lx, double Ly, int ncid, int varid_xcoord, int varid_ycoord);
+void close_netcdf(int ncid);
 #endif
 void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop);
 void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize,
@@ -285,6 +286,9 @@ int main(int argc, char *argv[])
    malloc2D_free(x, nhalo);
    malloc2D_free(xnew, nhalo);
 
+#ifdef USE_PNETCDF
+   close_netcdf(ncid);
+#endif
    MPI_Finalize();
    exit(0);
 }

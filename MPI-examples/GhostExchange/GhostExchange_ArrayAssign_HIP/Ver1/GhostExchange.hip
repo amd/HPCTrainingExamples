@@ -143,14 +143,17 @@ do{                                                                             
 
 void print_affinity_info (int rank)
 {
-    // If ROCR_VISIBLE_DEVICES is set, capture visible GPUs
+    // If HIP_VISIBLE_DEVICES (or ROCR_VISIBLE_DEVICES) is set, capture visible GPUs
     const char* gpu_id_list;
-    const char* rocr_visible_devices = getenv("ROCR_VISIBLE_DEVICES");
-    if(rocr_visible_devices == NULL){
+    const char* visible_devices = getenv("HIP_VISIBLE_DEVICES");
+    if(visible_devices == NULL){
+        visible_devices = getenv("ROCR_VISIBLE_DEVICES");
+    }
+    if(visible_devices == NULL){
         gpu_id_list = "N/A";
     }
     else{
-        gpu_id_list = rocr_visible_devices;
+        gpu_id_list = visible_devices;
     }
 
     // Find how many GPUs HIP runtime says are available
@@ -191,6 +194,7 @@ void Cartesian_print(double **x, int jmax, int imax, int nhalo, int nprocy, int 
 void create_netcdf_file(const char *fname, int jmax, int imax, MPI_Comm comm, int *ncid, int *varid, int *varid_xcoord, int *varid_ycoord);
 void write_netcdf_soln(double **x, int jmax, int imax, int nhalo, int nprocy, int nprocx, int tstep, int ncid, int varid);
 void write_netcdf_coords(int imax, int jmax, int nprocx, int nprocy, double Lx, double Ly, int ncid, int varid_xcoord, int varid_ycoord);
+void close_netcdf(int ncid);
 #endif
 void boundarycondition_update(double **x, int nhalo, int jsize, int isize, int nleft, int nrght, int nbot, int ntop);
 void ghostcell_update(double **x, int nhalo, int corners, int jsize, int isize,
@@ -336,6 +340,9 @@ int main(int argc, char *argv[])
    malloc2D_free(x, nhalo);
    malloc2D_free(xnew, nhalo);
 
+#ifdef USE_PNETCDF
+   close_netcdf(ncid);
+#endif
    MPI_Finalize();
    exit(0);
 }

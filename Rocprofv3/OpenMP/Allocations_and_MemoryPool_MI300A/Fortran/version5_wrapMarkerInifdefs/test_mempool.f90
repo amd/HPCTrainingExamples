@@ -93,8 +93,8 @@ program main
       call mem_pool%allocate(a,[n])
       call mem_pool%allocate(b,[n])
       call mem_pool%allocate(c,[n])
-      call roctxpop("allocate" // c_null_char)      
 #ifdef WITH_ROCTX      
+      call roctxpop("allocate" // c_null_char)      
       call roctxpush("first touch" // c_null_char)    
 #endif        
       ! Initialize input vectors.

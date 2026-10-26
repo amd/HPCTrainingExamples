@@ -16,6 +16,7 @@ of performance optimization. Generally speaking, however, the various versions f
 - **Ver5**: this is a variation of Ver4, where the solution array is unrolled from a 2D array into a 1D array.
 - **Ver6**: this is a variation of Ver5, where the solution array and the communication buffers are allocated on the GPU with `hipMalloc`. In this version, GPU aware MPI is leveraged, thanks to the allocation of the communication buffers with `hipMalloc`. For this version, unified shared memory is not required and therefore one could `unset HSA_XNACK`.
 - **Ver8**: where the computation advancing the solution happens on the GPU and overlaps with the MPI exchanges happening on the CPU. This feature is particularly valuable for the MI300A architecture since no copy and transfer of data has to be performed. Note that, unlike in Ver6, the communication buffers are allocated on the CPU. Unified shared memory is needed for this example, hence we need to `export HSA_XNACK=1` (variation of [Orig8](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange/GhostExchange_ArrayAssign/Orig8) from the OpenMP dir).
+- **Ver9**: this is a variation of Ver8, where the MPI exchanges also happen on the GPU and overlap with the computation advancing the solution. As in Ver6, the solution array and the communication buffers are allocated on the GPU with `hipMalloc` and GPU aware MPI is leveraged, therefore one could `unset HSA_XNACK`. Within a node, when the MPI library copies through the HSA runtime (e.g. Open MPI with UCX), the overlap is only effective if the GPU to GPU copies use the SDMA engines (default) rather than blit kernels (`export HSA_ENABLE_SDMA=0`).
 
 
 ## Overview of the implementation
@@ -91,5 +92,5 @@ You can export the environment variable below to check that the kernels are inde
 export AMD_LOG_LEVEL=4
 ```
 
-Version 2 through 6 can be run similarly. For version 6, we recommend to `unset HSA_XNACK` since all the arrays are allocated on the GPU with `hipMalloc`. For Ver8, we need to `export HSA_XNACK=1` again.  
+Version 2 through 6 can be run similarly. For version 6, we recommend to `unset HSA_XNACK` since all the arrays are allocated on the GPU with `hipMalloc`. For Ver8, we need to `export HSA_XNACK=1` again. For Ver9, `HSA_XNACK` is not needed, see its [`README`](https://github.com/amd/HPCTrainingExamples/blob/main/MPI-examples/GhostExchange/GhostExchange_ArrayAssign_HIP/Ver9/README.md) for how to compare the SDMA engines with blit kernels.
 

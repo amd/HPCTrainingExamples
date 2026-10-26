@@ -1,0 +1,1 @@
+../GhostExchange_Oversubscription_HIP/mpirun_check.sh

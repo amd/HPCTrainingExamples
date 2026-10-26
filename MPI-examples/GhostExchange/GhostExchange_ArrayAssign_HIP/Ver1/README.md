@@ -72,7 +72,7 @@ script has been adjusted only to run 4 processes on the first four GPU devices.
 $ cat set_gpu_device.sh
 #!/bin/bash
 let mygpu=${OMPI_COMM_WORLD_SIZE}-${OMPI_COMM_WORLD_LOCAL_RANK}-1
-export ROCR_VISIBLE_DEVICES=$mygpu
+export HIP_VISIBLE_DEVICES=$mygpu
 exec $*
 ```
 

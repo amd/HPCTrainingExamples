@@ -37,8 +37,6 @@ else ifneq ($(findstring flang, $(FC1)),)
 else ifneq ($(findstring gfortran,$(FC1)),)
   OPENMP_FLAGS = -fopenmp --offload=-march=$(ROCM_GPU)
   FREE_FORM_FLAG = -ffree-form
-else ifneq ($(findstring ftn,$(FC1)),)
-  OPENMP_FLAGS = -fopenmp
 endif
 
 FFLAGS = -g -O3 ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
@@ -60,11 +58,13 @@ clean:
 	rm -rf build
 ```
 
-Load a Fortran compiler module (on AAC6 use ```rocm```, on AAC7 use ```rocm-new```):
+Load a Fortran compiler module (on AAC6 use ```rocm/10.1.0```, on AAC7 use ```rocm-new/10.1.0```):
 
 ```
-module load rocm        # on AAC6
-module load rocm-new  # on AAC7
+module load rocm/10.1.0   # on AAC6
+export FC=amdflang
+module load rocm-new/10.1.0  # on AAC7
+export FC=amdflang
 make
 ```
 
@@ -101,20 +101,18 @@ if ("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Clang")
    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp --offload-arch=${ROCM_GPU}")
 elseif ("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp -foffload=-march=${ROCM_GPU}")
-elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Cray")
-   set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fopenmp")
-   #the cray compiler decides the offload-arch by loading appropriate modules
-   #module load craype-accel-amd-gfx942 for example
 endif()
 
 add_executable(openmp_code openmp_code.F90)
 ```
 
-Load a Fortran compiler module (on AAC6 use ```rocm```, on AAC7 use ```rocm-new```):
+Load a Fortran compiler module (on AAC6 use ```rocm/10.1.0```, on AAC7 use ```rocm-new/10.1.0```):
 
 ```
-module load rocm        # on AAC6
-module load rocm-new  # on AAC7
+module load rocm/10.1.0   # on AAC6
+export FC=amdflang
+module load rocm-new/10.1.0  # on AAC7
+export FC=amdflang
 mkdir build && cd build && cmake ..
 make
 ```
