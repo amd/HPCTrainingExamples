@@ -55,7 +55,7 @@ make
 ./jacobi
 ```
 Compare with your solution (e.g. use ```vimdiff``` to compare).
-Note that instead of writing ```!$omp requires unified_shared_memory``` in each compilation unit we use the ```-fopenmp-force-usm``` flag in the Makefile. This saves the developer some typing and it allows the comparison of the running same code with and without ```HSA_XNACK=1``` and with and without requiring unified shared memory. To switch the USM compilation off one can compile with ```make USM_FLAG=""```. This is especially interesting to compare the collected traces in timeline profiling where one can compare the traces with and without memory movement (see respective [rocprofv3](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/OpenMP) and [rocprofiler-systems](https://github.com/amd/HPCTrainingExamples/tree/main/rocprofiler-systems/) exercises).
+Note that instead of writing ```!$omp requires unified_shared_memory``` in each compilation unit we use the ```-fopenmp-force-usm``` flag in the Makefile. This saves the developer some typing and it allows the comparison of running same code with and without ```HSA_XNACK=1``` and with and without requiring unified shared memory. To switch the USM compilation off one can compile with ```make USM_FLAG=""```. This is especially interesting to compare the collected traces in timeline profiling where one can compare the traces with and without memory movement (see respective [rocprofv3](https://github.com/amd/HPCTrainingExamples/tree/main/Rocprofv3/OpenMP) and [rocprofiler-systems](https://github.com/amd/HPCTrainingExamples/tree/main/rocprofiler-systems/) exercises).
 
 For the discrete GPU / manual memory management version:
 ```
