@@ -72,10 +72,14 @@ fi
 source "${VENV}/bin/activate"
 python3 -m pip install --upgrade pip
 
-echo "Installing nightly ROCm + PyTorch (${ROCM_VERSION}, ${GPU_ARCH}) ..."
+echo "Installing nightly ROCm (${ROCM_VERSION}, ${GPU_ARCH}) ..."
 python3 -m pip install \
     --index-url "${ROCM_INDEX_URL}" \
-    "rocm[profiler,devel,libraries,device-${GPU_ARCH}]==${ROCM_VERSION}" \
+    "rocm[profiler,devel,libraries,device-${GPU_ARCH}]==${ROCM_VERSION}"
+
+echo "Installing PyTorch for ROCm ${ROCM_VERSION} ..."
+python3 -m pip install \
+    --index-url "${ROCM_INDEX_URL}" \
     "torch[device-${GPU_ARCH}]" \
     "torchvision[device-${GPU_ARCH}]"
 
@@ -85,6 +89,7 @@ python3 -m pip install transformers
 # --- 2. extract the ROCm SDK ----------------------------------------------
 echo "Running rocm-sdk init ..."
 rocm-sdk init
+rocpd --version
 
 # Resolve the extracted SDK path (python minor version independent).
 SITE_PACKAGES="$(python3 -c 'import site; print(site.getsitepackages()[0])')"
