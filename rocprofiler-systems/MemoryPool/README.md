@@ -207,6 +207,6 @@ Look at the *.proto file from the output folder with Perfetto (https://ui.perfet
 
 ## Next steps
 
-Try other rocprofiler-system options with this small example or try other examples from this repository.
+Try other rocprofiler-system options or try to introduce functions and subroutines and see what changes with an instrumented binary with this small example or try other examples from this repository.
 
 **Finally, try to profile your own application!**
