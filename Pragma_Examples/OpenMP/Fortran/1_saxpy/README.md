@@ -8,6 +8,7 @@ This exercise will guide you through porting your first kernels step by step by 
 For this exercise, compile the code directly on the commandline for practicing how to compile code for the GPU or APU.
 However, there is a Makefile provided in each folder and all following exercises will use Makefiles.
 
+The whole exercise assumes you have a GPU already allocated interactively.
 ## Part 1: Porting with unified shared memory enabled
 First, prepare the environment (load modules, set environment variables, check the instructions), if you didn't do so before.
 
