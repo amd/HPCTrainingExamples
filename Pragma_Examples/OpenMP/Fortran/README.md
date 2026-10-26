@@ -18,7 +18,7 @@ Check with ```echo $FC``` and ```$FC --version``` that you are using `amdflang`.
 #### on aac7:
 Get an interactive session on a node:
 ```
-salloc -N 1 --mem=100GB --gpus=1 -p 192C4G1H_MI300A_RHEL9_A1_CPX
+salloc -N 1 --mem=20GB --gpus=1 -p 192C4G1H_MI300A_RHEL9_A1_CPX
 ```
 Note: you will get 1 GPU and 100 GB of memory. This will allow others to use the remaining resources of a node.
 Useful commands:
