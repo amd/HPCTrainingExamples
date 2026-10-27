@@ -3,5 +3,5 @@ gradio
 numpy
 scipy
 matplotlib
-mcp[cli]
+mcp[cli]<2
 
