@@ -1,0 +1,23 @@
+# English eval lines (one utterance per line, # starts a comment).
+# Representative of an AMD GPU / HPC talk: technical terms, gendered acronyms,
+# mishear-prone words, tool names, numbers, and casual filler.
+Hello everyone, thanks for joining today.
+This talk is about high performance computing and large language models.
+We run everything natively on AMD GPUs using ROCm and HIP.
+The kernel launch uses a workgroup of 256 threads, and each wavefront has 64 lanes.
+The throughput and latency depend on the HBM bandwidth and the compiler.
+The backend runs on the GPU while the frontend stays on the CPU.
+We compile the code with amdflang and amdclang for the MI300A.
+The APU shares memory between the CPU and the GPU on a single package.
+Occupancy improves when the workgroup fits in the local data share.
+We use vLLM to serve the model with bfloat16 precision.
+Let's get started with a quick demo of the live translation.
+Okay, so yeah, this is going to be awesome.
+The tensor cores accelerate FP16 and BF16 matrix multiplication.
+Memory bandwidth is the main bottleneck for this inference workload.
+Each compute unit schedules several wavefronts to hide latency.
+The pipeline overlaps data movement with computation for better utilization.
+We measured a two times speedup compared to the previous generation.
+The cache hierarchy keeps the hottest tensors close to the cores.
+PyTorch and JAX both run on top of ROCm on this platform.
+Thank you all, and I am looking forward to your questions.

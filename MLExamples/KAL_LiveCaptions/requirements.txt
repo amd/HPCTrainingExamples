@@ -1,0 +1,4 @@
+faster-whisper>=1.2
+sounddevice>=0.5
+requests>=2.32
+numpy>=2.0
