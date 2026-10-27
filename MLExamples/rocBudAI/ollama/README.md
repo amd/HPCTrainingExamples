@@ -40,13 +40,12 @@ Beyond that, we need the following before starting:
 - `git`, `curl` and `sha256sum`, plus `zstd` when the installer downloads ollama.
   Laguna's tool calling needs ollama 0.32.3 or newer.
 
-Once we hold the node, setup takes about ten minutes. On an MI300X node with a
-fast network, the install took 40 s including the ollama download, and pulling
-the model took one minute. The first agent turn then arrived within two and a
-half minutes of running `rocbudai`. Downloads scale with the site's bandwidth,
-and we have not timed CDNA2 GPUs, where the first turn is slower. Without a GPU
-node, the [`aim-engine`](../aim-engine/README.md) example runs the agent with no
-local GPU, but it needs a Kubernetes cluster that already runs AIM Engine.
+Once we hold the node, setup takes roughly ten minutes: a quick install (plus the
+ollama download when one is needed) and a one-time model pull of about 20 GB, both
+bound by your site's bandwidth. The first agent turn arrives shortly after
+`rocbudai` starts, and is slower on older (CDNA2) GPUs. Without a GPU node, the
+[`aim-engine`](../aim-engine/README.md) example runs the agent with no local GPU,
+but it needs a Kubernetes cluster that already runs AIM Engine.
 
 ## How it works
 
@@ -114,9 +113,9 @@ cd <your-project-dir>
 rocbudai
 ```
 
-Unlike the cluster module, loading `rocbudai/ollama` only sets the environment;
-`rocbudai` then starts the agent. Session resume and session files work the same
-as in every recipe (see
+Unlike the cluster-served variants (whose module launches the agent on load),
+loading `rocbudai/ollama` only sets the environment; `rocbudai` then starts the
+agent. Session resume and session files work the same as in every recipe (see
 [What every recipe shares](../README.md#what-every-recipe-shares)). When we are
 done, we stop the daemon with `pkill -u $USER -x ollama`, which also releases its
 GPU.

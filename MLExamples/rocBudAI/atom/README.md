@@ -34,25 +34,25 @@ model on a compute node, and the weights in a shared offline cache.
 We need the following before starting:
 
 - An AMD Instinct MI355X node (`gfx950`), eight GPUs, reachable through Slurm. We
-  must request the whole node's memory: `--exclusive` grants all GPUs but not RAM
-  on this cluster, and Kimi-K3 (about 1.5 TB of weights) is OOM-killed on load
+  must request the whole node's memory: `--exclusive` grants all GPUs but not
+  necessarily all RAM, and Kimi-K3 (about 1.5 TB of weights) is OOM-killed on load
   without `--mem=0`. The serve command refuses a low-memory allocation and prints
   the fix.
 - A login node that shares the compute nodes' filesystem, where the agent runs.
 - The Kimi-K3 weights in a shared, offline HuggingFace cache (about 1.5 TB). The
   cache is downloaded once and reused by everyone; see
   [Building the engine](#building-the-engine).
-- The ATOM engine and a matching AITER wheel staged on a shared path. On this
-  cluster both are already installed and world-readable, so most users skip the
-  build entirely.
+- The ATOM engine and a matching AITER wheel staged on a shared path. On a
+  prepared cluster both are already installed and world-readable, so most users
+  skip the build entirely.
 - `opencode` on `PATH`. The module ships a pinned copy; a site that stages its own
   points `ROCBUDAI_OPENCODE_BIN` at it.
 
-On this cluster the runtime is already installed and world-readable, so there is
-nothing to build: we load the module and start a server (see
+On a prepared cluster the runtime is already installed and world-readable, so there
+is nothing to build: we load the module and start a server (see
 [Quick start](#quick-start)). On a fresh cluster, staging the engine takes a few
 minutes plus the one-time weights download, which for Kimi-K3's 1.5 TB is bound by
-the site's bandwidth and storage.
+your site's bandwidth and storage.
 
 ## How it works
 
@@ -72,8 +72,8 @@ It installs into a prefix in our home directory by default and touches nothing
 system-wide. The patch keys everything on `ROCBUDAI_BACKEND=vllm` and leaves the
 ollama path untouched: loading the module points the stock launcher at an
 OpenAI-compatible endpoint, declares Kimi-K3's context window so opencode
-auto-compacts instead of overflowing, and launches the TUI. On this cluster the
-agent is already installed at a world-readable shared prefix, so most users skip
+auto-compacts instead of overflowing, and launches the TUI. On a prepared cluster
+the agent is already installed at a world-readable shared prefix, so most users skip
 the install and just `module load`.
 
 Because the agent runs on a login node with no local GPU, the no-GPU addendum
@@ -83,10 +83,15 @@ specific here: the model's own allocation is saturated by Kimi-K3, so dispatched
 GPU jobs land in a separate allocation on the `mi355x` partition
 (`ROCBUDAI_SUBMIT_PARTITION`).
 
-The server is `rocbudai-serve-kimi`, run inside an MI355X allocation. The cluster's
-`vllm/0.19.1` module cannot serve Kimi-K3's architecture, and the vLLM that can
-needs a newer ROCm than the site's `rocm/7.2.2`. ATOM targets exactly this ROCm
-and GPU and installs as pure Python, reusing the `vllm` module's torch 2.10. ATOM
+The server is `rocbudai-serve-kimi`, run inside an MI355X allocation. A stock vLLM
+module built for a site's base ROCm typically cannot serve Kimi-K3's architecture,
+and a vLLM new enough to do so needs a newer ROCm than many sites ship by default.
+ATOM instead installs as pure Python against a pinned ROCm and GPU, reusing a
+prebuilt `vllm` module's torch (2.10 by default). This recipe expects that engine
+pre-installed as a `vllm/<ver>` Lmod module — the pinned defaults target
+`vllm/0.19.1-pt2.10.0` on `rocm/7.2.2` — built from source with AMD's HPCTrainingDock
+[`vllm_setup.sh`](https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/vllm_setup.sh)
+(pinned via `--vllm-ref`/`--vllm-version`); this recipe only layers ATOM on top. ATOM
 needs a newer AITER than that module ships (the first run died on
 `ImportError: cannot import name 'topk_select' from 'aiter'`), so a pinned AITER
 release wheel (`v0.1.25`, built for `rocm7.2`) is layered ahead of the module on
@@ -125,7 +130,7 @@ served context window as the model's `limit` in `opencode.json` (see
 Run the installer; it clones and patches rocBudAI and writes the modulefile:
 
 ```bash
-./install-rocbudai-atom.sh                      # into $HOME/rocbudai-atom
+./install-rocbudai-atom.sh                      # into $HOME/opt/rocbudai/kimi
 ```
 
 If your site has already staged the agent at a shared prefix, skip the install and
@@ -136,12 +141,15 @@ Point the serve defaults and shared cache at your own engine build (see
 prefix for the whole site:
 
 ```bash
+# Variants share a parent dir: ROCBUDAI_PREFIX_ROOT sets the base (default
+# $HOME/opt/rocbudai) and the installer appends the variant leaf (here `kimi`).
+# Override the whole path with --prefix instead if you prefer.
+ROCBUDAI_PREFIX_ROOT=/shared/apps/rocbudai \
 ./install-rocbudai-atom.sh \
-  --prefix /shared/apps/rocbudai-atom \
   --hf-home /shared/apps/hf-cache \
-  --atom-pylib /shared/apps/rocbudai-atom/atom-pylib \
-  --aiter /shared/apps/rocbudai-atom/aiter-wheel
-module use /shared/apps/rocbudai-atom/modulefiles
+  --atom-pylib /shared/apps/rocbudai/kimi/atom-pylib \
+  --aiter /shared/apps/rocbudai/kimi/aiter-wheel
+module use /shared/apps/rocbudai/kimi/modulefiles
 ```
 
 The installer prints the `module use` / `module load` lines to finish with. All
@@ -151,7 +159,7 @@ flags are in [Options](#options); `--help` lists them.
 
 We start a server on a compute node, then load the module on the login node.
 Below, `$PREFIX` is the install root (the installer's default is
-`$HOME/rocbudai-atom`; a site may stage it on a shared path instead).
+`$HOME/opt/rocbudai/kimi`; a site may stage it on a shared path instead).
 
 Step 1: in an MI355X allocation, start the server. `--mem=0` is required, and we
 use the full path because the module is not loaded on the compute node:
@@ -178,7 +186,7 @@ profile. It finds the allocation's node on its own:
 ```bash
 module use "$PREFIX"/modulefiles
 cd <your-project-dir>
-module load rocbudai/atom
+module load rocbudai/kimi
 ```
 
 Loading the module launches the TUI exactly as every recipe does (see
@@ -189,7 +197,7 @@ respected, a loopback one is ignored so detection can run.
 
 ## Building the engine
 
-Most users on this cluster never build anything. The setup kit in this directory
+Most users on a prepared cluster never build anything. The setup kit in this directory
 is for reproducing the install or porting it to another MI355X system. Every
 setting lives in `config.sh` and is overridable; export a variable before sourcing
 to change it. By default the scripts reuse the shared prebuilt engine, so the
@@ -255,7 +263,8 @@ writes:
 
 | Flag | Meaning |
 | --- | --- |
-| `--prefix DIR` | install root (default `$HOME/rocbudai-atom`) |
+| `--prefix DIR` | install root (default `${ROCBUDAI_PREFIX_ROOT:-$HOME/opt/rocbudai}/kimi`) |
+| `ROCBUDAI_PREFIX_ROOT` (env) | shared parent dir for the default prefix (default `$HOME/opt/rocbudai`); the installer appends the `kimi` leaf |
 | `--gfx-arch ARCH` | profiling-target persona: `gfx90a`/`mi300x`/`gfx950`/`mi300a` (default `gfx950`) |
 | `--model NAME` | served model id (default `moonshotai/Kimi-K3`) |
 | `--context-limit N` | context window opencode advertises; keep equal to `RBK_MAXLEN` (default `131072`) |
@@ -344,7 +353,7 @@ all 8 GPUs saturated. Set `RBK_PREFIX_CACHING=0` to disable.
   runs on a compute node. Start it inside an MI355X allocation.
 - The TUI reports the server is not reachable: a stale loopback
   `ROCBUDAI_OPENAI_BASE` is blocking auto-detection, or no server is running.
-  `module unload rocbudai/atom && module load rocbudai/atom` re-detects the node.
+  `module unload rocbudai/kimi && module load rocbudai/kimi` re-detects the node.
 - `import aiter` fails on the login node: expected. The GPU libraries exist only
   on compute nodes; test inside an allocation.
 

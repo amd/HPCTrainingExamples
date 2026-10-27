@@ -8,7 +8,7 @@
 #   rocbudai-serve-kimi                 # foreground (Ctrl-C to stop)
 #   rocbudai-serve-kimi &               # background, then: module load rocbudai
 #
-# Engine: ATOM, layered on the cluster's vllm module (which provides torch 2.10
+# Engine: ATOM, layered on a prebuilt vllm Lmod module (which provides torch 2.10
 # + AITER kernels). Weights come from a shared, world-readable HF cache
 # (downloaded once). Validated recipe: gfx950 / MI355X, TP8, MXFP4 MoE via
 # online ptpc_fp8 quant (ATOM recipes/Kimi-K3.md + AMD Day-0 article).
@@ -74,8 +74,8 @@ if [[ -z "${SLURM_JOB_ID:-}" ]]; then
 fi
 
 # Kimi-K3 needs (nearly) all of the node's RAM to load. --exclusive alone does
-# NOT grant memory on this cluster (it stays capped, often 16G from a partition
-# default), so a ModelRunner gets OOM-killed (exitcode -9) on load. Read the real
+# NOT necessarily grant memory (on many clusters it stays capped, often 16G from a
+# partition default), so a ModelRunner gets OOM-killed (exitcode -9) on load. Read the real
 # allocation from scontrol and fail fast unless you used --mem=0 (whole node).
 if [[ -n "${SLURM_JOB_ID:-}" ]] && command -v scontrol >/dev/null 2>&1; then
     _tomb() { local n="${1%[KMGT]}" u="${1##*[0-9]}"

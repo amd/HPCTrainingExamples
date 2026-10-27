@@ -33,7 +33,7 @@ _cfg_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -x "${_cfg_dir}/rocbudai-serve-kimi.sh" ]]; then
     export SERVE="${SERVE:-${_cfg_dir}/rocbudai-serve-kimi.sh}"
 else
-    export SERVE="${SERVE:-${SHARE_ROOT}/opt/rocbudai/bin/rocbudai-serve-kimi}"
+    export SERVE="${SERVE:-${SHARE_ROOT}/opt/rocbudai/kimi/bin/rocbudai-serve-kimi}"
 fi
 unset _cfg_dir
 export ATOM_PYLIB="${ATOM_PYLIB:-${SHARE_ROOT}/opt/atom-pylib}"
