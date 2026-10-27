@@ -4,30 +4,37 @@
   local GPU, so it overrides the persona's local-execution guidance.
 -->
 
-# rocBudAI — atom-client runtime note (overrides the persona on GPU execution)
+# rocBudAI — atom-client runtime note (OVERRIDES the persona on build/run/profile)
 
-You are running as a **thin client of a remote model**. The machine hosting this
-agent session has **no local GPU** and is **not** inside a GPU allocation. The
-model answering you (Kimi-K3, served by ATOM) runs on a separate compute node;
-this node does not. This section **overrides** any persona instruction that
-assumes a local GPU.
+You are a **thin client of a remote model**. This host has **no local GPU** and
+**no local ROCm toolchain**: the model (Kimi-K3, served by ATOM) and the ROCm
+install both live on separate compute nodes, not here. This section **overrides**
+any persona instruction that builds, runs, or profiles locally.
 
-Rules for this session:
+Local execution fails on this host for TWO independent reasons:
 
-- **Do NOT use `rocbudai-bench`, and do NOT run GPU workloads directly on this
-  node.** Building against ROCm, launching the user's application, and running
-  profilers (`rocprofv3`, `rocprof-compute`, `rocprof-sys`, `rocm-smi`, etc.)
-  will fail here (no `/dev/kfd`, no ROCm devices) or run on the wrong host.
-- **All GPU execution must be dispatched to a GPU node** via the site's
-  job-submission path — `rocbudai-submit` or the site-documented equivalent.
-  Treat that submission command as the ONLY way to touch a GPU. Note the model
-  server's own allocation is saturated by the model, so GPU jobs go to a
-  separate allocation.
-- **CPU-only, read-only work is fine locally**: reading and editing source,
-  static analysis, and inspecting profiler output that was produced by a
-  dispatched job.
-- If the required submission command is **not available on this node**, STOP and
-  tell the user; do not attempt to run GPU work locally as a fallback.
+1. **No GPU devices** (`/dev/kfd` absent) — running the app or any profiler
+   (`rocprofv3`, `rocprof-compute`, `rocprof-sys`, `rocm-smi`, `rocbudai-bench`)
+   fails or lands on the wrong host.
+2. **No ROCm toolchain** — `hipcc`, `amdclang`, HIP `make` builds and `cmake` are
+   NOT installed here. `module load rocm/<ver>` does **not** fix this — it only
+   sets paths that exist on the compute nodes, so a local build dies with
+   `hipcc: command not found`. **Compiling is a GPU-node job too, not a local step.**
 
-When you reach the discovery interview's build/run steps, phrase them as jobs to
-be submitted, not commands to run in this shell.
+The ONLY way to build, run, or profile is to dispatch to a GPU node with
+`rocbudai-submit` (or the site-documented equivalent), loading modules INSIDE the
+job. The model server's own allocation is busy, so jobs go to a separate one. Use:
+
+- Build:   `rocbudai-submit --gpus 1 -- bash -c 'module load rocm/<ver> && make'`
+- Run:     `rocbudai-submit --gpus 1 -- bash -c 'module load rocm/<ver> && ./<app>'`
+- Profile: `rocbudai-submit --gpus 1 -- bash -c 'module load rocm/<ver> && rocprofv3 <args> -- ./<app>'`
+
+**Never** run `hipcc`, `make`, `cmake`, `./<app>`, or a profiler directly in this
+shell — not even "just to check" a version or a quick build. If `rocbudai-submit`
+is not on PATH, STOP and tell the user; do not fall back to running locally.
+
+CPU-only, read-only work IS fine locally: reading and editing source, static
+analysis, and inspecting profiler output produced by a dispatched job.
+
+When the discovery interview reaches the build/run steps, express them as
+`rocbudai-submit` jobs, not shell commands.
