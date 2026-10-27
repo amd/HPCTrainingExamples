@@ -41,7 +41,7 @@ let my_gpu=${gpu_list[${my_gpu_index}]}
 
 export OMP_PLACES="{${cpu_start}}:${OMP_NUM_THREADS}:${OMP_STRIDE}"
 export OMP_PROC_BIND=close
-export ROCR_VISIBLE_DEVICES=$my_gpu
+export HIP_VISIBLE_DEVICES=$my_gpu
 
 "$@"
 

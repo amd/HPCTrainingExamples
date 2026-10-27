@@ -1,0 +1,23 @@
+Gate vLLM's ROCm libtorch symbol promotion behind VLLM_NO_ROCM_SYMBOL_PROMOTION.
+
+vllm/env_override.py's _maybe_promote_torch_symbols_for_rocm() dlopens
+libtorch_cpu.so with RTLD_GLOBAL so rocprofiler-sdk can find rocprofiler_configure
+for GPU profiling. With the pytorch module's torch wheel, that promotes libtorch's
+bundled LLVM symbols into the global scope; Triton's libtriton.so then binds its own
+LLVM against torch's copy and segfaults during `import vllm` (torch._inductor pulls
+in triton). Serving does not profile inside the process, so this adds an opt-out
+env var (default off == upstream behaviour) that the serve command sets to skip the
+promotion. Applied by 2-build-engine.sh after vllm_setup.sh installs vLLM.
+
+--- a/vllm/env_override.py
++++ b/vllm/env_override.py
+@@ -111,6 +111,9 @@
+     Best effort. If the library cannot be loaded early we leave the process
+     exactly as it would have been, losing only GPU tracing.
+     """
++    if os.environ.get("VLLM_NO_ROCM_SYMBOL_PROMOTION", "0").strip().lower() in (
++        "1", "true", "yes", "on"):
++        return
+     if _get_torch_version_attr("hip") is None:
+         return
+     try:

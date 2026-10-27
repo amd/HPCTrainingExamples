@@ -5,8 +5,10 @@ README: `Pragma_Examples/OpenMP/Fortran/9_interop`
 This is a simple example to demonstrate Fortran to HIP interoperability.
 Load a current ROCm version (at least rocm/7.0) and build with
 ```
-module load rocm        # AAC6
-module load rocm-new  # AAC7
+module load rocm/10.1.0   # AAC6
+export FC=amdflang
+module load rocm-new/10.1.0  # AAC7
+export FC=amdflang
 make
 ```
 Make sure to choose the correct module for the system you are on and run it with

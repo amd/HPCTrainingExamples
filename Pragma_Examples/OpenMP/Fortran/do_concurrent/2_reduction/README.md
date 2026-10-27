@@ -23,7 +23,7 @@ This example requires at least Fortran Drop 23.2.0 (April 2026, beta release). T
 See [here](#beta-compiler-release-which-enables-reduce) for more details on how to install this version.
 
 ```bash
-module load rocm/therock-23.2.0
+module load rocm/10.1.0
 export FC=amdflang
 ```
 Either use `HSA_XNACK=1` or `HSA_XNACK=0`, you can also experiment with that.
@@ -41,7 +41,8 @@ The `Makefile` sets `ROCM_GPU` to the first `rocminfo` line that contains a `gfx
 ### Build and run the example
 First, build the serial starting point (any Fortran compiler would do, but use the latest pre-release Fortran Drop 23.2.0 (April 2026) as required for the next step):
 ```bash
-module load rocm/therock-23.2.0
+module load rocm/10.1.0
+export FC=amdflang
 cd 0_port_yourself
 make
 ./freduce
@@ -52,7 +53,7 @@ Expected result: `sum=   100000.0` (or similar formatting).
 Next, compare the code changes you made to the solution. Run the solution with:
 ```bash
 cd 1_do_concurrent_reduce
-module load rocm/therock-23.2.0  
+module load rocm/10.1.0  
 export FC=amdflang
 make   # or:  make ROCM_GPU=gfx942 if not on a compute node
 ./freduce # needs to run on a compute node!

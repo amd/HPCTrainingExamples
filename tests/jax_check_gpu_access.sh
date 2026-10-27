@@ -13,7 +13,10 @@ if [ $? -eq 1 ]; then
   echo "loading default rocm module"
   module load rocm
 fi
-module load jax
+module -t list 2>&1 | grep -q "^jax"
+if [ $? -eq 1 ]; then
+  module load jax
+fi
 
 python3 -c 'import jax; print(jax.devices())'
 

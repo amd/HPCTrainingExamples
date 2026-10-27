@@ -40,7 +40,7 @@ correct results: `2.0` after the GPU kernel and `4.0` after the CPU kernel.
 ### Build
 
 ```bash
-module load rocm-afar  # or module load rocm depending on the system. Tested with rocm 7.2 and Fortran therock drop 23.1.0
+module load rocm/10.1.0
 export FC=amdflang
 
 cd problem && make && cd ..
@@ -61,7 +61,7 @@ echo "=== Solution (with always) ==="
 
 Note: if you `export HSA_XNACK=1` instead you will see correct results with any version. This shows how USM makes your life easier!
 
-### Example Results (gfx942, rocm-afar/22.3.0)
+### Example Results (gfx942, ROCm 10.1)
 
 **Problem (without `always` modifier) -- WRONG results:**
 ```

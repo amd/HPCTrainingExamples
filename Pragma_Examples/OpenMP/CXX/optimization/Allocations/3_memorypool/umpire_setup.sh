@@ -31,16 +31,15 @@ if [[ -n "$CRAYPE_VERSION" || -f /etc/cray-release ]]; then
       export FC=`which ftn`
    fi
 else
-   module -t list 2>&1 | grep -q "^rocm"
+   module -t list 2>&1 | grep -q "^rocm/10.1"
    if [ $? -eq 1 ]; then
-     echo "rocm module is not loaded"
-     echo "loading default rocm module"
-     module load rocm
+     echo "rocm/10.1 module is not loaded"
+     echo "loading rocm/10.1.0 module"
+     module load rocm/10.1.0
    fi
-   module load amdflang-new >& /dev/null
-   if [ "$?" == "1" ]; then
-      module load amdclang
-   fi
+   export CXX=${CXX:-amdclang++}
+   export CC=${CC:-amdclang}
+   export FC=${FC:-amdflang}
 fi
 
 AMDGPU_GFXMODEL=`rocminfo | grep gfx | sed -e 's/Name://' | head -1 |sed 's/ //g'`

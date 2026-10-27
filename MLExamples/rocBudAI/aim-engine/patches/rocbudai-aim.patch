@@ -1,0 +1,497 @@
+diff --git a/bin/rocbudai b/bin/rocbudai
+index c44e07b..1dedb7b 100755
+--- a/bin/rocbudai
++++ b/bin/rocbudai
+@@ -32,6 +32,11 @@ case "${1:-}" in
+     -h|--help) usage; exit 0 ;;
+ esac
+ 
++# AIM backend: the model is served remotely, so rocBudAI runs on the login
++# node (no SLURM_JOB_ID). Skip the compute-node gate and forward directly so
++# `rocbudai --continue` / `rocbudai --new` work the same as on the stock path.
++[[ "${ROCBUDAI_BACKEND:-ollama}" == "aim" ]] && exec rocbudai-tui "$@"
++
+ if [[ -z "${SLURM_JOB_ID:-}" ]]; then
+     cat >&2 <<'EOF'
+ [rocbudai] error: rocbudai must run on a Slurm-allocated compute node
+diff --git a/bin/rocbudai-airgap-check b/bin/rocbudai-airgap-check
+index 78b4232..248dd73 100755
+--- a/bin/rocbudai-airgap-check
++++ b/bin/rocbudai-airgap-check
+@@ -98,6 +98,116 @@ echo "rocbudai-airgap-check — verify the cluster airgap baseline is in force"
+ printf "host: %s   user: %s   date: %s\n" "$(hostname)" "${USER:-?}" "$(date -Is)"
+ echo "──────────────────────────────────────────────────────────"
+ 
++# --- AIM backend airgap verification (HPCTrainingExamples overlay) -----------
++# When the model is served by AIM (ROCBUDAI_BACKEND=aim, or an endpoint is set),
++# the invariants differ from the ollama path: the model runs in-cluster, so we
++# verify the endpoint is in-boundary, opencode is locked down, phone-home is
++# suppressed, host egress (advisory), and (deep) the predictor is not publicly
++# exposed. We run those and skip the ollama/Slurm sections below.
++if [[ "${ROCBUDAI_BACKEND:-ollama}" == "aim" || -n "${ROCBUDAI_AIM_ENDPOINT:-}" ]]; then
++    ep="${ROCBUDAI_AIM_ENDPOINT:-http://localhost:${ROCBUDAI_AIM_LOCAL_PORT:-8088}/v1}"
++    ep="${ep%/}"
++
++    echo "1. Trust assertion"
++    if [[ "${ROCBUDAI_AIM_TRUSTED:-0}" == "1" ]]; then
++        ok "site asserts a trusted, in-boundary cluster (ROCBUDAI_AIM_TRUSTED=1)"
++    else
++        fail "ROCBUDAI_AIM_TRUSTED is not 1 — the launcher will refuse to start."
++        hint "re-run install-rocbudai-aim.sh --trust only if the cluster is genuinely trusted + internet-severed."
++    fi
++    echo
++
++    echo "2. Endpoint is in-boundary"
++    host="$(printf '%s' "$ep" | sed -E 's#^[a-z]+://##; s#[:/].*$##')"
++    if ROCBUDAI_AIM_HOST="$host" python3 - <<'PY'
++import ipaddress, os, socket, sys
++host = os.environ["ROCBUDAI_AIM_HOST"]
++if host == "localhost":
++    sys.exit(0)
++try:
++    addrs = {i[4][0] for i in socket.getaddrinfo(host, None)}
++except Exception:
++    sys.exit(1)
++for a in addrs:
++    ip = ipaddress.ip_address(a)
++    if not (ip.is_loopback or ip.is_private):
++        sys.exit(1)
++sys.exit(0 if addrs else 1)
++PY
++    then
++        ok "endpoint host '${host}' is loopback / RFC1918 (in-boundary)"
++    else
++        fail "endpoint host '${host}' is not in-boundary — code/prompts could leave the cluster."
++        hint "point at a ClusterIP via port-forward, or an internal (RFC1918) address."
++    fi
++    echo
++
++    echo "3. Model endpoint reachable"
++    if curl -fsS --max-time 5 "${ep}/models" >/dev/null 2>&1; then
++        model="$(curl -fsS --max-time 5 "${ep}/models" 2>/dev/null | tr ',' '\n' | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
++        ok "AIM endpoint reachable at ${ep} (model ${model:-?})"
++    else
++        warn "AIM endpoint ${ep} not reachable now (start the port-forward / module load first)."
++    fi
++    echo
++
++    echo "4. opencode lockdown"
++    for v in AUTOUPDATE LSP_DOWNLOAD MODELS_FETCH EXTERNAL_SKILLS SHARE; do
++        eval "val=\${OPENCODE_DISABLE_${v}:-}"
++        if [[ "$val" == "1" ]]; then
++            ok "OPENCODE_DISABLE_${v}=1"
++        else
++            warn "OPENCODE_DISABLE_${v} not set (load the rocbudai module to set it)."
++        fi
++    done
++    if [[ -f opencode.json ]] && grep -q '"share"[[:space:]]*:[[:space:]]*"disabled"' opencode.json 2>/dev/null; then
++        ok "project opencode.json has share: disabled"
++    else
++        hint "run from a session dir (with opencode.json) to verify share:disabled."
++    fi
++    echo
++
++    echo "5. Host egress (advisory)"
++    if curl -fsS --max-time 3 -o /dev/null --head https://huggingface.co/ 2>/dev/null; then
++        warn "this host can reach the public internet; the airgap relies on the cluster being severed, not host-level blocking."
++    else
++        ok "this host cannot reach https://huggingface.co/ (egress restricted)."
++    fi
++    echo
++
++    if [[ $DEEP -eq 1 ]]; then
++        echo "6. Predictor not publicly exposed (deep, needs kubectl)"
++        if command -v kubectl >/dev/null 2>&1 && [[ -n "${ROCBUDAI_AIM_NAMESPACE:-}" ]]; then
++            svc_types="$(kubectl get svc -n "${ROCBUDAI_AIM_NAMESPACE}" -l component=predictor -o jsonpath='{.items[*].spec.type}' --request-timeout=10s 2>/dev/null || true)"
++            if [[ -z "$svc_types" ]]; then
++                warn "no predictor Service found in namespace '${ROCBUDAI_AIM_NAMESPACE}'."
++            elif [[ "$svc_types" == *LoadBalancer* || "$svc_types" == *NodePort* ]]; then
++                fail "predictor Service type is '${svc_types}' — publicly reachable types break the in-boundary assumption."
++            else
++                ok "predictor Service type is '${svc_types}' (ClusterIP — in-cluster only)."
++            fi
++        else
++            hint "set ROCBUDAI_AIM_NAMESPACE and authenticate kubectl for the deep check."
++        fi
++        echo
++    else
++        hint "(re-run with --deep to check the predictor Service is ClusterIP via kubectl)"
++        echo
++    fi
++
++    echo "──────────────────────────────────────────────────────────"
++    echo "Summary:  ${C_OK}${PASS} pass${C_RST}   ${C_FAIL}${FAIL} fail${C_RST}   ${C_WARN}${WARN} warn${C_RST}"
++    echo
++    if [[ $FAIL -gt 0 ]]; then
++        echo "${C_FAIL}One or more AIM airgap checks FAILED — the in-boundary promise is degraded.${C_RST}"
++        exit 1
++    fi
++    echo "The AIM airgap baseline appears intact: the model is served from an in-boundary"
++    echo "endpoint, opencode phone-home is suppressed, and sharing is disabled. Code,"
++    echo "prompts, and model responses stay within the trusted cluster boundary."
++    exit 0
++fi
++
+ # ---------------------------------------------------------------------------
+ # 1. Compute node + ollama allocation
+ # ---------------------------------------------------------------------------
+diff --git a/bin/rocbudai-tui b/bin/rocbudai-tui
+index dd89a8b..92e5bef 100755
+--- a/bin/rocbudai-tui
++++ b/bin/rocbudai-tui
+@@ -111,6 +111,205 @@ err() { echo "[rocbudai-tui] error: $*" >&2; }
+ warn() { echo "[rocbudai-tui] warning: $*" >&2; }
+ info() { echo "[rocbudai-tui] $*"; }
+ 
++# --- AIM backend (HPCTrainingExamples overlay) -------------------------------
++# With ROCBUDAI_BACKEND=aim we serve the model from an AIM Engine endpoint
++# (OpenAI-compatible vLLM on a trusted, in-boundary Kubernetes cluster) instead
++# of a local ollama daemon. The session picker, naming, banner, resume, and
++# rocbudai-submit paths are reused unchanged; only model resolution, the
++# opencode provider config, and the launch call differ.
++ROCBUDAI_BACKEND="${ROCBUDAI_BACKEND:-ollama}"
++ROCBUDAI_AIM_ENDPOINT="${ROCBUDAI_AIM_ENDPOINT:-}"
++ROCBUDAI_AIM_NAMESPACE="${ROCBUDAI_AIM_NAMESPACE:-}"
++ROCBUDAI_AIM_SERVICE="${ROCBUDAI_AIM_SERVICE:-}"
++ROCBUDAI_AIM_LOCAL_PORT="${ROCBUDAI_AIM_LOCAL_PORT:-8088}"
++ROCBUDAI_AIM_REMOTE_PORT="${ROCBUDAI_AIM_REMOTE_PORT:-80}"
++ROCBUDAI_AIM_TRUSTED="${ROCBUDAI_AIM_TRUSTED:-0}"
++_ROCBUDAI_AIM_MIN_CONTEXT=65536
++_ROCBUDAI_AIM_PF_PID=""
++
++aim_active()  { [[ "${ROCBUDAI_BACKEND}" == "aim" ]]; }
++aim_cleanup() { [[ -n "${_ROCBUDAI_AIM_PF_PID}" ]] && { kill "${_ROCBUDAI_AIM_PF_PID}" >/dev/null 2>&1; pkill -f "port-forward -n ${ROCBUDAI_AIM_NAMESPACE} svc/[^ ]* ${ROCBUDAI_AIM_LOCAL_PORT}:${ROCBUDAI_AIM_REMOTE_PORT}" >/dev/null 2>&1; } || true; }
++
++# Return 0 if HOST is loopback or an RFC1918 private address (in-boundary).
++aim_host_in_boundary() {
++    ROCBUDAI_AIM_HOST="$1" python3 - <<'PY'
++import ipaddress, os, socket, sys
++host = os.environ["ROCBUDAI_AIM_HOST"]
++if host == "localhost":
++    sys.exit(0)
++try:
++    addrs = {i[4][0] for i in socket.getaddrinfo(host, None)}
++except Exception:
++    sys.exit(1)
++for a in addrs:
++    ip = ipaddress.ip_address(a)
++    if not (ip.is_loopback or ip.is_private):
++        sys.exit(1)
++sys.exit(0 if addrs else 1)
++PY
++}
++
++# Refuse unless the site has asserted this is a trusted, in-boundary cluster.
++aim_trust_gate() {
++    if [[ "${ROCBUDAI_AIM_TRUSTED}" != "1" ]]; then
++        err "AIM backend refused: this cluster has not been asserted trusted."
++        err "rocBudAI over AIM only runs against a trusted, in-boundary cluster"
++        err "(your own AMD GPUs, internet-severed). Re-run install-rocbudai-aim.sh"
++        err "with --trust only if that genuinely holds."
++        exit 1
++    fi
++}
++
++# Resolve the AIM endpoint (direct URL or kubectl port-forward), verify it is
++# in-boundary, then read the served model id + context window from /v1/models.
++aim_preflight() {
++    local endpoint="${ROCBUDAI_AIM_ENDPOINT%/}"
++    if [[ -z "${endpoint}" ]]; then
++        command -v kubectl >/dev/null 2>&1 || { err "kubectl not found and no ROCBUDAI_AIM_ENDPOINT set."; exit 1; }
++        [[ -n "${ROCBUDAI_AIM_NAMESPACE}" ]] || { err "set ROCBUDAI_AIM_ENDPOINT or ROCBUDAI_AIM_NAMESPACE."; exit 1; }
++        local svc="${ROCBUDAI_AIM_SERVICE}"
++        if [[ -z "${svc}" ]]; then
++            svc="$(kubectl get svc -n "${ROCBUDAI_AIM_NAMESPACE}" -l component=predictor -o name --request-timeout=10s 2>/dev/null | head -n1 | cut -d/ -f2 || true)"
++            [[ -n "${svc}" ]] || svc="$(kubectl get svc -n "${ROCBUDAI_AIM_NAMESPACE}" -o name --request-timeout=10s 2>/dev/null | grep -m1 predictor | cut -d/ -f2 || true)"
++        fi
++        if [[ -z "${svc}" ]]; then
++            err "no predictor Service found in namespace '${ROCBUDAI_AIM_NAMESPACE}'."
++            err "is kubectl authenticated? try:  kubectl get svc -n ${ROCBUDAI_AIM_NAMESPACE}"
++            exit 1
++        fi
++        info "AIM: port-forwarding svc/${svc} ${ROCBUDAI_AIM_LOCAL_PORT}->${ROCBUDAI_AIM_REMOTE_PORT} (ns ${ROCBUDAI_AIM_NAMESPACE})"
++        endpoint="http://localhost:${ROCBUDAI_AIM_LOCAL_PORT}/v1"
++        ( while :; do kubectl port-forward -n "${ROCBUDAI_AIM_NAMESPACE}" "svc/${svc}" "${ROCBUDAI_AIM_LOCAL_PORT}:${ROCBUDAI_AIM_REMOTE_PORT}" >/dev/null 2>&1 || true; sleep 1; done ) &
++        _ROCBUDAI_AIM_PF_PID=$!
++        trap aim_cleanup EXIT
++        local i ok=""
++        for i in $(seq 1 12); do
++            sleep 1
++            if curl -fsS --max-time 3 "${endpoint}/models" >/dev/null 2>&1; then ok=1; break; fi
++        done
++        [[ -n "${ok}" ]] || { err "AIM endpoint not reachable via port-forward (check kubectl auth / namespace / service)."; exit 1; }
++    fi
++
++    local host
++    host="$(printf '%s' "${endpoint}" | sed -E 's#^[a-z]+://##; s#[:/].*$##')"
++    if ! aim_host_in_boundary "${host}"; then
++        err "AIM endpoint '${endpoint}' does not resolve to an in-boundary address"
++        err "(loopback or RFC1918). Refusing: code and prompts must stay in your cluster."
++        exit 1
++    fi
++
++    local models_json model_id ctx
++    models_json="$(curl -fsS --max-time 10 "${endpoint}/models" 2>/dev/null || true)"
++    [[ -n "${models_json}" ]] || { err "empty response from ${endpoint}/models."; exit 1; }
++    model_id="$(printf '%s' "${models_json}" | tr ',' '\n' | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1 || true)"
++    [[ -n "${model_id}" ]] || { err "could not parse a model id from ${endpoint}/models."; exit 1; }
++    ctx="$(printf '%s' "${models_json}" | tr ',' '\n' | sed -n 's/.*"max_model_len"[[:space:]]*:[[:space:]]*\([0-9]*\).*/\1/p' | head -n1 || true)"
++
++    ROCBUDAI_AIM_RESOLVED_ENDPOINT="${endpoint}"
++    ROCBUDAI_AIM_CONTEXT="${ctx}"
++    ROCBUDAI_MODEL="${model_id}"
++    ROCBUDAI_ALLOWED_MODELS="${model_id}"
++    info "AIM: model '${model_id}' via ${endpoint}"
++    if [[ -n "${ctx}" && "${ctx}" -lt "${_ROCBUDAI_AIM_MIN_CONTEXT}" ]]; then
++        warn "AIM: served context ${ctx} < ${_ROCBUDAI_AIM_MIN_CONTEXT}; the full persona (~28k tokens) may not fit."
++    fi
++}
++
++# A usable local GPU means the agent can run locally; without one, opencode's
++# instructions get the no-GPU addendum so GPU work is dispatched via Slurm.
++aim_has_local_gpu() {
++    [[ -e /dev/kfd ]] && return 0
++    command -v rocminfo >/dev/null 2>&1 && rocminfo 2>/dev/null | grep -q 'gfx'
++}
++
++aim_persona_file_for() {
++    case "$1" in
++        gfx90a)        echo "AGENTS-gfx90a.md" ;;
++        gfx942|mi300x) echo "AGENTS-gfx942-mi300x.md" ;;
++        gfx950)        echo "AGENTS-gfx950.md" ;;
++        mi300a)        echo "AGENTS-default.md" ;;
++        *)             echo "" ;;
++    esac
++}
++
++# The agent host has no local GPU to autodetect from, so the profiling target
++# is asked, not detected. An existing session AGENTS.md is reused (resume), and
++# ROCBUDAI_GFX_ARCH short-circuits the prompt for non-interactive use.
++aim_pick_arch() {
++    if [[ -f AGENTS.md ]]; then
++        ROCBUDAI_AGENTS_TEMPLATE="$(pwd)/AGENTS.md"
++        return
++    fi
++    local arch="${ROCBUDAI_GFX_ARCH:-}"
++    if [[ -z "${arch}" ]]; then
++        echo "This host has no local GPU, so the profiling target cannot be detected." >&2
++        echo "Which AMD GPU are you profiling on the compute nodes?" >&2
++        echo "  1) MI250X / MI210    (gfx90a)" >&2
++        echo "  2) MI300X            (mi300x)" >&2
++        echo "  3) MI355X / MI350X   (gfx950)" >&2
++        echo "  4) MI300A APU        (mi300a)" >&2
++        local choice=""
++        while :; do
++            printf "select [1-4]: " >&2
++            read -r choice || choice=""
++            case "${choice}" in
++                1) arch=gfx90a; break ;;
++                2) arch=mi300x; break ;;
++                3) arch=gfx950; break ;;
++                4) arch=mi300a; break ;;
++                *) echo "  please enter 1, 2, 3, or 4." >&2 ;;
++            esac
++        done
++    fi
++    local persona; persona="$(aim_persona_file_for "${arch}")"
++    [[ -n "${persona}" ]] || { warn "unknown ROCBUDAI_GFX_ARCH='${arch}'; using the gfx950 persona."; persona="AGENTS-gfx950.md"; }
++    ROCBUDAI_AGENTS_TEMPLATE="${ROCBUDAI_SHARE}/${persona}"
++    info "AIM: ${arch} profiling target (${persona})"
++}
++
++# Write opencode.json for the AIM provider from the stock template (so the
++# permission block and share:disabled are inherited), injecting the provider,
++# the aim/<id> model, and absolute instruction paths.
++aim_write_opencode_json() {
++    ROCBUDAI_T="$1" ROCBUDAI_O="$2" ROCBUDAI_EP="$3" ROCBUDAI_M="$4" \
++    ROCBUDAI_AG="$5" ROCBUDAI_ADD="$6" ROCBUDAI_CTX="$7" python3 - <<'PY'
++import json, os
++tpl = json.load(open(os.environ["ROCBUDAI_T"]))
++model = os.environ["ROCBUDAI_M"]
++tpl["model"] = f"aim/{model}"
++tpl["small_model"] = f"aim/{model}"
++# The AIM model is served by a custom provider opencode has no models.dev
++# metadata for (unlike the stock ollama model, whose limits opencode already
++# knows). Declare the served window (max_model_len) so opencode's auto-compaction
++# and output-token cap engage; without a limit it can send a negative max_tokens
++# once the context fills and vLLM rejects with "max_tokens must be at least 1".
++entry = {"name": model}
++ctx = os.environ.get("ROCBUDAI_CTX", "")
++if ctx.isdigit() and int(ctx) > 0:
++    n = int(ctx)
++    entry["limit"] = {"context": n, "output": min(32768, max(4096, n // 4))}
++tpl["provider"] = {
++    "aim": {
++        "npm": "@ai-sdk/openai-compatible",
++        "name": "AIM Engine",
++        "options": {"baseURL": os.environ["ROCBUDAI_EP"]},
++        "models": {model: entry},
++    }
++}
++instr = [os.environ["ROCBUDAI_AG"]]
++add = os.environ.get("ROCBUDAI_ADD", "")
++if add:
++    instr.append(add)
++tpl["instructions"] = instr
++json.dump(tpl, open(os.environ["ROCBUDAI_O"], "w"), indent=2)
++PY
++}
++
++if aim_active; then
++    aim_trust_gate
++    aim_preflight
++fi
++
+ # 1. Sanity checks ------------------------------------------------------------
+ #
+ # These are fast preflight checks that bail before launching the TUI if the
+@@ -123,7 +322,7 @@ info() { echo "[rocbudai-tui] $*"; }
+ # them in because they have a running allocation here), SLURM_JOB_ID is NOT
+ # propagated into the shell. Recover the jobid via squeue: their unique
+ # RUNNING job on this node.
+-if [[ -z "${ROCBUDAI_CONTAINER:-}" && -z "${SLURM_JOB_ID:-}" ]] && command -v squeue >/dev/null 2>&1; then
++if [[ -z "${ROCBUDAI_CONTAINER:-}" && "${ROCBUDAI_BACKEND}" != "aim" && -z "${SLURM_JOB_ID:-}" ]] && command -v squeue >/dev/null 2>&1; then
+     _adopted=$(squeue -h -w "$(hostname -s)" -u "$USER" -t R -o '%i' 2>/dev/null)
+     if [[ -n "$_adopted" && $(printf '%s\n' "$_adopted" | wc -l) -eq 1 ]]; then
+         export SLURM_JOB_ID="$_adopted"
+@@ -138,7 +337,7 @@ if [[ -n "${ROCBUDAI_CONTAINER:-}" ]]; then
+     info "container quick-test mode — skipping Slurm/partition gates (testing only)."
+ fi
+ 
+-if [[ -z "${ROCBUDAI_CONTAINER:-}" && -z "${SLURM_JOB_ID:-}" ]]; then
++if [[ -z "${ROCBUDAI_CONTAINER:-}" && "${ROCBUDAI_BACKEND}" != "aim" && -z "${SLURM_JOB_ID:-}" ]]; then
+     err "no SLURM_JOB_ID — rocbudai-tui must run inside a Slurm allocation."
+     err "from a login node, allocate one first (-p selects the GPU"
+     err "partition; --comment=ollama starts the ollama daemon for you):"
+@@ -155,7 +354,7 @@ fi
+ # but `scontrol show job` is the authoritative source for both, so use
+ # it as primary and fall back to env vars only if scontrol is missing.
+ _scontrol_out=""
+-if [[ -z "${ROCBUDAI_CONTAINER:-}" ]] && command -v scontrol >/dev/null 2>&1; then
++if [[ -z "${ROCBUDAI_CONTAINER:-}" && "${ROCBUDAI_BACKEND}" != "aim" ]] && command -v scontrol >/dev/null 2>&1; then
+     _scontrol_out="$(scontrol show job "${SLURM_JOB_ID:-}" -o 2>/dev/null || true)"
+ fi
+ _job_comment=""
+@@ -181,7 +380,7 @@ _job_partition="${_job_partition:-${SLURM_JOB_PARTITION:-}}"
+ # lets the launcher start, only for the runner to crash mid-load with
+ # "model failed to load, resource limitations or internal error". Catch
+ # it here with an actionable message instead.
+-if [[ -z "${ROCBUDAI_CONTAINER:-}" && "${_job_comment}" != *ollama* ]]; then
++if [[ -z "${ROCBUDAI_CONTAINER:-}" && "${ROCBUDAI_BACKEND}" != "aim" && "${_job_comment}" != *ollama* ]]; then
+     err "this allocation's --comment is '${_job_comment:-(none)}', which does not contain 'ollama'."
+     err "rocBudAI requires --comment=ollama at salloc time so the Slurm prolog"
+     err "starts (and the epilog stops) the ollama daemon for THIS job."
+@@ -212,7 +411,7 @@ for _p in ${_spx_partitions//,/ }; do
+         break
+     fi
+ done
+-if [[ -z "${ROCBUDAI_CONTAINER:-}" && -n "$_spx_partitions" && "$_spx_ok" -eq 0 ]]; then
++if [[ -z "${ROCBUDAI_CONTAINER:-}" && "${ROCBUDAI_BACKEND}" != "aim" && -n "$_spx_partitions" && "$_spx_ok" -eq 0 ]]; then
+     err "this allocation's partition is '${_job_partition:-(none)}', which is not in the rocBudAI allow-list."
+     err "the default model needs enough GPUs in full (SPX) mode; partitions that"
+     err "expose sliced GPUs (e.g. MI300A CPX/TPX) cause the runner to abort with"
+@@ -265,8 +464,9 @@ if command -v rocm-smi >/dev/null 2>&1; then
+     fi
+ fi
+ 
+-# Ollama reachability (3s timeout, no hang).
+-if ! curl -fsS --max-time 3 "${ROCBUDAI_OLLAMA_HOST}/api/tags" >/dev/null 2>&1; then
++# Ollama reachability (3s timeout, no hang). Skipped for the AIM backend, which
++# resolved and probed its own endpoint in aim_preflight above.
++if [[ "${ROCBUDAI_BACKEND}" != "aim" ]] && ! curl -fsS --max-time 3 "${ROCBUDAI_OLLAMA_HOST}/api/tags" >/dev/null 2>&1; then
+     err "ollama daemon not reachable at ${ROCBUDAI_OLLAMA_HOST}."
+     err "did you allocate with --comment=ollama?  is the daemon up on this node?"
+     err "try:  systemctl is-active ollama ollama-proxy"
+@@ -274,8 +474,8 @@ if ! curl -fsS --max-time 3 "${ROCBUDAI_OLLAMA_HOST}/api/tags" >/dev/null 2>&1;
+     exit 1
+ fi
+ 
+-# Confirm the pinned model is actually loaded/available locally.
+-if ! curl -fsS --max-time 3 "${ROCBUDAI_OLLAMA_HOST}/api/tags" \
++# Confirm the pinned model is actually loaded/available locally (ollama only).
++if [[ "${ROCBUDAI_BACKEND}" != "aim" ]] && ! curl -fsS --max-time 3 "${ROCBUDAI_OLLAMA_HOST}/api/tags" \
+         | grep -q "\"${ROCBUDAI_MODEL}\""; then
+     warn "model '${ROCBUDAI_MODEL}' is not in the ollama registry on this node."
+     warn "the TUI will start, but the first prompt may fail until an admin"
+@@ -593,6 +793,17 @@ if [[ -f opencode.json \
+ fi
+ 
+ if [[ ! -f opencode.json || $ROCBUDAI_FORCE_REWRITE -eq 1 ]]; then
++    if aim_active; then
++    _aim_addendum=""
++    if ! aim_has_local_gpu && [[ -f "${ROCBUDAI_SHARE}/no-gpu-addendum.md" ]]; then
++        _aim_addendum="${ROCBUDAI_SHARE}/no-gpu-addendum.md"
++    fi
++    aim_write_opencode_json "${ROCBUDAI_OPENCODE_TEMPLATE}" opencode.json \
++        "${ROCBUDAI_AIM_RESOLVED_ENDPOINT}" "${ROCBUDAI_MODEL}" "${cwd}/AGENTS.md" \
++        "${_aim_addendum}" "${ROCBUDAI_AIM_CONTEXT}"
++    chmod 0644 opencode.json
++    info "wrote opencode.json (AIM provider, model=${ROCBUDAI_MODEL})"
++    else
+     # Two substitutions into the template:
+     #
+     # 1. Active model into the "model" field so the JSON matches the --model
+@@ -616,6 +827,7 @@ if [[ ! -f opencode.json || $ROCBUDAI_FORCE_REWRITE -eq 1 ]]; then
+         "${ROCBUDAI_OPENCODE_TEMPLATE}" > opencode.json
+     chmod 0644 opencode.json
+     info "wrote opencode.json (${ROCBUDAI_PERMISSION_MODE} mode, model=${ROCBUDAI_MODEL})"
++    fi
+ fi
+ 
+ # AGENTS.md: seed from the arch-specific persona (resolved here, now that the
+@@ -633,6 +845,8 @@ elif [[ -n "${ROCBUDAI_CONTAINER:-}" && -f "${ROCBUDAI_CONTAINER_DEMO_PERSONA}"
+     # the demo is a tiny saxpy walkthrough and a small model follows a short
+     # focused prompt far more reliably than the full ~2100-line persona.
+     ROCBUDAI_AGENTS_TEMPLATE="${ROCBUDAI_CONTAINER_DEMO_PERSONA}"
++elif aim_active; then
++    aim_pick_arch
+ else
+     [[ -n "${ROCBUDAI_AGENTS_TEMPLATE}" ]] && \
+         warn "ROCBUDAI_AGENTS_TEMPLATE='${ROCBUDAI_AGENTS_TEMPLATE}' not found; autodetecting persona by GPU arch."
+@@ -1009,7 +1223,7 @@ chmod 0644 .rocbudai-banner.md
+ # instructions, share=disabled) is still read by opencode regardless of
+ # launch path — verified in iter_02.
+ 
+-if ! command -v ollama >/dev/null 2>&1; then
++if [[ "${ROCBUDAI_BACKEND}" != "aim" ]] && ! command -v ollama >/dev/null 2>&1; then
+     err "ollama not found on PATH on this node."
+     exit 1
+ fi
+@@ -1087,7 +1301,7 @@ elif [[ -n "$ROCBUDAI_CONTINUE" ]]; then
+     info "resuming last session"
+     OPENCODE_EXTRA_ARGS=(--continue)
+ else
+-    info "launching via: ollama launch opencode --model ${ROCBUDAI_MODEL}"
++    info "launching opencode (${ROCBUDAI_BACKEND} backend) with model ${ROCBUDAI_MODEL}"
+     # Seed prompt = first user turn the model sees. opencode's `--prompt`
+     # is rendered as a visible user message in the chat history (there is
+     # no hidden / system-message injection in the TUI). We use the visible
+@@ -1155,7 +1369,14 @@ if [[ -z "${ROCBUDAI_CONTAINER:-}" && "${ROCBUDAI_NO_FENCING:-0}" != "1" ]]; the
+     fi
+ fi
+ 
+-ollama launch opencode --model "${ROCBUDAI_MODEL}" -y -- "${OPENCODE_EXTRA_ARGS[@]}" || true
++if aim_active; then
++    # Force the model on the CLI so it beats any global opencode config
++    # (~/.opencode/*, ~/.config/opencode/*) that would otherwise override the
++    # project opencode.json and send prompts to opencode's Zen cloud instead.
++    "${ROCBUDAI_OPENCODE_BIN}" --model "aim/${ROCBUDAI_MODEL}" "${OPENCODE_EXTRA_ARGS[@]}" || true
++else
++    ollama launch opencode --model "${ROCBUDAI_MODEL}" -y -- "${OPENCODE_EXTRA_ARGS[@]}" || true
++fi
+ 
+ # Watcher is parent-death-guarded but stop it eagerly on clean exit too,
+ # so users don't see a stray python process in ps after /exit.
+diff --git a/libexec/rocbudai-load-hook.sh b/libexec/rocbudai-load-hook.sh
+index 279f2f6..cb95c95 100755
+--- a/libexec/rocbudai-load-hook.sh
++++ b/libexec/rocbudai-load-hook.sh
+@@ -32,7 +32,7 @@ if [[ -z "${SLURM_JOB_ID:-}" ]] && command -v squeue >/dev/null 2>&1; then
+     unset _adopted
+ fi
+ 
+-if [[ -z "${SLURM_JOB_ID:-}" ]]; then
++if [[ "${ROCBUDAI_BACKEND:-ollama}" != "aim" && -z "${SLURM_JOB_ID:-}" ]]; then
+     echo "[rocBudAI] this module is for compute nodes; you are on a login node." >&2
+     echo "[rocBudAI] allocate a compute node first (-p selects the SPX" >&2
+     echo "[rocBudAI] partition; --comment=ollama starts the ollama daemon):" >&2

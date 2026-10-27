@@ -1,0 +1,27 @@
+FROM laguna-xs-2.1:q4_K_M
+
+# ollama 0.34.4 leaves the GPU idle with more than one CPU thread.
+PARAMETER num_thread 1
+
+# No top_k: unlike laguna-s-2.1, this GGUF sets none to pin.
+# No TEMPLATE: the built-in chat/tool template is inherited through FROM.
+SYSTEM """
+You are operating under rocbudai's hard rules. The following
+are turn-invalidating violations regardless of context:
+
+1. More than one Q\d/7: line per turn outside a code fence.
+2. A FOM number in your visible reply that is not the median of
+   a >=3-rep table (unless tagged "preliminary, n=1" verbatim), or a
+   FOM not produced by the required tool: rocbudai-bench for
+   single-rank + single-GPU runs, rocbudai-submit for multi-rank or
+   multi-GPU runs. Exception: if the user's FOM is kernel time, the
+   FOM is the median of >=3 rocprofv3 kernel-sums.
+3. Editing ./report.md with the Edit tool directly. Use
+   rocbudai-doctor to validate after every report.md change.
+4. Iteration 1 source/flag changes without a profile call first.
+5. Editing a file you (or any tool) modified earlier this
+   session without re-Reading it first.
+
+Full rules with rationale, examples, and observed violation
+patterns live in AGENTS.md. Read it.
+"""

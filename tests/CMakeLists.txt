@@ -1043,6 +1043,11 @@ set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY PASS_REGULAR_EXPRESSION "Prin
 set_property(TEST MPI_Ghost_Exchange_Ver6 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 set_tests_properties(MPI_Ghost_Exchange_Ver6 PROPERTIES TIMEOUT 600)
 
+add_test(NAME MPI_Oversubscription_Check COMMAND ../mpicheck_oversubscribe.sh )
+set_property(TEST MPI_Oversubscription_Check PROPERTY PASS_REGULAR_EXPRESSION "PASSED!")
+set_property(TEST MPI_Oversubscription_Check PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_tests_properties(MPI_Oversubscription_Check PROPERTIES TIMEOUT 600)
+
 # Ver7 is disabled: no Ver7/ source directory exists yet. The script is kept
 # in sync with ver2 (ver1 + rocprof-sys) so it is ready to enable once a
 # Ver7/ variant is added.
@@ -1107,6 +1112,8 @@ add_test(NAME Profiling_ShallowWater_Novice_3_Block_32x32_Makefile COMMAND ../pr
 add_test(NAME Profiling_ShallowWater_Novice_3_Block_32x32_CMakeLists COMMAND ../profiling_shallowwater_novice_cmakelists.sh 3_block_32x32)
 add_test(NAME Profiling_ShallowWater_Novice_4_Block_64x4_Makefile COMMAND ../profiling_shallowwater_novice_makefile.sh 4_block_64x4)
 add_test(NAME Profiling_ShallowWater_Novice_4_Block_64x4_CMakeLists COMMAND ../profiling_shallowwater_novice_cmakelists.sh 4_block_64x4)
+add_test(NAME Profiling_ShallowWater_Novice_5_Vectorized_Loads_Makefile COMMAND ../profiling_shallowwater_novice_makefile.sh 5_vectorized_loads)
+add_test(NAME Profiling_ShallowWater_Novice_5_Vectorized_Loads_CMakeLists COMMAND ../profiling_shallowwater_novice_cmakelists.sh 5_vectorized_loads)
 set_tests_properties(
   Profiling_ShallowWater_Novice_0_Baseline_Makefile
   Profiling_ShallowWater_Novice_0_Baseline_CMakeLists
@@ -1118,6 +1125,8 @@ set_tests_properties(
   Profiling_ShallowWater_Novice_3_Block_32x32_CMakeLists
   Profiling_ShallowWater_Novice_4_Block_64x4_Makefile
   Profiling_ShallowWater_Novice_4_Block_64x4_CMakeLists
+  Profiling_ShallowWater_Novice_5_Vectorized_Loads_Makefile
+  Profiling_ShallowWater_Novice_5_Vectorized_Loads_CMakeLists
   PROPERTIES
     PASS_REGULAR_EXPRESSION "MCUPS"
     FAIL_REGULAR_EXPRESSION "NEGATIVE!"
@@ -1753,6 +1762,11 @@ add_test(NAME JAX_Mnist COMMAND ../jax_mnist.sh )
 set_property(TEST JAX_Mnist PROPERTY PASS_REGULAR_EXPRESSION "Epoch 9 in")
 set_property(TEST JAX_Mnist PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'jax'")
 
+add_test(NAME JAX_Pytest_Lax_Vmap COMMAND ../jax_pytest_lax_vmap.sh )
+set_property(TEST JAX_Pytest_Lax_Vmap PROPERTY PASS_REGULAR_EXPRESSION "Success")
+set_property(TEST JAX_Pytest_Lax_Vmap PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'jax'")
+set_tests_properties(JAX_Pytest_Lax_Vmap PROPERTIES TIMEOUT 600)
+
 # commenting this out since passing outcome is hardware dependent
 #add_test(NAME JAX_Check_Performance COMMAND ../jax_check_performance.sh )
 #set_property(TEST JAX_Check_Performance PROPERTY PASS_REGULAR_EXPRESSION "Acheived bfloat16 TFLOPS: 129")
@@ -2013,6 +2027,11 @@ add_test(NAME Profiling_ShallowWater_Novice_Block_64x4 COMMAND ../profiling_shal
 set_property(TEST Profiling_ShallowWater_Novice_Block_64x4 PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
 set_property(TEST Profiling_ShallowWater_Novice_Block_64x4 PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
 set_property(TEST Profiling_ShallowWater_Novice_Block_64x4 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+
+add_test(NAME Profiling_ShallowWater_Novice_Vectorized_Loads COMMAND ../profiling_shallow_water_novice.sh 5_vectorized_loads )
+set_property(TEST Profiling_ShallowWater_Novice_Vectorized_Loads PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")
+set_property(TEST Profiling_ShallowWater_Novice_Vectorized_Loads PROPERTY FAIL_REGULAR_EXPRESSION "NEGATIVE!")
+set_property(TEST Profiling_ShallowWater_Novice_Vectorized_Loads PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
 add_test(NAME Profiling_ShallowWater_Advanced_Baseline COMMAND ../profiling_shallow_water_advanced.sh 0_baseline )
 set_property(TEST Profiling_ShallowWater_Advanced_Baseline PROPERTY PASS_REGULAR_EXPRESSION "MCUPS")

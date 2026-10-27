@@ -86,7 +86,7 @@ script has been adjusted only to run 4 processes on the four GPU devices.
 $ cat set_gpu_device_mi300a.sh
 #!/bin/bash
 let mygpu=${OMPI_COMM_WORLD_LOCAL_RANK}
-export ROCR_VISIBLE_DEVICES=$mygpu
+export HIP_VISIBLE_DEVICES=$mygpu
 exec $*
 ```
 

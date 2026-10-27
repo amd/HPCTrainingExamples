@@ -16,4 +16,12 @@ There are three major versions of a Ghost Exchange example:
 - [`GhostExchange_ArrayAssign_HIP`](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange/GhostExchange_ArrayAssign_HIP): this version also considers a 2D domain but HIP is used in place of OpenMP to further enhance parallelism. MPI is used for data exchange.
 - [`GhostExchange3D_ArrayAssign`](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange/GhostExchange3D_ArrayAssign): this version is similar to `GhostExchange_ArrayAssign` but instead considers a 3D domain. Currently, only a basic implementation is available and the performance improvements done for `GhostExchange_ArrayAssign` are not implemented at the moment.
 
+Alongside these there are two examples that use the versions above to study a
+different question -- how many MPI ranks can share one GPU before the driver starts
+time-slicing it:
+- [`GhostExchange_Oversubscription_HIP`](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange/GhostExchange_Oversubscription_HIP): measures the hardware compute queues each rank holds on an AMD Instinct MI300A and MI250, the rank limits that follow from them in SPX and CPX compute-partition modes, and what crossing those limits costs. Includes `mpirun_check.sh`, a launch wrapper that applies the rule to a command line before running it.
+- [`GhostExchange_Oversubscription_OpenMP`](https://github.com/amd/HPCTrainingExamples/tree/main/MPI-examples/GhostExchange/GhostExchange_Oversubscription_OpenMP): the same study for OpenMP target offload, where a rank costs one queue more than its HIP equivalent and the rank limits are correspondingly lower.
+
+Start with the HIP one; it carries the background that both share.
+
 The reader is encouraged to explore the single directories for further details on the code and various subversions.

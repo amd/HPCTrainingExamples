@@ -1,0 +1,648 @@
+diff --git a/bin/rocbudai-doctor b/bin/rocbudai-doctor
+index b2bfdeb..984f181 100755
+--- a/bin/rocbudai-doctor
++++ b/bin/rocbudai-doctor
+@@ -32,6 +32,14 @@ ROCBUDAI_OLLAMA_HOST="${ROCBUDAI_OLLAMA_HOST:-http://127.0.0.1:11434}"
+ ROCBUDAI_MODEL="${ROCBUDAI_MODEL:-qwen3.5:122b}"
+ ROCBUDAI_ALLOWED_MODELS="${ROCBUDAI_ALLOWED_MODELS:-qwen3.5:122b}"
+ 
++# Backend selects which connectivity checks apply. The default ollama backend
++# serves a local daemon on the compute node; the vllm backend (ATOM / Kimi-K3)
++# serves on a compute node while the agent runs on the login node, so its checks
++# are about the remote OpenAI-compatible endpoint, not a local daemon or GPUs.
++ROCBUDAI_BACKEND="${ROCBUDAI_BACKEND:-ollama}"
++ROCBUDAI_OPENAI_BASE="${ROCBUDAI_OPENAI_BASE:-}"
++ROCBUDAI_OPENAI_PORT="${ROCBUDAI_OPENAI_PORT:-8000}"
++
+ # Colour helpers — degrade gracefully on non-TTY (e.g. piped to a log).
+ if [[ -t 1 ]]; then
+     C_OK=$'\e[32m'; C_FAIL=$'\e[31m'; C_WARN=$'\e[33m'; C_DIM=$'\e[2m'; C_RST=$'\e[0m'
+@@ -48,6 +56,10 @@ fail() { printf '  %s[FAIL]%s   %s\n'  "$C_FAIL" "$C_RST" "$*"; FAIL=$((FAIL+1))
+ warn() { printf '  %s[warn]%s   %s\n'  "$C_WARN" "$C_RST" "$*"; WARN=$((WARN+1)); }
+ hint() { printf '          %s%s%s\n'   "$C_DIM"  "$*"     "$C_RST"; }
+ 
++# Self-numbering section header so skipped backend-specific checks leave no gaps.
++STEP=0
++section() { STEP=$((STEP+1)); echo "${STEP}. $*"; }
++
+ usage() {
+     cat <<EOF
+ rocbudai-doctor — environment preflight for rocBudAI
+@@ -79,9 +91,98 @@ if [[ $QUIET -eq 0 ]]; then
+ fi
+ 
+ # ---------------------------------------------------------------------------
+-# 1. Slurm allocation
++# Backend-specific connectivity checks.
++#   vllm (ATOM):  the agent runs HERE on the login node and the model runs on a
++#                 compute node, so we check the remote OpenAI endpoint, the live
++#                 allocation that serves it, and server reachability.
++#   ollama:       the agent runs on the compute node with a local ollama daemon,
++#                 so we check the Slurm comment/partition, GPUs and the daemon.
+ # ---------------------------------------------------------------------------
+-echo "1. Slurm allocation"
++if [[ "${ROCBUDAI_BACKEND}" == "vllm" ]]; then
++
++section "Backend and endpoint (vLLM / ATOM)"
++ok "backend: vllm (OpenAI-compatible; the agent runs on this login node)"
++if [[ -z "${ROCBUDAI_OPENAI_BASE}" ]]; then
++    fail "ROCBUDAI_OPENAI_BASE is not set"
++    hint "the module auto-detects it from your live Slurm allocation on load;"
++    hint "an empty value usually means no live allocation. Start a server first:"
++    hint "  salloc -p mi355x --exclusive --gres=gpu:amd_instinct_mi355_oam:8 --mem=0 -t 2:00:00"
++    hint "  rocbudai-serve-kimi            # wait for 'Application startup complete'"
++    hint "then reload:  module unload rocbudai && module load rocbudai"
++elif [[ "${ROCBUDAI_OPENAI_BASE}" != http://*/* && "${ROCBUDAI_OPENAI_BASE}" != https://*/* ]]; then
++    warn "ROCBUDAI_OPENAI_BASE='${ROCBUDAI_OPENAI_BASE}' does not look like a full URL"
++    hint "expected form:  http://<compute-node>:${ROCBUDAI_OPENAI_PORT}/v1"
++else
++    ok "ROCBUDAI_OPENAI_BASE=${ROCBUDAI_OPENAI_BASE}"
++fi
++echo
++
++section "Live Slurm allocation (model node)"
++_nodes=""
++if command -v squeue >/dev/null 2>&1; then
++    _nodes="$(squeue -h -u "$USER" -t R -o '%N' 2>/dev/null \
++               | xargs -r -n1 scontrol show hostnames 2>/dev/null | sort -u)"
++fi
++if [[ -z "${_nodes}" ]]; then
++    fail "no live Slurm allocation found for ${USER}"
++    hint "the model needs a running compute-node server; grab a node and start one:"
++    hint "  salloc -p mi355x --exclusive --gres=gpu:amd_instinct_mi355_oam:8 --mem=0 -t 2:00:00"
++    hint "  rocbudai-serve-kimi"
++else
++    _ncount="$(echo "${_nodes}" | grep -c .)"
++    if [[ "${_ncount}" -gt 1 ]]; then
++        warn "multiple live allocations: $(echo "${_nodes}" | paste -sd, -)"
++        hint "the module cannot pick one; cancel the extras or pin ROCBUDAI_OPENAI_BASE"
++    else
++        ok "live allocation on node: ${_nodes}"
++        if [[ -n "${ROCBUDAI_OPENAI_BASE}" && "${ROCBUDAI_OPENAI_BASE}" != *"${_nodes}"* ]]; then
++            warn "endpoint host does not match the allocation node (${_nodes})"
++            hint "reload to re-detect:  module unload rocbudai && module load rocbudai"
++        fi
++    fi
++fi
++echo
++
++section "vLLM server reachability"
++if ! command -v curl >/dev/null 2>&1; then
++    fail "curl not on PATH (cannot probe the server)"
++elif [[ -z "${ROCBUDAI_OPENAI_BASE}" ]]; then
++    warn "skipped — ROCBUDAI_OPENAI_BASE is not set (see above)"
++elif ! curl -fsS --max-time 5 "${ROCBUDAI_OPENAI_BASE}/models" >/dev/null 2>&1; then
++    fail "server not reachable at ${ROCBUDAI_OPENAI_BASE}"
++    hint "if you just started it, Kimi-K3 loads ~1.5 TB and can take many minutes —"
++    hint "wait for 'Application startup complete' on the compute node, then retry"
++    hint "verify from here:  curl -fsS ${ROCBUDAI_OPENAI_BASE}/models"
++else
++    ok "server reachable at ${ROCBUDAI_OPENAI_BASE}"
++    _models_json="$(curl -fsS --max-time 5 "${ROCBUDAI_OPENAI_BASE}/models" 2>/dev/null)"
++    if printf '%s' "${_models_json}" | ROCBUDAI_MODEL="${ROCBUDAI_MODEL}" python3 -c "
++import json, os, sys
++want = os.environ.get('ROCBUDAI_MODEL', '')
++try:
++    ids = [m.get('id', '') for m in json.load(sys.stdin).get('data', [])]
++except Exception:
++    sys.exit(2)
++sys.exit(0 if want in ids else 1)
++" 2>/dev/null; then
++        ok "model '${ROCBUDAI_MODEL}' is served"
++    else
++        warn "model '${ROCBUDAI_MODEL}' not found in the server's /v1/models"
++        hint "served ids:"
++        printf '%s' "${_models_json}" \
++            | python3 -c "import json,sys; [print('            '+m.get('id','')) for m in json.load(sys.stdin).get('data',[])]" 2>/dev/null \
++            || hint "    (could not parse /v1/models response)"
++    fi
++    unset _models_json
++fi
++echo
++
++else   # ----- ollama backend -----------------------------------------------
++
++# ---------------------------------------------------------------------------
++# Slurm allocation (ollama backend)
++# ---------------------------------------------------------------------------
++section "Slurm allocation"
+ if [[ -n "${ROCBUDAI_CONTAINER:-}" ]]; then
+     ok "container quick-test mode — Slurm/comment/partition gates not applicable (testing only)"
+ elif [[ -n "${SLURM_JOB_ID:-}" ]]; then
+@@ -147,7 +248,7 @@ echo
+ # ---------------------------------------------------------------------------
+ # 2. AMD GPUs (rocm-smi)
+ # ---------------------------------------------------------------------------
+-echo "2. AMD GPUs"
++section "AMD GPUs"
+ if ! command -v rocm-smi >/dev/null 2>&1; then
+     warn "rocm-smi not on PATH"
+     hint "the agent can still help with non-GPU profiling, but ROCm tools require it"
+@@ -177,7 +278,7 @@ echo
+ # ---------------------------------------------------------------------------
+ # 3. Ollama daemon reachable
+ # ---------------------------------------------------------------------------
+-echo "3. Ollama daemon"
++section "Ollama daemon"
+ if ! command -v curl >/dev/null 2>&1; then
+     fail "curl not on PATH (cannot probe ollama)"
+ elif ! curl -fsS --max-time 3 "${ROCBUDAI_OLLAMA_HOST}/api/tags" >/dev/null 2>&1; then
+@@ -193,7 +294,7 @@ echo
+ # ---------------------------------------------------------------------------
+ # 4. Canonical model present
+ # ---------------------------------------------------------------------------
+-echo "4. Model availability"
++section "Model availability"
+ # Match against /api/tags via a proper JSON parse rather than a grep
+ # of the raw bytes — Ollama always stores pulled models with an
+ # explicit tag (e.g. a bare 'qwen3.5' becomes 'qwen3.5:latest' on
+@@ -227,10 +328,12 @@ fi
+ unset _tags_json
+ echo
+ 
++fi   # end backend-specific connectivity checks
++
+ # ---------------------------------------------------------------------------
+-# 5. Model selection allow-list
++# Model selection allow-list (common to both backends)
+ # ---------------------------------------------------------------------------
+-echo "5. Model selection"
++section "Model selection"
+ # allow-list match: comma-bracketed substring search, robust to spaces.
+ _normalised=",${ROCBUDAI_ALLOWED_MODELS// /},"
+ if [[ "${_normalised}" == *",${ROCBUDAI_MODEL},"* ]]; then
+@@ -245,7 +348,7 @@ echo
+ # ---------------------------------------------------------------------------
+ # 6. opencode binary
+ # ---------------------------------------------------------------------------
+-echo "6. opencode binary"
++section "opencode binary"
+ if [[ ! -x "$ROCBUDAI_OPENCODE_BIN" ]]; then
+     fail "opencode binary not found / not executable: $ROCBUDAI_OPENCODE_BIN"
+     hint "is /shared/apps mounted on this node?    mount | grep '/shared/apps'"
+@@ -262,7 +365,7 @@ echo
+ # ---------------------------------------------------------------------------
+ # 7. Working directory
+ # ---------------------------------------------------------------------------
+-echo "7. Working directory"
++section "Working directory"
+ _pwd="$(pwd)"
+ if [[ "$_pwd" == "$HOME" ]]; then
+     warn "current dir is \$HOME (${HOME}) — TUI will fall back to ~/rocbudai-runs/<timestamp>/"
+@@ -278,7 +381,7 @@ echo
+ # ---------------------------------------------------------------------------
+ # 8. AGENTS.md / opencode.json templates available
+ # ---------------------------------------------------------------------------
+-echo "8. rocBudAI install tree"
++section "rocBudAI install tree"
+ _share="${ROCBUDAI_ROOT}/share/rocbudai"
+ _missing=()
+ for f in AGENTS-default.md opencode-default.json opencode-allow-all.json ; do
+@@ -295,9 +398,11 @@ fi
+ echo
+ 
+ # ---------------------------------------------------------------------------
+-# 9. Leaked KFD processes for current user
++# Leaked KFD processes for current user (compute-node / ollama backend only;
++# the vllm agent host is a login node with no local GPU work to leak).
+ # ---------------------------------------------------------------------------
+-echo "9. Leaked KFD processes"
++if [[ "${ROCBUDAI_BACKEND}" != "vllm" ]]; then
++section "Leaked KFD processes"
+ _reaper="${ROCBUDAI_ROOT}/bin/rocbudai-reap-stale"
+ if [[ ! -x "$_reaper" ]]; then
+     warn "rocbudai-reap-stale not found at ${_reaper}"
+@@ -328,9 +433,10 @@ else
+     fi
+ fi
+ echo
++fi   # end KFD check (ollama backend only)
+ 
+ # ---------------------------------------------------------------------------
+-# 10. Project report.md (added after stress-test D-3, 2026-05-11)
++# Project report.md (added after stress-test D-3, 2026-05-11)
+ # ---------------------------------------------------------------------------
+ #
+ # If the current working directory contains a report.md (i.e. we are inside
+@@ -338,7 +444,7 @@ echo
+ # is the same check rocbudai-tui runs at /exit; surfacing it here lets the
+ # user re-run after the fact (e.g. between sessions, or after a manual edit
+ # to report.md, without launching the full TUI).
+-echo "10. Project report.md"
++section "Project report.md"
+ _report_path="$(pwd)/report.md"
+ if [[ ! -f "$_report_path" ]]; then
+     ok "no report.md in cwd (skipping — not yet inside a project)"
+@@ -453,7 +559,8 @@ echo
+ # manifest under the local ollama cache and reports any missing or
+ # wrong-sized blobs. Independent of daemon state (reads files only); useful
+ # when checks 3 or 4 above already failed.
+-echo "11. Local manifest blob completeness"
++if [[ "${ROCBUDAI_BACKEND}" != "vllm" ]]; then
++section "Local manifest blob completeness"
+ _ollama_cache="${ROCBUDAI_OLLAMA_CACHE:-/var/local/cache/ollama}"
+ if [[ ! -d "${_ollama_cache}/manifests" ]]; then
+     warn "no ollama manifest cache at ${_ollama_cache}/manifests"
+@@ -540,6 +647,7 @@ PY
+     fi
+ fi
+ echo
++fi   # end manifest check (ollama backend only)
+ 
+ # ---------------------------------------------------------------------------
+ # Summary
+diff --git a/bin/rocbudai-tui b/bin/rocbudai-tui
+index 9c5ef22..0e37de0 100755
+--- a/bin/rocbudai-tui
++++ b/bin/rocbudai-tui
+@@ -30,6 +30,15 @@ ROCBUDAI_OPENCODE_DIR="$(dirname "$ROCBUDAI_OPENCODE_BIN")"
+ ROCBUDAI_OLLAMA_HOST="${ROCBUDAI_OLLAMA_HOST:-http://127.0.0.1:11434}"
+ ROCBUDAI_MODEL="${ROCBUDAI_MODEL:-qwen3.5:122b}"
+ ROCBUDAI_ALLOWED_MODELS="${ROCBUDAI_ALLOWED_MODELS:-qwen3.5:122b}"
++# Backend selector. "ollama" (default) is the stock path; "vllm" talks to an
++# OpenAI-compatible vLLM server (e.g. Kimi-K3 on MI355X) started by the user in
++# their own allocation. For vllm we probe /v1/models, write an OpenAI-compatible
++# opencode.json, and launch opencode directly (no `ollama launch`).
++ROCBUDAI_BACKEND="${ROCBUDAI_BACKEND:-ollama}"
++ROCBUDAI_OPENAI_BASE="${ROCBUDAI_OPENAI_BASE:-http://127.0.0.1:8000/v1}"
++ROCBUDAI_OPENAI_PROVIDER="${ROCBUDAI_OPENAI_PROVIDER:-vllm}"
++ROCBUDAI_CONTEXT_LIMIT="${ROCBUDAI_CONTEXT_LIMIT:-32768}"
++ROCBUDAI_OUTPUT_LIMIT="${ROCBUDAI_OUTPUT_LIMIT:-8192}"
+ ROCBUDAI_SHARE="${ROCBUDAI_ROOT}/share/rocbudai"
+ # Which AGENTS.md persona template to seed into the project dir.
+ #   * If ROCBUDAI_AGENTS_TEMPLATE is exported to an existing file (baked into
+@@ -126,8 +135,11 @@ info() { echo "[rocbudai-tui] $*"; }
+ # them in because they have a running allocation here), SLURM_JOB_ID is NOT
+ # propagated into the shell. Recover the jobid via squeue: their unique
+ # RUNNING job on this node.
+-if [[ -z "${ROCBUDAI_CONTAINER:-}" && -z "${SLURM_JOB_ID:-}" ]] && command -v squeue >/dev/null 2>&1; then
+-    _adopted=$(squeue -h -w "$(hostname -s)" -u "$USER" -t R -o '%i' 2>/dev/null)
++# Only the ollama backend runs on the compute node and needs a local jobid; the
++# vLLM backend runs on the login node (no allocation), where `squeue -w <login>`
++# errors and would trip `set -e`. So gate this, and keep the substitution safe.
++if [[ -z "${ROCBUDAI_CONTAINER:-}" && "${ROCBUDAI_BACKEND}" == "ollama" && -z "${SLURM_JOB_ID:-}" ]] && command -v squeue >/dev/null 2>&1; then
++    _adopted=$(squeue -h -w "$(hostname -s)" -u "$USER" -t R -o '%i' 2>/dev/null || true)
+     if [[ -n "$_adopted" && $(printf '%s\n' "$_adopted" | wc -l) -eq 1 ]]; then
+         export SLURM_JOB_ID="$_adopted"
+     fi
+@@ -141,8 +153,12 @@ if [[ -n "${ROCBUDAI_CONTAINER:-}" ]]; then
+     info "container quick-test mode — skipping Slurm/partition gates (testing only)."
+ fi
+ 
+-if [[ -z "${ROCBUDAI_CONTAINER:-}" && -z "${SLURM_JOB_ID:-}" ]]; then
+-    err "no SLURM_JOB_ID — rocbudai-tui must run inside a Slurm allocation."
++# The vLLM backend talks to a REMOTE server (started in its own allocation), so
++# the agent itself runs on the LOGIN node — no allocation needed here, and it
++# must not run on the compute node where it would contend with the model. Only
++# the local ollama backend requires an allocation on this node.
++if [[ -z "${ROCBUDAI_CONTAINER:-}" && "${ROCBUDAI_BACKEND}" == "ollama" && -z "${SLURM_JOB_ID:-}" ]]; then
++    err "no SLURM_JOB_ID — the ollama backend must run inside a Slurm allocation."
+     err "from a login node, allocate one first (-p selects the GPU"
+     err "partition; --comment=ollama starts the ollama daemon for you):"
+     err "  salloc -p <gpu-partition> --exclusive --comment=ollama --time=01:00:00"
+@@ -157,8 +173,11 @@ fi
+ # prolog / epilog contexts). SLURM_JOB_PARTITION usually IS inherited,
+ # but `scontrol show job` is the authoritative source for both, so use
+ # it as primary and fall back to env vars only if scontrol is missing.
++# Only the ollama backend uses the --comment/partition gates below; for vLLM the
++# jobid is empty (agent runs on the login node) and `scontrol show job ''` would
++# dump every job and trip the grep/pipefail under set -e. So resolve only then.
+ _scontrol_out=""
+-if [[ -z "${ROCBUDAI_CONTAINER:-}" ]] && command -v scontrol >/dev/null 2>&1; then
++if [[ -z "${ROCBUDAI_CONTAINER:-}" && "${ROCBUDAI_BACKEND}" == "ollama" ]] && command -v scontrol >/dev/null 2>&1; then
+     _scontrol_out="$(scontrol show job "${SLURM_JOB_ID:-}" -o 2>/dev/null || true)"
+ fi
+ _job_comment=""
+@@ -184,7 +203,7 @@ _job_partition="${_job_partition:-${SLURM_JOB_PARTITION:-}}"
+ # lets the launcher start, only for the runner to crash mid-load with
+ # "model failed to load, resource limitations or internal error". Catch
+ # it here with an actionable message instead.
+-if [[ -z "${ROCBUDAI_CONTAINER:-}" && "${_job_comment}" != *ollama* ]]; then
++if [[ -z "${ROCBUDAI_CONTAINER:-}" && "${ROCBUDAI_BACKEND}" == "ollama" && "${_job_comment}" != *ollama* ]]; then
+     err "this allocation's --comment is '${_job_comment:-(none)}', which does not contain 'ollama'."
+     err "rocBudAI requires --comment=ollama at salloc time so the Slurm prolog"
+     err "starts (and the epilog stops) the ollama daemon for THIS job."
+@@ -215,7 +234,7 @@ for _p in ${_spx_partitions//,/ }; do
+         break
+     fi
+ done
+-if [[ -z "${ROCBUDAI_CONTAINER:-}" && -n "$_spx_partitions" && "$_spx_ok" -eq 0 ]]; then
++if [[ -z "${ROCBUDAI_CONTAINER:-}" && "${ROCBUDAI_BACKEND}" == "ollama" && -n "$_spx_partitions" && "$_spx_ok" -eq 0 ]]; then
+     err "this allocation's partition is '${_job_partition:-(none)}', which is not in the rocBudAI allow-list."
+     err "the default model needs enough GPUs in full (SPX) mode; partitions that"
+     err "expose sliced GPUs (e.g. MI300A CPX/TPX) cause the runner to abort with"
+@@ -268,22 +287,44 @@ if command -v rocm-smi >/dev/null 2>&1; then
+     fi
+ fi
+ 
+-# Ollama reachability (3s timeout, no hang).
+-if ! curl -fsS --max-time 3 "${ROCBUDAI_OLLAMA_HOST}/api/tags" >/dev/null 2>&1; then
+-    err "ollama daemon not reachable at ${ROCBUDAI_OLLAMA_HOST}."
+-    err "did you allocate with --comment=ollama?  is the daemon up on this node?"
+-    err "try:  systemctl is-active ollama ollama-proxy"
+-    err "for full diagnostics:  rocbudai-doctor"
+-    exit 1
+-fi
++if [[ "${ROCBUDAI_BACKEND}" == "vllm" ]]; then
++    # vLLM (OpenAI-compatible) reachability. The user starts the server in
++    # their own allocation (see `rocbudai-serve-kimi`); we just need /v1/models
++    # to answer on this node before launching the TUI.
++    if ! curl -fsS --max-time 5 "${ROCBUDAI_OPENAI_BASE}/models" >/dev/null 2>&1; then
++        err "vLLM server not reachable at ${ROCBUDAI_OPENAI_BASE}."
++        err "the agent runs HERE (login node); the model runs on a compute node."
++        err "1) in a compute-node allocation, start the server:"
++        err "     salloc -p mi355x --exclusive --gres=gpu:amd_instinct_mi355_oam:8 --mem=0 -t 2:00:00"
++        err "     rocbudai-serve-kimi           # wait for 'Application startup complete'"
++        err "2) back here, point the agent at that node and retry:"
++        err "     export ROCBUDAI_OPENAI_BASE=http://<compute-node>:8000/v1"
++        err "     module load rocbudai"
++        err "for full diagnostics:  rocbudai-doctor"
++        exit 1
++    fi
++    if ! curl -fsS --max-time 5 "${ROCBUDAI_OPENAI_BASE}/models" | grep -q "${ROCBUDAI_MODEL}"; then
++        warn "vLLM is up but '${ROCBUDAI_MODEL}' is not in /v1/models yet."
++        warn "it may still be loading weights (Kimi-K3 is large); the first prompt may fail."
++    fi
++else
++    # Ollama reachability (3s timeout, no hang).
++    if ! curl -fsS --max-time 3 "${ROCBUDAI_OLLAMA_HOST}/api/tags" >/dev/null 2>&1; then
++        err "ollama daemon not reachable at ${ROCBUDAI_OLLAMA_HOST}."
++        err "did you allocate with --comment=ollama?  is the daemon up on this node?"
++        err "try:  systemctl is-active ollama ollama-proxy"
++        err "for full diagnostics:  rocbudai-doctor"
++        exit 1
++    fi
+ 
+-# Confirm the pinned model is actually loaded/available locally.
+-if ! curl -fsS --max-time 3 "${ROCBUDAI_OLLAMA_HOST}/api/tags" \
+-        | grep -q "\"${ROCBUDAI_MODEL}\""; then
+-    warn "model '${ROCBUDAI_MODEL}' is not in the ollama registry on this node."
+-    warn "the TUI will start, but the first prompt may fail until an admin"
+-    warn "runs:  sudo -u ollama ollama pull ${ROCBUDAI_MODEL}"
+-    warn "for full diagnostics:  rocbudai-doctor"
++    # Confirm the pinned model is actually loaded/available locally.
++    if ! curl -fsS --max-time 3 "${ROCBUDAI_OLLAMA_HOST}/api/tags" \
++            | grep -q "\"${ROCBUDAI_MODEL}\""; then
++        warn "model '${ROCBUDAI_MODEL}' is not in the ollama registry on this node."
++        warn "the TUI will start, but the first prompt may fail until an admin"
++        warn "runs:  sudo -u ollama ollama pull ${ROCBUDAI_MODEL}"
++        warn "for full diagnostics:  rocbudai-doctor"
++    fi
+ fi
+ 
+ # 1.5. Session picker --------------------------------------------------------
+@@ -595,6 +636,46 @@ if [[ -f opencode.json \
+     info "opencode.json template is newer — refreshing from ${ROCBUDAI_PERMISSION_MODE} template"
+ fi
+ 
++# vLLM backend: the model's compute node (baseURL), the served model and the
++# advertised context window are all dynamic. If an existing opencode.json disagrees
++# with the current ROCBUDAI_* values, refresh it — otherwise opencode keeps dialing
++# the previous node ("Cannot connect to API") or compacting against a stale context
++# window.
++if [[ -f opencode.json \
++      && -z "${ROCBUDAI_OPENCODE_NOREFRESH:-}" \
++      && $ROCBUDAI_FORCE_REWRITE -eq 0 \
++      && "${ROCBUDAI_BACKEND}" == "vllm" \
++      && -n "${ROCBUDAI_OPENAI_BASE:-}" ]]; then
++    _stale="$(BASE="${ROCBUDAI_OPENAI_BASE}" MODEL="${ROCBUDAI_MODEL}" \
++              CTX="${ROCBUDAI_CONTEXT_LIMIT}" python3 -c "
++import json, os
++try:
++    d = json.load(open('opencode.json'))
++    provs = d.get('provider', {}) or {}
++    prov = next(iter(provs.values()), {})
++    base = (prov.get('options', {}) or {}).get('baseURL', '')
++    models = prov.get('models', {}) or {}
++    mdl = next(iter(models.values()), {})
++    ctx = str((mdl.get('limit', {}) or {}).get('context', ''))
++    wmodel = d.get('model', '')
++    r = []
++    if base != os.environ['BASE']:
++        r.append('endpoint')
++    if ctx != os.environ['CTX']:
++        r.append('context')
++    if os.environ['MODEL'] and os.environ['MODEL'] not in wmodel:
++        r.append('model')
++    print(','.join(r))
++except Exception:
++    print('parse')
++" 2>/dev/null)"
++    if [[ -n "${_stale}" ]]; then
++        ROCBUDAI_FORCE_REWRITE=1
++        info "opencode.json stale (${_stale}) — refreshing from current settings"
++    fi
++    unset _stale
++fi
++
+ if [[ ! -f opencode.json || $ROCBUDAI_FORCE_REWRITE -eq 1 ]]; then
+     # Two substitutions into the template:
+     #
+@@ -614,11 +695,59 @@ if [[ ! -f opencode.json || $ROCBUDAI_FORCE_REWRITE -eq 1 ]]; then
+     #    model). An absolute path is opencode's documented fix and loads the
+     #    persona regardless of cwd / git-root. ${cwd} is the abs dir we cd'd
+     #    into above and where AGENTS.md is written.
+-    sed -E -e "s|\"model\":[[:space:]]*\"ollama/[^\"]*\"|\"model\": \"ollama/${ROCBUDAI_MODEL}\"|" \
+-           -e "s|\"AGENTS\.md\"|\"${cwd}/AGENTS.md\"|" \
+-        "${ROCBUDAI_OPENCODE_TEMPLATE}" > opencode.json
+-    chmod 0644 opencode.json
+-    info "wrote opencode.json (${ROCBUDAI_PERMISSION_MODE} mode, model=${ROCBUDAI_MODEL})"
++    if [[ "${ROCBUDAI_BACKEND}" == "vllm" ]]; then
++        # The vLLM/ATOM agent usually runs on a login node with NO local GPU
++        # while the model is served on a compute node. Without a local GPU the
++        # persona's local-execution guidance (rocbudai-bench, direct profiler
++        # runs) cannot work, so append the no-GPU addendum AFTER the persona to
++        # override it: GPU work is dispatched via rocbudai-submit instead. On a
++        # real GPU host the addendum is omitted and the stock local flow applies.
++        _rbai_addendum=""
++        if ! { [[ -e /dev/kfd ]] \
++               || { command -v rocminfo >/dev/null 2>&1 && rocminfo 2>/dev/null | grep -q 'gfx'; }; } \
++           && [[ -f "${ROCBUDAI_SHARE}/no-gpu-addendum.md" ]]; then
++            _rbai_addendum="${ROCBUDAI_SHARE}/no-gpu-addendum.md"
++        fi
++        # Transform the selected permission template (ASK / auto-run) into an
++        # OpenAI-compatible config: swap provider+model to the vLLM endpoint and
++        # make the instructions path absolute. Reusing the same templates keeps
++        # the ASK/auto-run permission semantics (and the auto-run toggle) intact.
++        ROCBUDAI_OPENCODE_TEMPLATE="${ROCBUDAI_OPENCODE_TEMPLATE}" \
++        PROV="${ROCBUDAI_OPENAI_PROVIDER}" MODEL="${ROCBUDAI_MODEL}" \
++        BASE="${ROCBUDAI_OPENAI_BASE}" CWD="${cwd}" \
++        CTX="${ROCBUDAI_CONTEXT_LIMIT}" OUT="${ROCBUDAI_OUTPUT_LIMIT}" \
++        ADDENDUM="${_rbai_addendum}" \
++        python3 - > opencode.json <<'PY'
++import json, os
++d = json.load(open(os.environ['ROCBUDAI_OPENCODE_TEMPLATE']))
++prov, model = os.environ['PROV'], os.environ['MODEL']
++d['model'] = f"{prov}/{model}"
++d['provider'] = {prov: {
++    "npm": "@ai-sdk/openai-compatible",
++    "name": "vLLM (rocBudAI)",
++    "options": {"baseURL": os.environ['BASE'], "apiKey": "dummy"},
++    "models": {model: {"limit": {"context": int(os.environ['CTX']),
++                                 "output": int(os.environ['OUT'])}}},
++}}
++instr = [os.path.join(os.environ['CWD'], 'AGENTS.md')]
++addendum = os.environ.get('ADDENDUM', '')
++if addendum:
++    instr.append(addendum)
++d['instructions'] = instr
++print(json.dumps(d, indent=2))
++PY
++        chmod 0644 opencode.json
++        _rbai_nogpu_note=""
++        [[ -n "${_rbai_addendum}" ]] && _rbai_nogpu_note=", no-GPU addendum"
++        info "wrote opencode.json (${ROCBUDAI_PERMISSION_MODE} mode, vLLM backend, model=${ROCBUDAI_MODEL}, base=${ROCBUDAI_OPENAI_BASE}${_rbai_nogpu_note})"
++        unset _rbai_addendum _rbai_nogpu_note
++    else
++        sed -E -e "s|\"model\":[[:space:]]*\"ollama/[^\"]*\"|\"model\": \"ollama/${ROCBUDAI_MODEL}\"|" \
++               -e "s|\"AGENTS\.md\"|\"${cwd}/AGENTS.md\"|" \
++            "${ROCBUDAI_OPENCODE_TEMPLATE}" > opencode.json
++        chmod 0644 opencode.json
++        info "wrote opencode.json (${ROCBUDAI_PERMISSION_MODE} mode, model=${ROCBUDAI_MODEL})"
++    fi
+ fi
+ 
+ # AGENTS.md: seed from the arch-specific persona (resolved here, now that the
+@@ -849,7 +978,8 @@ regenerated on the next \`module load rocbudai\`.
+ | Working dir          | ${_ROCBUDAI_CWD_FULL}                |
+ | Working dir display  | ${_ROCBUDAI_CWD_DISPLAY}             |
+ | Working dir auto-created | ${ROCBUDAI_CWD_AUTOCREATED}      |
+-| Ollama host          | ${ROCBUDAI_OLLAMA_HOST}              |
++| Backend              | ${ROCBUDAI_BACKEND}                  |
++| Inference endpoint   | $( [[ "${ROCBUDAI_BACKEND}" == "vllm" ]] && echo "${ROCBUDAI_OPENAI_BASE}" || echo "${ROCBUDAI_OLLAMA_HOST}" ) |
+ | Session ID           | ${ROCBUDAI_SESSION_ID:-(new)}        |
+ | Session name         | ${ROCBUDAI_SESSION_NAME:-(unnamed)}  |
+ | Started at           | $(date -Is)                          |
+@@ -972,6 +1102,21 @@ fi
+ _ROCBUDAI_BANNER_NUDGE_SHORT="${_ROCBUDAI_BANNER_NUDGE_SHORT%$'\n'}"
+ _ROCBUDAI_BANNER_NUDGE_FULL="${_ROCBUDAI_BANNER_NUDGE_FULL%$'\n'}"
+ 
++# Privacy line, honest per backend. The ollama path serves the model on this same
++# node and ships rocbudai-airgap-check, so the stock assurance holds. The vllm
++# path runs the agent on a login node and the model on a separate compute node
++# with no enforced airgap, so claiming data "stays on this node" would be false.
++if [[ "${ROCBUDAI_BACKEND}" == "vllm" ]]; then
++    _ROCBUDAI_BANNER_PRIVACY="Privacy: no airgap is enforced in this setup. Your code, chats, and model
++responses travel from this login node to the model server on your compute
++node, and this host may have external network access. Do not use it on data
++that must stay private; see the stock rocBudAI INSTALL.md for the airgapped
++deployment."
++else
++    _ROCBUDAI_BANNER_PRIVACY="Privacy: your code, chats, and model responses stay on this node while
++this job runs. Verify: rocbudai-airgap-check"
++fi
++
+ if [[ -n "${ROCBUDAI_CONTAINER:-}" ]]; then
+     # Container quick-test banner. No Slurm/partition/module concepts apply
+     # here, so the cluster banner's --comment / `module load rocbudai`
+@@ -1019,8 +1164,7 @@ Session info:
+   Model:       ${ROCBUDAI_MODEL}
+   Working dir: ${_ROCBUDAI_CWD_DISPLAY}${_ROCBUDAI_BANNER_AUTOLINE}
+ 
+-Privacy: your code, chats, and model responses stay on this node while
+-this job runs. Verify: rocbudai-airgap-check
++${_ROCBUDAI_BANNER_PRIVACY}
+ 
+ ${_ROCBUDAI_BANNER_PERM_FULL}
+ 
+@@ -1047,7 +1191,7 @@ chmod 0644 .rocbudai-banner.md
+ # instructions, share=disabled) is still read by opencode regardless of
+ # launch path — verified in iter_02.
+ 
+-if ! command -v ollama >/dev/null 2>&1; then
++if [[ "${ROCBUDAI_BACKEND}" == "ollama" ]] && ! command -v ollama >/dev/null 2>&1; then
+     err "ollama not found on PATH on this node."
+     exit 1
+ fi
+@@ -1065,10 +1209,12 @@ fi
+ # and export. This is also the right thing to do in production: it
+ # pins clients to whatever endpoint the modulefile selected, instead
+ # of relying on the ollama CLI's default matching by coincidence.
+-_ollama_host_for_cli="${ROCBUDAI_OLLAMA_HOST#http://}"
+-_ollama_host_for_cli="${_ollama_host_for_cli#https://}"
+-_ollama_host_for_cli="${_ollama_host_for_cli%/}"
+-export OLLAMA_HOST="${_ollama_host_for_cli}"
++if [[ "${ROCBUDAI_BACKEND}" == "ollama" ]]; then
++    _ollama_host_for_cli="${ROCBUDAI_OLLAMA_HOST#http://}"
++    _ollama_host_for_cli="${_ollama_host_for_cli#https://}"
++    _ollama_host_for_cli="${_ollama_host_for_cli%/}"
++    export OLLAMA_HOST="${_ollama_host_for_cli}"
++fi
+ 
+ # Bash-tool default timeout for opencode. Upstream default is 120 s
+ # (packages/opencode/src/tool/bash.ts), which is too low for typical
+@@ -1125,7 +1271,11 @@ elif [[ -n "$ROCBUDAI_CONTINUE" ]]; then
+     info "resuming last session"
+     OPENCODE_EXTRA_ARGS=(--continue)
+ else
+-    info "launching via: ollama launch opencode --model ${ROCBUDAI_MODEL}"
++    if [[ "${ROCBUDAI_BACKEND}" == "vllm" ]]; then
++        info "launching opencode against vLLM (${ROCBUDAI_OPENAI_BASE}) model ${ROCBUDAI_MODEL}"
++    else
++        info "launching via: ollama launch opencode --model ${ROCBUDAI_MODEL}"
++    fi
+     # Seed prompt = first user turn the model sees. opencode's `--prompt`
+     # is rendered as a visible user message in the chat history (there is
+     # no hidden / system-message injection in the TUI). We use the visible
+@@ -1182,7 +1332,13 @@ if [[ -z "${ROCBUDAI_CONTAINER:-}" && "${ROCBUDAI_NO_FENCING:-0}" != "1" ]]; the
+     fi
+ fi
+ 
+-ollama launch opencode --model "${ROCBUDAI_MODEL}" -y -- "${OPENCODE_EXTRA_ARGS[@]}" || true
++if [[ "${ROCBUDAI_BACKEND}" == "vllm" ]]; then
++    # Direct opencode launch. The provider+model live in opencode.json (pointed
++    # at via OPENCODE_CONFIG above), so no `ollama launch` wrapper is needed.
++    "${ROCBUDAI_OPENCODE_BIN}" "${OPENCODE_EXTRA_ARGS[@]}" || true
++else
++    ollama launch opencode --model "${ROCBUDAI_MODEL}" -y -- "${OPENCODE_EXTRA_ARGS[@]}" || true
++fi
+ 
+ # Watcher is parent-death-guarded but stop it eagerly on clean exit too,
+ # so users don't see a stray python process in ps after /exit.
+diff --git a/libexec/rocbudai-load-hook.sh b/libexec/rocbudai-load-hook.sh
+index 279f2f6..b6ec771 100755
+--- a/libexec/rocbudai-load-hook.sh
++++ b/libexec/rocbudai-load-hook.sh
+@@ -19,26 +19,26 @@
+ #   ROCBUDAI_OPENCODE_BIN, PATH (with rocbudai-tui on it).
+ 
+ set -u
++ROCBUDAI_BACKEND="${ROCBUDAI_BACKEND:-ollama}"
+ 
+-# If the user reached this compute node via ssh (e.g. `pam_slurm_adopt` letting
+-# them in because they have a running allocation here), SLURM_JOB_ID is NOT
+-# propagated into the shell — only the cgroup is (and on some configs not even
+-# that). Recover the jobid via squeue: their unique RUNNING job on this node.
+-if [[ -z "${SLURM_JOB_ID:-}" ]] && command -v squeue >/dev/null 2>&1; then
+-    _adopted=$(squeue -h -w "$(hostname -s)" -u "$USER" -t R -o '%i' 2>/dev/null)
+-    if [[ -n "$_adopted" && $(printf '%s\n' "$_adopted" | wc -l) -eq 1 ]]; then
+-        export SLURM_JOB_ID="$_adopted"
++# The vLLM backend talks to a REMOTE model server, so the agent runs HERE (a
++# login node is the right place — it must not steal CPU from the model on the
++# compute node). The local ollama backend instead needs a GPU allocation on
++# this node, so for it we require (and, for ssh-adopted shells, recover) a jobid.
++if [[ "${ROCBUDAI_BACKEND}" == "ollama" ]]; then
++    if [[ -z "${SLURM_JOB_ID:-}" ]] && command -v squeue >/dev/null 2>&1; then
++        _adopted=$(squeue -h -w "$(hostname -s)" -u "$USER" -t R -o '%i' 2>/dev/null)
++        if [[ -n "$_adopted" && $(printf '%s\n' "$_adopted" | wc -l) -eq 1 ]]; then
++            export SLURM_JOB_ID="$_adopted"
++        fi
++        unset _adopted
+     fi
+-    unset _adopted
+ fi
+ 
+-if [[ -z "${SLURM_JOB_ID:-}" ]]; then
+-    echo "[rocBudAI] this module is for compute nodes; you are on a login node." >&2
+-    echo "[rocBudAI] allocate a compute node first (-p selects the SPX" >&2
+-    echo "[rocBudAI] partition; --comment=ollama starts the ollama daemon):" >&2
+-    echo "[rocBudAI]   salloc -p PPAC_MI300A_SPX --exclusive --comment=ollama --time=01:00:00" >&2
+-    echo "[rocBudAI] then on the compute node prompt:" >&2
+-    echo "[rocBudAI]   cd <project-dir> && module load rocbudai" >&2
++if [[ "${ROCBUDAI_BACKEND}" == "ollama" && -z "${SLURM_JOB_ID:-}" ]]; then
++    echo "[rocBudAI] the ollama backend needs a GPU allocation on this node." >&2
++    echo "[rocBudAI]   salloc -p mi355x --exclusive --comment=ollama -t 1:00:00" >&2
++    echo "[rocBudAI] then:  cd <project-dir> && module load rocbudai" >&2
+ elif [[ -n "${ROCBUDAI_ACTIVE:-}" ]]; then
+     echo "[rocBudAI] already inside a rocbudai session (ROCBUDAI_ACTIVE set); not re-launching." >&2
+ elif [[ ! -t 0 || ! -t 1 ]]; then

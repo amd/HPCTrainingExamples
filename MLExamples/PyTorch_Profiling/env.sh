@@ -54,7 +54,7 @@ ROOFLINE_ARCH="${ROOFLINE_ARCH:-}"
 # --- ROCm build ------------------------------------------------------------
 # Nightly build to validate; see the index below for available versions.
 ROCM_VERSION="${ROCM_VERSION:-}"
-ROCM_INDEX_URL="${ROCM_INDEX_URL:-https://rocm.nightlies.amd.com/whl-multi-arch/}"
+ROCM_INDEX_URL="${ROCM_INDEX_URL:-https://nightly.repo.amd.com/rocm/whl-next/}"
 
 # --- base python used to create the venv -----------------------------------
 # PYTHON_MODULE is loaded first when set (e.g. cray-python on Cray systems);

@@ -101,14 +101,7 @@ Always validate against the wall clock.
 
 ## Roofline
 
-`profile_app.py` in Roofline Extractor needs its
-[Python environment](../README.md#roofline-extractor) active:
-
-```bash
-python3 "$ROOFLINE_EXTRACTOR/profile_app.py" -o roofline_out --arch MI300A -- ./shallow
-```
-
-The equivalent in `rocprof-compute`, whose `analyze` step needs its
+We collect it with `rocprof-compute`, whose `analyze` step needs its
 [Python environment](../README.md#rocprof-compute-analyze) active:
 
 ```bash
@@ -116,11 +109,11 @@ rocprof-compute profile -n 3_block_32x32 --roof-only --device 0 -k compute_rhs -
 rocprof-compute analyze -p workloads/3_block_32x32/0
 ```
 
-Both are explained in [Roofline plots](../README.md#roofline-plots).
+The command is explained in [Roofline plots](../README.md#roofline-plots).
 
 <p>
-<img src="../../figs/roofline_no_sync.png" alt="Roofline of compute_rhs with 16x16 blocks, before this stage" width="49%" />
-<img src="../../figs/roofline_block_32x32.png" alt="Roofline of compute_rhs with 32x32 blocks, after this stage" width="49%" />
+<img src="../../figs/roofline_no_sync.png" alt="Roofline of compute_rhs with 16x16 blocks" width="49%" />
+<img src="../../figs/roofline_block_32x32.png" alt="Roofline of compute_rhs with 32x32 blocks" width="49%" />
 </p>
 
 With the 16x16 blocks of stage 2 on the left and 32x32 on the right, the kernel has moved closer to

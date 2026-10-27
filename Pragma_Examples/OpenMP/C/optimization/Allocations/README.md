@@ -9,7 +9,9 @@ The first version is an OpenMP offload example with three kernels in an iterativ
 Set up the environment
 
 ```
-module load amdclang
+module load rocm/10.1.0
+export CC=amdclang
+export C_COMPILER=amdclang
 export HSA_XNACK=1
 ```
 
@@ -48,18 +50,14 @@ A possible solution is to use a memory pool. An example pool you can use in C/C+
 cd  3_memorypool
 ```
 
-First install umpire
+Load the Umpire module:
 ```
-export hip_DIR=${ROCM_PATH}
-./umpire_setup.sh
-```
-
-Set the `UMPIRE_PATH` to the installation location:
-```
-export UMPIRE_PATH=$HOME/Umpire
+module load umpire/2025.12.0
 ```
 
-Have a look how the memory pool is set up by looking at the memorypool.f90 file.
+The module sets `UMPIRE_PATH` for the Makefile. If your system does not provide an Umpire module, see the Umpire build helper at https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/umpire_setup.sh.
+
+Have a look how the memory pool is set up by looking at the memorypool.c file.
 
 Compile and run with umpire:
 
@@ -73,3 +71,5 @@ The first two iterations when the memory pool still 'warms up' will have a longe
 The total execution time is roughly: 253 ms, so the speed up is a little less than moving the allocation outside, but also for the memory pool we only pay the price in the first 2 iterations until the library figured out the size of the pool. This is usually negligible if hundreds to thousands of iterations / time steps are run in production applications which do more iterations than this training example.
 
 Conclusion: The usage of memory pools is recommended if you have frequent allocations and deallocations in your application and cannot move the allocations outside the loop!
+
+For profiler-focused walkthroughs of this issue, see the [`rocprofv3` memory pool exercise](../../../../../Rocprofv3/OpenMP/Allocations_and_MemoryPool_MI300A/Fortran) and the [rocprofiler-systems memory pool exercise](../../../../../rocprofiler-systems/MemoryPool).

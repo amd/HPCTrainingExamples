@@ -17,3 +17,9 @@ void initialize_constants(int isize){
       constants[i] = (double)i;
    }
 }
+
+void finalize_constants(int isize){
+#pragma omp target exit data map(release:constants[0:isize])
+   free(constants);
+   constants = NULL;
+}

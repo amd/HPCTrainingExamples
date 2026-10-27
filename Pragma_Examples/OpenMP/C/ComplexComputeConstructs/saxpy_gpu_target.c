@@ -5,6 +5,7 @@ This software is distributed under the MIT License
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <omp.h>
 
 void saxpy(float a, float *x, float *y, int N) {

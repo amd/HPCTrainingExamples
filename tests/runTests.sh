@@ -27,6 +27,7 @@ HPCTOOLKIT=0
 OPENMPI=0
 MPI=0
 MPI4PY=0
+MPICHECK=0
 FFTW=0
 OPENMP=0
 OPENACC=0
@@ -69,8 +70,9 @@ usage()
     echo "--hpctoolkit: runs the hpctoolkit tests"
     echo "--tau: runs the tau tests"
     echo "--scorep: runs the score-p tests"
-    echo "--mpi : runs all the mpi tests (same as including --opempi --mpi4py --mvapich2 --gpu-aware-mpi)"
+    echo "--mpi : runs all the mpi tests (same as including --opempi --mpi4py --mvapich2 --gpu-aware-mpi --mpicheck)"
     echo "--openmpi : runs the openmpi tests"
+    echo "--mpicheck : runs the mpicheck oversubscription tests"
     echo "--fftw: runts the fftw tests"
     echo "--hip-python: runs the hip-python tests"
     echo "--numba-hip: runs the numba-hip tests"
@@ -269,6 +271,11 @@ do
           MPI4PY=1
           reset-last
           ;;
+      "--mpicheck")
+          shift
+          MPICHECK=1
+          reset-last
+          ;;
       "--hipfort")
           shift
           HIPFORT=1
@@ -344,6 +351,24 @@ mkdir build
 cd build
 cmake ..
 
+# CTest's own summary counts skipped tests as passed
+if command ctest --help 2>/dev/null | grep -q -- "--output-junit"; then
+   JUNIT_RUNS=0
+   ctest() {
+      JUNIT_RUNS=$((JUNIT_RUNS + 1))
+      command ctest --output-junit junit-${JUNIT_RUNS}.xml "$@"
+   }
+fi
+
+junit_count() {
+   local f n total=0
+   for f in junit-*.xml; do
+      n=$(tr '\n' ' ' < ${f} | grep -o '<testsuite [^>]*>' | grep -o "[[:space:]]${1}=\"[0-9]*\"" | grep -o '[0-9][0-9]*')
+      total=$((total + ${n:-0}))
+   done
+   echo ${total}
+}
+
 if [ ${AI} -eq 1 ]; then
    ctest -R Cupy
    ctest -R Pytorch
@@ -411,8 +436,11 @@ elif [ ${MPI} -eq 1 ]; then
    ctest -R Mvapich2
    ctest -R GPUAware
    ctest -R MPI4PY
+   ctest -R MPI_Oversubscription
 elif [ ${OPENMPI} -eq 1 ]; then
    ctest -R OpenMPI
+elif [ ${MPICHECK} -eq 1 ]; then
+   ctest -R MPI_Oversubscription
 elif [ ${MPI4PY} -eq 1 ]; then
    ctest -R MPI4PY
 elif [ ${OPENMP} -eq 1 ]; then
@@ -437,6 +465,15 @@ elif [ ${PROFILING_BY_EXAMPLE} -eq 1 ]; then
    ctest -R Profiling_
 else
    ctest
+fi
+
+if ls junit-*.xml >/dev/null 2>&1; then
+   TOTAL=$(junit_count tests)
+   FAILED=$(junit_count failures)
+   SKIPPED=$(junit_count skipped)
+   DISABLED=$(junit_count disabled)
+   RAN=$((TOTAL - SKIPPED - DISABLED))
+   echo "Ran ${RAN} of ${TOTAL} tests: $((RAN - FAILED)) passed, ${FAILED} failed, ${SKIPPED} skipped, ${DISABLED} disabled"
 fi
 
 rm -rf build

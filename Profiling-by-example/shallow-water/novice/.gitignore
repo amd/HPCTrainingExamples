@@ -8,7 +8,12 @@ profile_*.out
 # rocprofv3 output, from the -d argument used in the stage READMEs
 outdir/
 prof/
-roofline_out/
 
-# rocprof-compute workload directories (ROOFLINE_TOOL=rocprof-compute)
+# rocprof-compute workload directories
 workloads/
+rocprof_compute_compare.txt
+
+# ATT output from stage 5 (rocprofv3 --att -d att)
+att/
+att_*.att
+ui_output_agent_*/

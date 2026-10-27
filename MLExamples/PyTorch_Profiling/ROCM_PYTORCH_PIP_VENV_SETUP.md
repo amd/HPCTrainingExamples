@@ -35,45 +35,59 @@ python3 -m venv "${VENV}"
 source "${VENV}/bin/activate"
 ```
 
-## 2. Install ROCm + PyTorch from the nightly multi-arch index
+## 2. Install ROCm from the nightly multi-arch index
 
 ```bash
 pip install --index-url "${ROCM_INDEX_URL}" \
-    "rocm[profiler,devel,libraries,device-${GPU_ARCH}]==${ROCM_VERSION}" \
-    "torch[device-${GPU_ARCH}]" \
-    "torchvision[device-${GPU_ARCH}]"
+    "rocm[profiler,devel,libraries,device-${GPU_ARCH}]==${ROCM_VERSION}"
 ```
 
 The `rocm[...]` extras pull in the pieces this workflow needs:
 - `profiler`  — the ROCm profilers: `rocprof-compute`, `rocprofv3`, and
   `rocprof-sys` (bundled `_rocm_profiler`)
-- `devel`     — development package (headers/device code, extracted in step 4)
+- `devel`     — development package (headers/device code, extracted in step 3)
 - `libraries` — math libraries (hipBLAS, rocBLAS, ...)
 - `device-${GPU_ARCH}` — the GPU-arch kernels (`gfx942` for MI300A, `gfx90a` for
   MI250X); see the index for the architectures a given nightly ships
 
 To validate a different nightly, change `ROCM_VERSION` in `local.env` and
 rebuild. Available versions are listed at the index URL itself,
-<https://rocm.nightlies.amd.com/whl-multi-arch/>.
+<https://nightly.repo.amd.com/rocm/whl-next/>.
 
-## 3. Install `transformers` (required by the training script)
-
-```bash
-pip install transformers
-```
-
-The training script builds its models with `transformers`, so this package is
-required.
-
-## 4. Extract development headers and device code
+## 3. Extract development headers and device code
 
 ```bash
 "${VENV}/bin/rocm-sdk" init
 ```
 
 `rocm-sdk init` unpacks the `devel` payload (headers, LLVM device bitcode) into
-`_rocm_sdk_devel/` inside the venv — the device bitcode HIP needs to run kernels,
-and the paths `setup_rocm.sh` points at next.
+`_rocm_sdk_devel/` inside the venv: the device bitcode HIP needs to run kernels,
+and the paths `setup_rocm.sh` points at later. Initialize the tree before testing
+the packaged command wrappers:
+
+```bash
+rocpd --version
+```
+
+This check requires no GPU and does not require a separate `otf2` installation.
+
+## 4. Install PyTorch and `transformers`
+
+```bash
+pip install --index-url "${ROCM_INDEX_URL}" \
+    "torch[device-${GPU_ARCH}]" \
+    "torchvision[device-${GPU_ARCH}]"
+pip install transformers
+```
+
+PyTorch wheels require the exact ROCm version against which they were built.
+ROCm Core and PyTorch nightlies are separate builds, so a ROCm wheel can exist
+for a date that has no corresponding PyTorch wheel. Select a `ROCM_VERSION`
+available from both products. Otherwise pip cannot satisfy the already-installed
+ROCm pin and will eventually report `ResolutionImpossible`.
+
+The training script builds its models with `transformers`, so this package is
+also required.
 
 ---
 
@@ -106,7 +120,7 @@ Expected output resembles:
 
 ```
 setup_rocm.sh: ROCm venv active: /.../rocm-pytorch-pip
-torch 2.12.0+rocm7.15.0a20260721
+torch 2.15.0+rocm10.3.0a20261026
 device ok: 8.0
 ```
 

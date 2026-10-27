@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 void initialize_constants(int isize);
+void finalize_constants(int isize);
 void compute(int cindex, double *x);
 
 int main(int argc, char *argv[]){
@@ -32,5 +33,6 @@ int main(int argc, char *argv[]){
    printf("Result: sum of x is %lf\n",sum);
 
    free(x);
+   finalize_constants(isize);
 }
       
