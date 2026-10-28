@@ -27,9 +27,7 @@ model on a compute node, and the weights in a shared offline cache.
 > This setup does not reproduce the stock rocBudAI airgap and Slurm gating. The
 > model, the weights cache and the agent all stay on the cluster, and the module
 > disables opencode's phone-home, but nothing here blocks the login node's own
-> egress. Privacy rests on the cluster being trusted and in-boundary. It is a
-> preview, not the production airgap (see
-> [What every recipe shares](../README.md#what-every-recipe-shares)).
+> egress. Privacy rests on the cluster being trusted and in-boundary. 
 
 We need the following before starting:
 
@@ -48,13 +46,13 @@ We need the following before starting:
 - `opencode` on `PATH`. The module ships a pinned copy; a site that stages its own
   points `ROCBUDAI_OPENCODE_BIN` at it.
 
-On a prepared cluster the runtime is already installed and world-readable, so there
-is nothing to build: we load the module and start a server (see
-[Quick start](#quick-start)). On a fresh cluster, staging the engine takes a few
+On an existing cluster the runtime may be already installed and world-readable, so there
+might be nothing additional that requires a build: we load the necessary modules and start a server (see
+[Quick start](#quick-start)). When needing to build from scratch, staging the engine takes a few
 minutes plus the one-time weights download, which for Kimi-K3's 1.5 TB is bound by
 your site's bandwidth and storage.
 
-## How it works
+## How it works (read only if interested in the technicalities) 
 
 The recipe has two halves: the agent side (a modulefile any user loads) and the
 engine side (the ATOM server each user starts in their own allocation).
@@ -68,13 +66,11 @@ The agent side is produced by `install-rocbudai-atom.sh`, which, like its
 4. it writes a modulefile (Lmod `.lua` or classic Tcl, auto-detected) that reuses
    rocBudAI's own load hook.
 
-It installs into a prefix in our home directory by default and touches nothing
+It installs into a prefix in your home directory by default and touches nothing
 system-wide. The patch keys everything on `ROCBUDAI_BACKEND=vllm` and leaves the
 ollama path untouched: loading the module points the stock launcher at an
 OpenAI-compatible endpoint, declares Kimi-K3's context window so opencode
-auto-compacts instead of overflowing, and launches the TUI. On a prepared cluster
-the agent is already installed at a world-readable shared prefix, so most users skip
-the install and just `module load`.
+auto-compacts instead of overflowing, and launches the TUI. 
 
 Because the agent runs on a login node with no local GPU, the no-GPU addendum
 engages and dispatches each profiler job through `rocbudai-submit` (see

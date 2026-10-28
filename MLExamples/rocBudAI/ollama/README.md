@@ -4,11 +4,11 @@
 | --- | --- |
 | Model | Laguna XS, small |
 | Engine | ollama, self-run on a GPU node |
-| Needs | 1 AMD Instinct GPU (CDNA2+) with ROCm, ~25 GB disk, no admin |
+| Needs | 1 AMD Instinct GPU (CDNA2+) with ROCm, ~25 GB disk, no admin need to start |
 | Setup | ~10 min |
 
 This directory installs [rocBudAI](https://github.com/AMD-HPC/rocBudAI) into our
-home directory and runs it against an ollama daemon that we start ourselves on a
+home directory and runs it against an ollama daemon that you start on a
 GPU node. Nothing needs an administrator: there is no Slurm comment or partition
 to request, no allow-list to configure, and no system service. The agent is stock
 rocBudAI; its UI and sessions behave the same across every recipe (see
@@ -18,14 +18,9 @@ rocBudAI; its UI and sessions behave the same across every recipe (see
 
 > No airgap is enforced in this setup: nothing blocks the node's network traffic,
 > so the agent and the tools it runs can reach the internet. Do not use it on code
-> or data that must stay private. This is a preview, not the production airgap (see
-> [What every recipe shares](../README.md#what-every-recipe-shares)).
+> or data that must stay private.
 
-We repeat this message wherever a session shows its state. The launcher prints it
-at startup and the welcome banner states it. `rocbudai-doctor` warns about it,
-and `rocbudai-airgap-check` fails and exits with status 1.
-
-Beyond that, we need the following before starting:
+These are the detailed requirements to start:
 
 - A GPU node with at least one AMD Instinct GPU of the CDNA2 generation or
   newer, for example an MI210, MI250 or MI300X, and ROCm (for example
@@ -43,11 +38,9 @@ Beyond that, we need the following before starting:
 Once we hold the node, setup takes roughly ten minutes: a quick install (plus the
 ollama download when one is needed) and a one-time model pull of about 20 GB, both
 bound by your site's bandwidth. The first agent turn arrives shortly after
-`rocbudai` starts, and is slower on older (CDNA2) GPUs. Without a GPU node, the
-[`aim-engine`](../aim-engine/README.md) example runs the agent with no local GPU,
-but it needs a Kubernetes cluster that already runs AIM Engine.
+`rocbudai` starts, and is slower on older (CDNA2) GPUs.
 
-## How it works
+## How it works (read only if interested in the technicalities)
 
 `install-rocbudai-ollama.sh` clones rocBudAI at a pinned commit and applies
 `patches/rocbudai-ollama.patch`. It stages checksum-verified `opencode` and `rg`
@@ -82,8 +75,8 @@ once:
 ./install-rocbudai-ollama.sh --models-dir /path/with/space/ollama-models
 ```
 
-Then load the module and start our own ollama daemon. rocBudAI
-reserves the last visible GPU for benchmarks, so we start the daemon on the GPUs
+Then load the module and start your own ollama daemon. rocBudAI
+reserves the last visible GPU for benchmarks, so you start the daemon on the GPUs
 the topology helper assigns to the model:
 
 ```bash
@@ -95,7 +88,7 @@ module load rocbudai/ollama
 ```
 
 Ollama has no authentication, so on a node shared with other users anyone on
-that node can reach this daemon and use our model. We prefer an exclusive
+that node can reach this daemon and use your model. We prefer an exclusive
 allocation, or at least a non-default port set with `--ollama-host` at install
 time.
 
@@ -113,8 +106,8 @@ cd <your-project-dir>
 rocbudai
 ```
 
-Unlike the cluster-served variants (whose module launches the agent on load),
-loading `rocbudai/ollama` only sets the environment; `rocbudai` then starts the
+
+**NOTE**: loading `rocbudai/ollama` only sets the environment; `rocbudai` then starts the
 agent. Session resume and session files work the same as in every recipe (see
 [What every recipe shares](../README.md#what-every-recipe-shares)). When we are
 done, we stop the daemon with `pkill -u $USER -x ollama`, which also releases its
