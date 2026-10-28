@@ -1,56 +1,61 @@
 # KAL live captions
 
-We present a talk in English and the audience reads live Mexican-Spanish
-subtitles. A microphone is transcribed on the CPU with faster-whisper, each
-complete phrase is translated by the KAL model served through vLLM, and the
-Spanish text is streamed into a file that a display source reads. There is no
-speech synthesis, so the only perceived delay is the time until the first
-translated token appears.
+When we give a technical talk in English to an audience that reads Spanish, the
+language gets in the way even when the slides are shared. Meeting platforms can
+show live captions, but they transcribe whatever language is being spoken, so an
+English talk produces English captions. What the audience needs is the reverse:
+our English speech shown as Spanish subtitles, produced quickly enough to read
+along as we speak.
 
-The translator is [SaptivaAI/KAL-24B-mx-v1](https://huggingface.co/SaptivaAI/KAL-24B-mx-v1),
-a Mexican-Spanish model, served behind an OpenAI-compatible API. Any
-OpenAI-compatible endpoint and model can be substituted through the environment
-variables below, though the prompt in `live_captions.py` is written for
-English-to-Mexican-Spanish technical speech.
+This example is a small pipeline that does that. It listens to the microphone,
+recognizes the English speech, translates each sentence into Mexican Spanish, and
+writes the result to a file that a caption display reads. Nothing is spoken back,
+so the audience hears our own voice while they read the translation.
 
 ## How it works
 
-The audio callback tracks short-term energy to find phrase boundaries. It
-accumulates a phrase while we speak and, on a brief trailing silence, hands the
-whole utterance to a worker thread. The worker transcribes that utterance once
-and then streams its translation, so the caption fills in token by token and a
-new line begins on the next phrase. Capturing whole phrases, rather than
-repeatedly re-decoding a growing buffer, keeps the model fed with complete
-sentences and avoids both dropped audio and sentences cut in the middle.
+We read the microphone in short frames and track the energy of each frame to tell
+speech from silence. Frames are grouped into a phrase, and the phrase is released
+once a brief pause marks its end. Each finished phrase is transcribed once, on the
+CPU, with faster-whisper, and the text is sent to the translator. The translation
+streams back token by token, so the Spanish line grows on screen as it is produced
+and a new line begins with the next phrase. Because we translate whole phrases
+rather than a buffer we re-read as it fills, the translator always sees complete
+sentences and no audio is lost while it is busy. The delay the audience notices is
+the time to the first translated token, not the time to finish a sentence.
 
-Two filters keep phantom captions off the screen. faster-whisper reports a
-no-speech probability and an average log-probability per segment, and we discard
-segments that score poorly on either; a short list of the words whisper tends to
-emit from silence is dropped as well. A small substitution table repairs coined
-tool names that whisper reliably mis-hears before they reach the translator.
+Silence and background noise can make the recognizer emit stray words. We guard
+against this in two ways. Every recognized segment carries a no-speech probability
+and an average token probability, and we drop the segments that look more like
+noise than speech. We also keep a short substitution table for the coined tool
+names the recognizer tends to mishear, and apply it before translation.
 
 ## Requirements
 
-The client runs on the machine with the microphone (Windows, macOS, or Linux):
+The client runs on the machine with the microphone, on Windows, macOS, or Linux.
+We create a virtual environment and install the dependencies:
 
 ```
 python -m venv venv
 venv/bin/pip install -r requirements.txt   # venv\Scripts\pip on Windows
 ```
 
-The translator runs wherever a GPU is available. The first run downloads the
-model weights.
+The translator runs wherever a GPU is available. Serving it is described next.
 
 ## Serving the translator
 
-`serve_vllm.sh` starts vLLM and exposes the API on port 8000:
+We serve the translator with vLLM, which exposes an OpenAI-compatible API on port
+8000. The model used here is
+[SaptivaAI/KAL-24B-mx-v1](https://huggingface.co/SaptivaAI/KAL-24B-mx-v1), trained
+for Mexican Spanish. Any OpenAI-compatible endpoint can take its place by pointing
+the client at a different URL and model name. The first run downloads the weights.
 
 ```
 bash serve_vllm.sh
 ```
 
-On a batch system we wrap this invocation in a scheduler job script and request
-one GPU. When the serving node is not the client machine, we forward the port
+On a batch system we wrap that command in a scheduler job script and request one
+GPU. When the GPU is on a different machine from the client, we forward the port
 over SSH so the client reaches the API at `localhost:8000`:
 
 ```
@@ -59,55 +64,58 @@ ssh -N -L 8000:SERVING_NODE:8000 USER@LOGIN_HOST
 
 ## Running the captions
 
-With the API reachable, start the client:
+With the API reachable, we start the client:
 
 ```
 python live_captions.py
 ```
 
-We speak in English and watch the terminal, which prints each English phrase, its
-Spanish translation, and per-utterance timings. The current caption is written to
-`caption.txt` next to the script.
+We speak in English. The terminal prints each recognized phrase, its translation,
+and the per-phrase timings, and the current caption is written to `caption.txt`
+next to the script.
 
 ## Showing the captions
 
-For a shared screen, `caption_overlay.py` draws a semi-transparent, always-on-top
-bar that reads `caption.txt`. We share the entire screen so the bar is captured
-with the slides. On Windows the bar is click-through and quits with Ctrl+Alt+Q;
-elsewhere it quits with Escape. The bar clears itself after a few idle seconds so
-a finished line does not linger.
+The caption file is meant to be read by whatever the audience already sees, and
+this example comes with two displays for it.
 
-For a talking-head feed, OBS reads the same file: add a Text (GDI+) source, enable
-read-from-file, point it at `caption.txt`, start the virtual camera, and select
-that camera in the meeting application. Any video background effect in the meeting
-application will cover captions burned onto the camera, so we leave it off.
+When we share the whole screen, `caption_overlay.py` floats a translucent bar
+across it that mirrors `caption.txt`. On Windows the bar lets clicks pass through
+to the windows beneath it and closes with Ctrl+Alt+Q; on other systems it closes
+with Escape. It clears itself after a short silence so a finished sentence does
+not linger.
 
-## Evaluating and tuning
+When we share a camera instead, OBS can read the same file: add a Text (GDI+)
+source, enable read-from-file, point it at `caption.txt`, and select the OBS
+virtual camera in the meeting application. A video background effect in the meeting
+application hides captions drawn on the camera, so we leave it off.
 
-The pipeline has two quality stages, and `eval/` measures each offline so changes
-can be compared without a live meeting.
+## Tuning and evaluation
 
-`eval/stt_eval.py` reports transcription word-error-rate and decode speed per
-model. We record a representative sample as `eval/audio/NAME.wav` with the spoken
-words in `eval/audio/NAME.txt`, then:
+The pipeline has two quality stages, recognition and translation, and the `eval`
+folder measures each offline so a change can be judged without a live meeting.
+
+`eval/stt_eval.py` reports the recognizer word-error-rate and decode speed for one
+or more models. We place a recording at `eval/audio/NAME.wav` with its transcript
+at `eval/audio/NAME.txt`, then:
 
 ```
 python eval/stt_eval.py tiny.en base.en
 ```
 
 `eval/mt_eval.py` sends the lines in `eval/eval_set_en.txt` through the running
-translator and checks that terms meant to stay English survive, that the reply is
-a translation rather than a chatbot answer, that no formatting leaks through, and
-that latency stays low:
+translator and checks each result: that terms meant to stay in English survive,
+that the model translated rather than answered, that no formatting leaked through,
+and that the latency stays low.
 
 ```
 python eval/mt_eval.py
 ```
 
-Each tool writes a timestamped report, so a prompt or model change is evaluated by
-running it before and after and diffing the two reports.
+Each tool writes a timestamped report, so we judge a prompt or model change by
+running it before and after and comparing the two reports.
 
-The behaviour is adjusted through environment variables read by the client:
+Day-to-day behaviour is set through environment variables read by the client:
 
 | variable | meaning |
 |---|---|
@@ -123,8 +131,9 @@ The behaviour is adjusted through environment variables read by the client:
 The overlay reads `KAL_OVL_POS` (top or bottom), `KAL_OVL_FONT`, `KAL_OVL_ALPHA`,
 `KAL_OVL_IDLE` (idle seconds before clearing), and `KAL_OVL_CLICKTHROUGH`.
 
-The KEEP list in `live_captions.py` names the product names and acronyms that must
-stay in English. Generic vocabulary such as throughput, latency, and bandwidth is
-deliberately left off that list so the model renders it in Spanish, which reads
-more naturally for the audience. `eval/mt_eval.py` carries a copy of the list, and
-the two must agree for its check to reflect the client.
+One list is worth calling out. The KEEP list in `live_captions.py` holds the
+product names and acronyms that must stay in English. Generic vocabulary such as
+throughput, latency, and bandwidth is deliberately left off it, so the model
+renders those words in Spanish, which reads more naturally for the audience.
+`eval/mt_eval.py` keeps its own copy of the list for the preservation check, and
+the two should agree.
