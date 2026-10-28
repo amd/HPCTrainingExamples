@@ -1,0 +1,96 @@
+{
+  "status": "complete",
+  "started_utc": "2026-09-30T13:47:40.842467+00:00",
+  "python": "3.12.13",
+  "torch": "2.9.1+rocm7.2.1.gitff65f5bc",
+  "scipy": "1.18.0",
+  "physicsnemo": "2.1.1",
+  "rocm": "7.2.53211-e1a6bc5663",
+  "device": "cuda:0",
+  "device_name": "AMD Radeon Graphics",
+  "checkpoint_sha256": "c8b50c3ee8673ccf6c14a17cdc530c0a109ca5f55e81146593d9722f88971bee",
+  "checkpoint_epoch": 200,
+  "observation": {
+    "frame_after_initial": 25,
+    "model_output_index": 24,
+    "initial_vtk": "Bumper_Beam_AP_meshedA001.vtk",
+    "observed_vtk": "Bumper_Beam_AP_meshedA026.vtk",
+    "initial_vtk_sha256": "6a33829552001d7b33cefde738fe1632f6c8cb9ae06a80cd9321840007ca5745",
+    "observed_vtk_sha256": "5d874902548a63d863e09a3a38aacf70dd8dff6b60aa1c487f6fdc8e65855771",
+    "solver_time": 25.0002,
+    "solver_time_units": "native solver time units; no conversion assumed",
+    "training_frame_label": 0.125,
+    "frame_mapping": "Training conversion labels frame k as k*0.005; model uses first 51 frames, without resampling.",
+    "velocity_x": -7.0,
+    "rwall_origin_y": 0.0,
+    "excluded_part_id": 1,
+    "true_design": {
+      "crash_box": 0.9571428571428571,
+      "beam": 1.02
+    },
+    "observed_nodes": 13675,
+    "total_nodes": 13882,
+    "source": "OpenRadioss FEA; displacement is moving coordinates minus A001 coordinates",
+    "observation_sha256": "5b4972ed5d853be378cd4961f30763090b71acf8b43e93d1913d7a71c0aa16d8"
+  },
+  "observed_nodes": 13675,
+  "noise_mm": 0.0,
+  "seed": 7,
+  "grid_size": 7,
+  "maxiter": 50,
+  "holdout_verified": true,
+  "holdout_evidence": "data/checkpoint_training_manifest.json",
+  "observation_rms_mm": 122.88184120204707,
+  "nominal_gradient": [
+    -0.00012077830615453422,
+    0.0004589659802149981
+  ],
+  "gradient_checks": [
+    {
+      "step": 0.01,
+      "finite_difference": [
+        -0.00012114178389310837,
+        0.0004606496077030897
+      ],
+      "absolute_difference": [
+        3.634777385741472e-07,
+        1.683627488091588e-06
+      ]
+    },
+    {
+      "step": 0.001,
+      "finite_difference": [
+        -0.00012223608791828156,
+        0.00046123750507831573
+      ],
+      "absolute_difference": [
+        1.4577817637473345e-06,
+        2.271524863317609e-06
+      ]
+    }
+  ],
+  "selection": "optimizer",
+  "selected_start": 2,
+  "solver_success": true,
+  "solver_message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+  "inferred_design": {
+    "crash_box": 1.020583175378249,
+    "beam": 0.9923889346184378
+  },
+  "absolute_parameter_error": {
+    "crash_box": 0.06344031823539198,
+    "beam": 0.027611065381562216
+  },
+  "fitted_vector_rmse_mm": 4.178382058447167,
+  "nominal_vector_rmse_mm": 4.183783720518394,
+  "true_design_surrogate_vector_rmse_mm": 4.241254315870166,
+  "relative_field_error": 0.034003250745379944,
+  "normalized_mse": 0.0011562210274860263,
+  "fea_validated_inferred_design": false,
+  "fitting_seconds": 17.038173138862476,
+  "plots": [
+    "displacement_fit.png",
+    "loss_landscape.png",
+    "convergence.png"
+  ]
+}

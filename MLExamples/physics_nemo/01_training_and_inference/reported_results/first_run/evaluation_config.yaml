@@ -1,0 +1,64 @@
+reader:
+  _target_: vtp_reader.Reader
+  _convert_: all
+datapipe:
+  _target_: datapipe.CrashPointCloudDataset
+  _convert_: all
+  data_dir: data/vtp_holdout
+  global_features_filepath: data/global_features.json
+  num_samples: 2
+  num_steps: 51
+  sample_type: all_time_steps
+  static_features: []
+  dynamic_features: []
+  dynamic_targets:
+  - effective_plastic_strain
+  - stress_vm
+  global_features:
+  - velocity_x
+  - crash_box_thick_scale
+  - beam_thick_scale
+  - rwall_origin_y
+  stats_dir: checkpoint/stats
+model:
+  _target_: rollout.GeoTransolverOneShot
+  _convert_: all
+  functional_dim: 3
+  out_dim: 250
+  geometry_dim: 3
+  global_dim: 4
+  slice_num: 128
+  n_layers: 6
+  use_te: false
+  time_input: false
+  include_local_features: true
+  num_time_steps: 51
+  attention_type: GALE_FA
+training:
+  raw_data_dir: data/vtp_holdout
+  raw_data_dir_validation: data/vtp_holdout
+  global_features_filepath: data/global_features.json
+  max_workers_preprocessing: 64
+  optimizer: muon
+  optimizer_weight_decay: 0.0001
+  num_time_steps: 51
+  num_training_samples: 2
+  num_validation_samples: 0
+  start_lr: 0.0001
+  end_lr: 3.0e-07
+  epochs: 200
+  validation_freq: 10
+  save_checkpoint_freq: 10
+  amp: true
+  num_dataloader_workers: 4
+  ckpt_path: checkpoint/checkpoints
+  tensorboard_log_dir: ./tensorboard_logs
+  displacement_loss_alpha: 2.0
+  peak_loss_weight: 0.5
+  peak_loss_top_k: 50
+  peak_plastic_strain_loss_weight: 0.5
+inference:
+  output_dir_pred: ./predicted_vtps
+  output_dir_exact: ./exact_vtps
+  raw_data_dir_test: data/vtp_holdout
+experiment_name: Bumper-GeoFLARE-2D-Thickness

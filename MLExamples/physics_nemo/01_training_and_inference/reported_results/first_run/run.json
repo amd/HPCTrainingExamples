@@ -1,0 +1,19 @@
+{
+  "status": "complete",
+  "started_utc": "2026-09-28T15:27:13.332765+00:00",
+  "python": "3.12.14",
+  "platform": "Linux-6.8.0-134-generic-x86_64-with-glibc2.35",
+  "torch": "2.11.0+rocm10.0.0",
+  "rocm": "7.15.26333",
+  "physicsnemo": "2.1.1",
+  "pyvista": "0.49.0",
+  "device": "cuda:0",
+  "device_name": "AMD Instinct MI300A",
+  "force_adam_mi300a": true,
+  "optimizer": "Adam",
+  "toy_training_seconds": 67.49129986763,
+  "model_archive_gb": 0.027181934,
+  "model_tensor_gb": 0.027111872,
+  "checkpoint_epoch": 200,
+  "total_seconds": 136.90930771827698
+}

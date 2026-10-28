@@ -1,0 +1,23 @@
+{
+  "frame_after_initial": 25,
+  "model_output_index": 24,
+  "initial_vtk": "Bumper_Beam_AP_meshedA001.vtk",
+  "observed_vtk": "Bumper_Beam_AP_meshedA026.vtk",
+  "initial_vtk_sha256": "6a33829552001d7b33cefde738fe1632f6c8cb9ae06a80cd9321840007ca5745",
+  "observed_vtk_sha256": "5d874902548a63d863e09a3a38aacf70dd8dff6b60aa1c487f6fdc8e65855771",
+  "solver_time": 25.0002,
+  "solver_time_units": "native solver time units; no conversion assumed",
+  "training_frame_label": 0.125,
+  "frame_mapping": "Training conversion labels frame k as k*0.005; model uses first 51 frames, without resampling.",
+  "velocity_x": -7.0,
+  "rwall_origin_y": 0.0,
+  "excluded_part_id": 1,
+  "true_design": {
+    "crash_box": 0.9571428571428571,
+    "beam": 1.02
+  },
+  "observed_nodes": 13675,
+  "total_nodes": 13882,
+  "source": "OpenRadioss FEA; displacement is moving coordinates minus A001 coordinates",
+  "observation_sha256": "5b4972ed5d853be378cd4961f30763090b71acf8b43e93d1913d7a71c0aa16d8"
+}

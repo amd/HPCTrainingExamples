@@ -85,3 +85,5 @@ build/
 # Julia manifests
 Manifest.toml
 Manifest-v*.toml
+
+# PhysicsNeMo application artifacts are ignored in each application's .gitignore.

@@ -1,0 +1,68 @@
+{
+  "status": "complete",
+  "checkpoint_sha256": "c8b50c3ee8673ccf6c14a17cdc530c0a109ca5f55e81146593d9722f88971bee",
+  "epoch": 200,
+  "device": "cuda:0",
+  "torch": "2.9.1+rocm7.2.1.gitff65f5bc",
+  "physicsnemo": "2.1.1",
+  "scipy": "1.18.0",
+  "rocm": "7.2.53211-e1a6bc5663",
+  "device_name": "AMD Radeon Graphics",
+  "arguments": {
+    "limit_mm": 1.0,
+    "safety_factor": 1.0,
+    "velocity": -7.0,
+    "wall_position": 0.0,
+    "grid_size": 2,
+    "maxiter": 3,
+    "output_dir": "/home/nicob/AIEvent/HPCTrainingExamples/MLExamples/physics_nemo/02_design_optimization/results/infeasible-check"
+  },
+  "nominal_peak_mm": 344.816650390625,
+  "nominal_gradient": [
+    -43.67599105834961,
+    -88.84185791015625
+  ],
+  "gradient_checks": [
+    {
+      "step": 0.01,
+      "finite_difference": [
+        -43.67828369140625,
+        -88.83819580078125
+      ],
+      "absolute_difference": [
+        0.002292633056640625,
+        0.003662109375
+      ]
+    },
+    {
+      "step": 0.001,
+      "finite_difference": [
+        -43.6248779296875,
+        -88.8519287109375
+      ],
+      "absolute_difference": [
+        0.051113128662109375,
+        0.01007080078125
+      ]
+    }
+  ],
+  "best_feasible_grid": null,
+  "candidate": {
+    "crash_box": 1.2999999999999994,
+    "beam": 1.3,
+    "mass_proxy": 1.2999999999999998,
+    "peak_mm": 299.1270751953125,
+    "adjusted_peak_mm": 299.1270751953125,
+    "gradient": [
+      -44.64363098144531,
+      -101.65367889404297
+    ],
+    "violation_mm": 298.1270751953125,
+    "predicted_feasible": false
+  },
+  "solver_success": false,
+  "solver_message": "Iteration limit reached",
+  "iterations": 3,
+  "fea_validated": false,
+  "total_seconds": 12.278102703014156
+}
