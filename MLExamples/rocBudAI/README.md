@@ -17,7 +17,7 @@ This directory shows how to try rocBudAI at a user level instead, without
 administrator access. Each subdirectory installs the stock agent into our home
 directory and changes only where the model is served.
 
-The agent and its workflow are identical across the three subdirectories; only the
+The agent and its workflow are identical across the four subdirectories; only the
 trust boundary and the model differ. The behavior they share is collected in
 [What every recipe shares](#what-every-recipe-shares) below, so each subdirectory
 documents only what is unique to it.
@@ -28,16 +28,22 @@ documents only what is unique to it.
 - [`aim-engine`](aim-engine/README.md): runs the agent as a thin client of a large
   model served by [`LLM_Serving/aim-engine`](../LLM_Serving/aim-engine/README.md),
   on a cluster we assert is trusted and in-boundary. The agent then also runs from
-  a login node or a laptop without a local GPU.
+  a login   node or a laptop without a local GPU.
 - [`atom`](atom/README.md): runs the agent against a frontier model (Kimi-K3)
   served on the same cluster by AMD's [ATOM](https://github.com/ROCm/ATOM) engine
   on an MI355X node. The model runs on a compute node and the agent on the login
   node, so like `aim-engine` it needs no local GPU, but model, weights and agent
   all stay on one HPC system.
+- [`muse`](muse/README.md): runs the agent against a frontier model
+  (Muse-Spark-Open) served on the same cluster by mainline
+  [vLLM](https://github.com/vllm-project/vllm) built from source on an MI355X node.
+  Like `atom` the model runs on a compute node and the agent on the login node with
+  no local GPU, and model, weights and agent all stay on one HPC system; it differs
+  in the serving engine.
 
 ## What every recipe shares
 
-The three recipes differ only in the model and where it is served; the agent and
+The four recipes differ only in the model and where it is served; the agent and
 its workflow are the same. The common parts are described once here, and each
 subdirectory links back rather than repeating them.
 
