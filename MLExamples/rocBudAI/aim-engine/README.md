@@ -23,9 +23,7 @@ no GPU of its own.
 > This setup does not provide the stock rocBudAI airgap: it installs nothing that
 > blocks the agent's traffic, and `rocbudai-airgap-check` only probes whether the
 > host is restricted. Privacy rests on our assertion that the serving cluster is
-> trusted, plus the checks in [The trust boundary](#the-trust-boundary). It is a
-> preview, not the production airgap (see
-> [What every recipe shares](../README.md#what-every-recipe-shares)).
+> trusted, plus the checks in [The trust boundary](#the-trust-boundary).
 
 Beyond that, we need the following before starting:
 
@@ -50,7 +48,7 @@ Beyond that, we need the following before starting:
 Two serving properties matter for the persona to work. The model must be a large,
 tools-strong model (about 120B class): small models follow the strict persona and
 first-turn rules unreliably. And the context window must fit the persona, which
-is about 28k tokens. A vLLM `--max-model-len` of 32k stalls on prefill, so we
+is currently about 28k tokens. A vLLM `--max-model-len` of 32k stalls on prefill, so we
 prefer 64k or more. The launcher reads the served `max_model_len` and warns when
 it is small.
 
@@ -58,11 +56,9 @@ With a model already serving, setup is short: authenticating `kubectl` and
 running the installer, which clones rocBudAI and writes a modulefile. Deploying
 the model at install time adds its image pull and weight download, which for
 gpt-oss-120b (tens of GB) takes many minutes, and some catalog models exceed
-600 GB. Without a cluster that already runs AIM Engine, this example is not the
-place to start: the [`ollama`](../ollama/README.md) example needs only a GPU
-node.
+600 GB. 
 
-## How it works
+## How it works (read only if interested in the technicalities)
 
 `install-rocbudai-aim.sh` does four things:
 
@@ -71,7 +67,7 @@ node.
 3. it drops in the no-GPU addendum;
 4. it writes an Lmod modulefile that reuses rocBudAI's own load hook.
 
-We install into a prefix in our home directory by default and touch nothing
+It installs into a prefix in your home directory by default and touch nothing
 system-wide.
 
 The patch (`patches/rocbudai-aim.patch`) adds one backend branch to the stock
@@ -105,13 +101,13 @@ ollama launch path requires.
 
 ## The trust boundary
 
-rocBudAI's promise is that our code, prompts and model output never leave a
-boundary we trust. With a local ollama model that boundary is the GPU node; over
+rocBudAI's canonical setup is that your code, prompts and model output never leave a
+boundary you trust. With a local ollama model that boundary is the GPU node; over
 AIM it becomes the cluster that serves the model. The recipe therefore treats
 trust as an explicit, verifiable assertion rather than an assumption.
 
-The installer asks us to confirm (or takes `--trust`) that the cluster is one we
-control and that is severed from the internet. It bakes `ROCBUDAI_AIM_TRUSTED=1`
+The installer asks us to confirm (or takes `--trust`) that the cluster is a trusted one.
+It bakes `ROCBUDAI_AIM_TRUSTED=1`
 into the modulefile only if so. At launch the patched `rocbudai-tui` re-checks
 that flag and refuses to start without it, and it resolves the endpoint only if
 it points at an in-boundary address. `rocbudai-airgap-check` verifies the rest on
@@ -122,10 +118,6 @@ demand:
 - an advisory host-egress probe;
 - with `--deep`, that the predictor Service is a ClusterIP, not a publicly
   reachable LoadBalancer or NodePort.
-
-This is a defensible ceiling, not a proof. The assertion is the human judgment
-and the checks make it verifiable: they catch obvious leaks, not a determined
-insider. Cluster admins are trusted, and login nodes often have open egress.
 
 ## Quick start
 
@@ -188,7 +180,7 @@ cd <your-project-dir>          # the code you want rocBudAI to profile
 module load rocbudai
 ```
 
-Loading the module launches the TUI (terminal user interface) exactly as every
+Loading the module launches the terminal user interface (TUI) exactly as every
 recipe does (see
 [What every recipe shares](../README.md#what-every-recipe-shares)). One detail is
 specific here: on a fresh session the launcher first asks which GPU we are
@@ -207,14 +199,15 @@ workloads submitted to a Slurm HPC system with `rocbudai-submit`. Today the reci
 targets running the agent on the HPC login node itself: Slurm is on `PATH` and the
 compute nodes share the login node's filesystem, so the agent submits jobs
 directly. `rocbudai-submit` comes with the rocBudAI tree the installer stages, so
-it is always on `PATH`.
+it is always on `PATH`. Interested users could modify the recipe to run the agentic flow
+on their laptop and instruct it to ssh into a cluster before submitting jobs with the scheduler.
 
 `rocbudai-submit` carries no hardcoded cluster information. It reads the target
 partition from `ROCBUDAI_SUBMIT_PARTITION`, falling back to the Slurm cluster
 default when unset, and `-p` overrides it per run. Passing `--submit-partition` at
 install time bakes the site's GPU partition into the modulefile so dispatched
-jobs land where they should. We leave it unset only if the cluster default
-partition is already the right GPU partition.
+jobs land where they should. You should leave it unset only if the cluster default
+partition is already the right GPU partition you want to profile on.
 
 ## Options
 
@@ -232,7 +225,7 @@ partition is already the right GPU partition.
 | `--dry-run` | print actions without changing anything |
 | `--help` | usage |
 
-The persona is chosen for the profiling target we work on, independent of the GPU
+The persona is chosen for the profiling target you work on, independent of the GPU
 serving the model, so one shared install drives every supported architecture: the
 launcher asks at the start of each fresh session. `--gfx-arch` is for a
 single-architecture site that prefers to pin one default (baked into the
@@ -253,7 +246,7 @@ It forwards `--model-image`, `--max-model-len` and repeatable
 Both examples below assume an authenticated `kubectl` (Quick start, step 1). The
 `<tag>` in `--model-image` is the AIM release version, and
 `AIM_ACCELERATOR_COUNT` must match a GPU count the image ships a profile for (a
-wrong count reports `ProfileNotFound`). We get both the same way: list what the
+wrong count reports `ProfileNotFound`). You get both the same way: list what the
 cluster serves with `kubectl get aimclustermodels`, then read the exact tag and
 the valid counts from `kubectl get aimclustermodel <name> -o yaml`. The
 [Model catalog](../../LLM_Serving/aim-engine/deploy/README.md#model-catalog)
