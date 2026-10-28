@@ -76,6 +76,14 @@ dispatches every build, run and profiler job through `rocbudai-submit` to Slurm
 instead of running it locally. For a recipe that assumes a GPU is present (the Ollama recipe)
 the addendum is omitted and the stock local flow applies.
 
+Two knobs behave the same way in every recipe. The GPU jobs the agent dispatches run
+through `rocbudai-submit`, which targets the partition in `ROCBUDAI_SUBMIT_PARTITION`
+(the Slurm default when unset) and takes `-p <partition>` per run; recipes that bake a
+partition at install do so from an installer flag. The persona matches the GPU you are
+profiling, not the one serving the model, and is chosen with `--gfx-arch` (or
+`ROCBUDAI_GFX_ARCH` for a single shell); each recipe states whether it pins a default
+or asks per fresh session.
+
 A remotely served model reaches opencode through a custom provider
 it has no metadata for, so the launcher declares the served context window as that
 model's `limit` in `opencode.json`. That is what lets opencode auto-compact the

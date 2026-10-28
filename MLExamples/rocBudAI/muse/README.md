@@ -5,7 +5,7 @@
 | Model | Muse-Spark-Open, frontier MoE (816B-A42B, MXFP4) |
 | Engine | mainline vLLM (built from source) on an MI355X node |
 | Needs | an 8-GPU MI355X via Slurm (`--mem=0`), the ~510 GB weight cache, no local GPU |
-| Setup | minutes on a prepared cluster; else a one-time source build + ~510 GB download |
+| Setup | a one-time source build + ~510 GB download |
 
 This directory runs [rocBudAI](../README.md) as a thin client of
 [Muse-Spark-Open](https://huggingface.co/amd/Muse-Spark-Open-816B-A42B-Quark-MXFP4)
@@ -42,9 +42,7 @@ the model on a compute node, and the weights in a shared offline cache.
 > This setup does not reproduce the stock rocBudAI airgap and Slurm gating. The
 > model, the weights cache and the agent all stay on the cluster, and the module
 > disables opencode's phone-home, but nothing here blocks the login node's own
-> egress. Privacy rests on the cluster being trusted and in-boundary. It is a
-> preview, not the production airgap (see
-> [What every recipe shares](../README.md#what-every-recipe-shares)).
+> egress. Privacy rests on the cluster being trusted and in-boundary.
 
 We need the following before starting:
 
@@ -58,9 +56,7 @@ We need the following before starting:
   for the MXFP4 checkpoint, plus the DSpark draft). The cache is downloaded once
   and reused by everyone; see [Building the engine](#building-the-engine).
 - A muse-capable vLLM `vllm/<ver>` Lmod module, built from source (vLLM plus its
-  AITER MXFP4 MoE kernels), staged on a shared `module use` path. On a prepared
-  cluster it is already installed and world-readable, so most users skip the build
-  entirely.
+  AITER MXFP4 MoE kernels), staged on a shared `module use` path.
 - `opencode` on `PATH`. The module ships a pinned copy; a site that stages its own
   points `ROCBUDAI_OPENCODE_BIN` at it.
 
@@ -70,7 +66,7 @@ is nothing to build: we load the module and start a server (see
 source build plus the one-time weights download, which for the ~510 GB MXFP4
 checkpoint is bound by your site's bandwidth and storage.
 
-## How it works
+## How it works (read only if interested in the technicalities)
 
 The recipe has two halves: the agent side (a modulefile any user loads) and the
 engine side (the vLLM server each user starts in their own allocation).
@@ -85,12 +81,10 @@ The agent side is produced by `install-rocbudai-muse.sh`, which, like its
    rocBudAI's own load hook.
 
 It installs into a prefix in our home directory by default and touches nothing
-system-wide. The patch keys everything on `ROCBUDAI_BACKEND=vllm` and leaves the
-ollama path untouched: loading the module points the stock launcher at an
+system-wide. The patch keys everything on `ROCBUDAI_BACKEND=vllm`:
+ loading the module points the stock launcher at an
 OpenAI-compatible endpoint, declares the model's context window so opencode
-auto-compacts instead of overflowing, and launches the TUI. On a prepared cluster
-the agent is already installed at a world-readable shared prefix, so most users
-skip the install and just `module load`.
+auto-compacts instead of overflowing, and launches the TUI. 
 
 Because the agent runs on a login node with no local GPU, the no-GPU addendum
 engages and dispatches each profiler job through `rocbudai-submit` (see
@@ -134,9 +128,6 @@ Run the installer; it clones and patches rocBudAI and writes the modulefile:
 ```bash
 ./install-rocbudai-muse.sh                      # into $HOME/opt/rocbudai/muse
 ```
-
-If your site has already staged the agent at a shared prefix, skip the install and
-`module use <that-prefix>/modulefiles` directly.
 
 Point the serve defaults and shared cache at your own engine build (see
 [Building the engine](#building-the-engine)) and, optionally, publish to a shared
@@ -197,9 +188,21 @@ endpoint instead of auto-detection, export
 `ROCBUDAI_OPENAI_BASE=http://host:port/v1` before loading; a real remote value is
 respected, a loopback one is ignored so detection can run.
 
+## Partition and persona
+
+- **Submit partition.** The agent dispatches GPU jobs through `rocbudai-submit` to
+  `ROCBUDAI_SUBMIT_PARTITION`, baked from `--partition` at install (default
+  `mi355x`). Override it per run with `-p <partition>`, or export
+  `ROCBUDAI_SUBMIT_PARTITION` before `module load`. These jobs land in a separate
+  allocation from the model's, which is saturated by Muse-Spark-Open.
+- **Persona.** The persona matches the GPU you are *profiling*, independent of the
+  GPU serving the model. Unlike `aim-engine`, this recipe pins it at install
+  (`--gfx-arch`, default `gfx950`) instead of asking per session; override it for one
+  shell by exporting `ROCBUDAI_GFX_ARCH=<arch>` before `module load`.
+
 ## Building the engine
 
-Most users on a prepared cluster never build anything. The setup kit in this
+The setup kit in this
 directory is for reproducing the install or porting it to another MI355X system.
 Every setting lives in `config.sh` and is overridable; export a variable before
 sourcing to change it. By default the scripts reuse the shared prebuilt engine, so

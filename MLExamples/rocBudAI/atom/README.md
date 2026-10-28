@@ -40,9 +40,7 @@ We need the following before starting:
 - The Kimi-K3 weights in a shared, offline HuggingFace cache (about 1.5 TB). The
   cache is downloaded once and reused by everyone; see
   [Building the engine](#building-the-engine).
-- The ATOM engine and a matching AITER wheel staged on a shared path. On a
-  prepared cluster both are already installed and world-readable, so most users
-  skip the build entirely.
+- The ATOM engine and a matching AITER wheel staged on a shared path. 
 - `opencode` on `PATH`. The module ships a pinned copy; a site that stages its own
   points `ROCBUDAI_OPENCODE_BIN` at it.
 
@@ -79,25 +77,21 @@ specific here: the model's own allocation is saturated by Kimi-K3, so dispatched
 GPU jobs land in a separate allocation on the `mi355x` partition
 (`ROCBUDAI_SUBMIT_PARTITION`).
 
-The server is `rocbudai-serve-kimi`, run inside an MI355X allocation. A stock vLLM
-module built for a site's base ROCm typically cannot serve Kimi-K3's architecture,
-and a vLLM new enough to do so needs a newer ROCm than many sites ship by default.
-ATOM instead installs as pure Python against a pinned ROCm and GPU, reusing a
-prebuilt `vllm` module's torch (2.10 by default). This recipe expects that engine
-pre-installed as a `vllm/<ver>` Lmod module — the pinned defaults target
-`vllm/0.19.1-pt2.10.0` on `rocm/7.2.2` — built from source with AMD's HPCTrainingDock
-[`vllm_setup.sh`](https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/vllm_setup.sh)
-(pinned via `--vllm-ref`/`--vllm-version`); this recipe only layers ATOM on top. ATOM
-needs a newer AITER than that module ships (the first run died on
-`ImportError: cannot import name 'topk_select' from 'aiter'`), so a pinned AITER
-release wheel (`v0.1.25`, built for `rocm7.2`) is layered ahead of the module on
-`PYTHONPATH`, where the first entry wins. The command serves the MXFP4 MoE
-checkpoint with online `ptpc_fp8` quantization and an fp8 KV cache, tensor-parallel
-across the eight GPUs, binding `0.0.0.0:8000` so the login node can reach it.
+The server is `rocbudai-serve-kimi`, run inside an MI355X allocation. As of October 2026, no stock vLLM
+serves Kimi-K3 on the ROCm most sites ship: a vLLM old enough to match that ROCm
+predates Kimi-K3's architecture, while a vLLM new enough to support it needs a newer
+ROCm. ATOM sidesteps this by installing as pure Python on top of a prebuilt `vllm`
+Lmod module, reusing that module's PyTorch and Triton instead of demanding a new
+ROCm. Because ATOM might need newer `aiter` symbols than the module ships, a pinned AITER
+wheel is layered ahead of it on `PYTHONPATH`, where the first entry wins. The command
+then serves the MXFP4 MoE checkpoint with online `ptpc_fp8` quantization and an fp8
+KV cache, tensor-parallel across the eight GPUs, binding `0.0.0.0:8000` so the login
+node can reach it. The exact versions this is pinned to — and how to move to another
+ROCm or GPU — are in [Engine versions and porting](#engine-versions-and-porting).
 
-Mixing a newer AITER and ATOM against the `vllm` module's torch 2.10 means their
-Triton-facing kernels do not all match the module's Triton, so two of them are
-pinned to version-stable paths:
+ATOM and the pinned AITER wheel might be newer than the `vllm` module they layer on, so
+their Triton-facing kernels do not all match the PyTorch and Triton that module
+provides. Two of them are therefore pinned to version-stable paths:
 
 - ATOM's packed host-to-device helper calls a cached Triton kernel directly, an
   ABI that the module's Triton rejects (`function takes exactly 14 arguments
@@ -108,11 +102,13 @@ pinned to version-stable paths:
   attribute '_flatten_ir'`). The serve command sets `AITER_FDA_USE_GLUON=0`, which
   selects AITER's pure-Triton KDA kernel.
 
-Because these depend on the exact engine versions, the recipe pins them: ATOM at
-commit `67c54da4e` and AITER at `v0.1.25`, both validated against `rocm/7.2.2` and
-`vllm/0.19.1-pt2.10.0` on `gfx950`.
+Because these fixes depend on the exact engine versions, the recipe ships a default
+set validated together — ATOM `67c54da4e`, AITER `v0.1.25`, `rocm/7.2.2` and
+`vllm/0.19.1-pt2.10.0` on `gfx950` — which is what the version numbers elsewhere in
+this README refer to. Any of them can be changed; see
+[Engine versions and porting](#engine-versions-and-porting) for moving the whole set.
 
-The two halves meet on `module load`. The module reads the user's live Slurm
+When `module load` is executed, the module reads the user's live Slurm
 allocation, resolves the compute node, and sets
 `ROCBUDAI_OPENAI_BASE=http://<that-node>:8000/v1` automatically. With no live
 allocation it errors out and tells the user to start a server first. Detection
@@ -128,9 +124,6 @@ Run the installer; it clones and patches rocBudAI and writes the modulefile:
 ```bash
 ./install-rocbudai-atom.sh                      # into $HOME/opt/rocbudai/kimi
 ```
-
-If your site has already staged the agent at a shared prefix, skip the install and
-`module use <that-prefix>/modulefiles` directly.
 
 Point the serve defaults and shared cache at your own engine build (see
 [Building the engine](#building-the-engine)) and, optionally, publish to a shared
@@ -170,7 +163,7 @@ are site-specific: find yours with `sinfo` and the `Gres=` line of
 `scontrol show node <node>`, or set `SLURM_PARTITION` / `GPU_GRES` in `config.sh`.
 `--mem=0` (whole-node memory) is the one flag that must stay, since Kimi-K3 needs
 nearly all of the node's RAM to load. For a different ROCm version or GPU, see
-[Porting to a different ROCm version or GPU](#porting-to-a-different-rocm-version-or-gpu).
+[Engine versions and porting](#engine-versions-and-porting).
 
 The first start loads 1.5 TB of weights and builds JIT kernels, which takes
 several minutes. It is ready when it prints `Application startup complete` and
@@ -191,10 +184,22 @@ endpoint instead of auto-detection, export
 `ROCBUDAI_OPENAI_BASE=http://host:port/v1` before loading; a real remote value is
 respected, a loopback one is ignored so detection can run.
 
+## Partition and persona
+
+- **Submit partition.** The agent dispatches GPU jobs through `rocbudai-submit` to
+  `ROCBUDAI_SUBMIT_PARTITION`, baked from `--partition` at install (default
+  `mi355x`). Override it per run with `-p <partition>`, or export
+  `ROCBUDAI_SUBMIT_PARTITION` before `module load`. These jobs land in a separate
+  allocation from the model's, which is saturated by Kimi-K3.
+- **Persona.** The persona matches the GPU you are *profiling*, independent of the
+  GPU serving the model. Unlike `aim-engine`, this recipe pins it at install
+  (`--gfx-arch`, default `gfx950`) instead of asking per session; override it for one
+  shell by exporting `ROCBUDAI_GFX_ARCH=<arch>` before `module load`.
+
 ## Building the engine
 
-Most users on a prepared cluster never build anything. The setup kit in this directory
-is for reproducing the install or porting it to another MI355X system. Every
+The setup kit in this directory is for reproducing the install or porting it to
+another MI355X system. Every
 setting lives in `config.sh` and is overridable; export a variable before sourcing
 to change it. By default the scripts reuse the shared prebuilt engine, so the
 download and build steps are optional.
@@ -225,16 +230,21 @@ command does this for us. We watch a run with `squeue -u $USER` and
 `tail -f "$LOGDIR"/*.log`; a good serve prints the `/v1/models` listing and a
 `/v1/chat/completions` reply.
 
-### Porting to a different ROCm version or GPU
+### Engine versions and porting
 
 The recipe is pinned and validated as one set: `rocm/7.2.2`,
 `vllm/0.19.1-pt2.10.0`, AITER `v0.1.25` (built for `rocm7.2`), and ATOM
-`67c54da4e`, on `gfx950`. The hard rule is that **ATOM and the AITER wheel must
-match the ROCm, PyTorch, and Triton that the serving modules provide**. A mismatch
-does not fail cleanly; it surfaces as the Triton errors in
+`67c54da4e`, on `gfx950`. The `vllm/<ver>` piece is a prebuilt Lmod module the
+recipe expects to already exist, built from source with AMD's HPCTrainingDock
+[`vllm_setup.sh`](https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/vllm_setup.sh)
+(pinned via `--vllm-ref`/`--vllm-version`); ATOM and the AITER wheel only layer on
+top of it. The hard rule is that **ATOM and the AITER wheel must match the ROCm,
+PyTorch, and Triton that the serving modules provide**. A mismatch does not fail
+cleanly; it surfaces as the Triton errors in
 [Troubleshooting](#troubleshooting) (the `packed_h2d` "14 arguments" crash and the
-Gluon `SwizzledSharedLayout` crash are both AITER/ATOM-vs-module-Triton skew). So
-move the whole set together rather than one piece at a time.
+Gluon `SwizzledSharedLayout` crash are both AITER/ATOM-vs-module-Triton skew, and
+the module's older `aiter` winning gives the `topk_select` `ImportError`). So move
+the whole set together rather than one piece at a time.
 
 To target a different ROCm version, override these in `config.sh` before building:
 

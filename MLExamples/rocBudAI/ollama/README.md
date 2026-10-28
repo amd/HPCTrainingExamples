@@ -131,15 +131,19 @@ GPU.
 | `--dry-run` | print actions without changing anything |
 | `--help` | usage |
 
-The launcher picks the persona from the GPU that `rocminfo` reports. Some MI300X
-systems do not report the MI300X marketing name, and the launcher then falls back
-to the MI300A persona; on those we install with `--gfx-arch mi300x`. Exporting
-`ROCBUDAI_MODEL` before loading the module overrides the model for one shell.
-A model other than Laguna needs its own entry in rocBudAI's opencode templates
-to get a correct context limit.
+Exporting `ROCBUDAI_MODEL` before loading the module overrides the model for one
+shell. A model other than Laguna needs its own entry in rocBudAI's opencode
+templates to get a correct context limit.
 
-`rocbudai-submit` dispatches GPU work through `sbatch`, so it works only on a
-system with Slurm. Everything else runs on the node where we start `rocbudai`.
+## Partition and persona
+
+- **Submit partition.** GPU work runs on the node where you start `rocbudai` (inside
+  your allocation). `rocbudai-submit` dispatches to other nodes only on a Slurm
+  system: it targets `ROCBUDAI_SUBMIT_PARTITION` (the Slurm default when unset), and
+  `-p <partition>` overrides it per run.
+- **Persona.** The launcher auto-detects the persona from the GPU `rocminfo` reports.
+  Some MI300X systems report no marketing name and fall back to the MI300A persona;
+  on those, pin it at install with `--gfx-arch mi300x`.
 
 ## Files
 
