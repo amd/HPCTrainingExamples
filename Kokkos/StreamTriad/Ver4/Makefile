@@ -53,7 +53,7 @@ $(TARGET_BIN): $(OBJ)
 	$(CXX) $(LDFLAGS) $< -o $@ $(LDLIBS)
 
 run: $(TARGET_BIN)
-	export=HSA_XNACK=1 ./$(TARGET_BIN)
+	OMP_PROC_BIND=false HSA_XNACK=1 ./$(TARGET_BIN)
 
 clean:
 	rm -f $(TARGET_BIN) $(OBJ)

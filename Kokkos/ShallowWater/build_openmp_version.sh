@@ -20,6 +20,9 @@ cmake -DCMAKE_PREFIX_PATH=${Kokkos_DIR} -DCMAKE_CXX_COMPILER=${CXX} -DKokkos_ENA
       ..
 make -j 8
 
+# binaries land in the repo root (CMAKE_SOURCE_DIR), not in this build dir
+cd ..
+
 for exec in ShallowWater ShallowWater_par?
 do
    echo ""

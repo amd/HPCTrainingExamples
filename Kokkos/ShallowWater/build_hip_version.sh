@@ -19,6 +19,9 @@ mkdir hip_build; cd hip_build
 cmake -DCMAKE_PREFIX_PATH=${Kokkos_DIR} -DKokkos_ENABLE_HIP=ON -DCMAKE_CXX_COMPILER=${CXX} -DGPU_TARGETS='gfx942' ..
 make -j 8
 
+# binaries land in the repo root (CMAKE_SOURCE_DIR), not in this build dir
+cd ..
+
 for exec in ShallowWater ShallowWater_par?
 do
    echo ""

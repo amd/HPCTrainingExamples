@@ -25,6 +25,7 @@ int main(int argc, char *argv[]){
       Kokkos::parallel_for(nsize, KOKKOS_LAMBDA (int i) {
          c[i] = a[i] + scalar*b[i];
       });
+      Kokkos::fence();
       time_sum += cpu_timer_stop(tstart);
    }
 

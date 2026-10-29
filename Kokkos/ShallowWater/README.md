@@ -15,7 +15,7 @@ serial C++ to Kokkos.
 - `timer.c` / `timer.h` — `clock_gettime`-based wall-timer used by `ShallowWater.cc` and `par1`-`par3`.
 - `graphics/` — optional FreeGLUT-based visualization, built only when `ENABLE_GRAPHICS` is set.
 - `kokkos_cmake_options.txt` — reference list of Kokkos CMake options (CUDA/HIP/arch flags); not consumed by the build.
-- `CMakeLists.txt` — defines all six executables and locates Kokkos via `find_package(Kokkos REQUIRED)`.
+- `CMakeLists.txt` — defines all six executables, locates Kokkos via `find_package(Kokkos REQUIRED)`, and places all built binaries in the repo root (`RUNTIME_OUTPUT_DIRECTORY`), not in the build directory.
 
 `ShallowWater_par1`-`par5` pick their Kokkos execution space via an `ExecSpace`
 alias near the top of each file: `Kokkos::DefaultExecutionSpace` by default
@@ -29,7 +29,7 @@ alias near the top of each file: `Kokkos::DefaultExecutionSpace` by default
 - `build_hip_version.sh` — configures/builds in `hip_build/` for AMD GPUs (`gfx942`); uses the HIP (default) execution space.
 - `build_cuda_version.sh` — configures/builds in `cuda_build/` for NVIDIA GPUs (Volta); unused on this AMD cluster.
 
-Each script creates its build directory, runs `cmake`/`make -j 8`, then runs every built executable in turn.
+Each script creates its build directory, runs `cmake`/`make -j 8`, then `cd`s back to the repo root (where the binaries actually land, per the CMakeLists.txt setting above) and runs every built executable in turn.
 All three AMD scripts `module purge` then `module load rocm-new/10.1.0`, and link against the
 single pre-built Kokkos install at `$HOME/install/Kokkos_HIP` (built with Serial, OpenMP, and HIP all enabled).
 
@@ -66,6 +66,6 @@ salloc --partition=192C4G1H_MI300A_RHEL9_A1_CPX -n1 --gpus=1 --ntasks=8 -t 03:00
 # once dropped onto the allocated node:
 ./build_hip_version.sh
 
-# or just run an already-built binary directly:
-./hip_build/ShallowWater_par5
+# or just run an already-built binary directly (binaries live in the repo root):
+./ShallowWater_par5
 ```

@@ -40,6 +40,10 @@ target_link_libraries(ShallowWater_par4 Kokkos::kokkos -lm)
 add_executable(ShallowWater_par5 ShallowWater_par5.cc)
 target_link_libraries(ShallowWater_par5 Kokkos::kokkos -lm)
 
+set_target_properties(ShallowWater ShallowWater_par1 ShallowWater_par2 ShallowWater_par3 ShallowWater_par4 ShallowWater_par5 PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
 # Cleanup
 add_custom_target(distclean COMMAND rm -rf CMakeCache.txt CMakeFiles
                   Makefile cmake_install.cmake ShallowWater.dSYM ipo_out.optrpt)
