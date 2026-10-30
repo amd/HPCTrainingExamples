@@ -1,8 +1,3 @@
-- [Exercise 7 (TUI): redo a stepping session full-screen](#org122334b)
-
-
-<a id="org122334b"></a>
-
 # Exercise 7 (TUI): redo a stepping session full-screen
 
 Programs are in `../common/`; run rocgdb from this directory. This repeats Exercise 2, but in the terminal UI so you can watch the source as you step.

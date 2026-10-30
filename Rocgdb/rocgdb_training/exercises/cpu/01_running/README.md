@@ -1,16 +1,7 @@
-- [Exercise 1 (running): launch, control the start, and attach](#orgeb701d4)
-  - [1a - launch under rocgdb: run / start / next / continue](#orgf56ad6f)
-  - [1b - attach to an already-running process](#org0406e7d)
-
-
-<a id="orgeb701d4"></a>
-
 # Exercise 1 (running): launch, control the start, and attach
 
 The programs are in `../common/` (build them first, see `../common/README`). Run rocgdb from this directory; look at `../common/demo.c` alongside.
 
-
-<a id="orgf56ad6f"></a>
 
 ## 1a - launch under rocgdb: run / start / next / continue
 
@@ -27,8 +18,6 @@ $ rocgdb --args ../common/demo
 -   `next` executes one line at a time *without* descending into calls.
 -   If rocgdb asks `Enable debuginfod for this session? (y or [n])`, answer `n` for this course. To stop it asking in future, put `export DEBUGINFOD_URLS=` in your shell startup - an empty value disables the automatic download of system debug info.
 
-
-<a id="org0406e7d"></a>
 
 ## 1b - attach to an already-running process
 
