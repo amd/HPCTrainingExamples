@@ -1,17 +1,7 @@
-- [Exercise 3 (breakpoints): set, list, and toggle](#org0491417)
-  - [3a - set breakpoints several ways, then list them](#org568500f)
-  - [3b - a one-shot (temporary) breakpoint](#org9b84883)
-  - [3c - disable a loop breakpoint once you have seen enough](#org91394dc)
-
-
-<a id="org0491417"></a>
-
 # Exercise 3 (breakpoints): set, list, and toggle
 
 Programs are in `../common/`; run rocgdb from this directory.
 
-
-<a id="org568500f"></a>
 
 ## 3a - set breakpoints several ways, then list them
 
@@ -27,8 +17,6 @@ $ rocgdb ../common/demo
 ```
 
 
-<a id="org9b84883"></a>
-
 ## 3b - a one-shot (temporary) breakpoint
 
 ```
@@ -37,8 +25,6 @@ $ rocgdb ../common/demo
 (gdb) info breakpoints       # ...and the tbreak is already gone (fires once)
 ```
 
-
-<a id="org91394dc"></a>
 
 ## 3c - disable a loop breakpoint once you have seen enough
 

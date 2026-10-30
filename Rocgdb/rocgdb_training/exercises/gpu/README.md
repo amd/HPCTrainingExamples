@@ -1,16 +1,13 @@
-- [Layout](#org683151a)
-
-Hands-on labs for **Part II** (Basics of rocgdb). Each `NN_name/` directory is self-contained: it ships the buggy program to debug, a `*_fixed` reference, and a `README` with the build line and a walkthrough. There is no shared `common/`.
+Hands-on labs for **Part II** (Basics of rocgdb). Each `NN_name/` directory is self-contained: a `README` with the build line and a walkthrough, and (01-03) the buggy program to debug and a `*_fixed` reference; 04 debugs a program that is already in this repository. There is no shared `common/`.
 
 See `../README` for how to get onto a GPU node and load the toolchain.
 
-
-<a id="org683151a"></a>
 
 # Layout
 
 -   `01_pagefault/` - a HIP `saxmy` that page-faults on the device; find out why.
 -   `02_omp_offload/` - a Fortran and C `!$omp target` `saxmy` that page-faults because `x` is never allocated (a null pointer on the device); find and fix it.
 -   `03_mpi_pagefault/` - an MPI + HIP `saxmy` where exactly one rank passes a null device pointer; find which rank and why (per-rank `rocgdb` wrapper).
+-   `04_ghost_exchange/` - an MPI + HIP halo exchange (GhostExchange) that runs without an error but leaves some cells unset; find the bad kernel launch. Its code is not copied here: it is this repository's `MPI-examples/GhostExchange/GhostExchange_ArrayAssign_HIP/Ver1WithBug`.
 
-Each lab: build the buggy program, reproduce the fault under `rocgdb`, locate it, then diff against the `*_fixed` version to confirm your diagnosis.
+Each lab: build the buggy program, reproduce the problem under `rocgdb`, locate it, then confirm your diagnosis against the `*_fixed` version (04: against the fix at the end of its `README`).

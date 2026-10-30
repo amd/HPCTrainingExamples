@@ -1,16 +1,7 @@
-- [Exercise 5 (changing state): write memory and skip a line](#org7a5cf3e)
-  - [5a - write a variable and an array element](#org14885a4)
-  - [5b - jump over a line](#org15b3f8e)
-
-
-<a id="org7a5cf3e"></a>
-
 # Exercise 5 (changing state): write memory and skip a line
 
 Programs are in `../common/`; run rocgdb from this directory. In `floats.c`: `da` is a `double[3]`, `scale` is set on line 11 and multiplied on line 14.
 
-
-<a id="org14885a4"></a>
 
 ## 5a - write a variable and an array element
 
@@ -28,8 +19,6 @@ $ rocgdb ../common/floats
 
 -   `set {double}<addr> = ...` writes `sizeof(double)` bytes at the address - powerful and unchecked, so aim carefully.
 
-
-<a id="org15b3f8e"></a>
 
 ## 5b - jump over a line
 

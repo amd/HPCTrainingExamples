@@ -1,24 +1,12 @@
-- [Exercise 2 (stepping): next, step, and until](#org307e7eb)
-  - [2a - next OVER a call](#orgabf9fc1)
-  - [2b - step INTO a call](#orgc1b5cf1)
-  - [2c - step and a LIBRARY function](#org347a6e1)
-  - [2d - until: run out of a loop](#org02cabc9)
-  - [2e - until <line>: reached vs. run out of frame](#orgc46a0b0)
-
-
-<a id="org307e7eb"></a>
-
 # Exercise 2 (stepping): next, step, and until
 
 Programs are in `../common/`; run rocgdb from this directory. Key lines in `demo.c`:
 
 -   the call `sum_array(data, 8)` is line 32
--   the loop body `total = add(...)` is line 18
+-   the loop body `total = add(...)` is line 22
 -   `return total` is line 25; the never-taken `printf("overflow!")` is line 24.
 -   Parts 2a-2c reuse ONE rocgdb session - do not quit rocgdb between them.
 
-
-<a id="orgabf9fc1"></a>
 
 ## 2a - next OVER a call
 
@@ -31,8 +19,6 @@ $ rocgdb ../common/demo
 
 -   For the curious: `nexti` does the same at the machine-instruction level.
 
-
-<a id="orgc1b5cf1"></a>
 
 ## 2b - step INTO a call
 
@@ -52,23 +38,29 @@ $ rocgdb ../common/demo
 -   For the curious: `stepi` steps a single instruction.
 
 
-<a id="org347a6e1"></a>
-
 ## 2c - step and a LIBRARY function
 
--   Same session again. Line 27 calls `strlen` (libc); add a breakpoint and step:
+-   Same session again. Line 31 calls `strlen` (libc); add a breakpoint and step:
 
 ```
 (gdb) break demo.c:31
 (gdb) run                  # stops at line 31 (the strlen call)
-(gdb) step                 # descends INTO libc's strlen (e.g. __strlen_evex, no source)
-(gdb) finish               # returns you to your own code (main, line 31)
+(gdb) step                 # usually steps OVER strlen: you land on line 32
 ```
 
--   What `step` does at a library call depends on the build: with line info (as here) it drops into the library's implementation - often hand-written assembly shown with a "No such file" warning; without line info it just steps over. Either way, `finish` (run until the current function returns) - or `until`, or a breakpoint back in your own code - gets you out.
+-   `step` only stops in code that has line information. Your program has it (`-ggdb`), but the C library normally does not, so `step` treats `strlen` the way `next` does. That is what you see on most clusters, Hunter included.
+-   Where the C library's debug symbols are installed (a `libc6-dbg` or `glibc-debuginfo` package, or fetched through debuginfod), `step` does descend: you land in the library's implementation, e.g. `__strlen_evex`, usually hand-written assembly shown with a "No such file" warning. `finish` (run until the current function returns) brings you back to `main`.
+-   To follow the call without those symbols, step single instructions instead:
 
+```
+(gdb) run                  # back to line 31 (answer y to restart)
+(gdb) stepi                # three single instructions: the third enters
+(gdb) stepi                #   strlen@plt, the stub through which your program
+(gdb) stepi                #   calls a shared-library function
+(gdb) bt                   # strlen@plt <- main
+(gdb) finish               # runs the call to completion: back in main, line 31
+```
 
-<a id="org02cabc9"></a>
 
 ## 2d - until: run out of a loop
 
@@ -85,8 +77,6 @@ $ rocgdb ../common/demo
 
 -   Contrast with `next`, which would stop on every one of the 8 iterations.
 
-
-<a id="orgc46a0b0"></a>
 
 ## 2e - until <line>: reached vs. run out of frame
 

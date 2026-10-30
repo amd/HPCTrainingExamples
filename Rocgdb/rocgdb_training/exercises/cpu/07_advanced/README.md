@@ -1,19 +1,7 @@
-- [Exercise 7 (advanced): conditions, ignore, watch, display](#org69d94a4)
-  - [7a - a conditional breakpoint](#org81b1b18)
-  - [7b - ignore a breakpoint N times](#orgd929ca8)
-  - [7c - watch a value change](#org032708d)
-  - [7d - awatch an array element (not the 0th)](#org55eb92c)
-  - [7e - display a value while stepping](#org85b8b4a)
-
-
-<a id="org69d94a4"></a>
-
 # Exercise 7 (advanced): conditions, ignore, watch, display
 
 Programs are in `../common/`; run rocgdb from this directory. All parts share one session; `delete` clears breakpoints between them.
 
-
-<a id="org81b1b18"></a>
 
 ## 7a - a conditional breakpoint
 
@@ -26,8 +14,6 @@ $ rocgdb ../common/demo
 ```
 
 
-<a id="orgd929ca8"></a>
-
 ## 7b - ignore a breakpoint N times
 
 ```
@@ -38,8 +24,6 @@ $ rocgdb ../common/demo
 (gdb) print i
 ```
 
-
-<a id="org032708d"></a>
 
 ## 7c - watch a value change
 
@@ -53,8 +37,6 @@ $ rocgdb ../common/demo
 ```
 
 
-<a id="org55eb92c"></a>
-
 ## 7d - awatch an array element (not the 0th)
 
 In this exercise, the use of `-location` is necessary to avoid rocgdb stopping each time the base address of `data` is accessed.
@@ -67,8 +49,6 @@ In this exercise, the use of `-location` is necessary to avoid rocgdb stopping e
 (gdb) continue                     # fires when the loop reaches i = 3 (data[3] = 1)
 ```
 
-
-<a id="org85b8b4a"></a>
 
 ## 7e - display a value while stepping
 
