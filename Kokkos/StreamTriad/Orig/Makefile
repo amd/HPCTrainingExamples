@@ -5,7 +5,7 @@
 #   make run        # run interactively via srun (set JOBID to your salloc job)
 #   make clean
 
-ROCM_PATH := /shared/apps/rhel9/rocm-10.1.0
+ROCM_PATH ?= /shared/apps/rhel9/rocm-10.1.0
 
 CXX      := $(ROCM_PATH)/llvm/bin/amdclang++
 

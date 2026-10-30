@@ -5,8 +5,8 @@
 #   make run        # run interactively via srun (set JOBID to your salloc job)
 #   make clean
 
-ROCM_PATH   := /shared/apps/rhel9/rocm-10.1.0
-KOKKOS_PATH := /shared/midgard/home/useth/install/Kokkos_HIP
+ROCM_PATH   ?= /shared/apps/rhel9/rocm-10.1.0
+Kokkos_DIR  ?= ${HOME}/install/Kokkos_HIP
 
 CXX      := $(ROCM_PATH)/llvm/bin/amdclang++
 # Set your target AMD GPU architecture
@@ -19,15 +19,15 @@ CXXFLAGS := -std=gnu++20 -march=znver1 -mtune=znver1 -fno-gpu-rdc \
             -xhip --rocm-path=$(ROCM_PATH) --offload-arch=$(TARGET) \
             -x hip -fopenmp=libomp \
             -DKOKKOS_DEPENDENCE -DUSE_PROF_API=1 -D__HIP_PLATFORM_AMD__=1 \
-            -isystem $(KOKKOS_PATH)/include -isystem $(ROCM_PATH)/include
+            -isystem $(Kokkos_DIR)/include -isystem $(ROCM_PATH)/include
 
 LDFLAGS  := -march=znver1 -mtune=znver1 -fno-gpu-rdc \
             -Wl,-rpath,$(ROCM_PATH)/lib:$(ROCM_PATH)/lib/llvm/lib
 
-LDLIBS   := $(KOKKOS_PATH)/lib64/libkokkoscontainers.a \
-            $(KOKKOS_PATH)/lib64/libkokkosalgorithms.a \
-            $(KOKKOS_PATH)/lib64/libkokkossimd.a \
-            $(KOKKOS_PATH)/lib64/libkokkoscore.a \
+LDLIBS   := $(Kokkos_DIR)/lib64/libkokkoscontainers.a \
+            $(Kokkos_DIR)/lib64/libkokkosalgorithms.a \
+            $(Kokkos_DIR)/lib64/libkokkossimd.a \
+            $(Kokkos_DIR)/lib64/libkokkoscore.a \
             $(ROCM_PATH)/lib/libamdhip64.so.7.16.26385-0000000 \
             --hip-link \
             $(ROCM_PATH)/lib/llvm/lib/clang/24/lib/linux/libclang_rt.builtins-x86_64.a \
