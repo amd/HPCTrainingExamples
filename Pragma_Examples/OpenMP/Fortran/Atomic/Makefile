@@ -29,7 +29,7 @@ else ifneq ($(findstring ftn,$(FC1)),)
   endif
 endif
 
-FFLAGS := -g -O3 ${FFLAGS} ${FREE_FORM_FLAG} ${OPENMP_FLAGS}
+FFLAGS := -g -O3 ${FFLAGS} ${FREE_FORM_FLAG} ${OPENMP_FLAGS} -fatomic-fine-grained-memory
 LDFLAGS = ${OPENMP_FLAGS}
 
 %: %.o
