@@ -6,7 +6,7 @@ export OMP_PROC_BIND=true
 export OMP_PLACES=cores
 
 # fall back to the default install if the module did not set this
-: ${ROCM_PATH:=/shared/apps/rhel9/rocm-10.1.0}
+: ${ROCM_PATH:=/opt/rocm}
 export ROCM_PATH
 
 export CC=${ROCM_PATH}/llvm/bin/amdclang
