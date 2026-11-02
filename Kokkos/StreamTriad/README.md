@@ -1,5 +1,7 @@
 # StreamTriad
 
+**Disclaimer**: these examples have been tested on AMD's internal cluster AAC7 (MI300A accelerators) with module rocm-new/10.1.0.
+
 Five progressive versions of the STREAM Triad benchmark (`c[i] = a[i] + scalar*b[i]`), showing the migration path from plain C++ to Kokkos.
 
 ## Folders
@@ -10,7 +12,7 @@ Five progressive versions of the STREAM Triad benchmark (`c[i] = a[i] + scalar*b
 - **Ver3** — Fully Kokkos: `Kokkos::View` for data and `Kokkos::parallel_for` for both init and triad loops.
 - **Ver4** — Same as Ver3, plus timing via `Kokkos::Timer`/`Kokkos::fence` instead of the custom `timer.c` utility.
 
-## Builid and execute
+## Build and execute
 
 Before building, load the ROCm toolchain used to build Kokkos, point CMake at that Kokkos install, and pin the compiler (otherwise CMake falls back to the Cray compiler wrapper and `find_package(Threads)` fails):
 

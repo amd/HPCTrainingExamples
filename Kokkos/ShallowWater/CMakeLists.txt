@@ -7,18 +7,9 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 find_package(Kokkos REQUIRED)
 
-if (ENABLE_GRAPHICS)
-   add_subdirectory(graphics)
-endif (ENABLE_GRAPHICS)
-
 # Adds build target of ShallowWater with source code files
 add_executable(ShallowWater ShallowWater.cc memory.c timer.c)
 target_link_libraries(ShallowWater -lm)
-if (ENABLE_GRAPHICS)
-   set_source_files_properties(ShallowWater.cc PROPERTIES COMPILE_FLAGS "-DHAVE_GRAPHICS=1")
-   set_source_files_properties(ShallowWater.cc PROPERTIES INCLUDE_DIRECTORIES graphics)
-   target_link_libraries(ShallowWater graphics ${FREEGLUT_LIBRARIES})
-endif (ENABLE_GRAPHICS)
 
 # Adds build target of ShallowWater_par1 with source code files
 add_executable(ShallowWater_par1 ShallowWater_par1.cc timer.c)

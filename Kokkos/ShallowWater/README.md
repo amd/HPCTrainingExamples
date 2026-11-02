@@ -1,5 +1,7 @@
 # ShallowWater (Kokkos)
 
+**Disclaimer**: these examples have been tested on AMD's internal cluster AAC7 (MI300A accelerators) with module rocm-new/10.1.0.
+
 2D shallow water equation solver (Bob Robey, LANL), progressively ported from
 serial C++ to Kokkos.
 
@@ -13,7 +15,6 @@ serial C++ to Kokkos.
 - `ShallowWater_par5.cc` — like par4, but swaps View handles (pointer swap) instead of copying data.
 - `memory.c` / `memory.h` — 1D/2D heap allocation helpers (`dvector`, `malloc2D`) used by the serial baseline.
 - `timer.c` / `timer.h` — `clock_gettime`-based wall-timer used by `ShallowWater.cc` and `par1`-`par3`.
-- `graphics/` — optional FreeGLUT-based visualization, built only when `ENABLE_GRAPHICS` is set.
 - `kokkos_cmake_options.txt` — reference list of Kokkos CMake options (CUDA/HIP/arch flags); not consumed by the build.
 - `CMakeLists.txt` — defines all six executables, locates Kokkos via `find_package(Kokkos REQUIRED)`, and places all built binaries in the repo root (`RUNTIME_OUTPUT_DIRECTORY`), not in the build directory.
 
