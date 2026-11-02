@@ -1,7 +1,7 @@
 #!/bin/sh
 
 module purge
-module load rocm-new/10.1.0
+module load rocm
 
 export OMP_PROC_BIND=true
 export OMP_PLACES=cores

@@ -31,7 +31,7 @@ alias near the top of each file: `Kokkos::DefaultExecutionSpace` by default
 - `build_cuda_version.sh` — configures/builds in `cuda_build/` for NVIDIA GPUs (Volta); unused on this AMD cluster.
 
 Each script creates its build directory, runs `cmake`/`make -j 8`, then `cd`s back to the repo root (where the binaries actually land, per the CMakeLists.txt setting above) and runs every built executable in turn.
-All three AMD scripts `module purge` then `module load rocm-new/10.1.0`, and link against the
+All three AMD scripts `module purge` then `module load rocm`, and link against the
 single pre-built Kokkos install at `$HOME/install/Kokkos_HIP` (built with Serial, OpenMP, and HIP all enabled).
 
 **Caveat:** `Kokkos::initialize()` always initializes *every* backend compiled
@@ -62,7 +62,7 @@ The `ShallowWater_par*` binaries require a GPU, so request an interactive node
 first, then build/run from inside that allocation:
 
 ```sh
-salloc --partition=192C4G1H_MI300A_RHEL9_A1_CPX -n1 --gpus=1 --ntasks=8 -t 03:00:00
+salloc --partition=192C4G1H_MI300A_RHEL9_A1 -n1 --gpus=1 --ntasks=8 -t 03:00:00
 
 # once dropped onto the allocated node:
 ./build_hip_version.sh

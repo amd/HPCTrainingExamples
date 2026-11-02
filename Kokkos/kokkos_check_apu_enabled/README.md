@@ -27,7 +27,7 @@ discrete, both `gfx942`) before debugging a larger build.
 Via CMake:
 
 ```sh
-module purge && module load rocm-new/10.1.0
+module purge && module load rocm
 export Kokkos_DIR=${HOME}/install/Kokkos_HIP
 export CC=${ROCM_PATH}/llvm/bin/amdclang
 export CXX=${ROCM_PATH}/llvm/bin/amdclang++
@@ -40,18 +40,7 @@ export HSA_XNACK=1
 ./kokkos_check_apu_enabled
 ```
 
-Via Makefile (equivalent, no CMake involved):
-
-```sh
-module purge && module load rocm-new/10.1.0
-
-make
-export OMP_PROC_BIND=false
-export HSA_XNACK=1
-make run
-```
-
-Both require a GPU-allocated node to run successfully, e.g.:
+Execution requires a GPU-allocated node to run successfully, e.g.:
 
 ```sh
 salloc --partition=192C4G1H_MI300A_RHEL9_A1 -N1 --gpus=1 --ntasks=8 -t 03:00:00

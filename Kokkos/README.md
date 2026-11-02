@@ -13,13 +13,13 @@ git clone https://github.com/kokkos/kokkos Kokkos_build
 cd Kokkos_build
 ```
 
-Load a ROCm module if needed. Whichever module you use here must also be
+Load a ROCm module. Whichever module you use here must also be
 loaded later when building the example projects against this Kokkos install
 (e.g. the StreamTriad/ShallowWater examples in this repo were built and
-tested with `rocm-new/10.1.0` - use the same one consistently for both steps).
+tested with `rocm-new/10.1.0`).
 
 ```
-module load rocm-new/10.1.0
+module load rocm
 ```
 
 Set CC and CXX in environment (bash shown)
@@ -34,7 +34,7 @@ Build Kokkos with OpenMP backend
 ```
 cmake -B build_openmp -S . \
       -DCMAKE_INSTALL_PREFIX=${HOME}/install/Kokkos_OpenMP -DKokkos_ENABLE_SERIAL=On \
-      -DKokkos_ENABLE_OPENMP=On ..
+      -DKokkos_ENABLE_OPENMP=On 
 
 cmake --build build_openmp --target install --parallel 8
 

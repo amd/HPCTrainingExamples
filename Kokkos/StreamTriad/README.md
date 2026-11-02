@@ -17,7 +17,8 @@ Five progressive versions of the STREAM Triad benchmark (`c[i] = a[i] + scalar*b
 Before building, load the ROCm toolchain used to build Kokkos, point CMake at that Kokkos install, and pin the compiler (otherwise CMake falls back to the Cray compiler wrapper and `find_package(Threads)` fails):
 
 ```sh
-module purge && module load rocm-new/10.1.0
+module purge && module load rocm
+#set path to your Kokkos installation
 export Kokkos_DIR=${HOME}/install/Kokkos_HIP
 export CC=${ROCM_PATH}/llvm/bin/amdclang
 export CXX=${ROCM_PATH}/llvm/bin/amdclang++
@@ -44,28 +45,7 @@ Then run it:
 ./StreamTriad
 ```
 
-## Building with Makefile
-
-Every folder (Orig, Ver1, Ver2, Ver3, Ver4) also has a plain Makefile as an
-alternative to CMake. `ROCM_PATH` and `Kokkos_DIR` default to the same paths
-as the CMake flow, but are only used if not already set in the environment —
-so load the module and export them first, same as for CMake:
-
-```sh
-module purge && module load rocm-new/10.1.0
-export Kokkos_DIR=${HOME}/install/Kokkos_HIP
-```
-
-Then build and run:
-
-```sh
-cd Ver4
-make          # build ./StreamTriad
-make run      # run it (sets OMP_PROC_BIND=false and HSA_XNACK=1 for you)
-make clean    # remove the binary and object files
-```
-
-## Hands-on exercise: build it yourself, step by step
+## Detailed Hands-on exercise: build it yourself, step by step
 
 This walks through turning a plain serial C++ loop into a Kokkos program
 running on both CPU (OpenMP) and GPU (HIP). Each step's finished result
