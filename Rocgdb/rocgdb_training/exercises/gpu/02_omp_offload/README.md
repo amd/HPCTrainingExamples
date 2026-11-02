@@ -1,19 +1,7 @@
-- [GPU Exercise 2 (OpenMP offload): a null-pointer page fault](#org911df57)
-  - [Build and reproduce the fault](#orge3fb746)
-  - [Find it under rocgdb](#org4b95c00)
-  - [Diagnose](#orgb03489f)
-  - [Fix and confirm](#org26ee713)
-  - [Takeaway](#orgd11e06f)
-
-
-<a id="org911df57"></a>
-
 # GPU Exercise 2 (OpenMP offload): a null-pointer page fault
 
 `saxmy` offloads `y(i) = a*x(i)*y(i)` to the GPU with an OpenMP `target teams distribute`. It faults in the offload region. Find out why, then fix it. The exercise ships in both languages - Fortran `saxmy.f90` and C `saxmy.c`; the reference solutions are `saxmy_fixed.f90` and `saxmy_fixed.c`.
 
-
-<a id="orge3fb746"></a>
 
 ## Build and reproduce the fault
 
@@ -35,8 +23,6 @@ Both abort with a runtime memory fault at a *null* address (under any `HSA_XNACK
 OFFLOAD ERROR: memory access fault by GPU 1 ... at virtual address (nil).
 ```
 
-
-<a id="org4b95c00"></a>
 
 ## Find it under rocgdb
 
@@ -61,15 +47,11 @@ $1 = (double *) 0x0
 The frame (C) shows `x=0x0` outright, and `print x` confirms it: `x` is a null pointer. In Fortran the fault is identical - every wave stops at `saxmy.f90:24`, and the backtrace shows `x` as a descriptor whose data pointer is an invalid address. `info threads` shows all eight waves halted on the same line.
 
 
-<a id="orgb03489f"></a>
-
 ## Diagnose
 
 -   The kernel reads `x(i)` / `x[i]`, but `x` is **never allocated** - it is a null pointer, so the device dereferences address 0.
 -   Why doesn't simply *mapping* `x` save you? An *allocated* `x` on an MI300A is silently demand-paged onto the device even when it is unmapped, so a merely-unmapped (but allocated) `x` would NOT fault. The reliable bug - and the real one here - is the missing **allocation**.
 
-
-<a id="org26ee713"></a>
 
 ## Fix and confirm
 
@@ -86,8 +68,6 @@ amdclang -ggdb -O0 -fopenmp --offload-arch=gfx942 -o saxmy_fixed saxmy_fixed.c
 OMP_TARGET_OFFLOAD=MANDATORY ./saxmy_fixed         # y(1) = 4.0
 ```
 
-
-<a id="orgd11e06f"></a>
 
 ## Takeaway
 

@@ -1,18 +1,7 @@
-- [GPU Exercise 3 (MPI): find the rank that faults on the device](#orgc4cd113)
-  - [Build](#orgf4e0c06)
-  - [Reproduce and locate the fault (per-rank wrapper)](#org1a92299)
-  - [Diagnose](#org2d83bff)
-  - [Fix and confirm](#org0d7e9fa)
-
-
-<a id="orgc4cd113"></a>
-
 # GPU Exercise 3 (MPI): find the rank that faults on the device
 
 `mpi_saxmy.cpp` runs the `saxmy` kernel (`y[i] = a*x[i]*y[i]`, a scaled Hadamard product - deliberately NOT a BLAS routine) on **every** MPI rank, each on its own GPU. It crashes - but only on **one** rank. Your job: use `rocgdb` (driven per-rank, non-interactively) to find **which** rank and **why**.
 
-
-<a id="orgf4e0c06"></a>
 
 ## Build
 
@@ -41,8 +30,6 @@ mpicxx -x hip -ggdb -O0 --offload-arch=gfx942 -o mpi_saxmy mpi_saxmy.cpp
 -   On Cray, the `CC` wrapper already carries the MPI flags: `CC -x hip -ggdb ...`.
 
 
-<a id="org1a92299"></a>
-
 ## Reproduce and locate the fault (per-rank wrapper)
 
 We debug an MPI job here as if it was a batch job: wrap every rank in `rocgdb` with the per-rank wrapper from the CPU MPI exercise (it writes one `gdb_out_<rank>.txt` per rank, no interleaving):
@@ -56,16 +43,12 @@ tail -n +1 gdb_out_*.txt        # read each rank's log from the end
 -   The wrapper sets `catch signal SIGSEGV` and `set amdgpu precise-memory`, runs, then dumps `thread apply all bt` and `info dispatches`.
 
 
-<a id="org2d83bff"></a>
-
 ## Diagnose
 
 -   Exactly one rank's log shows a GPU memory fault; the others just print `done`.
 -   In the faulting rank's log, read the frame at `mpi_saxmy.cpp:20` (`y[i] = ...`): which pointer is null? (`print y`, or read the frame args.)
 -   Look at `main`: `hipMalloc(&y, ...)` is guarded by `if (rank !` size - 1)=, so the **last** rank never allocates `y` - it launches the kernel with a null `y` and faults on the store.
 
-
-<a id="org0d7e9fa"></a>
 
 ## Fix and confirm
 

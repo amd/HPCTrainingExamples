@@ -1,17 +1,7 @@
-- [Exercise 6 (batch): non-interactive rocgdb, then MPI](#org77513ee)
-  - [6a - batch-debug a non-MPI program, two ways](#orgafc3c9d)
-  - [6b - debug an MPI job with the per-rank wrapper](#orgf5c4d67)
-  - [6c - change what the wrapper does](#org9edcf0d)
-
-
-<a id="org77513ee"></a>
-
 # Exercise 6 (batch): non-interactive rocgdb, then MPI
 
 The two wrapper scripts live in THIS directory. Run rocgdb from here; the compiled programs are in `../common/` (built by the setup step, including `make mpi`).
 
-
-<a id="orgafc3c9d"></a>
 
 ## 6a - batch-debug a non-MPI program, two ways
 
@@ -36,8 +26,6 @@ $ rocgdb -batch -x cmds.txt --args ../common/demo
 -   `-ex` and `-x` are interchangeable; everything must be set **before** `run`.
 
 
-<a id="orgf5c4d67"></a>
-
 ## 6b - debug an MPI job with the per-rank wrapper
 
 ```
@@ -49,8 +37,6 @@ $ tail -n +1 gdb_out_*.txt                     # one log per rank, read from the
 -   Each rank writes its own `gdb_commands_<rank>.txt` and `gdb_out_<rank>.txt` (no interleaving). The log captures both rocgdb's output *and* the program's own stdout.
 -   As shipped, each rank just issues `run` and dumps a full backtrace.
 
-
-<a id="org9edcf0d"></a>
 
 ## 6c - change what the wrapper does
 

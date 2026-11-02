@@ -1,21 +1,7 @@
-- [Exercise 4 (inspecting): stack, variables, memory - and a wrong line](#orgd11f4eb)
-  - [4a - a backtrace without a crash (demo)](#orgcdaa1c0)
-  - [4b - move around the stack: frame / up / down](#orgf3f64c3)
-  - [4c - print and examine memory](#org50f5380)
-  - [4d - print with a SIDE EFFECT (careful!)](#org8d753c9)
-  - [4e - x remembers the format: a size gotcha (floats)](#org3e72265)
-  - [4f - a breakpoint on the wrong line (fusion, built at -O2)](#org4efae07)
-  - [4g - fix it: rebuild without optimization](#orga93c3bd)
-
-
-<a id="orgd11f4eb"></a>
-
 # Exercise 4 (inspecting): stack, variables, memory - and a wrong line
 
 Programs are in `../common/`; run rocgdb from this directory. This exercise uses three programs (`demo`, `floats`, `fusion`); quit and restart rocgdb when you switch, as marked.
 
-
-<a id="orgcdaa1c0"></a>
 
 ## 4a - a backtrace without a crash (demo)
 
@@ -26,8 +12,6 @@ $ rocgdb ../common/demo
 (gdb) bt                   # #0 add  <-  #1 sum_array  <-  #2 main
 ```
 
-
-<a id="orgf3f64c3"></a>
 
 ## 4b - move around the stack: frame / up / down
 
@@ -43,8 +27,6 @@ $ rocgdb ../common/demo
 ```
 
 
-<a id="org50f5380"></a>
-
 ## 4c - print and examine memory
 
 -   Still the same stop:
@@ -55,8 +37,6 @@ $ rocgdb ../common/demo
 (gdb) x/8dw data           # dump 8 decimal words starting at data
 ```
 
-
-<a id="org8d753c9"></a>
 
 ## 4d - print with a SIDE EFFECT (careful!)
 
@@ -74,8 +54,6 @@ $ rocgdb ../common/demo
 -   The program now prints `sum = 14`, not `31`: your assignment changed the result.
 
 
-<a id="org3e72265"></a>
-
 ## 4e - x remembers the format: a size gotcha (floats)
 
 -   Quit rocgdb (`quit`) and start it on `floats`:
@@ -92,8 +70,6 @@ $ rocgdb ../common/floats
 -   Lesson: `x` keeps the last size/format. Always name the size that matches the type.
 
 
-<a id="org4efae07"></a>
-
 ## 4f - a breakpoint on the wrong line (fusion, built at -O2)
 
 -   Quit rocgdb and start it on `fusion` (built at `-O2` by the setup step):
@@ -108,8 +84,6 @@ $ rocgdb ../common/fusion
 
 -   Ask for line 13 and rocgdb binds you to a shared instruction - not the line you meant.
 
-
-<a id="orga93c3bd"></a>
 
 ## 4g - fix it: rebuild without optimization
 
