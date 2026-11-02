@@ -1,6 +1,6 @@
 # kokkos_check_apu_enabled
 
-**Disclaimer**: these examples have been tested on AMD's internal cluster AAC7 (MI300A accelerators) with module rocm-new/10.1.0.
+**Disclaimer**: these examples have been tested on AMD's cluster AAC7 (MI300A accelerators) with module rocm-new/10.1.0.
 
 Standalone sanity check that a Kokkos install is built with the HIP backend
 and the expected AMD GPU architecture — compile-time asserts plus a runtime

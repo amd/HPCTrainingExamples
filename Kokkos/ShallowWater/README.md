@@ -1,6 +1,6 @@
 # ShallowWater (Kokkos)
 
-**Disclaimer**: these examples have been tested on AMD's internal cluster AAC7 (MI300A accelerators) with module rocm-new/10.1.0.
+**Disclaimer**: these examples have been tested on AMD's cluster AAC7 (MI300A accelerators) with module rocm-new/10.1.0.
 
 2D shallow water equation solver (Bob Robey, LANL), progressively ported from
 serial C++ to Kokkos.

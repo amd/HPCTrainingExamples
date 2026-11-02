@@ -1,6 +1,6 @@
 # Kokkos
 
-**Disclaimer**: these examples have been tested on AMD's internal cluster AAC7 (MI300A accelerators) with module rocm-new/10.1.0.
+**Disclaimer**: these examples have been tested on AMD's cluster AAC7 (MI300A accelerators) with module rocm-new/10.1.0.
 
 Instructions for building the [Kokkos](https://github.com/kokkos/kokkos) C++
 performance-portability library from source, for use by the example projects

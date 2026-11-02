@@ -1,6 +1,6 @@
 # StreamTriad
 
-**Disclaimer**: these examples have been tested on AMD's internal cluster AAC7 (MI300A accelerators) with module rocm-new/10.1.0.
+**Disclaimer**: these examples have been tested on AMD's cluster AAC7 (MI300A accelerators) with module rocm-new/10.1.0.
 
 Five progressive versions of the STREAM Triad benchmark (`c[i] = a[i] + scalar*b[i]`), showing the migration path from plain C++ to Kokkos.
 
