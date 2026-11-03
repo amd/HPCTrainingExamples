@@ -14,10 +14,13 @@ Five progressive versions of the STREAM Triad benchmark (`c[i] = a[i] + scalar*b
 
 ## Build and execute
 
-Before building, load the ROCm toolchain used to build Kokkos, point CMake at that Kokkos install, and pin the compiler (otherwise CMake falls back to the Cray compiler wrapper and `find_package(Threads)` fails):
+Before building, load the ROCm toolchain used to build Kokkos, point CMake at that Kokkos install, and pin the compiler (otherwise CMake falls back to the default compiler wrapper and `find_package(Threads)` fails):
 
 ```sh
 module purge && module load rocm
+# If a `kokkos` module is available (check: module avail kokkos), load it directly
+# instead — it may already set Kokkos_DIR, so check `echo $Kokkos_DIR` before
+# setting it manually below.
 #set path to your Kokkos installation
 export Kokkos_DIR=${HOME}/install/Kokkos_HIP
 export CC=${ROCM_PATH}/llvm/bin/amdclang

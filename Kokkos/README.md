@@ -22,6 +22,15 @@ tested with `rocm-new/10.1.0`).
 module load rocm
 ```
 
+> **Note:** Check if a `kokkos` module is already available on this system first
+> (`module avail kokkos`). If so, you can load it directly instead of building
+> Kokkos from source:
+> ```
+> module load kokkos
+> ```
+> This may already set `Kokkos_DIR` for you — check with `echo $Kokkos_DIR` before
+> going through the build steps below.
+
 Set CC and CXX in environment (bash shown)
 
 ```

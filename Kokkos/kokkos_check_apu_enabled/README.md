@@ -28,6 +28,9 @@ Via CMake:
 
 ```sh
 module purge && module load rocm
+# If a `kokkos` module is available (check: module avail kokkos), load it directly
+# instead — it may already set Kokkos_DIR, so check `echo $Kokkos_DIR` before
+# setting it manually below.
 export Kokkos_DIR=${HOME}/install/Kokkos_HIP
 export CC=${ROCM_PATH}/llvm/bin/amdclang
 export CXX=${ROCM_PATH}/llvm/bin/amdclang++

@@ -34,6 +34,11 @@ Each script creates its build directory, runs `cmake`/`make -j 8`, then `cd`s ba
 All three AMD scripts `module purge` then `module load rocm`, and link against the
 single pre-built Kokkos install at `$HOME/install/Kokkos_HIP` (built with Serial, OpenMP, and HIP all enabled).
 
+> **Note:** If a `kokkos` module is available on this system (check: `module avail
+> kokkos`), you can `module load kokkos` directly after `module load rocm` — it may
+> already set `Kokkos_DIR` for you, in which case these scripts don't need to point
+> at a separately-built `$HOME/install/Kokkos_HIP`.
+
 **Caveat:** `Kokkos::initialize()` always initializes *every* backend compiled
 into the linked Kokkos library, not just the one your code uses. Since HIP is
 compiled into `Kokkos_HIP`, the `ShallowWater_par*` binaries always probe for a
