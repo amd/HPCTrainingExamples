@@ -1433,6 +1433,14 @@ set_property(TEST Pytorch_FlashAttention_Verify_Enabled PROPERTY SKIP_REGULAR_EX
 set_property(TEST Pytorch_FlashAttention_Verify_Enabled PROPERTY SKIP_RETURN_CODE 77)
 set_tests_properties(Pytorch_FlashAttention_Verify_Enabled PROPERTIES TIMEOUT 300)
 
+add_test(NAME Pytorch_RocSHMEM_SymmMem_2GPU COMMAND ../pytorch_rocshmem_symm_mem_2gpu.sh )
+set_property(TEST Pytorch_RocSHMEM_SymmMem_2GPU PROPERTY PASS_REGULAR_EXPRESSION "ROCSHMEM SYMMMEM: OK")
+set_property(TEST Pytorch_RocSHMEM_SymmMem_2GPU PROPERTY FAIL_REGULAR_EXPRESSION "ROCSHMEM SYMMMEM: FAIL")
+set_property(TEST Pytorch_RocSHMEM_SymmMem_2GPU PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'" "ROCSHMEM SYMMMEM: SKIPPED")
+set_property(TEST Pytorch_RocSHMEM_SymmMem_2GPU PROPERTY SKIP_RETURN_CODE 77)
+set_property(TEST Pytorch_RocSHMEM_SymmMem_2GPU PROPERTY PROCESSORS 2)
+set_tests_properties(Pytorch_RocSHMEM_SymmMem_2GPU PROPERTIES TIMEOUT 600)
+
 add_test(NAME Pytorch_Check_Gpu_Access COMMAND ../pytorch_check_gpu_access.sh )
 set_property(TEST Pytorch_Check_Gpu_Access PROPERTY PASS_REGULAR_EXPRESSION "True")
 set_property(TEST Pytorch_Check_Gpu_Access PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Unable to locate a modulefile for 'pytorch'")
