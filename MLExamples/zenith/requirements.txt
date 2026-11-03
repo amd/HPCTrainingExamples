@@ -38,7 +38,7 @@ click==8.3.2
 python-dotenv==1.2.2
 requests==2.33.1
 pydantic==2.12.5
-fsspec==2026.2.0
+fsspec==2026.6.0
 fire==0.7.1
 pyyaml==6.0.3
 psutil==7.2.2
@@ -55,7 +55,7 @@ pynvml==13.0.1
 einops==0.8.2
 
 # --- metrics & logging ---
-nltk==3.9.4
+nltk==3.10.4
 rouge_score==0.1.2
 tensorboard==2.20.0
 tensorboardX==2.6.5
