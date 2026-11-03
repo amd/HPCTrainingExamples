@@ -43,5 +43,9 @@ if(EXPECTED_KOKKOS_ARCH MATCHES "_APU$")
   target_compile_definitions(kokkos_check_apu_enabled PRIVATE KOKKOS_CHECK_EXPECT_APU=1)
 endif()
 
+set_target_properties(kokkos_check_apu_enabled PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
 enable_testing()
 add_test(NAME KokkosAPUCheck COMMAND kokkos_check_apu_enabled)
