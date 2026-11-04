@@ -177,8 +177,8 @@ To run RCCL test, follow these steps:
 
 ```
 module load rocm openmpi  # For modules on AAC7, see note at beginning
-git clone https://github.com/ROCm/rccl-tests.git
-cd rccl-tests/
+git clone https://github.com/ROCm/rocm-systems.git
+cd rocm-systems/projects/rccl-tests/
 make MPI=1 MPI_HOME=$MPI_PATH HIP_HOME=$ROCM_PATH
 ```
 
