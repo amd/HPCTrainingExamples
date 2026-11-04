@@ -6,78 +6,41 @@
 # and StreamK is always the track that is picked
 # For details: https://rocm.docs.amd.com/projects/hipBLASLt/en/develop/reference/env-variables.html#origami-with-stream-k-configuration
 
-# Fast regression check for hipBLASLt heuristic-fall-through bugs.
-# Exercises the three GEMM families (forward + 2
-# backward variants) of `nn.Linear(hidden, num_classes)` over a small
-# (batch_size, num_classes, hidden) sweep, captures the hipBLASLt API
-# log, and flags any `returnAlgoCount=0` event.
+# Fast regression check for hipBLASLt heuristic/dispatch bugs on MI300-class GPUs.
+# Two phases:
+#   Phase 1 (per-dtype log sweep): runs the forward + 2 backward GEMMs of
+#     nn.Linear(hidden, num_classes) over a (batch, num_classes, hidden) sweep,
+#     captures the hipBLASLt API log at LOG_LEVEL=5, and fails on any
+#     `returnAlgoCount=0` heuristic miss.
+#   Phase 2 (layout timing sweep): times small GEMMs across the full transpose
+#     matrix (mm/bmm/linear, NN/NT/TN/TT) and fails on any cell slower than
+#     ${SLOW_MS} ms -- catches the generic-fallback dispatch defect the log
+#     sweep is blind to (see the Phase 2 banner below).
 #
+# Knobs (env vars):
+#   HIPBLASLT_REGRESS_SWEEP    quick (12 configs) | full (120, default)
+#   HIPBLASLT_REGRESS_DTYPES   comma-separated, default fp16,fp32,bf16
+#   HIPBLASLT_REGRESS_ARCH     force the shape family (gfx942|gfx950); the
+#                              .dat library is still chosen by real hardware
+#   HIPBLASLT_REGRESS_SLOW_MS  Phase 2 slow-cell threshold in ms, default 50
 #
-# Modes (HIPBLASLT_REGRESS_SWEEP env var):
-#   quick   (default)  12 configs / 36 GEMM tuples, ~10 s.
-#   full               120 configs / 360 GEMM tuples, ~80 s.
+# Each dtype consults an INDEPENDENT Tensile .dat (HH=fp16, SS=fp32, BB=bf16),
+# so each needs its own coverage. fp64 is excluded: it rarely dispatches through
+# hipBLASLt and its DD_DD libraries are catch-all rows that cannot miss, so it
+# would pass vacuously.
 #
-# Datatypes (HIPBLASLT_REGRESS_DTYPES env var, comma-separated):
-#   fp16,fp32,bf16   (default)
+# Shapes are arch-aware (read from rocminfo, override with HIPBLASLT_REGRESS_ARCH):
+#   gfx942 (CDNA3, MI300A/X): ResNet classifier-head FC shapes, centered on
+#                             (256,100,2048) -- the point that surfaced the
+#                             original 2026-05 regression.
+#   gfx950 (CDNA4, MI355X)  : Llama-/Mistral-style FFN + output-projection shapes.
+#   other                   : small blended fallback (warns).
+# Detection is arch-agnostic: a zero-solution tuple (Phase 1) or a slow cell
+# (Phase 2) is a regression on whatever partition (SPX/CPX) the run lands on.
 #
-# Each dtype consults a DIFFERENT Tensile .dat library on disk and a
-# DIFFERENT solution catalogue:
-#   fp16  -> TensileLibrary_HH_HH_..._gfx942.dat
-#   fp32  -> TensileLibrary_SS_SS_..._gfx942.dat
-#   bf16  -> TensileLibrary_BB_BB_..._gfx942.dat
+# Runtime ~10 s healthy; each regressed shape adds ~6 s of Tensile compile stall.
 #
-# fp64 is INTENTIONALLY EXCLUDED: it is not normally dispatched
-# through hipBLASLt (parser sees zero rocblaslt_matmul_algo_get_heuristic
-# events), and every shipped TensileLibrary_DD_DD_..._gfx942.dat is a
-# single TruePred->Matching catch-all row that cannot return zero
-# solutions anyway. Either reason alone makes returnAlgoCount=0
-# unreachable, so fp64 would PASS vacuously.
-# fp32 stays: the API IS exercised, and some SS_SS placeholders ship
-# with EqualityMatching-only rows (no catch-all) where a real miss
-# is structurally possible.
-#
-# Detection is architecture-agnostic: any (M, N, K, tA, tB) tuple for
-# which hipBLASLt's heuristic returns zero solutions counts as a
-# regression on whatever arch the run is on. The shape sweep (i.e. what shapes are checked)
-# is arch-aware -- the script reads `rocminfo` and picks the (bs, nc,
-# hidden) ranges that match what could be a production workload pattern of the
-# target arch:
-#     gfx942 (CDNA3, MI300A/X)  : ResNet-style FC shapes
-#                                 -- centered on (256, 100, 2048),
-#                                 the single_process.sh point that
-#                                 surfaced the original 2026-05 bug.
-#     gfx950 (CDNA4, MI355X)    : Llama-/Mistral-style FFN + output
-#                                 projection shapes (bs = tokens,
-#                                 nc in {ffn-dim, vocab-tile},
-#                                 hidden in {4096, 8192}).
-#     other / unknown           : small blended fallback (warns).
-# Override the auto-detected arch with HIPBLASLT_REGRESS_ARCH=gfx95X
-# (useful for dry-running the gfx950 sweep on a gfx942 node).
-#
-# Why these shapes? On gfx942 (MI300A) the original bug shows up as
-# 3 specific (M, N, K) tuples per training step:
-#     (100,  256, 2048) tA=T tB=N  -- forward
-#     (2048, 256,  100) tA=N tB=N  -- backward grad
-#     (2048, 100,  256) tA=N tB=T  -- backward weight
-# These aren't synthetic / corner-case shapes -- they're the canonical
-# signature of a CNN classifier head: nn.Linear(features=2048,
-# num_classes=N) at batch=B. The 2048 comes from the ResNet-50/-101/
-# -152 backbone output channels after AvgPool (He et al. 2016, "Deep
-# Residual Learning for Image Recognition", Table 1; torchvision impl:
-# `torchvision/models/resnet.py` -> `self.fc = nn.Linear(512 *
-# block.expansion, num_classes)` with `block.expansion=4` for
-# Bottleneck = 2048). N=100 is CIFAR-100; the same head shape applies
-# to ImageNet (N=1000), all classifier-head ViTs, and most fine-tuning
-# pipelines. So the patched + probed shapes are the bread-and-butter
-# of CV transfer learning, not an esoteric corner.
-#
-# Runtime: ~10 s on a healthy / patched system, regardless of partition
-# (SPX or CPX). On a regressed system each broken shape adds ~6 s of
-# Tensile dynamic-compile stall, which makes the test slower and is
-# itself a signal to inspect the failing-shapes list it prints.
-#
-# NOTE: this test assumes PyTorch has been installed according
-# to the instructions available in the model installation repo:
+# Assumes PyTorch installed per:
 # https://github.com/amd/HPCTrainingDock/blob/main/extras/scripts/pytorch_setup.sh
 
 if ! type module >/dev/null 2>&1; then
@@ -139,32 +102,21 @@ echo "detected GPU arch: ${GFX_ARCH}"
 #                                returnAlgoCount=N lines live here
 # We need BOTH the API channel (to see heuristic misses) and the INFO
 # channel (to confirm which .dat library was opened), so LEVEL=5 is
-# the minimum that gives the parser anything to work with. 
+# the minimum that gives the parser anything to work with.
 export HIPBLASLT_LOG_LEVEL=5
 
-# Sweep selector:
-#
-#   quick   (default): 12 configs around the canonical workload point.
-#           Detects ANY heuristic miss in that neighbourhood --
-#           whether it's a patched shape that broke or a new shape we
-#           never patched. The test is intentionally STRICTER than
-#           the current overlay's coverage, so a FAIL on a patched
-#           system is itself useful signal: it means the upstream
-#           gap is wider than what we've patched and the overlay
-#           should be extended. Don't dilute this by narrowing it
-#           just to satisfy CTest -- the failures are real.
-#
-#   full    120 configs. Same intent as `quick`, maximum coverage.
+# Sweep width. The sweep is intentionally wider than the overlay's coverage, so
+# a FAIL on a patched system is useful signal that the upstream gap is wider than
+# what we patch -- don't narrow it just to satisfy CTest.
 SWEEP=${HIPBLASLT_REGRESS_SWEEP:-full}
 
-# Datatypes to sweep. Each dtype consults an INDEPENDENT Tensile .dat
-# library on disk, so each needs INDEPENDENT regression coverage:
-# a passing fp16 run says nothing about whether the fp32 or bf16
-# equality tables have the same shape family populated. Default covers
-# the three dtypes that actually dispatch through hipBLASLt for
-# nn.Linear(bias=True) on gfx942 / rocm-7.x.
-#
 DTYPES_RAW=${HIPBLASLT_REGRESS_DTYPES:-fp16,fp32,bf16}
+
+# Slow-cell threshold (ms) for the layout/dispatch timing sweep (Phase 2).
+# A healthy small GEMM dispatches in well under 1 ms; the general-path
+# dispatch defect produces a flat ~400-600 ms, so 50 ms cleanly separates
+# the two with a wide margin.
+SLOW_MS=${HIPBLASLT_REGRESS_SLOW_MS:-50}
 
 OVERALL_FAIL=0
 PER_DTYPE_RESULT=""
@@ -177,12 +129,9 @@ cleanup_logs() {
 }
 trap cleanup_logs EXIT
 
-# Single-dtype run: takes the dtype label (fp16|fp32) and re-runs the
-# Python harness + parser pipeline against its own log file. Most of
-# the body is identical to the pre-2026-05-18 single-dtype script;
-# the only change is the dtype is passed through as argv[3] of the
-# Python harness so .half() vs .float() can be selected, and the log
-# is per-dtype so the parser's miss list isn't cross-contaminated.
+# Phase 1, one dtype: run the harness + parser against a per-dtype log file
+# (per-dtype so the parser's miss list isn't cross-contaminated). The dtype is
+# passed as argv[3] so the harness can select .half()/.float()/.bfloat16().
 run_dtype_sweep() {
    local DTYPE="$1"
 
@@ -274,24 +223,10 @@ print(f"  device     = {torch.cuda.get_device_name(0)}")
 print(f"  torch.hip  = {torch.version.hip}")
 
 torch.manual_seed(0)
-# Warmup at the canonical single_process.sh point (bs=256, nc=100,
-# hd=2048). We pick this shape specifically because:
-#   (a) for fp16 the patched overlay covers it with an exact-match
-#       row, so the warmup itself acts as a one-line confirmation
-#       that the patch is actually being consulted -- if even this
-#       shape misses, the env said the patch was loaded but it
-#       wasn't taking effect;
-#   (b) it triggers hipBLASLt initialization (emits the
-#       `[Info][initialize] Using ...` line into the log) which our
-#       library-path diagnostic keys off;
-#   (c) using a shape that we KNOW is a heuristic hit (for fp16)
-#       means the warmup doesn't pollute the miss list with a
-#       synthetic (M=10, N=8, K=64) entry that has nothing to do
-#       with the workload under test. For fp32 we keep the same
-#       shape for diagnostic parity, even though it may itself be
-#       a heuristic miss against the unpatched SS_SS .dat -- the
-#       warmup MISS contributing to the count is part of the
-#       signal, not noise.
+# Warmup at the canonical (bs=256, nc=100, hd=2048) point: a known fp16
+# heuristic hit, so it confirms the overlay is being consulted and triggers the
+# `[Info][initialize]` line our library-path diagnostic keys off, without
+# polluting the miss list with a synthetic warmup shape.
 _warm = nn.Linear(2048, 100).to(dtype=torch_dtype, device=dev)
 _warm(torch.randn(256, 2048, dtype=torch_dtype, device=dev)).sum().backward()
 torch.cuda.synchronize()
@@ -371,7 +306,7 @@ PY
 
    # Parse the log: every `returnAlgoCount=0` is a heuristic miss.  For
    # each miss, reconstruct (M, N, K) from the 3 layout_create lines that
-   # immediately precede it. 
+   # immediately precede it.
    local MISSES RC_PARSE
    MISSES=$(python3 - "${LOG}" <<'PY'
 import re, sys, os
@@ -424,6 +359,155 @@ PY
    fi
 }
 
+# ─────────────────────────────────────────────────────────────────────
+# Phase 2: transpose-layout / dispatch TIMING sweep.
+#
+# The per-dtype sweep above is a LOG-based detector: it flags only
+# `returnAlgoCount=0` heuristic misses from nn.Linear (which emits a
+# single transpose layout, NT). It is blind to a whole class of
+# dispatch regression that the 2026-11 MI300A investigation surfaced:
+#
+#   * The generic (no-CU) gfx942 fallback libraries ship solutions whose
+#     workGroupMappingXCC (4/8/16/32) does not divide the partition CU
+#     count (228 SPX / 38 CPX). The runtime predicate rejects them, the
+#     heuristic search empties, the empty result is NOT cached, and the
+#     full search is paid on EVERY call -> a flat ~400-600 ms that is
+#     independent of GEMM size, spans fp16/bf16/fp32, and -- critically --
+#     appears on transpose layouts nn.Linear never produces (mm/bmm
+#     NN/TN/TT). A log-miss counter can also UNDER-report it when the
+#     slow search eventually returns a (valid) solution.
+#
+# So this phase measures wall-clock dispatch time directly, across the
+# full transpose matrix and both dtypes/sizes (this is the content of
+# check_fp16_gemm.py, Daniele Bagni / HLRS, 2026-11), and FAILS on any
+# cell slower than ${SLOW_MS} ms. It is architecture-agnostic: a slow
+# cell is a regression on whatever partition the run lands on.
+#
+# Logging is deliberately unset for this phase so the API-log overhead
+# does not perturb the timings.
+run_layout_timing_sweep() {
+   echo
+   echo "=========================================================="
+   echo "  PHASE 2: layout/dispatch TIMING sweep  (slow > ${SLOW_MS} ms)"
+   echo "=========================================================="
+   (
+      unset HIPBLASLT_LOG_LEVEL HIPBLASLT_LOG_FILE
+      python3 - "${SLOW_MS}" <<'PY'
+import os, sys, time, statistics
+import torch
+
+slow_ms = float(sys.argv[1]) if len(sys.argv) > 1 else 50.0
+if not torch.cuda.is_available():
+    print("  no GPU available, skipping", file=sys.stderr)
+    sys.exit(77)
+
+DTYPES = [("fp16", torch.float16), ("bf16", torch.bfloat16), ("fp32", torch.float32)]
+# Part 1: the OPT-125M fused-QKV projection (where this first surfaced
+# under vLLM) plus one large shape to show big GEMMs are unaffected.
+CASES = [
+    ("small skinny  x[1,768] @ w[2304,768]", 1, 768, 2304),
+    ("small batched x[8,768] @ w[2304,768]", 8, 768, 2304),
+    ("large         x[4096,4096] @ w[4096,4096]", 4096, 4096, 4096),
+]
+# Part 2: transpose layouts. The defect is NOT dtype-bound and NOT
+# shape-bound -- it is selected by transpose layout, so every op/layout
+# combination must be probed.
+LAYOUT_SHAPES = [(256, 256, 128), (1024, 1024, 1024)]
+BATCH = 8
+WARMUP, REPEATS = 5, 10
+dev = torch.device("cuda")
+
+print(f"  device   = {torch.cuda.get_device_name(0)}")
+print(f"  torch    = {torch.__version__}  hip = {torch.version.hip}")
+print(f"  libpath  = {os.environ.get('HIPBLASLT_TENSILE_LIBPATH', '(unset)')}")
+print(f"  overlay  = {os.environ.get('HIPBLASLT_OVERLAY', '(unset)')}")
+
+def measure(fn):
+    for _ in range(WARMUP):
+        fn()
+    torch.cuda.synchronize()
+    s = []
+    for _ in range(REPEATS):
+        torch.cuda.synchronize(); t = time.perf_counter()
+        fn(); torch.cuda.synchronize()
+        s.append((time.perf_counter() - t) * 1000.0)
+    return min(s), statistics.median(s)
+
+def measure_adaptive(fn):
+    """measure(), but cheap when a single call already costs ~0.5 s."""
+    fn(); torch.cuda.synchronize()
+    t = time.perf_counter(); fn(); torch.cuda.synchronize()
+    warm, rep = (1, 3) if (time.perf_counter() - t) > 0.05 else (WARMUP, REPEATS)
+    for _ in range(warm):
+        fn()
+    s = []
+    for _ in range(rep):
+        torch.cuda.synchronize(); t = time.perf_counter()
+        fn(); torch.cuda.synchronize()
+        s.append((time.perf_counter() - t) * 1000.0)
+    return min(s), statistics.median(s)
+
+def layout_ops(m, n, k, dtype, batch):
+    def t(*shape):
+        return torch.randn(*shape, dtype=dtype, device=dev)
+    a_n, a_t = t(m, k), t(k, m)
+    b_n, b_t = t(k, n), t(n, k)
+    ba_n, ba_t = t(batch, m, k), t(batch, k, m)
+    bb_n, bb_t = t(batch, k, n), t(batch, n, k)
+    return [
+        ("mm", "NN", lambda: torch.mm(a_n, b_n)),
+        ("mm", "NT", lambda: torch.mm(a_n, b_t.t())),
+        ("mm", "TN", lambda: torch.mm(a_t.t(), b_n)),
+        ("mm", "TT", lambda: torch.mm(a_t.t(), b_t.t())),
+        ("bmm", "NN", lambda: torch.bmm(ba_n, bb_n)),
+        ("bmm", "NT", lambda: torch.bmm(ba_n, bb_t.transpose(1, 2))),
+        ("bmm", "TN", lambda: torch.bmm(ba_t.transpose(1, 2), bb_n)),
+        ("linear", "NT", lambda: torch.nn.functional.linear(a_n, b_t, None)),
+    ]
+
+torch.manual_seed(0)
+slow = []
+
+print()
+print(f"  {'case':<44} {'dtype':<6} {'min':>11} {'median':>11}")
+print("  " + "-" * 72)
+for label, m, k, n in CASES:
+    for dname, dtype in DTYPES:
+        x = torch.randn(m, k, dtype=dtype, device=dev)
+        w = torch.randn(n, k, dtype=dtype, device=dev)
+        lo, med = measure(lambda: torch.nn.functional.linear(x, w, None))
+        mark = "  <== SLOW" if med > slow_ms else ""
+        print(f"  {label:<44} {dname:<6} {lo:9.3f}ms {med:9.3f}ms{mark}")
+        if mark:
+            slow.append(f"{label} {dname}")
+        del x, w
+        torch.cuda.empty_cache()
+
+print()
+print(f"  Part 2: transpose layouts. MxNxK, bmm batch {BATCH}.")
+print(f"  {'shape':<16} {'op':<7} {'layout':<7} {'dtype':<6} {'min':>11} {'median':>11}")
+print("  " + "-" * 72)
+for m, n, k in LAYOUT_SHAPES:
+    shape = f"{m}x{n}x{k}"
+    for dname, dtype in DTYPES:
+        for op, layout, fn in layout_ops(m, n, k, dtype, BATCH):
+            lo, med = measure_adaptive(fn)
+            mark = "  <== SLOW" if med > slow_ms else ""
+            print(f"  {shape:<16} {op:<7} {layout:<7} {dname:<6} {lo:9.3f}ms {med:9.3f}ms{mark}")
+            if mark:
+                slow.append(f"{shape} {op} {layout} {dname}")
+        torch.cuda.empty_cache()
+    print()
+
+ncells = len(CASES) * len(DTYPES) + len(LAYOUT_SHAPES) * len(DTYPES) * 8
+print(f"  Slow cells (median > {slow_ms:g} ms): {len(slow)} of {ncells}")
+for s in slow:
+    print("     slow:", s)
+sys.exit(0 if not slow else 1)
+PY
+   )
+}
+
 # Main dtype loop: comma-separated DTYPES_RAW -> "fp16 fp32" etc.
 IFS=',' read -r -a DTYPES_ARR <<< "${DTYPES_RAW}"
 ALL_SKIP=1
@@ -447,6 +531,21 @@ for DT in "${DTYPES_ARR[@]}"; do
           ALL_SKIP=0;;
    esac
 done
+
+# Phase 2: layout/dispatch timing sweep (complements the per-dtype log sweep).
+run_layout_timing_sweep
+LAYOUT_RC=$?
+case ${LAYOUT_RC} in
+   0)  PER_DTYPE_RESULT="${PER_DTYPE_RESULT}  layout-timing: PASS\n"
+       ALL_SKIP=0;;
+   77) PER_DTYPE_RESULT="${PER_DTYPE_RESULT}  layout-timing: SKIP (no GPU)\n";;
+   *)  PER_DTYPE_RESULT="${PER_DTYPE_RESULT}  layout-timing: FAIL\n"
+       echo "REGRESSION CHECK [layout-timing]: FAILED  (slow dispatch cells listed above)"
+       echo "  -> likely the generic-fallback workGroupMappingXCC divisibility defect."
+       echo "  -> fix: hpctd repo, rocm/scripts/hipblaslt_patch_setup.sh (general-xcc path)."
+       OVERALL_FAIL=1
+       ALL_SKIP=0;;
+esac
 
 echo
 echo "=========================================================="
