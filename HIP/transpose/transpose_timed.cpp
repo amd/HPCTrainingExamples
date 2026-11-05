@@ -41,6 +41,7 @@ double benchmark_kernel(KernelFunc kernel, const double* __restrict d_input,
 
     // Warm up
     kernel<<<grid_size, block_size>>>(d_input, d_output, height, width);
+    hipCheck( hipGetLastError() );   // fail loudly on a bad launch (e.g. wrong --offload-arch)
     hipCheck( hipDeviceSynchronize() );
 
     // Time the kernel execution

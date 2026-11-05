@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
 
         // Warm up
         transpose_kernel_write_contiguous<<<grid_size, block_size>>>(d_input, d_output, height, width);
+        hipCheck( hipGetLastError() );   // fail loudly on a bad launch (e.g. wrong --offload-arch)
         hipCheck( hipDeviceSynchronize() );
 
         // Time the kernel execution
