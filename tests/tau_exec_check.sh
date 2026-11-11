@@ -164,13 +164,33 @@ echo "TAU_CHECK: launcher is ${MPI_LAUNCH}"
 # Use a 1024x1024 local mesh so the TAU trace buffer fits in GPU memory
 # (default 4096x4096 caused "HIP failure: 'out of memory'" during trace finalization).
 if [[ "${result}" ]]; then
-   ${MPI_LAUNCH} tau_exec -rocm -T rocm,rocprofsdk ./Jacobi_hip -g 2 1 -m 1024 1024
+   ${MPI_LAUNCH} tau_exec -rocm -T rocm,rocprofsdk ./Jacobi_hip -g 2 1 -m 1024 1024 2>&1 | tee run.out
 else
-   ${MPI_LAUNCH} tau_exec -T rocm,roctracer,rocprofiler ./Jacobi_hip -g 2 1 -m 1024 1024
+   ${MPI_LAUNCH} tau_exec -T rocm,roctracer,rocprofiler ./Jacobi_hip -g 2 1 -m 1024 1024 2>&1 | tee run.out
 fi
+tau_rc=${PIPESTATUS[0]}
 
 ls
 pprof 2>&1 | tee pprof.out
+
+# TAU can smash the heap at teardown and still leave a complete profile behind
+# (ROCM-29037), so the presence of an artifact is not by itself evidence of a
+# healthy run -- on several ROCm versions the ranks aborted while every check
+# below still reported PRESENT and the test went green. Require the run to have
+# exited cleanly before any artifact is reported as present.
+tau_run_ok=1
+if [ "${tau_rc}" -ne 0 ]; then
+   echo "TAU_CHECK: launcher exited ${tau_rc}"
+   tau_run_ok=0
+fi
+if grep -qE 'corrupted size vs\. prev_size|malloc\(\): invalid size|free\(\): invalid|Signal: Aborted' run.out; then
+   echo "TAU_CHECK: run ABORTED at teardown (heap corruption)"
+   tau_run_ok=0
+fi
+if [ "${tau_run_ok}" != "1" ]; then
+   echo "TAU_CHECK: run did not complete cleanly; not reporting artifacts as present"
+   exit 1
+fi
 
 # Check for the produced files and print our own result strings, which CMake
 # matches on. Matching the tool's own words was unreliable: "profile.0" also
