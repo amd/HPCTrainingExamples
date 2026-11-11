@@ -21,6 +21,7 @@ and run
 Remember the output result for the serial version to validate the offload version. The expected output is `Final result:   1.000000`.
 
 Port the example (including the Makefile) in the following and build and run the example after every kernel you ported to ensure correctness.
+Note: OpenMP 6.0 is needed for this exercise, see flag ```-fopenmp-version=60``` in the Makefiles in the solutions.
 
 ## Part 1: unified shared memory
 The following example port assumes unified shared memory.
