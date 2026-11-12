@@ -95,20 +95,44 @@ def make_step(mesh, nprocx, nprocy, nhalo, corners):
     return run
 
 
-def write_netcdf_soln(fname, u_global, imax, jmax):
+def gather_global(u, nproc):
+    # The full global field as a host array (on every process).
+    if nproc > 1:
+        from jax.experimental import multihost_utils
+        return multihost_utils.process_allgather(u, tiled=True)
+    return np.asarray(u)
+
+
+def create_netcdf_file(fname, jmax, imax):
     from netCDF4 import Dataset
     ncid = Dataset(fname, 'w', format='NETCDF4')
-    ncid.createDimension('time', None)
+
+    ncid.createDimension('time', None)  # None = unlimited dimension
     ncid.createDimension('y', jmax)
     ncid.createDimension('x', imax)
-    varid = ncid.createVariable('u', 'f8', ('time', 'y', 'x'))
-    vx = ncid.createVariable('xcoord', 'f8', ('x',))
-    vy = ncid.createVariable('ycoord', 'f8', ('y',))
+
+    varid = ncid.createVariable('u', 'f8', ('time', 'y', 'x'))  # f8 = double precision
+    varid_xcoord = ncid.createVariable('xcoord', 'f8', ('x',))
+    varid_ycoord = ncid.createVariable('ycoord', 'f8', ('y',))
+
     varid.description = "solution field"
+    varid_xcoord.description = "x coordinate"
+    varid_ycoord.description = "y coordinate"
+
+    return ncid, varid, varid_xcoord, varid_ycoord
+
+
+def write_netcdf_soln(u_global, tstep, varid):
     # flip y to match the other variants' output orientation
-    varid[0, :, :] = np.asarray(u_global)[::-1, :]
-    vx[:] = np.linspace(0.0, (imax - 1) / imax, imax)
-    vy[:] = np.linspace(0.0, (jmax - 1) / jmax, jmax)
+    varid[tstep, :, :] = np.asarray(u_global)[::-1, :]
+
+
+def write_netcdf_coords(imax, jmax, Lx, Ly, varid_xcoord, varid_ycoord):
+    varid_xcoord[:] = np.linspace(0.0, (imax - 1) * Lx / imax, imax)
+    varid_ycoord[:] = np.linspace(0.0, (jmax - 1) * Ly / jmax, jmax)
+
+
+def close_netcdf(ncid):
     ncid.close()
 
 
@@ -244,6 +268,15 @@ def main():
 
     u = jax.make_array_from_callback((jmax, imax), sharding, init_cb)
 
+    if do_print:
+        # as in the other variants: the file starts with the initial condition
+        u_global = gather_global(u, nproc)
+        if rank == 0:
+            ncid, varid, varid_xcoord, varid_ycoord = \
+                create_netcdf_file("solution.nc", jmax, imax)
+            write_netcdf_soln(u_global, 0, varid)
+            write_netcdf_coords(imax, jmax, Lx, Ly, varid_xcoord, varid_ycoord)
+
     run = make_step(mesh, nprocx, nprocy, nhalo, corners)
 
     # compile / warm up (not timed). Use a throwaway so the real solution is
@@ -265,10 +298,11 @@ def main():
     gmax = float(jnp.max(u))
 
     if do_print:
-        from jax.experimental import multihost_utils
-        u_global = multihost_utils.process_allgather(u, tiled=True) if nproc > 1 else np.asarray(u)
+        # ... and the final field goes in record maxIter, as in the other variants
+        u_global = gather_global(u, nproc)
         if rank == 0:
-            write_netcdf_soln("solution.nc", u_global, imax, jmax)
+            write_netcdf_soln(u_global, maxIter, varid)
+            close_netcdf(ncid)
 
     total_time = time.time() - tstart_total
 
