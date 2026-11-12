@@ -99,10 +99,31 @@ def write_netcdf_soln(fname, u_global, imax, jmax):
     ncid.close()
 
 
+def world_size():
+    # Detect the number of launched processes across common HPC launchers
+    # (Slurm srun, Open MPI / MPICH mpirun, torchrun-style WORLD_SIZE).
+    for var in ('SLURM_NTASKS', 'OMPI_COMM_WORLD_SIZE', 'PMI_SIZE',
+                'WORLD_SIZE'):
+        val = os.environ.get(var)
+        if val:
+            return int(val)
+    return 1
+
+
 def main():
-    # One process per GPU (srun) -> distributed; single process -> local GPUs.
-    nproc_env = int(os.environ.get('SLURM_NTASKS', '1'))
-    if nproc_env > 1:
+    # One process per GPU -> JAX distributed; single process -> all local GPUs.
+    # jax.distributed.initialize() auto-detects the launcher (Slurm, Open MPI,
+    # ...), so just launch one process per GPU, e.g.
+    #   srun --ntasks=<#GPUs> --ntasks-per-node=<gpus-per-node> python ghost_jax.py ...
+    nproc = world_size()
+    if nproc > 1:
+        # Some clusters export HTTP(S) proxies that also intercept the JAX
+        # coordinator's gRPC traffic, making initialize() hang or time out.
+        # The coordinator is always reached directly inside the cluster, so
+        # clear proxy settings for this process before initializing.
+        for _p in ('http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY',
+                   'all_proxy', 'ALL_PROXY', 'no_proxy', 'NO_PROXY'):
+            os.environ.pop(_p, None)
         jax.distributed.initialize()
 
     rank = jax.process_index()
@@ -170,7 +191,7 @@ def main():
 
     if do_print:
         from jax.experimental import multihost_utils
-        u_global = multihost_utils.process_allgather(u, tiled=True) if nproc_env > 1 else np.asarray(u)
+        u_global = multihost_utils.process_allgather(u, tiled=True) if nproc > 1 else np.asarray(u)
         if rank == 0:
             write_netcdf_soln("solution.nc", u_global, imax, jmax)
 
