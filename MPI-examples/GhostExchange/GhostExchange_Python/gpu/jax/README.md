@@ -38,4 +38,4 @@ For multi-node runs, launch one process per GPU with `srun`:
 srun -N 2 --ntasks-per-node=8 --gpus-per-task=1 python3 ghost_jax.py -x 4 -y 4 -i 8000 -j 8000 -I 500 -p
 ```
 
-The `-c` (corners) and `-h` (halo width) options are accepted for command-line parity with the other versions but have no effect here: the 5-point stencil only needs a width-one, edge-neighbour halo.
+The `-h` (halo width, default 2) and `-c` (exchange the corner cells) options work as in the other versions: every step exchanges `nhalo` ghost layers in two phases (left/right, then top/bottom; with `-c` the top/bottom messages also carry the corners), and the domain boundary replicates the edge cells. As in the other versions the 5-point stencil only reads the innermost ghost layer, so neither option changes the result; they change how much data is exchanged.

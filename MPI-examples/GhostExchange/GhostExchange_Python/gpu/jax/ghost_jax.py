@@ -167,12 +167,21 @@ def init_distributed():
     kwargs = dict(coordinator_address=coord, num_processes=ntasks,
                   process_id=procid, initialization_timeout=600)
 
-    # Assign this process the block of local GPUs it should drive. Works for
-    # both layouts: tasks-per-node=1 -> all local GPUs; tasks-per-node=G -> 1 each.
-    tpn_env = os.environ.get('SLURM_NTASKS_PER_NODE', '').split('(')[0]
-    tasks_per_node = int(tpn_env) if tpn_env else max(1, ntasks // nnodes)
+    # Local GPUs this process drives, as device ids within the set it can see.
+    # If the launcher already restricted the visible GPUs (Slurm GPU binding, or
+    # ROCR/HIP/CUDA_VISIBLE_DEVICES) the process drives all of them: with one
+    # process per GPU each process sees a single device, so its id is 0, not
+    # its local rank. Otherwise carve this task's block out of the node's GPUs.
+    visible = [len([d for d in os.environ[v].split(',') if d])
+               for v in ('ROCR_VISIBLE_DEVICES', 'HIP_VISIBLE_DEVICES',
+                         'CUDA_VISIBLE_DEVICES') if os.environ.get(v)]
+    n_visible = min(visible) if visible else 0
     gpus_on_node = int(os.environ.get('SLURM_GPUS_ON_NODE', '0'))
-    if gpus_on_node:
+    if n_visible:
+        kwargs['local_device_ids'] = list(range(n_visible))
+    elif gpus_on_node:
+        tpn_env = os.environ.get('SLURM_NTASKS_PER_NODE', '').split('(')[0]
+        tasks_per_node = int(tpn_env) if tpn_env else max(1, ntasks // nnodes)
         per_task = max(1, gpus_on_node // tasks_per_node)
         kwargs['local_device_ids'] = list(range(localid * per_task,
                                                  (localid + 1) * per_task))
