@@ -100,7 +100,7 @@ def write_netcdf_soln(fname, u_global, imax, jmax):
 
 
 def world_size():
-    # Detect the number of launched processes across common HPC launchers
+    # Number of launched processes, across common HPC launchers
     # (Slurm srun, Open MPI / MPICH mpirun, torchrun-style WORLD_SIZE).
     for var in ('SLURM_NTASKS', 'OMPI_COMM_WORLD_SIZE', 'PMI_SIZE',
                 'WORLD_SIZE'):
@@ -110,21 +110,66 @@ def world_size():
     return 1
 
 
+def init_distributed():
+    # Bring up the JAX distributed runtime for a multi-process run.
+    #
+    # JAX uses one global device mesh and the *device* (not the process) is the
+    # unit of parallelism, so a single process can drive several local GPUs.
+    # Two launch layouts are supported and give the identical computation
+    # (same global device set, same mesh):
+    #   * one process per node  -> each process drives all its local GPUs
+    #     (recommended on Slurm: robust, no per-task GPU binding needed)
+    #         srun -N<nodes> --ntasks-per-node=1 python ghost_jax.py ...
+    #   * one process per GPU   -> each process drives a single GPU
+    #         srun -N<nodes> --ntasks-per-node=<gpus-per-node> python ghost_jax.py ...
+    #
+    # Some clusters export HTTP(S) proxies that also intercept the coordinator's
+    # gRPC traffic and make initialize() hang/time out; the coordinator is always
+    # reached directly inside the cluster, so clear proxy settings first.
+    for _p in ('http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY',
+               'all_proxy', 'ALL_PROXY', 'no_proxy', 'NO_PROXY'):
+        os.environ.pop(_p, None)
+
+    # Non-Slurm launchers (Open MPI, cloud, ...): let JAX auto-detect the cluster.
+    if 'SLURM_PROCID' not in os.environ:
+        jax.distributed.initialize()
+        return
+
+    # Slurm: set the topology explicitly (auto-detection is brittle when a
+    # process owns more than one GPU, or when GPU binding is not per-task).
+    import subprocess
+    ntasks = int(os.environ['SLURM_NTASKS'])
+    procid = int(os.environ['SLURM_PROCID'])
+    localid = int(os.environ.get('SLURM_LOCALID', '0'))
+    nnodes = int(os.environ.get('SLURM_NNODES', '1'))
+
+    coord = os.environ.get('JAX_COORDINATOR_ADDRESS')
+    if not coord:
+        nodelist = (os.environ.get('SLURM_JOB_NODELIST')
+                    or os.environ.get('SLURM_NODELIST', ''))
+        first = subprocess.check_output(
+            ['scontrol', 'show', 'hostnames', nodelist]).decode().split()[0]
+        coord = f"{first}:{os.environ.get('JAX_COORDINATOR_PORT', '12421')}"
+
+    kwargs = dict(coordinator_address=coord, num_processes=ntasks,
+                  process_id=procid, initialization_timeout=600)
+
+    # Assign this process the block of local GPUs it should drive. Works for
+    # both layouts: tasks-per-node=1 -> all local GPUs; tasks-per-node=G -> 1 each.
+    tpn_env = os.environ.get('SLURM_NTASKS_PER_NODE', '').split('(')[0]
+    tasks_per_node = int(tpn_env) if tpn_env else max(1, ntasks // nnodes)
+    gpus_on_node = int(os.environ.get('SLURM_GPUS_ON_NODE', '0'))
+    if gpus_on_node:
+        per_task = max(1, gpus_on_node // tasks_per_node)
+        kwargs['local_device_ids'] = list(range(localid * per_task,
+                                                 (localid + 1) * per_task))
+    jax.distributed.initialize(**kwargs)
+
+
 def main():
-    # One process per GPU -> JAX distributed; single process -> all local GPUs.
-    # jax.distributed.initialize() auto-detects the launcher (Slurm, Open MPI,
-    # ...), so just launch one process per GPU, e.g.
-    #   srun --ntasks=<#GPUs> --ntasks-per-node=<gpus-per-node> python ghost_jax.py ...
     nproc = world_size()
     if nproc > 1:
-        # Some clusters export HTTP(S) proxies that also intercept the JAX
-        # coordinator's gRPC traffic, making initialize() hang or time out.
-        # The coordinator is always reached directly inside the cluster, so
-        # clear proxy settings for this process before initializing.
-        for _p in ('http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY',
-                   'all_proxy', 'ALL_PROXY', 'no_proxy', 'NO_PROXY'):
-            os.environ.pop(_p, None)
-        jax.distributed.initialize()
+        init_distributed()
 
     rank = jax.process_index()
 
