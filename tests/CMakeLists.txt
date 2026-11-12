@@ -2090,3 +2090,97 @@ set_tests_properties(
     Profiling_ShallowWater_Advanced_Halo_Pipeline
     Profiling_ShallowWater_Advanced_2D_Decomposition
   PROPERTIES TIMEOUT 600)
+
+# Open-ticket regression reproducers.
+# Each test reproduces a specific open Jira ticket. Those marked "Expected
+# failure" stay RED on an affected toolchain (the bug is still present) and turn
+# GREEN once the ticket is fixed; this is deliberate, matching the convention
+# used above for other known-broken cases. Reproducer sources live in
+# tests/regression_<ticket>/. GPU-run cases print "Skip" when no GPU is visible.
+
+# ROCM-33905: hipfftXtSetCallback keeps the address of the caller's callback
+# array instead of copying it, so a stack-local that goes out of scope before
+# hipfftExecR2C yields a GPU memory fault / wrong results (ROCm 7.2.0+).
+# Expected failure on affected ROCm.
+add_test(NAME Regression_ROCM33905_HipFFT_Callback_Scope COMMAND ../hipfft_callback_scope_regression.sh )
+set_property(TEST Regression_ROCM33905_HipFFT_Callback_Scope PROPERTY PASS_REGULAR_EXPRESSION "PASS")
+set_property(TEST Regression_ROCM33905_HipFFT_Callback_Scope PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_tests_properties(Regression_ROCM33905_HipFFT_Callback_Scope PROPERTIES TIMEOUT 300)
+
+# ROCM-33903: AMDGPU StructurizeCFG rewrites a phi incoming value to poison, so
+# divergent "else"-path lanes store out of bounds -> GPU page fault at -O1+
+# (ROCm 7.2.0+). Expected failure on affected ROCm.
+add_test(NAME Regression_ROCM33903_StructurizeCFG_Miscompile COMMAND ../structurizecfg_miscompile_regression.sh )
+set_property(TEST Regression_ROCM33903_StructurizeCFG_Miscompile PROPERTY PASS_REGULAR_EXPRESSION "PASS")
+set_property(TEST Regression_ROCM33903_StructurizeCFG_Miscompile PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_tests_properties(Regression_ROCM33903_StructurizeCFG_Miscompile PROPERTIES TIMEOUT 300)
+
+# LCOMPILER-2959: amdflang miscompiles a parallel do nested in a sequential loop
+# inside target teams distribute at -O0 (wrong results / memory fault; 7.1.1+).
+# Expected failure on affected toolchains.
+add_test(NAME Regression_LCOMPILER2959_Nested_ParallelDo_O0 COMMAND ../amdflang_nested_paralleldo_o0_regression.sh )
+set_property(TEST Regression_LCOMPILER2959_Nested_ParallelDo_O0 PROPERTY PASS_REGULAR_EXPRESSION "PASS")
+set_property(TEST Regression_LCOMPILER2959_Nested_ParallelDo_O0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_tests_properties(Regression_LCOMPILER2959_Nested_ParallelDo_O0 PROPERTIES TIMEOUT 300)
+
+# LCOMPILER-1829: amdflang rejects a multi-term OpenMP atomic update unless the
+# extra terms are parenthesized. Exercises the accepted (workaround) form, so it
+# PASSES on current compilers and guards the form documented in the example.
+add_test(NAME Regression_LCOMPILER1829_Atomic_Multiterm COMMAND ../openmp_fortran_atomic_multiterm.sh )
+set_property(TEST Regression_LCOMPILER1829_Atomic_Multiterm PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
+set_property(TEST Regression_LCOMPILER1829_Atomic_Multiterm PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_tests_properties(Regression_LCOMPILER1829_Atomic_Multiterm PROPERTIES TIMEOUT 300)
+
+# LCOMPILER-1746: omp_get_interop_ptr(iobj, omp_ipr_targetsync, NULL) segfaults
+# since ROCm 7.2 (worked through 7.1.1). Expected failure on affected ROCm.
+add_test(NAME Regression_LCOMPILER1746_Interop_Ptr COMMAND ../hip_openmp_interoperability_cxx_interop.sh )
+set_property(TEST Regression_LCOMPILER1746_Interop_Ptr PROPERTY PASS_REGULAR_EXPRESSION "PASS!")
+set_property(TEST Regression_LCOMPILER1746_Interop_Ptr PROPERTY SKIP_REGULAR_EXPRESSION "module spider" "Skip")
+set_tests_properties(Regression_LCOMPILER1746_Interop_Ptr PROPERTIES TIMEOUT 300)
+
+# ROCM-31493: rocprofiler-sdk headers transitively expose POSIX shutdown(int,int)
+# from <sys/socket.h>, colliding with a C consumer's own shutdown identifier
+# (HPCToolkit rocm-ss.c). Compile-only, no GPU. Expected failure on ROCm 10.
+add_test(NAME Regression_ROCM31493_RocprofilerSDK_Shutdown COMMAND ../amdflang_rocprofiler_sdk_shutdown_regression.sh )
+set_property(TEST Regression_ROCM31493_RocprofilerSDK_Shutdown PROPERTY PASS_REGULAR_EXPRESSION "ROCM31493_PASS")
+set_property(TEST Regression_ROCM31493_RocprofilerSDK_Shutdown PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(Regression_ROCM31493_RocprofilerSDK_Shutdown PROPERTIES TIMEOUT 300)
+
+# LCOMPILER-142: under -flto amdflang truncates the ELF st_size/.lbss size of a
+# COMMON block > 4 GB to its low 32 bits; the first store past it segfaults.
+# Static readelf check, no GPU. Expected failure on affected toolchains.
+add_test(NAME Regression_LCOMPILER142_Common_Block_LTO COMMAND ../amdflang_common_block_lto_regression.sh )
+set_property(TEST Regression_LCOMPILER142_Common_Block_LTO PROPERTY PASS_REGULAR_EXPRESSION "LCOMPILER142_PASS")
+set_property(TEST Regression_LCOMPILER142_Common_Block_LTO PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(Regression_LCOMPILER142_Common_Block_LTO PROPERTIES TIMEOUT 600)
+
+# LCOMPILER-2446: amdflang mis-parses a named DO construct `block: do` when it is
+# the first construct of an OpenMP region's structured block. Compile-only, no
+# GPU. Expected failure on affected toolchains.
+add_test(NAME Regression_LCOMPILER2446_Named_Block_Do COMMAND ../amdflang_named_block_do_regression.sh )
+set_property(TEST Regression_LCOMPILER2446_Named_Block_Do PROPERTY PASS_REGULAR_EXPRESSION "LCOMPILER2446_PASS")
+set_property(TEST Regression_LCOMPILER2446_Named_Block_Do PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(Regression_LCOMPILER2446_Named_Block_Do PROPERTIES TIMEOUT 300)
+
+# LCOMPILER-1858: passing arrays as private to a target region errors at -O0.
+# Build-only (compile + device link), no GPU. Expected failure on affected drops.
+add_test(NAME Regression_LCOMPILER1858_Private_Arrays_O0 COMMAND ../amdflang_private_arrays_o0_regression.sh )
+set_property(TEST Regression_LCOMPILER1858_Private_Arrays_O0 PROPERTY PASS_REGULAR_EXPRESSION "LCOMPILER1858_PASS")
+set_property(TEST Regression_LCOMPILER1858_Private_Arrays_O0 PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(Regression_LCOMPILER1858_Private_Arrays_O0 PROPERTIES TIMEOUT 300)
+
+# DCGPUBU-1552: array-syntax init (rhoi(1:nmax)=0.) in a target region fails to
+# link with amdflang-new (undefined _FortranAAssign). Build-only, no GPU.
+# Expected failure on affected drops.
+add_test(NAME Regression_DCGPUBU1552_Array_Assign_Target COMMAND ../amdflangnew_array_assign_target_regression.sh )
+set_property(TEST Regression_DCGPUBU1552_Array_Assign_Target PROPERTY PASS_REGULAR_EXPRESSION "DCGPUBU1552_PASS")
+set_property(TEST Regression_DCGPUBU1552_Array_Assign_Target PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(Regression_DCGPUBU1552_Array_Assign_Target PROPERTIES TIMEOUT 300)
+
+# DCGPUBU-1551: passing array sections to a routine in a target region fails to
+# link with amdflang-new (undefined _FortranAIsContiguous / _FortranACopyInAssign
+# / _FortranACopyOutAssign). Build-only, no GPU. Expected failure on affected drops.
+add_test(NAME Regression_DCGPUBU1551_Array_CopyInOut_Target COMMAND ../amdflangnew_array_copyinout_target_regression.sh )
+set_property(TEST Regression_DCGPUBU1551_Array_CopyInOut_Target PROPERTY PASS_REGULAR_EXPRESSION "DCGPUBU1551_PASS")
+set_property(TEST Regression_DCGPUBU1551_Array_CopyInOut_Target PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
+set_tests_properties(Regression_DCGPUBU1551_Array_CopyInOut_Target PROPERTIES TIMEOUT 300)
