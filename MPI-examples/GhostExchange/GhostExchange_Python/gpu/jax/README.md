@@ -50,6 +50,8 @@ JAX can drive the GPUs in two layouts, which compute exactly the same thing:
 
   Leaving all the GPUs of a node visible to every rank also works, and each rank then takes its own GPU by local rank, as in PyTorch's `LOCAL_RANK`: `srun -N 2 -n 16 --gpus 16 --gpus-per-node 8 --cpus-per-task=16 python3 ghost_jax.py ...`.
 
+On run performed on Lux, both layouts gave the same solve time, but the start up of one process per GPU was much faster. For a 32768² grid and 10,000 iterations, the `Total` on 8 GPUs was 21 s with one process per GPU and 47 s with one process driving all 8 GPUs (the solve took 13 s in both).
+
 When it is launched with several processes (Slurm, Open MPI, ...) the script calls `jax.distributed.initialize()` by itself. Under Slurm it takes the process count and id from `SLURM_NTASKS`/`SLURM_PROCID`, runs the coordinator on the first node of the `srun` step (set `JAX_COORDINATOR_ADDRESS=host:port` or `JAX_COORDINATOR_PORT` to override), and works out which GPUs each process drives: everything it can see if the launcher gave it its own GPU, otherwise its share of the GPUs of the node. It also clears the `http_proxy`-style environment variables first, because a proxy would otherwise intercept the coordinator's gRPC traffic and the start-up would time out.
 
 ### Give every process enough CPU cores
