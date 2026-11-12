@@ -102,6 +102,15 @@ def boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop):
     boundarycondition_time += time.time() - tstart_boundarycondition
 
 
+def gpu_sync():
+    # GPU-aware MPI reads and writes the device buffers behind CuPy's back, but CuPy
+    # launches its kernels asynchronously. Before MPI touches a buffer, the kernels that
+    # zero it (cp.zeros), pack it (.copy(), .flatten()) or produced the data it is cut
+    # from (the stencil) must have finished; otherwise MPI can send stale data, or a
+    # late cp.zeros memset can overwrite a halo that MPI has already received.
+    cp.cuda.get_current_stream().synchronize()
+
+
 def ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, do_timing):
     
     global ghostcell_time
@@ -133,6 +142,8 @@ def ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, 
     if nrght != MPI.PROC_NULL:
         xbuf_rght_send = x[jlow:jhgh, isize:nhalo+isize].flatten()
 
+    gpu_sync()
+
     requests = []
 
     if nrght != MPI.PROC_NULL:
@@ -160,16 +171,21 @@ def ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, 
         if ntop != MPI.PROC_NULL:
             recv_buf_top = cp.zeros((nhalo, isize + 2*nhalo), dtype=np.float64)
             #recv_buf_top = np.zeros((nhalo, isize + 2*nhalo), dtype=np.float64)
-            requests.append(MPI.COMM_WORLD.Irecv(recv_buf_top, source=ntop, tag=2001))
-        if nbot != MPI.PROC_NULL:
-            send_buf_bot = x[nhalo:2*nhalo, 0:2*nhalo+isize].copy()
-            requests.append(MPI.COMM_WORLD.Isend(send_buf_bot, dest=nbot, tag=2001))
+            send_buf_top = x[jsize:nhalo+jsize, 0:2*nhalo+isize].copy()
         if nbot != MPI.PROC_NULL:
             recv_buf_bot = cp.zeros((nhalo, isize + 2*nhalo), dtype=np.float64)
             #recv_buf_bot = np.zeros((nhalo, isize + 2*nhalo), dtype=np.float64)
+            send_buf_bot = x[nhalo:2*nhalo, 0:2*nhalo+isize].copy()
+
+        gpu_sync()
+
+        if ntop != MPI.PROC_NULL:
+            requests.append(MPI.COMM_WORLD.Irecv(recv_buf_top, source=ntop, tag=2001))
+        if nbot != MPI.PROC_NULL:
+            requests.append(MPI.COMM_WORLD.Isend(send_buf_bot, dest=nbot, tag=2001))
+        if nbot != MPI.PROC_NULL:
             requests.append(MPI.COMM_WORLD.Irecv(recv_buf_bot, source=nbot, tag=2002))
         if ntop != MPI.PROC_NULL:
-            send_buf_top = x[jsize:nhalo+jsize, 0:2*nhalo+isize].copy()
             requests.append(MPI.COMM_WORLD.Isend(send_buf_top, dest=ntop, tag=2002))
 
         MPI.Request.Waitall(requests)
@@ -180,6 +196,8 @@ def ghostcell_update(x, nhalo, corners, jsize, isize, nleft, nrght, nbot, ntop, 
             x[0:nhalo, 0:2*nhalo+isize] = recv_buf_bot
 
     else:
+        gpu_sync()
+
         for j in range(nhalo):
             if ntop != MPI.PROC_NULL:
                 requests.append(MPI.COMM_WORLD.Irecv(

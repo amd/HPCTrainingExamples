@@ -104,6 +104,15 @@ def gather_global(u, nproc):
 
 
 def create_netcdf_file(fname, jmax, imax):
+    # Serial netCDF output from process 0 only. A netCDF4 built with parallel I/O imports
+    # mpi4py, whose default import calls MPI_Init -- which would block process 0 waiting
+    # for the other processes of the srun job. This writer needs no MPI, so keep it off.
+    try:
+        import mpi4py
+        mpi4py.rc.initialize = False
+        mpi4py.rc.finalize = False
+    except ImportError:
+        pass
     from netCDF4 import Dataset
     ncid = Dataset(fname, 'w', format='NETCDF4')
 
@@ -182,7 +191,10 @@ def init_distributed():
 
     coord = os.environ.get('JAX_COORDINATOR_ADDRESS')
     if not coord:
-        nodelist = (os.environ.get('SLURM_JOB_NODELIST')
+        # the coordinator runs in process 0, i.e. on the first node of this
+        # srun *step* (which can be a subset of the job's nodes)
+        nodelist = (os.environ.get('SLURM_STEP_NODELIST')
+                    or os.environ.get('SLURM_JOB_NODELIST')
                     or os.environ.get('SLURM_NODELIST', ''))
         first = subprocess.check_output(
             ['scontrol', 'show', 'hostnames', nodelist]).decode().split()[0]
@@ -192,23 +204,26 @@ def init_distributed():
                   process_id=procid, initialization_timeout=600)
 
     # Local GPUs this process drives, as device ids within the set it can see.
-    # If the launcher already restricted the visible GPUs (Slurm GPU binding, or
-    # ROCR/HIP/CUDA_VISIBLE_DEVICES) the process drives all of them: with one
-    # process per GPU each process sees a single device, so its id is 0, not
-    # its local rank. Otherwise carve this task's block out of the node's GPUs.
+    #  * If it sees fewer GPUs than there are tasks on the node, the launcher gave
+    #    each task its own GPU (Slurm --gpus-per-task/--gpu-bind, or a per-rank
+    #    HIP_VISIBLE_DEVICES from gpu_wrapper.sh): drive everything visible. With
+    #    one process per GPU that is a single device, id 0 -- not the local rank.
+    #  * Otherwise all tasks on the node see the same GPUs (e.g. one process per
+    #    node, or one per GPU with all GPUs visible): take this task's share.
     visible = [len([d for d in os.environ[v].split(',') if d])
                for v in ('ROCR_VISIBLE_DEVICES', 'HIP_VISIBLE_DEVICES',
                          'CUDA_VISIBLE_DEVICES') if os.environ.get(v)]
-    n_visible = min(visible) if visible else 0
-    gpus_on_node = int(os.environ.get('SLURM_GPUS_ON_NODE', '0'))
+    n_visible = (min(visible) if visible
+                 else int(os.environ.get('SLURM_GPUS_ON_NODE', '0')))
+    tpn_env = os.environ.get('SLURM_NTASKS_PER_NODE', '').split('(')[0]
+    tasks_per_node = int(tpn_env) if tpn_env else max(1, ntasks // nnodes)
     if n_visible:
-        kwargs['local_device_ids'] = list(range(n_visible))
-    elif gpus_on_node:
-        tpn_env = os.environ.get('SLURM_NTASKS_PER_NODE', '').split('(')[0]
-        tasks_per_node = int(tpn_env) if tpn_env else max(1, ntasks // nnodes)
-        per_task = max(1, gpus_on_node // tasks_per_node)
-        kwargs['local_device_ids'] = list(range(localid * per_task,
-                                                 (localid + 1) * per_task))
+        if n_visible < tasks_per_node:
+            kwargs['local_device_ids'] = list(range(n_visible))
+        else:
+            per_task = n_visible // tasks_per_node
+            kwargs['local_device_ids'] = list(range(localid * per_task,
+                                                     (localid + 1) * per_task))
     jax.distributed.initialize(**kwargs)
 
 
