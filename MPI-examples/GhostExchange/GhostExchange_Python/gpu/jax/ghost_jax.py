@@ -12,11 +12,13 @@ try:
 except AttributeError:  # older jax
     from jax.experimental.shard_map import shard_map
 
-def parse_input_args(argv, jmax, imax, nprocy, nprocx, maxIter, do_print):
+def parse_input_args(argv, jmax, imax, nprocy, nprocx, nhalo, corners,
+                     maxIter, do_print):
     i = 1
     while i < len(argv):
         a = argv[i]
         if a == '-c':
+            corners = 1
             i += 1
         elif a == '-t':
             i += 1
@@ -24,7 +26,7 @@ def parse_input_args(argv, jmax, imax, nprocy, nprocx, maxIter, do_print):
             do_print = 1
             i += 1
         elif a == '-h':
-            i += 2
+            nhalo = int(argv[i + 1]); i += 2
         elif a == '-I':
             maxIter = int(argv[i + 1]); i += 2
         elif a == '-i':
@@ -37,38 +39,49 @@ def parse_input_args(argv, jmax, imax, nprocy, nprocx, maxIter, do_print):
             nprocy = int(argv[i + 1]); i += 2
         else:
             print(f"Unknown option {a}", file=sys.stderr); sys.exit(1)
-    return jmax, imax, nprocy, nprocx, maxIter, do_print
+    return jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, do_print
 
 
-def make_step(mesh, nprocx, nprocy):
-    
-    def jacobi_local(u):
+def make_step(mesh, nprocx, nprocy, nhalo, corners):
+    h = nhalo
+
+    def ghostcell_update(u):
+
         xi = jax.lax.axis_index('x')
         yi = jax.lax.axis_index('y')
 
-        # --- x halos (columns) ---
+        # --- left/right exchange (halo columns) ---
         if nprocx > 1:
-            lh = jax.lax.ppermute(u[:, -1:], 'x', [(k, k + 1) for k in range(nprocx - 1)])
-            rh = jax.lax.ppermute(u[:, :1], 'x', [(k, k - 1) for k in range(1, nprocx)])
+            lh = jax.lax.ppermute(u[:, -h:], 'x', [(k, k + 1) for k in range(nprocx - 1)])
+            rh = jax.lax.ppermute(u[:, :h], 'x', [(k, k - 1) for k in range(1, nprocx)])
         else:
-            lh = u[:, -1:]
-            rh = u[:, :1]
-        left_halo = jnp.where(xi == 0, u[:, :1], lh)
-        right_halo = jnp.where(xi == nprocx - 1, u[:, -1:], rh)
-        west = jnp.concatenate([left_halo, u[:, :-1]], axis=1)   # u[:, i-1]
-        east = jnp.concatenate([u[:, 1:], right_halo], axis=1)   # u[:, i+1]
+            lh = u[:, -h:]
+            rh = u[:, :h]
+        left = jnp.where(xi == 0, jnp.broadcast_to(u[:, :1], lh.shape), lh)
+        right = jnp.where(xi == nprocx - 1, jnp.broadcast_to(u[:, -1:], rh.shape), rh)
+        ux = jnp.concatenate([left, u, right], axis=1)           # (jl, il + 2h)
 
-        # --- y halos (rows) ---
+        # --- top/bottom exchange (halo rows) ---
+        v = ux if corners else u
         if nprocy > 1:
-            uh = jax.lax.ppermute(u[-1:, :], 'y', [(k, k + 1) for k in range(nprocy - 1)])
-            dh = jax.lax.ppermute(u[:1, :], 'y', [(k, k - 1) for k in range(1, nprocy)])
+            uh = jax.lax.ppermute(v[-h:, :], 'y', [(k, k + 1) for k in range(nprocy - 1)])
+            dh = jax.lax.ppermute(v[:h, :], 'y', [(k, k - 1) for k in range(1, nprocy)])
         else:
-            uh = u[-1:, :]
-            dh = u[:1, :]
-        up_halo = jnp.where(yi == 0, u[:1, :], uh)
-        down_halo = jnp.where(yi == nprocy - 1, u[-1:, :], dh)
-        north = jnp.concatenate([up_halo, u[:-1, :]], axis=0)    # u[j-1, :]
-        south = jnp.concatenate([u[1:, :], down_halo], axis=0)   # u[j+1, :]
+            uh = v[-h:, :]
+            dh = v[:h, :]
+        up = jnp.where(yi == 0, jnp.broadcast_to(v[:1, :], uh.shape), uh)
+        down = jnp.where(yi == nprocy - 1, jnp.broadcast_to(v[-1:, :], dh.shape), dh)
+        uy = jnp.concatenate([up, v, down], axis=0)              # (jl + 2h, il [+ 2h])
+        return ux, uy
+
+    def jacobi_local(u):
+        jl, il = u.shape
+        ux, uy = ghostcell_update(u)
+        c0 = h if corners else 0           # first interior column of uy
+        west = ux[:, h - 1:h - 1 + il]                   # u[:, i-1]
+        east = ux[:, h + 1:h + 1 + il]                   # u[:, i+1]
+        north = uy[h - 1:h - 1 + jl, c0:c0 + il]         # u[j-1, :]
+        south = uy[h + 1:h + 1 + jl, c0:c0 + il]         # u[j+1, :]
 
         return (u + west + east + north + south) / 5.0
 
@@ -177,10 +190,13 @@ def main():
     jmax = 2000
     nprocx = 0
     nprocy = 0
+    nhalo = 2
+    corners = 0
     maxIter = 1000
     do_print = 0
-    jmax, imax, nprocy, nprocx, maxIter, do_print = \
-        parse_input_args(sys.argv, jmax, imax, nprocy, nprocx, maxIter, do_print)
+    jmax, imax, nprocy, nprocx, nhalo, corners, maxIter, do_print = \
+        parse_input_args(sys.argv, jmax, imax, nprocy, nprocx, nhalo, corners,
+                         maxIter, do_print)
 
     if rank == 0:
         print("------> Initializing the Problem")
@@ -192,6 +208,11 @@ def main():
         if rank == 0:
             print(f"error: -x {nprocx} * -y {nprocy} = {nprocx*nprocy} != "
                   f"{len(devices)} devices", file=sys.stderr)
+        sys.exit(1)
+    if nhalo < 1 or nhalo > min(jmax // nprocy, imax // nprocx):
+        if rank == 0:
+            print(f"error: -h {nhalo} must be between 1 and the local block size "
+                  f"({jmax // nprocy} x {imax // nprocx})", file=sys.stderr)
         sys.exit(1)
     mesh = Mesh(np.asarray(devices).reshape(nprocy, nprocx), axis_names=('y', 'x'))
     sharding = NamedSharding(mesh, P('y', 'x'))
@@ -214,7 +235,7 @@ def main():
 
     u = jax.make_array_from_callback((jmax, imax), sharding, init_cb)
 
-    run = make_step(mesh, nprocx, nprocy)
+    run = make_step(mesh, nprocx, nprocy, nhalo, corners)
 
     # compile / warm up (not timed). Use a throwaway so the real solution is
     # NOT advanced here: the timed run below must do exactly maxIter steps.
