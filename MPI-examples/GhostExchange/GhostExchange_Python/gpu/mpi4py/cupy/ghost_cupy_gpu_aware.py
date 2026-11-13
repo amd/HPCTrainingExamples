@@ -103,11 +103,7 @@ def boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop):
 
 
 def gpu_sync():
-    # GPU-aware MPI reads and writes the device buffers behind CuPy's back, but CuPy
-    # launches its kernels asynchronously. Before MPI touches a buffer, the kernels that
-    # zero it (cp.zeros), pack it (.copy(), .flatten()) or produced the data it is cut
-    # from (the stencil) must have finished; otherwise MPI can send stale data, or a
-    # late cp.zeros memset can overwrite a halo that MPI has already received.
+    # CuPy kernels run asynchronously: finish them before MPI touches the buffers
     cp.cuda.get_current_stream().synchronize()
 
 

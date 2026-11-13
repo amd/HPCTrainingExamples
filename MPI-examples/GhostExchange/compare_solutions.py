@@ -17,8 +17,7 @@ TOL = 1e-12   # roundoff-level agreement for fp64
 
 
 def load(path):
-    # Read only the first and last record: the files have maxIter+1 records,
-    # almost all of them never written (fill values).
+    # read only the first and last record (the others are mostly fill values)
     try:
         ds = nc.Dataset(path)
     except OSError as e:

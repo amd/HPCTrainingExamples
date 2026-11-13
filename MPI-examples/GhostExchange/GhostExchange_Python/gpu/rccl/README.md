@@ -1,30 +1,69 @@
-# Ghost exchange example in Python (RCCL version)
+# Ghost exchange example in Python (RCCL halo exchange)
 
-This is the RCCL counterpart of the CuPy `gpu/cupy/gpu_aware_mpi.py` version:
-both keep the packed halo buffers on the device and never stage them through host
-memory. The difference is the transport &mdash; where the CuPy GPU-aware version
-hands the device buffers to a GPU-aware MPI, this one moves the halos directly
-between GPUs with [RCCL](https://github.com/ROCm/rccl) (`ncclSend`/`ncclRecv`).
-The 2D Jacobi stencil and the boundary-condition update are identical; only the
-ghost cell exchange differs. RCCL is driven from Python through CuPy's thin RCCL
-binding, `cupy.cuda.nccl`. MPI is still used, but only to launch the ranks and to
-broadcast the RCCL unique id needed to build the RCCL communicator &mdash; the
-same bootstrap idiom used by the
-[`RCCL-examples`](https://github.com/amd/HPCTrainingExamples/tree/main/RCCL-examples)
-`pt2pt.cpp` &mdash; it never touches the GPU payload.
+These versions keep the halo data on the GPU, like the GPU-aware MPI versions in
+[`../mpi4py`](../mpi4py/README.md), but move it between GPUs with
+[RCCL](https://github.com/ROCm/rccl) point-to-point calls (`ncclSend`/`ncclRecv`)
+instead of MPI. The stencil code and the boundary conditions are the same as in
+the mpi4py version of the same framework; only the ghost cell exchange differs.
 
-In terms of the open AMD scaling stack, this version exercises the **RCCL** point-to-point path directly (`ncclSend`/`ncclRecv`), with MPI used only for bootstrap.
+| directory     | script               | RCCL binding used         |
+|---------------|----------------------|---------------------------|
+| `cupy/`       | `ghost_cupy_rccl.py` | CuPy's `cupy.cuda.nccl`   |
+| `hip-python/` | `ghost_hip_rccl.py`  | hip-python's `hip.rccl`   |
 
-See the top-level [README](../../README.md) for the common environment setup (modules, virtual environment, netCDF4, GPU binding, the `-p` option and comparing solutions). In addition to the common modules, load the CuPy module (its `cupy.cuda.nccl` binding links against RCCL):
+The CuPy version is written in the NumPy array style, while the hip-python version
+uses the kernels of the C++ HIP version; the mpi4py [README](../mpi4py/README.md)
+describes that difference.
+
+MPI is still used, but only to launch the ranks and to broadcast the RCCL unique
+id that every rank needs to build the RCCL communicator, the same bootstrap idiom
+used by `pt2pt.cpp` in
+[`RCCL-examples`](https://github.com/amd/HPCTrainingExamples/tree/main/RCCL-examples).
+MPI never touches the halo data.
+
+For each direction (left/right, then top/bottom) the sends and receives are posted
+between `ncclGroupStart` and `ncclGroupEnd`, so that RCCL runs them together and
+neighbors that send to each other do not deadlock; the host then waits for the
+stream before the received halos are used. Two differences from MPI show up in the
+code:
+
+- RCCL point-to-point calls have no message tags. The messages from one rank to a
+  peer are matched to the peer's receives in the order they are posted, so both
+  sides post them in the same order.
+- RCCL has no `MPI_PROC_NULL`, so the calls for missing neighbors at the physical
+  boundaries are skipped.
+
+## Modules
+
+See the top-level [README](../../README.md) for the common environment setup
+(modules, virtual environment, netCDF4, GPU binding, the `-p` option and comparing
+solutions). In addition to the common modules, load the module of the framework:
 
 ```
-module load cupy
+module load cupy        # for cupy/
+module load hip-python  # for hip-python/
 ```
 
-`cupy` is installed as a module with `extras/scripts/cupy_setup.sh` in [HPCTrainingDock](https://github.com/amd/HPCTrainingDock) (on ROCm 7.x this builds AMD's ROCm CuPy fork, whose `cupy.cuda.nccl` binding links against RCCL).
+Both bindings call the RCCL library of the ROCm installation. `cupy` is installed
+as a module with `extras/scripts/cupy_setup.sh` in
+[HPCTrainingDock](https://github.com/amd/HPCTrainingDock) (on ROCm 7.x this builds
+AMD's ROCm CuPy fork, whose `cupy.cuda.nccl` binding links against RCCL), and
+`hip-python` with `extras/scripts/hip-python_setup.sh`.
 
-Run from this directory with:
+## Running
+
+Run from the directory of the framework, for example:
 
 ```
-mpirun -n 4 ../gpu_wrapper.sh python3 ghost_rccl.py -x 2 -y 2 -i 200 -j 200 -c -I 100 -p
+cd cupy
+mpirun -n 4 ../../gpu_wrapper.sh python3 ghost_cupy_rccl.py -x 2 -y 2 -i 200 -j 200 -c -I 100 -p
 ```
+
+```
+cd hip-python
+mpirun -n 4 ../../gpu_wrapper.sh python3 ghost_hip_rccl.py -x 2 -y 2 -i 200 -j 200 -c -I 100 -p
+```
+
+RCCL has to reach the GPUs of the other ranks on the node. If your Slurm setup
+isolates each task to its own GPU, see the binding section of the top-level
+README.

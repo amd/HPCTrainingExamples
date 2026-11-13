@@ -74,7 +74,7 @@ def make_step(mesh, nprocx, nprocy, nhalo, corners):
         uy = jnp.concatenate([up, v, down], axis=0)              # (jl + 2h, il [+ 2h])
         return ux, uy
 
-    def jacobi_local(u):
+    def stencil_local(u):
         jl, il = u.shape
         ux, uy = ghostcell_update(u)
         c0 = h if corners else 0           # first interior column of uy
@@ -85,7 +85,7 @@ def make_step(mesh, nprocx, nprocy, nhalo, corners):
 
         return (u + west + east + north + south) / 5.0
 
-    step = shard_map(jacobi_local, mesh=mesh,
+    step = shard_map(stencil_local, mesh=mesh,
                      in_specs=P('y', 'x'), out_specs=P('y', 'x'))
 
     @jax.jit
@@ -104,9 +104,7 @@ def gather_global(u, nproc):
 
 
 def create_netcdf_file(fname, jmax, imax):
-    # Serial netCDF output from process 0 only. A netCDF4 built with parallel I/O imports
-    # mpi4py, whose default import calls MPI_Init -- which would block process 0 waiting
-    # for the other processes of the srun job. This writer needs no MPI, so keep it off.
+    # serial output from process 0; keep a parallel netCDF4 build from calling MPI_Init
     try:
         import mpi4py
         mpi4py.rc.initialize = False
@@ -146,8 +144,7 @@ def close_netcdf(ncid):
 
 
 def world_size():
-    # Number of launched processes, across common HPC launchers
-    # (Slurm srun, Open MPI / MPICH mpirun, torchrun-style WORLD_SIZE).
+    # number of launched processes (srun, mpirun, torchrun-style WORLD_SIZE)
     for var in ('SLURM_NTASKS', 'OMPI_COMM_WORLD_SIZE', 'PMI_SIZE',
                 'WORLD_SIZE'):
         val = os.environ.get(var)
@@ -157,32 +154,18 @@ def world_size():
 
 
 def init_distributed():
-    # Bring up the JAX distributed runtime for a multi-process run.
-    #
-    # JAX uses one global device mesh and the *device* (not the process) is the
-    # unit of parallelism, so a single process can drive several local GPUs.
-    # Two launch layouts are supported and give the identical computation
-    # (same global device set, same mesh):
-    #   * one process per node  -> each process drives all its local GPUs
-    #     (recommended on Slurm: robust, no per-task GPU binding needed)
-    #         srun -N<nodes> --ntasks-per-node=1 python ghost_jax.py ...
-    #   * one process per GPU   -> each process drives a single GPU
-    #         srun -N<nodes> --ntasks-per-node=<gpus-per-node> python ghost_jax.py ...
-    #
-    # Some clusters export HTTP(S) proxies that also intercept the coordinator's
-    # gRPC traffic and make initialize() hang/time out; the coordinator is always
-    # reached directly inside the cluster, so clear proxy settings first.
+    # JAX distributed runtime: one process per node or one process per GPU.
+    # Proxies can intercept the coordinator's traffic, so clear them.
     for _p in ('http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY',
                'all_proxy', 'ALL_PROXY', 'no_proxy', 'NO_PROXY'):
         os.environ.pop(_p, None)
 
-    # Non-Slurm launchers (Open MPI, cloud, ...): let JAX auto-detect the cluster.
+    # non-Slurm launchers: let JAX auto-detect the cluster
     if 'SLURM_PROCID' not in os.environ:
         jax.distributed.initialize()
         return
 
-    # Slurm: set the topology explicitly (auto-detection is brittle when a
-    # process owns more than one GPU, or when GPU binding is not per-task).
+    # Slurm: set the topology explicitly
     import subprocess
     ntasks = int(os.environ['SLURM_NTASKS'])
     procid = int(os.environ['SLURM_PROCID'])
@@ -191,8 +174,7 @@ def init_distributed():
 
     coord = os.environ.get('JAX_COORDINATOR_ADDRESS')
     if not coord:
-        # the coordinator runs in process 0, i.e. on the first node of this
-        # srun *step* (which can be a subset of the job's nodes)
+        # coordinator: process 0, on the first node of this srun step
         nodelist = (os.environ.get('SLURM_STEP_NODELIST')
                     or os.environ.get('SLURM_JOB_NODELIST')
                     or os.environ.get('SLURM_NODELIST', ''))
@@ -203,13 +185,8 @@ def init_distributed():
     kwargs = dict(coordinator_address=coord, num_processes=ntasks,
                   process_id=procid, initialization_timeout=600)
 
-    # Local GPUs this process drives, as device ids within the set it can see.
-    #  * If it sees fewer GPUs than there are tasks on the node, the launcher gave
-    #    each task its own GPU (Slurm --gpus-per-task/--gpu-bind, or a per-rank
-    #    HIP_VISIBLE_DEVICES from gpu_wrapper.sh): drive everything visible. With
-    #    one process per GPU that is a single device, id 0 -- not the local rank.
-    #  * Otherwise all tasks on the node see the same GPUs (e.g. one process per
-    #    node, or one per GPU with all GPUs visible): take this task's share.
+    # local GPUs this process drives: all the visible ones if the launcher gave each
+    # task its own GPUs, otherwise this task's share of the node's GPUs
     visible = [len([d for d in os.environ[v].split(',') if d])
                for v in ('ROCR_VISIBLE_DEVICES', 'HIP_VISIBLE_DEVICES',
                          'CUDA_VISIBLE_DEVICES') if os.environ.get(v)]
@@ -265,7 +242,7 @@ def main():
     mesh = Mesh(np.asarray(devices).reshape(nprocy, nprocx), axis_names=('y', 'x'))
     sharding = NamedSharding(mesh, P('y', 'x'))
 
-    # Gaussian initial condition (index space), matching the other variants.
+    # Gaussian initial condition
     Lx = Ly = 1.0
     sigma = 0.01 / ((Lx / imax) * (Ly / jmax))
     x_center = imax / 2.0
@@ -284,7 +261,7 @@ def main():
     u = jax.make_array_from_callback((jmax, imax), sharding, init_cb)
 
     if do_print:
-        # as in the other variants: the file starts with the initial condition
+        # record 0: initial condition
         u_global = gather_global(u, nproc)
         if rank == 0:
             ncid, varid, varid_xcoord, varid_ycoord = \
@@ -294,8 +271,7 @@ def main():
 
     run = make_step(mesh, nprocx, nprocy, nhalo, corners)
 
-    # compile / warm up (not timed). Use a throwaway so the real solution is
-    # NOT advanced here: the timed run below must do exactly maxIter steps.
+    # compile / warm up on a throwaway result (not timed)
     warm = run(u, 1)
     warm.block_until_ready()
     del warm
@@ -313,7 +289,7 @@ def main():
     gmax = float(jnp.max(u))
 
     if do_print:
-        # ... and the final field goes in record maxIter, as in the other variants
+        # record maxIter: final field
         u_global = gather_global(u, nproc)
         if rank == 0:
             write_netcdf_soln(u_global, maxIter, varid)

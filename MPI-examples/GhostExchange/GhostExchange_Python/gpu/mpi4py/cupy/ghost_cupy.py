@@ -391,9 +391,7 @@ def main():
        stencil_time += time.time() - tstart_stencil
 
        boundarycondition_update(x, nhalo, jsize, isize, nleft, nrght, nbot, ntop);
-       # Host<->device staging for the (non GPU-aware) MPI halo exchange. This
-       # cost is what gpu_aware_mpi.py avoids, so time it explicitly. asnumpy
-       # (D2H) is blocking; the synchronize makes the asarray (H2D) accurate.
+       # host<->device staging for the MPI halo exchange (timed separately)
        t_xfer = time.time()
        x_cpu=cp.asnumpy(x)
        transfer_time += time.time() - t_xfer
