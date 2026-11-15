@@ -20,7 +20,7 @@ Start with [`novice`](novice) unless you have already profiled single-process GP
 advanced track separates raw speed from scalability, and spends its second half on communication and
 decomposition rather than on kernels.
 
-On AAC6, the novice setup is in [AAC6_novice.md](AAC6_novice.md) and the advanced setup is in [AAC6_advanced.md](AAC6_advanced.md).
+On AAC6, the novice setup is in [AAC6_novice.md](AAC6_novice.md) and the advanced setup is in [AAC6_advanced.md](AAC6_advanced.md). On AAC7, the novice setup is in [AAC7_novice.md](AAC7_novice.md).
 
 ## The application
 
