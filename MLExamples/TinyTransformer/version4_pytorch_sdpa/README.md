@@ -3,6 +3,9 @@
 
 README.md from `HPCTrainingExamples/MLExamples/TinyTransformer/version4_pytorch_sdpa` in the Training Examples repository
 
+> [!TIP]
+> If there is no PyTorch module available, see the [general Apptainer instructions](../../README_apptainer.md) to run this exercise in a container.
+
 **Objective**: Achieve maximum performance through ultra-fusion techniques and state-of-the-art optimization
 
 **Expected Performance**: 3.5-5.0x speedup over baseline, 85-98% memory reduction

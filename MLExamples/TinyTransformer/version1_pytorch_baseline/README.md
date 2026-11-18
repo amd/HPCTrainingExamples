@@ -3,6 +3,9 @@
 
 README.md from `HPCTrainingExamples/MLExamples/TinyTransformer/version1_pytorch_baseline` in the Training Examples repository
 
+> [!TIP]
+> If there is no PyTorch module available, see the [general Apptainer instructions](../../README_apptainer.md) to run this exercise in a container.
+
 ## Overview
 
 Version 1 establishes the profiling foundation for the workshop using a standard PyTorch implementation of Tiny LLaMA. This version focuses on comprehensive performance characterization using PyTorch native profiling and DeepSpeed FLOPS profiler, providing the baseline measurements for all subsequent optimizations.

@@ -24,17 +24,9 @@ pip3 install -r requirements.txt
 ```
 
 > [!TIP]
-> You can also setup your environment and run this exercise in a container via Apptainer:
-> ```bash
-> apptainer pull rocm10.0_ubuntu24.04_py3.12_pytorch_release_2.11.0.sif docker://<registry>/rocm10.0_ubuntu24.04_py3.12_pytorch_release_2.11.0
-> apptainer shell --cleanenv --rocm rocm10.0_ubuntu24.04_py3.12_pytorch_release_2.11.0.sif
-> cd HPCTrainingExamples/MLExamples/Neural_Operators
-> python3 -m venv --system-site-packages ./venv-pt
-> echo "/opt/venv/lib/python3.12/site-packages" > ./venv-pt/lib/python3.12/site-packages/_container_torch.pth
-> source ./venv-pt/bin/activate
-> pip3 install -r requirements.txt
-> ```
-> The extra `.pth` line is needed because a plain `python3 -m venv` inside the container loses access to the pre-installed ROCm PyTorch; it re-adds it to the new venv's search path.
+> You can also set up your environment and run this exercise in a container via Apptainer.
+> Follow the [general Apptainer instructions](../README_apptainer.md) and setup the necessary requirements from `requirements.txt` es explained.
+> Since the dataset is downloaded at runtime, make sure `--base_path` points to a writable location with enough space.
 
 ## A Brief Introduction to Neural Operators
 Many tasks in computational science can be reduced to predicting how a system evolves in time.
