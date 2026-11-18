@@ -76,8 +76,8 @@ try:
     DEEPSPEED_AVAILABLE = True
 except ImportError:
     DEEPSPEED_AVAILABLE = False
-
-    class FlopsProfiler:  # placeholder so the type hint below resolves without deepspeed installed
+    print("Warning: DeepSpeed not available. FLOPS profiling disabled.")
+    class FlopsProfiler:  # placeholder so the name resolves
         pass
 
 try:
