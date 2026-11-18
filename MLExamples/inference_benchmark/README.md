@@ -1,6 +1,9 @@
 # pytorch-micro-benchmarking
 We supply a small microbenchmarking script for PyTorch training on ROCm.
 
+> [!TIP]
+> If there is no PyTorch module available, see the [general Apptainer instructions](../../README_apptainer.md) to run this exercise in a container.
+
 To execute:
 `python micro_benchmarking_pytorch.py --network <network name> [--batch-size <batch size> ] [--iterations <number of iterations>] [--fp16 <0 or 1> ] [--distributed_dataparallel] [--device_ids <comma separated list (no spaces) of GPU indices (0-indexed) to run distributed_dataparallel api on>] `
 

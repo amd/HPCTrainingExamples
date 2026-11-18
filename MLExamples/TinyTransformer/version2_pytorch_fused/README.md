@@ -49,17 +49,8 @@ After completing this version, you will be able to:
 ## Workshop Exercises
 
 > [!TIP]
-> You can also run this exercise in a container via Apptainer:
-> ```bash
-> apptainer pull rocm10.0_ubuntu24.04_py3.12_pytorch_release_2.11.0.sif docker://<registry>/rocm10.0_ubuntu24.04_py3.12_pytorch_release_2.11.0
-> apptainer shell --cleanenv --rocm rocm10.0_ubuntu24.04_py3.12_pytorch_release_2.11.0.sif
-> cd HPCTrainingExamples/MLExamples/TinyTransformer/version2_pytorch_fused
-> python3 -m venv --system-site-packages ./venv-pt
-> echo "/opt/venv/lib/python3.12/site-packages" > ./venv-pt/lib/python3.12/site-packages/_container_torch.pth
-> source ./venv-pt/bin/activate
-> pip3 install -r requirements.txt
-> ```
-> The extra `.pth` line is needed because a plain `python3 -m venv` inside the container loses access to the pre-installed ROCm PyTorch; it re-adds it to the new venv's search path.
+> You can also run this exercise in a container via Apptainer.
+> Follow the [general Apptainer instructions](../../README_apptainer.md) and run the `cd HPCTrainingExamples/MLExamples/TinyTransformer/version2_pytorch_fused` and `pip3 install -r requirements.txt` steps inside the container.
 >
 > If you want to use `rocprof-sys` (Step 2) and `rocprof-compute` (Step 3) you can install them inside the container with:
 > ```bash
@@ -247,7 +238,7 @@ Besides the `pytorch` package already used in the previous exercises, this exerc
 ```bash
 pip install --user datasets
 ```
-On other systems, you might need to install both. If you're running inside the Apptainer container described above, both are already installed via `requirements.txt` in your `venv-pt`.
+On other systems, you might need to install both. If you're running inside an Apptainer container as described in the [general Apptainer instructions](../../README_apptainer.md), both are already installed via `requirements.txt` in your `venv-pt`.
 
 The text is tokenized with the pretrained GPT-2 tokenizer (`--wiki-tokenizer`, default `gpt2`, vocab size 50,257) fetched from HuggingFace. The tokenized corpus is cached in `wiki_cache/` the first time the training script is executed with the new dataset enabled:
 ```bash

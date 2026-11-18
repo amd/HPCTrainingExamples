@@ -46,6 +46,7 @@ ROCPROF=0
 SCOREP=0
 USM=0
 PROFILING_BY_EXAMPLE=0
+APPTAINER=0
 
 
 usage()
@@ -94,6 +95,7 @@ usage()
     echo "--rocprofv3 : runs the rocprofv3 tests"
     echo "--usm : runs the usm tests"
     echo "--profiling-by-example : runs the profiling-by-example walkthrough tests"
+    echo "--apptainer : runs the apptainer container tests (set APPTAINER_SIF to the pre-pulled image, default \$HOME/rocm-pytorch.sif)"
     echo ""
     exit 1
 }
@@ -331,6 +333,11 @@ do
           PROFILING_BY_EXAMPLE=1
           reset-last
           ;;
+      "--apptainer")
+          shift
+          APPTAINER=1
+          reset-last
+          ;;
       "--help")
           usage
           ;;
@@ -463,6 +470,8 @@ elif [ ${USM} -eq 1 ]; then
    ctest -R USM
 elif [ ${PROFILING_BY_EXAMPLE} -eq 1 ]; then
    ctest -R Profiling_
+elif [ ${APPTAINER} -eq 1 ]; then
+   ctest -R Apptainer
 else
    ctest
 fi

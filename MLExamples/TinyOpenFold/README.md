@@ -103,6 +103,10 @@ pip3 install -r setup/requirements_rocprof-compute-develop.txt
 
 **Note**: Activate the virtual environment (`source venv/bin/activate`) each time you start a new session.
 
+> [!TIP]
+> Alternatively, you can also run this exercise in a container by setting up your environment following the [general Apptainer instructions](../../README_apptainer.md).
+> Avoid installing `../setup/requirements.txt` in this case since it will mask the container image's PyTorch.
+
 ### Environment Setup — ROCm 7.13 (TheRock nightly)
 
 The setup above (ROCm 7.2 module + PyTorch rocm7.1 nightly) remains fully supported. Use the
