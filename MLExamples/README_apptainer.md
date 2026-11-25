@@ -2,9 +2,9 @@
 
 README_apptainer.md from `HPCTrainingExamples/MLExamples` in the Training Examples repository
 
-Most examples in this directory only require an installation PyTorch with ROCm support and only few additional packages that can be simply installed via `pip`.
+Most examples in this directory only require an installation of PyTorch with ROCm support and only few additional packages that can be simply installed via `pip`.
 If your system does not provide a PyTorch module, a container is the easiest way to get a consistent, ready-to-use software stack.
-This page describes the general workflow how to run the examples in this folder with [Apptainer](https://apptainer.org/), which is the non-root container runtime most HPC centers support.
+This page describes the general workflow on how to run the examples in this folder with [Apptainer](https://apptainer.org/), which is the non-root container runtime most HPC centers support.
 
 > [!TIP]
 > The `Pytorch/mnist` example contains a complete walkthrough of different ways to run PyTorch in HPC environments, including running it with either Apptainer or Podman: [Pytorch/mnist/README.md](Pytorch/mnist/README.md).
@@ -38,10 +38,9 @@ export APPTAINER_TMPDIR=/path/with/space/apptainer_tmp
 
 On a node with a GPU, e.g. after `salloc --ntasks 1 --gpus=1 --time=01:00:00`, start an interactive shell with
 ```bash
-apptainer shell --cleanenv --rocm $SIF
+apptainer shell --cleanenv $SIF
 ```
 
-- `--rocm` makes the host's GPU driver and device files available in the container.
 - `--cleanenv` stops the host environment (`PYTHONPATH`, `LD_LIBRARY_PATH`, loaded modules, ...) from leaking into the container where it could shadow the image's PyTorch and other pre-installed softare.
   Consequently, the `module` command does not exist in the container and scripts that call `module load` have to be skipped or adapted.
 - Your home directory and the current working directory are mounted automatically, so you can access a clone of this repository from the host directly if it is located in the directory you started Apptainer in.
@@ -71,7 +70,7 @@ IMAGE_SP=$(python3 -c 'import torch, os; print(os.path.dirname(os.path.dirname(t
 VENV_SP=$(./venv-pt/bin/python3 -c 'import site; print(site.getsitepackages()[0])')
 echo "$IMAGE_SP" > "$VENV_SP/_container_torch.pth"
 source ./venv-pt/bin/activate
-python3 -m pip install -r requirements.txt     # if the example has a requirements.txt
+python3 -m pip install --no-build-isolation -r requirements.txt     # if the example has a requirements.txt
 ```
 
 > [!WARNING]
