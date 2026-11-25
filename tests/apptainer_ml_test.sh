@@ -4,7 +4,7 @@
 # Usage: apptainer_ml_test.sh <case>
 #
 # Runs a short example inside an Apptainer container the way the README describes
-# (--cleanenv --rocm, venv with --system-site-packages plus a .pth file pointing to the
+# (--cleanenv, venv with --system-site-packages plus a .pth file pointing to the
 # image's PyTorch) and prints "Success" if the example finishes.
 #
 # The image is not pulled by the test (conversion is slow and memory hungry). Pull it once
@@ -83,7 +83,7 @@ echo "${IMAGE_SP}" > "${VENV_SP}/_container_torch.pth"
 source ./venv-pt/bin/activate
 
 if [ -f requirements.txt ]; then
-  python3 -m pip install -r requirements.txt || { echo "SKIPPED: pip install failed (no network access?)"; exit 77; }
+  python3 -m pip install --no-build-isolation -r requirements.txt || { echo "SKIPPED: pip install failed (no network access?)"; exit 77; }
 fi
 
 python3 -c '
@@ -98,7 +98,7 @@ grep -q "${TEST_SENTINEL}" run.log
 echo "Success"
 EOS
 
-apptainer exec --cleanenv --rocm \
+apptainer exec --cleanenv \
   --bind "${SCRATCH}:/work" --pwd "/work/${TOP}/${SUB}" \
   --env TEST_CMD="${CMD}" --env TEST_SENTINEL="${SENTINEL}" \
   --env TORCH_HOME=/work/cache --env XDG_CACHE_HOME=/work/cache \

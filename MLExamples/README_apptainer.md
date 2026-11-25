@@ -6,6 +6,16 @@ Most examples in this directory only require an installation of PyTorch with ROC
 If your system does not provide a PyTorch module, a container is the easiest way to get a consistent, ready-to-use software stack.
 This page describes the general workflow on how to run the examples in this folder with [Apptainer](https://apptainer.org/), which is the non-root container runtime most HPC centers support.
 
+Apptainer is a container engine like Docker, but the two differ in philosophy:
+- Docker isolates containers strongly by default: the container gets its own filesystem and its own process and network environment, and the host's files are visible only if you explicitly share them.
+- Apptainer, which was created for HPC clusters, favors integration over isolation. By default, it runs the container as just another program under your own user account, sharing the host's filesystem and resource allocation.
+
+In practice, this means:
+- **Same user**. You are the same user inside the container as outside, and you cannot gain extra privileges on the host.
+- **Shared files**. By default your home directory, the current working directory and some system directories (such as `/tmp` and `/dev`) are mounted into the container. Files you create, modify or delete there are changed on the host too. Administrators and command-line flags (e.g. `--no-home`, `--containall`) can change this.
+- **Read-only image**. The files inside the image itself cannot be modified by default. If you want to have persistent changes, you can use writeable overlays. 
+- **Shared resources**. The container runs under the resource allocation your shell already has, for example a Slurm job's cgroup. It is not a separate set of resources, so exceeding your job's memory limit from inside the container fails the same way as outside.
+
 > [!TIP]
 > The `Pytorch/mnist` example contains a complete walkthrough of different ways to run PyTorch in HPC environments, including running it with either Apptainer or Podman: [Pytorch/mnist/README.md](Pytorch/mnist/README.md).
 
@@ -48,6 +58,16 @@ apptainer shell --cleanenv $SIF
 Within the container, frst check that PyTorch sees the GPU:
 ```bash
 python3 -c 'import torch; print(torch.__version__, torch.version.hip, torch.cuda.is_available())'
+```
+
+You can also check that the PyTorch found is at the expected location by running
+```bash
+python3 -c 'import torch;print(torch.__file__)'
+```
+
+This path should point to a location **within** the container, for instance
+```
+/usr/local/lib/python3.12/dist-packages/torch/__init__.py
 ```
 
 ## 3. Set up the Python environment of an example
@@ -102,7 +122,7 @@ A SLURM script that needs to activate a virtual environment inside the container
 SIF=$HOME/rocm-pytorch.sif
 cd $HOME/HPCTrainingExamples/MLExamples/<example>
 
-apptainer exec --cleanenv --rocm $SIF bash -s <<'EOS'
+apptainer exec --cleanenv $SIF bash -s <<'EOS'
 source ./venv-pt/bin/activate
 python3 <script>.py
 EOS
@@ -114,6 +134,11 @@ EOS
 - **`ensurepip is not available` when creating the venv:** the image's Python has no `ensurepip`. Add `--without-pip` to the `python3 -m venv` call.
 - **Packages installed with `pip3 install` are missing afterwards:** `pip3` on `PATH` points to the system Python, not the venv, and installs land in `$HOME/.local` instead. Use `python3 -m pip install ...` after activating the venv.
 - **`ModuleNotFoundError: No module named 'torch'` in the venv:** the `.pth` file is missing or points to the wrong directory. Recreate it as shown in [section 3.1](#3-set-up-the-python-environment-of-an-example).
+- **Wrong or conflicting package version is imported (e.g. a different `torch` than expected):** check the order `sys.path` is searched in:
+  ```bash
+  python3 -c 'import sys; print("\n".join(sys.path))'
+  ```
+  The venv's own `site-packages` is searched before the `.pth`-appended image `site-packages`, so a package installed into the venv always shadows the image's copy of the same package. If you need a different precedence, edit or remove entries from `sys.path` (e.g. via `PYTHONPATH`, or by editing the `.pth` file created in [section 3.1](#3-set-up-the-python-environment-of-an-example)).
 - **`module: command not found`:** This is expected inside the container, because `--cleanenv` removes the module system. Skip the `module load` lines.
 - **`pip install` fails with a network error:** compute nodes often have no direct internet access. Install the packages on a login node (in an interactive container shell) first.
 - **`No space left on device`:** redirect the caches as described below and set `APPTAINER_CACHEDIR` and `APPTAINER_TMPDIR`.
