@@ -3,6 +3,9 @@
 
 README.md from `HPCTrainingExamples/MLExamples/TinyTransformer/version3_triton` in the Training Examples repository
 
+> [!TIP]
+> If there is no PyTorch module available, see the [general Apptainer instructions](../../README_apptainer.md) to run this exercise in a container.
+
 **Objective**: Implement custom GPU kernels using Triton for maximum performance optimization
 
 **Expected Performance**: 2.0-3.5x speedup over baseline, 70-95% memory reduction

@@ -1976,6 +1976,19 @@ add_test(NAME Apptainer_Test COMMAND ../apptainer_test.sh)
 set_property(TEST Apptainer_Test PROPERTY PASS_REGULAR_EXPRESSION "HSA System Attributes")
 set_property(TEST Apptainer_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")
 
+# MLExamples in Apptainer (MLExamples/README_apptainer.md); skipped without apptainer, GPU or $APPTAINER_SIF
+foreach(ML_CASE
+        tinytransformer_v1 tinytransformer_v2 tinytransformer_v3 tinytransformer_v4
+        tinyopenfold_v1 tinyopenfold_v2 tinyopenfold_v3 tinyopenfold_v3_correctness
+        inference_benchmark)
+  add_test(NAME Apptainer_ML_${ML_CASE} COMMAND ../apptainer_ml_test.sh ${ML_CASE})
+  set_property(TEST Apptainer_ML_${ML_CASE} PROPERTY PASS_REGULAR_EXPRESSION "Success")
+  set_property(TEST Apptainer_ML_${ML_CASE} PROPERTY SKIP_REGULAR_EXPRESSION "SKIPPED")
+  set_property(TEST Apptainer_ML_${ML_CASE} PROPERTY SKIP_RETURN_CODE 77)
+  set_property(TEST Apptainer_ML_${ML_CASE} PROPERTY RESOURCE_LOCK apptainer_ml_gpu)
+  set_tests_properties(Apptainer_ML_${ML_CASE} PROPERTIES TIMEOUT 900)
+endforeach()
+
 add_test(NAME Podman_Test COMMAND ../podman_test.sh)
 set_property(TEST Podman_Test PROPERTY PASS_REGULAR_EXPRESSION "HSA System Attributes")
 set_property(TEST Podman_Test PROPERTY SKIP_REGULAR_EXPRESSION "module spider")

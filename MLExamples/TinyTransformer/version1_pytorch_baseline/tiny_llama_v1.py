@@ -63,6 +63,8 @@ try:
 except ImportError:
     DEEPSPEED_AVAILABLE = False
     print("Warning: DeepSpeed not available. FLOPS profiling disabled.")
+    class FlopsProfiler:  # placeholder so the name resolves
+        pass
 
 try:
     import psutil
