@@ -1,7 +1,7 @@
 # rocprofiler-systems — PyTorch examples (overlap timeline)
 
 > Shared guide for [`imagenet`](../../imagenet/profiling/PROFILING.md),
-> [`minGPT-ddp`](../../minGPT-ddp/PROFILING.md), and [`FSDP2`](../../FSDP2/PROFILING.md).
+> [`minGPT-ddp`](../../minGPT-ddp/profiling/PROFILING.md), and [`FSDP2`](../../FSDP2/profiling/PROFILING.md).
 > Read each example's *Ground rules* first.
 
 When you need to *see* the communication overlap (or stall) the compute on a

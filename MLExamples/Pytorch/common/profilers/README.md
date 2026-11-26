@@ -2,7 +2,7 @@
 
 These are **shared, step-by-step profiler guides** for the three PyTorch training
 examples — [`imagenet`](../../imagenet/profiling/PROFILING.md),
-[`minGPT-ddp`](../../minGPT-ddp/PROFILING.md), and [`FSDP2`](../../FSDP2/PROFILING.md).
+[`minGPT-ddp`](../../minGPT-ddp/profiling/PROFILING.md), and [`FSDP2`](../../FSDP2/profiling/PROFILING.md).
 Each page covers: environment/module setup, an instrumented run (with the exact
 `torchrun` line per example), the **text output** to expect, and how to view any
 **graphics** in a remote AAC6 session (VNC / noVNC / X11). Each example's

@@ -1,7 +1,7 @@
 # DeepSpeed FlopsProfiler — PyTorch examples
 
 > Shared guide for [`imagenet`](../../imagenet/profiling/PROFILING.md),
-> [`minGPT-ddp`](../../minGPT-ddp/PROFILING.md), and [`FSDP2`](../../FSDP2/PROFILING.md).
+> [`minGPT-ddp`](../../minGPT-ddp/profiling/PROFILING.md), and [`FSDP2`](../../FSDP2/profiling/PROFILING.md).
 > Read each example's *Ground rules* first.
 
 `--flops` runs the DeepSpeed `get_model_profile` on the model **without** needing a

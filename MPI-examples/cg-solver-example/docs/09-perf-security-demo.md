@@ -23,11 +23,11 @@ Two deliverables implement this:
 
 | Script | Role | Privilege |
 |--------|------|-----------|
-| [`CG-CPU/perf_users_setup.sh`](../CG-CPU/perf_users_setup.sh) | **Admin**: create group, add users, gate + `setcap` one ROCm release's profilers | root (`--apply`); **dry-run by default** |
-| [`CG-CPU/perf_security_demo.sh`](../CG-CPU/perf_security_demo.sh) | **User**: verify the posture (paranoid, group membership, caps) and exercise the permitted perf scopes on `cg_cpu` | none (read-only) |
-| [`CG-CPU/perf_paranoid_test.sh`](../CG-CPU/perf_paranoid_test.sh) | **Proof**: show an ordinary user can still profile under a *raised* `perf_event_paranoid` via `CAP_PERFMON`. Two modes: `verify` (no root; reads the prolog-set level) and `raise` (self-contained `sudo`, auto-restores) | none / `sudo` |
-| [`CG-CPU/slurm/perf_paranoid.prolog.sh`](../CG-CPU/slurm/perf_paranoid.prolog.sh) | **Admin (SLURM)**: raise `perf_event_paranoid` per job when the user passes `--comment=paranoid[=N]` | installed as root; runs as root at job start |
-| [`CG-CPU/slurm/perf_paranoid.epilog.sh`](../CG-CPU/slurm/perf_paranoid.epilog.sh) | **Admin (SLURM)**: restore the original `perf_event_paranoid` at job end | installed as root; runs as root at job end |
+| [`CG-CPU/perf_users_setup.sh`](../CG-CPU/paranoid/perf_users_setup.sh) | **Admin**: create group, add users, gate + `setcap` one ROCm release's profilers | root (`--apply`); **dry-run by default** |
+| [`CG-CPU/perf_security_demo.sh`](../CG-CPU/paranoid/perf_security_demo.sh) | **User**: verify the posture (paranoid, group membership, caps) and exercise the permitted perf scopes on `cg_cpu` | none (read-only) |
+| [`CG-CPU/perf_paranoid_test.sh`](../CG-CPU/paranoid/perf_paranoid_test.sh) | **Proof**: show an ordinary user can still profile under a *raised* `perf_event_paranoid` via `CAP_PERFMON`. Two modes: `verify` (no root; reads the prolog-set level) and `raise` (self-contained `sudo`, auto-restores) | none / `sudo` |
+| [`CG-CPU/slurm/perf_paranoid.prolog.sh`](../CG-CPU/paranoid/slurm/perf_paranoid.prolog.sh) | **Admin (SLURM)**: raise `perf_event_paranoid` per job when the user passes `--comment=paranoid[=N]` | installed as root; runs as root at job start |
+| [`CG-CPU/slurm/perf_paranoid.epilog.sh`](../CG-CPU/paranoid/slurm/perf_paranoid.epilog.sh) | **Admin (SLURM)**: restore the original `perf_event_paranoid` at job end | installed as root; runs as root at job end |
 
 ## Goals
 
@@ -70,7 +70,7 @@ which is unrelated to perf security.
 
 **Status: implemented and dry-run-verified** (kernel 6.8, `rocm/7.2.3`,
 `/nfsapps` = NFS, `perf` ELF on xfs). The admin script
-[`perf_users_setup.sh`](../CG-CPU/perf_users_setup.sh) performs:
+[`perf_users_setup.sh`](../CG-CPU/paranoid/perf_users_setup.sh) performs:
 
 1. **Group + membership.** `groupadd -f perf_users`; `usermod -aG perf_users <u>`
    for each `--users`. (Members must re-login for the group to take effect.)
@@ -87,7 +87,7 @@ which is unrelated to perf security.
    explicit note that it is **not** modified, so other releases keep working.
 
 The **proof** that the overlay actually works is a separate step,
-[`perf_paranoid_test.sh`](../CG-CPU/perf_paranoid_test.sh), run *once* under `sudo`
+[`perf_paranoid_test.sh`](../CG-CPU/paranoid/perf_paranoid_test.sh), run *once* under `sudo`
 inside an **exclusive** allocation. It:
 
 1. Saves the current `perf_event_paranoid` and installs a restore trap.
@@ -111,8 +111,8 @@ Rather than hand each tester `sudo` to poke the sysctl, do the privileged change
 `--comment=paranoid[=N]`; the prolog raises `perf_event_paranoid`, the epilog
 restores it. Two drop-ins implement this (install them as root):
 
-- [`slurm/perf_paranoid.prolog.sh`](../CG-CPU/slurm/perf_paranoid.prolog.sh)
-- [`slurm/perf_paranoid.epilog.sh`](../CG-CPU/slurm/perf_paranoid.epilog.sh)
+- [`slurm/perf_paranoid.prolog.sh`](../CG-CPU/paranoid/slurm/perf_paranoid.prolog.sh)
+- [`slurm/perf_paranoid.epilog.sh`](../CG-CPU/paranoid/slurm/perf_paranoid.epilog.sh)
 
 **How the comment maps to a level** (deployed form is `paranoid<num>`, no `=`;
 parsing verified against the §M scope ladder):

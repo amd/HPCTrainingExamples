@@ -353,6 +353,6 @@ At the end of this exercise, you should have:
 
 **Key Takeaway**: Systematic bottleneck identification reveals that the baseline model has clear optimization opportunities in kernel fusion, attention computation, and memory usage. The data-driven approach provides a roadmap for achieving 1.5-2.0x speedup in Version 2.
 
-**Next Phase**: [Version 2 - PyTorch Fused](../version2_pytorch_fused/README.md)
+**Next Phase**: [Version 2 - PyTorch Fused](../../version2_pytorch_fused/README.md)
 
 
