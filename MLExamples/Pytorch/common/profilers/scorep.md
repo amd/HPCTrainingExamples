@@ -1,7 +1,7 @@
 # Score-P — PyTorch examples (Python training-loop regions)
 
 > Shared guide for [`imagenet`](../../imagenet/profiling/PROFILING.md),
-> [`minGPT-ddp`](../../minGPT-ddp/PROFILING.md), and [`FSDP2`](../../FSDP2/PROFILING.md).
+> [`minGPT-ddp`](../../minGPT-ddp/profiling/PROFILING.md), and [`FSDP2`](../../FSDP2/profiling/PROFILING.md).
 > Read each example's *Ground rules* first.
 
 [Score-P](https://www.vi-hps.org/projects/score-p/) instruments the **Python

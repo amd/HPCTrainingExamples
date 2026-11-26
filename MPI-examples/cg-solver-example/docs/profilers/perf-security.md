@@ -1,7 +1,7 @@
 # perf_events security & access control
 
 > Part of the [CG profiler guides](README.md). Companion to [Linux perf](perf.md).
-> The runnable demo is [`CG-CPU/perf_security_demo.sh`](../../CG-CPU/perf_security_demo.sh);
+> The runnable demo is [`CG-CPU/perf_security_demo.sh`](../../CG-CPU/paranoid/perf_security_demo.sh);
 > the full plan is [chapter 9](../09-perf-security-demo.md).
 
 `perf` (see [perf.md](perf.md)) reads hardware performance counters,
@@ -48,14 +48,14 @@ shell" achieves the same via the ambient capability set.
 
 The [demo](../09-perf-security-demo.md) automates this as a **least-privilege
 overlay on one ROCm release**:
-[`perf_users_setup.sh`](../../CG-CPU/perf_users_setup.sh) creates the group, adds
+[`perf_users_setup.sh`](../../CG-CPU/paranoid/perf_users_setup.sh) creates the group, adds
 users, and gates (`chgrp`+`chmod o-rwx`) + `setcap`s the profilers of a single
 release, while **leaving `perf_event_paranoid` open** so profilers from *other*
 releases keep working unchanged. A real-world wrinkle it handles: the local `perf`
 ELF is on **xfs** (`setcap` works), but ROCm is on **NFS**, which cannot hold
 file-capability xattrs — there group members get `CAP_PERFMON` via the `capsh`
 privileged shell instead. To **prove** the overlay,
-[`perf_paranoid_test.sh`](../../CG-CPU/perf_paranoid_test.sh) *raises*
+[`perf_paranoid_test.sh`](../../CG-CPU/paranoid/perf_paranoid_test.sh) *raises*
 `perf_event_paranoid` and shows an ordinary `perf_users` member still lands a
 system-wide `perf stat -a` via `CAP_PERFMON`, then restores the original value.
 

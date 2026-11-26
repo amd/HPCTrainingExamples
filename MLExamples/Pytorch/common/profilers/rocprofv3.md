@@ -1,7 +1,7 @@
 # rocprofv3 — PyTorch examples (kernel and RCCL trace)
 
 > Shared guide for [`imagenet`](../../imagenet/profiling/PROFILING.md),
-> [`minGPT-ddp`](../../minGPT-ddp/PROFILING.md), and [`FSDP2`](../../FSDP2/PROFILING.md).
+> [`minGPT-ddp`](../../minGPT-ddp/profiling/PROFILING.md), and [`FSDP2`](../../FSDP2/profiling/PROFILING.md).
 > Read each example's *Ground rules* first.
 
 For a **framework-independent** kernel trace — and to see the RCCL collectives as

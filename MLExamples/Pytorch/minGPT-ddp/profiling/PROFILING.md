@@ -11,7 +11,7 @@ GEMM / layernorm), the **RCCL collectives** (`ncclDevKernel_AllReduce_*` /
 
 The transformer's gradients are large (≈498 MB/step for the 124M-param GPT2), so
 the all-reduce is a **bigger share of each step** than for the ResNet in the
-[imagenet](../imagenet) example — this is the more LLM-representative RCCL study.
+[imagenet](../../imagenet) example — this is the more LLM-representative RCCL study.
 
 The per-tool steps live in the **shared per-profiler guides** under
 [`../../common/profilers/`](../../common/profilers/README.md) — each page carries the
